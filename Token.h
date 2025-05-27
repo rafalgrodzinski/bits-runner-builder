@@ -1,6 +1,8 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
+#include <iostream>
+
 class Token {
 public:
     enum Kind {
@@ -8,6 +10,13 @@ public:
         real,
         eof
     };
+
+private:
+    Kind kind;
+
+public:
+    Token(Kind kind);
+    std::string toString();
 };
 
 #endif
