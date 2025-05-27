@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 
     std::string source = readFile(std::string(argv[1]));
     Lexer lexer(source);
-    std::vector<Token> tokens = lexer.tokens();
+    std::vector<Token> tokens = lexer.getTokens();
     for (Token &token : tokens)
         std::cout << token.toString() << " ";
     std::cout << std::endl;
