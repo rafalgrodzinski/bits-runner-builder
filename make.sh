@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cc -g -std=c++17 -lc++ *.cpp -o brb
+cc -g -std=c++17 -lc++ src/*.cpp -o brb
