@@ -13,7 +13,7 @@ public:
         INVALID
     };
 
-    enum Operation {
+    enum Operator {
         ADD,
         SUB,
         MUL,
@@ -25,7 +25,7 @@ public:
 private:
     Kind kind = INVALID;
     int64_t integer = 0;
-    Operation operation = NONE;
+    Operator operation = NONE;
     shared_ptr<Expression> left = nullptr;
     shared_ptr<Expression> right = nullptr;
 
@@ -35,6 +35,10 @@ private:
 public:
     Expression(Kind kind, Token token, shared_ptr<Expression> left, shared_ptr<Expression> right);
     Kind getKind();
+    int64_t getInteger();
+    Operator getOperator();
+    shared_ptr<Expression> getLeft();
+    shared_ptr<Expression> getRight();
     bool operator==(Expression const& other);
     bool operator!=(Expression const& other);
     string toString();

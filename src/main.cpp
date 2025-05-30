@@ -6,6 +6,9 @@
 
 #include "Expression.h"
 #include "Parser.h"
+#include "Compiler.h"
+
+#include "llvm/Support/raw_ostream.h"
 
 using namespace std;
 
@@ -39,6 +42,11 @@ int main(int argc, char **argv) {
     Parser parser(tokens);
     shared_ptr<Expression> expression = parser.getExpression();
     cout << expression->toString() << endl;
+
+    Compiler compiler(expression);
+    compiler.getModule();
+    shared_ptr<llvm::Module> module = compiler.getModule();
+    module->print(llvm::outs(), nullptr);
 
     return 0;
 }

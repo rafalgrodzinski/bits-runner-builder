@@ -62,6 +62,22 @@ Expression::Kind Expression::getKind() {
     return kind;
 }
 
+int64_t Expression::getInteger() {
+    return integer;
+}
+
+Expression::Operator Expression::getOperator() {
+    return operation;
+}
+
+shared_ptr<Expression> Expression::getLeft() {
+    return left;
+}
+
+shared_ptr<Expression> Expression::getRight() {
+    return right;
+}
+
 bool Expression::operator==(Expression const& other) {
     return kind == other.kind;
 }
