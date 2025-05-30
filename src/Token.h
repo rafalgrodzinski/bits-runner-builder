@@ -35,6 +35,7 @@ public:
     std::string getLexme();
     bool operator==(Token const& other);
     bool operator!=(Token const& other);
+    bool isOneOf(std::vector<Kind> kinds);
     std::string toString();
 
     static Token Invalid;

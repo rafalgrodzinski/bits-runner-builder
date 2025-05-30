@@ -21,6 +21,15 @@ bool Token::operator!=(Token const& other) {
     return kind != other.kind;
 }
 
+bool Token::isOneOf(std::vector<Kind> kinds) {
+    for (Kind &kind : kinds) {
+        if (kind == this->kind)
+            return true;
+    }
+        
+    return false;
+}
+
 std::string Token::toString() {
     switch (kind) {
         case PLUS:

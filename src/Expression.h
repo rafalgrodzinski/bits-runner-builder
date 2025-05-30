@@ -3,23 +3,43 @@
 
 #include "Token.h"
 
-class ExpressionInvalid;
+using namespace std;
 
 class Expression {
 public:
-    static ExpressionInvalid Invalid;
+    enum Kind {
+        LITERAL,
+        BINARY,
+        INVALID
+    };
 
-    virtual std::string toString() = 0;
-};
+    enum Operation {
+        ADD,
+        SUB,
+        MUL,
+        DIV,
+        MOD,
+        NONE
+    };
 
-class ExpressionInvalid {
+private:
+    Kind kind = INVALID;
+    int64_t integer = 0;
+    Operation operation = NONE;
+    shared_ptr<Expression> left = nullptr;
+    shared_ptr<Expression> right = nullptr;
 
-};
+    void setupLiteral(Token token);
+    void setupBinary(Token token, shared_ptr<Expression> left, shared_ptr<Expression> right);
 
-/*class ExpressionInteger: Expression {
 public:
-    ExpressionInteger(Token token);
-    std::string toString() override;
-};*/
+    Expression(Kind kind, Token token, shared_ptr<Expression> left, shared_ptr<Expression> right);
+    Kind getKind();
+    bool operator==(Expression const& other);
+    bool operator!=(Expression const& other);
+    string toString();
+
+    static shared_ptr<Expression> Invalid;
+};
 
 #endif

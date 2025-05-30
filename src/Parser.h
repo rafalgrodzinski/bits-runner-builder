@@ -5,19 +5,23 @@
 #include "Token.h"
 #include "Expression.h"
 
+using namespace std;
+
 class Parser {
 private:
-    std::vector<Token> tokens;
+    vector<Token> tokens;
     int currentIndex = 0;
 
-    //Expression term();
-    //Expression primary();
+    shared_ptr<Expression> term(); // +, -
+    shared_ptr<Expression> factor(); // *, /, %
+    shared_ptr<Expression> primary();
 
-    Expression matchInteger();
+    shared_ptr<Expression> matchInteger();
+    shared_ptr<Expression> matchBinary(shared_ptr<Expression> left);
 
 public:
-    Parser(std::vector<Token> tokens);
-    //Expression getExpression();
+    Parser(vector<Token> tokens);
+    shared_ptr<Expression> getExpression();
 };
 
 #endif

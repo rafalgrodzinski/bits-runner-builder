@@ -1,7 +1,13 @@
 #include <iostream>
 #include <fstream>
-#include "Lexer.h"
+
 #include "Token.h"
+#include "Lexer.h"
+
+#include "Expression.h"
+#include "Parser.h"
+
+using namespace std;
 
 std::string readFile(std::string fileName) {
     std::ifstream file(fileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
@@ -29,6 +35,10 @@ int main(int argc, char **argv) {
     for (Token &token : tokens)
         std::cout << token.toString() << " ";
     std::cout << std::endl;
+
+    Parser parser(tokens);
+    shared_ptr<Expression> expression = parser.getExpression();
+    cout << expression->toString() << endl;
 
     return 0;
 }
