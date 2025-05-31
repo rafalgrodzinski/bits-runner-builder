@@ -9,6 +9,7 @@ class Expression {
 public:
     enum Kind {
         LITERAL,
+        GROUPING,
         BINARY,
         INVALID
     };
@@ -30,6 +31,7 @@ private:
     shared_ptr<Expression> right = nullptr;
 
     void setupLiteral(Token token);
+    void setupGrouping(Token token, shared_ptr<Expression> expression);
     void setupBinary(Token token, shared_ptr<Expression> left, shared_ptr<Expression> right);
 
 public:

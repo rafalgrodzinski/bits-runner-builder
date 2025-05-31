@@ -16,6 +16,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
     switch (expression->getKind()) {
         case Expression::Kind::LITERAL:
             return llvm::ConstantInt::get(int32Type, expression->getInteger(), true);
+        case Expression::Kind::GROUPING:
+            return valueForExpression(expression->getLeft());
         case Expression::Kind::BINARY:
             llvm::Value *leftValue = valueForExpression(expression->getLeft());
             llvm::Value *rightValue = valueForExpression(expression->getRight());

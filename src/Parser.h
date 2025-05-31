@@ -17,6 +17,7 @@ private:
     shared_ptr<Expression> primary();
 
     shared_ptr<Expression> matchInteger();
+    shared_ptr<Expression> matchGrouping();
     shared_ptr<Expression> matchBinary(shared_ptr<Expression> left);
 
 public:

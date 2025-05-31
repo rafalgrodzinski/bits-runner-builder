@@ -43,7 +43,7 @@ std::string Token::toString() {
         case PERCENT:
             return "PERCENT";
         case LEFT_PAREN:
-            return "LEFT_PARENT";
+            return "LEFT_PAREN";
         case RIGHT_PAREN:
             return "RIGHT_PAREN";
         case DOT:

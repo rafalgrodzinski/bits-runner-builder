@@ -7,6 +7,8 @@ Expression::Expression(Kind kind, Token token, shared_ptr<Expression> left, shar
         case LITERAL:
             setupLiteral(token);
             break;
+        case GROUPING:
+            setupGrouping(token, left);
         case BINARY:
             setupBinary(token, left, right);
             break;
@@ -22,6 +24,17 @@ void Expression::setupLiteral(Token token) {
 
     kind = LITERAL;
     integer = stoi(token.getLexme());
+}
+
+void Expression::setupGrouping(Token token, shared_ptr<Expression> expression) {
+    bool isKindValid = token.getKind() == Token::Kind::LEFT_PAREN;
+    bool isExpressionValid = expression != nullptr && expression->getKind() != Kind::INVALID;
+
+    if (!isKindValid || !isExpressionValid)
+        return;
+    
+    kind = GROUPING;
+    left = expression;
 }
 
 void Expression::setupBinary(Token token, shared_ptr<Expression> left, shared_ptr<Expression> right) {
@@ -90,6 +103,8 @@ std::string Expression::toString() {
     switch (kind) {
         case LITERAL:
             return to_string(integer);
+        case GROUPING:
+            return "<( " + left->toString() + " )>";
         case BINARY:
             switch (operation) {
                 case ADD:
