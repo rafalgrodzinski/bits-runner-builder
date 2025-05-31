@@ -1,18 +1,18 @@
-#include "Compiler.h"
+#include "ModuleBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/raw_ostream.h"
 
-Compiler::Compiler(shared_ptr<Expression> expression): expression(expression) {
+ModuleBuilder::ModuleBuilder(shared_ptr<Expression> expression): expression(expression) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>("dummy", *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
 
-    //int32Type = shared_ptr<llvm::IntegerType>(llvm::Type::getInt32Ty(context));
+    voidType = llvm::Type::getVoidTy(*context);
     int32Type = llvm::Type::getInt32Ty(*context);
 }
 
-llvm::Value *Compiler::valueForExpression(shared_ptr<Expression> expression) {
+llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case Expression::Kind::LITERAL:
             return llvm::ConstantInt::get(int32Type, expression->getInteger(), true);
@@ -35,8 +35,19 @@ llvm::Value *Compiler::valueForExpression(shared_ptr<Expression> expression) {
     }
 }
 
-shared_ptr<llvm::Module> Compiler::getModule() {
+shared_ptr<llvm::Module> ModuleBuilder::getModule() {
+    //llvm::Value *value = valueForExpression(expression);
+
+    llvm::FunctionType *fType = llvm::FunctionType::get(int32Type, false);
+    llvm::Function *f = llvm::Function::Create(fType, llvm::GlobalValue::InternalLinkage, "dummyFunc", module.get());
+
+    llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, "entry", f);
+    builder->SetInsertPoint(block);
     llvm::Value *value = valueForExpression(expression);
-    value->print(llvm::outs(), false);
+    //builder->CreateRetVoid();
+    builder->CreateRet(value);
+
+    //value->print(llvm::outs(), false);
+    //cout << endl;
     return module;
 }

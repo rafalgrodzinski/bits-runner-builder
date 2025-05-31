@@ -1,5 +1,5 @@
-#ifndef COMPILER_H
-#define COMPILER_H
+#ifndef MODULE_BUILDER_H
+#define MODULE_BUILDER_H
 
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"
@@ -7,21 +7,20 @@
 
 using namespace std;
 
-class Compiler {
+class ModuleBuilder {
 private:
     shared_ptr<llvm::LLVMContext> context;
-    //llvm::LLVMContext context;
     shared_ptr<llvm::Module> module;
     shared_ptr<llvm::IRBuilder<>> builder;
 
-    //shared_ptr<llvm::IntegerType> int32Type;
+    llvm::Type *voidType;
     llvm::IntegerType *int32Type;
 
     shared_ptr<Expression> expression;
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);
 
 public:
-    Compiler(shared_ptr<Expression> expression);
+    ModuleBuilder(shared_ptr<Expression> expression);
     shared_ptr<llvm::Module> getModule();
 };
 
