@@ -25,6 +25,7 @@ public:
 
 private:
     Kind kind = INVALID;
+    Token token;
     int64_t integer = 0;
     Operator operation = NONE;
     shared_ptr<Expression> left = nullptr;
@@ -37,15 +38,13 @@ private:
 public:
     Expression(Kind kind, Token token, shared_ptr<Expression> left, shared_ptr<Expression> right);
     Kind getKind();
+    Token getToken();
     int64_t getInteger();
     Operator getOperator();
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();
-    bool operator==(Expression const& other);
-    bool operator!=(Expression const& other);
+    bool isValid();
     string toString();
-
-    static shared_ptr<Expression> Invalid;
 };
 
 #endif

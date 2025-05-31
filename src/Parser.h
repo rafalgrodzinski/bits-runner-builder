@@ -14,7 +14,7 @@ private:
 
     shared_ptr<Expression> term(); // +, -
     shared_ptr<Expression> factor(); // *, /, %
-    shared_ptr<Expression> primary();
+    shared_ptr<Expression> primary(); // integer, ()
 
     shared_ptr<Expression> matchInteger();
     shared_ptr<Expression> matchGrouping();

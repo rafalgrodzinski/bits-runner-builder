@@ -36,12 +36,18 @@ int main(int argc, char **argv) {
     std::string source = readFile(std::string(argv[1]));
     Lexer lexer(source);
     std::vector<Token> tokens = lexer.getTokens();
+    if (tokens.empty()) {
+        exit(1);
+    }
     for (Token &token : tokens)
         std::cout << token.toString() << " ";
     std::cout << std::endl;
 
     Parser parser(tokens);
     shared_ptr<Expression> expression = parser.getExpression();
+    if (!expression) {
+        exit(1);
+    }
     cout << expression->toString() << endl;
 
     ModuleBuilder moduleBuilder(expression);

@@ -1,14 +1,13 @@
 #include "Expression.h"
 
-std::shared_ptr<Expression> Expression::Invalid = std::make_shared<Expression>(Expression::Kind::INVALID, Token::Invalid, nullptr, nullptr);
-
-Expression::Expression(Kind kind, Token token, shared_ptr<Expression> left, shared_ptr<Expression> right) {
+Expression::Expression(Kind kind, Token token, shared_ptr<Expression> left, shared_ptr<Expression> right): token(token) {
     switch (kind) {
         case LITERAL:
             setupLiteral(token);
             break;
         case GROUPING:
             setupGrouping(token, left);
+            break;
         case BINARY:
             setupBinary(token, left, right);
             break;
@@ -18,7 +17,7 @@ Expression::Expression(Kind kind, Token token, shared_ptr<Expression> left, shar
 }
 
 void Expression::setupLiteral(Token token) {
-    bool isKindValid = token.isOneOf({Token::Kind::INTEGER});
+    bool isKindValid = token.isOfKind({Token::Kind::INTEGER});
     if (!isKindValid)
         return;
 
@@ -38,7 +37,7 @@ void Expression::setupGrouping(Token token, shared_ptr<Expression> expression) {
 }
 
 void Expression::setupBinary(Token token, shared_ptr<Expression> left, shared_ptr<Expression> right) {
-    bool isKindValid = token.isOneOf({Token::Kind::PLUS, Token::Kind::MINUS, Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT});
+    bool isKindValid = token.isOfKind({Token::Kind::PLUS, Token::Kind::MINUS, Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT});
     bool isLeftValid = left != nullptr && left->getKind() != Kind::INVALID;
     bool isRightValid = right != nullptr && right->getKind() != Kind::INVALID;
 
@@ -65,6 +64,8 @@ void Expression::setupBinary(Token token, shared_ptr<Expression> left, shared_pt
             break;
         case Token::Kind::INVALID:
             break;
+        default:
+            exit(1);
     }
 
     this->left = left;
@@ -73,6 +74,10 @@ void Expression::setupBinary(Token token, shared_ptr<Expression> left, shared_pt
 
 Expression::Kind Expression::getKind() {
     return kind;
+}
+
+Token Expression::getToken() {
+    return token;
 }
 
 int64_t Expression::getInteger() {
@@ -91,15 +96,11 @@ shared_ptr<Expression> Expression::getRight() {
     return right;
 }
 
-bool Expression::operator==(Expression const& other) {
-    return kind == other.kind;
+bool Expression::isValid() {
+    return kind != Expression::Kind::INVALID;
 }
 
-bool Expression::operator!=(Expression const& other) {
-    return kind != other.kind;
-}
-
-std::string Expression::toString() {
+string Expression::toString() {
     switch (kind) {
         case LITERAL:
             return to_string(integer);

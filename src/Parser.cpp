@@ -4,13 +4,18 @@ Parser::Parser(vector<Token> tokens): tokens(tokens) {
 }
 
 shared_ptr<Expression> Parser::getExpression() {
-    return term();
+    shared_ptr<Expression> expression = term();
+    if (!expression->isValid()) {
+        cerr << "Unexpected token '" << expression->getToken().getLexme() << "' at " << expression->getToken().getLine() << ":" << expression->getToken().getColumn() << endl;
+        return nullptr;
+    }
+    return expression;
 }
 
 shared_ptr<Expression> Parser::term() {
     shared_ptr<Expression> expression = factor();
 
-    while (tokens.at(currentIndex).isOneOf({Token::Kind::PLUS, Token::Kind::MINUS})) {
+    while (tokens.at(currentIndex).isOfKind({Token::Kind::PLUS, Token::Kind::MINUS})) {
         expression = matchBinary(expression);
     }
 
@@ -20,7 +25,7 @@ shared_ptr<Expression> Parser::term() {
 shared_ptr<Expression> Parser::factor() {
     shared_ptr<Expression> expression = primary();
 
-    while (tokens.at(currentIndex).isOneOf({Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
+    while (tokens.at(currentIndex).isOfKind({Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
         expression = matchBinary(expression);
     }
 
@@ -28,17 +33,19 @@ shared_ptr<Expression> Parser::factor() {
 }
 
 shared_ptr<Expression> Parser::primary() {
-    shared_ptr<Expression> expression = Expression::Invalid;
+    {
+        shared_ptr<Expression> expression = matchInteger();
+        if (expression->isValid())
+            return expression;
+    }
 
-    do {
-        if((expression = matchInteger()) != Expression::Invalid)
-            break;
-        
-        if((expression = matchGrouping()) != Expression::Invalid)
-            break;
-    } while(false);
+    {
+        shared_ptr<Expression> expression = matchGrouping();
+        if (expression->isValid())
+            return expression;
+    }
 
-    return expression;
+    return make_shared<Expression>(Expression::Kind::INVALID, tokens.at(currentIndex), nullptr, nullptr);
 }
 
 shared_ptr<Expression> Parser::matchInteger() {
@@ -48,7 +55,7 @@ shared_ptr<Expression> Parser::matchInteger() {
         return make_shared<Expression>(Expression::Kind::LITERAL, token, nullptr, nullptr);
     }
 
-    return Expression::Invalid;
+    return make_shared<Expression>(Expression::Kind::INVALID, token, nullptr, nullptr);
 }
 
 shared_ptr<Expression> Parser::matchGrouping() {
@@ -56,22 +63,28 @@ shared_ptr<Expression> Parser::matchGrouping() {
     if (token.getKind() == Token::Kind::LEFT_PAREN) {
         currentIndex++;
         shared_ptr<Expression> expression = term();
+        // has grouped expression failed?
+        if (!expression->isValid())
+            return expression;
         if (tokens.at(currentIndex).getKind() == Token::Kind::RIGHT_PAREN) {
             currentIndex++;
             return make_shared<Expression>(Expression::Kind::GROUPING, token, expression, nullptr);
         }
     }
 
-    return Expression::Invalid;
+    return make_shared<Expression>(Expression::Kind::INVALID, token, nullptr, nullptr);
 }
 
 shared_ptr<Expression> Parser::matchBinary(shared_ptr<Expression> left) {
     Token token = tokens.at(currentIndex);
-    if (token.isOneOf({Token::Kind::PLUS, Token::Kind::MINUS, Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
+    if (token.isOfKind({Token::Kind::PLUS, Token::Kind::MINUS, Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
         currentIndex++;
         shared_ptr<Expression> right = factor();
+        // Has right expression failed?
+        if (!right->isValid())
+            return right;
         return make_shared<Expression>(Expression::Kind::BINARY, token, left, right);
     }
 
-    return Expression::Invalid;
+    return make_shared<Expression>(Expression::Kind::INVALID, token, nullptr, nullptr);
 }

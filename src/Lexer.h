@@ -1,14 +1,18 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include <vector>
 #include "Token.h"
+
+#include <vector>
+
+using namespace std;
 
 class Lexer {
 private:
-    std::string source;
+    string source;
     int currentIndex = 0;
     int currentLine = 0;
+    int currentColumn = 0;
 
     Token nextToken();
     Token matchEnd();
@@ -16,14 +20,15 @@ private:
     Token matchInvalid();
     Token matchSymbol(char symbol, Token::Kind kind);
     Token matchInteger();
+    Token matchKeyword(string keyword, Token::Kind kind);
 
     bool isWhiteSpace(int index);
     bool isNewLine(int index);
     bool isDigit(int index);
 
 public:
-    Lexer(std::string source);
-    std::vector<Token> getTokens();
+    Lexer(string source);
+    vector<Token> getTokens();
 };
 
 #endif

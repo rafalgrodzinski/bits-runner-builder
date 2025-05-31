@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 class Token {
 public:
     enum Kind {        
@@ -19,26 +21,29 @@ public:
 
         INTEGER,
 
-        NEW_LINE,
+        FUNCTION,
 
+        NEW_LINE,
         END,
+
         INVALID
     };
 
 private:
     Kind kind;
-    std::string lexme;
+    string lexme;
+    int line;
+    int column;
 
 public:
-    Token(Kind kind, std::string lexme);
+    Token(Kind kind, string lexme, int line, int column);
     Kind getKind();
-    std::string getLexme();
-    bool operator==(Token const& other);
-    bool operator!=(Token const& other);
-    bool isOneOf(std::vector<Kind> kinds);
-    std::string toString();
-
-    static Token Invalid;
+    string getLexme();
+    int getLine();
+    int getColumn();
+    bool isValid();
+    bool isOfKind(vector<Kind> kinds);
+    string toString();
 };
 
 #endif

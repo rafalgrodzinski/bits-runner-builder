@@ -1,27 +1,29 @@
 #include "Token.h"
 
-Token Token::Invalid = Token(Token::Kind::INVALID, "");
-
-Token::Token(Kind kind, std::string lexme): kind(kind), lexme(lexme) {
+Token::Token(Kind kind, string lexme, int line, int column): kind(kind), lexme(lexme), line(line), column(column) {
 }
 
 Token::Kind Token::getKind() {
     return kind;
 }
 
-std::string Token::getLexme() {
+string Token::getLexme() {
     return lexme;
 }
 
-bool Token::operator==(Token const& other) {
-    return kind == other.kind;
+int Token::getLine() {
+    return line;
 }
 
-bool Token::operator!=(Token const& other) {
-    return kind != other.kind;
+int Token::getColumn() {
+    return column;
 }
 
-bool Token::isOneOf(std::vector<Kind> kinds) {
+bool Token::isValid() {
+    return kind != Token::Kind::INVALID;
+}
+
+bool Token::isOfKind(vector<Kind> kinds) {
     for (Kind &kind : kinds) {
         if (kind == this->kind)
             return true;
@@ -30,7 +32,7 @@ bool Token::isOneOf(std::vector<Kind> kinds) {
     return false;
 }
 
-std::string Token::toString() {
+string Token::toString() {
     switch (kind) {
         case PLUS:
             return "PLUS";
@@ -52,6 +54,8 @@ std::string Token::toString() {
             return "COMMA";
         case INTEGER:
             return "INTEGER";
+        case FUNCTION:
+            return "FUNCTION";
         case NEW_LINE:
             return "NEW_LINE";
         case END:
