@@ -6,17 +6,9 @@
 
 #include "Expression.h"
 #include "Parser.h"
-#include "ModuleBuilder.h"
 
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/IR/LegacyPassManager.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/Target/TargetOptions.h"
-#include "llvm/TargetParser/Triple.h"
-#include "llvm/TargetParser/Host.h"
+#include "ModuleBuilder.h"
+#include "CodeGenerator.h"
 
 
 using namespace std;
@@ -56,38 +48,8 @@ int main(int argc, char **argv) {
     shared_ptr<llvm::Module> module = moduleBuilder.getModule();
     module->print(llvm::outs(), nullptr);
 
-    llvm::InitializeAllTargetInfos();
-    llvm::InitializeAllTargets();
-    llvm::InitializeAllTargetMCs();
-    llvm::InitializeAllAsmParsers();
-    llvm::InitializeAllAsmPrinters();
-
-    string targetTriple = llvm::sys::getDefaultTargetTriple();
-    cout << targetTriple << endl;
-    string errorString;
-    const llvm::Target *target = llvm::TargetRegistry::lookupTarget(targetTriple, errorString);
-    cout << errorString << endl;
-
-    llvm::TargetOptions options;
-    llvm::TargetMachine *targetMachine = target->createTargetMachine(targetTriple, "generic", "", options, llvm::Reloc::PIC_);
-
-    module->setDataLayout(targetMachine->createDataLayout());
-    module->setTargetTriple(targetTriple);
-
-    error_code errorCode;
-    llvm::raw_fd_ostream outputFile("test.o", errorCode, llvm::sys::fs::OF_None);
-    if (errorCode) {
-        cout << errorCode.message();
-        exit(1);
-    }
-
-    llvm::legacy::PassManager passManager;
-    if(targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
-        cout << "failed" << endl;
-        exit(1);
-    }
-    passManager.run(*module);
-    outputFile.flush();
+    CodeGenerator codeGenerator(module);;
+    codeGenerator.generateObjectFile("dummy.s");
 
     return 0;
 }
