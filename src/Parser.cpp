@@ -3,19 +3,49 @@
 Parser::Parser(vector<Token> tokens): tokens(tokens) {
 }
 
-/*shared_ptr<Expression> Parser::getExpression() {
-    shared_ptr<Expression> expression = term();
-    if (!expression->isValid()) {
-        cerr << "Unexpected token '" << expression->getToken().getLexme() << "' at " << expression->getToken().getLine() << ":" << expression->getToken().getColumn() << endl;
-        return nullptr;
-    }
-    return expression;
-}*/
-
 vector<shared_ptr<Statement>> Parser::getStatements() {
     vector<shared_ptr<Statement>> statements;
-        statements.push_back(make_shared<Statement>(Statement::Kind::INVALID));
+
+    while (tokens.at(currentIndex).getKind() != Token::Kind::END) {
+        shared_ptr<Statement> statement = nextStatement();
+        // Abort parsing if we got an error
+        if (!statement->isValid()) {
+            cerr << "Unexpected token '" << statement->getToken().getLexme() << "' at " << statement->getToken().getLine() << ":" << statement->getToken().getColumn() << endl;
+            return vector<shared_ptr<Statement>>();
+        }
+        statements.push_back(statement);
+    }
+
     return statements;
+}
+
+//
+// Statement
+//
+shared_ptr<Statement> Parser::nextStatement() {
+    {
+        shared_ptr<Statement> statement = matchExpressionStatement();
+        if (statement->isValid())
+            return statement;
+    }
+
+    return matchInvalidStatement();
+}
+
+shared_ptr<Statement> Parser::matchInvalidStatement() {
+    return make_shared<Statement>(Statement::Kind::INVALID, tokens.at(currentIndex), nullptr);
+}
+
+//
+// Expression
+//
+shared_ptr<Statement> Parser::matchExpressionStatement() {
+    shared_ptr<Expression> expression = term();
+    if (expression->isValid()) {
+        return make_shared<Statement>(Statement::Kind::EXPRESSION, tokens.at(currentIndex), expression);
+    } else {
+        return make_shared<Statement>(Statement::Kind::INVALID, tokens.at(currentIndex), expression);
+    }
 }
 
 shared_ptr<Expression> Parser::term() {

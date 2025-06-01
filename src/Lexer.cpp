@@ -9,7 +9,7 @@ vector<Token> Lexer::getTokens() {
         Token token = nextToken();
 
         // Abort scanning if we got an error
-        if (token.getKind() == Token::Kind::INVALID) {
+        if (!token.isValid()) {
             cerr << "Unexpected character '" << token.getLexme() << "' at " << token.getLine() << ":" << token.getColumn() << endl;
             return vector<Token>();
          }
