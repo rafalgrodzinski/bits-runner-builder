@@ -41,7 +41,8 @@ shared_ptr<Statement> Parser::matchInvalidStatement() {
 //
 shared_ptr<Statement> Parser::matchExpressionStatement() {
     shared_ptr<Expression> expression = term();
-    if (expression->isValid()) {
+    if (expression->isValid() && tokens.at(currentIndex).isOfKind({Token::Kind::NEW_LINE, Token::Kind::END})) {
+        currentIndex++;
         return make_shared<Statement>(Statement::Kind::EXPRESSION, nullptr, expression);
     } else {
         return make_shared<Statement>(Statement::Kind::INVALID, make_shared<Token>(tokens.at(currentIndex)), expression);
@@ -50,6 +51,8 @@ shared_ptr<Statement> Parser::matchExpressionStatement() {
 
 shared_ptr<Expression> Parser::term() {
     shared_ptr<Expression> expression = factor();
+    if (!expression->isValid())
+        return expression;
 
     while (tokens.at(currentIndex).isOfKind({Token::Kind::PLUS, Token::Kind::MINUS})) {
         expression = matchBinary(expression);
@@ -60,6 +63,8 @@ shared_ptr<Expression> Parser::term() {
 
 shared_ptr<Expression> Parser::factor() {
     shared_ptr<Expression> expression = primary();
+    if (!expression->isValid())
+        return expression;
 
     while (tokens.at(currentIndex).isOfKind({Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
         expression = matchBinary(expression);
