@@ -48,14 +48,18 @@ string Token::toString() {
             return "LEFT_PAREN";
         case RIGHT_PAREN:
             return "RIGHT_PAREN";
-        case DOT:
-            return "DOT";
-        case COMMA:
-            return "COMMA";
+        case COLON:
+            return "COLON";
+        case SEMICOLON:
+            return "SEMICOLON";
         case INTEGER:
             return "INTEGER";
+        case IDENTIFIER:
+            return "IDENTIFIER";
         case FUNCTION:
             return "FUNCTION";
+        case RETURN:
+            return "RETURN";
         case NEW_LINE:
             return "NEW_LINE";
         case END:

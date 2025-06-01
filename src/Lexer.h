@@ -19,12 +19,15 @@ private:
     Token matchNewLine();
     Token matchInvalid();
     Token matchSymbol(char symbol, Token::Kind kind);
-    Token matchInteger();
     Token matchKeyword(string keyword, Token::Kind kind);
+    Token matchInteger();
+    Token matchIdentifier();
 
     bool isWhiteSpace(int index);
     bool isNewLine(int index);
     bool isDigit(int index);
+    bool isIdentifier(int index);
+    bool isSeparator(int index);
 
 public:
     Lexer(string source);

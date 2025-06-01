@@ -84,13 +84,25 @@ Token Lexer::nextToken() {
     }
 
     {
-        Token token =matchSymbol('.', Token::Kind::DOT);
+        Token token = matchSymbol(':', Token::Kind::COLON);
         if (token.isValid())
             return token;
     }
 
     {
-        Token token = matchSymbol(',', Token::Kind::COMMA);
+        Token token = matchSymbol(';', Token::Kind::SEMICOLON);
+        if (token.isValid())
+            return token;
+    }
+
+    {
+        Token token = matchKeyword("fun", Token::Kind::FUNCTION);
+        if (token.isValid())
+            return token;
+    }
+
+    {
+        Token token = matchKeyword("ret", Token::Kind::RETURN);
         if (token.isValid())
             return token;
     }
@@ -102,7 +114,7 @@ Token Lexer::nextToken() {
     }
 
     {
-        Token token = matchKeyword("fun", Token::Kind::FUNCTION);
+        Token token = matchIdentifier();
         if (token.isValid())
             return token;
     }
@@ -137,27 +149,39 @@ Token Lexer::matchSymbol(char symbol, Token::Kind kind) {
     return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
 }
 
+Token Lexer::matchKeyword(string keyword, Token::Kind kind) {
+    bool isMatching = source.compare(currentIndex, keyword.length(), keyword) == 0;
+
+    if (isMatching && isSeparator(currentIndex + keyword.length()))
+        return Token(kind, keyword, currentLine, currentColumn);
+    else
+        return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
+}
+
 Token Lexer::matchInteger() {
     int nextIndex = currentIndex;
 
     while (nextIndex < source.length() && isDigit(nextIndex))
         nextIndex++;
     
-    if (nextIndex == currentIndex)
+    if (nextIndex == currentIndex || !isSeparator(nextIndex))
         return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
     return Token(Token::Kind::INTEGER, lexme, currentLine, currentColumn);
 }
 
-Token Lexer::matchKeyword(string keyword, Token::Kind kind) {
-    bool isMatching = source.compare(currentIndex, keyword.length(), keyword) == 0;
-    bool isSeparated = (currentIndex + keyword.length() >= source.length()) || isWhiteSpace(currentIndex + keyword.length()) || isNewLine(currentIndex + keyword.length());
+Token Lexer::matchIdentifier() {
+    int nextIndex = currentIndex;
 
-    if (isMatching && isSeparated)
-        return Token(Token::Kind::FUNCTION, keyword, currentLine, currentColumn);
-    else
+    while (nextIndex < source.length() && isIdentifier(nextIndex))
+        nextIndex++;
+
+    if (nextIndex == currentIndex || !isSeparator(nextIndex))
         return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
+
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
+    return Token(Token::Kind::IDENTIFIER, lexme, currentLine, currentColumn);
 }
 
 Token Lexer::matchInvalid() {
@@ -177,4 +201,36 @@ bool Lexer::isNewLine(int index) {
 bool Lexer::isDigit(int index) {
     char character = source.at(index);
     return character >= '0' && character <= '9';
+}
+
+bool Lexer::isIdentifier(int index) {
+    char character = source.at(index);
+    bool isDigit = character >= '0' && character <= '9';
+    bool isAlpha = character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z';
+    bool isAlowedSymbol = character == '_';
+
+    return isDigit || isAlpha || isAlowedSymbol;
+}
+
+bool Lexer::isSeparator(int index) {
+    if (index >= source.length())
+        return true;
+
+    char character = source.at(index);
+    switch (character) {
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+        case '%':
+        case '(':
+        case ')':
+        case ':':
+        case ' ':
+        case '\t':
+        case '\n':
+            return true;
+        default:
+            return false;
+    }
 }

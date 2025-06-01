@@ -16,12 +16,14 @@ public:
         
         LEFT_PAREN,
         RIGHT_PAREN,
-        DOT,
-        COMMA,
+        COLON,
+        SEMICOLON,
 
         INTEGER,
+        IDENTIFIER,
 
         FUNCTION,
+        RETURN,
 
         NEW_LINE,
         END,
