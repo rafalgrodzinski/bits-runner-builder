@@ -4,6 +4,7 @@
 #include <vector>
 #include "Token.h"
 #include "Expression.h"
+#include "Statement.h"
 
 using namespace std;
 
@@ -22,7 +23,8 @@ private:
 
 public:
     Parser(vector<Token> tokens);
-    shared_ptr<Expression> getExpression();
+    //shared_ptr<Expression> getExpression();
+    vector<shared_ptr<Statement>> getStatements();
 };
 
 #endif

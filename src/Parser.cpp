@@ -3,13 +3,19 @@
 Parser::Parser(vector<Token> tokens): tokens(tokens) {
 }
 
-shared_ptr<Expression> Parser::getExpression() {
+/*shared_ptr<Expression> Parser::getExpression() {
     shared_ptr<Expression> expression = term();
     if (!expression->isValid()) {
         cerr << "Unexpected token '" << expression->getToken().getLexme() << "' at " << expression->getToken().getLine() << ":" << expression->getToken().getColumn() << endl;
         return nullptr;
     }
     return expression;
+}*/
+
+vector<shared_ptr<Statement>> Parser::getStatements() {
+    vector<shared_ptr<Statement>> statements;
+        statements.push_back(make_shared<Statement>(Statement::Kind::INVALID));
+    return statements;
 }
 
 shared_ptr<Expression> Parser::term() {
