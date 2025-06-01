@@ -30,6 +30,12 @@ shared_ptr<Statement> Parser::nextStatement() {
     }
 
     {
+        shared_ptr<Statement> statement = matchReturnStatement();
+        if (statement->isValid())
+            return statement;
+    }
+
+    {
         shared_ptr<Statement> statement = matchExpressionStatement();
         if (statement->isValid())
             return statement;
@@ -76,6 +82,24 @@ shared_ptr<Statement> Parser::matchBlockStatement() {
         currentIndex++;
 
     return make_shared<Statement>(Statement::Kind::BLOCK, nullptr, nullptr, nullptr, statements, "");
+}
+
+shared_ptr<Statement> Parser::matchReturnStatement() {
+    if (tokens.at(currentIndex).getKind() != Token::Kind::RETURN)
+        return make_shared<Statement>(Statement::Kind::INVALID, make_shared<Token>(tokens.at(currentIndex)), nullptr, nullptr, vector<shared_ptr<Statement>>(), "");
+    
+    currentIndex++;
+
+    shared_ptr<Expression> expression = term();
+    if (!expression->isValid())
+        expression = nullptr;
+    
+    if (tokens.at(currentIndex).getKind() != Token::Kind::NEW_LINE)
+        return make_shared<Statement>(Statement::Kind::INVALID, make_shared<Token>(tokens.at(currentIndex)), nullptr, nullptr, vector<shared_ptr<Statement>>(), "");
+    
+    currentIndex++; // new line
+    
+    return make_shared<Statement>(Statement::Kind::RETURN, nullptr, expression, nullptr, vector<shared_ptr<Statement>>(), "");
 }
 
 shared_ptr<Statement> Parser::matchInvalidStatement() {

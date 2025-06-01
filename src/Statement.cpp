@@ -31,6 +31,13 @@ string Statement::toString() {
         }
         case FUNCTION_DECLARATION:
             return "FUNCTION " + name + "\n" + blockStatement->toString() + "\n;";
+        case RETURN: {
+            string value = "RETURN";
+            if (expression != nullptr) {
+                value += " " + expression->toString();
+            }
+            return value;
+        }
         case INVALID:
             return "INVALID";
     }

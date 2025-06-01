@@ -17,6 +17,7 @@ private:
 
     shared_ptr<Statement> matchFunctionDeclarationStatement();
     shared_ptr<Statement> matchBlockStatement();
+    shared_ptr<Statement> matchReturnStatement();
     shared_ptr<Statement> matchInvalidStatement();
 
     shared_ptr<Statement> matchExpressionStatement();

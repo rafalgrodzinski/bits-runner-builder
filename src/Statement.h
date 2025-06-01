@@ -14,6 +14,7 @@ public:
         EXPRESSION,
         BLOCK,
         FUNCTION_DECLARATION,
+        RETURN,
         INVALID
     };
 
