@@ -17,12 +17,12 @@ public:
 
 private:
     Kind kind;
-    Token token;
+    shared_ptr<Token> token;
     shared_ptr<Expression> expression;
 
 public:
-    Statement(Kind kind, Token token, shared_ptr<Expression> expression);
-    Token getToken();
+    Statement(Kind kind, shared_ptr<Token> token, shared_ptr<Expression> expression);
+    shared_ptr<Token> getToken();
     shared_ptr<Expression> getExpression();
     bool isValid();
     string toString();
