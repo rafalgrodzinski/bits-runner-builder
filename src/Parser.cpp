@@ -32,8 +32,41 @@ shared_ptr<Statement> Parser::nextStatement() {
     return matchInvalidStatement();
 }
 
+shared_ptr<Statement> Parser::matchFunctionDeclarationStatement() {
+    if (!matchesTokenKinds({Token::Kind::IDENTIFIER, Token::Kind::COLON, Token::Kind::FUNCTION}))
+        return make_shared<Statement>(Statement::Kind::INVALID, make_shared<Token>(tokens.at(currentIndex)), nullptr, nullptr, { }, "");
+
+    Token identifierToken = tokens.at(currentIndex);
+    currentIndex++;
+    currentIndex++; // skip colon
+    currentIndex++; // skip fun
+
+    while (tokens.at(currentIndex).getKind() != Token::Kind::NEW_LINE) {
+        currentIndex++;
+    }
+    currentIndex++; // new line
+    shared_ptr<Statement> blockStatement = matchBlockStatement();
+    if (!blockStatement->isValid())
+        return blockStatement;
+    
+    return make_shared<Statement>(Statement::Kind::FUNCTION_DECLARATION, nullptr, nullptr, blockStatement, { }, identifierToken.getLexme());
+}
+
+shared_ptr<Statement> Parser::matchBlockStatement() {
+    vector<shared_ptr<Statement>> statements;
+
+    while (tokens.at(currentIndex).getKind() != Token::Kind::SEMICOLON) {
+        shared_ptr<Statement> statement = nextStatement();
+        if (!statement->isValid())
+            return statement;
+        statements.push_back(statement);
+    }
+    currentIndex++; // skip ;
+    return make_shared<Statement>(Statement::Kind::BLOCK, nullptr, nullptr, nullptr, statements, "");
+}
+
 shared_ptr<Statement> Parser::matchInvalidStatement() {
-    return make_shared<Statement>(Statement::Kind::INVALID, make_shared<Token>(tokens.at(currentIndex)), nullptr);
+    return make_shared<Statement>(Statement::Kind::INVALID, make_shared<Token>(tokens.at(currentIndex)), nullptr, nullptr, { }, "");
 }
 
 //
@@ -43,9 +76,9 @@ shared_ptr<Statement> Parser::matchExpressionStatement() {
     shared_ptr<Expression> expression = term();
     if (expression->isValid() && tokens.at(currentIndex).isOfKind({Token::Kind::NEW_LINE, Token::Kind::END})) {
         currentIndex++;
-        return make_shared<Statement>(Statement::Kind::EXPRESSION, nullptr, expression);
+        return make_shared<Statement>(Statement::Kind::EXPRESSION, nullptr, expression, nullptr, { }, "");
     } else {
-        return make_shared<Statement>(Statement::Kind::INVALID, make_shared<Token>(tokens.at(currentIndex)), expression);
+        return make_shared<Statement>(Statement::Kind::INVALID, make_shared<Token>(tokens.at(currentIndex)), expression, nullptr, { }, "");
     }
 }
 
@@ -128,4 +161,15 @@ shared_ptr<Expression> Parser::matchBinary(shared_ptr<Expression> left) {
     }
 
     return make_shared<Expression>(Expression::Kind::INVALID, token, nullptr, nullptr);
+}
+
+bool Parser::matchesTokenKinds(vector<Token::Kind> kinds) {
+    if (currentIndex + kinds.size() >= tokens.size())
+        return false;
+
+    for (int i=0; i<kinds.size(); i++) {
+        if (kinds.at(i) != tokens.at(currentIndex + i).getKind())
+            return false;
+    }
+    return true;
 }

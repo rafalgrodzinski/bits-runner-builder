@@ -15,7 +15,9 @@ private:
 
     shared_ptr<Statement> nextStatement();
 
-    shared_ptr<Statement> matchInvalidStatement() ;
+    shared_ptr<Statement> matchFunctionDeclarationStatement();
+    shared_ptr<Statement> matchBlockStatement();
+    shared_ptr<Statement> matchInvalidStatement();
 
     shared_ptr<Statement> matchExpressionStatement();
     shared_ptr<Expression> term(); // +, -
@@ -25,6 +27,8 @@ private:
     shared_ptr<Expression> matchInteger();
     shared_ptr<Expression> matchGrouping();
     shared_ptr<Expression> matchBinary(shared_ptr<Expression> left);
+
+    bool matchesTokenKinds(vector<Token::Kind> kinds);
 
 public:
     Parser(vector<Token> tokens);
