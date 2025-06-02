@@ -11,10 +11,10 @@ using namespace std;
 class Statement {
 public:
     enum Kind {
-        EXPRESSION,
-        BLOCK,
         FUNCTION_DECLARATION,
+        BLOCK,
         RETURN,
+        EXPRESSION,
         INVALID
     };
 
@@ -28,8 +28,12 @@ private:
 
 public:
     Statement(Kind kind, shared_ptr<Token> token, shared_ptr<Expression> expression, shared_ptr<Statement> blockStatement, vector<shared_ptr<Statement>> statements, string name);
+    Kind getKind();
     shared_ptr<Token> getToken();
     shared_ptr<Expression> getExpression();
+    shared_ptr<Statement> getBlockStatement();
+    vector<shared_ptr<Statement>> getStatements();
+    string getName();
     bool isValid();
     string toString();
 };

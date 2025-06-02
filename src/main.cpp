@@ -52,18 +52,14 @@ int main(int argc, char **argv) {
         cout << statement->toString();
         cout << endl;
     }
-    //shared_ptr<Expression> expression = parser.getExpression();
-    //if (!expression) {
-    //    exit(1);
-    //}
-    //cout << expression->toString() << endl;
 
     //ModuleBuilder moduleBuilder(expression);
-    //shared_ptr<llvm::Module> module = moduleBuilder.getModule();
-    //module->print(llvm::outs(), nullptr);
+    ModuleBuilder moduleBuilder(statements);
+    shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+    module->print(llvm::outs(), nullptr);
 
-    //CodeGenerator codeGenerator(module);;
-    //codeGenerator.generateObjectFile("dummy.s");
+    CodeGenerator codeGenerator(module);
+    codeGenerator.generateObjectFile("dummy.s");
 
     return 0;
 }

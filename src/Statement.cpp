@@ -4,12 +4,28 @@ Statement::Statement(Kind kind, shared_ptr<Token> token, shared_ptr<Expression> 
     kind(kind), token(token), expression(expression), blockStatement(blockStatement), statements(statements), name(name) {
 }
 
-shared_ptr<Expression> Statement::getExpression() {
-    return expression;
+Statement::Kind Statement::getKind() {
+    return kind;
 }
 
 shared_ptr<Token> Statement::getToken() {
     return token;
+}
+
+shared_ptr<Expression> Statement::getExpression() {
+    return expression;
+}
+
+shared_ptr<Statement> Statement::getBlockStatement() {
+    return blockStatement;
+}
+
+vector<shared_ptr<Statement>> Statement::getStatements() {
+    return statements;
+}
+
+string Statement::getName() {
+    return name;
 }
 
 bool Statement::isValid() {

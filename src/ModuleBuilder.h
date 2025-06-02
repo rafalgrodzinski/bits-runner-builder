@@ -3,7 +3,9 @@
 
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"
+
 #include "Expression.h"
+#include "Statement.h"
 
 using namespace std;
 
@@ -16,11 +18,17 @@ private:
     llvm::Type *voidType;
     llvm::IntegerType *int32Type;
 
-    shared_ptr<Expression> expression;
+    vector<shared_ptr<Statement>> statements;
+
+    void buildCodeForStatement(shared_ptr<Statement> statement);
+    void buildFunction(shared_ptr<Statement> statement);
+    void buildBlock(shared_ptr<Statement> statement);
+    void buildReturn(shared_ptr<Statement> statement);
+    void buildExpression(shared_ptr<Statement> statement);
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);
 
 public:
-    ModuleBuilder(shared_ptr<Expression> expression);
+    ModuleBuilder(vector<shared_ptr<Statement>> statements);
     shared_ptr<llvm::Module> getModule();
 };
 

@@ -1,9 +1,9 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "Token.h"
-
 #include <vector>
+
+#include "Token.h"
 
 using namespace std;
 

@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include <vector>
+
 #include "Token.h"
 #include "Expression.h"
 #include "Statement.h"
