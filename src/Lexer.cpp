@@ -3,199 +3,195 @@
 Lexer::Lexer(string source): source(source) {
 }
 
-vector<Token> Lexer::getTokens() {
-    vector<Token> tokens;
+vector<shared_ptr<Token>> Lexer::getTokens() {
+    vector<shared_ptr<Token>> tokens;
+    shared_ptr<Token> token = nullptr;
     do {
-        Token token = nextToken();
+        token = nextToken();
+        // Got a nullptr, shouldn't have happened
+        if (!token) {
+            cerr << "Failed to scan tokens" << endl;
+            exit(1);
+        }
 
         // Abort scanning if we got an error
-        if (!token.isValid()) {
-            cerr << "Unexpected character '" << token.getLexme() << "' at " << token.getLine() << ":" << token.getColumn() << endl;
-            return vector<Token>();
+        if (!token->isValid()) {
+            cerr << "Unexpected character '" << token->getLexme() << "' at " << token->getLine() << ":" << token->getColumn() << endl;
+            exit(1);
          }
         
-        currentIndex += token.getLexme().length();
-        currentColumn += token.getLexme().length();
+        currentIndex += token->getLexme().length();
+        currentColumn += token->getLexme().length();
 
-        if (token.getKind() == Token::Kind::NEW_LINE) {
+        if (token->getKind() == Token::Kind::NEW_LINE) {
             currentLine++;
             currentColumn = 0;
         }
         
         // filter out multiple new lines
-        if (tokens.empty() || token.getKind() != Token::Kind::NEW_LINE || tokens.back().getKind() != token.getKind())
+        if (tokens.empty() || token->getKind() != Token::Kind::NEW_LINE || tokens.back()->getKind() != token->getKind())
             tokens.push_back(token);
-    } while (tokens.back().getKind() != Token::Kind::END);
+    } while (token->getKind() != Token::Kind::END);
     return tokens;
 }
 
-Token Lexer::nextToken() {
+shared_ptr<Token> Lexer::nextToken() {    
     while (currentIndex < source.length() && isWhiteSpace(currentIndex)) {
         currentIndex++;
         currentColumn++;
     }
 
-    {
-        Token token = matchEnd();
-        if (token.isValid())
-            return token;
-    }
+    shared_ptr<Token> token;
 
-    {
-        Token token = matchSymbol('+', Token::Kind::PLUS);
-        if (token.isValid())
-            return token;
-    }
+    // arithmetic
+    token = match(Token::Kind::PLUS, "+", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(Token::Kind::MINUS, "-", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchSymbol('-', Token::Kind::MINUS);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::STAR, "*", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchSymbol('*', Token::Kind::STAR);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::SLASH, "/", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchSymbol('/', Token::Kind::SLASH);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::PERCENT, "%", false);
+    if (token != nullptr)
+        return token;
+    
+    // logical
+    token = match(Token::Kind::NOT_EQUAL, "!=", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(Token::Kind::EQUAL, "=", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(Token::Kind::LESS_EQUAL, "<=", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token =matchSymbol('%', Token::Kind::PERCENT);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::LESS, "<", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchSymbol('(', Token::Kind::LEFT_PAREN);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::GREATER_EQUAL, ">=", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchSymbol(')', Token::Kind::RIGHT_PAREN);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::GREATER, ">", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchSymbol(':', Token::Kind::COLON);
-        if (token.isValid())
-            return token;
-    }
+    // structural
+    token = match(Token::Kind::LEFT_PAREN, "(", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchSymbol(';', Token::Kind::SEMICOLON);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::RIGHT_PAREN, ")", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchKeyword("fun", Token::Kind::FUNCTION);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::COLON, ":", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchKeyword("ret", Token::Kind::RETURN);
-        if (token.isValid())
-            return token;
-    }
+    token = match(Token::Kind::SEMICOLON, ";", false);
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchInteger();
-        if (token.isValid())
-            return token;
-    }
+    // keywords
+    token = match(Token::Kind::FUNCTION, "fun", true);
+    if (token != nullptr)
+        return token;
+    
+    token = match(Token::Kind::RETURN, "ret", true);
+    if (token != nullptr)
+        return token;
+    
+    // literal
+    token = matchInteger();
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchIdentifier();
-        if (token.isValid())
-            return token;
-    }
+    // identifier
+    token = matchIdentifier();
+    if (token != nullptr)
+        return token;
 
-    {
-        Token token = matchNewLine();
-        if (token.isValid())
-            return token;
-    }
+    // new line
+    token = match(Token::Kind::NEW_LINE, "\r\n", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(Token::Kind::NEW_LINE, "\n", false);
+    if (token != nullptr)
+        return token;
+    
+    // other
+    token = matchEnd();
+    if (token != nullptr)
+        return token;
 
     return matchInvalid();
 }
 
-Token Lexer::matchEnd() {
-    if (currentIndex >= source.length())
-        return Token(Token::Kind::END, "", currentLine, currentColumn);
-    
-    return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
-}
+shared_ptr<Token> Lexer::match(Token::Kind kind, string lexme, bool needsSeparator) {
+    bool isMatching = source.compare(currentIndex, lexme.length(), lexme) == 0;
+    bool isSeparatorSatisfied = !needsSeparator || isSeparator(currentIndex + lexme.length());
 
-Token Lexer::matchNewLine() {
-    if (isNewLine(currentIndex))
-        return Token(Token::Kind::NEW_LINE, "\n", currentLine, currentColumn);
-
-    return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
-}
-
-Token Lexer::matchSymbol(char symbol, Token::Kind kind) {
-    if (source.at(currentIndex) == symbol)
-        return Token(kind, string(1, symbol), currentLine, currentColumn);
-
-    return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
-}
-
-Token Lexer::matchKeyword(string keyword, Token::Kind kind) {
-    bool isMatching = source.compare(currentIndex, keyword.length(), keyword) == 0;
-
-    if (isMatching && isSeparator(currentIndex + keyword.length()))
-        return Token(kind, keyword, currentLine, currentColumn);
+    if (isMatching && isSeparatorSatisfied)
+        return make_shared<Token>(kind, lexme, currentLine, currentColumn);
     else
-        return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
+        return nullptr;
 }
 
-Token Lexer::matchInteger() {
+shared_ptr<Token> Lexer::matchInteger() {
     int nextIndex = currentIndex;
 
     while (nextIndex < source.length() && isDigit(nextIndex))
         nextIndex++;
     
     if (nextIndex == currentIndex || !isSeparator(nextIndex))
-        return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
+        return nullptr;
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    return Token(Token::Kind::INTEGER, lexme, currentLine, currentColumn);
+    return make_shared<Token>(Token::Kind::INTEGER, lexme, currentLine, currentColumn);
 }
 
-Token Lexer::matchIdentifier() {
+shared_ptr<Token> Lexer::matchIdentifier() {
     int nextIndex = currentIndex;
 
     while (nextIndex < source.length() && isIdentifier(nextIndex))
         nextIndex++;
 
     if (nextIndex == currentIndex || !isSeparator(nextIndex))
-        return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
+        return nullptr;
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    return Token(Token::Kind::IDENTIFIER, lexme, currentLine, currentColumn);
+    return make_shared<Token>(Token::Kind::IDENTIFIER, lexme, currentLine, currentColumn);
 }
 
-Token Lexer::matchInvalid() {
-    return Token(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
+shared_ptr<Token> Lexer::matchEnd() {
+    if (currentIndex >= source.length())
+        return make_shared<Token>(Token::Kind::END, "", currentLine, currentColumn);
+    
+    return nullptr;
+}
+
+shared_ptr<Token> Lexer::matchInvalid() {
+    return make_shared<Token>(Token::Kind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
 }
 
 bool Lexer::isWhiteSpace(int index) {
     char character = source.at(index);
     return character == ' ' || character == '\t';
-}
-
-bool Lexer::isNewLine(int index) {
-    char character = source.at(index);
-    return character == '\n';
 }
 
 bool Lexer::isDigit(int index) {
@@ -223,12 +219,17 @@ bool Lexer::isSeparator(int index) {
         case '*':
         case '/':
         case '%':
+        case '=':
+        case '<':
+        case '>':
         case '(':
         case ')':
         case ':':
+        case ';':
         case ' ':
         case '\t':
         case '\n':
+        case '\r';
             return true;
         default:
             return false;

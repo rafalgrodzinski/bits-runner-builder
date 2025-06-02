@@ -13,17 +13,24 @@ public:
         STAR,
         SLASH,
         PERCENT,
+
+        EQUAL,
+        NOT_EQUAL,
+        LESS,
+        LESS_EQUAL,
+        GREATER,
+        GREATER_EQUAL,
         
         LEFT_PAREN,
         RIGHT_PAREN,
         COLON,
         SEMICOLON,
 
-        INTEGER,
-        IDENTIFIER,
-
         FUNCTION,
         RETURN,
+
+        INTEGER,
+        IDENTIFIER,
 
         NEW_LINE,
         END,

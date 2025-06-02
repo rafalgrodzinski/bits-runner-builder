@@ -35,31 +35,30 @@ int main(int argc, char **argv) {
 
     std::string source = readFile(std::string(argv[1]));
     Lexer lexer(source);
-    std::vector<Token> tokens = lexer.getTokens();
-    if (tokens.empty()) {
-        exit(1);
+    std::vector<shared_ptr<Token>> tokens = lexer.getTokens();
+    for (int i=0; i<tokens.size(); i++) {
+        std::cout << tokens.at(i)->toString();
+        if (i < tokens.size() - 1)
+            std::cout << " ";
     }
-    for (Token &token : tokens)
-        std::cout << token.toString() << " ";
     std::cout << std::endl;
 
-    Parser parser(tokens);
-    vector<shared_ptr<Statement>> statements = parser.getStatements();
-    if (statements.empty()) {
-        exit(1);
-    }
-    for (shared_ptr<Statement> &statement : statements) {
-        cout << statement->toString();
-        cout << endl;
-    }
+    //Parser parser(tokens);
+    //vector<shared_ptr<Statement>> statements = parser.getStatements();
+    //if (statements.empty()) {
+    //    exit(1);
+    //}
+    //for (shared_ptr<Statement> &statement : statements) {
+    //    cout << statement->toString();
+    //    cout << endl;
+    //}
 
-    //ModuleBuilder moduleBuilder(expression);
-    ModuleBuilder moduleBuilder(statements);
-    shared_ptr<llvm::Module> module = moduleBuilder.getModule();
-    module->print(llvm::outs(), nullptr);
+    //ModuleBuilder moduleBuilder(statements);
+    //shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+    //module->print(llvm::outs(), nullptr);
 
-    CodeGenerator codeGenerator(module);
-    codeGenerator.generateObjectFile("dummy.s");
+    //CodeGenerator codeGenerator(module);
+    //codeGenerator.generateObjectFile("dummy.s");
 
     return 0;
 }

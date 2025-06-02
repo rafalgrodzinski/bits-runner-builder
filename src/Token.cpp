@@ -1,6 +1,7 @@
 #include "Token.h"
 
-Token::Token(Kind kind, string lexme, int line, int column): kind(kind), lexme(lexme), line(line), column(column) {
+Token::Token(Kind kind, string lexme, int line, int column):
+    kind(kind), lexme(lexme), line(line), column(column) {
 }
 
 Token::Kind Token::getKind() {
@@ -44,6 +45,20 @@ string Token::toString() {
             return "SLASH";
         case PERCENT:
             return "PERCENT";
+        
+        case EQUAL:
+            return "EQUAL";
+        case NOT_EQUAL:
+            return "NOT_EQUAL";
+        case LESS:
+            return "LESS";
+        case LESS_EQUAL:
+            return "LESS_EQUAL";
+        case GREATER:
+            return "GREATER";
+        case GREATER_EQUAL:
+            return "GREATER_EQUAL";
+
         case LEFT_PAREN:
             return "LEFT_PAREN";
         case RIGHT_PAREN:
@@ -52,14 +67,17 @@ string Token::toString() {
             return "COLON";
         case SEMICOLON:
             return "SEMICOLON";
+
         case INTEGER:
-            return "INTEGER";
+            return "INTEGER(" + lexme + ")";
         case IDENTIFIER:
-            return "IDENTIFIER";
+            return "IDENTIFIER(" + lexme + ")";
+
         case FUNCTION:
             return "FUNCTION";
         case RETURN:
             return "RETURN";
+
         case NEW_LINE:
             return "NEW_LINE";
         case END:
