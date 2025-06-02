@@ -14,24 +14,22 @@ private:
     int currentLine = 0;
     int currentColumn = 0;
 
-    Token nextToken();
-    Token matchEnd();
-    Token matchNewLine();
-    Token matchInvalid();
-    Token matchSymbol(char symbol, Token::Kind kind);
-    Token matchKeyword(string keyword, Token::Kind kind);
-    Token matchInteger();
-    Token matchIdentifier();
+    shared_ptr<Token> nextToken();
+    shared_ptr<Token> match(Token::Kind kind, string lexme, bool needsSeparator);
+    shared_ptr<Token> matchInteger();
+    shared_ptr<Token> matchIdentifier();
+    shared_ptr<Token> matchEnd();
+    shared_ptr<Token> matchInvalid();
 
     bool isWhiteSpace(int index);
-    bool isNewLine(int index);
     bool isDigit(int index);
     bool isIdentifier(int index);
     bool isSeparator(int index);
+    void advanceWithToken(shared_ptr<Token> token);
 
 public:
     Lexer(string source);
-    vector<Token> getTokens();
+    vector<shared_ptr<Token>> getTokens();
 };
 
 #endif
