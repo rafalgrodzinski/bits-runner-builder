@@ -14,37 +14,67 @@ public:
         INVALID
     };
 
-    enum Operator {
+private:
+    Kind kind;
+
+public:
+    Expression(Kind kind);
+    Kind getKind();
+    bool isValid();
+    virtual string toString();
+};
+
+class ExpressionBinary: public Expression {
+public:
+    enum Operation {
         ADD,
         SUB,
         MUL,
         DIV,
-        MOD,
-        NONE
+        MOD
     };
 
 private:
-    Kind kind = INVALID;
-    Token token;
-    int64_t integer = 0;
-    Operator operation = NONE;
-    shared_ptr<Expression> left = nullptr;
-    shared_ptr<Expression> right = nullptr;
-
-    void setupLiteral(Token token);
-    void setupGrouping(Token token, shared_ptr<Expression> expression);
-    void setupBinary(Token token, shared_ptr<Expression> left, shared_ptr<Expression> right);
+    Operation operation;
+    shared_ptr<Expression> left;
+    shared_ptr<Expression> right;
 
 public:
-    Expression(Kind kind, Token token, shared_ptr<Expression> left, shared_ptr<Expression> right);
-    Kind getKind();
-    Token getToken();
-    int64_t getInteger();
-    Operator getOperator();
+    ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right);
+    Operation getOperation();
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();
-    bool isValid();
-    string toString();
+    string toString() override;
+};
+
+class ExpressionLiteral: public Expression {
+private:
+    int64_t integer = 0;
+
+public:
+    ExpressionLiteral(shared_ptr<Token> token);
+    int64_t getInteger();
+    string toString() override;
+};
+
+class ExpressionGrouping: public Expression {
+private:
+    shared_ptr<Expression> expression;
+
+public:
+    ExpressionGrouping(shared_ptr<Expression> expression);
+    shared_ptr<Expression> getExpression();
+    string toString() override;
+};
+
+class ExpressionInvalid: public Expression {
+private:
+    shared_ptr<Token> token;
+
+public:
+    ExpressionInvalid(shared_ptr<Token> token);
+    shared_ptr<Token> getToken();
+    string toString() override;
 };
 
 #endif

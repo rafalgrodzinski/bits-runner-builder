@@ -123,7 +123,7 @@ shared_ptr<StatementInvalid> Parser::matchStatementInvalid() {
 // Expression
 //
 shared_ptr<Expression> Parser::nextExpression() {
-    return nullptr;
+    return matchExpressionInvalid();
 }
 
 /*shared_ptr<Expression> Parser::term() {
@@ -206,6 +206,10 @@ shared_ptr<Expression> Parser::matchBinary(shared_ptr<Expression> left) {
 
     return make_shared<Expression>(Expression::Kind::INVALID, token, nullptr, nullptr);
 }*/
+
+shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid() {
+    return make_shared<ExpressionInvalid>(tokens.at(currentIndex));
+}
 
 bool Parser::matchesTokenKinds(vector<Token::Kind> kinds) {
     if (currentIndex + kinds.size() >= tokens.size())

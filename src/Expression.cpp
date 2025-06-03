@@ -1,52 +1,26 @@
 #include "Expression.h"
 
-Expression::Expression(Kind kind, Token token, shared_ptr<Expression> left, shared_ptr<Expression> right): token(token) {
-    switch (kind) {
-        case LITERAL:
-            setupLiteral(token);
-            break;
-        case GROUPING:
-            setupGrouping(token, left);
-            break;
-        case BINARY:
-            setupBinary(token, left, right);
-            break;
-        case INVALID:
-            break;
-    }
+Expression::Expression(Kind kind):
+    kind(kind) {
 }
 
-void Expression::setupLiteral(Token token) {
-    bool isKindValid = token.isOfKind({Token::Kind::INTEGER});
-    if (!isKindValid)
-        return;
-
-    kind = LITERAL;
-    integer = stoi(token.getLexme());
+Expression::Kind Expression::getKind() {
+    return kind;
 }
 
-void Expression::setupGrouping(Token token, shared_ptr<Expression> expression) {
-    bool isKindValid = token.getKind() == Token::Kind::LEFT_PAREN;
-    bool isExpressionValid = expression != nullptr && expression->getKind() != Kind::INVALID;
-
-    if (!isKindValid || !isExpressionValid)
-        return;
-    
-    kind = GROUPING;
-    left = expression;
+bool Expression::isValid() {
+    return kind != Expression::Kind::INVALID;
 }
 
-void Expression::setupBinary(Token token, shared_ptr<Expression> left, shared_ptr<Expression> right) {
-    bool isKindValid = token.isOfKind({Token::Kind::PLUS, Token::Kind::MINUS, Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT});
-    bool isLeftValid = left != nullptr && left->getKind() != Kind::INVALID;
-    bool isRightValid = right != nullptr && right->getKind() != Kind::INVALID;
+string Expression::toString() {
+    return "EXPRESSION";
+}
 
-    if (!isKindValid || !isLeftValid || !isRightValid)
-        return;
-
-    kind = BINARY;
-
-    switch (token.getKind()) {
+//
+// ExpressionBinary
+ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
+    Expression(Expression::Kind::BINARY), left(left), right(right) {
+    switch (token->getKind()) {
         case Token::Kind::PLUS:
             operation = ADD;
             break;
@@ -62,66 +36,77 @@ void Expression::setupBinary(Token token, shared_ptr<Expression> left, shared_pt
         case Token::Kind::PERCENT:
             operation = MOD;
             break;
-        case Token::Kind::INVALID:
-            break;
         default:
             exit(1);
     }
-
-    this->left = left;
-    this->right = right;
 }
 
-Expression::Kind Expression::getKind() {
-    return kind;
-}
-
-Token Expression::getToken() {
-    return token;
-}
-
-int64_t Expression::getInteger() {
-    return integer;
-}
-
-Expression::Operator Expression::getOperator() {
+ExpressionBinary::Operation ExpressionBinary::getOperation() {
     return operation;
 }
 
-shared_ptr<Expression> Expression::getLeft() {
+shared_ptr<Expression> ExpressionBinary::getLeft() {
     return left;
 }
 
-shared_ptr<Expression> Expression::getRight() {
+shared_ptr<Expression> ExpressionBinary::getRight() {
     return right;
 }
 
-bool Expression::isValid() {
-    return kind != Expression::Kind::INVALID;
+string ExpressionBinary::toString() {
+    switch (operation) {
+    case ADD:
+        return "<+ " + left->toString() + " " + right->toString() + ">";
+    case SUB:
+        return "<- " + left->toString() + " " + right->toString() + ">";
+    case MUL:
+        return "<* " + left->toString() + " " + right->toString() + ">";
+    case DIV:
+        return "</ " + left->toString() + " " + right->toString() + ">";
+    case MOD:
+        return "<% " + left->toString() + " " + right->toString() + ">";
+    }
 }
 
-string Expression::toString() {
-    switch (kind) {
-        case LITERAL:
-            return to_string(integer);
-        case GROUPING:
-            return "<( " + left->toString() + " )>";
-        case BINARY:
-            switch (operation) {
-                case ADD:
-                    return "<+ " + left->toString() + " " + right->toString() + ">";
-                case SUB:
-                    return "<- " + left->toString() + " " + right->toString() + ">";
-                case MUL:
-                    return "<* " + left->toString() + " " + right->toString() + ">";
-                case DIV:
-                    return "</ " + left->toString() + " " + right->toString() + ">";
-                case MOD:
-                    return "<% " + left->toString() + " " + right->toString() + ">";
-                case NONE:
-                    return "NONE";
-            }
-        case INVALID:
-            return "INVALID";
-    }
+//
+// ExpressionLiteral
+ExpressionLiteral::ExpressionLiteral(shared_ptr<Token> token):
+    Expression(Expression::Kind::LITERAL) {
+    integer = stoi(token->getLexme());
+}
+
+int64_t ExpressionLiteral::getInteger() {
+    return integer;
+}
+
+string ExpressionLiteral::toString() {
+    return to_string(integer);
+}
+
+//
+// ExpressionGrouping
+ExpressionGrouping::ExpressionGrouping(shared_ptr<Expression> expression):
+    Expression(Expression::Kind::GROUPING), expression(expression) {
+}
+
+shared_ptr<Expression> ExpressionGrouping::getExpression() {
+    return expression;
+}
+
+string ExpressionGrouping::toString() {
+    return "<( " + expression->toString() + " )>";
+}
+
+//
+// ExpressionInvalid
+ExpressionInvalid::ExpressionInvalid(shared_ptr<Token> token):
+    Expression(Expression::Kind::INVALID), token(token) {
+}
+
+shared_ptr<Token> ExpressionInvalid::getToken() {
+    return token;
+}
+
+string ExpressionInvalid::toString() {
+    return "Invalid token " + token->toString() + " at " + to_string(token->getLine()) + ":" + to_string(token->getColumn()) + "\n";
 }

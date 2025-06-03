@@ -29,6 +29,7 @@ private:
     shared_ptr<Expression> matchInteger();
     shared_ptr<Expression> matchGrouping();
     shared_ptr<Expression> matchBinary(shared_ptr<Expression> left);*/
+    shared_ptr<ExpressionInvalid> matchExpressionInvalid();
 
     bool matchesTokenKinds(vector<Token::Kind> kinds);
 
