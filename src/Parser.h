@@ -11,17 +11,17 @@ using namespace std;
 
 class Parser {
 private:
-    vector<Token> tokens;
+    vector<shared_ptr<Token>> tokens;
     int currentIndex = 0;
 
     shared_ptr<Statement> nextStatement();
 
-    shared_ptr<Statement> matchFunctionDeclarationStatement();
-    shared_ptr<Statement> matchBlockStatement();
-    shared_ptr<Statement> matchReturnStatement();
-    shared_ptr<Statement> matchInvalidStatement();
+    //shared_ptr<Statement> matchFunctionDeclarationStatement();
+    //shared_ptr<Statement> matchBlockStatement();
+    //shared_ptr<Statement> matchReturnStatement();
+    shared_ptr<StatementInvalid> matchInvalidStatement();
 
-    shared_ptr<Statement> matchExpressionStatement();
+    /*shared_ptr<Statement> matchExpressionStatement();
     shared_ptr<Expression> term(); // +, -
     shared_ptr<Expression> factor(); // *, /, %
     shared_ptr<Expression> primary(); // integer, ()
@@ -31,9 +31,10 @@ private:
     shared_ptr<Expression> matchBinary(shared_ptr<Expression> left);
 
     bool matchesTokenKinds(vector<Token::Kind> kinds);
+    */
 
 public:
-    Parser(vector<Token> tokens);
+    Parser(vector<shared_ptr<Token>> tokens);
     vector<shared_ptr<Statement>> getStatements();
 };
 

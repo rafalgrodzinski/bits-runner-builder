@@ -43,15 +43,12 @@ int main(int argc, char **argv) {
     }
     std::cout << std::endl;
 
-    //Parser parser(tokens);
-    //vector<shared_ptr<Statement>> statements = parser.getStatements();
-    //if (statements.empty()) {
-    //    exit(1);
-    //}
-    //for (shared_ptr<Statement> &statement : statements) {
-    //    cout << statement->toString();
-    //    cout << endl;
-    //}
+    Parser parser(tokens);
+    vector<shared_ptr<Statement>> statements = parser.getStatements();
+    for (shared_ptr<Statement> &statement : statements) {
+        cout << statement->toString();
+        cout << endl;
+    }
 
     //ModuleBuilder moduleBuilder(statements);
     //shared_ptr<llvm::Module> module = moduleBuilder.getModule();

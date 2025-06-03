@@ -10,7 +10,7 @@
 using namespace std;
 
 class ModuleBuilder {
-private:
+/*private:
     shared_ptr<llvm::LLVMContext> context;
     shared_ptr<llvm::Module> module;
     shared_ptr<llvm::IRBuilder<>> builder;
@@ -29,7 +29,7 @@ private:
 
 public:
     ModuleBuilder(vector<shared_ptr<Statement>> statements);
-    shared_ptr<llvm::Module> getModule();
+    shared_ptr<llvm::Module> getModule();*/
 };
 
 #endif

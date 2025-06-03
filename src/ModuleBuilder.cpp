@@ -3,7 +3,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/raw_ostream.h"
 
-ModuleBuilder::ModuleBuilder(vector<shared_ptr<Statement>> statements): statements(statements) {
+/*ModuleBuilder::ModuleBuilder(vector<shared_ptr<Statement>> statements): statements(statements) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>("dummy", *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -88,4 +88,4 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
         buildCodeForStatement(statement);
     }
     return module;
-}
+}*/
