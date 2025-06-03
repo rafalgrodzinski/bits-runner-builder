@@ -26,23 +26,12 @@ public:
 
 private:
     Kind kind;
-    //shared_ptr<Token> token;
-    //shared_ptr<Expression> expression;
-    //shared_ptr<Statement> blockStatement;
-    //vector<shared_ptr<Statement>> statements;
-    //string name;
 
 public:
     Statement(Kind kind);
-    //Statement(Kind kind, shared_ptr<Token> token, shared_ptr<Expression> expression, shared_ptr<Statement> blockStatement, vector<shared_ptr<Statement>> statements, string name);
     Kind getKind();
-    //shared_ptr<Token> getToken();
-    //shared_ptr<Expression> getExpression();
-    //shared_ptr<Statement> getBlockStatement();
-    //vector<shared_ptr<Statement>> getStatements();
-    //string getName();
     bool isValid();
-    string toString();
+    virtual string toString();
 };
 
 class StatementFunctionDeclaration: public Statement {
@@ -54,6 +43,7 @@ public:
     StatementFunctionDeclaration(string name, shared_ptr<StatementBlock> statementBlock);
     string getName();
     shared_ptr<StatementBlock> getStatementBlock();
+    string toString() override;
 };
 
 class StatementBlock: public Statement {
@@ -63,6 +53,7 @@ private:
 public:
     StatementBlock(vector<shared_ptr<Statement>> statements);
     vector<shared_ptr<Statement>> getStatements();
+    string toString() override;
 };
 
 class StatementReturn: public Statement {
@@ -72,6 +63,7 @@ private:
 public:
     StatementReturn(shared_ptr<Expression> expression);
     shared_ptr<Expression> getExpression();
+    string toString() override;
 };
 
 class StatementExpression: public Statement {
@@ -81,16 +73,16 @@ private:
 public:
     StatementExpression(shared_ptr<Expression> expression);
     shared_ptr<Expression> getExpression();
+    string toString() override;
 };
 
 class StatementInvalid: public Statement {
-//private:
-//    string message;
+private:
+    shared_ptr<Token> token;
 
 public:
-    StatementInvalid();
-    //StatementInvalid(string message);
-    //string getMessage();
+    StatementInvalid(shared_ptr<Token> token);
+    string toString() override;
 };
 
 #endif

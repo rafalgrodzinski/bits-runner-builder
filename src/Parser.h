@@ -15,23 +15,22 @@ private:
     int currentIndex = 0;
 
     shared_ptr<Statement> nextStatement();
+    shared_ptr<Statement> matchStatementFunctionDeclaration();
+    shared_ptr<Statement> matchStatementBlock();
+    shared_ptr<Statement> matchStatementReturn();
+    shared_ptr<Statement> matchStatementExpression();
+    shared_ptr<StatementInvalid> matchStatementInvalid();
 
-    //shared_ptr<Statement> matchFunctionDeclarationStatement();
-    //shared_ptr<Statement> matchBlockStatement();
-    //shared_ptr<Statement> matchReturnStatement();
-    shared_ptr<StatementInvalid> matchInvalidStatement();
-
-    /*shared_ptr<Statement> matchExpressionStatement();
-    shared_ptr<Expression> term(); // +, -
+    shared_ptr<Expression> nextExpression();
+    /*shared_ptr<Expression> term(); // +, -
     shared_ptr<Expression> factor(); // *, /, %
     shared_ptr<Expression> primary(); // integer, ()
 
     shared_ptr<Expression> matchInteger();
     shared_ptr<Expression> matchGrouping();
-    shared_ptr<Expression> matchBinary(shared_ptr<Expression> left);
+    shared_ptr<Expression> matchBinary(shared_ptr<Expression> left);*/
 
     bool matchesTokenKinds(vector<Token::Kind> kinds);
-    */
 
 public:
     Parser(vector<shared_ptr<Token>> tokens);
