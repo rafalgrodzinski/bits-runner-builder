@@ -126,14 +126,12 @@ shared_ptr<Expression> Parser::nextExpression() {
 }
 
 shared_ptr<Expression> Parser::matchEquality() {
-    shared_ptr<Expression> expression = matchTerm();
+    shared_ptr<Expression> expression = matchComparison();
     if (expression == nullptr || !expression->isValid())
         return expression;
 
-    while (tokens.at(currentIndex)->isOfKind(Token::tokensEquality)) {
-        // comaprison
+    while (tokens.at(currentIndex)->isOfKind(Token::tokensEquality))
         expression = matchExpressionBinary(expression);
-    }
 
     return expression;
 }
@@ -143,10 +141,8 @@ shared_ptr<Expression> Parser::matchComparison() {
     if (expression == nullptr || !expression->isValid())
         return expression;
     
-    while (tokens.at(currentIndex)->isOfKind(Token::tokensComparison)) {
-        // term
+    while (tokens.at(currentIndex)->isOfKind(Token::tokensComparison))
         expression = matchExpressionBinary(expression);
-    }
     
     return expression;
 }
@@ -156,10 +152,8 @@ shared_ptr<Expression> Parser::matchTerm() {
     if (expression == nullptr || !expression->isValid())
         return expression;
 
-    while (tokens.at(currentIndex)->isOfKind(Token::tokensTerm)) {
-        // factor
+    while (tokens.at(currentIndex)->isOfKind(Token::tokensTerm))
         expression = matchExpressionBinary(expression);
-    }
 
     return expression;
 }
@@ -169,10 +163,8 @@ shared_ptr<Expression> Parser::matchFactor() {
     if (expression == nullptr || !expression->isValid())
         return expression;
 
-    while (tokens.at(currentIndex)->isOfKind(Token::tokensFactor)) {
-        // unary
+    while (tokens.at(currentIndex)->isOfKind(Token::tokensFactor))
         expression = matchExpressionBinary(expression);
-    }
 
     return expression;
 }
@@ -224,16 +216,28 @@ shared_ptr<Expression> Parser::matchExpressionGrouping() {
 
 shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left) {
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->isOfKind(Token::tokensBinary)) {
+    shared_ptr<Expression> right;
+    // What level of binary expression are we having?
+    if (token->isOfKind(Token::tokensEquality)) {
         currentIndex++;
-        shared_ptr<Expression> right = matchFactor();
-        if (right == nullptr) {
-            return matchExpressionInvalid();
-        } else if (!right->isValid()) {
-            return right;
-        } else {
-            return make_shared<ExpressionBinary>(token, left, right);
-        }
+        right = matchComparison();
+    } else if (token->isOfKind(Token::tokensComparison)) {
+        currentIndex++;
+        right = matchTerm();
+    } else if (token->isOfKind(Token::tokensTerm)) {
+        currentIndex++;
+        right = matchFactor();
+    } else if (token->isOfKind(Token::tokensFactor)) {
+        currentIndex++;
+        right = matchPrimary();
+    }
+
+    if (right == nullptr) {
+        return matchExpressionInvalid();
+    } else if (!right->isValid()) {
+        return right;
+    } else {
+        return make_shared<ExpressionBinary>(token, left, right);
     }
 
     return nullptr;
