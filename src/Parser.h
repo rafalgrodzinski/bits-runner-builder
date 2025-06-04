@@ -22,13 +22,13 @@ private:
     shared_ptr<StatementInvalid> matchStatementInvalid();
 
     shared_ptr<Expression> nextExpression();
-    /*shared_ptr<Expression> term(); // +, -
-    shared_ptr<Expression> factor(); // *, /, %
-    shared_ptr<Expression> primary(); // integer, ()
+    shared_ptr<Expression> matchTerm(); // +, -
+    shared_ptr<Expression> matchFactor(); // *, /, %
+    shared_ptr<Expression> matchPrimary(); // integer, ()
 
-    shared_ptr<Expression> matchInteger();
-    shared_ptr<Expression> matchGrouping();
-    shared_ptr<Expression> matchBinary(shared_ptr<Expression> left);*/
+    shared_ptr<Expression> matchExpressionLiteral();
+    shared_ptr<Expression> matchExpressionGrouping();
+    shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<ExpressionInvalid> matchExpressionInvalid();
 
     bool matchesTokenKinds(vector<Token::Kind> kinds);

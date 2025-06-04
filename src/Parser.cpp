@@ -111,7 +111,6 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
     else if (!expression->isValid())
         return make_shared<StatementInvalid>(tokens.at(currentIndex));
 
-    currentIndex++;
     return make_shared<StatementExpression>(expression);
 }
 
@@ -123,89 +122,94 @@ shared_ptr<StatementInvalid> Parser::matchStatementInvalid() {
 // Expression
 //
 shared_ptr<Expression> Parser::nextExpression() {
-    return matchExpressionInvalid();
+    return matchTerm();
 }
 
-/*shared_ptr<Expression> Parser::term() {
-    shared_ptr<Expression> expression = factor();
-    if (!expression->isValid())
+shared_ptr<Expression> Parser::matchTerm() {
+    shared_ptr<Expression> expression = matchFactor();
+    if (expression == nullptr || !expression->isValid())
         return expression;
 
     while (tokens.at(currentIndex)->isOfKind({Token::Kind::PLUS, Token::Kind::MINUS})) {
-        expression = matchBinary(expression);
+        expression = matchExpressionBinary(expression);
     }
 
     return expression;
 }
 
-shared_ptr<Expression> Parser::factor() {
-    shared_ptr<Expression> expression = primary();
-    if (!expression->isValid())
+shared_ptr<Expression> Parser::matchFactor() {
+    shared_ptr<Expression> expression = matchPrimary();
+    if (expression == nullptr || !expression->isValid())
         return expression;
 
     while (tokens.at(currentIndex)->isOfKind({Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
-        expression = matchBinary(expression);
+        expression = matchExpressionBinary(expression);
     }
 
     return expression;
 }
 
-shared_ptr<Expression> Parser::primary() {
-    {
-        shared_ptr<Expression> expression = matchInteger();
-        if (expression->isValid())
-            return expression;
-    }
+shared_ptr<Expression> Parser::matchPrimary() {
+    shared_ptr<Expression> expression;
 
-    {
-        shared_ptr<Expression> expression = matchGrouping();
-        if (expression->isValid())
-            return expression;
-    }
+    expression = matchExpressionLiteral();
+    if (expression != nullptr)
+        return expression;
+    
+    expression = matchExpressionGrouping();
+    if (expression != nullptr)
+        return expression;
 
-    return make_shared<Expression>(Expression::Kind::INVALID, tokens.at(currentIndex), nullptr, nullptr);
+    return nullptr;
 }
 
-shared_ptr<Expression> Parser::matchInteger() {
-    Token token = tokens.at(currentIndex);
-    if (token.getKind() == Token::Kind::INTEGER) {
+shared_ptr<Expression> Parser::matchExpressionLiteral() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
+    if (token->isOfKind({Token::Kind::INTEGER})) {
         currentIndex++;
-        return make_shared<Expression>(Expression::Kind::LITERAL, token, nullptr, nullptr);
+        return make_shared<ExpressionLiteral>(token);
     }
 
-    return make_shared<Expression>(Expression::Kind::INVALID, token, nullptr, nullptr);
+    return nullptr;
 }
 
-shared_ptr<Expression> Parser::matchGrouping() {
-    Token token = tokens.at(currentIndex);
-    if (token.getKind() == Token::Kind::LEFT_PAREN) {
+shared_ptr<Expression> Parser::matchExpressionGrouping() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
+    if (token->getKind() == Token::Kind::LEFT_PAREN) {
         currentIndex++;
-        shared_ptr<Expression> expression = term();
+        shared_ptr<Expression> expression = matchTerm();
         // has grouped expression failed?
-        if (!expression->isValid())
+        if (expression == nullptr) {
+            return matchExpressionInvalid();
+        } else if(!expression->isValid()) {
             return expression;
-        if (tokens.at(currentIndex)->getKind() == Token::Kind::RIGHT_PAREN) {
+        } else if (tokens.at(currentIndex)->getKind() == Token::Kind::RIGHT_PAREN) {
             currentIndex++;
-            return make_shared<Expression>(Expression::Kind::GROUPING, token, expression, nullptr);
+            return make_shared<ExpressionGrouping>(expression);
+        } else {
+            return matchExpressionInvalid();
         }
     }
 
-    return make_shared<Expression>(Expression::Kind::INVALID, token, nullptr, nullptr);
+    return nullptr;
 }
 
-shared_ptr<Expression> Parser::matchBinary(shared_ptr<Expression> left) {
-    Token token = tokens.at(currentIndex);
-    if (token.isOfKind({Token::Kind::PLUS, Token::Kind::MINUS, Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
+shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left) {
+    shared_ptr<Token> token = tokens.at(currentIndex);
+    if (token->isOfKind({Token::Kind::PLUS, Token::Kind::MINUS, Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
         currentIndex++;
-        shared_ptr<Expression> right = factor();
-        // Has right expression failed?
-        if (!right->isValid())
+        shared_ptr<Expression> right = matchFactor();
+        if (right == nullptr) {
+            return matchExpressionInvalid();
+        } else if (!right->isValid()) {
             return right;
-        return make_shared<Expression>(Expression::Kind::BINARY, token, left, right);
+        } else {
+            return make_shared<ExpressionBinary>(token, left, right);
+        }
     }
 
-    return make_shared<Expression>(Expression::Kind::INVALID, token, nullptr, nullptr);
-}*/
+    return nullptr;
+}
 
 shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid() {
     return make_shared<ExpressionInvalid>(tokens.at(currentIndex));

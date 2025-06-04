@@ -24,6 +24,26 @@ public:
     virtual string toString();
 };
 
+class ExpressionLiteral: public Expression {
+private:
+    int64_t integer = 0;
+
+public:
+    ExpressionLiteral(shared_ptr<Token> token);
+    int64_t getInteger();
+    string toString() override;
+};
+
+class ExpressionGrouping: public Expression {
+private:
+    shared_ptr<Expression> expression;
+
+public:
+    ExpressionGrouping(shared_ptr<Expression> expression);
+    shared_ptr<Expression> getExpression();
+    string toString() override;
+};
+
 class ExpressionBinary: public Expression {
 public:
     enum Operation {
@@ -44,26 +64,6 @@ public:
     Operation getOperation();
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();
-    string toString() override;
-};
-
-class ExpressionLiteral: public Expression {
-private:
-    int64_t integer = 0;
-
-public:
-    ExpressionLiteral(shared_ptr<Token> token);
-    int64_t getInteger();
-    string toString() override;
-};
-
-class ExpressionGrouping: public Expression {
-private:
-    shared_ptr<Expression> expression;
-
-public:
-    ExpressionGrouping(shared_ptr<Expression> expression);
-    shared_ptr<Expression> getExpression();
     string toString() override;
 };
 
