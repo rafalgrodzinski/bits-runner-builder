@@ -47,6 +47,12 @@ public:
 class ExpressionBinary: public Expression {
 public:
     enum Operation {
+        EQUAL,
+        NOT_EQUAL,
+        LESS,
+        LESS_EQUAL,
+        GREATER,
+        GREATER_EQUAL,
         ADD,
         SUB,
         MUL,

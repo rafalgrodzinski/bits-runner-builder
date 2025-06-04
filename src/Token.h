@@ -45,6 +45,12 @@ private:
     int column;
 
 public:
+    static vector<Token::Kind> tokensEquality;
+    static vector<Token::Kind> tokensComparison;
+    static vector<Token::Kind> tokensTerm;
+    static vector<Token::Kind> tokensFactor;
+    static vector<Token::Kind> tokensBinary;
+
     Token(Kind kind, string lexme, int line, int column);
     Kind getKind();
     string getLexme();

@@ -1,5 +1,41 @@
 #include "Token.h"
 
+vector<Token::Kind> Token::tokensEquality = {
+    Token::Kind::EQUAL,
+    Token::Kind::NOT_EQUAL
+};
+vector<Token::Kind> Token::tokensComparison = {
+    Token::Kind::LESS,
+    Token::Kind::LESS_EQUAL,
+    Token::Kind::GREATER,
+    Token::Kind::GREATER_EQUAL
+};
+vector<Token::Kind> Token::tokensTerm = {
+    Token::Kind::PLUS,
+    Token::Kind::MINUS
+};
+vector<Token::Kind> Token::tokensFactor = {
+    Token::Kind::STAR,
+    Token::Kind::SLASH,
+    Token::Kind::PERCENT
+};
+vector<Token::Kind> Token::tokensBinary = {
+    Token::Kind::EQUAL,
+    Token::Kind::NOT_EQUAL,
+
+    Token::Kind::LESS,
+    Token::Kind::LESS_EQUAL,
+    Token::Kind::GREATER,
+    Token::Kind::GREATER_EQUAL,
+
+    Token::Kind::PLUS,
+    Token::Kind::MINUS,
+    
+    Token::Kind::STAR,
+    Token::Kind::SLASH,
+    Token::Kind::PERCENT
+};
+
 Token::Token(Kind kind, string lexme, int line, int column):
     kind(kind), lexme(lexme), line(line), column(column) {
 }

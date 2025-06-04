@@ -22,6 +22,8 @@ private:
     shared_ptr<StatementInvalid> matchStatementInvalid();
 
     shared_ptr<Expression> nextExpression();
+    shared_ptr<Expression> matchEquality(); // =, !=
+    shared_ptr<Expression> matchComparison(); // <, <=, >, >=
     shared_ptr<Expression> matchTerm(); // +, -
     shared_ptr<Expression> matchFactor(); // *, /, %
     shared_ptr<Expression> matchPrimary(); // integer, ()

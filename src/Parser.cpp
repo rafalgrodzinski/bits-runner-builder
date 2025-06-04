@@ -122,7 +122,33 @@ shared_ptr<StatementInvalid> Parser::matchStatementInvalid() {
 // Expression
 //
 shared_ptr<Expression> Parser::nextExpression() {
-    return matchTerm();
+    return matchEquality();
+}
+
+shared_ptr<Expression> Parser::matchEquality() {
+    shared_ptr<Expression> expression = matchTerm();
+    if (expression == nullptr || !expression->isValid())
+        return expression;
+
+    while (tokens.at(currentIndex)->isOfKind(Token::tokensEquality)) {
+        // comaprison
+        expression = matchExpressionBinary(expression);
+    }
+
+    return expression;
+}
+
+shared_ptr<Expression> Parser::matchComparison() {
+    shared_ptr<Expression> expression = matchTerm();
+    if (expression == nullptr || !expression->isValid())
+        return expression;
+    
+    while (tokens.at(currentIndex)->isOfKind(Token::tokensComparison)) {
+        // term
+        expression = matchExpressionBinary(expression);
+    }
+    
+    return expression;
 }
 
 shared_ptr<Expression> Parser::matchTerm() {
@@ -130,7 +156,8 @@ shared_ptr<Expression> Parser::matchTerm() {
     if (expression == nullptr || !expression->isValid())
         return expression;
 
-    while (tokens.at(currentIndex)->isOfKind({Token::Kind::PLUS, Token::Kind::MINUS})) {
+    while (tokens.at(currentIndex)->isOfKind(Token::tokensTerm)) {
+        // factor
         expression = matchExpressionBinary(expression);
     }
 
@@ -142,7 +169,8 @@ shared_ptr<Expression> Parser::matchFactor() {
     if (expression == nullptr || !expression->isValid())
         return expression;
 
-    while (tokens.at(currentIndex)->isOfKind({Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
+    while (tokens.at(currentIndex)->isOfKind(Token::tokensFactor)) {
+        // unary
         expression = matchExpressionBinary(expression);
     }
 
@@ -196,7 +224,7 @@ shared_ptr<Expression> Parser::matchExpressionGrouping() {
 
 shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left) {
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->isOfKind({Token::Kind::PLUS, Token::Kind::MINUS, Token::Kind::STAR, Token::Kind::SLASH, Token::Kind::PERCENT})) {
+    if (token->isOfKind(Token::tokensBinary)) {
         currentIndex++;
         shared_ptr<Expression> right = matchFactor();
         if (right == nullptr) {

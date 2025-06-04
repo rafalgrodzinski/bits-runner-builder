@@ -21,6 +21,24 @@ string Expression::toString() {
 ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
     Expression(Expression::Kind::BINARY), left(left), right(right) {
     switch (token->getKind()) {
+        case Token::Kind::EQUAL:
+            operation = EQUAL;
+            break;
+        case Token::Kind::NOT_EQUAL:
+            operation = NOT_EQUAL;
+            break;
+        case Token::Kind::LESS:
+            operation = LESS;
+            break;
+        case Token::Kind::LESS_EQUAL:
+            operation = LESS_EQUAL;
+            break;
+        case Token::Kind::GREATER:
+            operation = GREATER;
+            break;
+        case Token::Kind::GREATER_EQUAL:
+            operation = GREATER_EQUAL;
+            break;
         case Token::Kind::PLUS:
             operation = ADD;
             break;
@@ -55,16 +73,28 @@ shared_ptr<Expression> ExpressionBinary::getRight() {
 
 string ExpressionBinary::toString() {
     switch (operation) {
+    case EQUAL:
+        return "{= " + left->toString() + " " + right->toString() + "}";
+    case NOT_EQUAL:
+        return "{!= " + left->toString() + " " + right->toString() + "}";
+    case LESS:
+        return "{< " + left->toString() + " " + right->toString() + "}";
+    case LESS_EQUAL:
+        return "{<= " + left->toString() + " " + right->toString() + "}";
+    case GREATER:
+        return "{> " + left->toString() + " " + right->toString() + "}";
+    case GREATER_EQUAL:
+        return "{<= " + left->toString() + " " + right->toString() + "}";
     case ADD:
-        return "<+ " + left->toString() + " " + right->toString() + ">";
+        return "{+ " + left->toString() + " " + right->toString() + "}";
     case SUB:
-        return "<- " + left->toString() + " " + right->toString() + ">";
+        return "{- " + left->toString() + " " + right->toString() + "}";
     case MUL:
-        return "<* " + left->toString() + " " + right->toString() + ">";
+        return "{* " + left->toString() + " " + right->toString() + "}";
     case DIV:
-        return "</ " + left->toString() + " " + right->toString() + ">";
+        return "{/ " + left->toString() + " " + right->toString() + "}";
     case MOD:
-        return "<% " + left->toString() + " " + right->toString() + ">";
+        return "{% " + left->toString() + " " + right->toString() + "}";
     }
 }
 

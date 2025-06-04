@@ -120,7 +120,7 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
     
-    // logical
+    // comparison
     token = match(Token::Kind::NOT_EQUAL, "!=", false);
     if (token != nullptr)
         return token;
