@@ -124,7 +124,7 @@ shared_ptr<Expression> ExpressionGrouping::getExpression() {
 }
 
 string ExpressionGrouping::toString() {
-    return "<( " + expression->toString() + " )>";
+    return "( " + expression->toString() + " )";
 }
 
 //
