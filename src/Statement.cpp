@@ -65,6 +65,7 @@ string StatementReturn::toString() {
     string value = "RETURN";
     if (expression != nullptr)
         value += "(" + expression->toString() + ")";
+    value += "\n";
     return value;
 }
 

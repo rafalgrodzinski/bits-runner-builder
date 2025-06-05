@@ -65,7 +65,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
 shared_ptr<Statement> Parser::matchStatementBlock() {
     vector<shared_ptr<Statement>> statements;
 
-    while (tokens.at(currentIndex)->getKind() != Token::Kind::SEMICOLON) {
+    while (!tokens.at(currentIndex)->isOfKind({Token::Kind::SEMICOLON, Token::Kind::COLON})) {
         shared_ptr<Statement> statement = nextStatement();
         if (statement == nullptr)
             return matchStatementInvalid();
@@ -74,7 +74,7 @@ shared_ptr<Statement> Parser::matchStatementBlock() {
         else
             statements.push_back(statement);
     }
-    currentIndex++; // skip ;
+    currentIndex++; // consune ';' and ':'
 
     if (!tokens.at(currentIndex)->isOfKind({Token::Kind::NEW_LINE, Token::Kind::END}))
         return matchStatementInvalid();
@@ -254,7 +254,48 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
-    return nullptr;
+    // Try maching '?'
+    shared_ptr<Token> token = tokens.at(currentIndex);
+    if (token->getKind() != Token::Kind::QUESTION)
+        return nullptr;
+    currentIndex++;
+
+    // Then get condition
+    shared_ptr<Expression> condition = nextExpression();
+    if (condition == nullptr)
+        return matchExpressionInvalid();
+    else if (!condition->isValid())
+        return condition;
+    
+    // Match ':', '\n', or ':\n'
+    if (matchesTokenKinds({Token::Kind::COLON, Token::Kind::NEW_LINE}))
+        currentIndex += 2;
+    else if (tokens.at(currentIndex)->isOfKind({Token::Kind::COLON, Token::Kind::NEW_LINE}))
+        currentIndex++;
+    else
+        return matchExpressionInvalid();
+
+    // Match then block
+    shared_ptr<Statement> thenBlock = matchStatementBlock();
+    if (thenBlock == nullptr)
+        return matchExpressionInvalid();
+    else if (!thenBlock->isValid())
+        return matchExpressionInvalid(); // FIXME
+
+    // Match else blcok
+    shared_ptr<Statement> elseBlock;
+
+    shared_ptr<Token> lastToken = tokens.at(currentIndex-2);
+    // ':' marks else block
+    if (lastToken->getKind() == Token::Kind::COLON) {
+        elseBlock = matchStatementBlock();
+        if (elseBlock == nullptr)
+            return matchExpressionInvalid();
+        else if (!elseBlock->isValid())
+            return matchExpressionInvalid(); // FIXME
+    }
+
+    return make_shared<ExpressionIfElse>(condition, dynamic_pointer_cast<StatementBlock>(thenBlock), dynamic_pointer_cast<StatementBlock>(elseBlock));
 }
 
 shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid() {
