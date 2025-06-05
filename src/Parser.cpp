@@ -122,7 +122,17 @@ shared_ptr<StatementInvalid> Parser::matchStatementInvalid() {
 // Expression
 //
 shared_ptr<Expression> Parser::nextExpression() {
-    return matchEquality();
+    shared_ptr<Expression> expression;
+
+    expression = matchEquality();
+    if (expression != nullptr)
+        return expression;
+    
+    expression = matchExpressionIfElse();
+    if (expression != nullptr)
+        return expression;
+
+    return nullptr;
 }
 
 shared_ptr<Expression> Parser::matchEquality() {
@@ -240,6 +250,10 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
         return make_shared<ExpressionBinary>(token, left, right);
     }
 
+    return nullptr;
+}
+
+shared_ptr<Expression> Parser::matchExpressionIfElse() {
     return nullptr;
 }
 

@@ -25,6 +25,8 @@ public:
         RIGHT_PAREN,
         COLON,
         SEMICOLON,
+        QUESTION,
+        QUESTION_QUESTION,
 
         FUNCTION,
         RETURN,

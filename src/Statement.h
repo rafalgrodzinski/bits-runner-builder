@@ -6,6 +6,8 @@
 #include "Token.h"
 #include "Expression.h"
 
+class Expression;
+
 using namespace std;
 
 class Statement;

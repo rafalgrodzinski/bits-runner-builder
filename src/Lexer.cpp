@@ -161,6 +161,14 @@ shared_ptr<Token> Lexer::nextToken() {
     token = match(Token::Kind::SEMICOLON, ";", false);
     if (token != nullptr)
         return token;
+    
+    token = match(Token::Kind::QUESTION_QUESTION, "??", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(Token::Kind::QUESTION, "?", false);
+    if (token != nullptr)
+        return token;
 
     // keywords
     token = match(Token::Kind::FUNCTION, "fun", true);

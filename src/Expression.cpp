@@ -128,6 +128,38 @@ string ExpressionGrouping::toString() {
 }
 
 //
+// ExpressionIfElse
+ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<StatementBlock> thenBlock, shared_ptr<StatementBlock> elseBlock):
+    Expression(Expression::Kind::IF_ELSE), condition(condition), thenBlock(thenBlock), elseBlock(elseBlock) {
+}
+
+shared_ptr<Expression> ExpressionIfElse::getCondition() {
+    return condition;
+}
+
+shared_ptr<StatementBlock> ExpressionIfElse::getThenBlock() {
+    return thenBlock;
+}
+
+shared_ptr<StatementBlock> ExpressionIfElse::getElseBlock() {
+    return elseBlock;
+}
+
+string ExpressionIfElse::toString() {
+    string value = "";
+
+    value += "IF(" + condition->toString() + ")\n";
+    value += thenBlock->toString();
+    if (elseBlock != nullptr) {
+        value += "ELSE\n";
+        value += elseBlock->toString();
+    }
+    value += ";";
+
+    return  value;
+}
+
+//
 // ExpressionInvalid
 ExpressionInvalid::ExpressionInvalid(shared_ptr<Token> token):
     Expression(Expression::Kind::INVALID), token(token) {

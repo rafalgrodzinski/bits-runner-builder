@@ -2,6 +2,9 @@
 #define EXPRESSION_H
 
 #include "Token.h"
+#include "Statement.h"
+
+class StatementBlock;
 
 using namespace std;
 
@@ -11,6 +14,7 @@ public:
         LITERAL,
         GROUPING,
         BINARY,
+        IF_ELSE,
         INVALID
     };
 
@@ -70,6 +74,20 @@ public:
     Operation getOperation();
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();
+    string toString() override;
+};
+
+class ExpressionIfElse: public Expression {
+private:
+    shared_ptr<Expression> condition;
+    shared_ptr<StatementBlock> thenBlock;
+    shared_ptr<StatementBlock> elseBlock;
+
+public:
+    ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<StatementBlock> thenBlock, shared_ptr<StatementBlock> elseBlock);
+    shared_ptr<Expression> getCondition();
+    shared_ptr<StatementBlock> getThenBlock();
+    shared_ptr<StatementBlock> getElseBlock();
     string toString() override;
 };
 

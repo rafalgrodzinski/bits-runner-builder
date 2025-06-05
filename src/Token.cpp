@@ -103,6 +103,10 @@ string Token::toString() {
             return "COLON";
         case SEMICOLON:
             return "SEMICOLON";
+        case QUESTION_QUESTION:
+            return "QUESTION_QUESTION";
+        case QUESTION:
+            return "QUESTION";
 
         case INTEGER:
             return "INTEGER(" + lexme + ")";
