@@ -33,6 +33,7 @@ private:
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
+    llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
 
 public:
     ModuleBuilder(vector<shared_ptr<Statement>> statements);

@@ -70,6 +70,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case Expression::Kind::BINARY:
             return valueForBinary(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case Expression::Kind::IF_ELSE:
+            return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
         default:
             exit(1);
     }
@@ -111,4 +113,43 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
     case ExpressionBinary::Operation::MOD:
         return builder->CreateSRem(leftValue, rightValue);
     }
+}
+
+llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expression) {
+    shared_ptr<ExpressionBinary> conditionExpression = dynamic_pointer_cast<ExpressionBinary>(expression->getCondition());
+
+    llvm::Function *fun = builder->GetInsertBlock()->getParent();
+    llvm::Value *conditionValue = valueForBinary(conditionExpression);
+
+    llvm::BasicBlock *thenBlock = llvm::BasicBlock::Create(*context, "thenBlock", fun);
+    llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(*context, "elseBlock");
+    llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "mergeBlock");
+
+    builder->CreateCondBr(conditionValue, thenBlock, elseBlock);
+
+    // Then
+    builder->SetInsertPoint(thenBlock);
+    llvm::Value *thenValue = llvm::ConstantInt::get(int32Type, 11, true);
+    buildStatement(expression->getThenBlock());
+    builder->CreateBr(mergeBlock);
+    thenBlock = builder->GetInsertBlock();
+
+    // Else
+    fun->insert(fun->end(), elseBlock);
+    llvm::Value *elseValue = llvm::ConstantInt::get(int32Type, 22, true);
+    builder->SetInsertPoint(elseBlock);
+    if (expression->getElseBlock() != nullptr)
+        buildStatement(expression->getElseBlock());
+    builder->CreateBr(mergeBlock);
+    elseBlock = builder->GetInsertBlock();
+
+    // Merge
+    fun->insert(fun->end(), mergeBlock);
+    builder->SetInsertPoint(mergeBlock);
+    llvm::PHINode *phi = builder->CreatePHI(int32Type, 2, "phii");
+    phi->addIncoming(thenValue, thenBlock);
+    phi->addIncoming(elseValue, elseBlock);
+
+    //return llvm::ConstantInt::get(int32Type, 42, true);
+    return phi;
 }
