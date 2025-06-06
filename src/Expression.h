@@ -18,23 +18,39 @@ public:
         INVALID
     };
 
+    enum ValueType {
+        VOID,
+        BOOL,
+        SINT32,
+        REAL32
+    };
+
 private:
     Kind kind;
 
+protected:
+    ValueType valueType;
+
 public:
-    Expression(Kind kind);
+    Expression(Kind kind, ValueType valueType);
     Kind getKind();
+    ValueType getValueType();
     bool isValid();
     virtual string toString();
 };
 
 class ExpressionLiteral: public Expression {
 private:
-    int64_t integer = 0;
+    bool boolValue;
+    int32_t sint32Value;
+    float real32Value;
 
 public:
     ExpressionLiteral(shared_ptr<Token> token);
-    int64_t getInteger();
+    //int64_t getInteger();
+    bool getBoolValue();
+    int32_t getSint32Value();
+    float getReal32Value();
     string toString() override;
 };
 

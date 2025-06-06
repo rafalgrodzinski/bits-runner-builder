@@ -108,8 +108,12 @@ string Token::toString() {
         case QUESTION:
             return "QUESTION";
 
+        case BOOL:
+            return "BOOL(" + lexme + ")";
         case INTEGER:
             return "INTEGER(" + lexme + ")";
+        case REAL:
+            return "REAL(" + lexme + ")";
         case IDENTIFIER:
             return "IDENTIFIER(" + lexme + ")";
 

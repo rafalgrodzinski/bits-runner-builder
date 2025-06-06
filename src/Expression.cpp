@@ -1,11 +1,15 @@
 #include "Expression.h"
 
-Expression::Expression(Kind kind):
-    kind(kind) {
+Expression::Expression(Kind kind, ValueType valueType):
+    kind(kind), valueType(valueType) {
 }
 
 Expression::Kind Expression::getKind() {
     return kind;
+}
+
+Expression::ValueType Expression::getValueType() {
+    return valueType;
 }
 
 bool Expression::isValid() {
@@ -19,7 +23,7 @@ string Expression::toString() {
 //
 // ExpressionBinary
 ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
-    Expression(Expression::Kind::BINARY), left(left), right(right) {
+    Expression(Expression::Kind::BINARY, Expression::ValueType::VOID), left(left), right(right) {
     switch (token->getKind()) {
         case Token::Kind::EQUAL:
             operation = EQUAL;
@@ -101,22 +105,41 @@ string ExpressionBinary::toString() {
 //
 // ExpressionLiteral
 ExpressionLiteral::ExpressionLiteral(shared_ptr<Token> token):
-    Expression(Expression::Kind::LITERAL) {
-    integer = stoi(token->getLexme());
+    Expression(Expression::Kind::LITERAL, Expression::ValueType::VOID) {
+    valueType = Expression::ValueType::SINT32;
+    sint32Value = stoi(token->getLexme());
 }
 
-int64_t ExpressionLiteral::getInteger() {
-    return integer;
+bool ExpressionLiteral::getBoolValue() {
+    return boolValue;
+}
+
+int32_t ExpressionLiteral::getSint32Value() {
+    return sint32Value;
+}
+
+float ExpressionLiteral::getReal32Value() {
+    return real32Value;
 }
 
 string ExpressionLiteral::toString() {
-    return to_string(integer);
+    //return to_string(integer);
+    switch (valueType) {
+        case Expression::ValueType::VOID:
+            return "VOID";
+        case Expression::ValueType::BOOL:
+            return to_string(boolValue);
+        case Expression::ValueType::SINT32:
+            return to_string(sint32Value);
+        case Expression::ValueType::REAL32:
+            return to_string(real32Value);
+    }
 }
 
 //
 // ExpressionGrouping
 ExpressionGrouping::ExpressionGrouping(shared_ptr<Expression> expression):
-    Expression(Expression::Kind::GROUPING), expression(expression) {
+    Expression(Expression::Kind::GROUPING, Expression::ValueType::VOID), expression(expression) {
 }
 
 shared_ptr<Expression> ExpressionGrouping::getExpression() {
@@ -130,7 +153,7 @@ string ExpressionGrouping::toString() {
 //
 // ExpressionIfElse
 ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<StatementBlock> thenBlock, shared_ptr<StatementBlock> elseBlock):
-    Expression(Expression::Kind::IF_ELSE), condition(condition), thenBlock(thenBlock), elseBlock(elseBlock) {
+    Expression(Expression::Kind::IF_ELSE, Expression::ValueType::VOID), condition(condition), thenBlock(thenBlock), elseBlock(elseBlock) {
 }
 
 shared_ptr<Expression> ExpressionIfElse::getCondition() {
@@ -162,7 +185,7 @@ string ExpressionIfElse::toString() {
 //
 // ExpressionInvalid
 ExpressionInvalid::ExpressionInvalid(shared_ptr<Token> token):
-    Expression(Expression::Kind::INVALID), token(token) {
+    Expression(Expression::Kind::INVALID, Expression::ValueType::VOID), token(token) {
 }
 
 shared_ptr<Token> ExpressionInvalid::getToken() {

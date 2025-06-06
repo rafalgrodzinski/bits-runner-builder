@@ -31,7 +31,9 @@ public:
         FUNCTION,
         RETURN,
 
+        BOOL,
         INTEGER,
+        REAL,
         IDENTIFIER,
 
         NEW_LINE,

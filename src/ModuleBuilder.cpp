@@ -78,7 +78,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
 }
 
 llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expression) {
-    return llvm::ConstantInt::get(int32Type, expression->getInteger(), true);
+    //return llvm::ConstantInt::get(int32Type, expression->getInteger(), true);
+    return llvm::ConstantInt::get(int32Type, expression->getSint32Value(), true);
 }
 
 llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expression) {

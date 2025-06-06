@@ -17,6 +17,7 @@ private:
     shared_ptr<Token> nextToken();
     shared_ptr<Token> match(Token::Kind kind, string lexme, bool needsSeparator);
     shared_ptr<Token> matchInteger();
+    shared_ptr<Token> matchReal();
     shared_ptr<Token> matchIdentifier();
     shared_ptr<Token> matchEnd();
     shared_ptr<Token> matchInvalid();
