@@ -16,6 +16,8 @@ class StatementReturn;
 class StatementExpression;
 class StatementInvalid;
 
+//
+// Statement
 class Statement {
 public:
     enum Kind {
@@ -33,9 +35,11 @@ public:
     Statement(Kind kind);
     Kind getKind();
     bool isValid();
-    virtual string toString();
+    virtual string toString(int indent);
 };
 
+//
+// StatementFunctionDeclaration
 class StatementFunctionDeclaration: public Statement {
 private:
     string name;
@@ -45,19 +49,25 @@ public:
     StatementFunctionDeclaration(string name, shared_ptr<StatementBlock> statementBlock);
     string getName();
     shared_ptr<StatementBlock> getStatementBlock();
-    string toString() override;
+    string toString(int indent) override;
 };
 
+//
+// StatementBlock
 class StatementBlock: public Statement {
 private:
     vector<shared_ptr<Statement>> statements;
+    shared_ptr<StatementExpression> statementExpression;
 
 public:
     StatementBlock(vector<shared_ptr<Statement>> statements);
     vector<shared_ptr<Statement>> getStatements();
-    string toString() override;
+    shared_ptr<StatementExpression> getStatementExpression();
+    string toString(int indent) override;
 };
 
+//
+// StatementReturn
 class StatementReturn: public Statement {
 private:
     shared_ptr<Expression> expression;
@@ -65,9 +75,11 @@ private:
 public:
     StatementReturn(shared_ptr<Expression> expression);
     shared_ptr<Expression> getExpression();
-    string toString() override;
+    string toString(int indent) override;
 };
 
+//
+// StatementExpression
 class StatementExpression: public Statement {
 private:
     shared_ptr<Expression> expression;
@@ -75,16 +87,18 @@ private:
 public:
     StatementExpression(shared_ptr<Expression> expression);
     shared_ptr<Expression> getExpression();
-    string toString() override;
+    string toString(int indent) override;
 };
 
+//
+// StatementInvalid
 class StatementInvalid: public Statement {
 private:
     shared_ptr<Token> token;
 
 public:
     StatementInvalid(shared_ptr<Token> token);
-    string toString() override;
+    string toString(int indent) override;
 };
 
 #endif

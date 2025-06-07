@@ -1,12 +1,14 @@
 #include "ModuleBuilder.h"
 
-ModuleBuilder::ModuleBuilder(vector<shared_ptr<Statement>> statements): statements(statements) {
+/*ModuleBuilder::ModuleBuilder(vector<shared_ptr<Statement>> statements): statements(statements) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>("dummy", *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
 
-    voidType = llvm::Type::getVoidTy(*context);
-    int32Type = llvm::Type::getInt32Ty(*context);
+    typeVoid = llvm::Type::getVoidTy(*context);
+    typeBool = llvm::Type::getInt1Ty(*context);
+    typeSInt32 = llvm::Type::getInt32Ty(*context);
+    typeReal32 = llvm::Type::getFloatTy(*context);
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
@@ -36,7 +38,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
 }
 
 void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement) {
-    llvm::FunctionType *funType = llvm::FunctionType::get(int32Type, false);
+    llvm::FunctionType *funType = llvm::FunctionType::get(typeSInt32, false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::InternalLinkage, statement->getName(), module.get());
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
     builder->SetInsertPoint(block);
@@ -79,7 +81,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
 
 llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expression) {
     //return llvm::ConstantInt::get(int32Type, expression->getInteger(), true);
-    return llvm::ConstantInt::get(int32Type, expression->getSint32Value(), true);
+    return llvm::ConstantInt::get(typeSInt32, expression->getSint32Value(), true);
 }
 
 llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expression) {
@@ -130,14 +132,14 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 
     // Then
     builder->SetInsertPoint(thenBlock);
-    llvm::Value *thenValue = llvm::ConstantInt::get(int32Type, 11, true);
+    llvm::Value *thenValue = llvm::ConstantInt::get(typeSInt32, 11, true);
     buildStatement(expression->getThenBlock());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
 
     // Else
     fun->insert(fun->end(), elseBlock);
-    llvm::Value *elseValue = llvm::ConstantInt::get(int32Type, 22, true);
+    llvm::Value *elseValue = llvm::ConstantInt::get(typeSInt32, 22, true);
     builder->SetInsertPoint(elseBlock);
     if (expression->getElseBlock() != nullptr)
         buildStatement(expression->getElseBlock());
@@ -147,10 +149,23 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     // Merge
     fun->insert(fun->end(), mergeBlock);
     builder->SetInsertPoint(mergeBlock);
-    llvm::PHINode *phi = builder->CreatePHI(int32Type, 2, "phii");
+    llvm::PHINode *phi = builder->CreatePHI(typeSInt32, 2, "phii");
     phi->addIncoming(thenValue, thenBlock);
     phi->addIncoming(elseValue, elseBlock);
 
     //return llvm::ConstantInt::get(int32Type, 42, true);
     return phi;
 }
+
+llvm::Type *ModuleBuilder::typeForExpression(shared_ptr<Expression> expression) {
+    switch (expression->getValueType()) {
+        case Expression::ValueType::VOID:
+            return typeVoid;
+        case Expression::ValueType::BOOL:
+            return typeBool;
+        case Expression::ValueType::SINT32:
+            return typeSInt32;
+        case Expression::ValueType::REAL32:
+            return typeReal32;
+    }
+}*/

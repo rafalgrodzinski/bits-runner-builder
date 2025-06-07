@@ -10,7 +10,7 @@ vector<shared_ptr<Statement>> Parser::getStatements() {
         shared_ptr<Statement> statement = nextStatement();
         // Abort parsing if we got an error
         if (!statement->isValid()) {
-            cerr << statement->toString();
+            cerr << statement->toString(0);
             exit(1);
         }
         statements.push_back(statement);
@@ -111,6 +111,10 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
     else if (!expression->isValid())
         return make_shared<StatementInvalid>(tokens.at(currentIndex));
 
+    // Consume new line
+    if (tokens.at(currentIndex)->getKind() == Token::Kind::NEW_LINE)
+        currentIndex++;
+
     return make_shared<StatementExpression>(expression);
 }
 
@@ -195,7 +199,7 @@ shared_ptr<Expression> Parser::matchPrimary() {
 
 shared_ptr<Expression> Parser::matchExpressionLiteral() {
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->isOfKind({Token::Kind::INTEGER})) {
+    if (token->isOfKind({Token::Kind::BOOL, Token::Kind::INTEGER, Token::Kind::REAL})) {
         currentIndex++;
         return make_shared<ExpressionLiteral>(token);
     }

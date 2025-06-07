@@ -41,18 +41,18 @@ int main(int argc, char **argv) {
         if (i < tokens.size() - 1)
             std::cout << " ";
     }
-    std::cout << std::endl;
+    cout << endl << endl;
 
     Parser parser(tokens);
     vector<shared_ptr<Statement>> statements = parser.getStatements();
     for (shared_ptr<Statement> &statement : statements) {
-        cout << statement->toString();
+        cout << statement->toString(0);
         cout << endl;
     }
 
-    ModuleBuilder moduleBuilder(statements);
-    shared_ptr<llvm::Module> module = moduleBuilder.getModule();
-    module->print(llvm::outs(), nullptr);
+    //ModuleBuilder moduleBuilder(statements);
+    //shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+    //module->print(llvm::outs(), nullptr);
 
     //CodeGenerator codeGenerator(module);
     //codeGenerator.generateObjectFile("dummy.s");

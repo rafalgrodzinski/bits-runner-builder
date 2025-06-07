@@ -5,6 +5,7 @@
 #include "Statement.h"
 
 class StatementBlock;
+class StatementExpression;
 
 using namespace std;
 
@@ -36,7 +37,7 @@ public:
     Kind getKind();
     ValueType getValueType();
     bool isValid();
-    virtual string toString();
+    virtual string toString(int indent);
 };
 
 class ExpressionLiteral: public Expression {
@@ -47,11 +48,10 @@ private:
 
 public:
     ExpressionLiteral(shared_ptr<Token> token);
-    //int64_t getInteger();
     bool getBoolValue();
     int32_t getSint32Value();
     float getReal32Value();
-    string toString() override;
+    string toString(int indent) override;
 };
 
 class ExpressionGrouping: public Expression {
@@ -61,7 +61,7 @@ private:
 public:
     ExpressionGrouping(shared_ptr<Expression> expression);
     shared_ptr<Expression> getExpression();
-    string toString() override;
+    string toString(int indent) override;
 };
 
 class ExpressionBinary: public Expression {
@@ -90,7 +90,7 @@ public:
     Operation getOperation();
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();
-    string toString() override;
+    string toString(int indent) override;
 };
 
 class ExpressionIfElse: public Expression {
@@ -104,7 +104,7 @@ public:
     shared_ptr<Expression> getCondition();
     shared_ptr<StatementBlock> getThenBlock();
     shared_ptr<StatementBlock> getElseBlock();
-    string toString() override;
+    string toString(int indent) override;
 };
 
 class ExpressionInvalid: public Expression {
@@ -114,7 +114,7 @@ private:
 public:
     ExpressionInvalid(shared_ptr<Token> token);
     shared_ptr<Token> getToken();
-    string toString() override;
+    string toString(int indent) override;
 };
 
 #endif
