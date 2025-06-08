@@ -13,33 +13,33 @@
 
 using namespace std;
 
-std::string readFile(std::string fileName) {
-    std::ifstream file(fileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
+string readFile(string fileName) {
+    ifstream file(fileName.c_str(), ios::in | ios::binary | ios::ate);
     if (!file.is_open()) {
-        std::cerr << "Cannot open file " << fileName << std::endl;
+        cerr << "Cannot open file " << fileName << endl;
         exit(1);
     }
 
-    std::streamsize fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
-    std::vector<char> fileBytes(fileSize);
+    streamsize fileSize = file.tellg();
+    file.seekg(0, ios::beg);
+    vector<char> fileBytes(fileSize);
     file.read(fileBytes.data(), fileSize);
-    return std::string(fileBytes.data(), fileSize);
+    return string(fileBytes.data(), fileSize);
 }
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        std::cerr << "Need to provide a file name" << std::endl;
+        cerr << "Need to provide a file name" << endl;
         exit(1);
     }
 
-    std::string source = readFile(std::string(argv[1]));
+    string source = readFile(string(argv[1]));
     Lexer lexer(source);
-    std::vector<shared_ptr<Token>> tokens = lexer.getTokens();
+    vector<shared_ptr<Token>> tokens = lexer.getTokens();
     for (int i=0; i<tokens.size(); i++) {
-        std::cout << tokens.at(i)->toString();
+        cout << tokens.at(i)->toString();
         if (i < tokens.size() - 1)
-            std::cout << " ";
+            cout << " ";
     }
     cout << endl << endl;
 
@@ -49,10 +49,11 @@ int main(int argc, char **argv) {
         cout << statement->toString(0);
         cout << endl;
     }
+    cout << endl << endl;
 
-    //ModuleBuilder moduleBuilder(statements);
-    //shared_ptr<llvm::Module> module = moduleBuilder.getModule();
-    //module->print(llvm::outs(), nullptr);
+    ModuleBuilder moduleBuilder(statements);
+    shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+    module->print(llvm::outs(), nullptr);
 
     //CodeGenerator codeGenerator(module);
     //codeGenerator.generateObjectFile("dummy.s");

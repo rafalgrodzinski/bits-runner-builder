@@ -3,65 +3,31 @@
 
 #include <iostream>
 
+#include "Types.h"
+
 using namespace std;
 
 class Token {
-public:
-    enum Kind {        
-        PLUS,
-        MINUS,
-        STAR,
-        SLASH,
-        PERCENT,
-
-        EQUAL,
-        NOT_EQUAL,
-        LESS,
-        LESS_EQUAL,
-        GREATER,
-        GREATER_EQUAL,
-        
-        LEFT_PAREN,
-        RIGHT_PAREN,
-        COLON,
-        SEMICOLON,
-        QUESTION,
-        QUESTION_QUESTION,
-
-        FUNCTION,
-        RETURN,
-
-        BOOL,
-        INTEGER,
-        REAL,
-        IDENTIFIER,
-
-        NEW_LINE,
-        END,
-
-        INVALID
-    };
-
 private:
-    Kind kind;
+    TokenKind kind;
     string lexme;
     int line;
     int column;
 
 public:
-    static vector<Token::Kind> tokensEquality;
-    static vector<Token::Kind> tokensComparison;
-    static vector<Token::Kind> tokensTerm;
-    static vector<Token::Kind> tokensFactor;
-    static vector<Token::Kind> tokensBinary;
+    static vector<TokenKind> tokensEquality;
+    static vector<TokenKind> tokensComparison;
+    static vector<TokenKind> tokensTerm;
+    static vector<TokenKind> tokensFactor;
+    static vector<TokenKind> tokensBinary;
 
-    Token(Kind kind, string lexme, int line, int column);
-    Kind getKind();
+    Token(TokenKind kind, string lexme, int line, int column);
+    TokenKind getKind();
     string getLexme();
     int getLine();
     int getColumn();
     bool isValid();
-    bool isOfKind(vector<Kind> kinds);
+    bool isOfKind(vector<TokenKind> kinds);
     string toString();
 };
 

@@ -13,7 +13,7 @@
 using namespace std;
 
 class ModuleBuilder {
-/*private:
+private:
     shared_ptr<llvm::LLVMContext> context;
     shared_ptr<llvm::Module> module;
     shared_ptr<llvm::IRBuilder<>> builder;
@@ -35,13 +35,16 @@ class ModuleBuilder {
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
+    llvm::Value *valueForBinaryBool(shared_ptr<ExpressionBinary> expression);
+    llvm::Value *valueForBinaryInteger(shared_ptr<ExpressionBinary> expression);
+    llvm::Value *valueForBinaryReal(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
 
     llvm::Type *typeForExpression(shared_ptr<Expression> expression);
 
 public:
     ModuleBuilder(vector<shared_ptr<Statement>> statements);
-    shared_ptr<llvm::Module> getModule();*/
+    shared_ptr<llvm::Module> getModule();
 };
 
 #endif

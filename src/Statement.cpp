@@ -2,15 +2,15 @@
 
 //
 // Statement
-Statement::Statement(Kind kind): kind(kind) {
+Statement::Statement(StatementKind kind): kind(kind) {
 }
 
-Statement::Kind Statement::getKind() {
+StatementKind Statement::getKind() {
     return kind;
 }
 
 bool Statement::isValid() {
-    return kind != Statement::Kind::INVALID;
+    return kind != StatementKind::INVALID;
 }
 
 string Statement::toString(int indent) {
@@ -19,12 +19,20 @@ string Statement::toString(int indent) {
 
 //
 // StatementFunctionDeclaration
-StatementFunctionDeclaration::StatementFunctionDeclaration(string name, shared_ptr<StatementBlock> statementBlock):
-Statement(Statement::Kind::FUNCTION_DECLARATION), name(name), statementBlock(statementBlock) {
+StatementFunctionDeclaration::StatementFunctionDeclaration(string name, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock):
+Statement(StatementKind::FUNCTION_DECLARATION), name(name), returnValueType(returnValueType), statementBlock(statementBlock) {
 }
 
 string StatementFunctionDeclaration::getName() {
     return name;
+}
+
+ValueType StatementFunctionDeclaration::getReturnValueType() {
+    return returnValueType;
+}
+
+shared_ptr<StatementBlock> StatementFunctionDeclaration::getStatementBlock() {
+    return statementBlock;
 }
 
 string StatementFunctionDeclaration::toString(int indent) {
@@ -39,15 +47,11 @@ string StatementFunctionDeclaration::toString(int indent) {
     return value;
 }
 
-shared_ptr<StatementBlock> StatementFunctionDeclaration::getStatementBlock() {
-    return statementBlock;
-}
-
 //
 // StatementBlock
 StatementBlock::StatementBlock(vector<shared_ptr<Statement>> statements):
-Statement(Statement::Kind::BLOCK), statements(statements) {
-    if (statements.back()->getKind() == Statement::Kind::EXPRESSION) {
+Statement(StatementKind::BLOCK), statements(statements) {
+    if (statements.back()->getKind() == StatementKind::EXPRESSION) {
         statementExpression = dynamic_pointer_cast<StatementExpression>(statements.back());
         this->statements.pop_back();
     }
@@ -83,8 +87,7 @@ string StatementBlock::toString(int indent) {
 //
 // StatementReturn
 StatementReturn::StatementReturn(shared_ptr<Expression> expression):
-Statement(Statement::Kind::RETURN), expression(expression) {
-
+Statement(StatementKind::RETURN), expression(expression) {
 }
 
 shared_ptr<Expression> StatementReturn::getExpression() {
@@ -105,7 +108,7 @@ string StatementReturn::toString(int indent) {
 //
 // StatementExpression
 StatementExpression::StatementExpression(shared_ptr<Expression> expression):
-Statement(Statement::Kind::EXPRESSION), expression(expression) {
+Statement(StatementKind::EXPRESSION), expression(expression) {
 }
 
 shared_ptr<Expression> StatementExpression::getExpression() {
@@ -124,7 +127,7 @@ string StatementExpression::toString(int indent) {
 //
 // StatementInvalid
 StatementInvalid::StatementInvalid(shared_ptr<Token> token):
-Statement(Statement::Kind::INVALID), token(token) {
+Statement(StatementKind::INVALID), token(token) {
 }
 
 string StatementInvalid::toString(int indent) {

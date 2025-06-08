@@ -15,7 +15,7 @@ private:
     int currentColumn = 0;
 
     shared_ptr<Token> nextToken();
-    shared_ptr<Token> match(Token::Kind kind, string lexme, bool needsSeparator);
+    shared_ptr<Token> match(TokenKind kind, string lexme, bool needsSeparator);
     shared_ptr<Token> matchInteger();
     shared_ptr<Token> matchReal();
     shared_ptr<Token> matchIdentifier();

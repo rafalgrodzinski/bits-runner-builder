@@ -3,43 +3,32 @@
 
 #include "Token.h"
 #include "Statement.h"
+#include "Types.h"
 
 class StatementBlock;
 class StatementExpression;
 
 using namespace std;
 
+//
+// Expression
 class Expression {
-public:
-    enum Kind {
-        LITERAL,
-        GROUPING,
-        BINARY,
-        IF_ELSE,
-        INVALID
-    };
-
-    enum ValueType {
-        VOID,
-        BOOL,
-        SINT32,
-        REAL32
-    };
-
 private:
-    Kind kind;
+    ExpressionKind kind;
 
 protected:
     ValueType valueType;
 
 public:
-    Expression(Kind kind, ValueType valueType);
-    Kind getKind();
+    Expression(ExpressionKind kind, ValueType valueType);
+    ExpressionKind getKind();
     ValueType getValueType();
     bool isValid();
     virtual string toString(int indent);
 };
 
+//
+// ExpressionLiteral
 class ExpressionLiteral: public Expression {
 private:
     bool boolValue;
@@ -49,11 +38,13 @@ private:
 public:
     ExpressionLiteral(shared_ptr<Token> token);
     bool getBoolValue();
-    int32_t getSint32Value();
+    int32_t getSInt32Value();
     float getReal32Value();
     string toString(int indent) override;
 };
 
+//
+// ExpressionGrouping
 class ExpressionGrouping: public Expression {
 private:
     shared_ptr<Expression> expression;
@@ -64,6 +55,8 @@ public:
     string toString(int indent) override;
 };
 
+//
+// ExpressionBinary
 class ExpressionBinary: public Expression {
 public:
     enum Operation {
@@ -93,6 +86,8 @@ public:
     string toString(int indent) override;
 };
 
+//
+// ExpressionIfElse
 class ExpressionIfElse: public Expression {
 private:
     shared_ptr<Expression> condition;
@@ -107,6 +102,8 @@ public:
     string toString(int indent) override;
 };
 
+//
+// ExpressionInvalid
 class ExpressionInvalid: public Expression {
 private:
     shared_ptr<Token> token;

@@ -5,35 +5,26 @@
 
 #include "Token.h"
 #include "Expression.h"
+#include "Types.h"
 
 class Expression;
-
-using namespace std;
-
 class Statement;
 class StatementBlock;
 class StatementReturn;
 class StatementExpression;
 class StatementInvalid;
 
+using namespace std;
+
 //
 // Statement
 class Statement {
-public:
-    enum Kind {
-        FUNCTION_DECLARATION,
-        BLOCK,
-        RETURN,
-        EXPRESSION,
-        INVALID
-    };
-
 private:
-    Kind kind;
+    StatementKind kind;
 
 public:
-    Statement(Kind kind);
-    Kind getKind();
+    Statement(StatementKind kind);
+    StatementKind getKind();
     bool isValid();
     virtual string toString(int indent);
 };
@@ -43,11 +34,13 @@ public:
 class StatementFunctionDeclaration: public Statement {
 private:
     string name;
+    ValueType returnValueType;
     shared_ptr<StatementBlock> statementBlock;
 
 public:
-    StatementFunctionDeclaration(string name, shared_ptr<StatementBlock> statementBlock);
+    StatementFunctionDeclaration(string name, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock);
     string getName();
+    ValueType getReturnValueType();
     shared_ptr<StatementBlock> getStatementBlock();
     string toString(int indent) override;
 };

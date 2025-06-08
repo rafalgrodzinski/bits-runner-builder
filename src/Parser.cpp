@@ -6,7 +6,7 @@ Parser::Parser(vector<shared_ptr<Token>> tokens): tokens(tokens) {
 vector<shared_ptr<Statement>> Parser::getStatements() {
     vector<shared_ptr<Statement>> statements;
 
-    while (tokens.at(currentIndex)->getKind() != Token::Kind::END) {
+    while (tokens.at(currentIndex)->getKind() != TokenKind::END) {
         shared_ptr<Statement> statement = nextStatement();
         // Abort parsing if we got an error
         if (!statement->isValid()) {
@@ -41,7 +41,7 @@ shared_ptr<Statement> Parser::nextStatement() {
 }
 
 shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
-    if (!matchesTokenKinds({Token::Kind::IDENTIFIER, Token::Kind::COLON, Token::Kind::FUNCTION}))
+    if (!matchesTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::FUNCTION}))
         return nullptr;
 
     shared_ptr<Token> identifierToken = tokens.at(currentIndex);
@@ -49,7 +49,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     currentIndex++; // skip colon
     currentIndex++; // skip fun
 
-    while (tokens.at(currentIndex)->getKind() != Token::Kind::NEW_LINE) {
+    while (tokens.at(currentIndex)->getKind() != TokenKind::NEW_LINE) {
         currentIndex++;
     }
     currentIndex++; // new line
@@ -59,13 +59,13 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     else if (!statementBlock->isValid())
         return statementBlock;
     else
-        return make_shared<StatementFunctionDeclaration>(identifierToken->getLexme(), dynamic_pointer_cast<StatementBlock>(statementBlock));
+        return make_shared<StatementFunctionDeclaration>(identifierToken->getLexme(), ValueType::SINT32, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock() {
     vector<shared_ptr<Statement>> statements;
 
-    while (!tokens.at(currentIndex)->isOfKind({Token::Kind::SEMICOLON, Token::Kind::COLON})) {
+    while (!tokens.at(currentIndex)->isOfKind({TokenKind::SEMICOLON, TokenKind::COLON})) {
         shared_ptr<Statement> statement = nextStatement();
         if (statement == nullptr)
             return matchStatementInvalid();
@@ -76,17 +76,17 @@ shared_ptr<Statement> Parser::matchStatementBlock() {
     }
     currentIndex++; // consune ';' and ':'
 
-    if (!tokens.at(currentIndex)->isOfKind({Token::Kind::NEW_LINE, Token::Kind::END}))
+    if (!tokens.at(currentIndex)->isOfKind({TokenKind::NEW_LINE, TokenKind::END}))
         return matchStatementInvalid();
     
-    if (tokens.at(currentIndex)->getKind() == Token::Kind::NEW_LINE)
+    if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
         currentIndex++;
 
     return make_shared<StatementBlock>(statements);
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {
-    if (tokens.at(currentIndex)->getKind() != Token::Kind::RETURN)
+    if (tokens.at(currentIndex)->getKind() != TokenKind::RETURN)
         return nullptr;
     
     currentIndex++;
@@ -95,7 +95,7 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
     if (expression != nullptr && !expression->isValid())
         return matchStatementInvalid();
 
-    if (tokens.at(currentIndex)->getKind() != Token::Kind::NEW_LINE)
+    if (tokens.at(currentIndex)->getKind() != TokenKind::NEW_LINE)
         return matchStatementInvalid();
     
     currentIndex++; // new line
@@ -112,7 +112,7 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
         return make_shared<StatementInvalid>(tokens.at(currentIndex));
 
     // Consume new line
-    if (tokens.at(currentIndex)->getKind() == Token::Kind::NEW_LINE)
+    if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
         currentIndex++;
 
     return make_shared<StatementExpression>(expression);
@@ -199,7 +199,7 @@ shared_ptr<Expression> Parser::matchPrimary() {
 
 shared_ptr<Expression> Parser::matchExpressionLiteral() {
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->isOfKind({Token::Kind::BOOL, Token::Kind::INTEGER, Token::Kind::REAL})) {
+    if (token->isOfKind({TokenKind::BOOL, TokenKind::INTEGER, TokenKind::REAL})) {
         currentIndex++;
         return make_shared<ExpressionLiteral>(token);
     }
@@ -209,7 +209,7 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->getKind() == Token::Kind::LEFT_PAREN) {
+    if (token->getKind() == TokenKind::LEFT_PAREN) {
         currentIndex++;
         shared_ptr<Expression> expression = matchTerm();
         // has grouped expression failed?
@@ -217,7 +217,7 @@ shared_ptr<Expression> Parser::matchExpressionGrouping() {
             return matchExpressionInvalid();
         } else if(!expression->isValid()) {
             return expression;
-        } else if (tokens.at(currentIndex)->getKind() == Token::Kind::RIGHT_PAREN) {
+        } else if (tokens.at(currentIndex)->getKind() == TokenKind::RIGHT_PAREN) {
             currentIndex++;
             return make_shared<ExpressionGrouping>(expression);
         } else {
@@ -260,7 +260,7 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
     // Try maching '?'
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->getKind() != Token::Kind::QUESTION)
+    if (token->getKind() != TokenKind::QUESTION)
         return nullptr;
     currentIndex++;
 
@@ -272,9 +272,9 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         return condition;
     
     // Match ':', '\n', or ':\n'
-    if (matchesTokenKinds({Token::Kind::COLON, Token::Kind::NEW_LINE}))
+    if (matchesTokenKinds({TokenKind::COLON, TokenKind::NEW_LINE}))
         currentIndex += 2;
-    else if (tokens.at(currentIndex)->isOfKind({Token::Kind::COLON, Token::Kind::NEW_LINE}))
+    else if (tokens.at(currentIndex)->isOfKind({TokenKind::COLON, TokenKind::NEW_LINE}))
         currentIndex++;
     else
         return matchExpressionInvalid();
@@ -291,7 +291,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
 
     shared_ptr<Token> lastToken = tokens.at(currentIndex-2);
     // ':' marks else block
-    if (lastToken->getKind() == Token::Kind::COLON) {
+    if (lastToken->getKind() == TokenKind::COLON) {
         elseBlock = matchStatementBlock();
         if (elseBlock == nullptr)
             return matchExpressionInvalid();
@@ -306,7 +306,7 @@ shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid() {
     return make_shared<ExpressionInvalid>(tokens.at(currentIndex));
 }
 
-bool Parser::matchesTokenKinds(vector<Token::Kind> kinds) {
+bool Parser::matchesTokenKinds(vector<TokenKind> kinds) {
     if (currentIndex + kinds.size() >= tokens.size())
         return false;
 

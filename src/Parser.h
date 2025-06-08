@@ -34,7 +34,7 @@ private:
     shared_ptr<Expression> matchExpressionIfElse();
     shared_ptr<ExpressionInvalid> matchExpressionInvalid();
 
-    bool matchesTokenKinds(vector<Token::Kind> kinds);
+    bool matchesTokenKinds(vector<TokenKind> kinds);
 
 public:
     Parser(vector<shared_ptr<Token>> tokens);

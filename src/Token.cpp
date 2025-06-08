@@ -1,46 +1,46 @@
 #include "Token.h"
 
-vector<Token::Kind> Token::tokensEquality = {
-    Token::Kind::EQUAL,
-    Token::Kind::NOT_EQUAL
+vector<TokenKind> Token::tokensEquality = {
+    TokenKind::EQUAL,
+    TokenKind::NOT_EQUAL
 };
-vector<Token::Kind> Token::tokensComparison = {
-    Token::Kind::LESS,
-    Token::Kind::LESS_EQUAL,
-    Token::Kind::GREATER,
-    Token::Kind::GREATER_EQUAL
+vector<TokenKind> Token::tokensComparison = {
+    TokenKind::LESS,
+    TokenKind::LESS_EQUAL,
+    TokenKind::GREATER,
+    TokenKind::GREATER_EQUAL
 };
-vector<Token::Kind> Token::tokensTerm = {
-    Token::Kind::PLUS,
-    Token::Kind::MINUS
+vector<TokenKind> Token::tokensTerm = {
+    TokenKind::PLUS,
+    TokenKind::MINUS
 };
-vector<Token::Kind> Token::tokensFactor = {
-    Token::Kind::STAR,
-    Token::Kind::SLASH,
-    Token::Kind::PERCENT
+vector<TokenKind> Token::tokensFactor = {
+    TokenKind::STAR,
+    TokenKind::SLASH,
+    TokenKind::PERCENT
 };
-vector<Token::Kind> Token::tokensBinary = {
-    Token::Kind::EQUAL,
-    Token::Kind::NOT_EQUAL,
+vector<TokenKind> Token::tokensBinary = {
+    TokenKind::EQUAL,
+    TokenKind::NOT_EQUAL,
 
-    Token::Kind::LESS,
-    Token::Kind::LESS_EQUAL,
-    Token::Kind::GREATER,
-    Token::Kind::GREATER_EQUAL,
+    TokenKind::LESS,
+    TokenKind::LESS_EQUAL,
+    TokenKind::GREATER,
+    TokenKind::GREATER_EQUAL,
 
-    Token::Kind::PLUS,
-    Token::Kind::MINUS,
+    TokenKind::PLUS,
+    TokenKind::MINUS,
     
-    Token::Kind::STAR,
-    Token::Kind::SLASH,
-    Token::Kind::PERCENT
+    TokenKind::STAR,
+    TokenKind::SLASH,
+    TokenKind::PERCENT
 };
 
-Token::Token(Kind kind, string lexme, int line, int column):
+Token::Token(TokenKind kind, string lexme, int line, int column):
     kind(kind), lexme(lexme), line(line), column(column) {
 }
 
-Token::Kind Token::getKind() {
+TokenKind Token::getKind() {
     return kind;
 }
 
@@ -57,11 +57,11 @@ int Token::getColumn() {
 }
 
 bool Token::isValid() {
-    return kind != Token::Kind::INVALID;
+    return kind != TokenKind::INVALID;
 }
 
-bool Token::isOfKind(vector<Kind> kinds) {
-    for (Kind &kind : kinds) {
+bool Token::isOfKind(vector<TokenKind> kinds) {
+    for (TokenKind &kind : kinds) {
         if (kind == this->kind)
             return true;
     }
@@ -71,62 +71,62 @@ bool Token::isOfKind(vector<Kind> kinds) {
 
 string Token::toString() {
     switch (kind) {
-        case PLUS:
+        case TokenKind::PLUS:
             return "PLUS";
-        case MINUS:
+        case TokenKind::MINUS:
             return "MINUS";
-        case STAR:
+        case TokenKind::STAR:
             return "STAR";
-        case SLASH:
+        case TokenKind::SLASH:
             return "SLASH";
-        case PERCENT:
+        case TokenKind::PERCENT:
             return "PERCENT";
         
-        case EQUAL:
+        case TokenKind::EQUAL:
             return "EQUAL";
-        case NOT_EQUAL:
+        case TokenKind::NOT_EQUAL:
             return "NOT_EQUAL";
-        case LESS:
+        case TokenKind::LESS:
             return "LESS";
-        case LESS_EQUAL:
+        case TokenKind::LESS_EQUAL:
             return "LESS_EQUAL";
-        case GREATER:
+        case TokenKind::GREATER:
             return "GREATER";
-        case GREATER_EQUAL:
+        case TokenKind::GREATER_EQUAL:
             return "GREATER_EQUAL";
 
-        case LEFT_PAREN:
+        case TokenKind::LEFT_PAREN:
             return "LEFT_PAREN";
-        case RIGHT_PAREN:
+        case TokenKind::RIGHT_PAREN:
             return "RIGHT_PAREN";
-        case COLON:
+        case TokenKind::COLON:
             return "COLON";
-        case SEMICOLON:
+        case TokenKind::SEMICOLON:
             return "SEMICOLON";
-        case QUESTION_QUESTION:
+        case TokenKind::QUESTION_QUESTION:
             return "QUESTION_QUESTION";
-        case QUESTION:
+        case TokenKind::QUESTION:
             return "QUESTION";
 
-        case BOOL:
+        case TokenKind::BOOL:
             return "BOOL(" + lexme + ")";
-        case INTEGER:
+        case TokenKind::INTEGER:
             return "INTEGER(" + lexme + ")";
-        case REAL:
+        case TokenKind::REAL:
             return "REAL(" + lexme + ")";
-        case IDENTIFIER:
+        case TokenKind::IDENTIFIER:
             return "IDENTIFIER(" + lexme + ")";
 
-        case FUNCTION:
+        case TokenKind::FUNCTION:
             return "FUNCTION";
-        case RETURN:
+        case TokenKind::RETURN:
             return "RETURN";
 
-        case NEW_LINE:
+        case TokenKind::NEW_LINE:
             return "NEW_LINE";
-        case END:
+        case TokenKind::END:
             return "END";
-        case INVALID:
+        case TokenKind::INVALID:
             return "INVALID";
     }
 }
