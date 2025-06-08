@@ -29,6 +29,10 @@ shared_ptr<Statement> Parser::nextStatement() {
     if (statement != nullptr)
         return statement;
 
+    statement = matchStatementVarDeclaration();
+    if (statement != nullptr)
+        return statement;
+
     statement = matchStatementReturn();
     if (statement != nullptr)
         return statement;
@@ -60,6 +64,45 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
         return statementBlock;
     else
         return make_shared<StatementFunctionDeclaration>(identifierToken->getLexme(), ValueType::SINT32, dynamic_pointer_cast<StatementBlock>(statementBlock));
+}
+
+shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
+    if (!matchesTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::TYPE}))
+        return nullptr;
+
+    shared_ptr<Token> identifierToken = tokens.at(currentIndex);
+    currentIndex++;
+    currentIndex++; // skip colon
+    shared_ptr<Token> valueTypeToken = tokens.at(currentIndex);
+    currentIndex++; // skip fun
+
+    // Expect left arrow
+    if (tokens.at(currentIndex)->getKind() != TokenKind::LEFT_ARROW)
+        return matchStatementInvalid();
+    currentIndex++;
+
+    shared_ptr<Expression> expression = nextExpression();
+    if (expression == nullptr || !expression->isValid())
+        return matchStatementInvalid();
+
+    ValueType valueType;
+    if (valueTypeToken->getLexme().compare("Void") == 0)
+        valueType = ValueType::VOID;
+    else if (valueTypeToken->getLexme().compare("Bool") == 0)
+        valueType = ValueType::BOOL;
+    else if (valueTypeToken->getLexme().compare("SInt32") == 0)
+        valueType = ValueType::SINT32;
+    else if (valueTypeToken->getLexme().compare("Real32") == 0)
+        valueType = ValueType::REAL32;
+    else
+        return matchStatementInvalid();
+
+    //if (tokens.at(currentIndex)->getKind() != TokenKind::NEW_LINE)
+    //    return matchStatementInvalid();
+    
+    //currentIndex++;
+
+    return make_shared<StatementVarDeclaration>(identifierToken->getLexme(), valueType, expression);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock() {

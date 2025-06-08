@@ -51,9 +51,9 @@ int main(int argc, char **argv) {
     }
     cout << endl << endl;
 
-    ModuleBuilder moduleBuilder(statements);
-    shared_ptr<llvm::Module> module = moduleBuilder.getModule();
-    module->print(llvm::outs(), nullptr);
+    //ModuleBuilder moduleBuilder(statements);
+    //shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+    //module->print(llvm::outs(), nullptr);
 
     //CodeGenerator codeGenerator(module);
     //codeGenerator.generateObjectFile("dummy.s");

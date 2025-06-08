@@ -50,8 +50,7 @@ string StatementFunctionDeclaration::toString(int indent) {
 //
 // StatementVarDeclaration
 StatementVarDeclaration::StatementVarDeclaration(string name, ValueType valueType, shared_ptr<Expression> expression):
-Statement(StatementKind::VAR_DECLARATION) {
-
+Statement(StatementKind::VAR_DECLARATION), name(name), valueType(valueType), expression(expression) {
 }
 
 string StatementVarDeclaration::getName() {
