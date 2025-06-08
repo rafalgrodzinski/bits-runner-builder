@@ -72,41 +72,45 @@ bool Token::isOfKind(vector<TokenKind> kinds) {
 string Token::toString() {
     switch (kind) {
         case TokenKind::PLUS:
-            return "PLUS";
+            return "+";
         case TokenKind::MINUS:
-            return "MINUS";
+            return "-";
         case TokenKind::STAR:
-            return "STAR";
+            return "*";
         case TokenKind::SLASH:
-            return "SLASH";
+            return "/";
         case TokenKind::PERCENT:
-            return "PERCENT";
+            return "%";
         
         case TokenKind::EQUAL:
-            return "EQUAL";
+            return "=";
         case TokenKind::NOT_EQUAL:
-            return "NOT_EQUAL";
+            return "≠";
         case TokenKind::LESS:
-            return "LESS";
+            return "<";
         case TokenKind::LESS_EQUAL:
-            return "LESS_EQUAL";
+            return "≤";
         case TokenKind::GREATER:
-            return "GREATER";
+            return ">";
         case TokenKind::GREATER_EQUAL:
-            return "GREATER_EQUAL";
+            return "≥";
 
         case TokenKind::LEFT_PAREN:
-            return "LEFT_PAREN";
+            return "(";
         case TokenKind::RIGHT_PAREN:
-            return "RIGHT_PAREN";
+            return ")";
         case TokenKind::COLON:
-            return "COLON";
+            return ":";
         case TokenKind::SEMICOLON:
-            return "SEMICOLON";
+            return ";";
         case TokenKind::QUESTION_QUESTION:
-            return "QUESTION_QUESTION";
+            return "??";
         case TokenKind::QUESTION:
-            return "QUESTION";
+            return "?";
+        case TokenKind::LEFT_ARROW:
+            return "←";
+        case TokenKind::RIGHT_ARROW:
+            return "→";
 
         case TokenKind::BOOL:
             return "BOOL(" + lexme + ")";
@@ -116,6 +120,8 @@ string Token::toString() {
             return "REAL(" + lexme + ")";
         case TokenKind::IDENTIFIER:
             return "IDENTIFIER(" + lexme + ")";
+        case TokenKind::TYPE:
+            return "TYPE(" + lexme + ")";
 
         case TokenKind::FUNCTION:
             return "FUNCTION";
@@ -123,7 +129,7 @@ string Token::toString() {
             return "RETURN";
 
         case TokenKind::NEW_LINE:
-            return "NEW_LINE";
+            return "↲";
         case TokenKind::END:
             return "END";
         case TokenKind::INVALID:

@@ -4,8 +4,8 @@ Lexer::Lexer(string source): source(source) {
 }
 
 vector<shared_ptr<Token>> Lexer::getTokens() {
-    vector<shared_ptr<Token>> tokens;
     shared_ptr<Token> token = nullptr;
+    tokens.clear();
     do {
         token = nextToken();
         // Got a nullptr, shouldn't have happened
@@ -99,6 +99,39 @@ shared_ptr<Token> Lexer::nextToken() {
             return nextToken(); // gets rid of remaining white spaces without repeating the code
     }
 
+    // structural
+    token = match(TokenKind::LEFT_PAREN, "(", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::RIGHT_PAREN, ")", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::COLON, ":", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::SEMICOLON, ";", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(TokenKind::QUESTION_QUESTION, "??", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(TokenKind::QUESTION, "?", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::LEFT_ARROW, "<-", false);
+    if (token != nullptr)
+         return token;
+        
+    token = match(TokenKind::RIGHT_ARROW, "->", false);
+    if (token != nullptr)
+        return token;
+
     // arithmetic
     token = match(TokenKind::PLUS, "+", false);
     if (token != nullptr)
@@ -145,31 +178,6 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    // structural
-    token = match(TokenKind::LEFT_PAREN, "(", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::RIGHT_PAREN, ")", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::COLON, ":", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::SEMICOLON, ";", false);
-    if (token != nullptr)
-        return token;
-    
-    token = match(TokenKind::QUESTION_QUESTION, "??", false);
-    if (token != nullptr)
-        return token;
-    
-    token = match(TokenKind::QUESTION, "?", false);
-    if (token != nullptr)
-        return token;
-
     // keywords
     token = match(TokenKind::FUNCTION, "fun", true);
     if (token != nullptr)
@@ -197,6 +205,10 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // identifier
+    token = matchType();
+    if (token != nullptr)
+        return token;
+
     token = matchIdentifier();
     if (token != nullptr)
         return token;
@@ -260,6 +272,30 @@ shared_ptr<Token> Lexer::matchReal() {
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
     shared_ptr<Token> token = make_shared<Token>(TokenKind::REAL, lexme, currentLine, currentColumn);
+    advanceWithToken(token);
+    return token;
+}
+
+shared_ptr<Token> Lexer::matchType() {
+    bool isVarDec = tokens.size() >= 2 &&
+        tokens.at(tokens.size() - 1)->getKind() == TokenKind::COLON &&
+        tokens.at(tokens.size() - 2)->getKind() == TokenKind::IDENTIFIER;
+
+    bool isFunDec = tokens.size() >= 1 &&
+        tokens.at(tokens.size() - 1)->getKind() == TokenKind::RIGHT_ARROW;
+    
+    if (!isVarDec && !isFunDec)
+        return nullptr;
+
+    int nextIndex = currentIndex;
+    while (nextIndex < source.length() && isIdentifier(nextIndex))
+        nextIndex++;
+
+    if (nextIndex == currentIndex || !isSeparator(nextIndex))
+        return nullptr;
+
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, currentLine, currentColumn);
     advanceWithToken(token);
     return token;
 }

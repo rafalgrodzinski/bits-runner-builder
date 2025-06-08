@@ -21,6 +21,8 @@ enum class TokenKind {
     SEMICOLON,
     QUESTION,
     QUESTION_QUESTION,
+    LEFT_ARROW,
+    RIGHT_ARROW,
 
     FUNCTION,
     RETURN,
@@ -29,6 +31,7 @@ enum class TokenKind {
     INTEGER,
     REAL,
     IDENTIFIER,
+    TYPE,
 
     NEW_LINE,
     END,

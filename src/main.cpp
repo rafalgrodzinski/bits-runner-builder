@@ -37,9 +37,9 @@ int main(int argc, char **argv) {
     Lexer lexer(source);
     vector<shared_ptr<Token>> tokens = lexer.getTokens();
     for (int i=0; i<tokens.size(); i++) {
-        cout << tokens.at(i)->toString();
+        cout << i << "|" << tokens.at(i)->toString();
         if (i < tokens.size() - 1)
-            cout << " ";
+            cout << ", ";
     }
     cout << endl << endl;
 
