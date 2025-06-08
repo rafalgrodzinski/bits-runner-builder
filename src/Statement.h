@@ -46,6 +46,22 @@ public:
 };
 
 //
+// StatementVarDeclaration
+class StatementVarDeclaration: public Statement {
+private:
+    string name;
+    ValueType valueType;
+    shared_ptr<Expression> expression;
+
+public:
+    StatementVarDeclaration(string name, ValueType valueType, shared_ptr<Expression> expression);
+    string getName();
+    ValueType getValueType();
+    shared_ptr<Expression> getExpression();
+    string toString(int indent) override;
+};
+
+//
 // StatementBlock
 class StatementBlock: public Statement {
 private:

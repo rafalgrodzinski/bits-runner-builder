@@ -46,6 +46,7 @@ enum class ExpressionKind {
 
 enum class StatementKind {
     FUNCTION_DECLARATION,
+    VAR_DECLARATION,
     BLOCK,
     RETURN,
     EXPRESSION,

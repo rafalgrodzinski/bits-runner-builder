@@ -48,6 +48,52 @@ string StatementFunctionDeclaration::toString(int indent) {
 }
 
 //
+// StatementVarDeclaration
+StatementVarDeclaration::StatementVarDeclaration(string name, ValueType valueType, shared_ptr<Expression> expression):
+Statement(StatementKind::VAR_DECLARATION) {
+
+}
+
+string StatementVarDeclaration::getName() {
+    return name;
+}
+
+ValueType StatementVarDeclaration::getValueType() {
+    return valueType;
+}
+
+shared_ptr<Expression> StatementVarDeclaration::getExpression() {
+    return expression;
+}
+
+string StatementVarDeclaration::toString(int indent) {
+    string value;
+    for (int ind=0; ind<indent; ind++)
+        value += "  ";
+    value += name + "(";
+    switch (valueType) {
+        case ValueType::VOID:
+            value += "VOID";
+            break;
+        case ValueType::BOOL:
+            value += "BOOL";
+            break;
+        case ValueType::SINT32:
+            value += "SINT32";
+            break;
+        case ValueType::REAL32:
+            value += "REAL32";
+            break;
+    }
+    value += "):\n";
+    for (int ind=0; ind<indent+1; ind++)
+        value += "  ";
+    value += expression->toString(indent+1);
+    value += "\n";
+    return value;
+}
+
+//
 // StatementBlock
 StatementBlock::StatementBlock(vector<shared_ptr<Statement>> statements):
 Statement(StatementKind::BLOCK), statements(statements) {
