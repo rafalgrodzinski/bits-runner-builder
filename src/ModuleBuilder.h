@@ -40,7 +40,7 @@ private:
     llvm::Value *valueForBinaryReal(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
 
-    llvm::Type *typeForExpression(shared_ptr<Expression> expression);
+    llvm::Type *typeForValueType(ValueType valueType);
 
 public:
     ModuleBuilder(vector<shared_ptr<Statement>> statements);

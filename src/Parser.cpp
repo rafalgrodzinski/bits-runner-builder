@@ -74,13 +74,16 @@ shared_ptr<Statement> Parser::matchStatementBlock() {
         else
             statements.push_back(statement);
     }
-    currentIndex++; // consune ';' and ':'
-
-    if (!tokens.at(currentIndex)->isOfKind({TokenKind::NEW_LINE, TokenKind::END}))
-        return matchStatementInvalid();
-    
-    if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
+    // consune ';' only
+    if (tokens.at(currentIndex)->getKind() == TokenKind::SEMICOLON) {
         currentIndex++;
+
+        if (!tokens.at(currentIndex)->isOfKind({TokenKind::NEW_LINE, TokenKind::END}))
+            return matchStatementInvalid();
+
+        if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
+            currentIndex++;
+    }
 
     return make_shared<StatementBlock>(statements);
 }
@@ -95,10 +98,11 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
     if (expression != nullptr && !expression->isValid())
         return matchStatementInvalid();
 
-    if (tokens.at(currentIndex)->getKind() != TokenKind::NEW_LINE)
+    if (!tokens.at(currentIndex)->isOfKind({TokenKind::NEW_LINE, TokenKind::SEMICOLON}))
         return matchStatementInvalid();
     
-    currentIndex++; // new line
+    if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
+        currentIndex++; // new line
     
     return make_shared<StatementReturn>(expression);
 }
@@ -289,9 +293,11 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     // Match else blcok
     shared_ptr<Statement> elseBlock;
 
-    shared_ptr<Token> lastToken = tokens.at(currentIndex-2);
-    // ':' marks else block
-    if (lastToken->getKind() == TokenKind::COLON) {
+    if (tokens.at(currentIndex)->getKind() == TokenKind::COLON) {
+        currentIndex++;
+        if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
+            currentIndex++;
+
         elseBlock = matchStatementBlock();
         if (elseBlock == nullptr)
             return matchExpressionInvalid();

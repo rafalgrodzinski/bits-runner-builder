@@ -38,7 +38,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
 }
 
 void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement) {
-    llvm::FunctionType *funType = llvm::FunctionType::get(typeSInt32, false);
+    llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::InternalLinkage, statement->getName(), module.get());
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
     builder->SetInsertPoint(block);
@@ -224,7 +224,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     // Merge
     fun->insert(fun->end(), mergeBlock);
     builder->SetInsertPoint(mergeBlock);
-    llvm::PHINode *phi = builder->CreatePHI(typeForExpression(expression), valuesCount, "phii");
+    llvm::PHINode *phi = builder->CreatePHI(typeForValueType(expression->getValueType()), valuesCount, "phii");
     phi->addIncoming(thenValue, thenBlock);
     if (elseValue != nullptr)
         phi->addIncoming(elseValue, elseBlock);
@@ -233,8 +233,8 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     return phi;
 }
 
-llvm::Type *ModuleBuilder::typeForExpression(shared_ptr<Expression> expression) {
-    switch (expression->getValueType()) {
+llvm::Type *ModuleBuilder::typeForValueType(ValueType valueType) {
+    switch (valueType) {
         case ValueType::VOID:
             return typeVoid;
         case ValueType::BOOL:
