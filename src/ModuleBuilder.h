@@ -27,6 +27,7 @@ private:
 
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement);
+    void buildVarDeclaration(shared_ptr<StatementVarDeclaration> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);

@@ -333,7 +333,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     else if (!thenBlock->isValid())
         return matchExpressionInvalid(); // FIXME
 
-    // Match else blcok
+    // Match else block
     shared_ptr<Statement> elseBlock;
 
     if (tokens.at(currentIndex)->getKind() == TokenKind::COLON) {

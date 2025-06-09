@@ -23,6 +23,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         case StatementKind::FUNCTION_DECLARATION:
             buildFunctionDeclaration(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
             break;
+        case StatementKind::VAR_DECLARATION:
+            buildVarDeclaration(dynamic_pointer_cast<StatementVarDeclaration>(statement));
+            break;
         case StatementKind::BLOCK:
             buildBlock(dynamic_pointer_cast<StatementBlock>(statement));
             break;
@@ -43,6 +46,12 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclara
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
     builder->SetInsertPoint(block);
     buildStatement(statement->getStatementBlock());
+}
+
+void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVarDeclaration> statement) {
+    llvm::Value *value = valueForExpression(statement->getExpression());
+    llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType()), nullptr, statement->getName());
+    builder->CreateStore(value, alloca);
 }
 
 void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
@@ -99,7 +108,7 @@ llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expr
 }
 
 llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expression) {
-    switch (expression->getValueType()) {
+    switch (expression->getLeft()->getValueType()) {
         case ValueType::BOOL:
             return valueForBinaryBool(expression);
         case ValueType::SINT32:
