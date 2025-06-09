@@ -33,6 +33,7 @@ private:
     shared_ptr<Expression> matchExpressionGrouping();
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionIfElse();
+    shared_ptr<Expression> matchExpressionVar();
     shared_ptr<ExpressionInvalid> matchExpressionInvalid();
 
     bool matchesTokenKinds(vector<TokenKind> kinds);

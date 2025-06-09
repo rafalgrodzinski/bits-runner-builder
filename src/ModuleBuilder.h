@@ -1,6 +1,8 @@
 #ifndef MODULE_BUILDER_H
 #define MODULE_BUILDER_H
 
+#include <map>
+
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
@@ -24,6 +26,7 @@ private:
     llvm::Type *typeReal32;
 
     vector<shared_ptr<Statement>> statements;
+    map<string, llvm::AllocaInst*> allocaMap;
 
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement);
@@ -40,6 +43,7 @@ private:
     llvm::Value *valueForBinaryInteger(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryReal(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
+    llvm::Value *valueForVar(shared_ptr<ExpressionVar> expression);
 
     llvm::Type *typeForValueType(ValueType valueType);
 

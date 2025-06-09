@@ -51,6 +51,7 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclara
 void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVarDeclaration> statement) {
     llvm::Value *value = valueForExpression(statement->getExpression());
     llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType()), nullptr, statement->getName());
+    allocaMap[statement->getName()] = alloca;
     builder->CreateStore(value, alloca);
 }
 
@@ -85,6 +86,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForBinary(dynamic_pointer_cast<ExpressionBinary>(expression));
         case ExpressionKind::IF_ELSE:
             return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
+        case ExpressionKind::VAR:
+            return valueForVar(dynamic_pointer_cast<ExpressionVar>(expression));
         default:
             exit(1);
     }
@@ -240,6 +243,14 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 
     //return llvm::ConstantInt::get(int32Type, 42, true);
     return phi;
+}
+
+llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVar> expression) {
+    llvm::AllocaInst *alloca = allocaMap[expression->getName()];
+    if (alloca == nullptr)
+        exit(1);
+
+    return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getName());
 }
 
 llvm::Type *ModuleBuilder::typeForValueType(ValueType valueType) {

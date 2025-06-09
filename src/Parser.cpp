@@ -97,10 +97,11 @@ shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
     else
         return matchStatementInvalid();
 
-    //if (tokens.at(currentIndex)->getKind() != TokenKind::NEW_LINE)
-    //    return matchStatementInvalid();
+    // Expect new line
+    if (tokens.at(currentIndex)->getKind() != TokenKind::NEW_LINE)
+        return matchStatementInvalid();
     
-    //currentIndex++;
+    currentIndex++;
 
     return make_shared<StatementVarDeclaration>(identifierToken->getLexme(), valueType, expression);
 }
@@ -180,6 +181,10 @@ shared_ptr<Expression> Parser::nextExpression() {
         return expression;
     
     expression = matchExpressionIfElse();
+    if (expression != nullptr)
+        return expression;
+    
+    expression = matchExpressionVar();
     if (expression != nullptr)
         return expression;
 
@@ -346,9 +351,23 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
             return matchExpressionInvalid();
         else if (!elseBlock->isValid())
             return matchExpressionInvalid(); // FIXME
+
+        // hack to treat statement as an expression
+        if (tokens.at(currentIndex-1)->getKind() == TokenKind::NEW_LINE)
+            currentIndex--;
     }
 
     return make_shared<ExpressionIfElse>(condition, dynamic_pointer_cast<StatementBlock>(thenBlock), dynamic_pointer_cast<StatementBlock>(elseBlock));
+}
+
+shared_ptr<Expression> Parser::matchExpressionVar() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
+    if (token->isOfKind({TokenKind::IDENTIFIER})) {
+        currentIndex++;
+        return make_shared<ExpressionVar>(token->getLexme());
+    }
+    
+    return nullptr;
 }
 
 shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid() {

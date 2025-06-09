@@ -44,6 +44,7 @@ enum class ExpressionKind {
     GROUPING,
     BINARY,
     IF_ELSE,
+    VAR,
     INVALID
 };
 

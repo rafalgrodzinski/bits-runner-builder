@@ -103,6 +103,18 @@ public:
 };
 
 //
+// ExpressionVar
+class ExpressionVar: public Expression {
+private:
+    string name;
+
+public:
+    ExpressionVar(string name);
+    string getName();
+    string toString(int indent) override;
+};
+
+//
 // ExpressionInvalid
 class ExpressionInvalid: public Expression {
 private:

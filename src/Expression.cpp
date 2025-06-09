@@ -23,7 +23,7 @@ string Expression::toString(int indent) {
 //
 // ExpressionBinary
 ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
-    Expression(ExpressionKind::BINARY, ValueType::VOID), left(left), right(right) {
+Expression(ExpressionKind::BINARY, ValueType::VOID), left(left), right(right) {
     // Types must match
     if (left->getValueType() != right->getValueType())
         exit(1);
@@ -124,7 +124,7 @@ string ExpressionBinary::toString(int indent) {
 //
 // ExpressionLiteral
 ExpressionLiteral::ExpressionLiteral(shared_ptr<Token> token):
-    Expression(ExpressionKind::LITERAL, ValueType::VOID) {
+Expression(ExpressionKind::LITERAL, ValueType::VOID) {
     switch (token->getKind()) {
         case TokenKind::BOOL:
             boolValue = token->getLexme().compare("true") == 0;
@@ -171,7 +171,7 @@ string ExpressionLiteral::toString(int indent) {
 //
 // ExpressionGrouping
 ExpressionGrouping::ExpressionGrouping(shared_ptr<Expression> expression):
-    Expression(ExpressionKind::GROUPING, expression->getValueType()), expression(expression) {
+Expression(ExpressionKind::GROUPING, expression->getValueType()), expression(expression) {
 }
 
 shared_ptr<Expression> ExpressionGrouping::getExpression() {
@@ -185,7 +185,7 @@ string ExpressionGrouping::toString(int indent) {
 //
 // ExpressionIfElse
 ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<StatementBlock> thenBlock, shared_ptr<StatementBlock> elseBlock):
-    Expression(ExpressionKind::IF_ELSE, ValueType::VOID), condition(condition), thenBlock(thenBlock), elseBlock(elseBlock) {
+Expression(ExpressionKind::IF_ELSE, ValueType::VOID), condition(condition), thenBlock(thenBlock), elseBlock(elseBlock) {
     // Condition must evaluate to bool
     if (condition->getValueType() != ValueType::BOOL)
         exit(1);
@@ -233,9 +233,23 @@ string ExpressionIfElse::toString(int indent) {
 }
 
 //
+// ExpressionVar
+ExpressionVar::ExpressionVar(string name):
+Expression(ExpressionKind::VAR, ValueType::VOID), name(name) {
+}
+
+string ExpressionVar::getName() {
+    return name;
+}
+
+string ExpressionVar::toString(int indent) {
+    return "VAR(" + name + ")";
+}
+
+//
 // ExpressionInvalid
 ExpressionInvalid::ExpressionInvalid(shared_ptr<Token> token):
-    Expression(ExpressionKind::INVALID, ValueType::VOID), token(token) {
+Expression(ExpressionKind::INVALID, ValueType::VOID), token(token) {
 }
 
 shared_ptr<Token> ExpressionInvalid::getToken() {
