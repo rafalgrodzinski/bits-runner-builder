@@ -1,5 +1,8 @@
 #include <iostream>
 #include <fstream>
+#include <filesystem>
+
+#include "llvm/Support/CommandLine.h"
 
 #include "Token.h"
 #include "Lexer.h"
@@ -13,10 +16,10 @@
 
 using namespace std;
 
-string readFile(string fileName) {
-    ifstream file(fileName.c_str(), ios::in | ios::binary | ios::ate);
+string readFile(filesystem::path filePath) {
+    ifstream file(filePath, ios::in | ios::binary | ios::ate);
     if (!file.is_open()) {
-        cerr << "Cannot open file " << fileName << endl;
+        cerr << "Cannot open file " << filePath << endl;
         exit(1);
     }
 
@@ -27,33 +30,48 @@ string readFile(string fileName) {
     return string(fileBytes.data(), fileSize);
 }
 
-int main(int argc, char **argv) {
-    if (argc < 2) {
-        cerr << "Need to provide a file name" << endl;
-        exit(1);
-    }
+void versionPrinter(llvm::raw_ostream &os) {
+    os << "Bits Runner Code, Version 1.0.0 (pre-alpha)\n";
+}
 
-    string source = readFile(string(argv[1]));
+int main(int argc, char **argv) {
+    llvm::cl::SetVersionPrinter(versionPrinter);
+    llvm::cl::extrahelp("\nADDITIONAL HELP:\n\n  This is the extra help\n");
+
+    llvm::cl::opt<bool> isVerbose("v", llvm::cl::desc("Verbos output"), llvm::cl::init(false));
+    llvm::cl::opt<string> inputFileName(llvm::cl::Positional, llvm::cl::desc("<input file>"), llvm::cl::Required);
+    llvm::cl::ParseCommandLineOptions(argc, argv, "Bits Runner Builder - LLVM based compiler for the Bits Runner Code language");
+
+    filesystem::path inputFilePath((string(inputFileName)));
+    string source = readFile(inputFilePath);
+    string moduleName = inputFilePath.filename().replace_extension();
+
     Lexer lexer(source);
     vector<shared_ptr<Token>> tokens = lexer.getTokens();
-    for (int i=0; i<tokens.size(); i++) {
-        cout << i << "|" << tokens.at(i)->toString();
-        if (i < tokens.size() - 1)
-            cout << ", ";
+    if (isVerbose) {
+        for (int i=0; i<tokens.size(); i++) {
+            cout << i << "|" << tokens.at(i)->toString();
+            if (i < tokens.size() - 1)
+                cout << ", ";
+        }
+        cout << endl << endl;
     }
-    cout << endl << endl;
 
     Parser parser(tokens);
     vector<shared_ptr<Statement>> statements = parser.getStatements();
-    for (shared_ptr<Statement> &statement : statements) {
-        cout << statement->toString(0);
-        cout << endl;
+    if (isVerbose) {
+        for (shared_ptr<Statement> &statement : statements) {
+            cout << statement->toString(0);
+            cout << endl;
+        }
+        cout << endl << endl;
     }
-    cout << endl << endl;
 
-    ModuleBuilder moduleBuilder(statements);
+    ModuleBuilder moduleBuilder(moduleName, inputFilePath, statements);
     shared_ptr<llvm::Module> module = moduleBuilder.getModule();
-    module->print(llvm::outs(), nullptr);
+    if (isVerbose) {
+        module->print(llvm::outs(), nullptr);
+    }
 
     //CodeGenerator codeGenerator(module);
     //codeGenerator.generateObjectFile("dummy.s");

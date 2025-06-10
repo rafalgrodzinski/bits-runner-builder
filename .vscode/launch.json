@@ -6,7 +6,7 @@
             "type": "lldb-dap",
             "request": "launch",
             "program": "${workspaceFolder}/brb",
-            "args": ["${workspaceFolder}/test.brc"],
+            "args": ["-v", "${workspaceFolder}/test.brc"],
             "internalConsoleOptions": "openOnSessionStart"
         }
 

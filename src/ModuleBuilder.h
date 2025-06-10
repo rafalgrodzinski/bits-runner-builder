@@ -16,6 +16,9 @@ using namespace std;
 
 class ModuleBuilder {
 private:
+    string moduleName;
+    string sourceFileName;
+
     shared_ptr<llvm::LLVMContext> context;
     shared_ptr<llvm::Module> module;
     shared_ptr<llvm::IRBuilder<>> builder;
@@ -48,7 +51,7 @@ private:
     llvm::Type *typeForValueType(ValueType valueType);
 
 public:
-    ModuleBuilder(vector<shared_ptr<Statement>> statements);
+    ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements);
     shared_ptr<llvm::Module> getModule();
 };
 
