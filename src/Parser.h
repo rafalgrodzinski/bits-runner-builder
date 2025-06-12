@@ -20,7 +20,7 @@ private:
     shared_ptr<Statement> matchStatementBlock();
     shared_ptr<Statement> matchStatementReturn();
     shared_ptr<Statement> matchStatementExpression();
-    shared_ptr<StatementInvalid> matchStatementInvalid();
+    shared_ptr<StatementInvalid> matchStatementInvalid(string message = "");
 
     shared_ptr<Expression> nextExpression();
     shared_ptr<Expression> matchEquality(); // =, !=

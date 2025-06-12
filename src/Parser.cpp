@@ -100,7 +100,7 @@ shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
 
     // Expect new line
     if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
-        return matchStatementInvalid();
+        return matchStatementInvalid("Expected a new line");
 
     return make_shared<StatementVarDeclaration>(identifierToken->getLexme(), valueType, expression);
 }
@@ -150,7 +150,7 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
     if (expression == nullptr)
         return nullptr;
     else if (!expression->isValid())
-        return make_shared<StatementInvalid>(tokens.at(currentIndex));
+        return make_shared<StatementInvalid>(tokens.at(currentIndex), expression->toString(0));
 
     // Consume new line
     tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
@@ -158,8 +158,8 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
     return make_shared<StatementExpression>(expression);
 }
 
-shared_ptr<StatementInvalid> Parser::matchStatementInvalid() {
-    return make_shared<StatementInvalid>(tokens.at(currentIndex));
+shared_ptr<StatementInvalid> Parser::matchStatementInvalid(string message) {
+    return make_shared<StatementInvalid>(tokens.at(currentIndex), message);
 }
 
 //
@@ -234,6 +234,10 @@ shared_ptr<Expression> Parser::matchPrimary() {
     if (expression != nullptr)
         return expression;
     
+    expression = matchExpressionVar();
+    if (expression != nullptr)
+        return expression;
+    
     expression = matchExpressionGrouping();
     if (expression != nullptr)
         return expression;
@@ -244,7 +248,7 @@ shared_ptr<Expression> Parser::matchPrimary() {
 shared_ptr<Expression> Parser::matchExpressionLiteral() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
-    if (tryMatchingTokenKinds({TokenKind::BOOL, TokenKind::INTEGER, TokenKind::REAL}, false, true))
+    if (tryMatchingTokenKinds(Token::tokensLiteral, false, true))
         return make_shared<ExpressionLiteral>(token);
 
     return nullptr;

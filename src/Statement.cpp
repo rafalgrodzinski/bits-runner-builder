@@ -172,10 +172,14 @@ string StatementExpression::toString(int indent) {
 
 //
 // StatementInvalid
-StatementInvalid::StatementInvalid(shared_ptr<Token> token):
-Statement(StatementKind::INVALID), token(token) {
+StatementInvalid::StatementInvalid(shared_ptr<Token> token, string message):
+Statement(StatementKind::INVALID), token(token), message(message) {
 }
 
 string StatementInvalid::toString(int indent) {
-    return "Invalid token " + token->toString() + " at " + to_string(token->getLine()) + ":" + to_string(token->getColumn()) + "\n";
+    return "Error for token " + token->getLexme() + " at " + to_string(token->getLine()) + ":" + to_string(token->getColumn()) + ": " + message + "\n";
+}
+
+string StatementInvalid::getMessage() {
+    return message;
 }

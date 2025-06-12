@@ -35,6 +35,11 @@ vector<TokenKind> Token::tokensBinary = {
     TokenKind::SLASH,
     TokenKind::PERCENT
 };
+vector<TokenKind> Token::tokensLiteral = {
+    TokenKind::BOOL,
+    TokenKind::INTEGER,
+    TokenKind::REAL
+};
 
 Token::Token(TokenKind kind, string lexme, int line, int column):
     kind(kind), lexme(lexme), line(line), column(column) {

@@ -20,6 +20,7 @@ public:
     static vector<TokenKind> tokensTerm;
     static vector<TokenKind> tokensFactor;
     static vector<TokenKind> tokensBinary;
+    static vector<TokenKind> tokensLiteral;
 
     Token(TokenKind kind, string lexme, int line, int column);
     TokenKind getKind();
