@@ -6,7 +6,7 @@ Parser::Parser(vector<shared_ptr<Token>> tokens): tokens(tokens) {
 vector<shared_ptr<Statement>> Parser::getStatements() {
     vector<shared_ptr<Statement>> statements;
 
-    while (tokens.at(currentIndex)->getKind() != TokenKind::END) {
+    while (!tryMatchingTokenKinds({TokenKind::END}, true, false)) {
         shared_ptr<Statement> statement = nextStatement();
         // Abort parsing if we got an error
         if (!statement->isValid()) {
@@ -45,7 +45,8 @@ shared_ptr<Statement> Parser::nextStatement() {
 }
 
 shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
-    if (!matchesTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::FUNCTION}))
+    //if (!matchesTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::FUNCTION}))
+     if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::FUNCTION}, true, false))
         return nullptr;
 
     shared_ptr<Token> identifierToken = tokens.at(currentIndex);
@@ -53,9 +54,10 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     currentIndex++; // skip colon
     currentIndex++; // skip fun
 
-    while (tokens.at(currentIndex)->getKind() != TokenKind::NEW_LINE) {
+    // FIXME: implement function arguments
+    while (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, false))
         currentIndex++;
-    }
+
     currentIndex++; // new line
     shared_ptr<Statement> statementBlock = matchStatementBlock();
     if (statementBlock == nullptr)
@@ -67,7 +69,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
 }
 
 shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
-    if (!matchesTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::TYPE}))
+    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::TYPE}, true, false))
         return nullptr;
 
     shared_ptr<Token> identifierToken = tokens.at(currentIndex);
@@ -77,9 +79,8 @@ shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
     currentIndex++; // skip fun
 
     // Expect left arrow
-    if (tokens.at(currentIndex)->getKind() != TokenKind::LEFT_ARROW)
+    if (!tryMatchingTokenKinds({TokenKind::LEFT_ARROW}, true, true))
         return matchStatementInvalid();
-    currentIndex++;
 
     shared_ptr<Expression> expression = nextExpression();
     if (expression == nullptr || !expression->isValid())
@@ -98,10 +99,8 @@ shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
         return matchStatementInvalid();
 
     // Expect new line
-    if (tokens.at(currentIndex)->getKind() != TokenKind::NEW_LINE)
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
         return matchStatementInvalid();
-    
-    currentIndex++;
 
     return make_shared<StatementVarDeclaration>(identifierToken->getLexme(), valueType, expression);
 }
@@ -109,7 +108,7 @@ shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
 shared_ptr<Statement> Parser::matchStatementBlock() {
     vector<shared_ptr<Statement>> statements;
 
-    while (!tokens.at(currentIndex)->isOfKind({TokenKind::SEMICOLON, TokenKind::COLON})) {
+    while (!tryMatchingTokenKinds({TokenKind::SEMICOLON, TokenKind::COLON}, false, false)) {
         shared_ptr<Statement> statement = nextStatement();
         if (statement == nullptr)
             return matchStatementInvalid();
@@ -119,34 +118,28 @@ shared_ptr<Statement> Parser::matchStatementBlock() {
             statements.push_back(statement);
     }
     // consune ';' only
-    if (tokens.at(currentIndex)->getKind() == TokenKind::SEMICOLON) {
-        currentIndex++;
-
-        if (!tokens.at(currentIndex)->isOfKind({TokenKind::NEW_LINE, TokenKind::END}))
+    if (tryMatchingTokenKinds({TokenKind::SEMICOLON}, true, true)) {
+        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE, TokenKind::END}, false, false))
             return matchStatementInvalid();
 
-        if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
-            currentIndex++;
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
     }
 
     return make_shared<StatementBlock>(statements);
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {
-    if (tokens.at(currentIndex)->getKind() != TokenKind::RETURN)
+    if (!tryMatchingTokenKinds({TokenKind::RETURN}, true, true))
         return nullptr;
-    
-    currentIndex++;
 
     shared_ptr<Expression> expression = nextExpression();
     if (expression != nullptr && !expression->isValid())
         return matchStatementInvalid();
 
-    if (!tokens.at(currentIndex)->isOfKind({TokenKind::NEW_LINE, TokenKind::SEMICOLON}))
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE, TokenKind::SEMICOLON}, false, false))
         return matchStatementInvalid();
     
-    if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
-        currentIndex++; // new line
+    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
     
     return make_shared<StatementReturn>(expression);
 }
@@ -160,8 +153,7 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
         return make_shared<StatementInvalid>(tokens.at(currentIndex));
 
     // Consume new line
-    if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
-        currentIndex++;
+    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
 
     return make_shared<StatementExpression>(expression);
 }
@@ -196,7 +188,7 @@ shared_ptr<Expression> Parser::matchEquality() {
     if (expression == nullptr || !expression->isValid())
         return expression;
 
-    while (tokens.at(currentIndex)->isOfKind(Token::tokensEquality))
+    while (tryMatchingTokenKinds({Token::tokensEquality}, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -207,7 +199,7 @@ shared_ptr<Expression> Parser::matchComparison() {
     if (expression == nullptr || !expression->isValid())
         return expression;
     
-    while (tokens.at(currentIndex)->isOfKind(Token::tokensComparison))
+    while (tryMatchingTokenKinds({Token::tokensComparison}, false, false))
         expression = matchExpressionBinary(expression);
     
     return expression;
@@ -218,7 +210,7 @@ shared_ptr<Expression> Parser::matchTerm() {
     if (expression == nullptr || !expression->isValid())
         return expression;
 
-    while (tokens.at(currentIndex)->isOfKind(Token::tokensTerm))
+    while (tryMatchingTokenKinds({Token::tokensTerm}, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -251,26 +243,23 @@ shared_ptr<Expression> Parser::matchPrimary() {
 
 shared_ptr<Expression> Parser::matchExpressionLiteral() {
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->isOfKind({TokenKind::BOOL, TokenKind::INTEGER, TokenKind::REAL})) {
-        currentIndex++;
+
+    if (tryMatchingTokenKinds({TokenKind::BOOL, TokenKind::INTEGER, TokenKind::REAL}, false, true))
         return make_shared<ExpressionLiteral>(token);
-    }
 
     return nullptr;
 }
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->getKind() == TokenKind::LEFT_PAREN) {
-        currentIndex++;
+    if (tryMatchingTokenKinds({TokenKind::LEFT_PAREN}, true, true)) {
         shared_ptr<Expression> expression = matchTerm();
         // has grouped expression failed?
         if (expression == nullptr) {
             return matchExpressionInvalid();
         } else if(!expression->isValid()) {
             return expression;
-        } else if (tokens.at(currentIndex)->getKind() == TokenKind::RIGHT_PAREN) {
-            currentIndex++;
+        } else if (tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
             return make_shared<ExpressionGrouping>(expression);
         } else {
             return matchExpressionInvalid();
@@ -284,17 +273,13 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     shared_ptr<Token> token = tokens.at(currentIndex);
     shared_ptr<Expression> right;
     // What level of binary expression are we having?
-    if (token->isOfKind(Token::tokensEquality)) {
-        currentIndex++;
+    if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
-    } else if (token->isOfKind(Token::tokensComparison)) {
-        currentIndex++;
+    } else if (tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
         right = matchTerm();
-    } else if (token->isOfKind(Token::tokensTerm)) {
-        currentIndex++;
+    } else if (tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
         right = matchFactor();
-    } else if (token->isOfKind(Token::tokensFactor)) {
-        currentIndex++;
+    } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
         right = matchPrimary();
     }
 
@@ -312,9 +297,10 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
     // Try maching '?'
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->getKind() != TokenKind::QUESTION)
+
+    //if (!tryAdvancingForOneOfTokenKinds({TokenKind::QUESTION}))
+    if (!tryMatchingTokenKinds({TokenKind::QUESTION}, true, true))
         return nullptr;
-    currentIndex++;
 
     // Then get condition
     shared_ptr<Expression> condition = nextExpression();
@@ -324,9 +310,9 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         return condition;
     
     // Match ':', '\n', or ':\n'
-    if (matchesTokenKinds({TokenKind::COLON, TokenKind::NEW_LINE}))
+    if (tryMatchingTokenKinds({TokenKind::COLON, TokenKind::NEW_LINE}, true, false))
         currentIndex += 2;
-    else if (tokens.at(currentIndex)->isOfKind({TokenKind::COLON, TokenKind::NEW_LINE}))
+    else if (tryMatchingTokenKinds({TokenKind::COLON, TokenKind::NEW_LINE}, false, false))
         currentIndex++;
     else
         return matchExpressionInvalid();
@@ -341,10 +327,8 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     // Match else block
     shared_ptr<Statement> elseBlock;
 
-    if (tokens.at(currentIndex)->getKind() == TokenKind::COLON) {
-        currentIndex++;
-        if (tokens.at(currentIndex)->getKind() == TokenKind::NEW_LINE)
-            currentIndex++;
+    if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
 
         elseBlock = matchStatementBlock();
         if (elseBlock == nullptr)
@@ -362,10 +346,9 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
 
 shared_ptr<Expression> Parser::matchExpressionVar() {
     shared_ptr<Token> token = tokens.at(currentIndex);
-    if (token->isOfKind({TokenKind::IDENTIFIER})) {
-        currentIndex++;
+
+    if (tryMatchingTokenKinds({TokenKind::IDENTIFIER}, true, true))
         return make_shared<ExpressionVar>(token->getLexme());
-    }
     
     return nullptr;
 }
@@ -374,14 +357,30 @@ shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid() {
     return make_shared<ExpressionInvalid>(tokens.at(currentIndex));
 }
 
-bool Parser::matchesTokenKinds(vector<TokenKind> kinds) {
-    if (currentIndex + kinds.size() >= tokens.size())
+bool Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {
+    int requiredCount = shouldMatchAll ? kinds.size() : 1;
+    if (currentIndex + requiredCount > tokens.size())
         return false;
+    
+    if (shouldMatchAll) {
+        for (int i=0; i<kinds.size(); i++) {
+            if (kinds.at(i) != tokens.at(currentIndex + i)->getKind())
+                return false;
+        }
 
-    for (int i=0; i<kinds.size(); i++) {
-        if (kinds.at(i) != tokens.at(currentIndex + i)->getKind())
-            return false;
+        if (shouldAdvance)
+            currentIndex += kinds.size();
+        
+        return true;
+    } else {
+        for (int i=0; i<kinds.size(); i++) {
+            if (kinds.at(i) == tokens.at(currentIndex)->getKind()) {
+                if (shouldAdvance)
+                    currentIndex++;
+                return true;
+            }
+        }
+
+        return false;
     }
-
-    return true;
 }
