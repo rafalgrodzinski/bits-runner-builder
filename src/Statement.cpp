@@ -1,5 +1,18 @@
 #include "Statement.h"
 
+string valueTypeToString(ValueType valueType) {
+    switch (valueType) {
+        case ValueType::VOID:
+            return "NONE";
+        case ValueType::BOOL:
+            return "BOOL";
+        case ValueType::SINT32:
+            return "SINT32";
+        case ValueType::REAL32:
+            return "REAL32";
+    }
+}
+
 //
 // Statement
 Statement::Statement(StatementKind kind): kind(kind) {
@@ -39,7 +52,9 @@ string StatementFunctionDeclaration::toString(int indent) {
     string value = "";
     for (int ind=0; ind<indent; ind++)
         value += "  ";
-    value += "FUNCTION(" + name + "):\n";
+    value += "FUNCTION(";
+    value += valueTypeToString(returnValueType);
+    value += ", " + name + "):\n";
     value += statementBlock->toString(indent+1);
     for (int ind=0; ind<indent; ind++)
         value += "  ";
@@ -70,20 +85,7 @@ string StatementVarDeclaration::toString(int indent) {
     for (int ind=0; ind<indent; ind++)
         value += "  ";
     value += name + "(";
-    switch (valueType) {
-        case ValueType::VOID:
-            value += "VOID";
-            break;
-        case ValueType::BOOL:
-            value += "BOOL";
-            break;
-        case ValueType::SINT32:
-            value += "SINT32";
-            break;
-        case ValueType::REAL32:
-            value += "REAL32";
-            break;
-    }
+    value += valueTypeToString(valueType);
     value += "):\n";
     for (int ind=0; ind<indent+1; ind++)
         value += "  ";

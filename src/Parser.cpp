@@ -53,9 +53,22 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     currentIndex++; // skip colon
     currentIndex++; // skip fun
 
-    // FIXME: implement function arguments
-    while (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, false))
-        currentIndex++;
+    // Return type
+    ValueType returnType = ValueType::VOID;
+    if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
+        shared_ptr<Token> valueTypeToken = tokens.at(currentIndex);
+
+        if (valueTypeToken->getLexme().compare("bool") == 0)
+            returnType = ValueType::BOOL;
+        else if (valueTypeToken->getLexme().compare("sint32") == 0)
+            returnType = ValueType::SINT32;
+        else if (valueTypeToken->getLexme().compare("real32") == 0)
+            returnType = ValueType::REAL32;
+        else
+            return matchStatementInvalid("Expected return type");
+
+        currentIndex++; // type
+    }
 
     currentIndex++; // new line
     shared_ptr<Statement> statementBlock = matchStatementBlock({TokenKind::SEMICOLON}, true);
@@ -67,7 +80,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     if(!tryMatchingTokenKinds({TokenKind::NEW_LINE}, false, true))
         return matchStatementInvalid("Expected a new line after a function declaration");
 
-    return make_shared<StatementFunctionDeclaration>(identifierToken->getLexme(), ValueType::SINT32, dynamic_pointer_cast<StatementBlock>(statementBlock));
+    return make_shared<StatementFunctionDeclaration>(identifierToken->getLexme(), returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
 
 shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
@@ -78,26 +91,25 @@ shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
     currentIndex++;
     currentIndex++; // skip colon
     shared_ptr<Token> valueTypeToken = tokens.at(currentIndex);
-    currentIndex++; // skip fun
+
+    ValueType valueType;
+    if (valueTypeToken->getLexme().compare("bool") == 0)
+        valueType = ValueType::BOOL;
+    else if (valueTypeToken->getLexme().compare("sint32") == 0)
+        valueType = ValueType::SINT32;
+    else if (valueTypeToken->getLexme().compare("real32") == 0)
+        valueType = ValueType::REAL32;
+    else
+        return matchStatementInvalid("Invalid type");
+
+    currentIndex++; // type
 
     // Expect left arrow
     if (!tryMatchingTokenKinds({TokenKind::LEFT_ARROW}, true, true))
-        return matchStatementInvalid();
+        return matchStatementInvalid("Expected left arrow");
 
     shared_ptr<Expression> expression = nextExpression();
     if (expression == nullptr || !expression->isValid())
-        return matchStatementInvalid();
-
-    ValueType valueType;
-    if (valueTypeToken->getLexme().compare("Void") == 0)
-        valueType = ValueType::VOID;
-    else if (valueTypeToken->getLexme().compare("Bool") == 0)
-        valueType = ValueType::BOOL;
-    else if (valueTypeToken->getLexme().compare("SInt32") == 0)
-        valueType = ValueType::SINT32;
-    else if (valueTypeToken->getLexme().compare("Real32") == 0)
-        valueType = ValueType::REAL32;
-    else
         return matchStatementInvalid();
 
     // Expect new line
