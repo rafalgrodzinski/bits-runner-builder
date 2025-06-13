@@ -17,7 +17,7 @@ private:
     shared_ptr<Statement> nextStatement();
     shared_ptr<Statement> matchStatementFunctionDeclaration();
     shared_ptr<Statement> matchStatementVarDeclaration();
-    shared_ptr<Statement> matchStatementBlock();
+    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal);
     shared_ptr<Statement> matchStatementReturn();
     shared_ptr<Statement> matchStatementExpression();
     shared_ptr<StatementInvalid> matchStatementInvalid(string message = "");

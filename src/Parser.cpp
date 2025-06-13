@@ -45,7 +45,6 @@ shared_ptr<Statement> Parser::nextStatement() {
 }
 
 shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
-    //if (!matchesTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::FUNCTION}))
      if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::FUNCTION}, true, false))
         return nullptr;
 
@@ -59,13 +58,16 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
         currentIndex++;
 
     currentIndex++; // new line
-    shared_ptr<Statement> statementBlock = matchStatementBlock();
+    shared_ptr<Statement> statementBlock = matchStatementBlock({TokenKind::SEMICOLON}, true);
     if (statementBlock == nullptr)
         return matchStatementInvalid();
     else if (!statementBlock->isValid())
         return statementBlock;
-    else
-        return make_shared<StatementFunctionDeclaration>(identifierToken->getLexme(), ValueType::SINT32, dynamic_pointer_cast<StatementBlock>(statementBlock));
+
+    if(!tryMatchingTokenKinds({TokenKind::NEW_LINE}, false, true))
+        return matchStatementInvalid("Expected a new line after a function declaration");
+
+    return make_shared<StatementFunctionDeclaration>(identifierToken->getLexme(), ValueType::SINT32, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
 
 shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
@@ -99,16 +101,17 @@ shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
         return matchStatementInvalid();
 
     // Expect new line
-    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
-        return matchStatementInvalid("Expected a new line");
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, false, true))
+        return matchStatementInvalid("Expected a new line after variable declaration");
 
     return make_shared<StatementVarDeclaration>(identifierToken->getLexme(), valueType, expression);
 }
 
-shared_ptr<Statement> Parser::matchStatementBlock() {
+shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal) {
     vector<shared_ptr<Statement>> statements;
 
-    while (!tryMatchingTokenKinds({TokenKind::SEMICOLON, TokenKind::COLON}, false, false)) {
+    bool hasNewLineTerminal = find(terminalTokenKinds.begin(), terminalTokenKinds.end(), TokenKind::NEW_LINE) != terminalTokenKinds.end();
+    while (!tryMatchingTokenKinds(terminalTokenKinds, false, shouldConsumeTerminal)) {
         shared_ptr<Statement> statement = nextStatement();
         if (statement == nullptr)
             return matchStatementInvalid();
@@ -116,14 +119,11 @@ shared_ptr<Statement> Parser::matchStatementBlock() {
             return statement;
         else
             statements.push_back(statement);
-    }
-    // consune ';' only
-    if (tryMatchingTokenKinds({TokenKind::SEMICOLON}, true, true)) {
-        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE, TokenKind::END}, false, false))
-            return matchStatementInvalid();
 
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
+        if (hasNewLineTerminal && tokens.at(currentIndex-1)->getKind() == TokenKind::NEW_LINE)
+            currentIndex--;
     }
+
 
     return make_shared<StatementBlock>(statements);
 }
@@ -302,7 +302,6 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     // Try maching '?'
     shared_ptr<Token> token = tokens.at(currentIndex);
 
-    //if (!tryAdvancingForOneOfTokenKinds({TokenKind::QUESTION}))
     if (!tryMatchingTokenKinds({TokenKind::QUESTION}, true, true))
         return nullptr;
 
@@ -313,37 +312,33 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     else if (!condition->isValid())
         return condition;
     
-    // Match ':', '\n', or ':\n'
-    if (tryMatchingTokenKinds({TokenKind::COLON, TokenKind::NEW_LINE}, true, false))
-        currentIndex += 2;
-    else if (tryMatchingTokenKinds({TokenKind::COLON, TokenKind::NEW_LINE}, false, false))
-        currentIndex++;
-    else
-        return matchExpressionInvalid();
+    // Consume optional ':'
+    tryMatchingTokenKinds({TokenKind::COLON}, true, true);
+    // Consume optional new line
+    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
 
     // Match then block
-    shared_ptr<Statement> thenBlock = matchStatementBlock();
+    shared_ptr<Statement> thenBlock = matchStatementBlock({TokenKind::COLON, TokenKind::SEMICOLON}, false);
     if (thenBlock == nullptr)
         return matchExpressionInvalid();
     else if (!thenBlock->isValid())
         return matchExpressionInvalid(); // FIXME
 
-    // Match else block
+    // Match else block. Then and else block are separated by ':'
     shared_ptr<Statement> elseBlock;
-
     if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
+        bool isSingleLine = !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
+        vector<TokenKind> terminalTokens = {TokenKind::SEMICOLON};
+        if (isSingleLine)
+            terminalTokens.push_back(TokenKind::NEW_LINE);
 
-        elseBlock = matchStatementBlock();
+        elseBlock = matchStatementBlock(terminalTokens, false);
         if (elseBlock == nullptr)
             return matchExpressionInvalid();
         else if (!elseBlock->isValid())
             return matchExpressionInvalid(); // FIXME
-
-        // hack to treat statement as an expression
-        if (tokens.at(currentIndex-1)->getKind() == TokenKind::NEW_LINE)
-            currentIndex--;
     }
+    tryMatchingTokenKinds({TokenKind::SEMICOLON}, true, true);
 
     return make_shared<ExpressionIfElse>(condition, dynamic_pointer_cast<StatementBlock>(thenBlock), dynamic_pointer_cast<StatementBlock>(elseBlock));
 }
