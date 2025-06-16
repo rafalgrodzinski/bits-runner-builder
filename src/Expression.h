@@ -38,7 +38,7 @@ private:
 public:
     ExpressionLiteral(shared_ptr<Token> token);
     bool getBoolValue();
-    int32_t getSInt32Value();
+    int32_t getSint32Value();
     float getReal32Value();
     string toString(int indent) override;
 };

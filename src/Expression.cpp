@@ -147,7 +147,7 @@ bool ExpressionLiteral::getBoolValue() {
     return boolValue;
 }
 
-int32_t ExpressionLiteral::getSInt32Value() {
+int32_t ExpressionLiteral::getSint32Value() {
     return sint32Value;
 }
 

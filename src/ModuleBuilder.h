@@ -25,7 +25,7 @@ private:
 
     llvm::Type *typeVoid;
     llvm::Type *typeBool;
-    llvm::IntegerType *typeSInt32;
+    llvm::IntegerType *typeSint32;
     llvm::Type *typeReal32;
 
     vector<shared_ptr<Statement>> statements;
@@ -43,9 +43,9 @@ private:
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
-    llvm::Value *valueForBinaryBool(shared_ptr<ExpressionBinary> expression);
-    llvm::Value *valueForBinaryInteger(shared_ptr<ExpressionBinary> expression);
-    llvm::Value *valueForBinaryReal(shared_ptr<ExpressionBinary> expression);
+    llvm::Value *valueForBinaryBool(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryInteger(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryReal(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVar(shared_ptr<ExpressionVar> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);

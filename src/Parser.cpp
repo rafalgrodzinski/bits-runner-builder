@@ -103,12 +103,11 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
 }
 
 shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
-    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::COLON, TokenKind::TYPE}, true, false))
+    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false))
         return nullptr;
 
     shared_ptr<Token> identifierToken = tokens.at(currentIndex);
-    currentIndex++;
-    currentIndex++; // skip colon
+    currentIndex++; // identifier
     shared_ptr<Token> valueTypeToken = tokens.at(currentIndex);
 
     ValueType valueType;
