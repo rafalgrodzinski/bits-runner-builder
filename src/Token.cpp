@@ -104,6 +104,8 @@ string Token::toString() {
             return "(";
         case TokenKind::RIGHT_PAREN:
             return ")";
+        case TokenKind::COMMA:
+            return ",";
         case TokenKind::COLON:
             return ":";
         case TokenKind::SEMICOLON:

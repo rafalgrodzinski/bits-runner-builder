@@ -23,7 +23,7 @@ string Expression::toString(int indent) {
 //
 // ExpressionBinary
 ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
-Expression(ExpressionKind::BINARY, ValueType::VOID), left(left), right(right) {
+Expression(ExpressionKind::BINARY, ValueType::NONE), left(left), right(right) {
     // Types must match
     if (left->getValueType() != right->getValueType())
         exit(1);
@@ -124,7 +124,7 @@ string ExpressionBinary::toString(int indent) {
 //
 // ExpressionLiteral
 ExpressionLiteral::ExpressionLiteral(shared_ptr<Token> token):
-Expression(ExpressionKind::LITERAL, ValueType::VOID) {
+Expression(ExpressionKind::LITERAL, ValueType::NONE) {
     switch (token->getKind()) {
         case TokenKind::BOOL:
             boolValue = token->getLexme().compare("true") == 0;
@@ -157,8 +157,8 @@ float ExpressionLiteral::getReal32Value() {
 
 string ExpressionLiteral::toString(int indent) {
     switch (valueType) {
-        case ValueType::VOID:
-            return "VOID";
+        case ValueType::NONE:
+            return "NONE";
         case ValueType::BOOL:
             return boolValue ? "true" : "false";
         case ValueType::SINT32:
@@ -185,7 +185,7 @@ string ExpressionGrouping::toString(int indent) {
 //
 // ExpressionIfElse
 ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<StatementBlock> thenBlock, shared_ptr<StatementBlock> elseBlock):
-Expression(ExpressionKind::IF_ELSE, ValueType::VOID), condition(condition), thenBlock(thenBlock), elseBlock(elseBlock) {
+Expression(ExpressionKind::IF_ELSE, ValueType::NONE), condition(condition), thenBlock(thenBlock), elseBlock(elseBlock) {
     // Condition must evaluate to bool
     if (condition->getValueType() != ValueType::BOOL)
         exit(1);
@@ -199,7 +199,7 @@ Expression(ExpressionKind::IF_ELSE, ValueType::VOID), condition(condition), then
         exit(1);
 
     // get type or default to void
-    valueType = thenExpression ? thenExpression->getValueType() : ValueType::VOID;
+    valueType = thenExpression ? thenExpression->getValueType() : ValueType::NONE;
 }
 
 shared_ptr<Expression> ExpressionIfElse::getCondition() {
@@ -235,7 +235,7 @@ string ExpressionIfElse::toString(int indent) {
 //
 // ExpressionVar
 ExpressionVar::ExpressionVar(string name):
-Expression(ExpressionKind::VAR, ValueType::VOID), name(name) {
+Expression(ExpressionKind::VAR, ValueType::NONE), name(name) {
 }
 
 string ExpressionVar::getName() {
@@ -249,7 +249,7 @@ string ExpressionVar::toString(int indent) {
 //
 // ExpressionInvalid
 ExpressionInvalid::ExpressionInvalid(shared_ptr<Token> token):
-Expression(ExpressionKind::INVALID, ValueType::VOID), token(token) {
+Expression(ExpressionKind::INVALID, ValueType::NONE), token(token) {
 }
 
 shared_ptr<Token> ExpressionInvalid::getToken() {

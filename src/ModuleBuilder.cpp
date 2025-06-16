@@ -97,7 +97,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
 
 llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expression) {
     switch (expression->getValueType()) {
-        case ValueType::VOID:
+        case ValueType::NONE:
             return llvm::UndefValue::get(typeVoid);
         case ValueType::BOOL:
             return llvm::ConstantInt::get(typeBool, expression->getBoolValue(), true);
@@ -257,7 +257,7 @@ llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVar> expression) {
 
 llvm::Type *ModuleBuilder::typeForValueType(ValueType valueType) {
     switch (valueType) {
-        case ValueType::VOID:
+        case ValueType::NONE:
             return typeVoid;
         case ValueType::BOOL:
             return typeBool;

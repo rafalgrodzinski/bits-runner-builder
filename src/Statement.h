@@ -34,12 +34,14 @@ public:
 class StatementFunctionDeclaration: public Statement {
 private:
     string name;
+    vector<pair<string, ValueType>> arguments;
     ValueType returnValueType;
     shared_ptr<StatementBlock> statementBlock;
 
 public:
-    StatementFunctionDeclaration(string name, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock);
+    StatementFunctionDeclaration(string name, vector<pair<string, ValueType>> arguments, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock);
     string getName();
+    vector<pair<string, ValueType>> getArguments();
     ValueType getReturnValueType();
     shared_ptr<StatementBlock> getStatementBlock();
     string toString(int indent) override;

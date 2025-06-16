@@ -37,6 +37,7 @@ private:
     shared_ptr<ExpressionInvalid> matchExpressionInvalid();
 
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
+    optional<ValueType> valueTypeForToken(shared_ptr<Token> token);
 
 public:
     Parser(vector<shared_ptr<Token>> tokens);

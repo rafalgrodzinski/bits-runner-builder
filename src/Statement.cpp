@@ -2,7 +2,7 @@
 
 string valueTypeToString(ValueType valueType) {
     switch (valueType) {
-        case ValueType::VOID:
+        case ValueType::NONE:
             return "NONE";
         case ValueType::BOOL:
             return "BOOL";
@@ -32,12 +32,16 @@ string Statement::toString(int indent) {
 
 //
 // StatementFunctionDeclaration
-StatementFunctionDeclaration::StatementFunctionDeclaration(string name, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock):
-Statement(StatementKind::FUNCTION_DECLARATION), name(name), returnValueType(returnValueType), statementBlock(statementBlock) {
+StatementFunctionDeclaration::StatementFunctionDeclaration(string name, vector<pair<string, ValueType>> arguments, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock):
+Statement(StatementKind::FUNCTION_DECLARATION), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
 }
 
 string StatementFunctionDeclaration::getName() {
     return name;
+}
+
+vector<pair<string, ValueType>> StatementFunctionDeclaration::getArguments() {
+    return arguments;
 }
 
 ValueType StatementFunctionDeclaration::getReturnValueType() {

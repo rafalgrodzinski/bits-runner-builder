@@ -112,6 +112,10 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = match(TokenKind::COMMA, ",", false);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::COLON, ":", false);
     if (token != nullptr)
         return token;
@@ -191,6 +195,7 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
     
+    // literal
     token = match(TokenKind::BOOL, "true", true);
     if (token != nullptr)
         return token;
@@ -199,7 +204,6 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
     
-    // literal
     token = matchReal();
     if (token != nullptr)
         return token;
@@ -208,11 +212,20 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    // identifier
-    token = matchType();
+    // type
+    token = match(TokenKind::TYPE, "bool", true);
     if (token != nullptr)
         return token;
 
+    token = match(TokenKind::TYPE, "sint32", true);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::TYPE, "real32", true);
+    if (token != nullptr)
+        return token;
+
+    // identifier
     token = matchIdentifier();
     if (token != nullptr)
         return token;
@@ -280,30 +293,6 @@ shared_ptr<Token> Lexer::matchReal() {
     return token;
 }
 
-shared_ptr<Token> Lexer::matchType() {
-    bool isVarDec = tokens.size() >= 2 &&
-        tokens.at(tokens.size() - 1)->getKind() == TokenKind::COLON &&
-        tokens.at(tokens.size() - 2)->getKind() == TokenKind::IDENTIFIER;
-
-    bool isFunDec = tokens.size() >= 1 &&
-        tokens.at(tokens.size() - 1)->getKind() == TokenKind::RIGHT_ARROW;
-    
-    if (!isVarDec && !isFunDec)
-        return nullptr;
-
-    int nextIndex = currentIndex;
-    while (nextIndex < source.length() && isIdentifier(nextIndex))
-        nextIndex++;
-
-    if (nextIndex == currentIndex || !isSeparator(nextIndex))
-        return nullptr;
-
-    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, currentLine, currentColumn);
-    advanceWithToken(token);
-    return token;
-}
-
 shared_ptr<Token> Lexer::matchIdentifier() {
     int nextIndex = currentIndex;
 
@@ -365,6 +354,7 @@ bool Lexer::isSeparator(int index) {
         case '>':
         case '(':
         case ')':
+        case ',':
         case ':':
         case ';':
         case ' ':

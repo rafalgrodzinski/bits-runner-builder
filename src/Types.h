@@ -17,6 +17,7 @@ enum class TokenKind {
     
     LEFT_PAREN,
     RIGHT_PAREN,
+    COMMA,
     COLON,
     SEMICOLON,
     QUESTION,
@@ -58,7 +59,7 @@ enum class StatementKind {
 };
 
 enum class ValueType {
-    VOID,
+    NONE,
     BOOL,
     SINT32,
     REAL32
