@@ -52,7 +52,10 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclara
     // build function declaration
     llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), types, false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::InternalLinkage, statement->getName(), module.get());
+<<<<<<< HEAD
     funMap[statement->getName()] = fun;
+=======
+>>>>>>> c6ace32 (Pass arguments into function)
 
     // define function body
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
@@ -154,7 +157,11 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
     }
 
+<<<<<<< HEAD
     failed("Unexpected operation");
+=======
+    exit(1);
+>>>>>>> c6ace32 (Pass arguments into function)
 }
 
 llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
