@@ -102,7 +102,7 @@ string StatementVarDeclaration::toString(int indent) {
 // StatementBlock
 StatementBlock::StatementBlock(vector<shared_ptr<Statement>> statements):
 Statement(StatementKind::BLOCK), statements(statements) {
-    if (statements.back()->getKind() == StatementKind::EXPRESSION) {
+    if (!statements.empty() && statements.back()->getKind() == StatementKind::EXPRESSION) {
         statementExpression = dynamic_pointer_cast<StatementExpression>(statements.back());
         this->statements.pop_back();
     }
