@@ -46,6 +46,7 @@ enum class ExpressionKind {
     BINARY,
     IF_ELSE,
     VAR,
+    CALL,
     INVALID
 };
 

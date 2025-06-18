@@ -264,6 +264,10 @@ shared_ptr<Expression> Parser::matchPrimary() {
     expression = matchExpressionLiteral();
     if (expression != nullptr)
         return expression;
+        
+    expression = matchExpressionCall();
+    if (expression != nullptr)
+        return expression;
     
     expression = matchExpressionVar();
     if (expression != nullptr)
@@ -359,7 +363,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     shared_ptr<Statement> elseBlock;
     if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
         bool isSingleLine = !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
-        vector<TokenKind> terminalTokens = {TokenKind::SEMICOLON};
+        vector<TokenKind> terminalTokens = {TokenKind::SEMICOLON, TokenKind::COMMA, TokenKind::RIGHT_PAREN};
         if (isSingleLine)
             terminalTokens.push_back(TokenKind::NEW_LINE);
 
@@ -381,6 +385,31 @@ shared_ptr<Expression> Parser::matchExpressionVar() {
         return make_shared<ExpressionVar>(token->getLexme());
     
     return nullptr;
+}
+
+shared_ptr<Expression> Parser::matchExpressionCall() {
+    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::LEFT_PAREN}, true, false))
+        return nullptr;
+
+    shared_ptr<Token> identifierToken = tokens.at(currentIndex);
+    currentIndex++; // identifier
+    currentIndex++; // left parenthesis
+
+    vector<shared_ptr<Expression>> argumentExpressions;
+    do {
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
+
+        shared_ptr<Expression> argumentExpression = nextExpression();
+        if (argumentExpression == nullptr || !argumentExpression->isValid())
+            return argumentExpression;
+        argumentExpressions.push_back(argumentExpression);
+    } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+
+    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
+    if (!tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true))
+        return matchExpressionInvalid();
+
+    return make_shared<ExpressionCall>(identifierToken->getLexme(), argumentExpressions);
 }
 
 shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid() {
