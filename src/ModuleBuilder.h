@@ -30,6 +30,7 @@ private:
 
     vector<shared_ptr<Statement>> statements;
     map<string, llvm::AllocaInst*> allocaMap;
+    map<string, llvm::Function*> funMap;
 
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement);
@@ -47,8 +48,10 @@ private:
     llvm::Value *valueForBinaryReal(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVar(shared_ptr<ExpressionVar> expression);
+    llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
 
     llvm::Type *typeForValueType(ValueType valueType);
+    void failed(string message);
 
 public:
     ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements);

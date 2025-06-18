@@ -38,13 +38,14 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildExpression(dynamic_pointer_cast<StatementExpression>(statement));
             return;
         default:
-            exit(1);
+            failed("Unexpected statement");
     }
 }
 
 void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement) {
     llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::InternalLinkage, statement->getName(), module.get());
+    funMap[statement->getName()] = fun;
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
     builder->SetInsertPoint(block);
     buildStatement(statement->getStatementBlock());
@@ -90,8 +91,10 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VAR:
             return valueForVar(dynamic_pointer_cast<ExpressionVar>(expression));
+        case ExpressionKind::CALL:
+            return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
         default:
-            exit(1);
+            failed("Unexpected expression");
     }
 }
 
@@ -120,8 +123,10 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
             return valueForBinaryInteger(expression);
         case ValueType::REAL32:
             return valueForBinaryReal(expression);
+        case ValueType::NONE:
+            return valueForBinaryInteger(expression);
         default:
-            exit(1);
+            failed("Unexpected operation");
     }
 }
 
@@ -135,7 +140,7 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(shared_ptr<ExpressionBinary> expr
     case ExpressionBinary::Operation::NOT_EQUAL:
         return builder->CreateICmpNE(leftValue, rightValue);
     default:
-        exit(1);
+        failed("Undefined operation for boolean operands");
     }
 }
 
@@ -203,7 +208,6 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     shared_ptr<Expression> conditionExpression = expression->getCondition();
 
     llvm::Function *fun = builder->GetInsertBlock()->getParent();
-    //llvm::Value *conditionValue = valueForBinary(conditionExpression);
     llvm::Value *conditionValue = valueForExpression(conditionExpression);
 
     llvm::BasicBlock *thenBlock = llvm::BasicBlock::Create(*context, "thenBlock", fun);
@@ -217,14 +221,11 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     builder->SetInsertPoint(thenBlock);
     llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getStatementExpression()->getExpression());
     buildStatement(expression->getThenBlock());
-    //llvm::Value *thenValue = llvm::ConstantInt::get(typeSInt32, 11, true);
-    //buildStatement(expression->getThenBlock());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
 
     // Else
     fun->insert(fun->end(), elseBlock);
-    //llvm::Value *elseValue = llvm::ConstantInt::get(typeSInt32, 22, true);
     builder->SetInsertPoint(elseBlock);
     llvm::Value *elseValue = nullptr;
     if (expression->getElseBlock() != nullptr) {
@@ -243,16 +244,27 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     if (elseValue != nullptr)
         phi->addIncoming(elseValue, elseBlock);
 
-    //return llvm::ConstantInt::get(int32Type, 42, true);
     return phi;
 }
 
 llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVar> expression) {
     llvm::AllocaInst *alloca = allocaMap[expression->getName()];
     if (alloca == nullptr)
-        exit(1);
+        failed("Variable " + expression->getName() + " not defined");
 
     return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getName());
+}
+
+llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
+    llvm::Function *fun = funMap[expression->getName()];
+    failed("Function " + expression->getName() + " not defined");
+    llvm::FunctionType *funType = fun->getFunctionType();
+    vector<llvm::Value*> argValues;
+    for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
+        llvm::Value *argValue = valueForExpression(argumentExpression);
+        argValues.push_back(argValue);
+    }
+    builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
 }
 
 llvm::Type *ModuleBuilder::typeForValueType(ValueType valueType) {
@@ -266,4 +278,9 @@ llvm::Type *ModuleBuilder::typeForValueType(ValueType valueType) {
         case ValueType::REAL32:
             return typeReal32;
     }
+}
+
+void ModuleBuilder::failed(string message) {
+    cerr << "Building module " << moduleName << " failed: " << message << endl;
+    exit(1);
 }
