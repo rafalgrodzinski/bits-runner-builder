@@ -5,7 +5,7 @@ using namespace std;
 CodeGenerator::CodeGenerator(shared_ptr<llvm::Module> module): module(module) {
 }
 
-void CodeGenerator::generateObjectFile(string fileName) {
+void CodeGenerator::generateObjectFile(OutputKind outputKind) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
@@ -26,6 +26,19 @@ void CodeGenerator::generateObjectFile(string fileName) {
     module->setDataLayout(targetMachine->createDataLayout());
     module->setTargetTriple(targetTriple);
 
+    string fileName;
+    llvm::CodeGenFileType codeGenFileType;
+    switch (outputKind) {
+        case OutputKind::ASSEMBLY:
+            fileName = string(module->getName()) + ".asm";
+            codeGenFileType = llvm::CodeGenFileType::AssemblyFile;
+            break;
+        case OutputKind::OBJECT:
+            fileName = string(module->getName()) + ".o";
+            codeGenFileType = llvm::CodeGenFileType::ObjectFile;
+            break;
+    }
+
     error_code errorCode;
     llvm::raw_fd_ostream outputFile(fileName, errorCode, llvm::sys::fs::OF_None);
     if (errorCode) {
@@ -34,8 +47,8 @@ void CodeGenerator::generateObjectFile(string fileName) {
     }
 
     llvm::legacy::PassManager passManager;
-    if (targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
-        cerr << "Failed to emit file" << endl;
+    if (targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, codeGenFileType)) {
+        cerr << "Failed to generate file " << fileName << endl;
         exit(1);
     }
 

@@ -37,8 +37,15 @@ void versionPrinter(llvm::raw_ostream &os) {
 int main(int argc, char **argv) {
     llvm::cl::SetVersionPrinter(versionPrinter);
     llvm::cl::extrahelp("\nADDITIONAL HELP:\n\n  This is the extra help\n");
-
     llvm::cl::opt<bool> isVerbose("v", llvm::cl::desc("Verbos output"), llvm::cl::init(false));
+    llvm::cl::opt<CodeGenerator::OutputKind> outputKind(
+        llvm::cl::desc("Choose generated output:"),
+        llvm::cl::init(CodeGenerator::OutputKind::OBJECT),
+        llvm::cl::values(
+            clEnumValN(CodeGenerator::OutputKind::OBJECT, "c", "Generate object file"),
+            clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "S", "Generate assembly file")
+        )
+    );
     llvm::cl::opt<string> inputFileName(llvm::cl::Positional, llvm::cl::desc("<input file>"), llvm::cl::Required);
     llvm::cl::ParseCommandLineOptions(argc, argv, "Bits Runner Builder - LLVM based compiler for the Bits Runner Code language");
 
@@ -73,8 +80,8 @@ int main(int argc, char **argv) {
         module->print(llvm::outs(), nullptr);
     }
 
-    //CodeGenerator codeGenerator(module);
-    //codeGenerator.generateObjectFile("dummy.s");
+    CodeGenerator codeGenerator(module);
+    codeGenerator.generateObjectFile(outputKind);
 
     return 0;
 }

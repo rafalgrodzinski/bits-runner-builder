@@ -14,12 +14,18 @@
 using namespace std;
 
 class CodeGenerator {
+public:
+    enum class OutputKind {
+        ASSEMBLY,
+        OBJECT
+    };
+
 private:
     shared_ptr<llvm::Module> module;
 
 public:
     CodeGenerator(shared_ptr<llvm::Module> module);
-    void generateObjectFile(string fileName);
+    void generateObjectFile(OutputKind outputKind);
 };
 
 #endif
