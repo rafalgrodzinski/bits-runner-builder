@@ -34,6 +34,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         case StatementKind::RETURN:
             buildReturn(dynamic_pointer_cast<StatementReturn>(statement));
             break;
+        case StatementKind::META_EXTERN_FUNCTION:
+            buildMetaExternFunction(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
+            break;
         case StatementKind::EXPRESSION:
             buildExpression(dynamic_pointer_cast<StatementExpression>(statement));
             return;
@@ -97,6 +100,27 @@ void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
         builder->CreateRet(value);
     } else {
         builder->CreateRetVoid();
+    }
+}
+
+void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement) {
+    // get argument types
+    vector<llvm::Type *> types;
+    for (pair<string, ValueType> &arg : statement->getArguments()) {
+        types.push_back(typeForValueType(arg.second));
+    }
+
+    // build function declaration
+    llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), types, false);
+    llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
+    funMap[statement->getName()] = fun;
+    
+    // build arguments
+    int i=0;
+    for (auto &arg : fun->args()) {
+        string name = statement->getArguments()[i].first;
+        arg.setName(name);
+        i++;
     }
 }
 

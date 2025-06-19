@@ -37,6 +37,7 @@ private:
     void buildVarDeclaration(shared_ptr<StatementVarDeclaration> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
+    void buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);
