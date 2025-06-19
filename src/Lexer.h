@@ -20,7 +20,6 @@ private:
     shared_ptr<Token> match(TokenKind kind, string lexme, bool needsSeparator);
     shared_ptr<Token> matchInteger();
     shared_ptr<Token> matchReal();
-    //shared_ptr<Token> matchType();
     shared_ptr<Token> matchIdentifier();
     shared_ptr<Token> matchEnd();
     shared_ptr<Token> matchInvalid();

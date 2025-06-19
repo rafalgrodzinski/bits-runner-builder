@@ -34,6 +34,8 @@ enum class TokenKind {
     IDENTIFIER,
     TYPE,
 
+    M_EXTERN,
+
     NEW_LINE,
     END,
 
@@ -56,6 +58,7 @@ enum class StatementKind {
     BLOCK,
     RETURN,
     EXPRESSION,
+    META_EXTERN_FUNCTION,
     INVALID
 };
 

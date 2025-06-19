@@ -135,6 +135,9 @@ string Token::toString() {
         case TokenKind::RETURN:
             return "RETURN";
 
+        case TokenKind::M_EXTERN:
+            return "@EXTERN";
+
         case TokenKind::NEW_LINE:
             return "↲";
         case TokenKind::END:

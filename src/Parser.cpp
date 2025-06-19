@@ -41,7 +41,11 @@ shared_ptr<Statement> Parser::nextStatement() {
     if (statement != nullptr)
         return statement;
 
-    return matchStatementInvalid();
+    statement = matchStatementMetaExternFunction();
+    if (statement != nullptr)
+        return statement;
+
+    return matchStatementInvalid("Unexpected token");
 }
 
 shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
@@ -186,6 +190,56 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
     tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
 
     return make_shared<StatementExpression>(expression);
+}
+
+shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
+    if (!tryMatchingTokenKinds({TokenKind::M_EXTERN, TokenKind::IDENTIFIER, TokenKind::FUNCTION}, true, false))
+        return nullptr;
+
+    currentIndex++; // skip meta
+    shared_ptr<Token> identifierToken = tokens.at(currentIndex);
+    currentIndex++;
+    currentIndex++; // skip fun
+
+    // Get arguments
+    vector<pair<string, ValueType>> arguments;
+    if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
+        do {
+            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
+            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false))
+                return matchStatementInvalid("Expected function argument");
+            shared_ptr<Token> identifierToken = tokens.at(currentIndex);
+            currentIndex++; // identifier
+            shared_ptr<Token> typeToken = tokens.at(currentIndex);
+            currentIndex++; // type
+            optional<ValueType> argumentType = valueTypeForToken(typeToken);
+            if (!argumentType)
+                return matchStatementInvalid("Invalid argument type");
+            
+            arguments.push_back(pair<string, ValueType>(identifierToken->getLexme(), *argumentType));
+        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+    }
+
+    // consume optional new line
+    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
+
+    // Return type
+    ValueType returnType = ValueType::NONE;
+    if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
+        shared_ptr<Token> typeToken = tokens.at(currentIndex);
+        optional<ValueType> type = valueTypeForToken(typeToken);
+        if (!type)
+            return matchStatementInvalid("Expected return type");
+        returnType = *type;
+
+        currentIndex++; // type
+
+        // consume new line
+        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+            return matchStatementInvalid("Expected new line after function declaration");
+    }
+
+    return make_shared<StatementMetaExternFunction>(identifierToken->getLexme(), arguments, returnType);
 }
 
 shared_ptr<StatementInvalid> Parser::matchStatementInvalid(string message) {

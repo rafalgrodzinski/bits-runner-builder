@@ -230,6 +230,11 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    // meta
+    token = match(TokenKind::M_EXTERN, "@extern", true);
+    if (token != nullptr)
+        return token;
+
     // new line
     token = match(TokenKind::NEW_LINE, "\n", false);
     if (token != nullptr)

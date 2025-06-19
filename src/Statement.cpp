@@ -177,6 +177,35 @@ string StatementExpression::toString(int indent) {
 }
 
 //
+// Statement @ Function
+StatementMetaExternFunction::StatementMetaExternFunction(string name, vector<pair<string, ValueType>> arguments, ValueType returnValueType):
+Statement(StatementKind::META_EXTERN_FUNCTION), name(name), arguments(arguments), returnValueType(returnValueType) {
+}
+
+string StatementMetaExternFunction::getName() {
+    return name;
+}
+
+vector<pair<string, ValueType>> StatementMetaExternFunction::getArguments() {
+    return arguments;
+}
+
+ValueType StatementMetaExternFunction::getReturnValueType() {
+    return returnValueType;
+}
+
+string StatementMetaExternFunction::toString(int indent) {
+    string value;
+    for (int ind=0; ind<indent; ind++)
+        value += "  ";
+    value += "EXTERN_FUN(";
+    value += name + ", ";
+    value += valueTypeToString(returnValueType);
+    value += ")\n";
+    return value;
+}
+
+//
 // StatementInvalid
 StatementInvalid::StatementInvalid(shared_ptr<Token> token, string message):
 Statement(StatementKind::INVALID), token(token), message(message) {
