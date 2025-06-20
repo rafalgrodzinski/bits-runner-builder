@@ -41,7 +41,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildExpression(dynamic_pointer_cast<StatementExpression>(statement));
             return;
         default:
-            failed("Unexpected statement");
+            failWithMessage("Unexpected statement");
     }
 }
 
@@ -77,6 +77,12 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclara
 
     // build function body
     buildStatement(statement->getStatementBlock());
+
+    // verify
+    string errorMessage;
+    llvm::raw_string_ostream llvmErrorMessage(errorMessage);
+    if (llvm::verifyFunction(*fun, &llvmErrorMessage))
+        failWithMessage(errorMessage);
 }
 
 void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVarDeclaration> statement) {
@@ -143,7 +149,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
         default:
-            failed("Unexpected expression");
+            failWithMessage("Unexpected expression");
     }
 }
 
@@ -178,7 +184,7 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
     }
 
-    failed("Unexpected operation");
+    failWithMessage("Unexpected operation");
 }
 
 llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
@@ -188,7 +194,7 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinary::Operation opera
     case ExpressionBinary::Operation::NOT_EQUAL:
         return builder->CreateICmpNE(leftValue, rightValue);
     default:
-        failed("Undefined operation for boolean operands");
+        failWithMessage("Undefined operation for boolean operands");
     }
 }
 
@@ -292,7 +298,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVar> expression) {
     llvm::AllocaInst *alloca = allocaMap[expression->getName()];
     if (alloca == nullptr)
-        failed("Variable " + expression->getName() + " not defined");
+        failWithMessage("Variable " + expression->getName() + " not defined");
 
     return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getName());
 }
@@ -300,7 +306,7 @@ llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVar> expression) {
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
     llvm::Function *fun = funMap[expression->getName()];
     if (fun == nullptr)
-        failed("Function " + expression->getName() + " not defined");
+        failWithMessage("Function " + expression->getName() + " not defined");
     llvm::FunctionType *funType = fun->getFunctionType();
     vector<llvm::Value*> argValues;
     for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
@@ -323,7 +329,7 @@ llvm::Type *ModuleBuilder::typeForValueType(ValueType valueType) {
     }
 }
 
-void ModuleBuilder::failed(string message) {
-    cerr << "Building module " << moduleName << " failed: " << message << endl;
+void ModuleBuilder::failWithMessage(string message) {
+    cerr << "Error! Building module \"" << moduleName << "\" from \"" + sourceFileName + "\" failed:" << endl << message << endl;
     exit(1);
 }

@@ -8,6 +8,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/Verifier.h"
 
 #include "Expression.h"
 #include "Statement.h"
@@ -52,7 +53,7 @@ private:
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
 
     llvm::Type *typeForValueType(ValueType valueType);
-    void failed(string message);
+    void failWithMessage(string message);
 
 public:
     ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements);
