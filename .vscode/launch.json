@@ -9,6 +9,5 @@
             "args": ["-v", "${workspaceFolder}/test.brc"],
             "internalConsoleOptions": "openOnSessionStart"
         }
-
     ]
 }

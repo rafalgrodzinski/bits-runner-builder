@@ -4,10 +4,19 @@
         {
             "label": "Build Bits Runner Builder",
             "type": "shell",
-            "command": "./make.sh",
+            "command": "cmake --build build",
             "group": {
                 "kind": "build",
                 "isDefault": true
+            }
+        },
+        {
+            "label": "Clean built product",
+            "type": "shell",
+            "command": "cmake --build build --target clean",
+            "group": {
+                "kind": "none",
+                "isDefault": false
             }
         }
     ]
