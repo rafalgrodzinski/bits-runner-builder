@@ -16,6 +16,16 @@ class StatementInvalid;
 
 using namespace std;
 
+enum class StatementKind {
+    FUNCTION_DECLARATION,
+    VAR_DECLARATION,
+    BLOCK,
+    RETURN,
+    EXPRESSION,
+    META_EXTERN_FUNCTION,
+    INVALID
+};
+
 //
 // Statement
 class Statement {

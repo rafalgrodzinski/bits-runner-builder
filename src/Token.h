@@ -7,6 +7,47 @@
 
 using namespace std;
 
+enum class TokenKind {        
+    PLUS,
+    MINUS,
+    STAR,
+    SLASH,
+    PERCENT,
+
+    EQUAL,
+    NOT_EQUAL,
+    LESS,
+    LESS_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+    
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    COMMA,
+    COLON,
+    SEMICOLON,
+    QUESTION,
+    QUESTION_QUESTION,
+    LEFT_ARROW,
+    RIGHT_ARROW,
+
+    FUNCTION,
+    RETURN,
+
+    BOOL,
+    INTEGER,
+    REAL,
+    IDENTIFIER,
+    TYPE,
+
+    M_EXTERN,
+
+    NEW_LINE,
+    END,
+
+    INVALID
+};
+
 class Token {
 private:
     TokenKind kind;

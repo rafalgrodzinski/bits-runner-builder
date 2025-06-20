@@ -10,6 +10,16 @@ class StatementExpression;
 
 using namespace std;
 
+enum class ExpressionKind {
+    LITERAL,
+    GROUPING,
+    BINARY,
+    IF_ELSE,
+    VAR,
+    CALL,
+    INVALID
+};
+
 //
 // Expression
 class Expression {
