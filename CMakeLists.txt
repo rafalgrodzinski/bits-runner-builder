@@ -12,4 +12,6 @@ file(GLOB_RECURSE SOURCES
     src/**/*.cpp)
 add_executable(brb ${SOURCES})
 
+target_include_directories(brb PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
 target_link_libraries(brb llvm)

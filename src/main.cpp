@@ -2,16 +2,16 @@
 #include <fstream>
 #include <filesystem>
 
-#include "llvm/Support/CommandLine.h"
+#include <llvm/Support/CommandLine.h>
 
-#include "Token.h"
-#include "Lexer.h"
+#include "Lexer/Token.h"
+#include "Lexer/Lexer.h"
 
-#include "Expression.h"
-#include "Parser.h"
+#include "Parser/Expression.h"
+#include "Parser/Parser.h"
 
-#include "ModuleBuilder.h"
-#include "CodeGenerator.h"
+#include "Compiler/ModuleBuilder.h"
+#include "Compiler/CodeGenerator.h"
 
 
 using namespace std;
@@ -80,8 +80,8 @@ int main(int argc, char **argv) {
         module->print(llvm::outs(), nullptr);
     }
 
-    CodeGenerator codeGenerator(module);
-    codeGenerator.generateObjectFile(outputKind);
+    //CodeGenerator codeGenerator(module);
+    //codeGenerator.generateObjectFile(outputKind);
 
     return 0;
 }

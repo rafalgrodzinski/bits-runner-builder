@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "Token.h"
+#include "Lexer/Token.h"
 #include "Expression.h"
 #include "Types.h"
 

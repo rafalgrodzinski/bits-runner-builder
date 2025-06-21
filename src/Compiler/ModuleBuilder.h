@@ -3,15 +3,15 @@
 
 #include <map>
 
-#include "llvm/IR/Module.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/IR/Verifier.h"
+#include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/IR/Verifier.h>
 
-#include "Expression.h"
-#include "Statement.h"
+#include "Parser/Expression.h"
+#include "Parser/Statement.h"
 
 using namespace std;
 

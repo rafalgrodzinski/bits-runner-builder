@@ -1,7 +1,7 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-#include "Token.h"
+#include "Lexer/Token.h"
 #include "Statement.h"
 #include "Types.h"
 

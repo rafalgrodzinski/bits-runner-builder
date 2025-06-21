@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "Token.h"
+#include "Lexer/Token.h"
 #include "Expression.h"
 #include "Statement.h"
 
