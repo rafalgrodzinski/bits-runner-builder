@@ -2,21 +2,12 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Bits Runner Builder",
-            "type": "shell",
-            "command": "cmake --build build",
+            "label": "Build Bits Runner Builder (Debug)",
+            "type": "cmake",
+            "command": "build",
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
-        },
-        {
-            "label": "Clean built product",
-            "type": "shell",
-            "command": "cmake --build build --target clean",
-            "group": {
-                "kind": "none",
-                "isDefault": false
             }
         }
     ]

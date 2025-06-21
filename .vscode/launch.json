@@ -5,9 +5,10 @@
             "name": "Debug Bits Runner Builder",
             "type": "lldb-dap",
             "request": "launch",
-            "program": "${workspaceFolder}/brb",
+            "program": "${command:cmake.launchTargetPath}",
             "args": ["-v", "${workspaceFolder}/test.brc"],
-            "internalConsoleOptions": "openOnSessionStart"
+            "cwd": "${workspaceFolder}",
+            "internalConsoleOptions": "openOnSessionStart",
         }
     ]
 }

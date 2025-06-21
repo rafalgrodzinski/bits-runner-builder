@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 4.0)
-project(bits-runner-builder LANGUAGES CXX)
+project(
+    bits-runner-builder
+    VERSION 0.1.0
+    LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_COLOR_DIAGNOSTICS OFF)
 
 find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
