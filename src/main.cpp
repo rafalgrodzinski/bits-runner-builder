@@ -80,8 +80,8 @@ int main(int argc, char **argv) {
         module->print(llvm::outs(), nullptr);
     }
 
-    //CodeGenerator codeGenerator(module);
-    //codeGenerator.generateObjectFile(outputKind);
+    CodeGenerator codeGenerator(module);
+    codeGenerator.generateObjectFile(outputKind);
 
     return 0;
 }
