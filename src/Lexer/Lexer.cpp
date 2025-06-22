@@ -208,9 +208,14 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    token = matchInteger();
+    token = matchIntegerDec();
     if (token != nullptr)
         return token;
+
+    token = matchIntegerHex();
+    if (token != nullptr)
+        return token;
+
 
     // type
     token = match(TokenKind::TYPE, "bool", true);
@@ -260,17 +265,39 @@ shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator
     return token;
 }
 
-shared_ptr<Token> Lexer::matchInteger() {
+shared_ptr<Token> Lexer::matchIntegerDec() {
     int nextIndex = currentIndex;
 
-    while (nextIndex < source.length() && isDigit(nextIndex))
+    while (nextIndex < source.length() && isDecDigit(nextIndex))
         nextIndex++;
     
     if (nextIndex == currentIndex || !isSeparator(nextIndex))
         return nullptr;
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_DEC, lexme, currentLine, currentColumn);
+    advanceWithToken(token);
+    return token;
+}
+
+shared_ptr<Token> Lexer::matchIntegerHex() {
+    int nextIndex = currentIndex;
+
+    // match 0x
+    if (nextIndex > source.length()-2)
+        return nullptr;
+
+    if (source.at(nextIndex++) != '0' || source.at(nextIndex++) != 'x')
+        return nullptr;
+
+    while (nextIndex < source.length() && isHexDigit(nextIndex))
+        nextIndex++;
+    
+    if (nextIndex == currentIndex || !isSeparator(nextIndex))
+        return nullptr;
+    
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_HEX, lexme, currentLine, currentColumn);
     advanceWithToken(token);
     return token;
 }
@@ -278,7 +305,7 @@ shared_ptr<Token> Lexer::matchInteger() {
 shared_ptr<Token> Lexer::matchReal() {
     int nextIndex = currentIndex;
 
-    while (nextIndex < source.length() && isDigit(nextIndex))
+    while (nextIndex < source.length() && isDecDigit(nextIndex))
         nextIndex++;
     
     if (nextIndex >= source.length() || source.at(nextIndex) != '.')
@@ -286,7 +313,7 @@ shared_ptr<Token> Lexer::matchReal() {
     else
         nextIndex++;
     
-    while (nextIndex < source.length() && isDigit(nextIndex))
+    while (nextIndex < source.length() && isDecDigit(nextIndex))
         nextIndex++;
 
     if (!isSeparator(nextIndex))
@@ -329,9 +356,14 @@ bool Lexer::isWhiteSpace(int index) {
     return character == ' ' || character == '\t';
 }
 
-bool Lexer::isDigit(int index) {
+bool Lexer::isDecDigit(int index) {
     char character = source.at(index);
     return character >= '0' && character <= '9';
+}
+
+bool Lexer::isHexDigit(int index) {
+    char character = source.at(index);
+    return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f');
 }
 
 bool Lexer::isIdentifier(int index) {

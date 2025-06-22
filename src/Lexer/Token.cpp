@@ -37,7 +37,8 @@ vector<TokenKind> Token::tokensBinary = {
 };
 vector<TokenKind> Token::tokensLiteral = {
     TokenKind::BOOL,
-    TokenKind::INTEGER,
+    TokenKind::INTEGER_DEC,
+    TokenKind::INTEGER_HEX,
     TokenKind::REAL
 };
 
@@ -121,8 +122,10 @@ string Token::toString() {
 
         case TokenKind::BOOL:
             return "BOOL(" + lexme + ")";
-        case TokenKind::INTEGER:
-            return "INTEGER(" + lexme + ")";
+        case TokenKind::INTEGER_DEC:
+            return "INTEGER_DEC(" + lexme + ")";
+        case TokenKind::INTEGER_HEX:
+            return "INTEGER_HEX(" + lexme + ")";
         case TokenKind::REAL:
             return "REAL(" + lexme + ")";
         case TokenKind::IDENTIFIER:

@@ -130,8 +130,12 @@ Expression(ExpressionKind::LITERAL, ValueType::NONE) {
             boolValue = token->getLexme().compare("true") == 0;
             valueType = ValueType::BOOL;
             break;
-        case TokenKind::INTEGER:
-            sint32Value = stoi(token->getLexme());
+        case TokenKind::INTEGER_DEC:
+            sint32Value = stoi(token->getLexme(), nullptr, 10);
+            valueType = ValueType::SINT32;
+            break;
+        case TokenKind::INTEGER_HEX:
+            sint32Value = stoi(token->getLexme(), nullptr, 16);
             valueType = ValueType::SINT32;
             break;
         case TokenKind::REAL:
