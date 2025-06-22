@@ -138,6 +138,14 @@ Expression(ExpressionKind::LITERAL, ValueType::NONE) {
             sint32Value = stoi(token->getLexme(), nullptr, 16);
             valueType = ValueType::SINT32;
             break;
+        case TokenKind::INTEGER_BIN:
+            sint32Value = stoi(
+                token->getLexme().substr(2, token->getLexme().size()-1),
+                nullptr,
+                2
+            );
+            valueType = ValueType::SINT32;
+            break;
         case TokenKind::REAL:
             real32Value = stof(token->getLexme());
             valueType = ValueType::REAL32;

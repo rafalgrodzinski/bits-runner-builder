@@ -216,6 +216,9 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = matchIntegerBin();
+    if (token != nullptr)
+        return token;
 
     // type
     token = match(TokenKind::TYPE, "bool", true);
@@ -302,6 +305,28 @@ shared_ptr<Token> Lexer::matchIntegerHex() {
     return token;
 }
 
+shared_ptr<Token> Lexer::matchIntegerBin() {
+    int nextIndex = currentIndex;
+
+    // match 0b
+    if (nextIndex > source.length()-2)
+        return nullptr;
+
+    if (source.at(nextIndex++) != '0' || source.at(nextIndex++) != 'b')
+        return nullptr;
+
+    while (nextIndex < source.length() && isBinDigit(nextIndex))
+        nextIndex++;
+    
+    if (nextIndex == currentIndex || !isSeparator(nextIndex))
+        return nullptr;
+    
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_BIN, lexme, currentLine, currentColumn);
+    advanceWithToken(token);
+    return token;
+}
+
 shared_ptr<Token> Lexer::matchReal() {
     int nextIndex = currentIndex;
 
@@ -364,6 +389,11 @@ bool Lexer::isDecDigit(int index) {
 bool Lexer::isHexDigit(int index) {
     char character = source.at(index);
     return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f');
+}
+
+bool Lexer::isBinDigit(int index) {
+    char character = source.at(index);
+    return character == '0' || character == '1';
 }
 
 bool Lexer::isIdentifier(int index) {
