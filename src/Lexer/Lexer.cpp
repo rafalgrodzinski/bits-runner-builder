@@ -271,10 +271,12 @@ shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator
 shared_ptr<Token> Lexer::matchIntegerDec() {
     int nextIndex = currentIndex;
 
-    while (nextIndex < source.length() && isDecDigit(nextIndex))
+    // Include _ which is not on the first position
+    while (nextIndex < source.length() && (isDecDigit(nextIndex) || (nextIndex > currentIndex && source.at(nextIndex) == '_')))
         nextIndex++;
     
-    if (nextIndex == currentIndex || !isSeparator(nextIndex))
+    // Resulting number shouldn't be empty, should be separated on the right, and _ shouldn't be the last character
+    if (nextIndex == currentIndex || !isSeparator(nextIndex) || source.at(nextIndex-1) == '_')
         return nullptr;
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
@@ -293,10 +295,12 @@ shared_ptr<Token> Lexer::matchIntegerHex() {
     if (source.at(nextIndex++) != '0' || source.at(nextIndex++) != 'x')
         return nullptr;
 
-    while (nextIndex < source.length() && isHexDigit(nextIndex))
+    // Include _ which is not on the first position
+    while (nextIndex < source.length() && (isHexDigit(nextIndex) || (nextIndex > currentIndex+2 && source.at(nextIndex) == '_')))
         nextIndex++;
-    
-    if (nextIndex == currentIndex || !isSeparator(nextIndex))
+
+    // Resulting number shouldn't be empty, should be separated on the right, and _ shouldn't be the last character
+    if (nextIndex == currentIndex+2 || !isSeparator(nextIndex) || source.at(nextIndex-1) == '_')
         return nullptr;
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
@@ -315,10 +319,12 @@ shared_ptr<Token> Lexer::matchIntegerBin() {
     if (source.at(nextIndex++) != '0' || source.at(nextIndex++) != 'b')
         return nullptr;
 
-    while (nextIndex < source.length() && isBinDigit(nextIndex))
+    // Include _ which is not on the first position    
+    while (nextIndex < source.length() && (isBinDigit(nextIndex) || (nextIndex > currentIndex+2 && source.at(nextIndex) == '_')))
         nextIndex++;
     
-    if (nextIndex == currentIndex || !isSeparator(nextIndex))
+    // Resulting number shouldn't be empty, should be separated on the right, and _ shouldn't be the last character
+    if (nextIndex == currentIndex || !isSeparator(nextIndex) || source.at(nextIndex-1) == '_')
         return nullptr;
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);

@@ -130,22 +130,28 @@ Expression(ExpressionKind::LITERAL, ValueType::NONE) {
             boolValue = token->getLexme().compare("true") == 0;
             valueType = ValueType::BOOL;
             break;
-        case TokenKind::INTEGER_DEC:
-            sint32Value = stoi(token->getLexme(), nullptr, 10);
+        case TokenKind::INTEGER_DEC: {
+            string numString = token->getLexme();
+            erase(numString, '_');
+            sint32Value = stoi(numString, nullptr, 10);
             valueType = ValueType::SINT32;
             break;
-        case TokenKind::INTEGER_HEX:
-            sint32Value = stoi(token->getLexme(), nullptr, 16);
+        }
+        case TokenKind::INTEGER_HEX: {
+            string numString = token->getLexme();
+            erase(numString, '_');
+            sint32Value = stoi(numString, nullptr, 16);
             valueType = ValueType::SINT32;
             break;
-        case TokenKind::INTEGER_BIN:
-            sint32Value = stoi(
-                token->getLexme().substr(2, token->getLexme().size()-1),
-                nullptr,
-                2
-            );
+        }
+        case TokenKind::INTEGER_BIN: {
+            string numString = token->getLexme();
+            erase(numString, '_');
+            numString = numString.substr(2, numString.size()-1);
+            sint32Value = stoi(numString, nullptr, 2);
             valueType = ValueType::SINT32;
             break;
+        }
         case TokenKind::REAL:
             real32Value = stof(token->getLexme());
             valueType = ValueType::REAL32;
