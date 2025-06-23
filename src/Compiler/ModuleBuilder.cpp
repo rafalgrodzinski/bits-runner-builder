@@ -29,10 +29,10 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
-        case StatementKind::FUNCTION_DECLARATION:
+        case StatementKind::FUNCTION:
             buildFunctionDeclaration(dynamic_pointer_cast<StatementFunction>(statement));
             break;
-        case StatementKind::VAR_DECLARATION:
+        case StatementKind::VARIABLE:
             buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
             break;
         case StatementKind::BLOCK:

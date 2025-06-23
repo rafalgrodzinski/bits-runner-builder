@@ -2,9 +2,9 @@
 
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
-#include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementInvalid.h"
 

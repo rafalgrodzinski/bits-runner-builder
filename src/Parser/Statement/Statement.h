@@ -5,21 +5,14 @@
 
 #include "Types.h"
 
-class Expression;
-class Statement;
-class StatementBlock;
-class StatementReturn;
-class StatementExpression;
-class StatementInvalid;
-
 using namespace std;
 
 enum class StatementKind {
-    FUNCTION_DECLARATION,
-    VAR_DECLARATION,
+    EXPRESSION,
     BLOCK,
     RETURN,
-    EXPRESSION,
+    FUNCTION,
+    VARIABLE,
     META_EXTERN_FUNCTION,
     INVALID
 };

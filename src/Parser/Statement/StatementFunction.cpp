@@ -16,7 +16,7 @@ static string valueTypeToString(ValueType valueType) {
 }
 
 StatementFunction::StatementFunction(string name, vector<pair<string, ValueType>> arguments, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock):
-Statement(StatementKind::FUNCTION_DECLARATION), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) { }
+Statement(StatementKind::FUNCTION), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) { }
 
 string StatementFunction::getName() {
     return name;

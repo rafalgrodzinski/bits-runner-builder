@@ -16,7 +16,7 @@ static string valueTypeToString(ValueType valueType) {
 }
 
 StatementVariable::StatementVariable(string name, ValueType valueType, shared_ptr<Expression> expression):
-Statement(StatementKind::VAR_DECLARATION), name(name), valueType(valueType), expression(expression) { }
+Statement(StatementKind::VARIABLE), name(name), valueType(valueType), expression(expression) { }
 
 string StatementVariable::getName() {
     return name;

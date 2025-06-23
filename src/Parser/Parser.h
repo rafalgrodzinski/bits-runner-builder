@@ -7,6 +7,8 @@
 #include "Expression.h"
 #include "Parser/Statement/Statement.h"
 
+class StatementInvalid;
+
 using namespace std;
 
 class Parser {
