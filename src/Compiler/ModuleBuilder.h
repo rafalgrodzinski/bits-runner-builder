@@ -11,7 +11,13 @@
 #include <llvm/IR/Verifier.h>
 
 #include "Parser/Expression.h"
-#include "Parser/Statement.h"
+#include "Parser/Statement/Statement.h"
+
+class StatementBlock;
+class StatementFunction;
+class StatementVariable;
+class StatementReturn;
+class StatementMetaExternFunction;
 
 using namespace std;
 
@@ -34,8 +40,8 @@ private:
     map<string, llvm::Function*> funMap;
 
     void buildStatement(shared_ptr<Statement> statement);
-    void buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement);
-    void buildVarDeclaration(shared_ptr<StatementVarDeclaration> statement);
+    void buildFunctionDeclaration(shared_ptr<StatementFunction> statement);
+    void buildVarDeclaration(shared_ptr<StatementVariable> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
     void buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement);

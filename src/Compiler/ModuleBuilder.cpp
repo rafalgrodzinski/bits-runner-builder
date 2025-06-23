@@ -1,5 +1,12 @@
 #include "ModuleBuilder.h"
 
+#include "Parser/Statement/StatementExpression.h"
+#include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementMetaExternFunction.h"
+
 ModuleBuilder::ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements):
 moduleName(moduleName), sourceFileName(sourceFileName), statements(statements) {
     context = make_shared<llvm::LLVMContext>();
@@ -23,10 +30,10 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::FUNCTION_DECLARATION:
-            buildFunctionDeclaration(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+            buildFunctionDeclaration(dynamic_pointer_cast<StatementFunction>(statement));
             break;
         case StatementKind::VAR_DECLARATION:
-            buildVarDeclaration(dynamic_pointer_cast<StatementVarDeclaration>(statement));
+            buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
             break;
         case StatementKind::BLOCK:
             buildBlock(dynamic_pointer_cast<StatementBlock>(statement));
@@ -45,7 +52,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     }
 }
 
-void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement) {
+void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> statement) {
     // get argument types
     vector<llvm::Type *> types;
     for (pair<string, ValueType> &arg : statement->getArguments()) {
@@ -85,7 +92,7 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclara
         failWithMessage(errorMessage);
 }
 
-void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVarDeclaration> statement) {
+void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement) {
     llvm::Value *value = valueForExpression(statement->getExpression());
     llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType()), nullptr, statement->getName());
     allocaMap[statement->getName()] = alloca;

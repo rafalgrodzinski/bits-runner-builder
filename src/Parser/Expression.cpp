@@ -1,5 +1,8 @@
 #include "Expression.h"
 
+#include "Parser/Statement/StatementExpression.h"
+#include "Parser/Statement/StatementBlock.h"
+
 Expression::Expression(ExpressionKind kind, ValueType valueType):
     kind(kind), valueType(valueType) {
 }

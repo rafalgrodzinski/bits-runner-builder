@@ -2,7 +2,7 @@
 #define EXPRESSION_H
 
 #include "Lexer/Token.h"
-#include "Statement.h"
+#include "Parser/Statement/Statement.h"
 #include "Types.h"
 
 class StatementBlock;

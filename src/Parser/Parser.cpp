@@ -1,5 +1,13 @@
 #include "Parser.h"
 
+#include "Parser/Statement/StatementExpression.h"
+#include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementMetaExternFunction.h"
+#include "Parser/Statement/StatementInvalid.h"
+
 Parser::Parser(vector<shared_ptr<Token>> tokens): tokens(tokens) {
 }
 
@@ -103,7 +111,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     if(!tryMatchingTokenKinds({TokenKind::NEW_LINE}, false, true))
         return matchStatementInvalid("Expected a new line after a function declaration");
 
-    return make_shared<StatementFunctionDeclaration>(identifierToken->getLexme(), arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
+    return make_shared<StatementFunction>(identifierToken->getLexme(), arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
 
 shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
@@ -138,7 +146,7 @@ shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
     if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, false, true))
         return matchStatementInvalid("Expected a new line after variable declaration");
 
-    return make_shared<StatementVarDeclaration>(identifierToken->getLexme(), valueType, expression);
+    return make_shared<StatementVariable>(identifierToken->getLexme(), valueType, expression);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal) {
