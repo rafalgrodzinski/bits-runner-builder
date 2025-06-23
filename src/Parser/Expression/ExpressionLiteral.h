@@ -9,7 +9,7 @@ private:
     ExpressionLiteral();
 
 public:
-    static shared_ptr<ExpressionLiteral> none;
+    static shared_ptr<ExpressionLiteral> NONE;
 
     ExpressionLiteral(shared_ptr<Token> token);
     bool getBoolValue();

@@ -1,6 +1,6 @@
 #include "ExpressionLiteral.h"
 
-shared_ptr<ExpressionLiteral> ExpressionLiteral::none;
+shared_ptr<ExpressionLiteral> ExpressionLiteral::NONE;
 
 ExpressionLiteral::ExpressionLiteral():
 Expression(ExpressionKind::LITERAL, ValueType::NONE) { }

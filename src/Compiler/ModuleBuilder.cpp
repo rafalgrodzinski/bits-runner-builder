@@ -6,6 +6,7 @@
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionBlock.h"
 
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
@@ -278,9 +279,8 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 
     // Then
     builder->SetInsertPoint(thenBlock);
-    //llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getStatementExpression()->getExpression());
-    llvm::Value *thenValue = llvm::UndefValue::get(typeVoid);
-    //buildStatement(expression->getThenBlock());
+    llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getResultStatementExpression()->getExpression());
+    buildStatement(expression->getThenBlock()->getStatementBlock());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
 
@@ -290,9 +290,8 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     llvm::Value *elseValue = nullptr;
     if (expression->getElseBlock() != nullptr) {
         valuesCount++;
-        //elseValue = valueForExpression(expression->getElseBlock()->getStatementExpression()->getExpression());
-        llvm::Value *elseValue = llvm::UndefValue::get(typeVoid);
-        //buildStatement(expression->getElseBlock());
+        elseValue = valueForExpression(expression->getElseBlock()->getResultStatementExpression()->getExpression());
+        buildStatement(expression->getElseBlock()->getStatementBlock());
     }
     builder->CreateBr(mergeBlock);
     elseBlock = builder->GetInsertBlock();
