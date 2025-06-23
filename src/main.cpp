@@ -7,8 +7,8 @@
 #include "Lexer/Token.h"
 #include "Lexer/Lexer.h"
 
-#include "Parser/Expression.h"
 #include "Parser/Parser.h"
+#include "Parser/Statement/Statement.h"
 
 #include "Compiler/ModuleBuilder.h"
 #include "Compiler/CodeGenerator.h"

@@ -1,4 +1,7 @@
-#include "Parser/Expression.h"
+#include "Parser/Expression/Expression.h"
+
+class Statement;
+class StatementExpression;
 
 class ExpressionBlock: public Expression {
 private:

@@ -1,8 +1,14 @@
 #include "Parser.h"
 
+#include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionVariable.h"
+#include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionInvalid.h"
 
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementBlock.h"
@@ -41,7 +47,7 @@ shared_ptr<Statement> Parser::nextStatement() {
     if (statement != nullptr)
         return statement;
 
-    statement = matchStatementVarDeclaration();
+    statement = matchStatementVariable();
     if (statement != nullptr)
         return statement;
 
@@ -118,7 +124,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     return make_shared<StatementFunction>(identifierToken->getLexme(), arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
 
-shared_ptr<Statement> Parser::matchStatementVarDeclaration() {
+shared_ptr<Statement> Parser::matchStatementVariable() {
     if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false))
         return nullptr;
 
@@ -446,7 +452,7 @@ shared_ptr<Expression> Parser::matchExpressionVar() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
     if (tryMatchingTokenKinds({TokenKind::IDENTIFIER}, true, true))
-        return make_shared<ExpressionVar>(token->getLexme());
+        return make_shared<ExpressionVariable>(token->getLexme());
     
     return nullptr;
 }

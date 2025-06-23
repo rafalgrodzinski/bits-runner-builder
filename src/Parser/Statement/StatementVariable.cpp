@@ -1,6 +1,6 @@
 #include "StatementVariable.h"
 
-#include "Parser/Expression.h"
+#include "Parser/Expression/Expression.h"
 
 static string valueTypeToString(ValueType valueType) {
     switch (valueType) {

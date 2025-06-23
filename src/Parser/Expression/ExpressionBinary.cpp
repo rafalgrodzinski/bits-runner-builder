@@ -1,0 +1,100 @@
+#include "ExpressionBinary.h"
+
+ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
+Expression(ExpressionKind::BINARY, ValueType::NONE), left(left), right(right) {
+    // Types must match
+    if (left->getValueType() != right->getValueType())
+        exit(1);
+
+    // Booleans can only do = or !=
+    if (valueType == ValueType::BOOL && (token->getKind() != TokenKind::EQUAL || token->getKind() != TokenKind::NOT_EQUAL))
+        exit(1);
+
+    switch (token->getKind()) {
+        case TokenKind::EQUAL:
+            operation = ExpressionBinaryOperation::EQUAL;
+            valueType = ValueType::BOOL;
+            break;
+        case TokenKind::NOT_EQUAL:
+            operation = ExpressionBinaryOperation::NOT_EQUAL;
+            valueType = ValueType::BOOL;
+            break;
+        case TokenKind::LESS:
+            operation = ExpressionBinaryOperation::LESS;
+            valueType = ValueType::BOOL;
+            break;
+        case TokenKind::LESS_EQUAL:
+            operation = ExpressionBinaryOperation::LESS_EQUAL;
+            valueType = ValueType::BOOL;
+            break;
+        case TokenKind::GREATER:
+            operation = ExpressionBinaryOperation::GREATER;
+            valueType = ValueType::BOOL;
+            break;
+        case TokenKind::GREATER_EQUAL:
+            operation = ExpressionBinaryOperation::GREATER_EQUAL;
+            valueType = ValueType::BOOL;
+            break;
+        case TokenKind::PLUS:
+            operation = ExpressionBinaryOperation::ADD;
+            valueType = left->getValueType();
+            break;
+        case TokenKind::MINUS:
+            operation = ExpressionBinaryOperation::SUB;
+            valueType = left->getValueType();
+            break;
+        case TokenKind::STAR:
+            operation = ExpressionBinaryOperation::MUL;
+            valueType = left->getValueType();
+            break;
+        case TokenKind::SLASH:
+            operation = ExpressionBinaryOperation::DIV;
+            valueType = left->getValueType();
+            break;
+        case TokenKind::PERCENT:
+            operation = ExpressionBinaryOperation::MOD;
+            valueType = left->getValueType();
+            break;
+        default:
+            exit(1);
+    }
+}
+
+ExpressionBinaryOperation ExpressionBinary::getOperation() {
+    return operation;
+}
+
+shared_ptr<Expression> ExpressionBinary::getLeft() {
+    return left;
+}
+
+shared_ptr<Expression> ExpressionBinary::getRight() {
+    return right;
+}
+
+string ExpressionBinary::toString(int indent) {
+    switch (operation) {
+    case ExpressionBinaryOperation::EQUAL:
+        return "{= " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::NOT_EQUAL:
+        return "{!= " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::LESS:
+        return "{< " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::LESS_EQUAL:
+        return "{<= " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::GREATER:
+        return "{> " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::GREATER_EQUAL:
+        return "{<= " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::ADD:
+        return "{+ " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::SUB:
+        return "{- " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::MUL:
+        return "{* " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::DIV:
+        return "{/ " + left->toString(0) + " " + right->toString(0) + "}";
+    case ExpressionBinaryOperation::MOD:
+        return "{% " + left->toString(0) + " " + right->toString(0) + "}";
+    }
+}

@@ -10,17 +10,24 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/Verifier.h>
 
-#include "Parser/Expression.h"
-#include "Parser/Statement/Statement.h"
+#include "Types.h"
 
+class Expression;
 class ExpressionLiteral;
 class ExpressionIfElse;
+class ExpressionGrouping;
+class ExpressionBinary;
+enum class ExpressionBinaryOperation;
+class ExpressionVariable;
+class ExpressionCall;
 
+class Statement;
 class StatementBlock;
 class StatementReturn;
 class StatementFunction;
 class StatementVariable;
 class StatementMetaExternFunction;
+class StatementExpression;
 
 using namespace std;
 
@@ -54,11 +61,11 @@ private:
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
-    llvm::Value *valueForBinaryBool(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue);
-    llvm::Value *valueForBinaryInteger(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue);
-    llvm::Value *valueForBinaryReal(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
-    llvm::Value *valueForVar(shared_ptr<ExpressionVar> expression);
+    llvm::Value *valueForVar(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
 
     llvm::Type *typeForValueType(ValueType valueType);

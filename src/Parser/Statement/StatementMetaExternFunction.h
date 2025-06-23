@@ -1,4 +1,4 @@
-#include "Parser/Parser.h"
+#include "Parser/Statement/Statement.h"
 
 class StatementMetaExternFunction: public Statement {
 private:

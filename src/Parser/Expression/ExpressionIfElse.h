@@ -1,4 +1,4 @@
-#include "Parser/Expression.h"
+#include "Parser/Expression/Expression.h"
 
 class ExpressionBlock;
 

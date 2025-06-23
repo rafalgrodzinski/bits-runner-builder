@@ -1,7 +1,12 @@
 #include "ModuleBuilder.h"
 
+#include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionGrouping.h"
+#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionVariable.h"
+#include "Parser/Expression/ExpressionCall.h"
 
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementBlock.h"
@@ -152,7 +157,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::IF_ELSE:
             return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VAR:
-            return valueForVar(dynamic_pointer_cast<ExpressionVar>(expression));
+            return valueForVar(dynamic_pointer_cast<ExpressionVariable>(expression));
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
         default:
@@ -194,67 +199,67 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
     failWithMessage("Unexpected operation");
 }
 
-llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
-    case ExpressionBinary::Operation::EQUAL:
+    case ExpressionBinaryOperation::EQUAL:
         return builder->CreateICmpEQ(leftValue, rightValue);
-    case ExpressionBinary::Operation::NOT_EQUAL:
+    case ExpressionBinaryOperation::NOT_EQUAL:
         return builder->CreateICmpNE(leftValue, rightValue);
     default:
         failWithMessage("Undefined operation for boolean operands");
     }
 }
 
-llvm::Value *ModuleBuilder::valueForBinaryInteger(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+llvm::Value *ModuleBuilder::valueForBinaryInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
-    case ExpressionBinary::Operation::EQUAL:
+    case ExpressionBinaryOperation::EQUAL:
         return builder->CreateICmpEQ(leftValue, rightValue);
-    case ExpressionBinary::Operation::NOT_EQUAL:
+    case ExpressionBinaryOperation::NOT_EQUAL:
         return builder->CreateICmpNE(leftValue, rightValue);
-    case ExpressionBinary::Operation::LESS:
+    case ExpressionBinaryOperation::LESS:
         return builder->CreateICmpSLT(leftValue, rightValue);
-    case ExpressionBinary::Operation::LESS_EQUAL:
+    case ExpressionBinaryOperation::LESS_EQUAL:
         return builder->CreateICmpSLE(leftValue, rightValue);
-    case ExpressionBinary::Operation::GREATER:
+    case ExpressionBinaryOperation::GREATER:
         return builder->CreateICmpSGT(leftValue, rightValue);
-    case ExpressionBinary::Operation::GREATER_EQUAL:
+    case ExpressionBinaryOperation::GREATER_EQUAL:
         return builder->CreateICmpSGE(leftValue, rightValue);
-    case ExpressionBinary::Operation::ADD:
+    case ExpressionBinaryOperation::ADD:
         return builder->CreateNSWAdd(leftValue, rightValue);
-    case ExpressionBinary::Operation::SUB:
+    case ExpressionBinaryOperation::SUB:
         return builder->CreateNSWSub(leftValue, rightValue);
-    case ExpressionBinary::Operation::MUL:
+    case ExpressionBinaryOperation::MUL:
         return builder->CreateNSWMul(leftValue, rightValue);
-    case ExpressionBinary::Operation::DIV:
+    case ExpressionBinaryOperation::DIV:
         return builder->CreateSDiv(leftValue, rightValue);
-    case ExpressionBinary::Operation::MOD:
+    case ExpressionBinaryOperation::MOD:
         return builder->CreateSRem(leftValue, rightValue);
     }
 }
 
-llvm::Value *ModuleBuilder::valueForBinaryReal(ExpressionBinary::Operation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+llvm::Value *ModuleBuilder::valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
-    case ExpressionBinary::Operation::EQUAL:
+    case ExpressionBinaryOperation::EQUAL:
         return builder->CreateFCmpOEQ(leftValue, rightValue);
-    case ExpressionBinary::Operation::NOT_EQUAL:
+    case ExpressionBinaryOperation::NOT_EQUAL:
         return builder->CreateFCmpONE(leftValue, rightValue);
-    case ExpressionBinary::Operation::LESS:
+    case ExpressionBinaryOperation::LESS:
         return builder->CreateFCmpOLT(leftValue, rightValue);
-    case ExpressionBinary::Operation::LESS_EQUAL:
+    case ExpressionBinaryOperation::LESS_EQUAL:
         return builder->CreateFCmpOLE(leftValue, rightValue);
-    case ExpressionBinary::Operation::GREATER:
+    case ExpressionBinaryOperation::GREATER:
         return builder->CreateFCmpOGT(leftValue, rightValue);
-    case ExpressionBinary::Operation::GREATER_EQUAL:
+    case ExpressionBinaryOperation::GREATER_EQUAL:
         return builder->CreateFCmpOGE(leftValue, rightValue);
-    case ExpressionBinary::Operation::ADD:
+    case ExpressionBinaryOperation::ADD:
         return builder->CreateNSWAdd(leftValue, rightValue);
-    case ExpressionBinary::Operation::SUB:
+    case ExpressionBinaryOperation::SUB:
         return builder->CreateNSWSub(leftValue, rightValue);
-    case ExpressionBinary::Operation::MUL:
+    case ExpressionBinaryOperation::MUL:
         return builder->CreateNSWMul(leftValue, rightValue);
-    case ExpressionBinary::Operation::DIV:
+    case ExpressionBinaryOperation::DIV:
         return builder->CreateSDiv(leftValue, rightValue);
-    case ExpressionBinary::Operation::MOD:
+    case ExpressionBinaryOperation::MOD:
         return builder->CreateSRem(leftValue, rightValue);
     }
 }
@@ -304,7 +309,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     return phi;
 }
 
-llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVar> expression) {
+llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVariable> expression) {
     llvm::AllocaInst *alloca = allocaMap[expression->getName()];
     if (alloca == nullptr)
         failWithMessage("Variable " + expression->getName() + " not defined");
