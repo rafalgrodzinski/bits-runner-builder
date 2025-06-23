@@ -1,5 +1,7 @@
 #include "Parser/Statement/Statement.h"
 
+class Expression;
+
 class StatementExpression: public Statement {
 private:
     shared_ptr<Expression> expression;

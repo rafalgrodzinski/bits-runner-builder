@@ -1,5 +1,7 @@
 #include "Parser/Statement/Statement.h"
 
+class Token;
+
 class StatementInvalid: public Statement {
 private:
     shared_ptr<Token> token;

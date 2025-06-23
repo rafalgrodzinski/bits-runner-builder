@@ -1,5 +1,7 @@
 #include "StatementVariable.h"
 
+#include "Parser/Expression.h"
+
 static string valueTypeToString(ValueType valueType) {
     switch (valueType) {
         case ValueType::NONE:

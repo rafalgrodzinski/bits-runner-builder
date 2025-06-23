@@ -1,5 +1,7 @@
 #include "Parser/Statement/Statement.h"
 
+class Expression;
+
 class StatementVariable: public Statement {
 private:
     string name;

@@ -1,5 +1,7 @@
 #include "StatementExpression.h"
 
+#include "Parser/Expression.h"
+
 StatementExpression::StatementExpression(shared_ptr<Expression> expression):
 Statement(StatementKind::EXPRESSION), expression(expression) { }
 
