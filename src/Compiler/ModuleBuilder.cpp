@@ -1,19 +1,18 @@
 #include "ModuleBuilder.h"
 
-#include "Parser/Expression/Expression.h"
-#include "Parser/Expression/ExpressionLiteral.h"
-#include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionGrouping.h"
-#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionBinary.h"
 
-#include "Parser/Statement/StatementExpression.h"
-#include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
+#include "Parser/Statement/StatementBlock.h"
 
 ModuleBuilder::ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements):
 moduleName(moduleName), sourceFileName(sourceFileName), statements(statements) {

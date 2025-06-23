@@ -13,21 +13,21 @@
 #include "Types.h"
 
 class Expression;
-class ExpressionLiteral;
-class ExpressionIfElse;
 class ExpressionGrouping;
-class ExpressionBinary;
-enum class ExpressionBinaryOperation;
+class ExpressionLiteral;
 class ExpressionVariable;
 class ExpressionCall;
+class ExpressionIfElse;
+class ExpressionBinary;
+enum class ExpressionBinaryOperation;
 
 class Statement;
-class StatementBlock;
-class StatementReturn;
 class StatementFunction;
 class StatementVariable;
-class StatementMetaExternFunction;
+class StatementReturn;
 class StatementExpression;
+class StatementMetaExternFunction;
+class StatementBlock;
 
 using namespace std;
 

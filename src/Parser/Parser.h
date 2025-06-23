@@ -19,12 +19,12 @@ private:
     int currentIndex = 0;
 
     shared_ptr<Statement> nextStatement();
-    shared_ptr<Statement> matchStatementFunctionDeclaration();
+    shared_ptr<Statement> matchStatementFunction();
     shared_ptr<Statement> matchStatementVariable();
-    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal);
     shared_ptr<Statement> matchStatementReturn();
     shared_ptr<Statement> matchStatementExpression();
     shared_ptr<Statement> matchStatementMetaExternFunction();
+    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal);
     shared_ptr<StatementInvalid> matchStatementInvalid(string message = "");
 
     shared_ptr<Expression> nextExpression();
@@ -34,12 +34,12 @@ private:
     shared_ptr<Expression> matchFactor(); // *, /, %
     shared_ptr<Expression> matchPrimary(); // integer, ()
 
-    shared_ptr<Expression> matchExpressionLiteral();
     shared_ptr<Expression> matchExpressionGrouping();
-    shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
-    shared_ptr<Expression> matchExpressionIfElse();
-    shared_ptr<Expression> matchExpressionVar();
+    shared_ptr<Expression> matchExpressionLiteral();
+    shared_ptr<Expression> matchExpressionVariable();
     shared_ptr<Expression> matchExpressionCall();
+    shared_ptr<Expression> matchExpressionIfElse();
+    shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal);
     shared_ptr<ExpressionInvalid> matchExpressionInvalid();
 
