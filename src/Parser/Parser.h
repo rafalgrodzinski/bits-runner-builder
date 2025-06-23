@@ -40,6 +40,7 @@ private:
     shared_ptr<Expression> matchExpressionIfElse();
     shared_ptr<Expression> matchExpressionVar();
     shared_ptr<Expression> matchExpressionCall();
+    shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal);
     shared_ptr<ExpressionInvalid> matchExpressionInvalid();
 
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);

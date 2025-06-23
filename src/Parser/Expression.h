@@ -17,6 +17,7 @@ enum class ExpressionKind {
     IF_ELSE,
     VAR,
     CALL,
+    BLOCK,
     INVALID
 };
 
@@ -35,22 +36,6 @@ public:
     ValueType getValueType();
     bool isValid();
     virtual string toString(int indent);
-};
-
-//
-// ExpressionLiteral
-class ExpressionLiteral: public Expression {
-private:
-    bool boolValue;
-    int32_t sint32Value;
-    float real32Value;
-
-public:
-    ExpressionLiteral(shared_ptr<Token> token);
-    bool getBoolValue();
-    int32_t getSint32Value();
-    float getReal32Value();
-    string toString(int indent) override;
 };
 
 //
@@ -93,22 +78,6 @@ public:
     Operation getOperation();
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();
-    string toString(int indent) override;
-};
-
-//
-// ExpressionIfElse
-class ExpressionIfElse: public Expression {
-private:
-    shared_ptr<Expression> condition;
-    shared_ptr<StatementBlock> thenBlock;
-    shared_ptr<StatementBlock> elseBlock;
-
-public:
-    ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<StatementBlock> thenBlock, shared_ptr<StatementBlock> elseBlock);
-    shared_ptr<Expression> getCondition();
-    shared_ptr<StatementBlock> getThenBlock();
-    shared_ptr<StatementBlock> getElseBlock();
     string toString(int indent) override;
 };
 

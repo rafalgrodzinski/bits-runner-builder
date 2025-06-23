@@ -1,5 +1,8 @@
 #include "ModuleBuilder.h"
 
+#include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionIfElse.h"
+
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementFunction.h"
@@ -100,11 +103,8 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
 }
 
 void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
-    for (shared_ptr<Statement> &innerStatement : statement->getStatements()) {
+    for (shared_ptr<Statement> &innerStatement : statement->getStatements())
         buildStatement(innerStatement);
-    }
-    if (statement->getStatementExpression() != nullptr)
-        buildStatement(statement->getStatementExpression());
 }
 
 void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
@@ -274,8 +274,9 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 
     // Then
     builder->SetInsertPoint(thenBlock);
-    llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getStatementExpression()->getExpression());
-    buildStatement(expression->getThenBlock());
+    //llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getStatementExpression()->getExpression());
+    llvm::Value *thenValue = llvm::UndefValue::get(typeVoid);
+    //buildStatement(expression->getThenBlock());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
 
@@ -285,8 +286,9 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     llvm::Value *elseValue = nullptr;
     if (expression->getElseBlock() != nullptr) {
         valuesCount++;
-        elseValue = valueForExpression(expression->getElseBlock()->getStatementExpression()->getExpression());
-        buildStatement(expression->getElseBlock());
+        //elseValue = valueForExpression(expression->getElseBlock()->getStatementExpression()->getExpression());
+        llvm::Value *elseValue = llvm::UndefValue::get(typeVoid);
+        //buildStatement(expression->getElseBlock());
     }
     builder->CreateBr(mergeBlock);
     elseBlock = builder->GetInsertBlock();

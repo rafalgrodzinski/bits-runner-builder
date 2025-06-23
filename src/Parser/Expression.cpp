@@ -125,71 +125,6 @@ string ExpressionBinary::toString(int indent) {
 }
 
 //
-// ExpressionLiteral
-ExpressionLiteral::ExpressionLiteral(shared_ptr<Token> token):
-Expression(ExpressionKind::LITERAL, ValueType::NONE) {
-    switch (token->getKind()) {
-        case TokenKind::BOOL:
-            boolValue = token->getLexme().compare("true") == 0;
-            valueType = ValueType::BOOL;
-            break;
-        case TokenKind::INTEGER_DEC: {
-            string numString = token->getLexme();
-            erase(numString, '_');
-            sint32Value = stoi(numString, nullptr, 10);
-            valueType = ValueType::SINT32;
-            break;
-        }
-        case TokenKind::INTEGER_HEX: {
-            string numString = token->getLexme();
-            erase(numString, '_');
-            sint32Value = stoi(numString, nullptr, 16);
-            valueType = ValueType::SINT32;
-            break;
-        }
-        case TokenKind::INTEGER_BIN: {
-            string numString = token->getLexme();
-            erase(numString, '_');
-            numString = numString.substr(2, numString.size()-1);
-            sint32Value = stoi(numString, nullptr, 2);
-            valueType = ValueType::SINT32;
-            break;
-        }
-        case TokenKind::REAL:
-            real32Value = stof(token->getLexme());
-            valueType = ValueType::REAL32;
-            break;
-        default:
-            exit(1);
-    }
-}
-
-bool ExpressionLiteral::getBoolValue() {
-    return boolValue;
-}
-
-int32_t ExpressionLiteral::getSint32Value() {
-    return sint32Value;
-}
-
-float ExpressionLiteral::getReal32Value() {
-    return real32Value;
-}
-
-string ExpressionLiteral::toString(int indent) {
-    switch (valueType) {
-        case ValueType::NONE:
-            return "NONE";
-        case ValueType::BOOL:
-            return boolValue ? "true" : "false";
-        case ValueType::SINT32:
-            return to_string(sint32Value);
-        case ValueType::REAL32:
-            return to_string(real32Value);
-    }
-}
-
-//
 // ExpressionGrouping
 ExpressionGrouping::ExpressionGrouping(shared_ptr<Expression> expression):
 Expression(ExpressionKind::GROUPING, expression->getValueType()), expression(expression) {
@@ -201,56 +136,6 @@ shared_ptr<Expression> ExpressionGrouping::getExpression() {
 
 string ExpressionGrouping::toString(int indent) {
     return "( " + expression->toString(0) + " )";
-}
-
-//
-// ExpressionIfElse
-ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<StatementBlock> thenBlock, shared_ptr<StatementBlock> elseBlock):
-Expression(ExpressionKind::IF_ELSE, ValueType::NONE), condition(condition), thenBlock(thenBlock), elseBlock(elseBlock) {
-    // Condition must evaluate to bool
-    if (condition->getValueType() != ValueType::BOOL)
-        exit(1);
-
-    // Return types must match
-    shared_ptr<StatementExpression> thenStatementExpression = thenBlock->getStatementExpression();
-    shared_ptr<Expression> thenExpression = thenStatementExpression != nullptr ? thenStatementExpression->getExpression() : nullptr;
-    shared_ptr<StatementExpression> elseStatementExpression = elseBlock != nullptr ? elseBlock->getStatementExpression() : nullptr;
-    shared_ptr<Expression> elseExpression = elseStatementExpression != nullptr ? elseStatementExpression->getExpression() : nullptr;
-    if (thenExpression != nullptr && elseExpression != nullptr && thenExpression->getValueType() != elseExpression->getValueType())
-        exit(1);
-
-    // get type or default to void
-    valueType = thenExpression ? thenExpression->getValueType() : ValueType::NONE;
-}
-
-shared_ptr<Expression> ExpressionIfElse::getCondition() {
-    return condition;
-}
-
-shared_ptr<StatementBlock> ExpressionIfElse::getThenBlock() {
-    return thenBlock;
-}
-
-shared_ptr<StatementBlock> ExpressionIfElse::getElseBlock() {
-    return elseBlock;
-}
-
-string ExpressionIfElse::toString(int indent) {
-    string value;
-    value += "IF(" + condition->toString(0) + "):\n";
-
-    value += thenBlock->toString(indent+1);
-    if (elseBlock != nullptr) {
-        for (int ind=0; ind<indent; ind++)
-            value += "  ";
-        value += "ELSE:\n";
-        value += elseBlock->toString(indent+1);
-    }
-    for (int ind=0; ind<indent; ind++)
-        value += "  ";
-    value += ";";
-
-    return  value;
 }
 
 //

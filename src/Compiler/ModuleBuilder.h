@@ -13,10 +13,13 @@
 #include "Parser/Expression.h"
 #include "Parser/Statement/Statement.h"
 
+class ExpressionLiteral;
+class ExpressionIfElse;
+
 class StatementBlock;
+class StatementReturn;
 class StatementFunction;
 class StatementVariable;
-class StatementReturn;
 class StatementMetaExternFunction;
 
 using namespace std;
