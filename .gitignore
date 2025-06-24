@@ -3,5 +3,5 @@
 brb
 .vscode/settings.json
 *.dSYM
-*.brc
+#*.brc
 build/
