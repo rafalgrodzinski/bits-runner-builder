@@ -1,15 +1,7 @@
 #include "ExpressionBinary.h"
 
 ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
-Expression(ExpressionKind::BINARY, ValueType::NONE), left(left), right(right) {
-    // Types must match
-    if (left->getValueType() != right->getValueType())
-        exit(1);
-
-    // Booleans can only do = or !=
-    if (valueType == ValueType::BOOL && (token->getKind() != TokenKind::EQUAL || token->getKind() != TokenKind::NOT_EQUAL))
-        exit(1);
-
+Expression(ExpressionKind::BINARY, ValueType::NONE), operation(ExpressionBinaryOperation::INVALID), left(left), right(right) {
     switch (token->getKind()) {
         case TokenKind::EQUAL:
             operation = ExpressionBinaryOperation::EQUAL;
@@ -56,8 +48,16 @@ Expression(ExpressionKind::BINARY, ValueType::NONE), left(left), right(right) {
             valueType = left->getValueType();
             break;
         default:
-            exit(1);
+            break;
     }
+
+    // Types must match
+    if (left->getValueType() != right->getValueType())
+        valueType = ValueType::NONE;
+
+    // Booleans can only do = or !=
+    if (valueType == ValueType::BOOL && (token->getKind() != TokenKind::EQUAL || token->getKind() != TokenKind::NOT_EQUAL))
+        valueType = ValueType::NONE;
 }
 
 ExpressionBinaryOperation ExpressionBinary::getOperation() {

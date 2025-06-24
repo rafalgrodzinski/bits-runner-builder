@@ -194,6 +194,10 @@ shared_ptr<Token> Lexer::nextToken() {
     token = match(TokenKind::RETURN, "ret", true);
     if (token != nullptr)
         return token;
+
+    token = match(TokenKind::REPEAT, "rep", true);
+    if (token != nullptr)
+        return token;
     
     // literal
     token = match(TokenKind::BOOL, "true", true);

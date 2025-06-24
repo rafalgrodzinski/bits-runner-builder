@@ -33,6 +33,7 @@ enum class TokenKind {
 
     FUNCTION,
     RETURN,
+    REPEAT,
 
     BOOL,
     INTEGER_DEC,

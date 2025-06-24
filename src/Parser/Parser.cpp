@@ -15,6 +15,7 @@
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementLoop.h"
 #include "Parser/Statement/StatementInvalid.h"
 
 Parser::Parser(vector<shared_ptr<Token>> tokens): tokens(tokens) {
@@ -51,6 +52,10 @@ shared_ptr<Statement> Parser::nextStatement() {
         return statement;
 
     statement = matchStatementReturn();
+    if (statement != nullptr)
+        return statement;
+    
+    statement = matchStatementLoop();
     if (statement != nullptr)
         return statement;
 
@@ -151,8 +156,8 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (expression == nullptr || !expression->isValid())
         return matchStatementInvalid();
 
-    // Expect new line
-    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, false, true))
+    // Expect comma or new line
+    if (!tryMatchingTokenKinds({TokenKind::COMMA}, true, false) && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, false, true))
         return matchStatementInvalid("Expected a new line after variable declaration");
 
     return make_shared<StatementVariable>(identifierToken->getLexme(), valueType, expression);
@@ -172,6 +177,50 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
     tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
     
     return make_shared<StatementReturn>(expression);
+}
+
+shared_ptr<Statement> Parser::matchStatementLoop() {
+    if (!tryMatchingTokenKinds({TokenKind::REPEAT}, true, true))
+        return nullptr;
+
+    // initial
+    shared_ptr<Statement> initStatement = matchStatementVariable();
+    if (initStatement != nullptr && !initStatement->isValid())
+        initStatement = nullptr;
+
+    // got initial, expect comma
+    if (initStatement != nullptr && !tryMatchingTokenKinds({TokenKind::COMMA}, true, true))
+        return matchStatementInvalid("Expected comma after initial statement");
+
+    // pre condition
+    shared_ptr<Expression> preConditionExpression = nextExpression();
+    if (preConditionExpression == nullptr || !preConditionExpression->isValid())
+        return matchStatementInvalid("Expected pre-condition expression");
+
+    // post condition
+    shared_ptr<Expression> postConditionExpression;
+    if (tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
+        postConditionExpression = nextExpression();
+        if (postConditionExpression == nullptr || !postConditionExpression->isValid())
+            return matchStatementInvalid("Expected post-condition expression");
+    }
+
+    // epxect new line
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+        return matchStatementInvalid("Expected new line");
+
+    // body
+    shared_ptr<Statement> bodyBlockStatement = matchStatementBlock({TokenKind::SEMICOLON}, true);
+    if (bodyBlockStatement == nullptr)
+        return matchStatementInvalid("Expected block statement");
+    else if (!bodyBlockStatement->isValid())
+        return bodyBlockStatement;
+    
+    // epxect new line
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+        return matchStatementInvalid("Expected new line");
+
+    return make_shared<StatementLoop>(initStatement, preConditionExpression, postConditionExpression, dynamic_pointer_cast<StatementBlock>(bodyBlockStatement));
 }
 
 shared_ptr<Statement> Parser::matchStatementExpression() {

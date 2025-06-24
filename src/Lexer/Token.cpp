@@ -140,6 +140,8 @@ string Token::toString() {
             return "FUNCTION";
         case TokenKind::RETURN:
             return "RETURN";
+        case TokenKind::REPEAT:
+            return "REPEAT";
 
         case TokenKind::M_EXTERN:
             return "@EXTERN";

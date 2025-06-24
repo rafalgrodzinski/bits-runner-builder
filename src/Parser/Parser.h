@@ -22,6 +22,7 @@ private:
     shared_ptr<Statement> matchStatementFunction();
     shared_ptr<Statement> matchStatementVariable();
     shared_ptr<Statement> matchStatementReturn();
+    shared_ptr<Statement> matchStatementLoop();
     shared_ptr<Statement> matchStatementExpression();
     shared_ptr<Statement> matchStatementMetaExternFunction();
     shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal);

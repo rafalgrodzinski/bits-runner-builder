@@ -11,7 +11,8 @@ enum class ExpressionBinaryOperation {
     SUB,
     MUL,
     DIV,
-    MOD
+    MOD,
+    INVALID
 };
 
 class ExpressionBinary: public Expression {
