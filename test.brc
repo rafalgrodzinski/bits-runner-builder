@@ -1,0 +1,8 @@
+test fun
+    /*rep i sint32 <- 0, i < 10
+        //i sint32 <- i + 1
+    ;*/
+    rep i sint32 <- 13
+        abc sint32 <- 5
+    ;
+;

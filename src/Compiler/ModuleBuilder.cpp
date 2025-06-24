@@ -12,6 +12,7 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
+#include "Parser/Statement/StatementLoop.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 
@@ -48,6 +49,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             break;
         case StatementKind::RETURN:
             buildReturn(dynamic_pointer_cast<StatementReturn>(statement));
+            break;
+        case StatementKind::LOOP:
+            buildLoop(dynamic_pointer_cast<StatementLoop>(statement));
             break;
         case StatementKind::META_EXTERN_FUNCTION:
             buildMetaExternFunction(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
@@ -119,6 +123,29 @@ void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
     } else {
         builder->CreateRetVoid();
     }
+}
+
+void ModuleBuilder::buildLoop(shared_ptr<StatementLoop> statement) {
+    shared_ptr<Statement> initStatement = statement->getInitStatement();
+    shared_ptr<Expression> preExpression = statement->getPreConditionExpression();
+    shared_ptr<Expression> postExpression = statement->getPostConditionExpression();
+    shared_ptr<StatementBlock> bodyStatement= statement->getBodyBlockStatement();
+
+    llvm::BasicBlock *parentBlock = builder->GetInsertBlock();
+
+    
+    if (initStatement != nullptr)
+        buildStatement(statement->getInitStatement());
+    llvm::Function *fun = builder->GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, "loopBody", fun);
+    builder->SetInsertPoint(bodyBlock);
+    buildBlock(bodyStatement);
+    builder->CreateBr(bodyBlock);
+
+    //llvm::BasicBlock *loopEndBlock = builder->GetInsertBlock()
+
+    builder->SetInsertPoint(parentBlock);
 }
 
 void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement) {

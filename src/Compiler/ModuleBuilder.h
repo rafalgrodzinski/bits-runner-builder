@@ -26,6 +26,7 @@ class StatementFunction;
 class StatementVariable;
 class StatementReturn;
 class StatementExpression;
+class StatementLoop;
 class StatementMetaExternFunction;
 class StatementBlock;
 
@@ -54,6 +55,7 @@ private:
     void buildVarDeclaration(shared_ptr<StatementVariable> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
+    void buildLoop(shared_ptr<StatementLoop> statement);
     void buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 

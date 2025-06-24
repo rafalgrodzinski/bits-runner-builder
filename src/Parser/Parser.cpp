@@ -194,7 +194,7 @@ shared_ptr<Statement> Parser::matchStatementLoop() {
 
     // pre condition
     shared_ptr<Expression> preConditionExpression = nextExpression();
-    if (preConditionExpression == nullptr || !preConditionExpression->isValid())
+    if (preConditionExpression != nullptr && !preConditionExpression->isValid())
         return matchStatementInvalid("Expected pre-condition expression");
 
     // post condition
