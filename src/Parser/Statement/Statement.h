@@ -13,6 +13,7 @@ enum class StatementKind {
     RETURN,
     FUNCTION,
     VARIABLE,
+    ASSIGNMENT,
     LOOP,
     META_EXTERN_FUNCTION,
     INVALID

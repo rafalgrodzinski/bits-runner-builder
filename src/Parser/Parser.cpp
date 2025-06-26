@@ -11,6 +11,7 @@
 
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
@@ -48,6 +49,10 @@ shared_ptr<Statement> Parser::nextStatement() {
         return statement;
 
     statement = matchStatementVariable();
+    if (statement != nullptr)
+        return statement;
+
+    statement = matchStatementAssignment();
     if (statement != nullptr)
         return statement;
 
@@ -161,6 +166,25 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         return matchStatementInvalid("Expected a new line after variable declaration");
 
     return make_shared<StatementVariable>(identifierToken->getLexme(), valueType, expression);
+}
+
+shared_ptr<Statement> Parser::matchStatementAssignment() {
+    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::LEFT_ARROW}, true, false))
+        return nullptr;
+     
+    shared_ptr<Token> identifierToken = tokens.at(currentIndex);
+    currentIndex++; // identifier
+    currentIndex++; // arrow
+
+    shared_ptr<Expression> expression = nextExpression();
+    if (expression == nullptr || !expression->isValid())
+        return matchStatementInvalid("Expected expression");
+
+    // Expect new line
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, false, true))
+        return matchStatementInvalid("Expected a new line after variable declaration");
+
+    return make_shared<StatementAssignment>(identifierToken->getLexme(), expression);
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {
@@ -396,13 +420,13 @@ shared_ptr<Expression> Parser::matchPrimary() {
     if (expression != nullptr)
         return expression;
 
-    expression = matchExpressionVariable();
-    if (expression != nullptr)
-    return expression;
-        
     expression = matchExpressionCall();
     if (expression != nullptr)
         return expression;
+
+    expression = matchExpressionVariable();
+    if (expression != nullptr)
+    return expression;
 
     return nullptr;
 }

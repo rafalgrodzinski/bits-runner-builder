@@ -10,6 +10,7 @@
 
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementLoop.h"
@@ -43,6 +44,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             break;
         case StatementKind::VARIABLE:
             buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
+            break;
+        case StatementKind::ASSIGNMENT:
+            buildAssignment(dynamic_pointer_cast<StatementAssignment>(statement));
             break;
         case StatementKind::BLOCK:
             buildBlock(dynamic_pointer_cast<StatementBlock>(statement));
@@ -108,6 +112,15 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
     llvm::Value *value = valueForExpression(statement->getExpression());
     llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType()), nullptr, statement->getName());
     allocaMap[statement->getName()] = alloca;
+    builder->CreateStore(value, alloca);
+}
+
+void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
+    llvm::AllocaInst *alloca = allocaMap[statement->getName()];
+    if (alloca == nullptr)
+        failWithMessage("Variable " + statement->getName() + " not defined");
+
+    llvm::Value *value = valueForExpression(statement->getExpression());
     builder->CreateStore(value, alloca);
 }
 

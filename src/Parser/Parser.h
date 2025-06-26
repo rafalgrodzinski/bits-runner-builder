@@ -21,6 +21,7 @@ private:
     shared_ptr<Statement> nextStatement();
     shared_ptr<Statement> matchStatementFunction();
     shared_ptr<Statement> matchStatementVariable();
+    shared_ptr<Statement> matchStatementAssignment();
     shared_ptr<Statement> matchStatementReturn();
     shared_ptr<Statement> matchStatementLoop();
     shared_ptr<Statement> matchStatementExpression();
