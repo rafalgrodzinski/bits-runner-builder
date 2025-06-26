@@ -183,31 +183,40 @@ shared_ptr<Statement> Parser::matchStatementLoop() {
     if (!tryMatchingTokenKinds({TokenKind::REPEAT}, true, true))
         return nullptr;
 
+    shared_ptr<Statement> initStatement;
+    shared_ptr<Expression> preConditionExpression;
+    shared_ptr<Expression> postConditionExpression;
+
     // initial
-    shared_ptr<Statement> initStatement = matchStatementVariable();
+    initStatement = matchStatementVariable();
     if (initStatement != nullptr && !initStatement->isValid())
         initStatement = nullptr;
 
-    // got initial, expect comma
-    if (initStatement != nullptr && !tryMatchingTokenKinds({TokenKind::COMMA}, true, true))
-        return matchStatementInvalid("Expected comma after initial statement");
+    if (tokens.at(currentIndex-1)->getKind() != TokenKind::NEW_LINE) {
+        // got initial, expect comma
+        if (initStatement != nullptr && !tryMatchingTokenKinds({TokenKind::COMMA}, true, true))
+            return matchStatementInvalid("Expected comma after initial statement");
 
-    // pre condition
-    shared_ptr<Expression> preConditionExpression = nextExpression();
-    if (preConditionExpression != nullptr && !preConditionExpression->isValid())
-        return matchStatementInvalid("Expected pre-condition expression");
+        // pre condition
+        preConditionExpression = nextExpression();
+        if (preConditionExpression != nullptr && !preConditionExpression->isValid())
+            return matchStatementInvalid("Expected pre-condition expression");
 
-    // post condition
-    shared_ptr<Expression> postConditionExpression;
-    if (tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
-        postConditionExpression = nextExpression();
-        if (postConditionExpression == nullptr || !postConditionExpression->isValid())
-            return matchStatementInvalid("Expected post-condition expression");
+        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+            // got pre-condition, expect comma
+            if (!tryMatchingTokenKinds({TokenKind::COMMA}, true, true))
+                return matchStatementInvalid("Expected comma after pre-condition statement");
+
+            // post condition
+            postConditionExpression = nextExpression();
+            if (postConditionExpression == nullptr || !postConditionExpression->isValid())
+                return matchStatementInvalid("Expected post-condition expression");
+            
+            // epxect new line
+            if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+                return matchStatementInvalid("Expected new line");
+        }
     }
-
-    // epxect new line
-    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
-        return matchStatementInvalid("Expected new line");
 
     // body
     shared_ptr<Statement> bodyBlockStatement = matchStatementBlock({TokenKind::SEMICOLON}, true);

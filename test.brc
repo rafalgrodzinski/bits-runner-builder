@@ -1,8 +1,5 @@
-test fun
-    /*rep i sint32 <- 0, i < 10
-        //i sint32 <- i + 1
-    ;*/
-    rep i sint32 <- 13
+test fun: num1 sint32, num2 sint32
+    rep num3 sint32 <- 5, true, num1 < num2
         abc sint32 <- 5
     ;
 ;

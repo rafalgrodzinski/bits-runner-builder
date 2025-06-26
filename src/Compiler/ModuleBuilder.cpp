@@ -127,25 +127,45 @@ void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
 
 void ModuleBuilder::buildLoop(shared_ptr<StatementLoop> statement) {
     shared_ptr<Statement> initStatement = statement->getInitStatement();
+    shared_ptr<StatementBlock> bodyStatement= statement->getBodyBlockStatement();
     shared_ptr<Expression> preExpression = statement->getPreConditionExpression();
     shared_ptr<Expression> postExpression = statement->getPostConditionExpression();
-    shared_ptr<StatementBlock> bodyStatement= statement->getBodyBlockStatement();
 
-    llvm::BasicBlock *parentBlock = builder->GetInsertBlock();
+    llvm::Function *fun = builder->GetInsertBlock()->getParent();
+    llvm::BasicBlock *preBlock = llvm::BasicBlock::Create(*context, "loopPre", fun);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, "loopBody");
+    llvm::BasicBlock *afterBlock = llvm::BasicBlock::Create(*context, "loopPost");
 
-    
+    // loop init
     if (initStatement != nullptr)
         buildStatement(statement->getInitStatement());
-    llvm::Function *fun = builder->GetInsertBlock()->getParent();
+    builder->CreateBr(preBlock);
 
-    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, "loopBody", fun);
+    // pre condition
+    builder->SetInsertPoint(preBlock);
+    if (preExpression != nullptr) {
+        llvm::Value *preConditionValue = valueForExpression(preExpression);
+        builder->CreateCondBr(preConditionValue, bodyBlock, afterBlock);
+    } else {
+        builder->CreateBr(bodyBlock);
+    }
+
+    // body
+    fun->insert(fun->end(), bodyBlock);
     builder->SetInsertPoint(bodyBlock);
     buildBlock(bodyStatement);
-    builder->CreateBr(bodyBlock);
 
-    //llvm::BasicBlock *loopEndBlock = builder->GetInsertBlock()
+    // post condition
+    if (postExpression != nullptr) {
+        llvm::Value *postConditionValue = valueForExpression(postExpression);
+        builder->CreateCondBr(postConditionValue, preBlock, afterBlock);
+    } else {
+        builder->CreateBr(preBlock);
+    }
 
-    builder->SetInsertPoint(parentBlock);
+    // loop post
+    fun->insert(fun->end(), afterBlock);
+    builder->SetInsertPoint(afterBlock);
 }
 
 void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement) {
