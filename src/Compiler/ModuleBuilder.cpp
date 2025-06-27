@@ -339,8 +339,8 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 
     // Then
     builder->SetInsertPoint(thenBlock);
-    llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getResultStatementExpression()->getExpression());
     buildStatement(expression->getThenBlock()->getStatementBlock());
+    llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getResultStatementExpression()->getExpression());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
 
@@ -350,8 +350,8 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     llvm::Value *elseValue = nullptr;
     if (expression->getElseBlock() != nullptr) {
         valuesCount++;
-        elseValue = valueForExpression(expression->getElseBlock()->getResultStatementExpression()->getExpression());
         buildStatement(expression->getElseBlock()->getStatementBlock());
+        elseValue = valueForExpression(expression->getElseBlock()->getResultStatementExpression()->getExpression());
     }
     builder->CreateBr(mergeBlock);
     elseBlock = builder->GetInsertBlock();
@@ -359,12 +359,17 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     // Merge
     fun->insert(fun->end(), mergeBlock);
     builder->SetInsertPoint(mergeBlock);
-    llvm::PHINode *phi = builder->CreatePHI(typeForValueType(expression->getValueType()), valuesCount, "phii");
-    phi->addIncoming(thenValue, thenBlock);
-    if (elseValue != nullptr)
-        phi->addIncoming(elseValue, elseBlock);
 
-    return phi;
+    if (elseValue != nullptr && thenValue->getType() != elseValue->getType()) {
+        return llvm::UndefValue::get(typeVoid);
+    } else {
+        llvm::PHINode *phi = builder->CreatePHI(thenValue->getType(), valuesCount, "ifElseResult");
+        phi->addIncoming(thenValue, thenBlock);
+        if (elseValue != nullptr)
+            phi->addIncoming(elseValue, elseBlock);
+
+        return phi;
+    }
 }
 
 llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVariable> expression) {
