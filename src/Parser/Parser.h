@@ -26,7 +26,7 @@ private:
     shared_ptr<Statement> matchStatementLoop();
     shared_ptr<Statement> matchStatementExpression();
     shared_ptr<Statement> matchStatementMetaExternFunction();
-    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal);
+    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
     shared_ptr<StatementInvalid> matchStatementInvalid(string message = "");
 
     shared_ptr<Expression> nextExpression();
