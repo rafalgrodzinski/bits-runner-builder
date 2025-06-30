@@ -26,14 +26,14 @@ enum class TokenKind {
     COMMA,
     COLON,
     SEMICOLON,
-    QUESTION,
-    QUESTION_QUESTION,
     LEFT_ARROW,
     RIGHT_ARROW,
 
     FUNCTION,
     RETURN,
     REPEAT,
+    IF,
+    ELSE,
 
     BOOL,
     INTEGER_DEC,

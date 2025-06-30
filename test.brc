@@ -1,17 +1,7 @@
-@extern putchar fun: character sint32 -> sint32
-
-stuff fun: num1 sint32, num2 sint32
-    ? num1 > num2
-        putchar(0x54)
-        
-    :
-        putchar(0x4e)
-        
+stuff fun: num1 sint32, num2 sint32 -> sint32
+    if num1 > num2:
+        ret 32 * num1
+    else
+        ret 45 * num2
     ;
-    putchar(0x0a)
-;
-
-main fun -> sint32
-    stuff(8, 108)
-    ret 42
 ;

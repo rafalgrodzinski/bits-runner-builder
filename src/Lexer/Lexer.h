@@ -10,11 +10,9 @@ using namespace std;
 class Lexer {
 private:
     string source;
-    int currentIndex = 0;
-    int currentLine = 0;
-    int currentColumn = 0;
-
-    vector<shared_ptr<Token>> tokens;
+    int currentIndex;
+    int currentLine;
+    int currentColumn;
 
     shared_ptr<Token> nextToken();
     shared_ptr<Token> match(TokenKind kind, string lexme, bool needsSeparator);

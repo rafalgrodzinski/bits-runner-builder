@@ -436,14 +436,12 @@ shared_ptr<Expression> Parser::matchExpressionGrouping() {
     if (tryMatchingTokenKinds({TokenKind::LEFT_PAREN}, true, true)) {
         shared_ptr<Expression> expression = matchTerm();
         // has grouped expression failed?
-        if (expression == nullptr) {
-            return matchExpressionInvalid();
-        } else if(!expression->isValid()) {
-            return expression;
+        if (expression == nullptr || !expression->isValid()) {
+            return expression ?: matchExpressionInvalid("Expected expression");
         } else if (tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
             return make_shared<ExpressionGrouping>(expression);
         } else {
-            return matchExpressionInvalid();
+            return matchExpressionInvalid("Unexpected token");
         }
     }
 
@@ -488,52 +486,56 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
 
     tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
     if (!tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true))
-        return matchExpressionInvalid();
+        return matchExpressionInvalid("Expected \")\"");
 
     return make_shared<ExpressionCall>(identifierToken->getLexme(), argumentExpressions);
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
-    // Try maching '?'
-    shared_ptr<Token> token = tokens.at(currentIndex);
-
-    if (!tryMatchingTokenKinds({TokenKind::QUESTION}, true, true))
+    if (!tryMatchingTokenKinds({TokenKind::IF}, true, true))
         return nullptr;
 
-    // Then get condition
-    shared_ptr<Expression> condition = nextExpression();
-    if (condition == nullptr)
-        return matchExpressionInvalid();
-    else if (!condition->isValid())
-        return condition;
-    
-    // Consume optional ':'
-    tryMatchingTokenKinds({TokenKind::COLON}, true, true);
-    // Consume optional new line
-    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
-
-    // Match then block
-    shared_ptr<Expression> thenBlock = matchExpressionBlock({TokenKind::COLON, TokenKind::SEMICOLON}, false);
-    if (thenBlock == nullptr)
-        return matchExpressionInvalid();
-    else if (!thenBlock->isValid())
-        return thenBlock;
-
-    // Match else block. Then and else block are separated by ':'
+    shared_ptr<Expression> condition;
+    shared_ptr<Expression> thenBlock;
     shared_ptr<Expression> elseBlock;
-    if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
-        bool isSingleLine = !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
-        vector<TokenKind> terminalTokens = {TokenKind::SEMICOLON, TokenKind::COMMA, TokenKind::RIGHT_PAREN};
-        if (isSingleLine)
-            terminalTokens.push_back(TokenKind::NEW_LINE);
 
-        elseBlock = matchExpressionBlock(terminalTokens, false);
-        if (elseBlock == nullptr)
-            return matchExpressionInvalid();
-        else if (!elseBlock->isValid())
-            return elseBlock;
+    // condition expression
+    condition = nextExpression();
+    if (condition == nullptr || !condition->isValid())
+        return condition ?: matchExpressionInvalid("Expected condition expression");
+    
+    if (!tryMatchingTokenKinds({TokenKind::COLON}, true, true))
+        return matchExpressionInvalid("Expected \":\"");
+    
+    // then
+    bool isMultiLine = false;
+
+    if (tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+        isMultiLine = true;
+
+    // then block
+    if (isMultiLine)
+        thenBlock = matchExpressionBlock({TokenKind::ELSE, TokenKind::SEMICOLON});
+    else
+        thenBlock = matchExpressionBlock({TokenKind::ELSE, TokenKind::NEW_LINE});
+    if (thenBlock == nullptr || !thenBlock->isValid())
+        return thenBlock ?: matchExpressionInvalid("Expected then block");
+
+    // else
+    if (tryMatchingTokenKinds({TokenKind::ELSE}, true, true)) {
+        if (tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+            isMultiLine = true;
+
+        // else block
+        if (isMultiLine)
+            elseBlock = matchExpressionBlock({TokenKind::SEMICOLON});
+        else
+            elseBlock = matchExpressionBlock({TokenKind::NEW_LINE});
+
+        if (elseBlock == nullptr || !elseBlock->isValid())
+            return elseBlock ?: matchExpressionInvalid("Expected else block");
     }
-    tryMatchingTokenKinds({TokenKind::SEMICOLON}, true, true);
+    tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true);
 
     return make_shared<ExpressionIfElse>(condition, dynamic_pointer_cast<ExpressionBlock>(thenBlock), dynamic_pointer_cast<ExpressionBlock>(elseBlock));
 }
@@ -553,7 +555,7 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     }
 
     if (right == nullptr) {
-        return matchExpressionInvalid();
+        return matchExpressionInvalid("Expected right-side expression");
     } else if (!right->isValid()) {
         return right;
     } else {
@@ -563,25 +565,21 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     return nullptr;
 }
 
-shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTokenKinds, bool shouldConsumeTerminal) {
+shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTokenKinds) {
     vector<shared_ptr<Statement>> statements;
 
-    bool hasNewLineTerminal = find(terminalTokenKinds.begin(), terminalTokenKinds.end(), TokenKind::NEW_LINE) != terminalTokenKinds.end();
-    while (!tryMatchingTokenKinds(terminalTokenKinds, false, shouldConsumeTerminal)) {
+    while (!tryMatchingTokenKinds(terminalTokenKinds, false, false)) {
         shared_ptr<Statement> statement = nextStatement();
         if (statement == nullptr || !statement->isValid())
-            return matchExpressionInvalid();
+            return matchExpressionInvalid("Expected statement");
         else
             statements.push_back(statement);
-
-        if (hasNewLineTerminal && tokens.at(currentIndex-1)->getKind() == TokenKind::NEW_LINE)
-            currentIndex--;
     }
 
     return make_shared<ExpressionBlock>(statements);
 }
 
-shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid() {
+shared_ptr<ExpressionInvalid> Parser::matchExpressionInvalid(string message) {
     return make_shared<ExpressionInvalid>(tokens.at(currentIndex));
 }
 
