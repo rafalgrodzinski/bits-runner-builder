@@ -13,7 +13,7 @@
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
-#include "Parser/Statement/StatementLoop.h"
+#include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 
@@ -54,8 +54,8 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         case StatementKind::RETURN:
             buildReturn(dynamic_pointer_cast<StatementReturn>(statement));
             break;
-        case StatementKind::LOOP:
-            buildLoop(dynamic_pointer_cast<StatementLoop>(statement));
+        case StatementKind::REPEAT:
+            buildLoop(dynamic_pointer_cast<StatementRepeat>(statement));
             break;
         case StatementKind::META_EXTERN_FUNCTION:
             buildMetaExternFunction(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
@@ -138,7 +138,7 @@ void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
     }
 }
 
-void ModuleBuilder::buildLoop(shared_ptr<StatementLoop> statement) {
+void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
     shared_ptr<Statement> initStatement = statement->getInitStatement();
     shared_ptr<StatementBlock> bodyStatement= statement->getBodyBlockStatement();
     shared_ptr<Expression> preExpression = statement->getPreConditionExpression();

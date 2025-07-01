@@ -16,7 +16,7 @@
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
-#include "Parser/Statement/StatementLoop.h"
+#include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementInvalid.h"
 
 Parser::Parser(vector<shared_ptr<Token>> tokens): tokens(tokens) {
@@ -80,7 +80,7 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
     if (statement != nullptr)
         return statement;
     
-    statement = matchStatementLoop();
+    statement = matchStatementRepeat();
     if (statement != nullptr)
         return statement;
 
@@ -267,7 +267,7 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
     return make_shared<StatementReturn>(expression);
 }
 
-shared_ptr<Statement> Parser::matchStatementLoop() {
+shared_ptr<Statement> Parser::matchStatementRepeat() {
     if (!tryMatchingTokenKinds({TokenKind::REPEAT}, true, true))
         return nullptr;
 
@@ -328,7 +328,7 @@ shared_ptr<Statement> Parser::matchStatementLoop() {
     
     tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true);
 
-    return make_shared<StatementLoop>(initStatement, preConditionExpression, postConditionExpression, dynamic_pointer_cast<StatementBlock>(bodyBlockStatement));
+    return make_shared<StatementRepeat>(initStatement, preConditionExpression, postConditionExpression, dynamic_pointer_cast<StatementBlock>(bodyBlockStatement));
 }
 
 shared_ptr<Statement> Parser::matchStatementExpression() {

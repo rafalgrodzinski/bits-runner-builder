@@ -28,7 +28,7 @@ private:
     shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
     shared_ptr<Statement> matchStatementAssignment();
     shared_ptr<Statement> matchStatementReturn();
-    shared_ptr<Statement> matchStatementLoop();
+    shared_ptr<Statement> matchStatementRepeat();
     shared_ptr<Statement> matchStatementExpression();
     shared_ptr<StatementInvalid> matchStatementInvalid(string message = "");
 
