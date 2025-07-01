@@ -1,7 +1,2 @@
 stuff fun: num1 sint32, num2 sint32 -> sint32
-    if num1 > num2:
-        ret 32 * num1
-    else
-        ret 45 * num2
-    ;
 ;

@@ -1,15 +1,30 @@
+# Detailed Syntax
+
+This documents specifies what is the allowed syntax for statements and expressions.
+
+### Symbols used
 `?` 0 or 1 instances
 
 `*` 0 or more instance
 
 `+` 1 or more instances
 
+`<TER>` Terminal token, usually new line <NL>, but it can also sometimes be `,`, `else`, or `;`
+
 `<NL>` New line
 
-`<IDENT>` Identifier
+`<ID>` Identifier
+
+`<EXPR_BLOCK>` Expression block
+
+`<STMT_BLOCK>` Statements block
+
+`<EXPR>` Expression
+
+`<STMT>` Statement
 
 ### Statement Function
-`<IDENT> fun (: <NL>? <IDENT> <TYPE> (, <NL?> <IDENT> <TYPE>)*)? (-> <NL>? <TYPE>)? <NL> ;`
+`<ID> fun (: <NL>? <ID> <TYPE> (, <NL>? <ID> <TYPE>)*)? (-> <NL>? <TYPE>)? <NL> <STMT_BLOCK> ; <NL>`
 ```
 stuff fun
 ;
@@ -25,23 +40,36 @@ sint32
 ;
 ```
 
+### Statement Meta Extern Function:
+`@extern <ID> fun (: <NL>? <ID> <TYPE> (, <NL>? <ID> <TYPE>)*)? (-> <NL>? <TYPE>)? <NL>`
+```
+@extern sum fun:
+num1 sint32,
+num2 sint32 ->
+sint32
+```
+
+
+### Statemnet Variable
+`<ID> <TYPE> <- <Expression> <TER>`
+```
+num sint32 <- 42
+
+```
+
 ### Statement Assignment
-`<IDENT> <- <Expression> <NL>`
+`<ID> <- <EXPR> <TER>`
 ```
 num1 <- 5
 
 ```
 
-### StatementBlock
+### Statement Block
 (<Statement> <NL>)*
 
 
-### StatementExpression
+### Statement Expression
 <Expression> <NL>
-
-StatementFunction:
-<IDENT> fun (: <NLO> <IDENT> <TYPE> (, <NLO> <IDENT> <TYPE>)*)? (-> <NLO> <TYPE>)? <NL> 
-;
 
 ### StatementLoop
 `loop [<StatementVariable> | <StatementAssignment>] (, <NL>? <Expression> (, <NL>? <Expression>)?)? <NL> <StatementBlock> ;`
@@ -64,16 +92,8 @@ i < 10
 
 `loop (<ExpressionLogical> (, <NL>? <ExpressionLogical>)?)? <NL> <StatementBlock> ;`
 
-
-StatementMetaExternFunction:
-@extern <IDENT> fun (: <NLO> <IDENT> <TYPE> (, <NLO> <IDENT> <TYPE>)*)? (-> <NLO> <TYPE>)? <NL>
-
-
 ### StatementReturn
 `ret <Expression>`
-
-### Statemnet Variable
-`<IDENT> <TYPE> <- <Expression>`
 
 ### ExpressionVariable:
 `<IDENT>`
