@@ -9,19 +9,11 @@ This documents specifies what is the allowed syntax for statements and expressio
 
 `+` 1 or more instances
 
-`<TER>` Terminal token, usually new line <NL>, but it can also sometimes be `,`, `else`, or `;`
-
 `<NL>` New line
 
 `<ID>` Identifier
 
-`<EXPR_BLOCK>` Expression block
-
-`<STMT_BLOCK>` Statements block
-
-`<EXPR>` Expression
-
-`<STMT>` Statement
+`<TYPE>` Type
 
 ### Overall structure
 ```
@@ -36,7 +28,7 @@ This documents specifies what is the allowed syntax for statements and expressio
     + <Statemnet Variable>
     + <Statement Assignment>
     + <Statement Return>
-    + <Statement Loop>
+    + <Statement Repeat>
       |
       + <Statement Block>...
     + <Statement Expression>
@@ -77,47 +69,52 @@ sint32
 ```
 
 ### Statement Assignment
-`<ID> <- <EXPR> <TER>`
+`<ID> <- <Expression>`
 ```
 num1 <- 5
-
 ```
 
 ### Statement Block
-(<Statement> <NL>)*
+`(<Statement> <NL>)*`
 
+### Statement Repeat
+`rep [<StatementVariable> | <StatementAssignment>]? : <Statement Block>`
 
-### Statement Expression
-<Expression> <NL>
+`rep [<StatementVariable> | <StatementAssignment>]? : <NL> <Statement Block> ;`
 
-### StatementLoop
-`loop [<StatementVariable> | <StatementAssignment>] (, <NL>? <Expression> (, <NL>? <Expression>)?)? <NL> <StatementBlock> ;`
+`rep [<StatementVariable> | <StatementAssignment>] (, <NL>? <Expression> (, <NL>? <Expression>)? )? : <StatementBlock>`
+
+`rep [<StatementVariable> | <StatementAssignment>] (, <NL>? <Expression> (, <NL>? <Expression>)? )? : <NL> <StatementBlock> ;`
+
+`rep (<Expression> (, <NL>? <Expression>)? )? : <StatementBlock>`
+
+`rep (<Expression> (, <NL>? <Expression>)? )? : <NL> <StatementBlock> ;`
 ```
-loop i sint32 <- 0, true, i < 10
+rep i sint32 <- 0, true, i < 10:
     doStuff(i)
 ;
 
-loop i sint32 <- 0,
-true, i < 10
+rep i sint32 <- 0,
+true, i < 10:
     doStuff(i)
 ;
 
-loop i sint32 <- 0,
+rep i sint32 <- 0,
 true,
-i < 10
+i < 10:
     doStuff(i)
 ;
-```
 
-`loop (<ExpressionLogical> (, <NL>? <ExpressionLogical>)?)? <NL> <StatementBlock> ;`
+rep: infiniteCall()
+```
 
 ### Statement Return
-`ret <Expression>? <NL>`
+`ret <Expression>?`
 
-### ExpressionVariable:
-`<IDENT>`
+### Expression Variable
+`<ID>`
 
-### Expression If Else:
+### Expression If-Else:
 `if <Expression> : <ExpressionBlock>`
 ```
 if num1 > 10: putchar('T')
@@ -158,4 +155,4 @@ if num1 > 10: putchar('T') else
 ```
 
 ### Expression Block
-`(<Statement> <NL>)* (<StatementExpression> <NL>?)? <TER>!`
+`<Statement> <NL>)* <Statement Expression>?`
