@@ -1,2 +1,6 @@
+dummy sint32 <- 55
 stuff fun: num1 sint32, num2 sint32 -> sint32
+    num1 sint32 <- 42
+    num1 <- 5 * num1
+    ret num1
 ;

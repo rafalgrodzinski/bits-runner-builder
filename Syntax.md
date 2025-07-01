@@ -23,8 +23,44 @@ This documents specifies what is the allowed syntax for statements and expressio
 
 `<STMT>` Statement
 
+### Overall structure
+```
+<Statement Meta Module>
+|
++ <Statement Meta Extern Function>
++ <Statemnet Variable>
++ <Statement Function>
+  |
+  + <Statement Block>
+    |
+    + <Statemnet Variable>
+    + <Statement Assignment>
+    + <Statement Return>
+    + <Statement Loop>
+      |
+      + <Statement Block>...
+    + <Statement Expression>
+      |
+      + <Expression>
+      + <Expression If-Else>
+        |
+        + <Expression Block>...
+```
+
+### Statement Meta Extern Function
+`@extern <ID> fun (: <NL>? <ID> <TYPE> (, <NL>? <ID> <TYPE>)*)? (-> <NL>? <TYPE>)?`
+```
+@extern sum fun:
+num1 sint32,
+num2 sint32 ->
+sint32
+```
+
+### Statement Variable
+`<ID> <TYPE> <- <Expression>`
+
 ### Statement Function
-`<ID> fun (: <NL>? <ID> <TYPE> (, <NL>? <ID> <TYPE>)*)? (-> <NL>? <TYPE>)? <NL> <STMT_BLOCK> ; <NL>`
+`<ID> fun (: <NL>? <ID> <TYPE> (, <NL>? <ID> <TYPE>)*)? (-> <NL>? <TYPE>)? <NL> <Statement Block> ;`
 ```
 stuff fun
 ;
@@ -38,23 +74,6 @@ num2 sint32 ->
 sint32
     ret num1 + num2
 ;
-```
-
-### Statement Meta Extern Function:
-`@extern <ID> fun (: <NL>? <ID> <TYPE> (, <NL>? <ID> <TYPE>)*)? (-> <NL>? <TYPE>)? <NL>`
-```
-@extern sum fun:
-num1 sint32,
-num2 sint32 ->
-sint32
-```
-
-
-### Statemnet Variable
-`<ID> <TYPE> <- <Expression> <TER>`
-```
-num sint32 <- 42
-
 ```
 
 ### Statement Assignment
@@ -92,8 +111,8 @@ i < 10
 
 `loop (<ExpressionLogical> (, <NL>? <ExpressionLogical>)?)? <NL> <StatementBlock> ;`
 
-### StatementReturn
-`ret <Expression>`
+### Statement Return
+`ret <Expression>? <NL>`
 
 ### ExpressionVariable:
 `<IDENT>`

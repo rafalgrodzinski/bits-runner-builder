@@ -19,14 +19,17 @@ private:
     int currentIndex = 0;
 
     shared_ptr<Statement> nextStatement();
-    shared_ptr<Statement> matchStatementFunction();
+    shared_ptr<Statement> nextInBlockStatement();
+
+    shared_ptr<Statement> matchStatementMetaExternFunction();
     shared_ptr<Statement> matchStatementVariable();
+    shared_ptr<Statement> matchStatementFunction();
+
+    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
     shared_ptr<Statement> matchStatementAssignment();
     shared_ptr<Statement> matchStatementReturn();
     shared_ptr<Statement> matchStatementLoop();
     shared_ptr<Statement> matchStatementExpression();
-    shared_ptr<Statement> matchStatementMetaExternFunction();
-    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
     shared_ptr<StatementInvalid> matchStatementInvalid(string message = "");
 
     shared_ptr<Expression> nextExpression();
