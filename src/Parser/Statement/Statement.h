@@ -14,7 +14,7 @@ enum class StatementKind {
     FUNCTION,
     VARIABLE,
     ASSIGNMENT,
-    LOOP,
+    REPEAT,
     META_EXTERN_FUNCTION,
     INVALID
 };

@@ -27,7 +27,7 @@ class StatementVariable;
 class StatementAssignment;
 class StatementReturn;
 class StatementExpression;
-class StatementLoop;
+class StatementRepeat;
 class StatementMetaExternFunction;
 class StatementBlock;
 
@@ -57,7 +57,7 @@ private:
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
-    void buildLoop(shared_ptr<StatementLoop> statement);
+    void buildLoop(shared_ptr<StatementRepeat> statement);
     void buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 

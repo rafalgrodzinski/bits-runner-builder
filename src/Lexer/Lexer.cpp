@@ -4,8 +4,12 @@ Lexer::Lexer(string source): source(source) {
 }
 
 vector<shared_ptr<Token>> Lexer::getTokens() {
-    shared_ptr<Token> token = nullptr;
-    tokens.clear();
+    currentIndex = 0;
+    currentLine = 0;
+    currentColumn = 0;
+
+    vector<shared_ptr<Token>> tokens;
+    shared_ptr<Token> token;
     do {
         token = nextToken();
         // Got a nullptr, shouldn't have happened
@@ -18,7 +22,11 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
         if (!token->isValid()) {
             cerr << "Unexpected character '" << token->getLexme() << "' at " << token->getLine() << ":" << token->getColumn() << endl;
             exit(1);
-         }
+        }
+
+        // Don't add new line as the first token
+        if (tokens.empty() && token->isOfKind({TokenKind::NEW_LINE}))
+            continue;
         
         // Insert an additional new line just before end
         if (token->getKind() == TokenKind::END && tokens.back()->getKind() != TokenKind::NEW_LINE)
@@ -123,14 +131,6 @@ shared_ptr<Token> Lexer::nextToken() {
     token = match(TokenKind::SEMICOLON, ";", false);
     if (token != nullptr)
         return token;
-    
-    token = match(TokenKind::QUESTION_QUESTION, "??", false);
-    if (token != nullptr)
-        return token;
-    
-    token = match(TokenKind::QUESTION, "?", false);
-    if (token != nullptr)
-        return token;
 
     token = match(TokenKind::LEFT_ARROW, "<-", false);
     if (token != nullptr)
@@ -187,6 +187,14 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // keywords
+    token = match(TokenKind::IF, "if", true);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::ELSE, "else", true);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::FUNCTION, "fun", true);
     if (token != nullptr)
         return token;

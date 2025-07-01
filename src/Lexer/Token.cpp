@@ -112,10 +112,6 @@ string Token::toString() {
             return ":";
         case TokenKind::SEMICOLON:
             return ";";
-        case TokenKind::QUESTION_QUESTION:
-            return "??";
-        case TokenKind::QUESTION:
-            return "?";
         case TokenKind::LEFT_ARROW:
             return "←";
         case TokenKind::RIGHT_ARROW:
@@ -136,6 +132,10 @@ string Token::toString() {
         case TokenKind::TYPE:
             return "TYPE(" + lexme + ")";
 
+        case TokenKind::IF:
+            return "IF";
+        case TokenKind::ELSE:
+            return "ELSE";
         case TokenKind::FUNCTION:
             return "FUNCTION";
         case TokenKind::RETURN:
