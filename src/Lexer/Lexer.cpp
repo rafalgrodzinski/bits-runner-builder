@@ -22,7 +22,11 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
         if (!token->isValid()) {
             cerr << "Unexpected character '" << token->getLexme() << "' at " << token->getLine() << ":" << token->getColumn() << endl;
             exit(1);
-         }
+        }
+
+        // Don't add new line as the first token
+        if (tokens.empty() && token->isOfKind({TokenKind::NEW_LINE}))
+            continue;
         
         // Insert an additional new line just before end
         if (token->getKind() == TokenKind::END && tokens.back()->getKind() != TokenKind::NEW_LINE)

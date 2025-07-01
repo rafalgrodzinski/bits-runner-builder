@@ -1,6 +1,7 @@
-dummy sint32 <- 55
+//dummy sint32 <- 55
 stuff fun: num1 sint32, num2 sint32 -> sint32
     rep:
         i <- i + 1
     ;
+    ret 42
 ;

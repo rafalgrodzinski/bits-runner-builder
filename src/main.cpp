@@ -74,14 +74,14 @@ int main(int argc, char **argv) {
         cout << endl << endl;
     }
 
-    /*ModuleBuilder moduleBuilder(moduleName, inputFilePath, statements);
+    ModuleBuilder moduleBuilder(moduleName, inputFilePath, statements);
     shared_ptr<llvm::Module> module = moduleBuilder.getModule();
     if (isVerbose) {
         module->print(llvm::outs(), nullptr);
     }
 
     CodeGenerator codeGenerator(module);
-    codeGenerator.generateObjectFile(outputKind);*/
+    codeGenerator.generateObjectFile(outputKind);
 
     return 0;
 }
