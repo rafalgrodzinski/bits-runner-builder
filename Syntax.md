@@ -1,6 +1,6 @@
 # Detailed Syntax
 
-This documents specifies what is the allowed syntax for statements and expressions.
+This documents specifies what is the allowed syntax for statements and expressions!
 
 ### Symbols used
 `?` 0 or 1 instances
