@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Lexer/Token.h"
+
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariable.h"
@@ -14,6 +15,13 @@
 #include "Parser/Statement/StatementExpression.h"
 
 #include "Parser/Expression/Expression.h"
+#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionVariable.h"
+#include "Parser/Expression/ExpressionGrouping.h"
+#include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionBlock.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -130,7 +138,7 @@ string Logger::toString(shared_ptr<StatementMetaExternFunction> statement) {
 }
 
 string Logger::toString(shared_ptr<StatementVariable> statement) {
-    return format("{}({}|)", statement->getName(), toString(statement->getValueType()), toString(statement->getExpression()));
+    return format("{}({}|{})", statement->getName(), toString(statement->getValueType()), toString(statement->getExpression()));
 }
 
 string Logger::toString(shared_ptr<StatementFunction> statement) {
@@ -165,7 +173,7 @@ string Logger::toString(shared_ptr<StatementAssignment> statement) {
 
 string Logger::toString(shared_ptr<StatementReturn> statement) {
     string text = "RET";
-    if (statement != nullptr)
+    if (statement->getExpression() != nullptr)
         text += format("({})", toString(statement->getExpression()));
     return text;
 }
@@ -210,8 +218,104 @@ string Logger::toString(ValueType valueType) {
 }
 
 string Logger::toString(shared_ptr<Expression> expression) {
-    return "";
+    switch (expression->getKind()) {
+        case ExpressionKind::BINARY:
+            return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case ExpressionKind::IF_ELSE:
+            return toString(dynamic_pointer_cast<ExpressionIfElse>(expression));
+        case ExpressionKind::VAR:
+            return toString(dynamic_pointer_cast<ExpressionVariable>(expression));
+        case ExpressionKind::GROUPING:
+            return toString(dynamic_pointer_cast<ExpressionGrouping>(expression));
+        case ExpressionKind::LITERAL:
+            return toString(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::CALL:
+            return toString(dynamic_pointer_cast<ExpressionCall>(expression));
+        case ExpressionKind::BLOCK:
+            return toString(dynamic_pointer_cast<ExpressionBlock>(expression));
+    }
 }
+
+string Logger::toString(shared_ptr<ExpressionBinary> expression) {
+    switch (expression->getOperation()) {
+        case ExpressionBinaryOperation::EQUAL:
+            return "{= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return "{!= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::LESS:
+            return "{< " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return "{<= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::GREATER:
+            return "{> " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return "{<= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::ADD:
+            return "{+ " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::SUB:
+            return "{- " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::MUL:
+            return "{* " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::DIV:
+            return "{/ " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::MOD:
+            return "{% " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+    }
+}
+
+string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
+    string text;
+
+    text += format("IF({}):\n", toString(expression->getCondition()));
+    text += toString(expression->getThenBlock());
+    if (expression->getElseBlock() != nullptr) {
+        text += "\nELSE:\n";
+        text += toString(expression->getElseBlock());
+    }
+    text += "\n;";
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ExpressionVariable> expression) {
+    return format("VAR({})", expression->getName());
+}
+
+string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
+    return format("({})", toString(expression->getExpression()));
+}
+
+string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
+    switch (expression->getValueType()) {
+        case ValueType::NONE:
+            return "NONE";
+        case ValueType::BOOL:
+            return expression->getBoolValue() ? "true" : "false";
+        case ValueType::SINT32:
+            return to_string(expression->getSint32Value());
+        case ValueType::REAL32:
+            return to_string(expression->getReal32Value());
+    }
+}
+
+string Logger::toString(shared_ptr<ExpressionCall> expression) {
+    string argsString;
+    for (int i = 0; i < expression->getArgumentExpressions().size(); i++) {
+        argsString += toString(expression->getArgumentExpressions().at(i));
+        if (i < expression->getArgumentExpressions().size() - 1)
+            argsString += ", ";
+    }
+    return format("CALL({}|{})", expression->getName(), argsString);
+}
+
+string Logger::toString(shared_ptr<ExpressionBlock> expression) {
+    string text;
+    text += toString(expression->getStatementBlock());
+    if (expression->getResultStatementExpression() != nullptr)
+        text += toString(expression->getResultStatementExpression());
+    return text;
+}
+
 
 void Logger::print(vector<shared_ptr<Token>> tokens) {
         for (int i=0; i<tokens.size(); i++) {

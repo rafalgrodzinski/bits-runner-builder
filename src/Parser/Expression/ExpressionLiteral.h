@@ -6,12 +6,10 @@ private:
     int32_t sint32Value;
     float real32Value;
     
-    ExpressionLiteral();
-
+    
 public:
-    static shared_ptr<ExpressionLiteral> NONE;
-
     ExpressionLiteral(shared_ptr<Token> token);
+    ExpressionLiteral();
     bool getBoolValue();
     int32_t getSint32Value();
     float getReal32Value();

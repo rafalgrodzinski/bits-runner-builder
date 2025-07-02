@@ -15,6 +15,13 @@ class StatementRepeat;
 class StatementExpression;
 
 class Expression;
+class ExpressionBinary;
+class ExpressionIfElse;
+class ExpressionVariable;
+class ExpressionGrouping;
+class ExpressionLiteral;
+class ExpressionCall;
+class ExpressionBlock;
 
 enum class ValueType;
 
@@ -35,6 +42,13 @@ private:
     static string toString(shared_ptr<StatementExpression> statement);
 
     static string toString(shared_ptr<Expression> expression);
+    static string toString(shared_ptr<ExpressionBinary> expression);
+    static string toString(shared_ptr<ExpressionIfElse> expression);
+    static string toString(shared_ptr<ExpressionVariable> expression);
+    static string toString(shared_ptr<ExpressionGrouping> expression);
+    static string toString(shared_ptr<ExpressionLiteral> expression);
+    static string toString(shared_ptr<ExpressionCall> expression);
+    static string toString(shared_ptr<ExpressionBlock> expression);
 
     static string toString(ValueType valueType);
 

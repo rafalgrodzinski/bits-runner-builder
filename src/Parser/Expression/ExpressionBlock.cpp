@@ -11,7 +11,7 @@ Expression(ExpressionKind::BLOCK, ValueType::NONE) {
         valueType = resultStatementExpression->getExpression()->getValueType();
         statements.pop_back();
     } else {
-        resultStatementExpression = make_shared<StatementExpression>(ExpressionLiteral::NONE);
+        resultStatementExpression = make_shared<StatementExpression>(make_shared<ExpressionLiteral>());
     }
     statementBlock = make_shared<StatementBlock>(statements);
 }
