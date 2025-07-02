@@ -4,6 +4,19 @@
 #include <vector>
 
 class Token;
+class Statement;
+class StatementMetaExternFunction;
+class StatementVariable;
+class StatementFunction;
+class StatementBlock;
+class StatementAssignment;
+class StatementReturn;
+class StatementRepeat;
+class StatementExpression;
+
+class Expression;
+
+enum class ValueType;
 
 using namespace std;
 
@@ -11,8 +24,23 @@ class Logger {
 private:
     static string toString(shared_ptr<Token> token);
 
+    static string toString(shared_ptr<Statement> statement);
+    static string toString(shared_ptr<StatementMetaExternFunction> statement);
+    static string toString(shared_ptr<StatementVariable> statement);
+    static string toString(shared_ptr<StatementFunction> statement);
+    static string toString(shared_ptr<StatementBlock> statement);
+    static string toString(shared_ptr<StatementAssignment> statement);
+    static string toString(shared_ptr<StatementReturn> statement);
+    static string toString(shared_ptr<StatementRepeat> statement);
+    static string toString(shared_ptr<StatementExpression> statement);
+
+    static string toString(shared_ptr<Expression> expression);
+
+    static string toString(ValueType valueType);
+
 public:
     static void print(vector<shared_ptr<Token>> tokens);
+    static void print(vector<shared_ptr<Statement>> statements);
 };
 
 #endif

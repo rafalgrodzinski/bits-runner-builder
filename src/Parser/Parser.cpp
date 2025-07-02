@@ -339,9 +339,6 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
     else if (!expression->isValid())
         return make_shared<StatementInvalid>(tokens.at(currentIndex), expression->toString(0));
 
-    // Consume new line
-    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
-
     return make_shared<StatementExpression>(expression);
 }
 
@@ -578,6 +575,13 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
         if (statement == nullptr || !statement->isValid())
             return matchExpressionInvalid("Expected statement");
         statements.push_back(statement);
+
+        if (tryMatchingTokenKinds(terminalTokenKinds, false, false))
+            break;
+
+        // except new line
+        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+            return matchExpressionInvalid("Expected new line");
     }
 
     return make_shared<ExpressionBlock>(statements);

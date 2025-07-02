@@ -3,6 +3,17 @@
 #include <iostream>
 
 #include "Lexer/Token.h"
+#include "Parser/Statement/Statement.h"
+#include "Parser/Statement/StatementMetaExternFunction.h"
+#include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementAssignment.h"
+#include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementRepeat.h"
+#include "Parser/Statement/StatementExpression.h"
+
+#include "Parser/Expression/Expression.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -83,11 +94,136 @@ string Logger::toString(shared_ptr<Token> token) {
     }
 }
 
+string Logger::toString(shared_ptr<Statement> statement) {
+    switch (statement->getKind()) {
+        case StatementKind::META_EXTERN_FUNCTION:
+            return toString(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
+        case StatementKind::VARIABLE:
+            return toString(dynamic_pointer_cast<StatementVariable>(statement));
+        case StatementKind::FUNCTION:
+            return toString(dynamic_pointer_cast<StatementFunction>(statement));
+        case StatementKind::BLOCK:
+            return toString(dynamic_pointer_cast<StatementBlock>(statement));
+        case StatementKind::ASSIGNMENT:
+            return toString(dynamic_pointer_cast<StatementAssignment>(statement));
+        case StatementKind::RETURN:
+            return toString(dynamic_pointer_cast<StatementReturn>(statement));
+        case StatementKind::REPEAT:
+            return toString(dynamic_pointer_cast<StatementRepeat>(statement));
+        case StatementKind::EXPRESSION:
+            return toString(dynamic_pointer_cast<StatementExpression>(statement));
+    }
+}
+
+string Logger::toString(shared_ptr<StatementMetaExternFunction> statement) {
+    string text;
+
+    string argsString;
+    for (int i = 0; i < statement->getArguments().size(); i++) {
+        auto arg = statement->getArguments().at(i);
+        argsString +=  format("ARG({}, {})", arg.first, toString(arg.second));
+    }
+    text += format("@EXTERN FUN(\"{}\"|{}|{})", statement->getName(), argsString, toString(statement->getReturnValueType()));
+
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementVariable> statement) {
+    return format("{}({}|)", statement->getName(), toString(statement->getValueType()), toString(statement->getExpression()));
+}
+
+string Logger::toString(shared_ptr<StatementFunction> statement) {
+    string text;
+
+    string argsString;
+    for (int i = 0; i < statement->getArguments().size(); i++) {
+        auto arg = statement->getArguments().at(i);
+        argsString +=  format("ARG({}, {})", arg.first, toString(arg.second));
+    }
+    text += format("FUN(\"{}\"|{}|{}):\n", statement->getName(), argsString, toString(statement->getReturnValueType()));
+    text += toString(statement->getStatementBlock());
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementBlock> statement) {
+    string text;
+
+    for (int i=0; i<statement->getStatements().size(); i++) {
+        text += toString(statement->getStatements().at(i));
+        if (i < statement->getStatements().size() - 1)
+            text += "\n";
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementAssignment> statement) {
+    return format("{} <- {}", statement->getName(), toString(statement->getExpression()));
+}
+
+string Logger::toString(shared_ptr<StatementReturn> statement) {
+    string text = "RET";
+    if (statement != nullptr)
+        text += format("({})", toString(statement->getExpression()));
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementRepeat> statement) {
+    string text;
+
+    string initStatement;
+    string preCondition;
+    string postCondition;
+
+    if (statement->getInitStatement() != nullptr)
+        initStatement = toString(statement->getInitStatement());
+    
+    if (statement->getPostConditionExpression() != nullptr)
+        preCondition = toString(statement->getPreConditionExpression());
+    
+    if (statement->getPostConditionExpression() != nullptr)
+        postCondition = toString(statement->getPostConditionExpression());
+
+    text += format("REP({}|{}|{}):\n", initStatement, preCondition, postCondition);
+    text += toString(statement->getBodyBlockStatement());
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementExpression> statement) {
+    return format("EXPR({})", toString(statement->getExpression()));
+}
+
+string Logger::toString(ValueType valueType) {
+    switch (valueType) {
+        case ValueType::NONE:
+            return "NONE";
+        case ValueType::BOOL:
+            return "BOOL";
+        case ValueType::SINT32:
+            return "SINT32";
+        case ValueType::REAL32:
+            return "REAL32";
+    }
+}
+
+string Logger::toString(shared_ptr<Expression> expression) {
+    return "";
+}
+
 void Logger::print(vector<shared_ptr<Token>> tokens) {
         for (int i=0; i<tokens.size(); i++) {
             cout << i << "|" << toString(tokens.at(i));
             if (i < tokens.size() - 1)
                 cout << "  ";
         }
-        cout << endl << endl;
+        cout << endl;
+}
+
+void Logger::print(vector<shared_ptr<Statement>> statements) {
+    for (shared_ptr<Statement> &statement : statements) {
+        cout << toString(statement) << endl << endl;
+    }
 }

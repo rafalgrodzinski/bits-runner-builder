@@ -56,27 +56,26 @@ int main(int argc, char **argv) {
 
     Lexer lexer(source);
     vector<shared_ptr<Token>> tokens = lexer.getTokens();
-    if (isVerbose)
+    if (isVerbose) {
         Logger::print(tokens);
+        cout << endl;
+    }
 
     Parser parser(tokens);
     vector<shared_ptr<Statement>> statements = parser.getStatements();
     if (isVerbose) {
-        for (shared_ptr<Statement> &statement : statements) {
-            cout << statement->toString(0);
-            cout << endl;
-        }
-        cout << endl << endl;
+        Logger::print(statements);
+        cout << endl;
     }
 
-    ModuleBuilder moduleBuilder(moduleName, inputFilePath, statements);
+    /*ModuleBuilder moduleBuilder(moduleName, inputFilePath, statements);
     shared_ptr<llvm::Module> module = moduleBuilder.getModule();
     if (isVerbose) {
         module->print(llvm::outs(), nullptr);
     }
 
     CodeGenerator codeGenerator(module);
-    codeGenerator.generateObjectFile(outputKind);
+    codeGenerator.generateObjectFile(outputKind);*/
 
     return 0;
 }
