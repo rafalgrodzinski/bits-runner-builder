@@ -9,5 +9,4 @@ private:
 public:
     StatementExpression(shared_ptr<Expression> expression);
     shared_ptr<Expression> getExpression();
-    string toString(int indent) override;
 };

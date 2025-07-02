@@ -16,5 +16,4 @@ public:
     shared_ptr<Expression> getPreConditionExpression();
     shared_ptr<Expression> getPostConditionExpression();
     shared_ptr<StatementBlock> getBodyBlockStatement();
-    string toString(int indent) override;
 };

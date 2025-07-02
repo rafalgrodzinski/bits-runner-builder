@@ -29,7 +29,7 @@ vector<shared_ptr<Statement>> Parser::getStatements() {
         shared_ptr<Statement> statement = nextStatement();
         // Abort parsing if we got an error
         if (!statement->isValid()) {
-            cerr << statement->toString(0);
+            //cerr << statement->toString(0);
             exit(1);
         }
         statements.push_back(statement);

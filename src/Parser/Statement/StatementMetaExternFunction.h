@@ -11,5 +11,4 @@ public:
     string getName();
     vector<pair<string, ValueType>> getArguments();
     ValueType getReturnValueType();
-    string toString(int indent) override;
 };

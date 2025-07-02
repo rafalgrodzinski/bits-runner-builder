@@ -9,6 +9,5 @@ private:
 
 public:
     StatementInvalid(shared_ptr<Token> token, string message);
-    string toString(int indent) override;
     string getMessage();
 };

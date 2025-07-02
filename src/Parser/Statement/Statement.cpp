@@ -10,7 +10,3 @@ StatementKind Statement::getKind() {
 bool Statement::isValid() {
     return kind != StatementKind::INVALID;
 }
-
-string Statement::toString(int indent) {
-   return "STATEMENT";
-}

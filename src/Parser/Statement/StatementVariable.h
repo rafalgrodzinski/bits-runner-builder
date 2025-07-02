@@ -13,5 +13,4 @@ public:
     string getName();
     ValueType getValueType();
     shared_ptr<Expression> getExpression();
-    string toString(int indent) override;
 };

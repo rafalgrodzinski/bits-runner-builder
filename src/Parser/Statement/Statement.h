@@ -25,9 +25,9 @@ private:
 
 public:
     Statement(StatementKind kind);
+    virtual ~Statement() {}
     StatementKind getKind();
     bool isValid();
-    virtual string toString(int indent);
 };
 
 #endif
