@@ -13,6 +13,7 @@
 #include "Compiler/ModuleBuilder.h"
 #include "Compiler/CodeGenerator.h"
 
+#include "Logger.h"
 
 using namespace std;
 
@@ -55,14 +56,8 @@ int main(int argc, char **argv) {
 
     Lexer lexer(source);
     vector<shared_ptr<Token>> tokens = lexer.getTokens();
-    if (isVerbose) {
-        for (int i=0; i<tokens.size(); i++) {
-            cout << i << "|" << tokens.at(i)->toString();
-            if (i < tokens.size() - 1)
-                cout << ", ";
-        }
-        cout << endl << endl;
-    }
+    if (isVerbose)
+        Logger::print(tokens);
 
     Parser parser(tokens);
     vector<shared_ptr<Statement>> statements = parser.getStatements();
