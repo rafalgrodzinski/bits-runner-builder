@@ -13,5 +13,4 @@ public:
     bool getBoolValue();
     int32_t getSint32Value();
     float getReal32Value();
-    string toString(int indent) override;
 };

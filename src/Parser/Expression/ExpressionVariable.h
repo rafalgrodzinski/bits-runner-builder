@@ -7,5 +7,4 @@ private:
 public:
     ExpressionVariable(string name);
     string getName();
-    string toString(int indent) override;
 };

@@ -337,7 +337,7 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
     if (expression == nullptr)
         return nullptr;
     else if (!expression->isValid())
-        return make_shared<StatementInvalid>(tokens.at(currentIndex), expression->toString(0));
+        return make_shared<StatementInvalid>(tokens.at(currentIndex), "");// expression->toString(0));
 
     return make_shared<StatementExpression>(expression);
 }

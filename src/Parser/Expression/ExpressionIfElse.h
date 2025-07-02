@@ -13,5 +13,4 @@ public:
     shared_ptr<Expression> getCondition();
     shared_ptr<ExpressionBlock> getThenBlock();
     shared_ptr<ExpressionBlock> getElseBlock();
-    string toString(int indent) override;
 };

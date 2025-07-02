@@ -25,7 +25,7 @@ private:
 
 public:
     Statement(StatementKind kind);
-    virtual ~Statement() {}
+    virtual ~Statement() { }
     StatementKind getKind();
     bool isValid();
 };

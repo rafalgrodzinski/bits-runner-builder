@@ -13,5 +13,4 @@ public:
     ExpressionBlock(vector<shared_ptr<Statement>> statements);
     shared_ptr<StatementBlock> getStatementBlock();
     shared_ptr<StatementExpression> getResultStatementExpression();
-    string toString(int indent) override;
 };

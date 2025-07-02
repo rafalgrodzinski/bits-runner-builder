@@ -6,7 +6,3 @@ Expression(ExpressionKind::VAR, ValueType::NONE), name(name) { }
 string ExpressionVariable::getName() {
     return name;
 }
-
-string ExpressionVariable::toString(int indent) {
-    return "VAR(" + name + ")";
-}

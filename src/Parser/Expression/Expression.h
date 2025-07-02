@@ -28,10 +28,10 @@ protected:
 
 public:
     Expression(ExpressionKind kind, ValueType valueType);
+    virtual ~Expression() { }
     ExpressionKind getKind();
     ValueType getValueType();
     bool isValid();
-    virtual string toString(int indent);
 };
 
 #endif

@@ -6,7 +6,3 @@ Expression(ExpressionKind::GROUPING, expression->getValueType()), expression(exp
 shared_ptr<Expression> ExpressionGrouping::getExpression() {
     return expression;
 }
-
-string ExpressionGrouping::toString(int indent) {
-    return "( " + expression->toString(0) + " )";
-}

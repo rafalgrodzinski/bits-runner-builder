@@ -7,5 +7,4 @@ private:
 public:
     ExpressionGrouping(shared_ptr<Expression> expression);
     shared_ptr<Expression> getExpression();
-    string toString(int indent) override;
 };

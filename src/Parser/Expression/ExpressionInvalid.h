@@ -7,5 +7,4 @@ private:
 public:
     ExpressionInvalid(shared_ptr<Token> token);
     shared_ptr<Token> getToken();
-    string toString(int indent) override;
 };

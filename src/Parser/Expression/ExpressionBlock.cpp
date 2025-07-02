@@ -23,7 +23,3 @@ shared_ptr<StatementBlock> ExpressionBlock::getStatementBlock() {
 shared_ptr<StatementExpression> ExpressionBlock::getResultStatementExpression() {
     return resultStatementExpression;
 }
-
-string ExpressionBlock::toString(int indent) {
-    return "";
-}

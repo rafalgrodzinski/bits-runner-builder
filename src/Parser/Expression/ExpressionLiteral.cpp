@@ -52,16 +52,3 @@ int32_t ExpressionLiteral::getSint32Value() {
 float ExpressionLiteral::getReal32Value() {
     return real32Value;
 }
-
-string ExpressionLiteral::toString(int indent) {
-    switch (valueType) {
-        case ValueType::NONE:
-            return "NONE";
-        case ValueType::BOOL:
-            return boolValue ? "true" : "false";
-        case ValueType::SINT32:
-            return to_string(sint32Value);
-        case ValueType::REAL32:
-            return to_string(real32Value);
-    }
-}

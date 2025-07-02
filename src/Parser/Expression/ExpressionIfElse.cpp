@@ -20,21 +20,3 @@ shared_ptr<ExpressionBlock> ExpressionIfElse::getThenBlock() {
 shared_ptr<ExpressionBlock> ExpressionIfElse::getElseBlock() {
     return elseBlock;
 }
-
-string ExpressionIfElse::toString(int indent) {
-    string value;
-    value += "IF(" + condition->toString(0) + "):\n";
-
-    value += thenBlock->toString(indent+1);
-    if (elseBlock != nullptr) {
-        for (int ind=0; ind<indent; ind++)
-            value += "  ";
-        value += "ELSE:\n";
-        value += elseBlock->toString(indent+1);
-    }
-    for (int ind=0; ind<indent; ind++)
-        value += "  ";
-    value += ";";
-
-    return  value;
-}
