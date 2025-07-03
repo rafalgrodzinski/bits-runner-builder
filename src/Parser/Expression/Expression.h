@@ -15,8 +15,7 @@ enum class ExpressionKind {
     IF_ELSE,
     VAR,
     CALL,
-    BLOCK,
-    INVALID
+    BLOCK
 };
 
 class Expression {
@@ -31,7 +30,6 @@ public:
     virtual ~Expression() { }
     ExpressionKind getKind();
     ValueType getValueType();
-    bool isValid();
 };
 
 #endif

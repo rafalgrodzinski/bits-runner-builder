@@ -11,7 +11,3 @@ ExpressionKind Expression::getKind() {
 ValueType Expression::getValueType() {
     return valueType;
 }
-
-bool Expression::isValid() {
-    return kind != ExpressionKind::INVALID;
-}

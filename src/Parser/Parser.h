@@ -9,8 +9,6 @@ enum class TokenKind;
 class Error;
 
 class Expression;
-class ExpressionInvalid;
-
 class Statement;
 
 using namespace std;

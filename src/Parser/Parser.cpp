@@ -10,7 +10,6 @@
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionBinary.h"
 #include "Parser/Expression/ExpressionBlock.h"
-#include "Parser/Expression/ExpressionInvalid.h"
 
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
@@ -176,9 +175,8 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     }
 
     shared_ptr<Expression> expression = nextExpression();
-    if (expression == nullptr || !expression->isValid()) {
+    if (expression == nullptr)
         return nullptr;
-    }
 
     return make_shared<StatementVariable>(identifierToken->getLexme(), valueType, expression);
 }
@@ -255,15 +253,14 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 
     while (!tryMatchingTokenKinds(terminalTokenKinds, false, false)) {
         shared_ptr<Statement> statement = nextInBlockStatement();
-        if (statement == nullptr)
-            return nullptr;
-        statements.push_back(statement);
+        if (statement != nullptr)
+            statements.push_back(statement);
 
         if (tryMatchingTokenKinds(terminalTokenKinds, false, false))
             break;
 
         // except new line
-        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+        if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
             markError(TokenKind::NEW_LINE, {});
             return nullptr;
         }
@@ -395,10 +392,10 @@ shared_ptr<Expression> Parser::nextExpression() {
 
 shared_ptr<Expression> Parser::matchEquality() {
     shared_ptr<Expression> expression = matchComparison();
-    if (expression == nullptr || !expression->isValid())
-        return expression;
+    if (expression == nullptr)
+        return nullptr;
 
-    while (tryMatchingTokenKinds({Token::tokensEquality}, false, false))
+    if (tryMatchingTokenKinds({Token::tokensEquality}, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -406,10 +403,10 @@ shared_ptr<Expression> Parser::matchEquality() {
 
 shared_ptr<Expression> Parser::matchComparison() {
     shared_ptr<Expression> expression = matchTerm();
-    if (expression == nullptr || !expression->isValid())
-        return expression;
+    if (expression == nullptr)
+        return nullptr;
     
-    while (tryMatchingTokenKinds({Token::tokensComparison}, false, false))
+    if (tryMatchingTokenKinds({Token::tokensComparison}, false, false))
         expression = matchExpressionBinary(expression);
     
     return expression;
@@ -417,10 +414,10 @@ shared_ptr<Expression> Parser::matchComparison() {
 
 shared_ptr<Expression> Parser::matchTerm() {
     shared_ptr<Expression> expression = matchFactor();
-    if (expression == nullptr || !expression->isValid())
-        return expression;
+    if (expression == nullptr)
+        return nullptr;
 
-    while (tryMatchingTokenKinds({Token::tokensTerm}, false, false))
+    if (tryMatchingTokenKinds({Token::tokensTerm}, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -428,10 +425,10 @@ shared_ptr<Expression> Parser::matchTerm() {
 
 shared_ptr<Expression> Parser::matchFactor() {
     shared_ptr<Expression> expression = matchPrimary();
-    if (expression == nullptr || !expression->isValid())
-        return expression;
+    if (expression == nullptr)
+        return nullptr;
 
-    while (tokens.at(currentIndex)->isOfKind(Token::tokensFactor))
+    if (tokens.at(currentIndex)->isOfKind(Token::tokensFactor))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -507,8 +504,8 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
         tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
 
         shared_ptr<Expression> argumentExpression = nextExpression();
-        if (argumentExpression == nullptr || !argumentExpression->isValid())
-            return argumentExpression;
+        if (argumentExpression == nullptr)
+            return nullptr;
         argumentExpressions.push_back(argumentExpression);
     } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
 
@@ -585,8 +582,6 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
 
     if (right == nullptr) {
         return nullptr;
-    } else if (!right->isValid()) {
-        return right;
     } else {
         return make_shared<ExpressionBinary>(token, left, right);
     }
