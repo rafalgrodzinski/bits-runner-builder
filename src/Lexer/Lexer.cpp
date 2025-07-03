@@ -18,20 +18,19 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
     shared_ptr<Token> token;
     do {
         token = nextToken();
-        if (token == nullptr)
-            continue;
+        if (token != nullptr) {
+            // Don't add new line as the first token
+            if (tokens.empty() && token->isOfKind({TokenKind::NEW_LINE}))
+                continue;
+            
+            // Insert an additional new line just before end
+            if (token->getKind() == TokenKind::END && tokens.back()->getKind() != TokenKind::NEW_LINE)
+                tokens.push_back(make_shared<Token>(TokenKind::NEW_LINE, "\n", token->getLine(), token->getColumn()));
 
-        // Don't add new line as the first token
-        if (tokens.empty() && token->isOfKind({TokenKind::NEW_LINE}))
-            continue;
-        
-        // Insert an additional new line just before end
-        if (token->getKind() == TokenKind::END && tokens.back()->getKind() != TokenKind::NEW_LINE)
-            tokens.push_back(make_shared<Token>(TokenKind::NEW_LINE, "\n", token->getLine(), token->getColumn()));
-
-        // filter out multiple new lines
-        if (tokens.empty() || token->getKind() != TokenKind::NEW_LINE || tokens.back()->getKind() != token->getKind())
-            tokens.push_back(token);
+            // filter out multiple new lines
+            if (tokens.empty() || token->getKind() != TokenKind::NEW_LINE || tokens.back()->getKind() != token->getKind())
+                tokens.push_back(token);
+        }
     } while (token == nullptr || token->getKind() != TokenKind::END);
 
     if (!errors.empty()) {
@@ -53,7 +52,7 @@ shared_ptr<Token> Lexer::nextToken() {
     shared_ptr<Token> token;
 
     // ignore // comment
-    token = match(TokenKind::INVALID, "//", false);
+    token = match(TokenKind::END, "//", false); // dummy token kind
     if (token) {
         currentIndex += 2;
         do {
@@ -73,7 +72,7 @@ shared_ptr<Token> Lexer::nextToken() {
     }
 
     // ignore /* */ comment
-    token = match(TokenKind::INVALID, "/*", false);
+    token = match(TokenKind::END, "/*", false); // dummy token kind
     if (token) {
         shared_ptr<Token> newLineToken = nullptr; // we want to return the first new line we come accross
         int depth = 1; // so we can embed comments inside each other
@@ -82,23 +81,25 @@ shared_ptr<Token> Lexer::nextToken() {
             token = match(TokenKind::NEW_LINE, "\n", false);
             newLineToken = newLineToken ? newLineToken : token;
             if (token) {
-                continue;;
+                continue;
             }
 
             // eof
             token = matchEnd();
-            if (token)
-                return make_shared<Token>(TokenKind::INVALID, "", currentLine, currentColumn);
+            if (token) {
+                markError();
+                return token;
+            }
 
             // go deeper
-            token = match(TokenKind::INVALID, "/*", false);
+            token = match(TokenKind::END, "/*", false); // dummy token kind
             if (token) {
                 depth++;
                 continue;
             }
 
             // go back
-            token = match(TokenKind::INVALID, "*/", false);
+            token = match(TokenKind::END, "*/", false); // dummy token kind
             if (token) {
                 depth--;
             }
@@ -274,6 +275,9 @@ shared_ptr<Token> Lexer::nextToken() {
 }
 
 shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator) {
+    if (currentIndex + lexme.length() > source.length())
+        return nullptr;
+
     bool isMatching = source.compare(currentIndex, lexme.length(), lexme) == 0;
     bool isSeparatorSatisfied = !needsSeparator || isSeparator(currentIndex + lexme.length());
 
@@ -466,9 +470,16 @@ void Lexer::advanceWithToken(shared_ptr<Token> token) {
 
 void Lexer::markError() {
     int startIndex = currentIndex;
-    do {
-        currentIndex++;
-    } while (!isSeparator(currentIndex));
-    errors.push_back(make_shared<Error>(currentLine, currentColumn, source.substr(startIndex, currentIndex - startIndex)));
-    currentIndex++;
+    int startColumn = currentColumn;
+    string lexme;
+    if (currentIndex < source.length()) {
+        do {
+            currentIndex++;
+            currentColumn++;
+        } while (!isSeparator(currentIndex));
+        lexme = source.substr(startIndex, currentIndex - startIndex);
+    } else {
+        lexme = "EOF";
+    }
+    errors.push_back(make_shared<Error>(currentLine, startColumn, lexme));
 }
