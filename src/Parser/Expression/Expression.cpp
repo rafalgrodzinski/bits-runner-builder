@@ -11,11 +11,3 @@ ExpressionKind Expression::getKind() {
 ValueType Expression::getValueType() {
     return valueType;
 }
-
-bool Expression::isValid() {
-    return kind != ExpressionKind::INVALID;
-}
-
-string Expression::toString(int indent) {
-    return "EXPRESSION";
-}

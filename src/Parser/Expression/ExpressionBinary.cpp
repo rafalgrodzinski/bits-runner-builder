@@ -71,30 +71,3 @@ shared_ptr<Expression> ExpressionBinary::getLeft() {
 shared_ptr<Expression> ExpressionBinary::getRight() {
     return right;
 }
-
-string ExpressionBinary::toString(int indent) {
-    switch (operation) {
-    case ExpressionBinaryOperation::EQUAL:
-        return "{= " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::NOT_EQUAL:
-        return "{!= " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::LESS:
-        return "{< " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::LESS_EQUAL:
-        return "{<= " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::GREATER:
-        return "{> " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::GREATER_EQUAL:
-        return "{<= " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::ADD:
-        return "{+ " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::SUB:
-        return "{- " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::MUL:
-        return "{* " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::DIV:
-        return "{/ " + left->toString(0) + " " + right->toString(0) + "}";
-    case ExpressionBinaryOperation::MOD:
-        return "{% " + left->toString(0) + " " + right->toString(0) + "}";
-    }
-}

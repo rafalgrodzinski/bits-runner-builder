@@ -15,8 +15,7 @@ enum class StatementKind {
     VARIABLE,
     ASSIGNMENT,
     REPEAT,
-    META_EXTERN_FUNCTION,
-    INVALID
+    META_EXTERN_FUNCTION
 };
 
 class Statement {
@@ -25,9 +24,8 @@ private:
 
 public:
     Statement(StatementKind kind);
+    virtual ~Statement() { }
     StatementKind getKind();
-    bool isValid();
-    virtual string toString(int indent);
 };
 
 #endif

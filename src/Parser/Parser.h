@@ -2,14 +2,14 @@
 #define PARSER_H
 
 #include <vector>
+#include "Types.h"
 
-#include "Lexer/Token.h"
+class Token;
+enum class TokenKind;
+class Error;
 
 class Expression;
-class ExpressionInvalid;
-
 class Statement;
-class StatementInvalid;
 
 using namespace std;
 
@@ -17,6 +17,7 @@ class Parser {
 private:
     vector<shared_ptr<Token>> tokens;
     int currentIndex = 0;
+    vector<shared_ptr<Error>> errors;
 
     shared_ptr<Statement> nextStatement();
     shared_ptr<Statement> nextInBlockStatement();
@@ -30,7 +31,6 @@ private:
     shared_ptr<Statement> matchStatementReturn();
     shared_ptr<Statement> matchStatementRepeat();
     shared_ptr<Statement> matchStatementExpression();
-    shared_ptr<StatementInvalid> matchStatementInvalid(string message = "");
 
     shared_ptr<Expression> nextExpression();
     shared_ptr<Expression> matchEquality(); // =, !=
@@ -46,10 +46,11 @@ private:
     shared_ptr<Expression> matchExpressionIfElse();
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
-    shared_ptr<ExpressionInvalid> matchExpressionInvalid(string message);
 
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
     optional<ValueType> valueTypeForToken(shared_ptr<Token> token);
+
+    void markError(optional<TokenKind> expectedTokenKind, optional<string> message);
 
 public:
     Parser(vector<shared_ptr<Token>> tokens);

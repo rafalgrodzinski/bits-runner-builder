@@ -15,5 +15,4 @@ public:
     vector<pair<string, ValueType>> getArguments();
     ValueType getReturnValueType();
     shared_ptr<StatementBlock> getStatementBlock();
-    string toString(int indent) override;
 };

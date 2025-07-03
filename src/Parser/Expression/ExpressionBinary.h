@@ -26,5 +26,4 @@ public:
     ExpressionBinaryOperation getOperation();
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();
-    string toString(int indent) override;
 };

@@ -9,5 +9,4 @@ private:
 public:
     StatementBlock(vector<shared_ptr<Statement>> statements);
     vector<shared_ptr<Statement>> getStatements();
-    string toString(int indent) override;
 };

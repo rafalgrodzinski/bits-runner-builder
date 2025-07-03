@@ -9,5 +9,4 @@ public:
     ExpressionCall(string name, vector<shared_ptr<Expression>> argumentExpressions);
     string getName();
     vector<shared_ptr<Expression>> getArgumentExpressions();
-    string toString(int indent) override;
 };

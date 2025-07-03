@@ -27,14 +27,3 @@ vector<pair<string, ValueType>> StatementMetaExternFunction::getArguments() {
 ValueType StatementMetaExternFunction::getReturnValueType() {
     return returnValueType;
 }
-
-string StatementMetaExternFunction::toString(int indent) {
-    string value;
-    for (int ind=0; ind<indent; ind++)
-        value += "  ";
-    value += "EXTERN_FUN(";
-    value += name + ", ";
-    value += valueTypeToString(returnValueType);
-    value += ")\n";
-    return value;
-}

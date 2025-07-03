@@ -43,17 +43,3 @@ ValueType StatementFunction::getReturnValueType() {
 shared_ptr<StatementBlock> StatementFunction::getStatementBlock() {
     return statementBlock;
 }
-
-string StatementFunction::toString(int indent) {
-    string value = "";
-    for (int ind=0; ind<indent; ind++)
-        value += "  ";
-    value += "FUNCTION(";
-    value += valueTypeToString(returnValueType);
-    value += ", " + name + "):\n";
-    value += statementBlock->toString(indent+1);
-    for (int ind=0; ind<indent; ind++)
-        value += "  ";
-    value += ";";
-    return value;
-}

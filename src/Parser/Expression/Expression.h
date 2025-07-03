@@ -15,8 +15,7 @@ enum class ExpressionKind {
     IF_ELSE,
     VAR,
     CALL,
-    BLOCK,
-    INVALID
+    BLOCK
 };
 
 class Expression {
@@ -28,10 +27,9 @@ protected:
 
 public:
     Expression(ExpressionKind kind, ValueType valueType);
+    virtual ~Expression() { }
     ExpressionKind getKind();
     ValueType getValueType();
-    bool isValid();
-    virtual string toString(int indent);
 };
 
 #endif
