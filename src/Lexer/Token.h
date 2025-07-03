@@ -46,9 +46,7 @@ enum class TokenKind {
     M_EXTERN,
 
     NEW_LINE,
-    END,
-
-    INVALID
+    END
 };
 
 class Token {
@@ -71,7 +69,6 @@ public:
     string getLexme();
     int getLine();
     int getColumn();
-    bool isValid();
     bool isOfKind(vector<TokenKind> kinds);
 };
 

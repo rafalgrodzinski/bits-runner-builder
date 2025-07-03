@@ -63,10 +63,6 @@ int Token::getColumn() {
     return column;
 }
 
-bool Token::isValid() {
-    return kind != TokenKind::INVALID;
-}
-
 bool Token::isOfKind(vector<TokenKind> kinds) {
     for (TokenKind &kind : kinds) {
         if (kind == this->kind)

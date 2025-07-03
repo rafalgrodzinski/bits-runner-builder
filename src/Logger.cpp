@@ -99,8 +99,6 @@ string Logger::toString(shared_ptr<Token> token) {
             return "↲";
         case TokenKind::END:
             return "END";
-        case TokenKind::INVALID:
-            return "INVALID";
     }
 }
 
