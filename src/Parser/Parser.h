@@ -48,7 +48,6 @@ private:
     shared_ptr<Expression> matchExpressionIfElse();
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
-    shared_ptr<ExpressionInvalid> matchExpressionInvalid(string message);
 
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
     optional<ValueType> valueTypeForToken(shared_ptr<Token> token);
