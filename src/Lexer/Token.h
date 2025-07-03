@@ -73,7 +73,6 @@ public:
     int getColumn();
     bool isValid();
     bool isOfKind(vector<TokenKind> kinds);
-    string toString();
 };
 
 #endif
