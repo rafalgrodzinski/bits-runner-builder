@@ -6,7 +6,3 @@ kind(kind) { }
 StatementKind Statement::getKind() {
     return kind;
 }
-
-bool Statement::isValid() {
-    return kind != StatementKind::INVALID;
-}

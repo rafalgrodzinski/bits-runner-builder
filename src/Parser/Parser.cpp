@@ -20,7 +20,6 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementRepeat.h"
-#include "Parser/Statement/StatementInvalid.h"
 
 Parser::Parser(vector<shared_ptr<Token>> tokens): tokens(tokens) {
 }
@@ -246,7 +245,6 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         markError(TokenKind::SEMICOLON, {});
         return nullptr;
     }
-        //return matchStatementInvalid("Expected a \";\" after a function declaration");
 
     return make_shared<StatementFunction>(name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
@@ -311,8 +309,6 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
 
     // initial
     initStatement = matchStatementVariable() ?: matchStatementAssignment();
-    if (initStatement != nullptr && !initStatement->isValid())
-        initStatement = nullptr;
 
     if (!tryMatchingTokenKinds({TokenKind::COLON}, false, true)) {
         // got initial, expect comma
@@ -369,8 +365,6 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
 
     if (expression == nullptr)
         return nullptr;
-    else if (!expression->isValid())
-        return make_shared<StatementInvalid>(tokens.at(currentIndex), "");// expression->toString(0));
 
     return make_shared<StatementExpression>(expression);
 }
@@ -601,8 +595,10 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
 
     while (!tryMatchingTokenKinds(terminalTokenKinds, false, false)) {
         shared_ptr<Statement> statement = nextInBlockStatement();
-        if (statement == nullptr || !statement->isValid())
-            return matchExpressionInvalid("Expected statement");
+        if (statement == nullptr) {
+            markError({}, "Expected statement");
+            return nullptr;
+        }
         statements.push_back(statement);
 
         if (tryMatchingTokenKinds(terminalTokenKinds, false, false))

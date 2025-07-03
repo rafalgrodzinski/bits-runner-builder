@@ -12,7 +12,6 @@ class Expression;
 class ExpressionInvalid;
 
 class Statement;
-class StatementInvalid;
 
 using namespace std;
 
