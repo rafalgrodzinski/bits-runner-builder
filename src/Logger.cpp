@@ -102,6 +102,81 @@ string Logger::toString(shared_ptr<Token> token) {
     }
 }
 
+string Logger::toString(TokenKind tokenKind) {
+        switch (tokenKind) {
+        case TokenKind::PLUS:
+            return "+";
+        case TokenKind::MINUS:
+            return "-";
+        case TokenKind::STAR:
+            return "*";
+        case TokenKind::SLASH:
+            return "/";
+        case TokenKind::PERCENT:
+            return "%";
+        
+        case TokenKind::EQUAL:
+            return "=";
+        case TokenKind::NOT_EQUAL:
+            return "≠";
+        case TokenKind::LESS:
+            return "<";
+        case TokenKind::LESS_EQUAL:
+            return "≤";
+        case TokenKind::GREATER:
+            return ">";
+        case TokenKind::GREATER_EQUAL:
+            return "≥";
+
+        case TokenKind::LEFT_PAREN:
+            return "(";
+        case TokenKind::RIGHT_PAREN:
+            return ")";
+        case TokenKind::COMMA:
+            return ",";
+        case TokenKind::COLON:
+            return ":";
+        case TokenKind::SEMICOLON:
+            return ";";
+        case TokenKind::LEFT_ARROW:
+            return "←";
+        case TokenKind::RIGHT_ARROW:
+            return "→";
+
+        case TokenKind::BOOL:
+            return "LITERAL(BOOLEAN)";
+        case TokenKind::INTEGER_DEC:
+        case TokenKind::INTEGER_HEX:
+        case TokenKind::INTEGER_BIN:
+            return "LITERAL(INTEGER)";
+        case TokenKind::REAL:
+            return "LITERAL(REAL)";
+        case TokenKind::IDENTIFIER:
+            return "LITERAL(ID)";
+        case TokenKind::TYPE:
+            return "TYPE";
+
+        case TokenKind::IF:
+            return "IF";
+        case TokenKind::ELSE:
+            return "ELSE";
+        case TokenKind::FUNCTION:
+            return "FUN";
+        case TokenKind::RETURN:
+            return "RET";
+        case TokenKind::REPEAT:
+            return "REP";
+
+        case TokenKind::M_EXTERN:
+            return "@EXTERN";
+
+        case TokenKind::NEW_LINE:
+            return "↲";
+        case TokenKind::END:
+            return "END";
+    }
+}
+
 string Logger::toString(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::META_EXTERN_FUNCTION:
@@ -333,5 +408,30 @@ void Logger::print(vector<shared_ptr<Statement>> statements) {
 }
 
 void Logger::print(shared_ptr<Error> error) {
-    cout << format("Unexpected token \"{}\" at line: {}, column: {}\n", error->getLexme(), error->getLine() + 1, error->getColumn() + 1);
+    string message;
+    switch (error->getKind()) {
+        case ErrorKind::LEXER_ERROR:
+            message = format("Unexpected token \"{}\" at line: {}, column: {}", error->getLexme(), error->getLine() + 1, error->getColumn() + 1);
+            break;
+        case ErrorKind::PARSER_ERROR:
+            shared_ptr<Token> token = error->getActualToken();
+            optional<TokenKind> expectedTokenKind = error->getExpectedTokenKind();
+            optional<string> errorMessage = error->getMessage();
+
+            if (expectedTokenKind) {
+                message = format(
+                    "Expected token {} but instead found \"{}\" at line: {}, column: {}",
+                    toString(*expectedTokenKind), token->getLexme(), token->getLine() + 1, token->getColumn() + 1
+                );
+            } else {
+                message = format(
+                    "Unexpected token \"{}\" found at line: {}, column: {}",
+                    token->getLexme(), token->getLine() + 1, token->getColumn() + 1
+                );
+            }
+            if (errorMessage)
+                message += format(". {}", *errorMessage);
+            break;
+    }
+    cout << message << endl;
 }

@@ -1,5 +1,8 @@
 #include "Parser.h"
 
+#include "Error.h"
+#include "Logger.h"
+
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionVariable.h"
@@ -27,18 +30,19 @@ vector<shared_ptr<Statement>> Parser::getStatements() {
 
     while (!tryMatchingTokenKinds({TokenKind::END}, true, false)) {
         shared_ptr<Statement> statement = nextStatement();
-        // Abort parsing if we got an error
-        if (!statement->isValid()) {
-            //cerr << statement->toString(0);
-            exit(1);
-        }
-        statements.push_back(statement);
+        if (statement != nullptr) {
+            statements.push_back(statement);
 
-        // Expect new line after statement
-        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
-            cerr << "Expected new line" << endl;
-            exit(1);
+            // Expect new line after statement
+            if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+                markError(TokenKind::NEW_LINE, {});
         }
+    }
+
+    if (!errors.empty()) {
+        for (shared_ptr<Error> &error : errors)
+            Logger::print(error);
+        exit(1);
     }
 
     return statements;
@@ -48,21 +52,23 @@ vector<shared_ptr<Statement>> Parser::getStatements() {
 // Statement
 //
 shared_ptr<Statement> Parser::nextStatement() {
-   shared_ptr<Statement> statement;
+    shared_ptr<Statement> statement;
+    int errorsCount = errors.size();
 
     statement = matchStatementFunction();
-    if (statement != nullptr)
+    if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
     statement = matchStatementVariable();
-    if (statement != nullptr)
+    if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
     statement = matchStatementMetaExternFunction();
-    if (statement != nullptr)
+    if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
-    return matchStatementInvalid("Unexpected token");
+    markError({}, {});
+    return nullptr;
 }
 
 shared_ptr<Statement> Parser::nextInBlockStatement() {
@@ -88,7 +94,8 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
     if (statement != nullptr)
         return statement;
 
-    return matchStatementInvalid("Unexpected token");
+    markError({}, {});
+    return nullptr;
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
@@ -107,13 +114,17 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
         do {
             tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
-            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false))
-                return matchStatementInvalid("Expected function argument");
+            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false)) {
+                markError({}, "Expected function argument");
+                return nullptr;
+            }
             shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
             shared_ptr<Token> typeToken = tokens.at(currentIndex++);
             optional<ValueType> argumentType = valueTypeForToken(typeToken);
-            if (!argumentType)
-                return matchStatementInvalid("Invalid argument type");
+            if (!argumentType) {
+                markError(TokenKind::TYPE, {});
+                return nullptr;
+            }
             
             arguments.push_back(pair<string, ValueType>(identifierToken->getLexme(), *argumentType));
         } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
@@ -125,8 +136,10 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
 
         shared_ptr<Token> typeToken = tokens.at(currentIndex);
         optional<ValueType> type = valueTypeForToken(typeToken);
-        if (!type)
-            return matchStatementInvalid("Expected return type");
+        if (!type) {
+            markError(TokenKind::TYPE, {});
+            return nullptr;
+        }
         returnType = *type;
 
         currentIndex++; // type
@@ -149,18 +162,23 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         valueType = ValueType::SINT32;
     else if (valueTypeToken->getLexme().compare("real32") == 0)
         valueType = ValueType::REAL32;
-    else
-        return matchStatementInvalid("Invalid type");
+    else {
+        markError(TokenKind::TYPE, {});
+        return nullptr;
+    }
 
     currentIndex++; // type
 
     // Expect left arrow
-    if (!tryMatchingTokenKinds({TokenKind::LEFT_ARROW}, true, true))
-        return matchStatementInvalid("Expected left arrow");
+    if (!tryMatchingTokenKinds({TokenKind::LEFT_ARROW}, true, true)) {
+        markError(TokenKind::LEFT_ARROW, {});
+        return nullptr;
+    }
 
     shared_ptr<Expression> expression = nextExpression();
-    if (expression == nullptr || !expression->isValid())
-        return matchStatementInvalid("Invalid expression");
+    if (expression == nullptr || !expression->isValid()) {
+        return nullptr;
+    }
 
     return make_shared<StatementVariable>(identifierToken->getLexme(), valueType, expression);
 }
@@ -182,13 +200,17 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
         do {
             tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
-            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false))
-                return matchStatementInvalid("Expected function argument");
+            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false)) {
+                markError({}, "Expected function argument");
+                return nullptr;
+            }
             shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
             shared_ptr<Token> typeToken = tokens.at(currentIndex++);
             optional<ValueType> argumentType = valueTypeForToken(typeToken);
-            if (!argumentType)
-                return matchStatementInvalid("Invalid argument type");
+            if (!argumentType) {
+                markError(TokenKind::TYPE, {});
+                return nullptr;
+            }
             
             arguments.push_back(pair<string, ValueType>(identifierToken->getLexme(), *argumentType));
         } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
@@ -200,24 +222,31 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 
         shared_ptr<Token> typeToken = tokens.at(currentIndex);
         optional<ValueType> type = valueTypeForToken(typeToken);
-        if (!type)
-            return matchStatementInvalid("Expected return type");
+        if (!type) {
+            markError(TokenKind::TYPE, {});
+            return nullptr;
+        }
         returnType = *type;
 
         currentIndex++; // type
     }
 
     // consume new line
-    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
-        return matchStatementInvalid("Expected new line after function declaration");
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+        markError(TokenKind::NEW_LINE, {});
+        return nullptr;
+    }
 
     // block
     statementBlock = matchStatementBlock({TokenKind::SEMICOLON});
-    if (statementBlock == nullptr || !statementBlock->isValid())
-        return statementBlock ?: matchStatementInvalid();
+    if (statementBlock == nullptr)
+        return nullptr;
 
-    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true))
-        return matchStatementInvalid("Expected a \";\" after a function declaration");
+    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
+        markError(TokenKind::SEMICOLON, {});
+        return nullptr;
+    }
+        //return matchStatementInvalid("Expected a \";\" after a function declaration");
 
     return make_shared<StatementFunction>(name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
@@ -227,16 +256,18 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 
     while (!tryMatchingTokenKinds(terminalTokenKinds, false, false)) {
         shared_ptr<Statement> statement = nextInBlockStatement();
-        if (statement == nullptr || !statement->isValid())
-            return statement ?: matchStatementInvalid("Expected statement");
+        if (statement == nullptr)
+            return nullptr;
         statements.push_back(statement);
 
         if (tryMatchingTokenKinds(terminalTokenKinds, false, false))
             break;
 
         // except new line
-        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
-            return matchStatementInvalid("Expected new line");
+        if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+            markError(TokenKind::NEW_LINE, {});
+            return nullptr;
+        }
     }
 
     return make_shared<StatementBlock>(statements);
@@ -250,8 +281,8 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
     currentIndex++; // arrow
 
     shared_ptr<Expression> expression = nextExpression();
-    if (expression == nullptr || !expression->isValid())
-        return matchStatementInvalid("Expected expression");
+    if (expression == nullptr)
+        return nullptr;
 
     return make_shared<StatementAssignment>(identifierToken->getLexme(), expression);
 }
@@ -261,8 +292,8 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
         return nullptr;
 
     shared_ptr<Expression> expression = nextExpression();
-    if (expression != nullptr && !expression->isValid())
-        return matchStatementInvalid("Expected expression");
+    if (expression == nullptr)
+        return nullptr;
     
     return make_shared<StatementReturn>(expression);
 }
@@ -285,33 +316,35 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
 
     if (!tryMatchingTokenKinds({TokenKind::COLON}, false, true)) {
         // got initial, expect comma
-        if (initStatement != nullptr && !tryMatchingTokenKinds({TokenKind::COMMA}, true, true))
-            return matchStatementInvalid("Expected comma after initial statement");
+        if (initStatement != nullptr && !tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
+            markError(TokenKind::COMMA, {});
+            return nullptr;
+        }
 
         // optional new line
         tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
 
         // pre condition
         preConditionExpression = nextExpression();
-        if (preConditionExpression != nullptr && !preConditionExpression->isValid())
-            return matchStatementInvalid("Expected pre-condition expression");
 
         if (!tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
             // got pre-condition, expect comma
-            if (!tryMatchingTokenKinds({TokenKind::COMMA}, true, true))
-                return matchStatementInvalid("Expected comma after pre-condition statement");
+            if (!tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
+                markError(TokenKind::COMMA, {});
+                return nullptr;
+            }
 
             // optional new line
             tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
 
             // post condition
             postConditionExpression = nextExpression();
-            if (postConditionExpression == nullptr || !postConditionExpression->isValid())
-                return matchStatementInvalid("Expected post-condition expression");
             
             // expect colon
-            if (!tryMatchingTokenKinds({TokenKind::COLON}, true, true))
-                return matchStatementInvalid("Expected \":\"");
+            if (!tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
+                markError(TokenKind::COLON, {});
+                return nullptr;
+            }
         }
     }
 
@@ -323,8 +356,8 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
     else
         bodyBlockStatement = matchStatementBlock({TokenKind::NEW_LINE});
 
-    if (bodyBlockStatement == nullptr || !bodyBlockStatement->isValid())
-        return bodyBlockStatement ?: matchStatementInvalid("Expected block statement");
+    if (bodyBlockStatement == nullptr)
+        return nullptr;
     
     tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true);
 
@@ -340,10 +373,6 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
         return make_shared<StatementInvalid>(tokens.at(currentIndex), "");// expression->toString(0));
 
     return make_shared<StatementExpression>(expression);
-}
-
-shared_ptr<StatementInvalid> Parser::matchStatementInvalid(string message) {
-    return make_shared<StatementInvalid>(tokens.at(currentIndex), message);
 }
 
 //
@@ -631,4 +660,20 @@ optional<ValueType> Parser::valueTypeForToken(shared_ptr<Token> token) {
         return ValueType::REAL32;
 
     return {};
+}
+
+void Parser::markError(optional<TokenKind> expectedTokenKind, optional<string> message) {
+    shared_ptr<Token> actualToken = tokens.at(currentIndex);
+
+    // Try reaching the next safe token
+    vector<TokenKind> safeKinds = {TokenKind::END};
+    if (!actualToken->isOfKind({TokenKind::NEW_LINE}))
+        safeKinds.push_back(TokenKind::NEW_LINE);
+    if (!actualToken->isOfKind({TokenKind::SEMICOLON}))
+        safeKinds.push_back(TokenKind::SEMICOLON);
+
+    while (!tryMatchingTokenKinds(safeKinds, false, true))
+        currentIndex++;
+
+    errors.push_back(make_shared<Error>(actualToken, expectedTokenKind, message));
 }

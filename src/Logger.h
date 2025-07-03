@@ -4,6 +4,7 @@
 #include <vector>
 
 class Token;
+enum class TokenKind;
 class Statement;
 class StatementMetaExternFunction;
 class StatementVariable;
@@ -32,6 +33,7 @@ using namespace std;
 class Logger {
 private:
     static string toString(shared_ptr<Token> token);
+    static string toString(TokenKind tokenKind);
 
     static string toString(shared_ptr<Statement> statement);
     static string toString(shared_ptr<StatementMetaExternFunction> statement);

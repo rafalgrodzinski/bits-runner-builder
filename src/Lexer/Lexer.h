@@ -15,7 +15,6 @@ private:
     int currentIndex;
     int currentLine;
     int currentColumn;
-
     vector<shared_ptr<Error>> errors;
 
     shared_ptr<Token> nextToken();
