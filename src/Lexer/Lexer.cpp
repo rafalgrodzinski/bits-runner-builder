@@ -1,5 +1,9 @@
 #include "Lexer.h"
 
+#include "Token.h"
+#include "Error.h"
+#include "Logger.h"
+
 Lexer::Lexer(string source): source(source) {
 }
 
@@ -8,21 +12,14 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
     currentLine = 0;
     currentColumn = 0;
 
+    errors.clear();
+
     vector<shared_ptr<Token>> tokens;
     shared_ptr<Token> token;
     do {
         token = nextToken();
-        // Got a nullptr, shouldn't have happened
-        if (!token) {
-            cerr << "Failed to scan tokens" << endl;
-            exit(1);
-        }
-
-        // Abort scanning if we got an error
-        if (!token->isValid()) {
-            cerr << "Unexpected character '" << token->getLexme() << "' at " << token->getLine() << ":" << token->getColumn() << endl;
-            exit(1);
-        }
+        if (token == nullptr)
+            continue;
 
         // Don't add new line as the first token
         if (tokens.empty() && token->isOfKind({TokenKind::NEW_LINE}))
@@ -35,7 +32,14 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
         // filter out multiple new lines
         if (tokens.empty() || token->getKind() != TokenKind::NEW_LINE || tokens.back()->getKind() != token->getKind())
             tokens.push_back(token);
-    } while (token->getKind() != TokenKind::END);
+    } while (token == nullptr || token->getKind() != TokenKind::END);
+
+    if (!errors.empty()) {
+        for (shared_ptr<Error> &error : errors)
+            Logger::print(error);
+        exit(1);
+    }
+
     return tokens;
 }
 
@@ -265,7 +269,8 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    return matchInvalid();
+    markError();
+    return nullptr;
 }
 
 shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator) {
@@ -359,8 +364,10 @@ shared_ptr<Token> Lexer::matchReal() {
     while (nextIndex < source.length() && isDecDigit(nextIndex))
         nextIndex++;
 
-    if (!isSeparator(nextIndex))
-        return matchInvalid();
+    if (!isSeparator(nextIndex)) {
+        markError();
+        return nullptr;
+    }
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
     shared_ptr<Token> token = make_shared<Token>(TokenKind::REAL, lexme, currentLine, currentColumn);
@@ -388,10 +395,6 @@ shared_ptr<Token> Lexer::matchEnd() {
         return make_shared<Token>(TokenKind::END, "", currentLine, currentColumn);
     
     return nullptr;
-}
-
-shared_ptr<Token> Lexer::matchInvalid() {
-    return make_shared<Token>(TokenKind::INVALID, source.substr(currentIndex, 1), currentLine, currentColumn);
 }
 
 bool Lexer::isWhiteSpace(int index) {
@@ -451,7 +454,7 @@ bool Lexer::isSeparator(int index) {
     }
 }
 
- void Lexer::advanceWithToken(shared_ptr<Token> token) {
+void Lexer::advanceWithToken(shared_ptr<Token> token) {
     if (token->getKind() == TokenKind::NEW_LINE) {
         currentLine++;
         currentColumn = 0;
@@ -459,4 +462,13 @@ bool Lexer::isSeparator(int index) {
         currentColumn += token->getLexme().length();
     }
     currentIndex += token->getLexme().length();
- }
+}
+
+void Lexer::markError() {
+    int startIndex = currentIndex;
+    do {
+        currentIndex++;
+    } while (!isSeparator(currentIndex));
+    errors.push_back(make_shared<Error>(currentLine, currentColumn, source.substr(startIndex, currentIndex - startIndex)));
+    currentIndex++;
+}

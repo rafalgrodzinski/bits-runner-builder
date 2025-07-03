@@ -3,7 +3,9 @@
 
 #include <vector>
 
-#include "Token.h"
+class Token;
+enum class TokenKind;
+class Error;
 
 using namespace std;
 
@@ -14,6 +16,8 @@ private:
     int currentLine;
     int currentColumn;
 
+    vector<shared_ptr<Error>> errors;
+
     shared_ptr<Token> nextToken();
     shared_ptr<Token> match(TokenKind kind, string lexme, bool needsSeparator);
     shared_ptr<Token> matchIntegerDec();
@@ -22,7 +26,6 @@ private:
     shared_ptr<Token> matchReal();
     shared_ptr<Token> matchIdentifier();
     shared_ptr<Token> matchEnd();
-    shared_ptr<Token> matchInvalid();
 
     bool isWhiteSpace(int index);
     bool isDecDigit(int index);
@@ -31,6 +34,8 @@ private:
     bool isIdentifier(int index);
     bool isSeparator(int index);
     void advanceWithToken(shared_ptr<Token> token);
+
+    void markError();
 
 public:
     Lexer(string source);

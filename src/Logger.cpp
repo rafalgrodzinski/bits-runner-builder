@@ -23,6 +23,8 @@
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
+#include "Error.h"
+
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
         case TokenKind::PLUS:
@@ -330,4 +332,8 @@ void Logger::print(vector<shared_ptr<Statement>> statements) {
     for (shared_ptr<Statement> &statement : statements) {
         cout << toString(statement) << endl << endl;
     }
+}
+
+void Logger::print(shared_ptr<Error> error) {
+    cout << format("Unexpected token \"{}\" at line: {}, column: {}\n", error->getLexme(), error->getLine() + 1, error->getColumn() + 1);
 }

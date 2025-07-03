@@ -25,6 +25,8 @@ class ExpressionBlock;
 
 enum class ValueType;
 
+class Error;
+
 using namespace std;
 
 class Logger {
@@ -55,6 +57,7 @@ private:
 public:
     static void print(vector<shared_ptr<Token>> tokens);
     static void print(vector<shared_ptr<Statement>> statements);
+    static void print(shared_ptr<Error> error);
 };
 
 #endif
