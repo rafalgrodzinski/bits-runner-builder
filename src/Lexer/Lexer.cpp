@@ -237,6 +237,10 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = matchIntegerChar();
+    if (token != nullptr)
+        return token;
+
     // type
     token = match(TokenKind::TYPE, "bool", true);
     if (token != nullptr)
@@ -350,6 +354,27 @@ shared_ptr<Token> Lexer::matchIntegerBin() {
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
     shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_BIN, lexme, currentLine, currentColumn);
+    advanceWithToken(token);
+    return token;
+}
+
+shared_ptr<Token> Lexer::matchIntegerChar() {
+    int nextIndex = currentIndex;
+
+    if (currentIndex >= source.size() || source.at(nextIndex) != '\'')
+        return nullptr;
+
+    bool isClosing = false;
+    do {
+        nextIndex++;
+        isClosing = source.at(nextIndex) == '\'' && source.at(nextIndex - 1) != '\\';
+    } while (nextIndex < source.length() && !isClosing);
+
+    if (!isClosing)
+        return nullptr;
+
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex + 1);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_CHAR, lexme, currentLine, currentColumn);
     advanceWithToken(token);
     return token;
 }
