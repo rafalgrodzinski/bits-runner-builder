@@ -137,7 +137,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
         tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
 
         shared_ptr<Token> returnTypeToken = tokens.at(currentIndex);
-        shared_ptr<ValueType> returnType = ValueType::valueTypeForToken(returnTypeToken);
+        returnType = ValueType::valueTypeForToken(returnTypeToken);
         if (returnType == nullptr) {
             markError(TokenKind::TYPE, {});
             return nullptr;
@@ -221,7 +221,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
 
         shared_ptr<Token> returnTypeToken = tokens.at(currentIndex);
-        shared_ptr<ValueType> returnType = ValueType::valueTypeForToken(returnTypeToken);
+        returnType = ValueType::valueTypeForToken(returnTypeToken);
         if (returnType == nullptr) {
             markError(TokenKind::TYPE, {});
             return nullptr;
