@@ -5,7 +5,7 @@
 #include "Parser/Statement/StatementBlock.h"
 
 ExpressionBlock::ExpressionBlock(vector<shared_ptr<Statement>> statements):
-Expression(ExpressionKind::BLOCK, ValueType::NONE) {
+Expression(ExpressionKind::BLOCK, nullptr) {
     if (!statements.empty() && statements.back()->getKind() == StatementKind::EXPRESSION) {
         resultStatementExpression = dynamic_pointer_cast<StatementExpression>(statements.back());
         valueType = resultStatementExpression->getExpression()->getValueType();

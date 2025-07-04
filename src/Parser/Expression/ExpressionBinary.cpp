@@ -1,7 +1,10 @@
 #include "ExpressionBinary.h"
 
+#include "Lexer/Token.h"
+#include "Parser/ValueType.h"
+
 ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
-Expression(ExpressionKind::BINARY, ValueType::NONE), operation(ExpressionBinaryOperation::INVALID), left(left), right(right) {
+Expression(ExpressionKind::BINARY, nullptr), operation(ExpressionBinaryOperation::INVALID), left(left), right(right) {
     switch (token->getKind()) {
         case TokenKind::EQUAL:
             operation = ExpressionBinaryOperation::EQUAL;
@@ -56,7 +59,7 @@ Expression(ExpressionKind::BINARY, ValueType::NONE), operation(ExpressionBinaryO
         valueType = ValueType::NONE;
 
     // Booleans can only do = or !=
-    if (valueType == ValueType::BOOL && (token->getKind() != TokenKind::EQUAL || token->getKind() != TokenKind::NOT_EQUAL))
+    if (valueType->getKind() == ValueTypeKind::BOOL && (token->getKind() != TokenKind::EQUAL || token->getKind() != TokenKind::NOT_EQUAL))
         valueType = ValueType::NONE;
 }
 

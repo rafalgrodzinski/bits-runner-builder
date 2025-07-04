@@ -2,7 +2,6 @@
 #define PARSER_H
 
 #include <vector>
-#include "Types.h"
 
 class Token;
 enum class TokenKind;
@@ -48,7 +47,6 @@ private:
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
-    optional<ValueType> valueTypeForToken(shared_ptr<Token> token);
 
     void markError(optional<TokenKind> expectedTokenKind, optional<string> message);
 

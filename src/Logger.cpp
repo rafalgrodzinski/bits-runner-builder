@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Lexer/Token.h"
+#include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
@@ -179,6 +180,17 @@ string Logger::toString(TokenKind tokenKind) {
     }
 }
 
+string Logger::toString(shared_ptr<ValueType> valueType) {
+    switch (valueType->getKind()) {
+        case ValueTypeKind::BOOL:
+            return "BOOL";
+        case ValueTypeKind::SINT32:
+            return "SINT32";
+        case ValueTypeKind::REAL32:
+            return "REAL32";
+    }
+}
+
 string Logger::toString(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::META_EXTERN_FUNCTION:
@@ -281,19 +293,6 @@ string Logger::toString(shared_ptr<StatementExpression> statement) {
     return format("EXPR({})", toString(statement->getExpression()));
 }
 
-string Logger::toString(ValueType valueType) {
-    switch (valueType) {
-        case ValueType::NONE:
-            return "NONE";
-        case ValueType::BOOL:
-            return "BOOL";
-        case ValueType::SINT32:
-            return "SINT32";
-        case ValueType::REAL32:
-            return "REAL32";
-    }
-}
-
 string Logger::toString(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
@@ -363,14 +362,12 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
-    switch (expression->getValueType()) {
-        case ValueType::NONE:
-            return "NONE";
-        case ValueType::BOOL:
+    switch (expression->getValueType()->getKind()) {
+        case ValueTypeKind::BOOL:
             return expression->getBoolValue() ? "true" : "false";
-        case ValueType::SINT32:
+        case ValueTypeKind::SINT32:
             return to_string(expression->getSint32Value());
-        case ValueType::REAL32:
+        case ValueTypeKind::REAL32:
             return to_string(expression->getReal32Value());
     }
 }

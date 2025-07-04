@@ -45,8 +45,7 @@ vector<TokenKind> Token::tokensLiteral = {
 };
 
 Token::Token(TokenKind kind, string lexme, int line, int column):
-    kind(kind), lexme(lexme), line(line), column(column) {
-}
+kind(kind), lexme(lexme), line(line), column(column) { }
 
 TokenKind Token::getKind() {
     return kind;

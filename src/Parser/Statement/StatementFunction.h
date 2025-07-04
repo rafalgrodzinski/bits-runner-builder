@@ -1,18 +1,19 @@
 #include "Parser/Statement/Statement.h"
 
 class StatementBlock;
+class ValueType;
 
 class StatementFunction: public Statement {
 private:
     string name;
-    vector<pair<string, ValueType>> arguments;
-    ValueType returnValueType;
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnValueType;
     shared_ptr<StatementBlock> statementBlock;
 
 public:
-    StatementFunction(string name, vector<pair<string, ValueType>> arguments, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock);
+    StatementFunction(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<StatementBlock> statementBlock);
     string getName();
-    vector<pair<string, ValueType>> getArguments();
-    ValueType getReturnValueType();
+    vector<pair<string, shared_ptr<ValueType>>> getArguments();
+    shared_ptr<ValueType> getReturnValueType();
     shared_ptr<StatementBlock> getStatementBlock();
 };

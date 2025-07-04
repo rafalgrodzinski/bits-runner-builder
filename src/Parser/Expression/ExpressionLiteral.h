@@ -5,8 +5,7 @@ private:
     bool boolValue;
     int32_t sint32Value;
     float real32Value;
-    
-    
+
 public:
     ExpressionLiteral(shared_ptr<Token> token);
     ExpressionLiteral();

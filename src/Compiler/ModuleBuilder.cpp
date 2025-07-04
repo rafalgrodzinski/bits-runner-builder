@@ -1,5 +1,7 @@
 #include "ModuleBuilder.h"
 
+#include "Parser/ValueType.h"
+
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionVariable.h"
@@ -71,7 +73,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
 void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> statement) {
     // get argument types
     vector<llvm::Type *> types;
-    for (pair<string, ValueType> &arg : statement->getArguments()) {
+    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
         types.push_back(typeForValueType(arg.second));
     }
 
@@ -184,7 +186,7 @@ void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
 void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement) {
     // get argument types
     vector<llvm::Type *> types;
-    for (pair<string, ValueType> &arg : statement->getArguments()) {
+    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
         types.push_back(typeForValueType(arg.second));
     }
 
@@ -226,14 +228,14 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
 }
 
 llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expression) {
-    switch (expression->getValueType()) {
-        case ValueType::NONE:
+    switch (expression->getValueType()->getKind()) {
+        case ValueTypeKind::NONE:
             return llvm::UndefValue::get(typeVoid);
-        case ValueType::BOOL:
+        case ValueTypeKind::BOOL:
             return llvm::ConstantInt::get(typeBool, expression->getBoolValue(), true);
-        case ValueType::SINT32:
+        case ValueTypeKind::SINT32:
             return llvm::ConstantInt::get(typeSint32, expression->getSint32Value(), true);
-        case ValueType::REAL32:
+        case ValueTypeKind::REAL32:
             return llvm::ConstantInt::get(typeReal32, expression->getReal32Value(), true);
     }
 }
@@ -393,15 +395,15 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
     return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
 }
 
-llvm::Type *ModuleBuilder::typeForValueType(ValueType valueType) {
-    switch (valueType) {
-        case ValueType::NONE:
+llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType) {
+    switch (valueType->getKind()) {
+        case ValueTypeKind::NONE:
             return typeVoid;
-        case ValueType::BOOL:
+        case ValueTypeKind::BOOL:
             return typeBool;
-        case ValueType::SINT32:
+        case ValueTypeKind::SINT32:
             return typeSint32;
-        case ValueType::REAL32:
+        case ValueTypeKind::REAL32:
             return typeReal32;
     }
 }

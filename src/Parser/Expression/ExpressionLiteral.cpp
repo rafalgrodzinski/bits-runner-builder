@@ -1,27 +1,30 @@
 #include "ExpressionLiteral.h"
 
+#include "Lexer/Token.h"
+#include "Parser/ValueType.h"
+
 ExpressionLiteral::ExpressionLiteral():
-Expression(ExpressionKind::LITERAL, ValueType::NONE) { }
+Expression(ExpressionKind::LITERAL, nullptr) { }
 
 ExpressionLiteral::ExpressionLiteral(shared_ptr<Token> token):
-Expression(ExpressionKind::LITERAL, ValueType::NONE) {
+Expression(ExpressionKind::LITERAL, nullptr) {
     switch (token->getKind()) {
         case TokenKind::BOOL:
             boolValue = token->getLexme().compare("true") == 0;
-            valueType = ValueType::BOOL;
+            valueType = ValueType::valueTypeForToken(token);
             break;
         case TokenKind::INTEGER_DEC: {
             string numString = token->getLexme();
             erase(numString, '_');
             sint32Value = stoi(numString, nullptr, 10);
-            valueType = ValueType::SINT32;
+            valueType = ValueType::valueTypeForToken(token);
             break;
         }
         case TokenKind::INTEGER_HEX: {
             string numString = token->getLexme();
             erase(numString, '_');
             sint32Value = stoi(numString, nullptr, 16);
-            valueType = ValueType::SINT32;
+            valueType = ValueType::valueTypeForToken(token);
             break;
         }
         case TokenKind::INTEGER_BIN: {
@@ -29,13 +32,13 @@ Expression(ExpressionKind::LITERAL, ValueType::NONE) {
             erase(numString, '_');
             numString = numString.substr(2, numString.size()-1);
             sint32Value = stoi(numString, nullptr, 2);
-            valueType = ValueType::SINT32;
+            valueType = ValueType::valueTypeForToken(token);
             break;
         }
         case TokenKind::INTEGER_CHAR: {
             string charString = token->getLexme();
 
-            valueType = ValueType::SINT32;
+            valueType = ValueType::valueTypeForToken(token);
             if (charString.length() == 3) {
                 sint32Value = charString[1];
             } else if (charString.length() == 4 && charString[1] == '\\') {
@@ -64,7 +67,7 @@ Expression(ExpressionKind::LITERAL, ValueType::NONE) {
         }
         case TokenKind::REAL:
             real32Value = stof(token->getLexme());
-            valueType = ValueType::REAL32;
+            valueType = ValueType::valueTypeForToken(token);
             break;
         default:
             exit(1);
