@@ -151,6 +151,7 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::INTEGER_DEC:
         case TokenKind::INTEGER_HEX:
         case TokenKind::INTEGER_BIN:
+        case TokenKind::INTEGER_CHAR:
             return "LITERAL(INTEGER)";
         case TokenKind::REAL:
             return "LITERAL(REAL)";
@@ -182,6 +183,8 @@ string Logger::toString(TokenKind tokenKind) {
 
 string Logger::toString(shared_ptr<ValueType> valueType) {
     switch (valueType->getKind()) {
+        case ValueTypeKind::NONE:
+            return "NONE";
         case ValueTypeKind::BOOL:
             return "BOOL";
         case ValueTypeKind::SINT32:
@@ -336,6 +339,8 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
             return "{/ " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
         case ExpressionBinaryOperation::MOD:
             return "{% " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::INVALID:
+            return "{INVALID}";
     }
 }
 
@@ -363,6 +368,8 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
 
 string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
     switch (expression->getValueType()->getKind()) {
+        case ValueTypeKind::NONE:
+            return "NONE";
         case ValueTypeKind::BOOL:
             return expression->getBoolValue() ? "true" : "false";
         case ValueTypeKind::SINT32:

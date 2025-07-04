@@ -222,7 +222,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 
         shared_ptr<Token> returnTypeToken = tokens.at(currentIndex);
         shared_ptr<ValueType> returnType = ValueType::valueTypeForToken(returnTypeToken);
-        if (returnType != nullptr) {
+        if (returnType == nullptr) {
             markError(TokenKind::TYPE, {});
             return nullptr;
         }
