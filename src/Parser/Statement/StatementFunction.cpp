@@ -3,20 +3,7 @@
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementReturn.h"
 
-static string valueTypeToString(ValueType valueType) {
-    switch (valueType) {
-        case ValueType::NONE:
-            return "NONE";
-        case ValueType::BOOL:
-            return "BOOL";
-        case ValueType::SINT32:
-            return "SINT32";
-        case ValueType::REAL32:
-            return "REAL32";
-    }
-}
-
-StatementFunction::StatementFunction(string name, vector<pair<string, ValueType>> arguments, ValueType returnValueType, shared_ptr<StatementBlock> statementBlock):
+StatementFunction::StatementFunction(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<StatementBlock> statementBlock):
 Statement(StatementKind::FUNCTION), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
     vector<shared_ptr<Statement>> statements = statementBlock->getStatements();
     if (!statements.empty() && statements.back()->getKind() == StatementKind::RETURN)
@@ -32,11 +19,11 @@ string StatementFunction::getName() {
     return name;
 }
 
-vector<pair<string, ValueType>> StatementFunction::getArguments() {
+vector<pair<string, shared_ptr<ValueType>>> StatementFunction::getArguments() {
     return arguments;
 }
 
-ValueType StatementFunction::getReturnValueType() {
+shared_ptr<ValueType> StatementFunction::getReturnValueType() {
     return returnValueType;
 }
 

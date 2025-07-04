@@ -4,8 +4,8 @@
 #include "Error.h"
 #include "Logger.h"
 
-Lexer::Lexer(string source): source(source) {
-}
+Lexer::Lexer(string source):
+source(source) { }
 
 vector<shared_ptr<Token>> Lexer::getTokens() {
     currentIndex = 0;

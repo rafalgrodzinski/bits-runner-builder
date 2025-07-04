@@ -5,6 +5,8 @@
 
 class Token;
 enum class TokenKind;
+class ValueType;
+
 class Statement;
 class StatementMetaExternFunction;
 class StatementVariable;
@@ -24,8 +26,6 @@ class ExpressionLiteral;
 class ExpressionCall;
 class ExpressionBlock;
 
-enum class ValueType;
-
 class Error;
 
 using namespace std;
@@ -34,6 +34,7 @@ class Logger {
 private:
     static string toString(shared_ptr<Token> token);
     static string toString(TokenKind tokenKind);
+    static string toString(shared_ptr<ValueType> valueType);
 
     static string toString(shared_ptr<Statement> statement);
     static string toString(shared_ptr<StatementMetaExternFunction> statement);
@@ -53,8 +54,6 @@ private:
     static string toString(shared_ptr<ExpressionLiteral> expression);
     static string toString(shared_ptr<ExpressionCall> expression);
     static string toString(shared_ptr<ExpressionBlock> expression);
-
-    static string toString(ValueType valueType);
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);

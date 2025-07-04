@@ -10,7 +10,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/Verifier.h>
 
-#include "Types.h"
+class ValueType;
 
 class Expression;
 class ExpressionGrouping;
@@ -72,7 +72,7 @@ private:
     llvm::Value *valueForVar(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
 
-    llvm::Type *typeForValueType(ValueType valueType);
+    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
     void failWithMessage(string message);
 
 public:

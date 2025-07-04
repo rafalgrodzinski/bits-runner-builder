@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Lexer/Token.h"
+#include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
@@ -150,6 +151,7 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::INTEGER_DEC:
         case TokenKind::INTEGER_HEX:
         case TokenKind::INTEGER_BIN:
+        case TokenKind::INTEGER_CHAR:
             return "LITERAL(INTEGER)";
         case TokenKind::REAL:
             return "LITERAL(REAL)";
@@ -176,6 +178,19 @@ string Logger::toString(TokenKind tokenKind) {
             return "↲";
         case TokenKind::END:
             return "END";
+    }
+}
+
+string Logger::toString(shared_ptr<ValueType> valueType) {
+    switch (valueType->getKind()) {
+        case ValueTypeKind::NONE:
+            return "NONE";
+        case ValueTypeKind::BOOL:
+            return "BOOL";
+        case ValueTypeKind::SINT32:
+            return "SINT32";
+        case ValueTypeKind::REAL32:
+            return "REAL32";
     }
 }
 
@@ -281,19 +296,6 @@ string Logger::toString(shared_ptr<StatementExpression> statement) {
     return format("EXPR({})", toString(statement->getExpression()));
 }
 
-string Logger::toString(ValueType valueType) {
-    switch (valueType) {
-        case ValueType::NONE:
-            return "NONE";
-        case ValueType::BOOL:
-            return "BOOL";
-        case ValueType::SINT32:
-            return "SINT32";
-        case ValueType::REAL32:
-            return "REAL32";
-    }
-}
-
 string Logger::toString(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
@@ -337,6 +339,8 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
             return "{/ " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
         case ExpressionBinaryOperation::MOD:
             return "{% " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::INVALID:
+            return "{INVALID}";
     }
 }
 
@@ -363,14 +367,14 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
-    switch (expression->getValueType()) {
-        case ValueType::NONE:
+    switch (expression->getValueType()->getKind()) {
+        case ValueTypeKind::NONE:
             return "NONE";
-        case ValueType::BOOL:
+        case ValueTypeKind::BOOL:
             return expression->getBoolValue() ? "true" : "false";
-        case ValueType::SINT32:
+        case ValueTypeKind::SINT32:
             return to_string(expression->getSint32Value());
-        case ValueType::REAL32:
+        case ValueTypeKind::REAL32:
             return to_string(expression->getReal32Value());
     }
 }

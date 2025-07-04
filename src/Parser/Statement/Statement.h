@@ -3,8 +3,6 @@
 
 #include <iostream>
 
-#include "Types.h"
-
 using namespace std;
 
 enum class StatementKind {

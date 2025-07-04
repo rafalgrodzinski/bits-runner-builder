@@ -3,8 +3,8 @@
 
 #include <iostream>
 
-#include "Lexer/Token.h"
-#include "Types.h"
+class Token;
+class ValueType;
 
 using namespace std;
 
@@ -23,13 +23,13 @@ private:
     ExpressionKind kind;
 
 protected:
-    ValueType valueType;
+    shared_ptr<ValueType> valueType;
 
 public:
-    Expression(ExpressionKind kind, ValueType valueType);
+    Expression(ExpressionKind kind, shared_ptr<ValueType> valueType);
     virtual ~Expression() { }
     ExpressionKind getKind();
-    ValueType getValueType();
+    shared_ptr<ValueType> getValueType();
 };
 
 #endif
