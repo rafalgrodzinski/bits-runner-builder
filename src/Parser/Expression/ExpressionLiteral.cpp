@@ -32,6 +32,36 @@ Expression(ExpressionKind::LITERAL, ValueType::NONE) {
             valueType = ValueType::SINT32;
             break;
         }
+        case TokenKind::INTEGER_CHAR: {
+            string charString = token->getLexme();
+
+            valueType = ValueType::SINT32;
+            if (charString.length() == 3) {
+                sint32Value = charString[1];
+            } else if (charString.length() == 4 && charString[1] == '\\') {
+                switch (charString[2]) {
+                    case 'b':
+                        sint32Value = '\b';
+                        break;
+                    case 'n':
+                        sint32Value = '\n';
+                        break;
+                    case 't':
+                        sint32Value = '\t';
+                        break;
+                    case '\\':
+                        sint32Value = '\\';
+                        break;
+                    case '\'':
+                        sint32Value = '\'';
+                        break;
+                    case '\"':
+                        sint32Value = '\"';
+                        break;
+                }
+            }
+            break;
+        }
         case TokenKind::REAL:
             real32Value = stof(token->getLexme());
             valueType = ValueType::REAL32;

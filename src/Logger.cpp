@@ -74,6 +74,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "INT_HEX(" + token->getLexme() + ")";
         case TokenKind::INTEGER_BIN:
             return "INT_BIN(" + token->getLexme() + ")";
+        case TokenKind::INTEGER_CHAR:
+            return "INT_CHAR(" + token->getLexme() + ")";
         case TokenKind::REAL:
             return "REAL(" + token->getLexme() + ")";
         case TokenKind::IDENTIFIER:

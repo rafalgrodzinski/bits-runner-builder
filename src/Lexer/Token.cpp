@@ -40,6 +40,7 @@ vector<TokenKind> Token::tokensLiteral = {
     TokenKind::INTEGER_DEC,
     TokenKind::INTEGER_HEX,
     TokenKind::INTEGER_BIN,
+    TokenKind::INTEGER_CHAR,
     TokenKind::REAL
 };
 
