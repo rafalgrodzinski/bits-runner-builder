@@ -367,6 +367,9 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
+    if (expression->getValueType() == nullptr)
+        return "?";
+
     switch (expression->getValueType()->getKind()) {
         case ValueTypeKind::NONE:
             return "NONE";
@@ -392,6 +395,8 @@ string Logger::toString(shared_ptr<ExpressionCall> expression) {
 string Logger::toString(shared_ptr<ExpressionBlock> expression) {
     string text;
     text += toString(expression->getStatementBlock());
+    if (!text.empty())
+        text += '\n';
     if (expression->getResultStatementExpression() != nullptr)
         text += toString(expression->getResultStatementExpression());
     return text;

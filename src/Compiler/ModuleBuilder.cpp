@@ -228,6 +228,9 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
 }
 
 llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expression) {
+    if (expression->getValueType() == nullptr)
+        return llvm::UndefValue::get(typeVoid);
+
     switch (expression->getValueType()->getKind()) {
         case ValueTypeKind::NONE:
             return llvm::UndefValue::get(typeVoid);

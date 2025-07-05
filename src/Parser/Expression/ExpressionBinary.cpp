@@ -54,13 +54,15 @@ Expression(ExpressionKind::BINARY, nullptr), operation(ExpressionBinaryOperation
             break;
     }
 
-    // Types must match
-    if (left->getValueType() != right->getValueType())
-        valueType = ValueType::NONE;
+    if (left->getValueType() != nullptr && right->getValueType() != nullptr) {
+        // Types must match
+        if (left->getValueType() != right->getValueType())
+            valueType = ValueType::NONE;
 
-    // Booleans can only do = or !=
-    if (valueType->getKind() == ValueTypeKind::BOOL && (token->getKind() != TokenKind::EQUAL || token->getKind() != TokenKind::NOT_EQUAL))
-        valueType = ValueType::NONE;
+        // Booleans can only do = or !=
+        if (valueType->getKind() == ValueTypeKind::BOOL && (token->getKind() != TokenKind::EQUAL || token->getKind() != TokenKind::NOT_EQUAL))
+            valueType = ValueType::NONE;
+    }
 }
 
 ExpressionBinaryOperation ExpressionBinary::getOperation() {
