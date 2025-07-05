@@ -21,7 +21,7 @@ printNum fun: number sint32
     ;
 ;
 
-// Print 20 first fibonacci numbers
+// Print first 20 fibonaci numbers
 main fun -> sint32
     rep i sint32 <- 0, i < 20:
         res sint32 <- fib(i)

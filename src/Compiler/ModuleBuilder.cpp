@@ -33,9 +33,9 @@ moduleName(moduleName), sourceFileName(sourceFileName), statements(statements) {
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
-    for (shared_ptr<Statement> &statement : statements) {
+    scopes.push(Scope());
+    for (shared_ptr<Statement> &statement : statements)
         buildStatement(statement);
-    }
     return module;
 }
 
@@ -80,11 +80,14 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
     // build function declaration
     llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), types, false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
-    funMap[statement->getName()] = fun;
+    if (!setFun(statement->getName(), fun))
+        return;
 
     // define function body
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
     builder->SetInsertPoint(block);
+
+    scopes.push(Scope());
 
     // build arguments
     int i=0;
@@ -94,7 +97,8 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
         arg.setName(name);
 
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, name);
-        allocaMap[name] = alloca;
+        if (!setAlloca(name, alloca))
+            return;
         builder->CreateStore(&arg, alloca);
 
         i++;
@@ -102,6 +106,8 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
 
     // build function body
     buildStatement(statement->getStatementBlock());
+
+    scopes.pop();
 
     // verify
     string errorMessage;
@@ -113,14 +119,16 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
 void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement) {
     llvm::Value *value = valueForExpression(statement->getExpression());
     llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType()), nullptr, statement->getName());
-    allocaMap[statement->getName()] = alloca;
+
+    if (!setAlloca(statement->getName(), alloca))
+        return;
     builder->CreateStore(value, alloca);
 }
 
 void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
-    llvm::AllocaInst *alloca = allocaMap[statement->getName()];
+    llvm::AllocaInst *alloca = getAlloca(statement->getName());
     if (alloca == nullptr)
-        failWithMessage("Variable " + statement->getName() + " not defined");
+        return;
 
     llvm::Value *value = valueForExpression(statement->getExpression());
     builder->CreateStore(value, alloca);
@@ -150,6 +158,8 @@ void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
     llvm::BasicBlock *preBlock = llvm::BasicBlock::Create(*context, "loopPre", fun);
     llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, "loopBody");
     llvm::BasicBlock *afterBlock = llvm::BasicBlock::Create(*context, "loopPost");
+
+    scopes.push(Scope());
 
     // loop init
     if (initStatement != nullptr)
@@ -181,6 +191,8 @@ void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
     // loop post
     fun->insert(fun->end(), afterBlock);
     builder->SetInsertPoint(afterBlock);
+
+    scopes.pop();
 }
 
 void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement) {
@@ -193,7 +205,8 @@ void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFuncti
     // build function declaration
     llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), types, false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
-    funMap[statement->getName()] = fun;
+    if (!setFun(statement->getName(), fun))
+        return;
     
     // build arguments
     int i=0;
@@ -343,13 +356,16 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     builder->CreateCondBr(conditionValue, thenBlock, elseBlock);
 
     // Then
+    scopes.push(Scope());
     builder->SetInsertPoint(thenBlock);
     buildStatement(expression->getThenBlock()->getStatementBlock());
     llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getResultStatementExpression()->getExpression());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
+    scopes.pop();
 
     // Else
+    scopes.push(Scope());
     fun->insert(fun->end(), elseBlock);
     builder->SetInsertPoint(elseBlock);
     llvm::Value *elseValue = nullptr;
@@ -360,6 +376,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     }
     builder->CreateBr(mergeBlock);
     elseBlock = builder->GetInsertBlock();
+    scopes.pop();
 
     // Merge
     fun->insert(fun->end(), mergeBlock);
@@ -378,17 +395,17 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 }
 
 llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVariable> expression) {
-    llvm::AllocaInst *alloca = allocaMap[expression->getName()];
+    llvm::AllocaInst *alloca = getAlloca(expression->getName());
     if (alloca == nullptr)
-        failWithMessage("Variable " + expression->getName() + " not defined");
+        return nullptr;
 
     return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getName());
 }
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
-    llvm::Function *fun = funMap[expression->getName()];
+    llvm::Function *fun = getFun(expression->getName());
     if (fun == nullptr)
-        failWithMessage("Function " + expression->getName() + " not defined");
+        return nullptr;
     llvm::FunctionType *funType = fun->getFunctionType();
     vector<llvm::Value*> argValues;
     for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
@@ -396,6 +413,48 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
         argValues.push_back(argValue);
     }
     return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
+}
+
+bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
+    if (scopes.top().allocaMap[name] != nullptr)
+        return false;
+
+    scopes.top().allocaMap[name] = alloca;
+    return true;
+}
+
+llvm::AllocaInst* ModuleBuilder::getAlloca(string name) {
+    stack<Scope> scopes = this->scopes;
+
+    while (!scopes.empty()) {
+        llvm::AllocaInst *alloca = scopes.top().allocaMap[name];
+        if (alloca != nullptr)
+            return alloca;
+        scopes.pop();
+    }
+
+    return nullptr;
+}
+
+bool ModuleBuilder::setFun(string name, llvm::Function *fun) {
+    if (scopes.top().funMap[name] != nullptr)
+        return false;
+
+    scopes.top().funMap[name] = fun;
+    return true;
+}
+
+llvm::Function* ModuleBuilder::getFun(string name) {
+    stack<Scope> scopes = this->scopes;
+
+    while (!scopes.empty()) {
+        llvm::Function *fun = scopes.top().funMap[name];
+        if (fun != nullptr)
+            return fun;
+        scopes.pop();
+    }
+
+    return nullptr;
 }
 
 llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType) {
