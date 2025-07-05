@@ -1,6 +1,7 @@
 #include "ModuleBuilder.h"
 
 #include "Error.h"
+#include "Logger.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Expression/ExpressionGrouping.h"
@@ -37,6 +38,13 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     scopes.push(Scope());
     for (shared_ptr<Statement> &statement : statements)
         buildStatement(statement);
+
+    if (!errors.empty()) {
+        for (shared_ptr<Error> &error : errors)
+            Logger::print(error);
+        exit(1);
+    }
+
     return module;
 }
 
@@ -67,7 +75,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildExpression(dynamic_pointer_cast<StatementExpression>(statement));
             return;
         default:
-            failWithMessage("Unexpected statement");
+            markError(0, 0, "Unexpected statement");
     }
 }
 
@@ -114,7 +122,7 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
     if (llvm::verifyFunction(*fun, &llvmErrorMessage))
-        failWithMessage(errorMessage);
+        markError(0, 0, errorMessage);
 }
 
 void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement) {
@@ -237,7 +245,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
         default:
-            failWithMessage("Unexpected expression");
+            markError(0, 0, "Unexpected expression");
+            return nullptr;
     }
 }
 
@@ -275,7 +284,8 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
     }
 
-    failWithMessage("Unexpected operation");
+    markError(0, 0, "Unexpected operation");
+    return nullptr;
 }
 
 llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
@@ -285,7 +295,8 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operati
     case ExpressionBinaryOperation::NOT_EQUAL:
         return builder->CreateICmpNE(leftValue, rightValue);
     default:
-        failWithMessage("Undefined operation for boolean operands");
+        markError(0, 0, "Unexpecgted operation for boolean operands");
+        return nullptr;
     }
 }
 
@@ -417,8 +428,10 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
 }
 
 bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
-    if (scopes.top().allocaMap[name] != nullptr)
+    if (scopes.top().allocaMap[name] != nullptr) {
+        markError(0, 0, format("Variable \"{}\" already defined", name));
         return false;
+    }
 
     scopes.top().allocaMap[name] = alloca;
     return true;
@@ -434,12 +447,15 @@ llvm::AllocaInst* ModuleBuilder::getAlloca(string name) {
         scopes.pop();
     }
 
+    markError(0, 0, format("Variable \"{}\" not defined in scope", name));
     return nullptr;
 }
 
 bool ModuleBuilder::setFun(string name, llvm::Function *fun) {
-    if (scopes.top().funMap[name] != nullptr)
+    if (scopes.top().funMap[name] != nullptr) {
+        markError(0, 0, format("Function \"{}\" already defined", name));
         return false;
+    }
 
     scopes.top().funMap[name] = fun;
     return true;
@@ -455,6 +471,7 @@ llvm::Function* ModuleBuilder::getFun(string name) {
         scopes.pop();
     }
 
+    markError(0, 0, format("Function \"{}\" not defined in scope", name));
     return nullptr;
 }
 
@@ -469,11 +486,6 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::REAL32:
             return typeReal32;
     }
-}
-
-void ModuleBuilder::failWithMessage(string message) {
-    cerr << "Error! Building module \"" << moduleName << "\" from \"" + sourceFileName + "\" failed:" << endl << message << endl;
-    exit(1);
 }
 
 void ModuleBuilder::markError(int line, int column, string message) {

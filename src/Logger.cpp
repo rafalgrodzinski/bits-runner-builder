@@ -447,7 +447,8 @@ void Logger::print(shared_ptr<Error> error) {
             break;
         }
         case ErrorKind::BUILDER_ERROR: {
-            message = "";
+            string errorMessage = error->getMessage() ? *(error->getMessage()) : "";
+            message = format("Error at line {}, column {}: {}", error->getLine(), error->getColumn(), errorMessage);
             break;
         }
     }

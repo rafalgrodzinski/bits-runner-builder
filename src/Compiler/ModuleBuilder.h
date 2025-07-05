@@ -86,7 +86,6 @@ private:
     llvm::Function *getFun(string name);
 
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
-    void failWithMessage(string message);
 
     void markError(int line, int column, string message);
 
