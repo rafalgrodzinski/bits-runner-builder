@@ -27,10 +27,10 @@ private:
     optional<string> message;
 
 public:
+    static shared_ptr<Error> lexerError(int line, int column, string lexme);
+    static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<string> message);
     static shared_ptr<Error> builderError(int line, int column, string message);
 
-    Error(int line, int column, string lexme);
-    Error(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<string> message);
     Error(ErrorKind kind, int line, int column, optional<string> lexme, shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<string> message);
 
     ErrorKind getKind();

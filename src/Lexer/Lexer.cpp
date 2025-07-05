@@ -1,8 +1,9 @@
 #include "Lexer.h"
 
-#include "Token.h"
 #include "Error.h"
 #include "Logger.h"
+
+#include "Token.h"
 
 Lexer::Lexer(string source):
 source(source) { }
@@ -506,5 +507,5 @@ void Lexer::markError() {
     } else {
         lexme = "EOF";
     }
-    errors.push_back(make_shared<Error>(currentLine, startColumn, lexme));
+    errors.push_back(Error::lexerError(currentLine, startColumn, lexme));
 }

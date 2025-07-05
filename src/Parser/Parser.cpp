@@ -655,5 +655,5 @@ void Parser::markError(optional<TokenKind> expectedTokenKind, optional<string> m
     while (!tryMatchingTokenKinds(safeKinds, false, true))
         currentIndex++;
 
-    errors.push_back(make_shared<Error>(actualToken, expectedTokenKind, message));
+    errors.push_back(Error::parserError(actualToken, expectedTokenKind, message));
 }
