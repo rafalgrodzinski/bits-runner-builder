@@ -10,7 +10,8 @@ using namespace std;
 
 enum class ErrorKind {
     LEXER_ERROR,
-    PARSER_ERROR
+    PARSER_ERROR,
+    BUILDER_ERROR
 };
 
 class Error {
@@ -19,21 +20,24 @@ private:
 
     int line;
     int column;
-    string lexme;
+    optional<string>  lexme;
 
     shared_ptr<Token> actualToken;
     optional<TokenKind> expectedTokenKind;
     optional<string> message;
 
 public:
-    Error(int line, int column, string lexme);
-    Error(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<string> message);
+    static shared_ptr<Error> lexerError(int line, int column, string lexme);
+    static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<string> message);
+    static shared_ptr<Error> builderError(int line, int column, string message);
+
+    Error(ErrorKind kind, int line, int column, optional<string> lexme, shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<string> message);
 
     ErrorKind getKind();
 
     int getLine();
     int getColumn();
-    string getLexme();
+    optional<string> getLexme();
 
     shared_ptr<Token> getActualToken();
     optional<TokenKind> getExpectedTokenKind();

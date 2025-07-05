@@ -1,0 +1,34 @@
+@extern putchar fun: character sint32 -> sint32
+
+fib fun: number sint32 -> sint32
+    ret if number < 2:
+        number
+    else
+        fib(number - 1) + fib(number - 2)
+    ;
+;
+
+printNum fun: number sint32
+    biggest sint32 <- 10
+    rep biggest <= number: biggest <- biggest * 10
+    biggest <- biggest / 10
+
+    rep biggest > 0:
+        digit sint32 <- number / biggest
+        putchar(digit + '0')
+        number <- number % biggest
+        biggest <- biggest / 10
+    ;
+;
+
+// Print first 20 fibonaci numbers
+main fun -> sint32
+    rep i sint32 <- 0, i < 20:
+        res sint32 <- fib(i)
+        printNum(res)
+        putchar('\n')
+        i <- i + 1
+    ;
+    
+    ret 0
+;

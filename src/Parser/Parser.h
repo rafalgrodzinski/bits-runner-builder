@@ -14,9 +14,9 @@ using namespace std;
 
 class Parser {
 private:
+    vector<shared_ptr<Error>> errors;
     vector<shared_ptr<Token>> tokens;
     int currentIndex = 0;
-    vector<shared_ptr<Error>> errors;
 
     shared_ptr<Statement> nextStatement();
     shared_ptr<Statement> nextInBlockStatement();

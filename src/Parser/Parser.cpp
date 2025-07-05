@@ -501,19 +501,21 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
     currentIndex++; // left parenthesis
 
     vector<shared_ptr<Expression>> argumentExpressions;
-    do {
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
-
-        shared_ptr<Expression> argumentExpression = nextExpression();
-        if (argumentExpression == nullptr)
-            return nullptr;
-        argumentExpressions.push_back(argumentExpression);
-    } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
-
-    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
     if (!tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
-        markError(TokenKind::RIGHT_PAREN, {});
-        return nullptr;
+        do {
+            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
+
+            shared_ptr<Expression> argumentExpression = nextExpression();
+            if (argumentExpression == nullptr)
+                return nullptr;
+            argumentExpressions.push_back(argumentExpression);
+        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
+        if (!tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
+            markError(TokenKind::RIGHT_PAREN, {});
+            return nullptr;
+        }
     }
 
     return make_shared<ExpressionCall>(identifierToken->getLexme(), argumentExpressions);
@@ -653,5 +655,5 @@ void Parser::markError(optional<TokenKind> expectedTokenKind, optional<string> m
     while (!tryMatchingTokenKinds(safeKinds, false, true))
         currentIndex++;
 
-    errors.push_back(make_shared<Error>(actualToken, expectedTokenKind, message));
+    errors.push_back(Error::parserError(actualToken, expectedTokenKind, message));
 }

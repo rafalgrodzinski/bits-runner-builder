@@ -2,6 +2,7 @@
 #define MODULE_BUILDER_H
 
 #include <map>
+#include <stack>
 
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
@@ -10,6 +11,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/Verifier.h>
 
+class Error;
 class ValueType;
 
 class Expression;
@@ -33,8 +35,14 @@ class StatementBlock;
 
 using namespace std;
 
+typedef struct {
+    map<string, llvm::AllocaInst*> allocaMap;
+    map<string, llvm::Function*> funMap;
+} Scope;
+
 class ModuleBuilder {
 private:
+    vector<shared_ptr<Error>> errors;
     string moduleName;
     string sourceFileName;
 
@@ -48,8 +56,7 @@ private:
     llvm::Type *typeReal32;
 
     vector<shared_ptr<Statement>> statements;
-    map<string, llvm::AllocaInst*> allocaMap;
-    map<string, llvm::Function*> funMap;
+    stack<Scope> scopes;
 
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunctionDeclaration(shared_ptr<StatementFunction> statement);
@@ -72,8 +79,15 @@ private:
     llvm::Value *valueForVar(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
 
+    bool setAlloca(string name, llvm::AllocaInst *alloca);
+    llvm::AllocaInst *getAlloca(string name);
+
+    bool setFun(string name, llvm::Function *fun);
+    llvm::Function *getFun(string name);
+
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
-    void failWithMessage(string message);
+
+    void markError(int line, int column, string message);
 
 public:
     ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements);
