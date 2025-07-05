@@ -501,19 +501,21 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
     currentIndex++; // left parenthesis
 
     vector<shared_ptr<Expression>> argumentExpressions;
-    do {
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
-
-        shared_ptr<Expression> argumentExpression = nextExpression();
-        if (argumentExpression == nullptr)
-            return nullptr;
-        argumentExpressions.push_back(argumentExpression);
-    } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
-
-    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
     if (!tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
-        markError(TokenKind::RIGHT_PAREN, {});
-        return nullptr;
+        do {
+            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
+
+            shared_ptr<Expression> argumentExpression = nextExpression();
+            if (argumentExpression == nullptr)
+                return nullptr;
+            argumentExpressions.push_back(argumentExpression);
+        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
+        if (!tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
+            markError(TokenKind::RIGHT_PAREN, {});
+            return nullptr;
+        }
     }
 
     return make_shared<ExpressionCall>(identifierToken->getLexme(), argumentExpressions);
