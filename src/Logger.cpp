@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "Error.h"
+
 #include "Lexer/Token.h"
 #include "Parser/ValueType.h"
 
@@ -23,8 +25,6 @@
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionBlock.h"
-
-#include "Error.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -421,10 +421,12 @@ void Logger::print(vector<shared_ptr<Statement>> statements) {
 void Logger::print(shared_ptr<Error> error) {
     string message;
     switch (error->getKind()) {
-        case ErrorKind::LEXER_ERROR:
-            message = format("Unexpected token \"{}\" at line: {}, column: {}", error->getLexme(), error->getLine() + 1, error->getColumn() + 1);
+        case ErrorKind::LEXER_ERROR: {
+            string lexme = error->getLexme() ? *(error->getLexme()) : "";
+            message = format("Unexpected token \"{}\" at line: {}, column: {}", lexme, error->getLine() + 1, error->getColumn() + 1);
             break;
-        case ErrorKind::PARSER_ERROR:
+        }
+        case ErrorKind::PARSER_ERROR: {
             shared_ptr<Token> token = error->getActualToken();
             optional<TokenKind> expectedTokenKind = error->getExpectedTokenKind();
             optional<string> errorMessage = error->getMessage();
@@ -443,6 +445,11 @@ void Logger::print(shared_ptr<Error> error) {
             if (errorMessage)
                 message += format(". {}", *errorMessage);
             break;
+        }
+        case ErrorKind::BUILDER_ERROR: {
+            message = "";
+            break;
+        }
     }
     cout << message << endl;
 }

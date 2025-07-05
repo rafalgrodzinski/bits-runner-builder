@@ -1,5 +1,6 @@
 #include "ModuleBuilder.h"
 
+#include "Error.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Expression/ExpressionGrouping.h"
@@ -473,4 +474,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType) {
 void ModuleBuilder::failWithMessage(string message) {
     cerr << "Error! Building module \"" << moduleName << "\" from \"" + sourceFileName + "\" failed:" << endl << message << endl;
     exit(1);
+}
+
+void ModuleBuilder::markError(int line, int column, string message) {
+    errors.push_back(Error::builderError(line, column, message));
 }

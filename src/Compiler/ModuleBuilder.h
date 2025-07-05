@@ -11,6 +11,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/Verifier.h>
 
+class Error;
 class ValueType;
 
 class Expression;
@@ -41,6 +42,7 @@ typedef struct {
 
 class ModuleBuilder {
 private:
+    vector<shared_ptr<Error>> errors;
     string moduleName;
     string sourceFileName;
 
@@ -85,6 +87,8 @@ private:
 
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
     void failWithMessage(string message);
+
+    void markError(int line, int column, string message);
 
 public:
     ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements);
