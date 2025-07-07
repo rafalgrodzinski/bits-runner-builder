@@ -23,6 +23,7 @@
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionArrayLiteral.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
@@ -56,6 +57,10 @@ string Logger::toString(shared_ptr<Token> token) {
             return "(";
         case TokenKind::RIGHT_PAREN:
             return ")";
+        case TokenKind::LEFT_SQUARE_BRACKET:
+            return "[";
+        case TokenKind::RIGHT_SQUARE_BRACKET:
+            return "]";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -308,6 +313,8 @@ string Logger::toString(shared_ptr<Expression> expression) {
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::LITERAL:
             return toString(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::ARRAY_LITERAL:
+            return toString(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
         case ExpressionKind::CALL:
             return toString(dynamic_pointer_cast<ExpressionCall>(expression));
         case ExpressionKind::BLOCK:
@@ -380,6 +387,18 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
         case ValueTypeKind::REAL32:
             return to_string(expression->getReal32Value());
     }
+}
+
+string Logger::toString(shared_ptr<ExpressionArrayLiteral> expression) {
+    string text;
+    text += "[";
+    for (int i=0; i<expression->getExpressions().size(); i++) {
+        text += toString(expression->getExpressions().at(i));
+        if (i < expression->getExpressions().size() - 1)
+            text += ", ";
+    }
+    text += "]";
+    return text;
 }
 
 string Logger::toString(shared_ptr<ExpressionCall> expression) {

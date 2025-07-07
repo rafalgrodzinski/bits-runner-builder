@@ -1,4 +1,7 @@
-#include "Parser/Expression/Expression.h"
+#ifndef EXPRESSION_LITERAL_H
+#define EXPRESSION_LITERAL_H
+
+#include "Expression.h"
 
 class ExpressionLiteral: public Expression {
 private:
@@ -13,3 +16,5 @@ public:
     int32_t getSint32Value();
     float getReal32Value();
 };
+
+#endif

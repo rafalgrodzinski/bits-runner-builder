@@ -8,6 +8,7 @@
 
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionArrayLiteral.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
@@ -261,10 +262,8 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
             break;
 
         // except new line
-        if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+        if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
             markError(TokenKind::NEW_LINE, {});
-            return nullptr;
-        }
     }
 
     return make_shared<StatementBlock>(statements);
@@ -446,6 +445,10 @@ shared_ptr<Expression> Parser::matchPrimary() {
     if (expression != nullptr)
         return expression;
 
+    expression = matchExpressionArrayLiteral();
+    if (expression != nullptr)
+        return expression;
+
     expression = matchExpressionCall();
     if (expression != nullptr)
         return expression;
@@ -458,7 +461,6 @@ shared_ptr<Expression> Parser::matchPrimary() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
-    shared_ptr<Token> token = tokens.at(currentIndex);
     if (tryMatchingTokenKinds({TokenKind::LEFT_PAREN}, true, true)) {
         shared_ptr<Expression> expression = matchTerm();
         // has grouped expression failed?
@@ -481,6 +483,28 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
         return make_shared<ExpressionLiteral>(token);
 
     return nullptr;
+}
+
+shared_ptr<Expression> Parser::matchExpressionArrayLiteral() {
+    if (!tryMatchingTokenKinds({TokenKind::LEFT_SQUARE_BRACKET}, true, true))
+        return nullptr;
+
+    vector<shared_ptr<Expression>> expressions;
+    if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
+        do {
+            shared_ptr<Expression> expression = nextExpression();
+            if (expression != nullptr)
+                expressions.push_back(expression);
+        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+
+        if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
+            markError(TokenKind::RIGHT_SQUARE_BRACKET, {});
+            return nullptr;
+        }
+    }
+
+
+    return make_shared<ExpressionArrayLiteral>(expressions);
 }
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {

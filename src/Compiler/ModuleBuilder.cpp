@@ -6,6 +6,7 @@
 
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionArrayLiteral.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
@@ -132,6 +133,21 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
     if (!setAlloca(statement->getName(), alloca))
         return;
     builder->CreateStore(value, alloca);
+
+    /*auto *aType = llvm::ArrayType::get(typeSint32, 7);
+    llvm::AllocaInst *allocaArr = builder->CreateAlloca(aType, nullptr, statement->getName() + "_Arr");
+
+    //llvm::AllocaInst *allocaBrr = builder->CreateAlloca(typeSint32, nullptr, statement->getName() + "_Arr");
+    vector<llvm::Constant *> values;
+    auto *bType = llvm::ArrayType::get(typeSint32, 9);
+    for (int i=0; i<9; i++) {
+        llvm::Constant *cnst = llvm::ConstantInt::get(typeSint32, i, true);
+        values.push_back(cnst);
+    }
+    llvm::Constant *ar = (llvm::ConstantArray *)llvm::ConstantArray::get(bType, values);
+    //auto vAr = ar->getAggregateElement(0);
+    llvm::AllocaInst *arAlloca = builder->CreateAlloca(bType, nullptr, "arBtype");
+    builder->CreateStore(ar, arAlloca);*/
 }
 
 void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
@@ -234,6 +250,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
     switch (expression->getKind()) {
         case ExpressionKind::LITERAL:
             return valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::ARRAY_LITERAL:
+            return valueForArrayLiteral(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
         case ExpressionKind::GROUPING:
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case ExpressionKind::BINARY:
@@ -264,6 +282,10 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
         case ValueTypeKind::REAL32:
             return llvm::ConstantInt::get(typeReal32, expression->getReal32Value(), true);
     }
+}
+
+llvm::Value *ModuleBuilder::valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression) {
+    return nullptr;
 }
 
 llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expression) {
