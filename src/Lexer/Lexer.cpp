@@ -250,6 +250,10 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = matchString();
+    if (token != nullptr)
+        return token;
+
     // type
     token = matchType();
     if (token != nullptr)
@@ -401,6 +405,27 @@ shared_ptr<Token> Lexer::matchReal() {
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
     shared_ptr<Token> token = make_shared<Token>(TokenKind::REAL, lexme, currentLine, currentColumn);
+    advanceWithToken(token);
+    return token;
+}
+
+shared_ptr<Token> Lexer::matchString() {
+    int nextIndex = currentIndex;
+
+    if (currentIndex >= source.size() || source.at(nextIndex) != '\"')
+        return nullptr;
+
+    bool isClosing = false;
+    do {
+        nextIndex++;
+        isClosing = source.at(nextIndex) == '\"' && source.at(nextIndex - 1) != '\\';
+    } while (nextIndex < source.length() && !isClosing);
+
+    if (!isClosing)
+        return nullptr;
+
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex + 1);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::STRING, lexme, currentLine, currentColumn);
     advanceWithToken(token);
     return token;
 }

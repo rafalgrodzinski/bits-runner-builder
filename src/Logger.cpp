@@ -84,6 +84,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "INT_CHAR(" + token->getLexme() + ")";
         case TokenKind::REAL:
             return "REAL(" + token->getLexme() + ")";
+        case TokenKind::STRING:
+            return "STRING(" + token->getLexme() + ")";
         case TokenKind::IDENTIFIER:
             return "ID(" + token->getLexme() + ")";
         case TokenKind::TYPE:
@@ -164,6 +166,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "LITERAL(INTEGER)";
         case TokenKind::REAL:
             return "LITERAL(REAL)";
+        case TokenKind::STRING:
+            return "LITERAL(STRING)";
         case TokenKind::IDENTIFIER:
             return "LITERAL(ID)";
         case TokenKind::TYPE:

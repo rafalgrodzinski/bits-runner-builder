@@ -9,6 +9,9 @@ private:
 
 public:
     ExpressionArrayLiteral(vector<shared_ptr<Expression>> expressions);
+    //ExpressionArrayLiteral(shared_ptr<Token> tokenString);
+    static shared_ptr<ExpressionArrayLiteral> expressionArrayLiteralForExpressions(vector<shared_ptr<Expression>> expressions);
+    static shared_ptr<ExpressionArrayLiteral> expressionArrayLiteralForTokenString(shared_ptr<Token> tokenString);
     vector<shared_ptr<Expression>> getExpressions();
 };
 

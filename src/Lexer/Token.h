@@ -41,6 +41,7 @@ enum class TokenKind {
     INTEGER_BIN,
     INTEGER_CHAR,
     REAL,
+    STRING,
     IDENTIFIER,
     TYPE,
 

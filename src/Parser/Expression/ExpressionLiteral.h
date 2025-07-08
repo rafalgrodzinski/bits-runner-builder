@@ -10,6 +10,8 @@ private:
     float real32Value;
 
 public:
+    static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
+    
     ExpressionLiteral(shared_ptr<Token> token);
     ExpressionLiteral();
     bool getBoolValue();

@@ -41,7 +41,8 @@ vector<TokenKind> Token::tokensLiteral = {
     TokenKind::INTEGER_HEX,
     TokenKind::INTEGER_BIN,
     TokenKind::INTEGER_CHAR,
-    TokenKind::REAL
+    TokenKind::REAL,
+    TokenKind::STRING
 };
 
 Token::Token(TokenKind kind, string lexme, int line, int column):

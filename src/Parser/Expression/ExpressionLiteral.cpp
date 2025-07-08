@@ -1,7 +1,25 @@
 #include "ExpressionLiteral.h"
 
+#include "Utils.h"
 #include "Lexer/Token.h"
 #include "Parser/ValueType.h"
+
+shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(shared_ptr<Token> token) {
+    switch (token->getKind()) {
+        case TokenKind::INTEGER_CHAR: {
+            string charString = token->getLexme();
+            optional<int> charValue = Utils::charStringToInt(charString);
+            if (!charValue)
+                return nullptr;
+            shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>();
+            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
+            expression->sint32Value = *charValue;
+            return expression;
+        }
+        default:
+            return nullptr;
+    }
+}
 
 ExpressionLiteral::ExpressionLiteral():
 Expression(ExpressionKind::LITERAL, nullptr) { }

@@ -25,6 +25,7 @@ private:
     shared_ptr<Token> matchIntegerBin();
     shared_ptr<Token> matchIntegerChar();
     shared_ptr<Token> matchReal();
+    shared_ptr<Token> matchString();
     shared_ptr<Token> matchType();
     shared_ptr<Token> matchIdentifier();
     shared_ptr<Token> matchEnd();

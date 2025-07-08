@@ -1,0 +1,7 @@
+@extern putchar fun: character sint32 -> sint32
+
+main fun -> sint32
+    text data<sint32> <- "Hello string!\n"
+
+    ret 0
+;

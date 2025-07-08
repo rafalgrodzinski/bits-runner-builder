@@ -421,11 +421,11 @@ shared_ptr<Expression> Parser::matchPrimary() {
     if (expression != nullptr)
         return expression;
 
-    expression = matchExpressionLiteral();
-    if (expression != nullptr)
-        return expression;
-
     expression = matchExpressionArrayLiteral();
+        if (expression != nullptr)
+            return expression;
+
+    expression = matchExpressionLiteral();
     if (expression != nullptr)
         return expression;
 
@@ -466,25 +466,28 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionArrayLiteral() {
-    if (!tryMatchingTokenKinds({TokenKind::LEFT_SQUARE_BRACKET}, true, true))
-        return nullptr;
-
-    vector<shared_ptr<Expression>> expressions;
-    if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
-        do {
-            shared_ptr<Expression> expression = nextExpression();
-            if (expression != nullptr)
-                expressions.push_back(expression);
-        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
-
+    if (tryMatchingTokenKinds({TokenKind::STRING}, true, false)) {
+        return ExpressionArrayLiteral::expressionArrayLiteralForTokenString(tokens.at(currentIndex++));
+    } else if (tryMatchingTokenKinds({TokenKind::LEFT_SQUARE_BRACKET}, true, true)) {
+        vector<shared_ptr<Expression>> expressions;
         if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
-            markError(TokenKind::RIGHT_SQUARE_BRACKET, {});
-            return nullptr;
+            do {
+                shared_ptr<Expression> expression = nextExpression();
+                if (expression != nullptr)
+                    expressions.push_back(expression);
+            } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+
+            if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
+                markError(TokenKind::RIGHT_SQUARE_BRACKET, {});
+                return nullptr;
+            }
         }
+
+
+        return make_shared<ExpressionArrayLiteral>(expressions);
     }
 
-
-    return make_shared<ExpressionArrayLiteral>(expressions);
+    return nullptr;
 }
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {
