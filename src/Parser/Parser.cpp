@@ -460,7 +460,7 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
     if (tryMatchingTokenKinds(Token::tokensLiteral, false, true))
-        return make_shared<ExpressionLiteral>(token);
+        return ExpressionLiteral::expressionLiteralForToken(token);
 
     return nullptr;
 }

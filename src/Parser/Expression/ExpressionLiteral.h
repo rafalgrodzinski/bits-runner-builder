@@ -12,7 +12,6 @@ private:
 public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
     
-    ExpressionLiteral(shared_ptr<Token> token);
     ExpressionLiteral();
     bool getBoolValue();
     int32_t getSint32Value();
