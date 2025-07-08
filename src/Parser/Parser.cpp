@@ -122,7 +122,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
                 return nullptr;
             }
             shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
-            shared_ptr<Token> argumentTypeToken = tokens.at(currentIndex++);
+            //shared_ptr<Token> argumentTypeToken = tokens.at(currentIndex++);
             shared_ptr<ValueType> argumentType = matchValueType();
             if (argumentType == nullptr) {
                 markError(TokenKind::TYPE, {});
@@ -143,8 +143,6 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
             markError(TokenKind::TYPE, {});
             return nullptr;
         }
-
-        currentIndex++; // type
     }
 
     return make_shared<StatementMetaExternFunction>(identifierToken->getLexme(), arguments, returnType);
@@ -192,7 +190,6 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
                 return nullptr;
             }
             shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
-            shared_ptr<Token> argumentTypeToken = tokens.at(currentIndex++);
             shared_ptr<ValueType> argumentType = matchValueType();
             if (argumentType == nullptr) {
                 markError(TokenKind::TYPE, {});
@@ -207,7 +204,6 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
         tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
 
-        //shared_ptr<Token> returnTypeToken = tokens.at(currentIndex);
         returnType = matchValueType();
         if (returnType == nullptr) {
             markError(TokenKind::TYPE, {});
@@ -702,6 +698,10 @@ void Parser::markError(optional<TokenKind> expectedTokenKind, optional<string> m
 
     while (!tryMatchingTokenKinds(safeKinds, false, true))
         currentIndex++;
+
+    // Last END should not be consumed
+    if (currentIndex > tokens.size() - 1)
+        currentIndex = tokens.size() - 1;
 
     errors.push_back(Error::parserError(actualToken, expectedTokenKind, message));
 }

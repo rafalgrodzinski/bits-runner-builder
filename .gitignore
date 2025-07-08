@@ -1,6 +1,12 @@
-.DS_Store
+# ignore files without extensions
+*
+!*.*
+# brb build artifiacts
 *.o
-brb
+
+.DS_Store
 .vscode/settings.json
+
+# project build artifacts
 *.dSYM
 build/
