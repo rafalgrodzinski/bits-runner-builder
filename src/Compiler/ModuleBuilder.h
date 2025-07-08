@@ -71,6 +71,7 @@ private:
     void buildExpression(shared_ptr<StatementExpression> statement);
 
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);
+    vector<llvm::Value*> valuesForExpression(shared_ptr<Expression> expression);
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression);
     vector<llvm::Value*> valuesForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
@@ -88,7 +89,7 @@ private:
     bool setFun(string name, llvm::Function *fun);
     llvm::Function *getFun(string name);
 
-    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
+    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
 
     void markError(int line, int column, string message);
 

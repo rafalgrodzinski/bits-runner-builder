@@ -43,4 +43,10 @@ ValueTypeKind ValueType::getKind() {
     return kind;
 }
 
-shared_ptr<ValueType> getSubType() {}
+shared_ptr<ValueType> ValueType::getSubType() {
+    return subType;
+}
+
+int ValueType::getValueArg() {
+    return valueArg;
+}
