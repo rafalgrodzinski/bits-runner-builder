@@ -3,16 +3,17 @@
 #include "Lexer/Token.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 
-ExpressionArrayLiteral::ExpressionArrayLiteral(vector<shared_ptr<Expression>> expressions):
-Expression(ExpressionKind::ARRAY_LITERAL, nullptr), expressions(expressions) { }
-
 shared_ptr<ExpressionArrayLiteral> ExpressionArrayLiteral::expressionArrayLiteralForExpressions(vector<shared_ptr<Expression>> expressions) {
-    return make_shared<ExpressionArrayLiteral>(expressions);
+    shared_ptr<ExpressionArrayLiteral> expression = make_shared<ExpressionArrayLiteral>();
+    expression->expressions = expressions;
+    return expression;
 }
 
 shared_ptr<ExpressionArrayLiteral> ExpressionArrayLiteral::expressionArrayLiteralForTokenString(shared_ptr<Token> tokenString) {
     if (tokenString->getKind() != TokenKind::STRING)
         return nullptr;
+
+    shared_ptr<ExpressionArrayLiteral> expression = make_shared<ExpressionArrayLiteral>();
 
     vector<shared_ptr<Expression>> expressions;
     string stringValue = tokenString->getLexme();
@@ -26,8 +27,13 @@ shared_ptr<ExpressionArrayLiteral> ExpressionArrayLiteral::expressionArrayLitera
         shared_ptr<ExpressionLiteral> expression = ExpressionLiteral::expressionLiteralForToken(token);
         expressions.push_back(expression);
     }
-    return make_shared<ExpressionArrayLiteral>(expressions);
+
+    expression->expressions = expressions;
+    return expression;
 }
+
+ExpressionArrayLiteral::ExpressionArrayLiteral():
+Expression(ExpressionKind::ARRAY_LITERAL, nullptr) { }
 
 vector<shared_ptr<Expression>> ExpressionArrayLiteral::getExpressions() {
     return expressions;

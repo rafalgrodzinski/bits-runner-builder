@@ -483,8 +483,7 @@ shared_ptr<Expression> Parser::matchExpressionArrayLiteral() {
             }
         }
 
-
-        return make_shared<ExpressionArrayLiteral>(expressions);
+        return ExpressionArrayLiteral::expressionArrayLiteralForExpressions(expressions);
     }
 
     return nullptr;
