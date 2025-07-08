@@ -15,6 +15,7 @@ private:
     int currentIndex;
     int currentLine;
     int currentColumn;
+    vector<shared_ptr<Token>> tokens;
     vector<shared_ptr<Error>> errors;
 
     shared_ptr<Token> nextToken();
@@ -24,6 +25,7 @@ private:
     shared_ptr<Token> matchIntegerBin();
     shared_ptr<Token> matchIntegerChar();
     shared_ptr<Token> matchReal();
+    shared_ptr<Token> matchType();
     shared_ptr<Token> matchIdentifier();
     shared_ptr<Token> matchEnd();
 

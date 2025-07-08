@@ -140,6 +140,10 @@ string Logger::toString(TokenKind tokenKind) {
             return "(";
         case TokenKind::RIGHT_PAREN:
             return ")";
+        case TokenKind::LEFT_SQUARE_BRACKET:
+            return "[";
+        case TokenKind::RIGHT_SQUARE_BRACKET:
+            return "]";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -196,6 +200,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "SINT32";
         case ValueTypeKind::REAL32:
             return "REAL32";
+        case ValueTypeKind::DATA:
+            return "[]";
     }
 }
 
@@ -386,6 +392,8 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
             return to_string(expression->getSint32Value());
         case ValueTypeKind::REAL32:
             return to_string(expression->getReal32Value());
+        default:
+            return "?";
     }
 }
 

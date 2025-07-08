@@ -150,6 +150,10 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
     builder->CreateStore(ar, arAlloca);*/
 }
 
+void ModuleBuilder::buildArrayDeclaration(shared_ptr<StatementVariable> statement) {
+    
+}
+
 void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
     llvm::AllocaInst *alloca = getAlloca(statement->getName());
     if (alloca == nullptr)
@@ -251,7 +255,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::LITERAL:
             return valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression));
         case ExpressionKind::ARRAY_LITERAL:
-            return valueForArrayLiteral(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
+            return nullptr;// valuesForArrayLiteral(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
         case ExpressionKind::GROUPING:
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case ExpressionKind::BINARY:
@@ -284,8 +288,12 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
     }
 }
 
-llvm::Value *ModuleBuilder::valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression) {
-    return nullptr;
+vector<llvm::Value*> ModuleBuilder::valuesForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression) {
+    vector<llvm::Value*> values;
+    for (shared_ptr<Expression> &expression : expression->getExpressions()) {
+        values.push_back(valueForExpression(expression));
+    }
+    return values;
 }
 
 llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expression) {

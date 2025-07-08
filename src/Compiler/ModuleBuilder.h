@@ -62,6 +62,7 @@ private:
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunctionDeclaration(shared_ptr<StatementFunction> statement);
     void buildVarDeclaration(shared_ptr<StatementVariable> statement);
+    void buildArrayDeclaration(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
@@ -71,7 +72,7 @@ private:
 
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression);
-    llvm::Value *valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
+    vector<llvm::Value*> valuesForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);

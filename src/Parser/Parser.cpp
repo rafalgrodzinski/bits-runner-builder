@@ -123,7 +123,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
             }
             shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
             shared_ptr<Token> argumentTypeToken = tokens.at(currentIndex++);
-            shared_ptr<ValueType> argumentType = ValueType::valueTypeForToken(argumentTypeToken);
+            shared_ptr<ValueType> argumentType = matchValueType();
             if (argumentType == nullptr) {
                 markError(TokenKind::TYPE, {});
                 return nullptr;
@@ -137,8 +137,8 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
         tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
 
-        shared_ptr<Token> returnTypeToken = tokens.at(currentIndex);
-        returnType = ValueType::valueTypeForToken(returnTypeToken);
+        //shared_ptr<Token> returnTypeToken = tokens.at(currentIndex);
+        returnType = matchValueType();
         if (returnType == nullptr) {
             markError(TokenKind::TYPE, {});
             return nullptr;
@@ -155,21 +155,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         return nullptr;
 
     shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
-    shared_ptr<Token> valueTypeToken = tokens.at(currentIndex);
-
-    shared_ptr<ValueType> valueType;
-    if (valueTypeToken->getLexme().compare("bool") == 0)
-        valueType = ValueType::BOOL; 
-    else if (valueTypeToken->getLexme().compare("sint32") == 0)
-        valueType = ValueType::SINT32;
-    else if (valueTypeToken->getLexme().compare("real32") == 0)
-        valueType = ValueType::REAL32;
-    else {
-        markError(TokenKind::TYPE, {});
-        return nullptr;
-    }
-
-    currentIndex++; // type
+    shared_ptr<ValueType> valueType = matchValueType();
 
     // Expect left arrow
     if (!tryMatchingTokenKinds({TokenKind::LEFT_ARROW}, true, true)) {
@@ -207,7 +193,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
             }
             shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
             shared_ptr<Token> argumentTypeToken = tokens.at(currentIndex++);
-            shared_ptr<ValueType> argumentType = ValueType::valueTypeForToken(argumentTypeToken);
+            shared_ptr<ValueType> argumentType = matchValueType();
             if (argumentType == nullptr) {
                 markError(TokenKind::TYPE, {});
                 return nullptr;
@@ -221,14 +207,12 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
         tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
 
-        shared_ptr<Token> returnTypeToken = tokens.at(currentIndex);
-        returnType = ValueType::valueTypeForToken(returnTypeToken);
+        //shared_ptr<Token> returnTypeToken = tokens.at(currentIndex);
+        returnType = matchValueType();
         if (returnType == nullptr) {
             markError(TokenKind::TYPE, {});
             return nullptr;
         }
-
-        currentIndex++; // type
     }
 
     // consume new line
@@ -636,6 +620,46 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
     }
 
     return make_shared<ExpressionBlock>(statements);
+}
+
+shared_ptr<ValueType> Parser::matchValueType() {
+    if (!tryMatchingTokenKinds({TokenKind::TYPE}, true, false))
+        return nullptr;
+    shared_ptr<Token> typeToken = tokens.at(currentIndex++);
+    shared_ptr<ValueType> subType;
+    int valueArg = 0;
+
+    if (tryMatchingTokenKinds({TokenKind::LESS}, true, true)) {
+        if (!tryMatchingTokenKinds({TokenKind::TYPE}, true, false)) {
+            markError(TokenKind::TYPE, {});
+            return nullptr;
+        }
+        subType = matchValueType();
+        if (subType == nullptr)
+            return subType;
+
+        if (tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
+            if (!tryMatchingTokenKinds({TokenKind::INTEGER_DEC, TokenKind::INTEGER_HEX, TokenKind::INTEGER_BIN, TokenKind::INTEGER_CHAR}, false, false)) {
+                markError({}, "Expected integer literal");
+                return nullptr;
+            }
+            shared_ptr<Expression> expressionValue = matchExpressionLiteral();
+            if (expressionValue == nullptr) {
+                markError({}, "Expected integer literal");
+                return nullptr;
+            }
+
+            valueArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getSint32Value();
+        }
+
+
+        if (!tryMatchingTokenKinds({TokenKind::GREATER}, true, true)) {
+            markError(TokenKind::GREATER, {});
+            return nullptr;
+        }
+    }
+
+    return ValueType::valueTypeForToken(typeToken, subType, valueArg);
 }
 
 bool Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {

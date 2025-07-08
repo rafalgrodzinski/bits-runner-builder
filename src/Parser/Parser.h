@@ -3,9 +3,11 @@
 
 #include <vector>
 
+class Error;
+
 class Token;
 enum class TokenKind;
-class Error;
+class ValueType;
 
 class Expression;
 class Statement;
@@ -46,6 +48,8 @@ private:
     shared_ptr<Expression> matchExpressionIfElse();
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
+
+    shared_ptr<ValueType> matchValueType();
 
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
