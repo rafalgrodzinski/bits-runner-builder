@@ -292,7 +292,7 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
         // got initial, expect comma
         if (initStatement != nullptr && !tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
             markError(TokenKind::COMMA, {});
-            return nullptr;
+            goto afterIf;
         }
 
         // optional new line
@@ -305,7 +305,7 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
             // got pre-condition, expect comma
             if (!tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
                 markError(TokenKind::COMMA, {});
-                return nullptr;
+                goto afterIf;
             }
 
             // optional new line
@@ -317,10 +317,11 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
             // expect colon
             if (!tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
                 markError(TokenKind::COLON, {});
-                return nullptr;
+                goto afterIf;
             }
         }
     }
+    afterIf:
 
     isMultiLine = tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
 
@@ -416,25 +417,26 @@ shared_ptr<Expression> Parser::matchFactor() {
 
 shared_ptr<Expression> Parser::matchPrimary() {
     shared_ptr<Expression> expression;
+    int errorsCount = errors.size();
 
     expression = matchExpressionGrouping();
-    if (expression != nullptr)
+    if (expression != nullptr || errors.size() > errorsCount)
         return expression;
 
     expression = matchExpressionArrayLiteral();
-        if (expression != nullptr)
+        if (expression != nullptr || errors.size() > errorsCount)
             return expression;
 
     expression = matchExpressionLiteral();
-    if (expression != nullptr)
+    if (expression != nullptr || errors.size() > errorsCount)
         return expression;
 
     expression = matchExpressionCall();
-    if (expression != nullptr)
+    if (expression != nullptr || errors.size() > errorsCount)
         return expression;
 
     expression = matchExpressionVariable();
-    if (expression != nullptr)
+    if (expression != nullptr || errors.size() > errorsCount)
     return expression;
 
     return nullptr;
@@ -490,12 +492,23 @@ shared_ptr<Expression> Parser::matchExpressionArrayLiteral() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {
-    shared_ptr<Token> token = tokens.at(currentIndex);
+    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER}, true, false))
+        return nullptr;
+    shared_ptr<Token> idToken = tokens.at(currentIndex++);
+    shared_ptr<Expression> indexExpression;
 
-    if (tryMatchingTokenKinds({TokenKind::IDENTIFIER}, true, true))
-        return make_shared<ExpressionVariable>(token->getLexme());
+    if (tryMatchingTokenKinds({TokenKind::LEFT_SQUARE_BRACKET}, true, true)) {
+        indexExpression = nextExpression();
+        if (indexExpression == nullptr)
+            return nullptr;
+
+        if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
+            markError(TokenKind::RIGHT_SQUARE_BRACKET, {});
+            return nullptr;
+        }
+    }
     
-    return nullptr;
+    return make_shared<ExpressionVariable>(idToken->getLexme(), indexExpression);
 }
 
 shared_ptr<Expression> Parser::matchExpressionCall() {

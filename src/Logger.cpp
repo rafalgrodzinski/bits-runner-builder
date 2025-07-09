@@ -376,7 +376,11 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionVariable> expression) {
-    return format("VAR({})", expression->getName());
+    string text = format("VAR({}", expression->getName());
+    if (expression->getIndexExpression() != nullptr)
+        text += format("|{}", toString(expression->getIndexExpression()));
+    text += ")";
+    return text;
 }
 
 string Logger::toString(shared_ptr<ExpressionGrouping> expression) {

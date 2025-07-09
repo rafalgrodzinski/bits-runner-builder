@@ -25,6 +25,8 @@ optional<int> Utils::charStringToInt(string charString) {
                     return '\'';
                 case '\"':
                     return '\"';
+                case '0':
+                    return '\0';
                 default:
                     return {};
             }

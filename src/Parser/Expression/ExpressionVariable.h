@@ -3,8 +3,10 @@
 class ExpressionVariable: public Expression {
 private:
     string name;
+    shared_ptr<Expression> indexExpression;
 
 public:
-    ExpressionVariable(string name);
+    ExpressionVariable(string name, shared_ptr<Expression> indexExpression);
     string getName();
+    shared_ptr<Expression> getIndexExpression();
 };

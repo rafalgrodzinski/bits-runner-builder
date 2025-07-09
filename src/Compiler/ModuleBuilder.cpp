@@ -132,12 +132,15 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
 
         llvm::ArrayType *type = (llvm::ArrayType *)typeForValueType(statement->getValueType(), values.size());
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, statement->getName());
+        if (!setAlloca(statement->getName(), alloca))
+            return;
         for (int i=0; i < type->getNumElements(); i++) {
             llvm::Value *index[] = {
                 builder->getInt32(0),
                 builder->getInt32(i)
             };
             llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}_{}", statement->getName(), i));
+
             builder->CreateStore(values[i], elementPtr);
         }
     } else {
@@ -148,10 +151,6 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
             return;
         builder->CreateStore(value, alloca);
     }
-}
-
-void ModuleBuilder::buildArrayDeclaration(shared_ptr<StatementVariable> statement) {
-    
 }
 
 void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
@@ -254,7 +253,6 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
     switch (expression->getKind()) {
         case ExpressionKind::LITERAL:
             return valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression));
-
         case ExpressionKind::GROUPING:
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case ExpressionKind::BINARY:
@@ -312,6 +310,9 @@ llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expr
 llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expression) {
     llvm::Value *leftValue = valueForExpression(expression->getLeft());
     llvm::Value *rightValue = valueForExpression(expression->getRight());
+
+    if (leftValue == nullptr || rightValue == nullptr)
+        return nullptr;
 
     llvm::Type *type = leftValue->getType();
 
@@ -450,7 +451,19 @@ llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVariable> expressio
     if (alloca == nullptr)
         return nullptr;
 
-    return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getName());
+    if (expression->getIndexExpression()) {
+        llvm::Value *indexValue = valueForExpression(expression->getIndexExpression());
+        llvm::Value *index[] = {
+            builder->getInt32(0),
+            indexValue
+        };
+        llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
+        llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", expression->getName()));
+
+        return builder->CreateLoad(type->getArrayElementType(), elementPtr);
+    } else {
+        return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getName());
+    }
 }
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
