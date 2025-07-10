@@ -159,7 +159,20 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
         return;
 
     llvm::Value *value = valueForExpression(statement->getExpression());
-    builder->CreateStore(value, alloca);
+
+    if (statement->getIndexExpression()) {
+        llvm::Value *indexValue = valueForExpression(statement->getIndexExpression());
+        llvm::Value *index[] = {
+            builder->getInt32(0),
+            indexValue
+        };
+        llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
+        llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", statement->getName()));
+
+        builder->CreateStore(value, elementPtr);
+    } else {
+        builder->CreateStore(value, alloca);
+    }
 }
 
 void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {

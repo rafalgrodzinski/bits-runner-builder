@@ -250,17 +250,35 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 }
 
 shared_ptr<Statement> Parser::matchStatementAssignment() {
-    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::LEFT_ARROW}, true, false))
+    int startIndex = currentIndex;
+
+    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER}, true, false))
         return nullptr;
-     
     shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
-    currentIndex++; // arrow
+    shared_ptr<Expression> indexExpression;
+
+    if (tryMatchingTokenKinds({TokenKind::LEFT_SQUARE_BRACKET}, true, true)) {
+        indexExpression = nextExpression();
+        if (indexExpression == nullptr)
+            return nullptr;
+
+        if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
+            markError(TokenKind::RIGHT_SQUARE_BRACKET, {});
+            return nullptr;
+        }
+    }
+
+    // assignment requires left arrow, otherwise abort
+    if (!tryMatchingTokenKinds({TokenKind::LEFT_ARROW}, true, true)) {
+        currentIndex = startIndex;
+        return nullptr;
+    }
 
     shared_ptr<Expression> expression = nextExpression();
     if (expression == nullptr)
         return nullptr;
 
-    return make_shared<StatementAssignment>(identifierToken->getLexme(), expression);
+    return make_shared<StatementAssignment>(identifierToken->getLexme(), indexExpression, expression);
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {
