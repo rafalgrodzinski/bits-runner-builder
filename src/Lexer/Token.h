@@ -21,6 +21,8 @@ enum class TokenKind {
     
     LEFT_PAREN,
     RIGHT_PAREN,
+    LEFT_SQUARE_BRACKET,
+    RIGHT_SQUARE_BRACKET,
     COMMA,
     COLON,
     SEMICOLON,
@@ -39,6 +41,7 @@ enum class TokenKind {
     INTEGER_BIN,
     INTEGER_CHAR,
     REAL,
+    STRING,
     IDENTIFIER,
     TYPE,
 

@@ -1,4 +1,7 @@
-#include "Parser/Expression/Expression.h"
+#ifndef EXPRESSION_LITERAL_H
+#define EXPRESSION_LITERAL_H
+
+#include "Expression.h"
 
 class ExpressionLiteral: public Expression {
 private:
@@ -7,9 +10,12 @@ private:
     float real32Value;
 
 public:
-    ExpressionLiteral(shared_ptr<Token> token);
+    static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
+    
     ExpressionLiteral();
     bool getBoolValue();
     int32_t getSint32Value();
     float getReal32Value();
 };
+
+#endif

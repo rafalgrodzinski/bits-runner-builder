@@ -23,6 +23,7 @@ class ExpressionIfElse;
 class ExpressionVariable;
 class ExpressionGrouping;
 class ExpressionLiteral;
+class ExpressionArrayLiteral;
 class ExpressionCall;
 class ExpressionBlock;
 
@@ -52,6 +53,7 @@ private:
     static string toString(shared_ptr<ExpressionVariable> expression);
     static string toString(shared_ptr<ExpressionGrouping> expression);
     static string toString(shared_ptr<ExpressionLiteral> expression);
+    static string toString(shared_ptr<ExpressionArrayLiteral> expression);
     static string toString(shared_ptr<ExpressionCall> expression);
     static string toString(shared_ptr<ExpressionBlock> expression);
 

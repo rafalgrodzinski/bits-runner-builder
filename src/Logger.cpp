@@ -23,6 +23,7 @@
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionArrayLiteral.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
@@ -56,6 +57,10 @@ string Logger::toString(shared_ptr<Token> token) {
             return "(";
         case TokenKind::RIGHT_PAREN:
             return ")";
+        case TokenKind::LEFT_SQUARE_BRACKET:
+            return "[";
+        case TokenKind::RIGHT_SQUARE_BRACKET:
+            return "]";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -79,6 +84,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "INT_CHAR(" + token->getLexme() + ")";
         case TokenKind::REAL:
             return "REAL(" + token->getLexme() + ")";
+        case TokenKind::STRING:
+            return "STRING(" + token->getLexme() + ")";
         case TokenKind::IDENTIFIER:
             return "ID(" + token->getLexme() + ")";
         case TokenKind::TYPE:
@@ -135,6 +142,10 @@ string Logger::toString(TokenKind tokenKind) {
             return "(";
         case TokenKind::RIGHT_PAREN:
             return ")";
+        case TokenKind::LEFT_SQUARE_BRACKET:
+            return "[";
+        case TokenKind::RIGHT_SQUARE_BRACKET:
+            return "]";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -155,6 +166,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "LITERAL(INTEGER)";
         case TokenKind::REAL:
             return "LITERAL(REAL)";
+        case TokenKind::STRING:
+            return "LITERAL(STRING)";
         case TokenKind::IDENTIFIER:
             return "LITERAL(ID)";
         case TokenKind::TYPE:
@@ -191,6 +204,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "SINT32";
         case ValueTypeKind::REAL32:
             return "REAL32";
+        case ValueTypeKind::DATA:
+            return "[]";
     }
 }
 
@@ -308,6 +323,8 @@ string Logger::toString(shared_ptr<Expression> expression) {
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::LITERAL:
             return toString(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::ARRAY_LITERAL:
+            return toString(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
         case ExpressionKind::CALL:
             return toString(dynamic_pointer_cast<ExpressionCall>(expression));
         case ExpressionKind::BLOCK:
@@ -359,7 +376,11 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionVariable> expression) {
-    return format("VAR({})", expression->getName());
+    string text = format("VAR({}", expression->getName());
+    if (expression->getIndexExpression() != nullptr)
+        text += format("|{}", toString(expression->getIndexExpression()));
+    text += ")";
+    return text;
 }
 
 string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
@@ -379,7 +400,21 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
             return to_string(expression->getSint32Value());
         case ValueTypeKind::REAL32:
             return to_string(expression->getReal32Value());
+        default:
+            return "?";
     }
+}
+
+string Logger::toString(shared_ptr<ExpressionArrayLiteral> expression) {
+    string text;
+    text += "[";
+    for (int i=0; i<expression->getExpressions().size(); i++) {
+        text += toString(expression->getExpressions().at(i));
+        if (i < expression->getExpressions().size() - 1)
+            text += ", ";
+    }
+    text += "]";
+    return text;
 }
 
 string Logger::toString(shared_ptr<ExpressionCall> expression) {

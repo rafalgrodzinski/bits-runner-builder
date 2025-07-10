@@ -1,0 +1,25 @@
+@extern putchar fun: character sint32 -> sint32
+
+/*
+User type
+    name data<u8, 32>
+    age u32
+    successRatio r32
+    isActive bool
+;
+*/
+
+/*
+i u32 <- 0, rep text[i] != 0:
+    putchar(text[i])
+    i++
+;
+*/
+
+// text data<u8> <- "Hello world!"
+
+main fun -> sint32
+    text data<sint32> <- "Hello string!\n"
+
+    ret 0
+;

@@ -1,6 +1,9 @@
 .DS_Store
-*.o
-brb
 .vscode/settings.json
+
+# project build artifacts
 *.dSYM
 build/
+
+# brb build artifiacts
+*.o

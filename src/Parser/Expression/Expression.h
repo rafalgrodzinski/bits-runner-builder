@@ -10,6 +10,7 @@ using namespace std;
 
 enum class ExpressionKind {
     LITERAL,
+    ARRAY_LITERAL,
     GROUPING,
     BINARY,
     IF_ELSE,

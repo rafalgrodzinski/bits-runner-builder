@@ -3,9 +3,11 @@
 
 #include <vector>
 
+class Error;
+
 class Token;
 enum class TokenKind;
-class Error;
+class ValueType;
 
 class Expression;
 class Statement;
@@ -40,11 +42,14 @@ private:
 
     shared_ptr<Expression> matchExpressionGrouping();
     shared_ptr<Expression> matchExpressionLiteral();
+    shared_ptr<Expression> matchExpressionArrayLiteral();
     shared_ptr<Expression> matchExpressionVariable();
     shared_ptr<Expression> matchExpressionCall();
     shared_ptr<Expression> matchExpressionIfElse();
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
+
+    shared_ptr<ValueType> matchValueType();
 
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
