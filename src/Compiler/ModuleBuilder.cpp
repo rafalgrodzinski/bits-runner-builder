@@ -14,6 +14,7 @@
 #include "Parser/Expression/ExpressionBlock.h"
 
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -53,6 +54,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::FUNCTION:
             buildFunctionDeclaration(dynamic_pointer_cast<StatementFunction>(statement));
+            break;
+        case StatementKind::RAW_FUNCTION:
+            buildRawFunction(dynamic_pointer_cast<StatementRawFunction>(statement));
             break;
         case StatementKind::VARIABLE:
             buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
@@ -124,6 +128,29 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
     if (llvm::verifyFunction(*fun, &llvmErrorMessage))
         markError(0, 0, errorMessage);
+}
+
+void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
+    llvm::FunctionType *funType = llvm::FunctionType::get(llvm::Type::getVoidTy(*context), nullptr, false);
+    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), "", false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
+    if (!setRawFun(statement->getName(), rawFun))
+        return;
+
+    /*int res;
+    int a = 42;
+    int b = 13;
+
+    vector<llvm::Type *> types;
+    types.push_back(typeSint32);
+    types.push_back(typeSint32);
+    llvm::FunctionType *asmType = llvm::FunctionType::get(typeSint32, types, false);
+    llvm::InlineAsm *asmm = llvm::InlineAsm::get(asmType, "add $0, $1", "+{ebx},i", false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
+
+    vector<llvm::Value *>argValues;
+    argValues.push_back(llvm::ConstantInt::get(typeSint32, 5, true));
+    argValues.push_back(llvm::ConstantInt::get(typeSint32, 4, true));
+
+    llvm::Value *valu = builder->CreateCall(asmm, llvm::ArrayRef(argValues));*/
 }
 
 void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement) {
@@ -518,7 +545,7 @@ llvm::AllocaInst* ModuleBuilder::getAlloca(string name) {
 
 bool ModuleBuilder::setFun(string name, llvm::Function *fun) {
     if (scopes.top().funMap[name] != nullptr) {
-        markError(0, 0, format("Function \"{}\" already defined", name));
+        markError(0, 0, format("Function \"{}\" already defined in scope", name));
         return false;
     }
 
@@ -537,6 +564,30 @@ llvm::Function* ModuleBuilder::getFun(string name) {
     }
 
     markError(0, 0, format("Function \"{}\" not defined in scope", name));
+    return nullptr;
+}
+
+bool ModuleBuilder::setRawFun(string name, llvm::Value *rawFun) {
+    if (scopes.top().rawFunMap[name] != nullptr) {
+        markError(0, 0, format("Raw function \"{}\" already defined in scope", name));
+        return false;
+    }
+    
+    scopes.top().rawFunMap[name] = rawFun;
+    return true;
+}
+
+llvm::Value *ModuleBuilder::getRawFun(string name) {
+    stack<Scope> scopes = this->scopes;
+
+    while (!scopes.empty()) {
+        llvm::Value *rawFun = scopes.top().rawFunMap[name];
+        if (rawFun != nullptr)
+            return rawFun;
+        scopes.pop();
+    }
+
+    markError(0, 0, format("Raw function \"{}\" not defined in scope", name));
     return nullptr;
 }
 

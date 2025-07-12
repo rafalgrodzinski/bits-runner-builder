@@ -10,6 +10,7 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/IR/InlineAsm.h>
 
 class Error;
 class ValueType;
@@ -26,6 +27,7 @@ enum class ExpressionBinaryOperation;
 
 class Statement;
 class StatementFunction;
+class StatementRawFunction;
 class StatementVariable;
 class StatementAssignment;
 class StatementReturn;
@@ -39,6 +41,7 @@ using namespace std;
 typedef struct {
     map<string, llvm::AllocaInst*> allocaMap;
     map<string, llvm::Function*> funMap;
+    map<string, llvm::Value*> rawFunMap;
 } Scope;
 
 class ModuleBuilder {
@@ -61,6 +64,7 @@ private:
 
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunctionDeclaration(shared_ptr<StatementFunction> statement);
+    void buildRawFunction(shared_ptr<StatementRawFunction> statement);
     void buildVarDeclaration(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
@@ -87,6 +91,9 @@ private:
 
     bool setFun(string name, llvm::Function *fun);
     llvm::Function *getFun(string name);
+
+    bool setRawFun(string name, llvm::Value *rawFun);
+    llvm::Value *getRawFun(string name);
 
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
 
