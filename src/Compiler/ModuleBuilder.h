@@ -41,7 +41,7 @@ using namespace std;
 typedef struct {
     map<string, llvm::AllocaInst*> allocaMap;
     map<string, llvm::Function*> funMap;
-    map<string, llvm::Value*> rawFunMap;
+    map<string, llvm::InlineAsm*> rawFunMap;
 } Scope;
 
 class ModuleBuilder {
@@ -92,8 +92,8 @@ private:
     bool setFun(string name, llvm::Function *fun);
     llvm::Function *getFun(string name);
 
-    bool setRawFun(string name, llvm::Value *rawFun);
-    llvm::Value *getRawFun(string name);
+    bool setRawFun(string name, llvm::InlineAsm *rawFun);
+    llvm::InlineAsm *getRawFun(string name);
 
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
 

@@ -131,8 +131,11 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
 }
 
 void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
-    llvm::FunctionType *funType = llvm::FunctionType::get(llvm::Type::getVoidTy(*context), nullptr, false);
-    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), "", false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
+    // get argument types
+    vector<llvm::Type *> types;
+
+    llvm::FunctionType *funType = llvm::FunctionType::get(llvm::Type::getVoidTy(*context), types, false);
+    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), "~{ebx}", false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
     if (!setRawFun(statement->getName(), rawFun))
         return;
 
@@ -508,15 +511,24 @@ llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVariable> expressio
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
     llvm::Function *fun = getFun(expression->getName());
-    if (fun == nullptr)
-        return nullptr;
-    llvm::FunctionType *funType = fun->getFunctionType();
-    vector<llvm::Value*> argValues;
-    for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
-        llvm::Value *argValue = valueForExpression(argumentExpression);
-        argValues.push_back(argValue);
+    if (fun != nullptr) {
+        llvm::FunctionType *funType = fun->getFunctionType();
+        vector<llvm::Value*> argValues;
+        for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
+            llvm::Value *argValue = valueForExpression(argumentExpression);
+            argValues.push_back(argValue);
+        }
+        return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
     }
-    return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
+
+    llvm::InlineAsm *rawFun = getRawFun(expression->getName());
+    if (rawFun != nullptr) {
+        vector<llvm::Value *>argValues;
+        return builder->CreateCall(rawFun, llvm::ArrayRef(argValues));
+    }
+
+    markError(0, 0, format("Function \"{}\" not defined in scope", expression->getName()));
+    return nullptr;
 }
 
 bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
@@ -563,11 +575,10 @@ llvm::Function* ModuleBuilder::getFun(string name) {
         scopes.pop();
     }
 
-    markError(0, 0, format("Function \"{}\" not defined in scope", name));
     return nullptr;
 }
 
-bool ModuleBuilder::setRawFun(string name, llvm::Value *rawFun) {
+bool ModuleBuilder::setRawFun(string name, llvm::InlineAsm *rawFun) {
     if (scopes.top().rawFunMap[name] != nullptr) {
         markError(0, 0, format("Raw function \"{}\" already defined in scope", name));
         return false;
@@ -577,17 +588,16 @@ bool ModuleBuilder::setRawFun(string name, llvm::Value *rawFun) {
     return true;
 }
 
-llvm::Value *ModuleBuilder::getRawFun(string name) {
+llvm::InlineAsm *ModuleBuilder::getRawFun(string name) {
     stack<Scope> scopes = this->scopes;
 
     while (!scopes.empty()) {
-        llvm::Value *rawFun = scopes.top().rawFunMap[name];
+        llvm::InlineAsm *rawFun = scopes.top().rawFunMap[name];
         if (rawFun != nullptr)
             return rawFun;
         scopes.pop();
     }
 
-    markError(0, 0, format("Raw function \"{}\" not defined in scope", name));
     return nullptr;
 }
 

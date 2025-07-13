@@ -257,6 +257,9 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         if (!rawSource.empty())
             rawSource += "\n";
         rawSource += tokens.at(currentIndex++)->getLexme();
+
+        // Consume optional new line (for example because of a comment)
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
     }
 
     if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
