@@ -12,6 +12,8 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
     currentIndex = 0;
     currentLine = 0;
     currentColumn = 0;
+    foundRawSourceStart = false;
+    isParsingRawSource = false;
 
     tokens.clear();
     errors.clear();
@@ -117,6 +119,11 @@ shared_ptr<Token> Lexer::nextToken() {
             return nextToken(); // gets rid of remaining white spaces without repeating the code
     }
 
+    // raw source
+    token = matchRawSourceLine();
+    if (token != nullptr)
+        return token;
+
     // structural
     token = match(TokenKind::LEFT_PAREN, "(", false);
     if (token != nullptr)
@@ -212,6 +219,12 @@ shared_ptr<Token> Lexer::nextToken() {
     token = match(TokenKind::FUNCTION, "fun", true);
     if (token != nullptr)
         return token;
+
+    token = match(TokenKind::RAW_FUNCTION, "raw", true);
+    if (token != nullptr) {
+        foundRawSourceStart = true;
+        return token;
+    }
     
     token = match(TokenKind::RETURN, "ret", true);
     if (token != nullptr)
@@ -271,8 +284,10 @@ shared_ptr<Token> Lexer::nextToken() {
 
     // new line
     token = match(TokenKind::NEW_LINE, "\n", false);
-    if (token != nullptr)
+    if (token != nullptr) {
+        tryStartingRawSourceParsing();
         return token;
+    }
     
     // eof
     token = matchEnd();
@@ -430,21 +445,6 @@ shared_ptr<Token> Lexer::matchString() {
     return token;
 }
 
-shared_ptr<Token> Lexer::matchIdentifier() {
-    int nextIndex = currentIndex;
-
-    while (nextIndex < source.length() && isIdentifier(nextIndex))
-        nextIndex++;
-
-    if (nextIndex == currentIndex || !isSeparator(nextIndex))
-        return nullptr;
-
-    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::IDENTIFIER, lexme, currentLine, currentColumn);
-    advanceWithToken(token);
-    return token;
-}
-
 shared_ptr<Token> Lexer::matchType() {
     int nextIndex = currentIndex;
 
@@ -460,6 +460,52 @@ shared_ptr<Token> Lexer::matchType() {
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
     shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, currentLine, currentColumn);
     advanceWithToken(token);
+    return token;
+}
+
+shared_ptr<Token> Lexer::matchIdentifier() {
+    int nextIndex = currentIndex;
+
+    while (nextIndex < source.length() && isIdentifier(nextIndex))
+        nextIndex++;
+
+    if (nextIndex == currentIndex || !isSeparator(nextIndex))
+        return nullptr;
+
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::IDENTIFIER, lexme, currentLine, currentColumn);
+    advanceWithToken(token);
+    return token;
+}
+
+void Lexer::tryStartingRawSourceParsing() {
+    if (!foundRawSourceStart)
+        return;
+
+    if (!tokens.at(tokens.size() - 2)->isOfKind({TokenKind::COLON, TokenKind::COMMA, TokenKind::RIGHT_ARROW})) {
+        foundRawSourceStart = false;
+        isParsingRawSource = true;
+    }
+}
+
+shared_ptr<Token> Lexer::matchRawSourceLine() {
+    int nextIndex = currentIndex;
+
+    if (!isParsingRawSource)
+        return nullptr;
+
+    if (source.at(nextIndex) == ';') {
+        isParsingRawSource = false;
+        return nullptr;
+    }
+
+    while (source.at(nextIndex) != '\n')
+        nextIndex++;
+
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
+    shared_ptr<Token> token =  make_shared<Token>(TokenKind::RAW_SOURCE_LINE, lexme, currentLine, currentColumn);
+    advanceWithToken(token);
+    currentIndex++; // skip newline
     return token;
 }
 
@@ -530,11 +576,15 @@ bool Lexer::isSeparator(int index) {
 }
 
 void Lexer::advanceWithToken(shared_ptr<Token> token) {
-    if (token->getKind() == TokenKind::NEW_LINE) {
-        currentLine++;
-        currentColumn = 0;
-    } else {
-        currentColumn += token->getLexme().length();
+    switch (token->getKind()) {
+        case TokenKind::NEW_LINE:
+        case TokenKind::RAW_SOURCE_LINE:
+            currentLine++;
+            currentColumn = 0;
+            break;
+        default:
+            currentColumn += token->getLexme().length();
+            break;
     }
     currentIndex += token->getLexme().length();
 }

@@ -17,6 +17,8 @@ private:
     int currentColumn;
     vector<shared_ptr<Token>> tokens;
     vector<shared_ptr<Error>> errors;
+    bool foundRawSourceStart;
+    bool isParsingRawSource;
 
     shared_ptr<Token> nextToken();
     shared_ptr<Token> match(TokenKind kind, string lexme, bool needsSeparator);
@@ -28,6 +30,8 @@ private:
     shared_ptr<Token> matchString();
     shared_ptr<Token> matchType();
     shared_ptr<Token> matchIdentifier();
+    void tryStartingRawSourceParsing();
+    shared_ptr<Token> matchRawSourceLine();
     shared_ptr<Token> matchEnd();
 
     bool isWhiteSpace(int index);

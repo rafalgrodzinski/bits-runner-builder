@@ -16,6 +16,7 @@
 #include "Parser/Expression/ExpressionBlock.h"
 
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -58,6 +59,10 @@ shared_ptr<Statement> Parser::nextStatement() {
     int errorsCount = errors.size();
 
     statement = matchStatementFunction();
+    if (statement != nullptr || errors.size() > errorsCount)
+        return statement;
+
+    statement = matchStatementRawFunction();
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
@@ -228,6 +233,38 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     }
 
     return make_shared<StatementFunction>(name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
+}
+
+shared_ptr<Statement> Parser::matchStatementRawFunction() {
+    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::RAW_FUNCTION}, true, false))
+        return nullptr;
+
+    string name;
+    string rawSource;
+
+    // name
+    name = tokens.at(currentIndex++)->getLexme();
+    currentIndex++; // skip raw
+
+    // consume new line
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+        markError(TokenKind::NEW_LINE, {});
+        return nullptr;
+    }
+
+    // source
+    while (tryMatchingTokenKinds({TokenKind::RAW_SOURCE_LINE}, true, false)) {
+        if (!rawSource.empty())
+            rawSource += "\n";
+        rawSource += tokens.at(currentIndex++)->getLexme();
+    }
+
+    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
+        markError(TokenKind::SEMICOLON, {});
+        return nullptr;
+    }
+
+    return make_shared<StatementRawFunction>(name, rawSource);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {

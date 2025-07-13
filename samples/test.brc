@@ -24,10 +24,14 @@ i u32 <- 0, rep text[i] != 0:
     add $1, $0
 ;*/
 
+rawAdd raw
+    mov eax, 5
+    mov ebx, 42
+    add eax, ebx
+;
+
 main fun -> sint32
-    //text data<sint32> <- "Hello string!\n"
-    abc sint32 <- 0
-    //addStuff()
+    rawAdd()
 
     ret 0
 ;
