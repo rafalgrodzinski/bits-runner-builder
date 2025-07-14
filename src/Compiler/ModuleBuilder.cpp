@@ -135,7 +135,7 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
     vector<llvm::Type *> types;
 
     llvm::FunctionType *funType = llvm::FunctionType::get(llvm::Type::getVoidTy(*context), types, false);
-    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), "~{ebx}", false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
+    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
     if (!setRawFun(statement->getName(), rawFun))
         return;
 

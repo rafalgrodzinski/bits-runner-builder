@@ -20,11 +20,11 @@ i u32 <- 0, rep text[i] != 0:
 
 // text data<u8> <- "Hello world!"
 
-/*addStuff asm<+r, r>: num1 u32, num2 u32 -> u32
+/*addStuff asm<"+r, r">: num1 u32, num2 u32 -> u32
     add $1, $0
 ;*/
 
-rawAdd raw
+rawAdd raw<"~{ebx}">
     //push rbx
     mov ebx, 5
     //pop rbx

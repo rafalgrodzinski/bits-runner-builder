@@ -240,11 +240,25 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
 
     string name;
+    string constraints;
     string rawSource;
 
     // name
     name = tokens.at(currentIndex++)->getLexme();
     currentIndex++; // skip raw
+
+    // constraints
+
+    if (tryMatchingTokenKinds({TokenKind::LESS}, true, true)) {
+        if (tokens.at(currentIndex)->isOfKind({TokenKind::STRING})) {
+            constraints = tokens.at(currentIndex++)->getLexme();
+            // remove enclosing quotes
+            if (constraints.length() >= 2)
+                constraints = constraints.substr(1, constraints.length() - 2);
+        }
+        if (!tryMatchingTokenKinds({TokenKind::GREATER}, true, true))
+            markError({TokenKind::GREATER}, {});
+    }
 
     // consume new line
     if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
@@ -267,7 +281,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(name, rawSource);
+    return make_shared<StatementRawFunction>(name, constraints, rawSource);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
