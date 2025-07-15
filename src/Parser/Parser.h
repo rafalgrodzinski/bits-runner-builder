@@ -12,6 +12,9 @@ class ValueType;
 class Expression;
 class Statement;
 
+class ParseeToken;
+class ParseeTokensGroup;
+
 using namespace std;
 
 class Parser {

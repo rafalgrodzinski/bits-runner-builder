@@ -25,6 +25,8 @@
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementRepeat.h"
 
+#include "Parsee.h"
+
 Parser::Parser(vector<shared_ptr<Token>> tokens) :
 tokens(tokens) { }
 
@@ -236,6 +238,55 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
+    ParseeTokensGroup idGroup = ParseeTokensGroup(
+        true,
+        {
+            ParseeToken(TokenKind::IDENTIFIER, true, true),
+            ParseeToken(TokenKind::RAW_FUNCTION, true, false)
+        },
+        {}
+    );
+
+    ParseeTokensGroup optionsGroup = ParseeTokensGroup(
+        false,
+        {
+            ParseeToken(TokenKind::LESS, true, false),
+            ParseeToken(TokenKind::STRING, true, true),
+            ParseeToken(TokenKind::GREATER, true, false)
+        },
+        {}
+    );
+
+    ParseeTokensGroup argumentsGroup = ParseeTokensGroup(
+        false,
+        {
+            ParseeToken(TokenKind::COLON, true, false),
+            ParseeToken(TokenKind::NEW_LINE, false, false),
+            ParseeToken(TokenKind::IDENTIFIER, true, true),
+            ParseeToken(TokenKind::TYPE, true, true)
+        },
+        ParseeTokensGroup(
+            true,
+            {
+                ParseeToken(TokenKind::COMMA, true, false),
+                ParseeToken(TokenKind::NEW_LINE, false, false),
+                ParseeToken(TokenKind::IDENTIFIER, true, true),
+                ParseeToken(TokenKind::TYPE, true, true)
+            },
+            {}
+        )
+    );
+
+    ParseeTokensGroup returnGroup = ParseeTokensGroup(
+        false,
+        {
+            ParseeToken(TokenKind::RIGHT_ARROW, true, false),
+            ParseeToken(TokenKind::NEW_LINE, false, false),
+            ParseeToken(TokenKind::TYPE, true, true)
+        },
+        {}
+    );
+
     if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::RAW_FUNCTION}, true, false))
         return nullptr;
 
