@@ -263,8 +263,34 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     }
 
     // arguments
+    if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
+        do {
+            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
+            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false)) {
+                markError({}, "Expected function argument");
+                return nullptr;
+            }
+            shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
+            shared_ptr<ValueType> argumentType = matchValueType();
+            if (argumentType == nullptr) {
+                markError(TokenKind::TYPE, {});
+                return nullptr;
+            }
+            
+            arguments.push_back(pair<string, shared_ptr<ValueType>>(identifierToken->getLexme(), argumentType));
+        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+    }
 
     // return type
+    if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
+
+        returnType = matchValueType();
+        if (returnType == nullptr) {
+            markError(TokenKind::TYPE, {});
+            return nullptr;
+        }
+    }
 
     // consume new line
     if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {

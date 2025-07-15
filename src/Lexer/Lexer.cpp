@@ -482,7 +482,7 @@ void Lexer::tryStartingRawSourceParsing() {
     if (!foundRawSourceStart)
         return;
 
-    if (!tokens.at(tokens.size() - 2)->isOfKind({TokenKind::COLON, TokenKind::COMMA, TokenKind::RIGHT_ARROW})) {
+    if (!tokens.at(tokens.size() - 1)->isOfKind({TokenKind::COLON, TokenKind::COMMA, TokenKind::RIGHT_ARROW})) {
         foundRawSourceStart = false;
         isParsingRawSource = true;
     }

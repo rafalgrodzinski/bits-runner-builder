@@ -274,7 +274,13 @@ string Logger::toString(shared_ptr<StatementFunction> statement) {
 string Logger::toString(shared_ptr<StatementRawFunction> statement) {
     string text;
 
-    text += format("RAW(\"{}\"):\n", statement->getName());
+    string argsString;
+    for (int i = 0; i < statement->getArguments().size(); i++) {
+        auto arg = statement->getArguments().at(i);
+        argsString +=  format("ARG({}, {})", arg.first, toString(arg.second));
+    }
+    text += format("RAW(\"{}\"|{}|{}):\n", statement->getName(), argsString, toString(statement->getReturnValueType()));
+
     text += statement->getRawSource();
 
     return text;

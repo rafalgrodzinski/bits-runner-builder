@@ -41,6 +41,12 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     for (shared_ptr<Statement> &statement : statements)
         buildStatement(statement);
 
+    // verify module
+    string errorMessage;
+    llvm::raw_string_ostream llvmErrorMessage(errorMessage);
+    if (llvm::verifyModule(*module, &llvmErrorMessage))
+        markError(0, 0, errorMessage);
+
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
             Logger::print(error);
@@ -139,7 +145,7 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
 
     // build function declaration & body
     llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
-    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
+    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
     if (!setRawFun(statement->getName(), rawFun))
         return;
 }
@@ -512,6 +518,10 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
     llvm::InlineAsm *rawFun = getRawFun(expression->getName());
     if (rawFun != nullptr) {
         vector<llvm::Value *>argValues;
+        for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
+            llvm::Value *argValue = valueForExpression(argumentExpression);
+            argValues.push_back(argValue);
+        }
         return builder->CreateCall(rawFun, llvm::ArrayRef(argValues));
     }
 

@@ -24,16 +24,30 @@ i u32 <- 0, rep text[i] != 0:
     add $1, $0
 ;*/
 
-rawAdd raw<"~{ebx}">
-    //push rbx
-    mov ebx, 5
-    //pop rbx
-    mov eax, 42
-    add eax, ebx
+normAdd fun: num1 sint32, num2 sint32 -> sint32
+    ret num1 + num2
 ;
 
+rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
+    add $1, $2
+    mov $0, $1
+;
+
+/*printChar raw
+    .global REGISTER
+    .text
+    .REGISTER:
+    .byte "Hello", 0xa0
+    .long RegisterTable
+    //push 0x21
+
+;*/
+
 main fun -> sint32
-    rawAdd()
+    //printChar()
+
+    res1 sint32 <- normAdd(4, 5)
+    res2 sint32 <- rawAdd(4, 5)
 
     ret 0
 ;
