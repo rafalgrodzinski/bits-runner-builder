@@ -1,5 +1,7 @@
 @extern putchar fun: character sint32 -> sint32
 
+// ./build/brb samples/test.brc -S -x86-asm-syntax=intel
+
 /*
 User type
     name data<u8, 32>
@@ -18,8 +20,34 @@ i u32 <- 0, rep text[i] != 0:
 
 // text data<u8> <- "Hello world!"
 
+/*addStuff asm<"+r, r">: num1 u32, num2 u32 -> u32
+    add $1, $0
+;*/
+
+normAdd fun: num1 sint32, num2 sint32 -> sint32
+    ret num1 + num2
+;
+
+rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
+    add $1, $2
+    mov $0, $1
+;
+
+/*printChar raw
+    .global REGISTER
+    .text
+    .REGISTER:
+    .byte "Hello", 0xa0
+    .long RegisterTable
+    //push 0x21
+
+;*/
+
 main fun -> sint32
-    text data<sint32> <- "Hello string!\n"
+    //printChar()
+
+    res1 sint32 <- normAdd(4, 5)
+    res2 sint32 <- rawAdd(4, 5)
 
     ret 0
 ;

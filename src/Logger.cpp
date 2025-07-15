@@ -11,6 +11,7 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -97,6 +98,10 @@ string Logger::toString(shared_ptr<Token> token) {
             return "ELSE";
         case TokenKind::FUNCTION:
             return "FUN";
+        case TokenKind::RAW_FUNCTION:
+            return "RAW";
+        case TokenKind::RAW_SOURCE_LINE:
+            return format("RAW_SOURCE_LINE({})", token->getLexme());
         case TokenKind::RETURN:
             return "RET";
         case TokenKind::REPEAT:
@@ -179,6 +184,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "ELSE";
         case TokenKind::FUNCTION:
             return "FUN";
+        case TokenKind::RAW_FUNCTION:
+            return "RAW";
         case TokenKind::RETURN:
             return "RET";
         case TokenKind::REPEAT:
@@ -217,6 +224,8 @@ string Logger::toString(shared_ptr<Statement> statement) {
             return toString(dynamic_pointer_cast<StatementVariable>(statement));
         case StatementKind::FUNCTION:
             return toString(dynamic_pointer_cast<StatementFunction>(statement));
+        case StatementKind::RAW_FUNCTION:
+            return toString(dynamic_pointer_cast<StatementRawFunction>(statement));
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement));
         case StatementKind::ASSIGNMENT:
@@ -258,6 +267,21 @@ string Logger::toString(shared_ptr<StatementFunction> statement) {
     }
     text += format("FUN(\"{}\"|{}|{}):\n", statement->getName(), argsString, toString(statement->getReturnValueType()));
     text += toString(statement->getStatementBlock());
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementRawFunction> statement) {
+    string text;
+
+    string argsString;
+    for (int i = 0; i < statement->getArguments().size(); i++) {
+        auto arg = statement->getArguments().at(i);
+        argsString +=  format("ARG({}, {})", arg.first, toString(arg.second));
+    }
+    text += format("RAW(\"{}\"|{}|{}):\n", statement->getName(), argsString, toString(statement->getReturnValueType()));
+
+    text += statement->getRawSource();
 
     return text;
 }
@@ -468,13 +492,13 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedTokenKind) {
                 message = format(
-                    "Expected token {} but instead found \"{}\" at line: {}, column: {}",
-                    toString(*expectedTokenKind), token->getLexme(), token->getLine() + 1, token->getColumn() + 1
+                    "Expected token {} but instead found {} at line: {}, column: {}",
+                    toString(*expectedTokenKind), toString(token), token->getLine() + 1, token->getColumn() + 1
                 );
             } else {
                 message = format(
                     "Unexpected token \"{}\" found at line: {}, column: {}",
-                    token->getLexme(), token->getLine() + 1, token->getColumn() + 1
+                    toString(token), token->getLine() + 1, token->getColumn() + 1
                 );
             }
             if (errorMessage)

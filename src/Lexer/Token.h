@@ -30,6 +30,8 @@ enum class TokenKind {
     RIGHT_ARROW,
 
     FUNCTION,
+    RAW_FUNCTION,
+    RAW_SOURCE_LINE,
     RETURN,
     REPEAT,
     IF,

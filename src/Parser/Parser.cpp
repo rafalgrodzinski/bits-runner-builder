@@ -16,6 +16,7 @@
 #include "Parser/Expression/ExpressionBlock.h"
 
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -58,6 +59,10 @@ shared_ptr<Statement> Parser::nextStatement() {
     int errorsCount = errors.size();
 
     statement = matchStatementFunction();
+    if (statement != nullptr || errors.size() > errorsCount)
+        return statement;
+
+    statement = matchStatementRawFunction();
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
@@ -228,6 +233,87 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     }
 
     return make_shared<StatementFunction>(name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
+}
+
+shared_ptr<Statement> Parser::matchStatementRawFunction() {
+    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::RAW_FUNCTION}, true, false))
+        return nullptr;
+
+    string name;
+    string constraints;
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnType = ValueType::NONE;
+    string rawSource;
+
+    // name
+    name = tokens.at(currentIndex++)->getLexme();
+    currentIndex++; // skip raw
+
+    // constraints
+
+    if (tryMatchingTokenKinds({TokenKind::LESS}, true, true)) {
+        if (tokens.at(currentIndex)->isOfKind({TokenKind::STRING})) {
+            constraints = tokens.at(currentIndex++)->getLexme();
+            // remove enclosing quotes
+            if (constraints.length() >= 2)
+                constraints = constraints.substr(1, constraints.length() - 2);
+        }
+        if (!tryMatchingTokenKinds({TokenKind::GREATER}, true, true))
+            markError({TokenKind::GREATER}, {});
+    }
+
+    // arguments
+    if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
+        do {
+            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
+            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false)) {
+                markError({}, "Expected function argument");
+                return nullptr;
+            }
+            shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
+            shared_ptr<ValueType> argumentType = matchValueType();
+            if (argumentType == nullptr) {
+                markError(TokenKind::TYPE, {});
+                return nullptr;
+            }
+            
+            arguments.push_back(pair<string, shared_ptr<ValueType>>(identifierToken->getLexme(), argumentType));
+        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+    }
+
+    // return type
+    if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
+
+        returnType = matchValueType();
+        if (returnType == nullptr) {
+            markError(TokenKind::TYPE, {});
+            return nullptr;
+        }
+    }
+
+    // consume new line
+    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+        markError(TokenKind::NEW_LINE, {});
+        return nullptr;
+    }
+
+    // source
+    while (tryMatchingTokenKinds({TokenKind::RAW_SOURCE_LINE}, true, false)) {
+        if (!rawSource.empty())
+            rawSource += "\n";
+        rawSource += tokens.at(currentIndex++)->getLexme();
+
+        // Consume optional new line (for example because of a comment)
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
+    }
+
+    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
+        markError(TokenKind::SEMICOLON, {});
+        return nullptr;
+    }
+
+    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
