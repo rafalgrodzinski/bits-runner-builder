@@ -131,29 +131,17 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
 }
 
 void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
-    // get argument types
-    vector<llvm::Type *> types;
+    // function types
+    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
+    vector<llvm::Type *> argTypes;
+    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments())
+        argTypes.push_back(typeForValueType(arg.second));
 
-    llvm::FunctionType *funType = llvm::FunctionType::get(llvm::Type::getVoidTy(*context), types, false);
+    // function declaration & body
+    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
     llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
     if (!setRawFun(statement->getName(), rawFun))
         return;
-
-    /*int res;
-    int a = 42;
-    int b = 13;
-
-    vector<llvm::Type *> types;
-    types.push_back(typeSint32);
-    types.push_back(typeSint32);
-    llvm::FunctionType *asmType = llvm::FunctionType::get(typeSint32, types, false);
-    llvm::InlineAsm *asmm = llvm::InlineAsm::get(asmType, "add $0, $1", "+{ebx},i", false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
-
-    vector<llvm::Value *>argValues;
-    argValues.push_back(llvm::ConstantInt::get(typeSint32, 5, true));
-    argValues.push_back(llvm::ConstantInt::get(typeSint32, 4, true));
-
-    llvm::Value *valu = builder->CreateCall(asmm, llvm::ArrayRef(argValues));*/
 }
 
 void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement) {

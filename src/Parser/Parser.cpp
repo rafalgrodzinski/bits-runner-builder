@@ -241,6 +241,8 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     string name;
     string constraints;
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnType = ValueType::NONE;
     string rawSource;
 
     // name
@@ -259,6 +261,10 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         if (!tryMatchingTokenKinds({TokenKind::GREATER}, true, true))
             markError({TokenKind::GREATER}, {});
     }
+
+    // arguments
+
+    // return type
 
     // consume new line
     if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
@@ -281,7 +287,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(name, constraints, rawSource);
+    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
