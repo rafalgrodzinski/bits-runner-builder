@@ -1,4 +1,4 @@
-@extern putchar fun: character sint32 -> sint32
+//@extern putchar fun: character sint32 -> sint32
 
 // ./build/brb samples/test.brc -S -x86-asm-syntax=intel
 
@@ -24,9 +24,9 @@ i u32 <- 0, rep text[i] != 0:
     add $1, $0
 ;*/
 
-normAdd fun: num1 sint32, num2 sint32 -> sint32
+/*normAdd fun: num1 sint32, num2 sint32 -> sint32
     ret num1 + num2
-;
+;*/
 
 rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
     add $1, $2
