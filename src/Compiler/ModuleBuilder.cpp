@@ -53,7 +53,7 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::FUNCTION:
-            buildFunctionDeclaration(dynamic_pointer_cast<StatementFunction>(statement));
+            buildFunction(dynamic_pointer_cast<StatementFunction>(statement));
             break;
         case StatementKind::RAW_FUNCTION:
             buildRawFunction(dynamic_pointer_cast<StatementRawFunction>(statement));
@@ -84,15 +84,15 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     }
 }
 
-void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> statement) {
-    // get argument types
-    vector<llvm::Type *> types;
-    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
-        types.push_back(typeForValueType(arg.second));
-    }
+void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
+    // function types
+    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
+    vector<llvm::Type *> argTypes;
+    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments())
+        argTypes.push_back(typeForValueType(arg.second));
 
     // build function declaration
-    llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), types, false);
+    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
     if (!setFun(statement->getName(), fun))
         return;
@@ -107,7 +107,7 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
     int i=0;
     for (auto &arg : fun->args()) {
         string name = statement->getArguments()[i].first;
-        llvm::Type *type = types[i];
+        llvm::Type *type = argTypes[i];
         arg.setName(name);
 
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, name);
@@ -137,7 +137,7 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
     for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments())
         argTypes.push_back(typeForValueType(arg.second));
 
-    // function declaration & body
+    // build function declaration & body
     llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
     llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), false, false, llvm::InlineAsm::AsmDialect::AD_Intel);
     if (!setRawFun(statement->getName(), rawFun))

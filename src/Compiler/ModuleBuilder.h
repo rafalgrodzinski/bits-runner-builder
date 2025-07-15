@@ -63,7 +63,7 @@ private:
     stack<Scope> scopes;
 
     void buildStatement(shared_ptr<Statement> statement);
-    void buildFunctionDeclaration(shared_ptr<StatementFunction> statement);
+    void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
     void buildVarDeclaration(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
