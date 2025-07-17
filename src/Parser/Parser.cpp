@@ -25,7 +25,8 @@
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementRepeat.h"
 
-#include "Parsee.h"
+#include "Parsee/Parsee.h"
+#include "Parsee/ParseeGroup.h"
 
 Parser::Parser(vector<shared_ptr<Token>> tokens) :
 tokens(tokens) { }
@@ -247,12 +248,12 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     shared_ptr<ValueType> returnType = ValueType::NONE;
 
     // identifier
-    groupTokens = tokensForParseeTokensGroup(
-        ParseeTokensGroup(
+    groupTokens = tokensForParseeGroup(
+        ParseeGroup(
             true,
             {
-                ParseeToken(TokenKind::IDENTIFIER, true, true),
-                ParseeToken(TokenKind::RAW_FUNCTION, true, false)
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+                Parsee::tokenParsee(TokenKind::RAW_FUNCTION, true, false)
             },
             {}
         )
@@ -265,13 +266,13 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     // options
     if (!hasError) {
-        groupTokens = tokensForParseeTokensGroup(
-            ParseeTokensGroup(
+        groupTokens = tokensForParseeGroup(
+            ParseeGroup(
                 false,
                 {
-                    ParseeToken(TokenKind::LESS, true, false),
-                    ParseeToken(TokenKind::STRING, true, true),
-                    ParseeToken(TokenKind::GREATER, true, false)
+                    Parsee::tokenParsee(TokenKind::LESS, true, false),
+                    Parsee::tokenParsee(TokenKind::STRING, true, true),
+                    Parsee::tokenParsee(TokenKind::GREATER, true, false)
                 },
                 {}
             )
@@ -285,22 +286,22 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     // arguments
     if (!hasError) {
-        groupTokens = tokensForParseeTokensGroup(
-            ParseeTokensGroup(
+        groupTokens = tokensForParseeGroup(
+            ParseeGroup(
                 false,
                 {
-                    ParseeToken(TokenKind::COLON, true, false),
-                    ParseeToken(TokenKind::NEW_LINE, false, false),
-                    ParseeToken(TokenKind::IDENTIFIER, true, true),
-                    ParseeToken(TokenKind::TYPE, true, true)
+                    Parsee::tokenParsee(TokenKind::COLON, true, false),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+                    Parsee::typeParsee()
                 },
-                ParseeTokensGroup(
+                ParseeGroup(
                     true,
                     {
-                        ParseeToken(TokenKind::COMMA, true, false),
-                        ParseeToken(TokenKind::NEW_LINE, false, false),
-                        ParseeToken(TokenKind::IDENTIFIER, true, true),
-                        ParseeToken(TokenKind::TYPE, true, true)
+                        Parsee::tokenParsee(TokenKind::COMMA, true, false),
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+                        Parsee::typeParsee()
                     },
                     {}
                 )
@@ -315,13 +316,13 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     // return type 
     if (!hasError) {
-        groupTokens = tokensForParseeTokensGroup(
-            ParseeTokensGroup(
+        groupTokens = tokensForParseeGroup(
+            ParseeGroup(
                 false,
                 {
-                    ParseeToken(TokenKind::RIGHT_ARROW, true, false),
-                    ParseeToken(TokenKind::NEW_LINE, false, false),
-                    ParseeToken(TokenKind::TYPE, true, true)
+                    Parsee::tokenParsee(TokenKind::RIGHT_ARROW, true, false),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
+                    Parsee::typeParsee()
                 },
                 {}
             )
@@ -871,12 +872,12 @@ shared_ptr<ValueType> Parser::matchValueType() {
     return ValueType::valueTypeForToken(typeToken, subType, valueArg);
 }
 
-optional<vector<shared_ptr<Token>>> Parser::tokensForParseeTokensGroup(ParseeTokensGroup group) {
+optional<vector<shared_ptr<Token>>> Parser::tokensForParseeGroup(ParseeGroup group) {
     int nextIndex = currentIndex;
     vector<shared_ptr<Token>> returnTokens;
     bool mustFulfill = false;
 
-    for (ParseeToken &parsee : group.getTokens()) {
+    for (Parsee &parsee : group.getParsees()) {
         shared_ptr<Token> currentToken = tokens.at(nextIndex);
         bool matches = currentToken->isOfKind({parsee.getTokenKind()});
 
