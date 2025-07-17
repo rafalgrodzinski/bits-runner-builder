@@ -5,7 +5,7 @@ enum class TokenKind;
 
 enum class ParseeKind {
     TOKEN,
-    TYPE
+    VALUE_TYPE
 };
 
 class Parsee {
@@ -14,15 +14,13 @@ private:
     TokenKind tokenKind;
     bool isRequired;
     bool shouldReturn;
-    
     Parsee();
 
 public:
     static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn);
-    static Parsee typeParsee();
+    static Parsee valueTypeParsee();
 
     ParseeKind getKind();
-
     TokenKind getTokenKind();
     bool getIsRequired();
     bool getShouldReturn();

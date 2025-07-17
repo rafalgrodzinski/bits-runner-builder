@@ -10,9 +10,9 @@ Parsee Parsee::tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldRetu
     return parsee;
 }
 
-Parsee Parsee::typeParsee() {
-    Parsee  parsee;
-    parsee.kind = ParseeKind::TYPE;
+Parsee Parsee::valueTypeParsee() {
+    Parsee parsee;
+    parsee.kind = ParseeKind::VALUE_TYPE;
 
     return parsee;
 }

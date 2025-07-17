@@ -27,6 +27,7 @@
 
 #include "Parsee/Parsee.h"
 #include "Parsee/ParseeGroup.h"
+#include "Parsee/ParseeResult.h"
 
 Parser::Parser(vector<shared_ptr<Token>> tokens) :
 tokens(tokens) { }
@@ -240,7 +241,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
     bool hasError = false;
-    optional<vector<shared_ptr<Token>>> groupTokens;
+    optional<vector<ParseeResult>> parseeResults;
 
     string name;
     string constraints;
@@ -248,7 +249,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     shared_ptr<ValueType> returnType = ValueType::NONE;
 
     // identifier
-    groupTokens = tokensForParseeGroup(
+    parseeResults = parseeResultsForParseeGroup(
         ParseeGroup(
             true,
             {
@@ -258,15 +259,15 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             {}
         )
     );
-    if (groupTokens) {
-        name = (*groupTokens).at(0)->getLexme();
+    if (parseeResults) {
+        name = (*parseeResults).at(0).getToken()->getLexme();
     } else {
         hasError = true;
     }
 
     // options
     if (!hasError) {
-        groupTokens = tokensForParseeGroup(
+        parseeResults = parseeResultsForParseeGroup(
             ParseeGroup(
                 false,
                 {
@@ -277,23 +278,23 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                 {}
             )
         );
-        if (groupTokens && !(*groupTokens).empty()) {
-            constraints = (*groupTokens).at(0)->getLexme();
-        } else if (!groupTokens) {
+        if (parseeResults && !(*parseeResults).empty()) {
+            constraints = (*parseeResults).at(0).getToken()->getLexme();
+        } else if (!parseeResults) {
             hasError = true;
         }
     }
 
     // arguments
     if (!hasError) {
-        groupTokens = tokensForParseeGroup(
+        parseeResults = parseeResultsForParseeGroup(
             ParseeGroup(
                 false,
                 {
                     Parsee::tokenParsee(TokenKind::COLON, true, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
                     Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
-                    Parsee::typeParsee()
+                    Parsee::valueTypeParsee()
                 },
                 ParseeGroup(
                     true,
@@ -301,36 +302,41 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                         Parsee::tokenParsee(TokenKind::COMMA, true, false),
                         Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
-                        Parsee::typeParsee()
+                        Parsee::valueTypeParsee()
                     },
                     {}
                 )
             )
         );
-        if (groupTokens && !(*groupTokens).empty()) {
-
-        } else if (!groupTokens) {
+        if (parseeResults && !(*parseeResults).empty()) {
+            for (int i=0; i<(*parseeResults).size(); i+=2) {
+                pair<string, shared_ptr<ValueType>> arg;
+                arg.first = (*parseeResults).at(i).getToken()->getLexme();
+                arg.second = (*parseeResults).at(i+1).getValueType();
+                arguments.push_back(arg);
+            }
+        } else if (!parseeResults) {
             hasError = true;
         }
     }
 
     // return type 
     if (!hasError) {
-        groupTokens = tokensForParseeGroup(
+        parseeResults = parseeResultsForParseeGroup(
             ParseeGroup(
                 false,
                 {
                     Parsee::tokenParsee(TokenKind::RIGHT_ARROW, true, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
-                    Parsee::typeParsee()
+                    Parsee::valueTypeParsee()
                 },
                 {}
             )
         );
 
-        if (groupTokens && !(*groupTokens).empty()) {
-
-        } else if (!groupTokens) {
+        if (parseeResults && !(*parseeResults).empty()) {
+            returnType = (*parseeResults).at(0).getValueType();
+        } else if (!parseeResults) {
             hasError = true;
         }
     }
@@ -872,9 +878,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
     return ValueType::valueTypeForToken(typeToken, subType, valueArg);
 }
 
-optional<vector<shared_ptr<Token>>> Parser::tokensForParseeGroup(ParseeGroup group) {
+optional<vector<ParseeResult>> Parser::parseeResultsForParseeGroup(ParseeGroup group) {
     int nextIndex = currentIndex;
-    vector<shared_ptr<Token>> returnTokens;
+    vector<ParseeResult> results;
     bool mustFulfill = false;
 
     for (Parsee &parsee : group.getParsees()) {
@@ -883,11 +889,11 @@ optional<vector<shared_ptr<Token>>> Parser::tokensForParseeGroup(ParseeGroup gro
 
         // if doesn't match on optional group
         if (!matches && parsee.getIsRequired() && !group.getIsRequired() && mustFulfill)
-            return vector<shared_ptr<Token>>();
+            return vector<ParseeResult>();
 
         // return matching token?
         if (matches && parsee.getShouldReturn())
-            returnTokens.push_back(currentToken);
+            results.push_back(ParseeResult::tokenResult(currentToken));
 
         // decide if we're decoding the expected sequence
         if (!parsee.getIsRequired() && nextIndex > currentIndex)
@@ -907,7 +913,7 @@ optional<vector<shared_ptr<Token>>> Parser::tokensForParseeGroup(ParseeGroup gro
 
     currentIndex = nextIndex;
 
-    return returnTokens;
+    return results;
 }
 
 bool Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {
