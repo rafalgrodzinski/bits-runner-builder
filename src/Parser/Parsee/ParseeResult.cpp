@@ -7,13 +7,15 @@ ParseeResult ParseeResult::tokenResult(shared_ptr<Token> token) {
     ParseeResult parseeResult;
     parseeResult.kind = ParseeResultKind::TOKEN;
     parseeResult.token = token;
+    parseeResult.tokensCount = 1;
     return parseeResult;
 }
 
-ParseeResult ParseeResult::valueTypeResult(shared_ptr<ValueType> valueType) {
+ParseeResult ParseeResult::valueTypeResult(shared_ptr<ValueType> valueType, int tokensCount) {
     ParseeResult parseeResult;
     parseeResult.kind = ParseeResultKind::VALUE_TYPE;
     parseeResult.valueType = valueType;
+    parseeResult.tokensCount = tokensCount;
     return parseeResult;    
 }
 
@@ -30,4 +32,8 @@ shared_ptr<Token> ParseeResult::getToken() {
 
 shared_ptr<ValueType> ParseeResult::getValueType() {
     return valueType;
+}
+
+int ParseeResult::getTokensCount() {
+    return tokensCount;
 }

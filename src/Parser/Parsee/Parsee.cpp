@@ -13,6 +13,7 @@ Parsee Parsee::tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldRetu
 Parsee Parsee::valueTypeParsee() {
     Parsee parsee;
     parsee.kind = ParseeKind::VALUE_TYPE;
+    parsee.shouldReturn = true;
 
     return parsee;
 }

@@ -247,6 +247,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     string constraints;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueType::NONE;
+    string rawSource;
 
     // identifier
     parseeResults = parseeResultsForParseeGroup(
@@ -297,7 +298,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                     Parsee::valueTypeParsee()
                 },
                 ParseeGroup(
-                    true,
+                    false,
                     {
                         Parsee::tokenParsee(TokenKind::COMMA, true, false),
                         Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
@@ -338,58 +339,6 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             returnType = (*parseeResults).at(0).getValueType();
         } else if (!parseeResults) {
             hasError = true;
-        }
-    }
-
-    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::RAW_FUNCTION}, true, false))
-        return nullptr;
-
-    string rawSource;
-
-    // name
-    name = tokens.at(currentIndex++)->getLexme();
-    currentIndex++; // skip raw
-
-    // constraints
-
-    if (tryMatchingTokenKinds({TokenKind::LESS}, true, true)) {
-        if (tokens.at(currentIndex)->isOfKind({TokenKind::STRING})) {
-            constraints = tokens.at(currentIndex++)->getLexme();
-            // remove enclosing quotes
-            if (constraints.length() >= 2)
-                constraints = constraints.substr(1, constraints.length() - 2);
-        }
-        if (!tryMatchingTokenKinds({TokenKind::GREATER}, true, true))
-            markError({TokenKind::GREATER}, {});
-    }
-
-    // arguments
-    if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
-        do {
-            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
-            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false)) {
-                markError({}, "Expected function argument");
-                return nullptr;
-            }
-            shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
-            shared_ptr<ValueType> argumentType = matchValueType();
-            if (argumentType == nullptr) {
-                markError(TokenKind::TYPE, {});
-                return nullptr;
-            }
-            
-            arguments.push_back(pair<string, shared_ptr<ValueType>>(identifierToken->getLexme(), argumentType));
-        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
-    }
-
-    // return type
-    if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
-
-        returnType = matchValueType();
-        if (returnType == nullptr) {
-            markError(TokenKind::TYPE, {});
-            return nullptr;
         }
     }
 
@@ -879,41 +828,101 @@ shared_ptr<ValueType> Parser::matchValueType() {
 }
 
 optional<vector<ParseeResult>> Parser::parseeResultsForParseeGroup(ParseeGroup group) {
-    int nextIndex = currentIndex;
+    int startIndex = currentIndex;
     vector<ParseeResult> results;
     bool mustFulfill = false;
 
     for (Parsee &parsee : group.getParsees()) {
-        shared_ptr<Token> currentToken = tokens.at(nextIndex);
-        bool matches = currentToken->isOfKind({parsee.getTokenKind()});
+        optional<ParseeResult> result;
+        switch (parsee.getKind()) {
+        case ParseeKind::TOKEN:
+            result = tokenParseeResult(currentIndex, parsee.getTokenKind());
+            break;
+        case ParseeKind::VALUE_TYPE:
+            result = valueTypeParseeResult(currentIndex);
+            break;
+        }
 
         // if doesn't match on optional group
-        if (!matches && parsee.getIsRequired() && !group.getIsRequired() && mustFulfill)
+        if (!result && parsee.getIsRequired() && !group.getIsRequired() && !mustFulfill) {
+            currentIndex = startIndex;
             return vector<ParseeResult>();
+        }
 
         // return matching token?
-        if (matches && parsee.getShouldReturn())
-            results.push_back(ParseeResult::tokenResult(currentToken));
+        if (result && parsee.getShouldReturn())
+            results.push_back(*result);
 
         // decide if we're decoding the expected sequence
-        if (!parsee.getIsRequired() && nextIndex > currentIndex)
+        if (!parsee.getIsRequired() && currentIndex > startIndex)
             mustFulfill = true;
 
         // invalid sequence detected?
-        if (!matches && parsee.getIsRequired() && mustFulfill) {
-            currentIndex = nextIndex;
+        if (!result && parsee.getIsRequired() && mustFulfill) {
             markError(parsee.getTokenKind(), {});
             return {};
         }
 
         // got to the next token if we got a match
-        if (matches)
-            nextIndex++;
+        if (result)
+            currentIndex += (*result).getTokensCount();
     }
 
-    currentIndex = nextIndex;
+    if (group.getRepeatedGroup()) {
+        bool hasSubResults = false;
+
+        optional<vector<ParseeResult>> subResults;
+        do {
+            subResults = parseeResultsForParseeGroup(*group.getRepeatedGroup());
+            if (!subResults)
+                return {};
+
+            for (ParseeResult &subResult : *subResults)
+                results.push_back(subResult);
+        } while (!(*subResults).empty());
+    }
 
     return results;
+}
+
+optional<ParseeResult> Parser::tokenParseeResult(int index, TokenKind tokenKind) {
+    shared_ptr<Token> token = tokens.at(index);
+    if (token->isOfKind({tokenKind}))
+        return ParseeResult::tokenResult(token);
+    return {};
+}
+
+optional<ParseeResult> Parser::valueTypeParseeResult(int index) {
+    int startIndex = index;
+
+    if (!tokens.at(index)->isOfKind({TokenKind::TYPE}))
+        return {};
+
+    shared_ptr<Token> typeToken = tokens.at(index++);
+    shared_ptr<ValueType> subType;
+    int typeArg = 0;
+
+    if (tokens.at(index)->isOfKind({TokenKind::LESS})) {
+        index++;
+        optional<ParseeResult> subResult = valueTypeParseeResult(index);
+        if (!subResult)
+            return {};
+        subType = (*subResult).getValueType();
+
+
+        if (tokens.at(index)->isOfKind({TokenKind::COMMA})) {
+            index++;
+
+            if (!tokens.at(index)->isOfKind({TokenKind::INTEGER_DEC, TokenKind::INTEGER_HEX, TokenKind::INTEGER_BIN, TokenKind::INTEGER_CHAR}))
+                return {};
+        }
+
+        if (!tokens.at(index)->isOfKind({TokenKind::GREATER}))
+            return {};
+    }
+
+    shared_ptr<ValueType> valueType = ValueType::valueTypeForToken(typeToken, subType, 0);
+    return ParseeResult::valueTypeResult(valueType, index - startIndex);
 }
 
 bool Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {

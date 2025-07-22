@@ -56,6 +56,8 @@ private:
     shared_ptr<ValueType> matchValueType();
 
     optional<vector<ParseeResult>> parseeResultsForParseeGroup(ParseeGroup group);
+    optional<ParseeResult> tokenParseeResult(int index, TokenKind tokenKind);
+    optional<ParseeResult> valueTypeParseeResult(int index);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
     void markError(optional<TokenKind> expectedTokenKind, optional<string> message);
