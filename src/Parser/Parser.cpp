@@ -297,9 +297,8 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
-    return nullptr;
-    /*bool hasError = false;
-    optional<vector<ParseeResult>> parseeResults;
+    bool hasError = false;
+    ParseeResultsGroup resultsGroup;
 
     string name;
     string constraints;
@@ -308,9 +307,8 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     string rawSource;
 
     // identifier
-    parseeResults = parseeResultsForParseeGroup(
+    resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
-            true,
             {
                 Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
                 Parsee::tokenParsee(TokenKind::RAW_FUNCTION, true, false)
@@ -318,17 +316,23 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             {}
         )
     );
-    if (parseeResults) {
-        name = (*parseeResults).at(0).getToken()->getLexme();
-    } else {
-        hasError = true;
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS:
+            name = resultsGroup.getResults().at(0).getToken()->getLexme();
+            break;
+        case ParseeResultsGroupKind::NO_MATCH:
+            return nullptr;
+            break;
+        case ParseeResultsGroupKind::FAILURE:
+            hasError = true;
+            break;
     }
 
-    // options
+    // constraints
     if (!hasError) {
-        parseeResults = parseeResultsForParseeGroup(
+        resultsGroup = parseeResultsGroupForParseeGroup(
             ParseeGroup(
-                false,
                 {
                     Parsee::tokenParsee(TokenKind::LESS, true, false),
                     Parsee::tokenParsee(TokenKind::STRING, true, true),
@@ -337,18 +341,27 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                 {}
             )
         );
-        if (parseeResults && !(*parseeResults).empty()) {
-            constraints = (*parseeResults).at(0).getToken()->getLexme();
-        } else if (!parseeResults) {
-            hasError = true;
+
+        switch (resultsGroup.getKind()) {
+            case ParseeResultsGroupKind::SUCCESS:
+                constraints = resultsGroup.getResults().at(0).getToken()->getLexme();
+                // remove enclosing quotes
+                if (constraints.length() >= 2)
+                    constraints = constraints.substr(1, constraints.length() - 2);
+                break;
+            case ParseeResultsGroupKind::NO_MATCH:
+                return nullptr;
+                break;
+            case ParseeResultsGroupKind::FAILURE:
+                hasError = true;
+                break;
         }
     }
 
     // arguments
     if (!hasError) {
-        parseeResults = parseeResultsForParseeGroup(
+        resultsGroup = parseeResultsGroupForParseeGroup(
             ParseeGroup(
-                false,
                 {
                     Parsee::tokenParsee(TokenKind::COLON, true, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
@@ -356,7 +369,6 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                     Parsee::valueTypeParsee(true)
                 },
                 ParseeGroup(
-                    false,
                     {
                         Parsee::tokenParsee(TokenKind::COMMA, true, false),
                         Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
@@ -367,23 +379,27 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                 )
             )
         );
-        if (parseeResults && !(*parseeResults).empty()) {
-            for (int i=0; i<(*parseeResults).size(); i+=2) {
-                pair<string, shared_ptr<ValueType>> arg;
-                arg.first = (*parseeResults).at(i).getToken()->getLexme();
-                arg.second = (*parseeResults).at(i+1).getValueType();
-                arguments.push_back(arg);
-            }
-        } else if (!parseeResults) {
-            hasError = true;
+        switch (resultsGroup.getKind()) {
+            case ParseeResultsGroupKind::SUCCESS:
+                for (int i=0; i<resultsGroup.getResults().size(); i+=2) {
+                    pair<string, shared_ptr<ValueType>> arg;
+                    arg.first = resultsGroup.getResults().at(i).getToken()->getLexme();
+                    arg.second = resultsGroup.getResults().at(i+1).getValueType();
+                    arguments.push_back(arg);
+                }
+                break;
+            case ParseeResultsGroupKind::NO_MATCH:
+                break;
+            case ParseeResultsGroupKind::FAILURE:
+                hasError = true;
+                break;
         }
     }
 
     // return type 
     if (!hasError) {
-        parseeResults = parseeResultsForParseeGroup(
+        resultsGroup = parseeResultsGroupForParseeGroup(
             ParseeGroup(
-                false,
                 {
                     Parsee::tokenParsee(TokenKind::RIGHT_ARROW, true, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
@@ -393,10 +409,15 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             )
         );
 
-        if (parseeResults && !(*parseeResults).empty()) {
-            returnType = (*parseeResults).at(0).getValueType();
-        } else if (!parseeResults) {
-            hasError = true;
+        switch (resultsGroup.getKind()) {
+            case ParseeResultsGroupKind::SUCCESS:
+                returnType = resultsGroup.getResults().at(0).getValueType();
+                break;
+            case ParseeResultsGroupKind::NO_MATCH:
+                break;
+            case ParseeResultsGroupKind::FAILURE:
+                hasError = true;
+                break;
         }
     }
 
@@ -421,7 +442,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource);*/
+    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
@@ -593,7 +614,6 @@ shared_ptr<Expression> Parser::nextExpression() {
     if (expression != nullptr || errors.size() > errorsCount)
         return expression;
 
-    //markError({}, {});
     return nullptr;
 }
 

@@ -28,10 +28,10 @@ i u32 <- 0, rep text[i] != 0:
     ret num1 + num2
 ;*/
 
-/*rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
+rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
     add $1, $2
     mov $0, $1
-;*/
+;
 
 /*rawAdd raw: num1 sint32, num2 sint32 -> sint32
     add $1, $2
@@ -48,11 +48,11 @@ i u32 <- 0, rep text[i] != 0:
 
 ;*/
 
-main fun: a sint32, b sint32 -> sint32
-    //printChar()
+main fun -> sint32
+    a sint32 <- 4
+    b sint32 <- 5
 
-    res1 sint32 <- a - b
-    //res2 sint32 <- rawAdd(4, 5)
+    res sint32 <- rawAdd(4, 5)
 
-    ret res1
+    ret res
 ;

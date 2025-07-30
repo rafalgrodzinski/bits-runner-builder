@@ -4,7 +4,6 @@
 #include <memory>
 
 enum class TokenKind;
-class Expression;
 
 enum class ParseeKind {
     TOKEN,
