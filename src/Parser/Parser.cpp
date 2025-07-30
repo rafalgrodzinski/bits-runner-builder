@@ -159,24 +159,6 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
 }
 
 shared_ptr<Statement> Parser::matchStatementVariable() {
-    /*if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false))
-        return nullptr;
-
-    shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
-    shared_ptr<ValueType> valueType = matchValueType();
-
-    // Expect left arrow
-    if (!tryMatchingTokenKinds({TokenKind::LEFT_ARROW}, true, true)) {
-        markError(TokenKind::LEFT_ARROW, {});
-        return nullptr;
-    }
-
-    shared_ptr<Expression> expression = nextExpression();
-    if (expression == nullptr)
-        return nullptr;
-
-    return make_shared<StatementVariable>(identifierToken->getLexme(), valueType, expression);*/
-
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
@@ -192,68 +174,105 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string name = resultsGroup.getResults().at(0).getToken()->getLexme();// tokens.at(currentIndex++);
+    string name = resultsGroup.getResults().at(0).getToken()->getLexme();
     shared_ptr<ValueType> valueType = resultsGroup.getResults().at(1).getValueType();
     shared_ptr<Expression> expression = resultsGroup.getResults().at(2).getExpression();
 
     return make_shared<StatementVariable>(name, valueType, expression);
-
-    /*optional<vector<ParseeResult>> parseeResults = parseeResultsForParseeGroup(
-        ParseeGroup(
-            false,
-            {
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
-                Parsee::valueTypeParsee(),
-                Parsee::tokenParsee(TokenKind::LEFT_ARROW, true, false),
-                Parsee::expressionParsee()
-            },
-            { }
-        )
-    );
-
-    optional<vector<ParseeResult>> parseeResults = parseeResultsForParseeGroup(parseeGroup);*/
 }
 
 shared_ptr<Statement> Parser::matchStatementFunction() {
-     if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::FUNCTION}, true, false))
-        return nullptr;
+    bool hasError = false;
+    ParseeResultsGroup resultsGroup;
 
     string name;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueType::NONE;
     shared_ptr<Statement> statementBlock;
 
-    // name
-    name = tokens.at(currentIndex++)->getLexme();
-    currentIndex++; // skip fun
+    // identifier
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+                Parsee::tokenParsee(TokenKind::FUNCTION, true, false)
+            },
+            {}
+        )
+    );
 
-    // arguments
-    if (tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
-        do {
-            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
-            if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::TYPE}, true, false)) {
-                markError({}, "Expected function argument");
-                return nullptr;
-            }
-            shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
-            shared_ptr<ValueType> argumentType = matchValueType();
-            if (argumentType == nullptr) {
-                markError(TokenKind::TYPE, {});
-                return nullptr;
-            }
-            
-            arguments.push_back(pair<string, shared_ptr<ValueType>>(identifierToken->getLexme(), argumentType));
-        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS:
+            name = resultsGroup.getResults().at(0).getToken()->getLexme();
+            break;
+        case ParseeResultsGroupKind::NO_MATCH:
+            return nullptr;
+            break;
+        case ParseeResultsGroupKind::FAILURE:
+            hasError = true;
+            break;
     }
 
-    // return type
-    if (tryMatchingTokenKinds({TokenKind::RIGHT_ARROW}, true, true)) {
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // skip new line
+    // arguments
+    if (!hasError) {
+        resultsGroup = parseeResultsGroupForParseeGroup(
+            ParseeGroup(
+                {
+                    Parsee::tokenParsee(TokenKind::COLON, true, false),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+                    Parsee::valueTypeParsee(true)
+                },
+                ParseeGroup(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, true, false),
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+                        Parsee::valueTypeParsee(true)
+                    },
+                    {}
+                )
+            )
+        );
+        switch (resultsGroup.getKind()) {
+            case ParseeResultsGroupKind::SUCCESS:
+                for (int i=0; i<resultsGroup.getResults().size(); i+=2) {
+                    pair<string, shared_ptr<ValueType>> arg;
+                    arg.first = resultsGroup.getResults().at(i).getToken()->getLexme();
+                    arg.second = resultsGroup.getResults().at(i+1).getValueType();
+                    arguments.push_back(arg);
+                }
+                break;
+            case ParseeResultsGroupKind::NO_MATCH:
+                break;
+            case ParseeResultsGroupKind::FAILURE:
+                hasError = true;
+                break;
+        }
+    }
 
-        returnType = matchValueType();
-        if (returnType == nullptr) {
-            markError(TokenKind::TYPE, {});
-            return nullptr;
+    // return type 
+    if (!hasError) {
+        resultsGroup = parseeResultsGroupForParseeGroup(
+            ParseeGroup(
+                {
+                    Parsee::tokenParsee(TokenKind::RIGHT_ARROW, true, false),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, false, false),
+                    Parsee::valueTypeParsee(true)
+                },
+                {}
+            )
+        );
+
+        switch (resultsGroup.getKind()) {
+            case ParseeResultsGroupKind::SUCCESS:
+                returnType = resultsGroup.getResults().at(0).getValueType();
+                break;
+            case ParseeResultsGroupKind::NO_MATCH:
+                break;
+            case ParseeResultsGroupKind::FAILURE:
+                hasError = true;
+                break;
         }
     }
 
@@ -268,6 +287,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     if (statementBlock == nullptr)
         return nullptr;
 
+    // closing semicolon
     if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
         markError(TokenKind::SEMICOLON, {});
         return nullptr;
@@ -931,84 +951,20 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
             currentIndex += (*result).getTokensCount();
     }
 
-    /*if (group.getRepeatedGroup()) {
-        bool hasSubResults = false;
-
-        optional<vector<ParseeResult>> subResults;
+    if (group.getRepeatedGroup()) {
+        ParseeResultsGroup subResultsGroup;
         do {
-            subResults = parseeResultsForParseeGroup(*group.getRepeatedGroup());
-            if (!subResults)
+            subResultsGroup = parseeResultsGroupForParseeGroup(*group.getRepeatedGroup());
+            if (subResultsGroup.getKind() == ParseeResultsGroupKind::FAILURE)
                 return ParseeResultsGroup::failure();
-                //return {};
 
-            for (ParseeResult &subResult : *subResults)
+            for (ParseeResult &subResult : subResultsGroup.getResults())
                 results.push_back(subResult);
-        } while (!(*subResults).empty());
-    }*/
+        } while (subResultsGroup.getKind() == ParseeResultsGroupKind::SUCCESS);
+    }
 
     return ParseeResultsGroup::success(results);
 }
-
-/*optional<vector<ParseeResult>> Parser::parseeResultsForParseeGroup(ParseeGroup group) {
-    int startIndex = currentIndex;
-    vector<ParseeResult> results;
-    bool mustFulfill = false;
-
-    for (Parsee &parsee : group.getParsees()) {
-        optional<ParseeResult> result;
-        switch (parsee.getKind()) {
-            case ParseeKind::TOKEN:
-                result = tokenParseeResult(currentIndex, parsee.getTokenKind());
-                break;
-            case ParseeKind::VALUE_TYPE:
-                result = valueTypeParseeResult(currentIndex);
-                break;
-            case ParseeKind::EXPRESSION:
-                result = expressionParseeResult(currentIndex);
-                break;
-        }
-
-        // if doesn't match on optional group
-        if (!result && parsee.getIsRequired() && !group.getIsRequired() && !mustFulfill) {
-            currentIndex = startIndex;
-            return vector<ParseeResult>();
-        }
-
-        // return matching token?
-        if (result && parsee.getShouldReturn())
-            results.push_back(*result);
-
-        // decide if we're decoding the expected sequence
-        if (!parsee.getIsRequired() && currentIndex > startIndex)
-            mustFulfill = true;
-
-        // invalid sequence detected?
-        if (!result && parsee.getIsRequired() && mustFulfill) {
-            markError(parsee.getTokenKind(), {});
-            return {};
-        }
-
-        // got to the next token if we got a match
-        if (result)
-            currentIndex += (*result).getTokensCount();
-    }
-
-    if (group.getRepeatedGroup()) {
-        bool hasSubResults = false;
-
-        optional<vector<ParseeResult>> subResults;
-        do {
-            subResults = parseeResultsForParseeGroup(*group.getRepeatedGroup());
-            if (!subResults)
-                return {};
-
-            for (ParseeResult &subResult : *subResults)
-                results.push_back(subResult);
-        } while (!(*subResults).empty());
-    }
-
-    return results;
-}*/
 
 optional<ParseeResult> Parser::tokenParseeResult(int index, TokenKind tokenKind) {
     shared_ptr<Token> token = tokens.at(index);

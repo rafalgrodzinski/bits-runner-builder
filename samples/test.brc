@@ -48,11 +48,11 @@ i u32 <- 0, rep text[i] != 0:
 
 ;*/
 
-main fun -> sint32
+main fun: a sint32, b sint32 -> sint32
     //printChar()
 
-    //res1 sint32 <- normAdd(4, 5)
+    res1 sint32 <- a - b
     //res2 sint32 <- rawAdd(4, 5)
 
-    ret 2-
+    ret res1
 ;

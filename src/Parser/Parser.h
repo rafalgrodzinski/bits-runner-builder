@@ -57,7 +57,6 @@ private:
     shared_ptr<ValueType> matchValueType();
 
     ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
-    //optional<vector<ParseeResult>> parseeResultsForParseeGroup(ParseeGroup group);
     optional<ParseeResult> tokenParseeResult(int index, TokenKind tokenKind);
     optional<ParseeResult> valueTypeParseeResult(int index);
     optional<ParseeResult> expressionParseeResult(int index);
