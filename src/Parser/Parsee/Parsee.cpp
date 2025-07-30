@@ -1,20 +1,29 @@
 #include "Parsee.h"
 
+#include "Parser/Expression/Expression.h"
+
 Parsee Parsee::tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn) {
     Parsee  parsee;
     parsee.kind = ParseeKind::TOKEN;
     parsee.tokenKind = tokenKind;
     parsee.isRequired = isRequired;
     parsee.shouldReturn = shouldReturn;
-
     return parsee;
 }
 
-Parsee Parsee::valueTypeParsee() {
+Parsee Parsee::valueTypeParsee(bool isRequired) {
     Parsee parsee;
     parsee.kind = ParseeKind::VALUE_TYPE;
+    parsee.isRequired = isRequired;
     parsee.shouldReturn = true;
+    return parsee;
+}
 
+Parsee Parsee::expressionParsee(bool isRequired) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::EXPRESSION;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = true;
     return parsee;
 }
 

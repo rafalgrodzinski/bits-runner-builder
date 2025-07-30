@@ -14,6 +14,7 @@ class Statement;
 
 class ParseeGroup;
 class ParseeResult;
+class ParseeResultsGroup;
 
 using namespace std;
 
@@ -55,9 +56,11 @@ private:
 
     shared_ptr<ValueType> matchValueType();
 
-    optional<vector<ParseeResult>> parseeResultsForParseeGroup(ParseeGroup group);
+    ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
+    //optional<vector<ParseeResult>> parseeResultsForParseeGroup(ParseeGroup group);
     optional<ParseeResult> tokenParseeResult(int index, TokenKind tokenKind);
     optional<ParseeResult> valueTypeParseeResult(int index);
+    optional<ParseeResult> expressionParseeResult(int index);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
     void markError(optional<TokenKind> expectedTokenKind, optional<string> message);

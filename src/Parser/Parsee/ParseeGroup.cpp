@@ -2,8 +2,8 @@
 
 #include "Parsee.h"
 
-ParseeGroup::ParseeGroup(bool isRequired, vector<Parsee> parsees, optional<ParseeGroup> repeatedGroup):
-isRequired(isRequired), parsees(parsees) {
+ParseeGroup::ParseeGroup(/*bool isRequired, */vector<Parsee> parsees, optional<ParseeGroup> repeatedGroup):
+/*isRequired(isRequired), */parsees(parsees) {
     if (repeatedGroup) {
         this->repeatedGroup = *repeatedGroup;
     } else {
@@ -11,9 +11,9 @@ isRequired(isRequired), parsees(parsees) {
     }
  }
 
-bool ParseeGroup::getIsRequired() {
+/*bool ParseeGroup::getIsRequired() {
     return isRequired;
-}
+}*/
 
 vector<Parsee> ParseeGroup::getParsees() {
     return parsees;

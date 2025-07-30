@@ -1,11 +1,15 @@
 #ifndef PARSEE_H
 #define PARSEE_H
 
+#include <memory>
+
 enum class TokenKind;
+class Expression;
 
 enum class ParseeKind {
     TOKEN,
-    VALUE_TYPE
+    VALUE_TYPE,
+    EXPRESSION
 };
 
 class Parsee {
@@ -18,7 +22,8 @@ private:
 
 public:
     static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn);
-    static Parsee valueTypeParsee();
+    static Parsee valueTypeParsee(bool isRequired);
+    static Parsee expressionParsee(bool isRequired);
 
     ParseeKind getKind();
     TokenKind getTokenKind();

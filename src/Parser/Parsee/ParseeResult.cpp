@@ -19,6 +19,14 @@ ParseeResult ParseeResult::valueTypeResult(shared_ptr<ValueType> valueType, int 
     return parseeResult;    
 }
 
+ParseeResult ParseeResult::expressionResult(shared_ptr<Expression> expression, int tokensCount) {
+    ParseeResult result;
+    result.kind = ParseeResultKind::EXPRESSION;
+    result.expression = expression;
+    result.tokensCount = tokensCount;
+    return result;
+}
+
 ParseeResult::ParseeResult() { }
 
 
@@ -32,6 +40,10 @@ shared_ptr<Token> ParseeResult::getToken() {
 
 shared_ptr<ValueType> ParseeResult::getValueType() {
     return valueType;
+}
+
+shared_ptr<Expression> ParseeResult::getExpression() {
+    return expression;
 }
 
 int ParseeResult::getTokensCount() {

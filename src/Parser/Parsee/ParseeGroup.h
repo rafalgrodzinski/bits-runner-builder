@@ -10,13 +10,13 @@ using namespace std;
 
 class ParseeGroup {
 private:
-    bool isRequired;
+    //bool isRequired;
     vector<Parsee> parsees;
     optional<reference_wrapper<ParseeGroup>> repeatedGroup;
 
 public:
-    ParseeGroup(bool isRequired, vector<Parsee> parsees, optional<ParseeGroup> repeatedGroup);
-    bool getIsRequired();
+    ParseeGroup(/*bool isRequired, */vector<Parsee> parsees, optional<ParseeGroup> repeatedGroup);
+    //bool getIsRequired();
     vector<Parsee> getParsees();
     optional<reference_wrapper<ParseeGroup>> getRepeatedGroup();
 };
