@@ -43,7 +43,8 @@ private:
     shared_ptr<Expression> matchComparison(); // <, <=, >, >=
     shared_ptr<Expression> matchTerm(); // +, -
     shared_ptr<Expression> matchFactor(); // *, /, %
-    shared_ptr<Expression> matchPrimary(); // integer, ()
+    shared_ptr<Expression> matchUnary(); // +, -
+    shared_ptr<Expression> matchPrimary(); // literal, ()
 
     shared_ptr<Expression> matchExpressionGrouping();
     shared_ptr<Expression> matchExpressionLiteral();

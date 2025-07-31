@@ -12,6 +12,7 @@
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionBinary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
@@ -723,7 +724,7 @@ shared_ptr<Expression> Parser::matchTerm() {
 }
 
 shared_ptr<Expression> Parser::matchFactor() {
-    shared_ptr<Expression> expression = matchPrimary();
+    shared_ptr<Expression> expression = matchUnary();
     if (expression == nullptr)
         return nullptr;
 
@@ -731,6 +732,19 @@ shared_ptr<Expression> Parser::matchFactor() {
         expression = matchExpressionBinary(expression);
 
     return expression;
+}
+
+shared_ptr<Expression> Parser::matchUnary() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
+
+    if (tryMatchingTokenKinds(Token::tokensUnary, false, true)) {
+        shared_ptr<Expression> expression = matchPrimary();
+        if (expression == nullptr)
+            return nullptr;
+        return make_shared<ExpressionUnary>(token, expression);
+    }
+
+    return matchPrimary();
 }
 
 shared_ptr<Expression> Parser::matchPrimary() {

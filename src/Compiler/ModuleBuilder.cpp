@@ -11,6 +11,7 @@
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
 #include "Parser/Statement/StatementFunction.h"
@@ -172,6 +173,8 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
         }
     } else {
         llvm::Value *value = valueForExpression(statement->getExpression());
+        if (value == nullptr)
+            return;
         llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType(), 0), nullptr, statement->getName());
 
         if (!setAlloca(statement->getName(), alloca))
@@ -297,6 +300,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case ExpressionKind::BINARY:
             return valueForBinary(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case ExpressionKind::UNARY:
+            return valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VAR:
@@ -337,7 +342,7 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
         case ValueTypeKind::S32:
             return llvm::ConstantInt::get(typeS32, expression->getS32Value(), true);
         case ValueTypeKind::R32:
-            return llvm::ConstantInt::get(typeR32, expression->getR32Value(), true);
+            return llvm::ConstantFP::get(typeR32, expression->getR32Value());
     }
 }
 
@@ -383,7 +388,7 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operati
     case ExpressionBinaryOperation::NOT_EQUAL:
         return builder->CreateICmpNE(leftValue, rightValue);
     default:
-        markError(0, 0, "Unexpecgted operation for boolean operands");
+        markError(0, 0, "Unexpected operation for boolean operands");
         return nullptr;
     }
 }
@@ -467,6 +472,26 @@ llvm::Value *ModuleBuilder::valueForBinaryReal(ExpressionBinaryOperation operati
     case ExpressionBinaryOperation::MOD:
         return builder->CreateSRem(leftValue, rightValue);
     }
+}
+
+llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression) {
+    llvm::Value *value = valueForExpression(expression->getExpression());
+    llvm::Type *type = value->getType();
+
+    // do nothing for plus
+    if (expression->getOperation() == ExpressionUnaryOperation::PLUS)
+        return value;
+
+    if (type == typeU8 || type == typeU32) {
+        return builder->CreateNeg(value);
+    } else if (type == typeS8 || type == typeS32) {
+        return builder->CreateNSWNeg(value);
+    } else if (type == typeR32) {
+        return builder->CreateFNeg(value);
+    }
+
+    markError(0, 0, "Unexpected operation");
+    return nullptr;
 }
 
 llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expression) {

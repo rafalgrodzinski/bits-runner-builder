@@ -20,6 +20,7 @@ class StatementExpression;
 
 class Expression;
 class ExpressionBinary;
+class ExpressionUnary;
 class ExpressionIfElse;
 class ExpressionVariable;
 class ExpressionGrouping;
@@ -51,6 +52,7 @@ private:
 
     static string toString(shared_ptr<Expression> expression);
     static string toString(shared_ptr<ExpressionBinary> expression);
+    static string toString(shared_ptr<ExpressionUnary> expression);
     static string toString(shared_ptr<ExpressionIfElse> expression);
     static string toString(shared_ptr<ExpressionVariable> expression);
     static string toString(shared_ptr<ExpressionGrouping> expression);

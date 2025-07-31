@@ -20,6 +20,7 @@
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionGrouping.h"
@@ -344,7 +345,9 @@ string Logger::toString(shared_ptr<StatementExpression> statement) {
 string Logger::toString(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
-            return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
+        return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case ExpressionKind::UNARY:
+            return toString(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return toString(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VAR:
@@ -387,6 +390,17 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
         case ExpressionBinaryOperation::MOD:
             return "{% " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
         case ExpressionBinaryOperation::INVALID:
+            return "{INVALID}";
+    }
+}
+
+string Logger::toString(shared_ptr<ExpressionUnary> expression) {
+    switch (expression->getOperation()) {
+        case ExpressionUnaryOperation::PLUS:
+            return "+" + toString(expression->getExpression());
+        case ExpressionUnaryOperation::MINUS:
+            return "-" + toString(expression->getExpression());
+        case ExpressionUnaryOperation::INVALID:
             return "{INVALID}";
     }
 }

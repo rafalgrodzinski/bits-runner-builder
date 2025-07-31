@@ -7,12 +7,15 @@ Expression(ExpressionKind::UNARY, nullptr), expression(expression) {
     switch (token->getKind()) {
         case TokenKind::PLUS:
             operation = ExpressionUnaryOperation::PLUS;
+            valueType = expression->getValueType();
             break;
         case TokenKind::MINUS:
             operation = ExpressionUnaryOperation::MINUS;
+            valueType = expression->getValueType();
             break;
         default:
             operation = ExpressionUnaryOperation::INVALID;
+            valueType = nullptr;
             break;
     }
 }
