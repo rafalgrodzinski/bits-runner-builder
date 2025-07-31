@@ -207,7 +207,6 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
             break;
         case ParseeResultsGroupKind::NO_MATCH:
             return nullptr;
-            break;
         case ParseeResultsGroupKind::FAILURE:
             hasError = true;
             break;
@@ -465,58 +464,87 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 }
 
 shared_ptr<Statement> Parser::matchStatementAssignment() {
-    int startIndex = currentIndex;
+    ParseeResultsGroup resultsGroup;
 
-    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER}, true, false))
-        return nullptr;
-    shared_ptr<Token> identifierToken = tokens.at(currentIndex++);
+    string identifier;
     shared_ptr<Expression> indexExpression;
+    shared_ptr<Expression> expression;
 
-    if (tryMatchingTokenKinds({TokenKind::LEFT_SQUARE_BRACKET}, true, true)) {
-        indexExpression = nextExpression();
-        if (indexExpression == nullptr)
-            return nullptr;
+    // identifier
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+            },
+            {}
+        )
+    );
 
-        if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
-            markError(TokenKind::RIGHT_SQUARE_BRACKET, {});
-            return nullptr;
-        }
-    }
-
-    // assignment requires left arrow, otherwise abort
-    if (!tryMatchingTokenKinds({TokenKind::LEFT_ARROW}, true, true)) {
-        currentIndex = startIndex;
-        return nullptr;
-    }
-
-    shared_ptr<Expression> expression = nextExpression();
-    if (expression == nullptr)
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    return make_shared<StatementAssignment>(identifierToken->getLexme(), indexExpression, expression);
+    identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
+
+    // index expression
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false),
+                Parsee::expressionParsee(true),
+                Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false),
+            },
+            {}
+        )
+    );
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS:
+            indexExpression = resultsGroup.getResults().at(0).getExpression();
+            break;
+        case ParseeResultsGroupKind::NO_MATCH:
+            break;
+        case ParseeResultsGroupKind::FAILURE:
+            return nullptr;
+    }
+
+    // expression
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::LEFT_ARROW, true, false),
+                Parsee::expressionParsee(true)
+            },
+            {}
+        )
+    );
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS:
+            expression = resultsGroup.getResults().at(0).getExpression();
+            break;
+        case ParseeResultsGroupKind::NO_MATCH:
+        case ParseeResultsGroupKind::FAILURE:
+            return nullptr;
+    }
+
+    return make_shared<StatementAssignment>(identifier, indexExpression, expression);
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {
-    shared_ptr<Expression> expression;
-
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
                 Parsee::tokenParsee(TokenKind::RETURN, true, false),
                 Parsee::expressionParsee(false)
             },
-            { }
+            {}
         )
     );
 
-    switch (resultsGroup.getKind()) {
-        case ParseeResultsGroupKind::SUCCESS:
-            expression = !resultsGroup.getResults().empty() ? resultsGroup.getResults().at(0).getExpression() : nullptr;
-            break;
-        case ParseeResultsGroupKind::NO_MATCH:
-        case ParseeResultsGroupKind::FAILURE:
-            return nullptr;
-    }
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    shared_ptr<Expression> expression = !resultsGroup.getResults().empty() ? resultsGroup.getResults().at(0).getExpression() : nullptr;
 
     return make_shared<StatementReturn>(expression);
 }
