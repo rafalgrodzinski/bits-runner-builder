@@ -208,18 +208,18 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
                 Parsee::tokenParsee(TokenKind::LEFT_ARROW, true, false),
                 Parsee::expressionParsee(true)
             },
-            { }
+            {}
         )
     );
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string name = resultsGroup.getResults().at(0).getToken()->getLexme();
+    string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
     shared_ptr<ValueType> valueType = resultsGroup.getResults().at(1).getValueType();
     shared_ptr<Expression> expression = resultsGroup.getResults().at(2).getExpression();
 
-    return make_shared<StatementVariable>(name, valueType, expression);
+    return make_shared<StatementVariable>(identifier, valueType, expression);
 }
 
 shared_ptr<Statement> Parser::matchStatementFunction() {
