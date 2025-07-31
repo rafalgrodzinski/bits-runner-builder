@@ -15,14 +15,14 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         case TokenKind::INTEGER_DEC: {
             string numString = token->getLexme();
             erase(numString, '_');
-            expression->sint32Value = stoi(numString, nullptr, 10);
+            expression->s32Value = stoi(numString, nullptr, 10);
             expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
             break;
         }
         case TokenKind::INTEGER_HEX: {
             string numString = token->getLexme();
             erase(numString, '_');
-            expression->sint32Value = stoi(numString, nullptr, 16);
+            expression->u32Value = stoul(numString, nullptr, 16);
             expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
             break;
         }
@@ -30,7 +30,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             string numString = token->getLexme();
             erase(numString, '_');
             numString = numString.substr(2, numString.size()-1);
-            expression->sint32Value = stoi(numString, nullptr, 2);
+            expression->u32Value = stoul(numString, nullptr, 2);
             expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
             break;
         }
@@ -41,11 +41,11 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
                 return nullptr;
             
             expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
-            expression->sint32Value = *charValue;
+            expression->u32Value = *charValue;
             return expression;
         }
         case TokenKind::REAL:
-            expression->real32Value = stof(token->getLexme());
+            expression->r32Value = stof(token->getLexme());
             expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
             break;
         default:
@@ -62,10 +62,22 @@ bool ExpressionLiteral::getBoolValue() {
     return boolValue;
 }
 
-int32_t ExpressionLiteral::getSint32Value() {
-    return sint32Value;
+uint8_t ExpressionLiteral::getU8Value() {
+    return s32Value;
 }
 
-float ExpressionLiteral::getReal32Value() {
-    return real32Value;
+uint32_t ExpressionLiteral::getU32Value() {
+    return s32Value;
+}
+
+int8_t ExpressionLiteral::getS8Value() {
+    return s32Value;
+}
+
+int32_t ExpressionLiteral::getS32Value() {
+    return s32Value;
+}
+
+float ExpressionLiteral::getR32Value() {
+    return r32Value;
 }

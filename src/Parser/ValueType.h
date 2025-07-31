@@ -10,8 +10,11 @@ using namespace std;
 enum class ValueTypeKind {
     NONE,
     BOOL,
-    SINT32,
-    REAL32,
+    U8,
+    U32,
+    S8,
+    S32,
+    R32,
     DATA
 };
 
@@ -24,8 +27,11 @@ private:
 public:
     static shared_ptr<ValueType> NONE;
     static shared_ptr<ValueType> BOOL;
-    static shared_ptr<ValueType> SINT32;
-    static shared_ptr<ValueType> REAL32;
+    static shared_ptr<ValueType> U8;
+    static shared_ptr<ValueType> U32;
+    static shared_ptr<ValueType> S8;
+    static shared_ptr<ValueType> S32;
+    static shared_ptr<ValueType> R32;
     static shared_ptr<ValueType> valueTypeForToken(shared_ptr<Token> token, shared_ptr<ValueType> subType, int valueArg);
 
     ValueType(ValueTypeKind kind, shared_ptr<ValueType> subType, int valueArg);

@@ -32,8 +32,11 @@ moduleName(moduleName), sourceFileName(sourceFileName), statements(statements) {
 
     typeVoid = llvm::Type::getVoidTy(*context);
     typeBool = llvm::Type::getInt1Ty(*context);
-    typeSint32 = llvm::Type::getInt32Ty(*context);
-    typeReal32 = llvm::Type::getFloatTy(*context);
+    typeU8 = llvm::Type::getInt8Ty(*context);
+    typeU32 = llvm::Type::getInt32Ty(*context);
+    typeS8 = llvm::Type::getInt8Ty(*context);
+    typeS32 = llvm::Type::getInt32Ty(*context);
+    typeR32 = llvm::Type::getFloatTy(*context);
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
@@ -325,10 +328,16 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
             return llvm::UndefValue::get(typeVoid);
         case ValueTypeKind::BOOL:
             return llvm::ConstantInt::get(typeBool, expression->getBoolValue(), true);
-        case ValueTypeKind::SINT32:
-            return llvm::ConstantInt::get(typeSint32, expression->getSint32Value(), true);
-        case ValueTypeKind::REAL32:
-            return llvm::ConstantInt::get(typeReal32, expression->getReal32Value(), true);
+        case ValueTypeKind::U8:
+            return llvm::ConstantInt::get(typeU8, expression->getU8Value(), true);
+        case ValueTypeKind::U32:
+            return llvm::ConstantInt::get(typeU32, expression->getU32Value(), true);
+        case ValueTypeKind::S8:
+            return llvm::ConstantInt::get(typeS8, expression->getS8Value(), true);
+        case ValueTypeKind::S32:
+            return llvm::ConstantInt::get(typeS32, expression->getS32Value(), true);
+        case ValueTypeKind::R32:
+            return llvm::ConstantInt::get(typeR32, expression->getR32Value(), true);
     }
 }
 
@@ -355,9 +364,11 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
 
     if (type == typeBool) {
         return valueForBinaryBool(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeSint32 || type == typeVoid) {
-        return valueForBinaryInteger(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeReal32) {
+    } else if (type == typeU8 || type == typeU32) {
+        return valueForBinaryUnsignedInteger(expression->getOperation(), leftValue, rightValue);
+    } else if (type == typeS8 || type == typeS32) {
+        return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
+    } else if (type == typeR32) {
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
     }
 
@@ -377,30 +388,57 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operati
     }
 }
 
-llvm::Value *ModuleBuilder::valueForBinaryInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+llvm::Value *ModuleBuilder::valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
-    case ExpressionBinaryOperation::EQUAL:
-        return builder->CreateICmpEQ(leftValue, rightValue);
-    case ExpressionBinaryOperation::NOT_EQUAL:
-        return builder->CreateICmpNE(leftValue, rightValue);
-    case ExpressionBinaryOperation::LESS:
-        return builder->CreateICmpSLT(leftValue, rightValue);
-    case ExpressionBinaryOperation::LESS_EQUAL:
-        return builder->CreateICmpSLE(leftValue, rightValue);
-    case ExpressionBinaryOperation::GREATER:
-        return builder->CreateICmpSGT(leftValue, rightValue);
-    case ExpressionBinaryOperation::GREATER_EQUAL:
-        return builder->CreateICmpSGE(leftValue, rightValue);
-    case ExpressionBinaryOperation::ADD:
-        return builder->CreateNSWAdd(leftValue, rightValue);
-    case ExpressionBinaryOperation::SUB:
-        return builder->CreateNSWSub(leftValue, rightValue);
-    case ExpressionBinaryOperation::MUL:
-        return builder->CreateNSWMul(leftValue, rightValue);
-    case ExpressionBinaryOperation::DIV:
-        return builder->CreateSDiv(leftValue, rightValue);
-    case ExpressionBinaryOperation::MOD:
-        return builder->CreateSRem(leftValue, rightValue);
+        case ExpressionBinaryOperation::EQUAL:
+            return builder->CreateICmpEQ(leftValue, rightValue);
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return builder->CreateICmpNE(leftValue, rightValue);
+        case ExpressionBinaryOperation::LESS:
+            return builder->CreateICmpSLT(leftValue, rightValue);
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return builder->CreateICmpSLE(leftValue, rightValue);
+        case ExpressionBinaryOperation::GREATER:
+            return builder->CreateICmpSGT(leftValue, rightValue);
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return builder->CreateICmpSGE(leftValue, rightValue);
+        case ExpressionBinaryOperation::ADD:
+            return builder->CreateNUWAdd(leftValue, rightValue);
+        case ExpressionBinaryOperation::SUB:
+            return builder->CreateNUWSub(leftValue, rightValue);
+        case ExpressionBinaryOperation::MUL:
+            return builder->CreateNUWMul(leftValue, rightValue);
+        case ExpressionBinaryOperation::DIV:
+            return builder->CreateUDiv(leftValue, rightValue);
+        case ExpressionBinaryOperation::MOD:
+            return builder->CreateURem(leftValue, rightValue);
+    }
+}
+
+llvm::Value *ModuleBuilder::valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+    switch (operation) {
+        case ExpressionBinaryOperation::EQUAL:
+            return builder->CreateICmpEQ(leftValue, rightValue);
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return builder->CreateICmpNE(leftValue, rightValue);
+        case ExpressionBinaryOperation::LESS:
+            return builder->CreateICmpSLT(leftValue, rightValue);
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return builder->CreateICmpSLE(leftValue, rightValue);
+        case ExpressionBinaryOperation::GREATER:
+            return builder->CreateICmpSGT(leftValue, rightValue);
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return builder->CreateICmpSGE(leftValue, rightValue);
+        case ExpressionBinaryOperation::ADD:
+            return builder->CreateNSWAdd(leftValue, rightValue);
+        case ExpressionBinaryOperation::SUB:
+            return builder->CreateNSWSub(leftValue, rightValue);
+        case ExpressionBinaryOperation::MUL:
+            return builder->CreateNSWMul(leftValue, rightValue);
+        case ExpressionBinaryOperation::DIV:
+            return builder->CreateSDiv(leftValue, rightValue);
+        case ExpressionBinaryOperation::MOD:
+            return builder->CreateSRem(leftValue, rightValue);
     }
 }
 
@@ -605,10 +643,16 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return typeVoid;
         case ValueTypeKind::BOOL:
             return typeBool;
-        case ValueTypeKind::SINT32:
-            return typeSint32;
-        case ValueTypeKind::REAL32:
-            return typeReal32;
+        case ValueTypeKind::U8:
+            return typeU8;
+        case ValueTypeKind::U32:
+            return typeU32;
+        case ValueTypeKind::S8:
+            return typeS8;
+        case ValueTypeKind::S32:
+            return typeS32;
+        case ValueTypeKind::R32:
+            return typeR32;
         case ValueTypeKind::DATA: {
             if (valueType->getSubType() == nullptr)
                 return nullptr;

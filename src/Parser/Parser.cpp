@@ -1052,7 +1052,7 @@ optional<ParseeResult> Parser::valueTypeParseeResult(int index) {
             int storedIndex = currentIndex;
             currentIndex = index;
             shared_ptr<Expression> expressionValue = matchExpressionLiteral();
-            typeArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getSint32Value();
+            typeArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getU32Value();
             currentIndex = storedIndex;
             index++;
         }

@@ -207,10 +207,16 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "NONE";
         case ValueTypeKind::BOOL:
             return "BOOL";
-        case ValueTypeKind::SINT32:
-            return "SINT32";
-        case ValueTypeKind::REAL32:
-            return "REAL32";
+        case ValueTypeKind::U8:
+            return "U8";
+        case ValueTypeKind::U32:
+            return "U32";
+        case ValueTypeKind::S8:
+            return "S8";
+        case ValueTypeKind::S32:
+            return "S32";
+        case ValueTypeKind::R32:
+            return "R32";
         case ValueTypeKind::DATA:
             return "[]";
     }
@@ -420,10 +426,16 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
             return "NONE";
         case ValueTypeKind::BOOL:
             return expression->getBoolValue() ? "true" : "false";
-        case ValueTypeKind::SINT32:
-            return to_string(expression->getSint32Value());
-        case ValueTypeKind::REAL32:
-            return to_string(expression->getReal32Value());
+        case ValueTypeKind::U8:
+            return to_string(expression->getU8Value());
+        case ValueTypeKind::U32:
+            return to_string(expression->getU32Value());
+        case ValueTypeKind::S8:
+            return to_string(expression->getS8Value());
+        case ValueTypeKind::S32:
+            return to_string(expression->getS32Value());
+        case ValueTypeKind::R32:
+            return to_string(expression->getR32Value());
         default:
             return "?";
     }
