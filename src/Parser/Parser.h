@@ -54,8 +54,6 @@ private:
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
-    shared_ptr<ValueType> matchValueType();
-
     ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
     optional<ParseeResult> tokenParseeResult(int index, TokenKind tokenKind);
     optional<ParseeResult> valueTypeParseeResult(int index);

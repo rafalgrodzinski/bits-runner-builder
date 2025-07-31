@@ -952,46 +952,6 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
     return make_shared<ExpressionBlock>(statements);
 }
 
-shared_ptr<ValueType> Parser::matchValueType() {
-    if (!tryMatchingTokenKinds({TokenKind::TYPE}, true, false))
-        return nullptr;
-    shared_ptr<Token> typeToken = tokens.at(currentIndex++);
-    shared_ptr<ValueType> subType;
-    int valueArg = 0;
-
-    if (tryMatchingTokenKinds({TokenKind::LESS}, true, true)) {
-        if (!tryMatchingTokenKinds({TokenKind::TYPE}, true, false)) {
-            markError(TokenKind::TYPE, {});
-            return nullptr;
-        }
-        subType = matchValueType();
-        if (subType == nullptr)
-            return subType;
-
-        if (tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
-            if (!tryMatchingTokenKinds({TokenKind::INTEGER_DEC, TokenKind::INTEGER_HEX, TokenKind::INTEGER_BIN, TokenKind::INTEGER_CHAR}, false, false)) {
-                markError({}, "Expected integer literal");
-                return nullptr;
-            }
-            shared_ptr<Expression> expressionValue = matchExpressionLiteral();
-            if (expressionValue == nullptr) {
-                markError({}, "Expected integer literal");
-                return nullptr;
-            }
-
-            valueArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getSint32Value();
-        }
-
-
-        if (!tryMatchingTokenKinds({TokenKind::GREATER}, true, true)) {
-            markError(TokenKind::GREATER, {});
-            return nullptr;
-        }
-    }
-
-    return ValueType::valueTypeForToken(typeToken, subType, valueArg);
-}
-
 ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
     int errorsCount = errors.size();
     int startIndex = currentIndex;
@@ -1081,20 +1041,28 @@ optional<ParseeResult> Parser::valueTypeParseeResult(int index) {
         if (!subResult)
             return {};
         subType = (*subResult).getValueType();
-
+        index += (*subResult).getTokensCount();
 
         if (tokens.at(index)->isOfKind({TokenKind::COMMA})) {
             index++;
 
             if (!tokens.at(index)->isOfKind({TokenKind::INTEGER_DEC, TokenKind::INTEGER_HEX, TokenKind::INTEGER_BIN, TokenKind::INTEGER_CHAR}))
                 return {};
+
+            int storedIndex = currentIndex;
+            currentIndex = index;
+            shared_ptr<Expression> expressionValue = matchExpressionLiteral();
+            typeArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getSint32Value();
+            currentIndex = storedIndex;
+            index++;
         }
 
         if (!tokens.at(index)->isOfKind({TokenKind::GREATER}))
             return {};
+        index++;
     }
 
-    shared_ptr<ValueType> valueType = ValueType::valueTypeForToken(typeToken, subType, 0);
+    shared_ptr<ValueType> valueType = ValueType::valueTypeForToken(typeToken, subType, typeArg);
     return ParseeResult::valueTypeResult(valueType, index - startIndex);
 }
 
