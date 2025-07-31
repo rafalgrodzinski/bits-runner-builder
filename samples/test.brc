@@ -50,10 +50,10 @@ i u32 <- 0, rep text[i] != 0:
 
 main fun -> u32
     num1 u8 <- 42
-    num2 s8 <- 15
+    num2 s8 <- -15
     num3 u32 <- 1234123
-    num4 s32 <- 345345
-    num5 r32 <- 42.58
+    num4 s32 <- -345345
+    num5 r32 <- -42.58
 
     ret 0
 ;

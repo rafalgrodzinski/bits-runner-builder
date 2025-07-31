@@ -12,6 +12,7 @@ enum class ExpressionKind {
     LITERAL,
     ARRAY_LITERAL,
     GROUPING,
+    UNARY,
     BINARY,
     IF_ELSE,
     VAR,
