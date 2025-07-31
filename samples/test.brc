@@ -1,4 +1,4 @@
-//@extern putchar fun: character sint32 -> sint32
+@extern putchar fun: character sint32 -> sint32
 
 // ./build/brb samples/test.brc -S -x86-asm-syntax=intel
 
@@ -49,10 +49,12 @@ rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
 ;*/
 
 main fun -> sint32
-    a sint32 <- 4
+    /*a sint32 <- 4
     b sint32 <- 5
 
-    res sint32 <- rawAdd(4, 5)
+    res sint32 <- rawAdd(4, 5)*/
+    putchar('@')
+    putchar('\n')
 
-    ret res
+    ret 0
 ;
