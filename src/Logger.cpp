@@ -482,7 +482,7 @@ void Logger::print(shared_ptr<Error> error) {
     switch (error->getKind()) {
         case ErrorKind::LEXER_ERROR: {
             string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("Unexpected token \"{}\" at line: {}, column: {}", lexme, error->getLine() + 1, error->getColumn() + 1);
+            message = format("At line {}, column {}: Unexpected token \"{}\"", error->getLine() + 1, error->getColumn() + 1, lexme);
             break;
         }
         case ErrorKind::PARSER_ERROR: {
@@ -492,13 +492,13 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedTokenKind) {
                 message = format(
-                    "Expected token {} but instead found {} at line: {}, column: {}",
-                    toString(*expectedTokenKind), toString(token), token->getLine() + 1, token->getColumn() + 1
+                    "At line {}, column {}: Expected token {} but found {} instead",
+                    token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
                 );
             } else {
                 message = format(
-                    "Unexpected token \"{}\" found at line: {}, column: {}",
-                    toString(token), token->getLine() + 1, token->getColumn() + 1
+                    "At line {}, column {}: Unexpected token \"{}\" found",
+                    token->getLine() + 1, token->getColumn() + 1, toString(token)
                 );
             }
             if (errorMessage)
@@ -507,7 +507,7 @@ void Logger::print(shared_ptr<Error> error) {
         }
         case ErrorKind::BUILDER_ERROR: {
             string errorMessage = error->getMessage() ? *(error->getMessage()) : "";
-            message = format("Error at line {}, column {}: {}", error->getLine(), error->getColumn(), errorMessage);
+            message = format("At line {}, column {}: {}", error->getLine(), error->getColumn(), errorMessage);
             break;
         }
     }

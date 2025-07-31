@@ -12,6 +12,10 @@ class ValueType;
 class Expression;
 class Statement;
 
+class ParseeGroup;
+class ParseeResult;
+class ParseeResultsGroup;
+
 using namespace std;
 
 class Parser {
@@ -50,8 +54,10 @@ private:
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
-    shared_ptr<ValueType> matchValueType();
-
+    ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
+    optional<ParseeResult> tokenParseeResult(int index, TokenKind tokenKind);
+    optional<ParseeResult> valueTypeParseeResult(int index);
+    optional<ParseeResult> expressionParseeResult(int index);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
     void markError(optional<TokenKind> expectedTokenKind, optional<string> message);

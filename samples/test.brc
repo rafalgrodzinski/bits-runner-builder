@@ -24,14 +24,19 @@ i u32 <- 0, rep text[i] != 0:
     add $1, $0
 ;*/
 
-normAdd fun: num1 sint32, num2 sint32 -> sint32
+/*normAdd fun: num1 sint32, num2 sint32 -> sint32
     ret num1 + num2
-;
+;*/
 
 rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
     add $1, $2
     mov $0, $1
 ;
+
+/*rawAdd raw: num1 sint32, num2 sint32 -> sint32
+    add $1, $2
+    mov $0, $1
+;*/
 
 /*printChar raw
     .global REGISTER
@@ -44,10 +49,12 @@ rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
 ;*/
 
 main fun -> sint32
-    //printChar()
+    /*a sint32 <- 4
+    b sint32 <- 5
 
-    res1 sint32 <- normAdd(4, 5)
-    res2 sint32 <- rawAdd(4, 5)
+    res sint32 <- rawAdd(4, 5)*/
+    putchar('@')
+    putchar('\n')
 
     ret 0
 ;
