@@ -23,6 +23,7 @@ class ExpressionVariable;
 class ExpressionCall;
 class ExpressionIfElse;
 class ExpressionBinary;
+class ExpressionUnary;
 enum class ExpressionBinaryOperation;
 
 class Statement;
@@ -56,8 +57,11 @@ private:
 
     llvm::Type *typeVoid;
     llvm::Type *typeBool;
-    llvm::IntegerType *typeSint32;
-    llvm::Type *typeReal32;
+    llvm::IntegerType *typeU8;
+    llvm::IntegerType *typeU32;
+    llvm::IntegerType *typeS8;
+    llvm::IntegerType *typeS32;
+    llvm::Type *typeR32;
 
     vector<shared_ptr<Statement>> statements;
     stack<Scope> scopes;
@@ -80,8 +84,10 @@ private:
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
-    llvm::Value *valueForBinaryInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForUnary(shared_ptr<ExpressionUnary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVar(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);

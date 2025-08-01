@@ -1,4 +1,7 @@
-#include "Parser/Expression/Expression.h"
+#ifndef EXPRESSION_BINARY_H
+#define EXPRESSION_BINARY_H
+
+#include "Expression.h"
 
 enum class ExpressionBinaryOperation {
     EQUAL,
@@ -27,3 +30,5 @@ public:
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();
 };
+
+#endif

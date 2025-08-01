@@ -20,6 +20,7 @@
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionGrouping.h"
@@ -202,15 +203,24 @@ string Logger::toString(TokenKind tokenKind) {
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {
+    if (valueType == nullptr)
+        return "{INVALID}";
+
     switch (valueType->getKind()) {
         case ValueTypeKind::NONE:
             return "NONE";
         case ValueTypeKind::BOOL:
             return "BOOL";
-        case ValueTypeKind::SINT32:
-            return "SINT32";
-        case ValueTypeKind::REAL32:
-            return "REAL32";
+        case ValueTypeKind::U8:
+            return "U8";
+        case ValueTypeKind::U32:
+            return "U32";
+        case ValueTypeKind::S8:
+            return "S8";
+        case ValueTypeKind::S32:
+            return "S32";
+        case ValueTypeKind::R32:
+            return "R32";
         case ValueTypeKind::DATA:
             return "[]";
     }
@@ -338,7 +348,9 @@ string Logger::toString(shared_ptr<StatementExpression> statement) {
 string Logger::toString(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
-            return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
+        return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case ExpressionKind::UNARY:
+            return toString(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return toString(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VAR:
@@ -385,6 +397,17 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
     }
 }
 
+string Logger::toString(shared_ptr<ExpressionUnary> expression) {
+    switch (expression->getOperation()) {
+        case ExpressionUnaryOperation::PLUS:
+            return "+" + toString(expression->getExpression());
+        case ExpressionUnaryOperation::MINUS:
+            return "-" + toString(expression->getExpression());
+        case ExpressionUnaryOperation::INVALID:
+            return "{INVALID}";
+    }
+}
+
 string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
     string text;
 
@@ -420,10 +443,16 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
             return "NONE";
         case ValueTypeKind::BOOL:
             return expression->getBoolValue() ? "true" : "false";
-        case ValueTypeKind::SINT32:
-            return to_string(expression->getSint32Value());
-        case ValueTypeKind::REAL32:
-            return to_string(expression->getReal32Value());
+        case ValueTypeKind::U8:
+            return to_string(expression->getU8Value());
+        case ValueTypeKind::U32:
+            return to_string(expression->getU32Value());
+        case ValueTypeKind::S8:
+            return to_string(expression->getS8Value());
+        case ValueTypeKind::S32:
+            return to_string(expression->getS32Value());
+        case ValueTypeKind::R32:
+            return to_string(expression->getR32Value());
         default:
             return "?";
     }
