@@ -12,6 +12,10 @@ class ValueType;
 class Expression;
 class Statement;
 
+class ParseeGroup;
+class ParseeResult;
+class ParseeResultsGroup;
+
 using namespace std;
 
 class Parser {
@@ -26,6 +30,7 @@ private:
     shared_ptr<Statement> matchStatementMetaExternFunction();
     shared_ptr<Statement> matchStatementVariable();
     shared_ptr<Statement> matchStatementFunction();
+    shared_ptr<Statement> matchStatementRawFunction();
 
     shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
     shared_ptr<Statement> matchStatementAssignment();
@@ -38,7 +43,8 @@ private:
     shared_ptr<Expression> matchComparison(); // <, <=, >, >=
     shared_ptr<Expression> matchTerm(); // +, -
     shared_ptr<Expression> matchFactor(); // *, /, %
-    shared_ptr<Expression> matchPrimary(); // integer, ()
+    shared_ptr<Expression> matchUnary(); // +, -
+    shared_ptr<Expression> matchPrimary(); // literal, ()
 
     shared_ptr<Expression> matchExpressionGrouping();
     shared_ptr<Expression> matchExpressionLiteral();
@@ -49,8 +55,10 @@ private:
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
-    shared_ptr<ValueType> matchValueType();
-
+    ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
+    optional<ParseeResult> tokenParseeResult(int index, TokenKind tokenKind);
+    optional<ParseeResult> valueTypeParseeResult(int index);
+    optional<ParseeResult> expressionParseeResult(int index);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
     void markError(optional<TokenKind> expectedTokenKind, optional<string> message);

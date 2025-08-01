@@ -4,21 +4,30 @@ vector<TokenKind> Token::tokensEquality = {
     TokenKind::EQUAL,
     TokenKind::NOT_EQUAL
 };
+
 vector<TokenKind> Token::tokensComparison = {
     TokenKind::LESS,
     TokenKind::LESS_EQUAL,
     TokenKind::GREATER,
     TokenKind::GREATER_EQUAL
 };
+
 vector<TokenKind> Token::tokensTerm = {
     TokenKind::PLUS,
     TokenKind::MINUS
 };
+
 vector<TokenKind> Token::tokensFactor = {
     TokenKind::STAR,
     TokenKind::SLASH,
     TokenKind::PERCENT
 };
+
+vector<TokenKind> Token::tokensUnary = {
+    TokenKind::PLUS,
+    TokenKind::MINUS
+};
+
 vector<TokenKind> Token::tokensBinary = {
     TokenKind::EQUAL,
     TokenKind::NOT_EQUAL,
@@ -35,6 +44,7 @@ vector<TokenKind> Token::tokensBinary = {
     TokenKind::SLASH,
     TokenKind::PERCENT
 };
+
 vector<TokenKind> Token::tokensLiteral = {
     TokenKind::BOOL,
     TokenKind::INTEGER_DEC,

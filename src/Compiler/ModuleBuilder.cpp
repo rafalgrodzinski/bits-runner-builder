@@ -11,9 +11,11 @@
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -31,14 +33,23 @@ moduleName(moduleName), sourceFileName(sourceFileName), statements(statements) {
 
     typeVoid = llvm::Type::getVoidTy(*context);
     typeBool = llvm::Type::getInt1Ty(*context);
-    typeSint32 = llvm::Type::getInt32Ty(*context);
-    typeReal32 = llvm::Type::getFloatTy(*context);
+    typeU8 = llvm::Type::getInt8Ty(*context);
+    typeU32 = llvm::Type::getInt32Ty(*context);
+    typeS8 = llvm::Type::getInt8Ty(*context);
+    typeS32 = llvm::Type::getInt32Ty(*context);
+    typeR32 = llvm::Type::getFloatTy(*context);
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     scopes.push(Scope());
     for (shared_ptr<Statement> &statement : statements)
         buildStatement(statement);
+
+    // verify module
+    string errorMessage;
+    llvm::raw_string_ostream llvmErrorMessage(errorMessage);
+    if (llvm::verifyModule(*module, &llvmErrorMessage))
+        markError(0, 0, errorMessage);
 
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
@@ -52,7 +63,10 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::FUNCTION:
-            buildFunctionDeclaration(dynamic_pointer_cast<StatementFunction>(statement));
+            buildFunction(dynamic_pointer_cast<StatementFunction>(statement));
+            break;
+        case StatementKind::RAW_FUNCTION:
+            buildRawFunction(dynamic_pointer_cast<StatementRawFunction>(statement));
             break;
         case StatementKind::VARIABLE:
             buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
@@ -80,15 +94,21 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     }
 }
 
-void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> statement) {
-    // get argument types
-    vector<llvm::Type *> types;
+void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
+    // function types
+    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
+    if (returnType == nullptr)
+        return;
+    vector<llvm::Type *> argTypes;
     for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
-        types.push_back(typeForValueType(arg.second));
+        llvm::Type *argType = typeForValueType(arg.second);
+        if (argType == nullptr)
+            return;
+        argTypes.push_back(argType);
     }
 
     // build function declaration
-    llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), types, false);
+    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
     if (!setFun(statement->getName(), fun))
         return;
@@ -103,7 +123,7 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
     int i=0;
     for (auto &arg : fun->args()) {
         string name = statement->getArguments()[i].first;
-        llvm::Type *type = types[i];
+        llvm::Type *type = argTypes[i];
         arg.setName(name);
 
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, name);
@@ -126,6 +146,20 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunction> state
         markError(0, 0, errorMessage);
 }
 
+void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
+    // function types
+    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
+    vector<llvm::Type *> argTypes;
+    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments())
+        argTypes.push_back(typeForValueType(arg.second));
+
+    // build function declaration & body
+    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
+    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
+    if (!setRawFun(statement->getName(), rawFun))
+        return;
+}
+
 void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement) {
     if (statement->getValueType()->getKind() == ValueTypeKind::DATA) {
         vector<llvm::Value *> values = valuesForExpression(statement->getExpression());
@@ -145,6 +179,8 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
         }
     } else {
         llvm::Value *value = valueForExpression(statement->getExpression());
+        if (value == nullptr)
+            return;
         llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType(), 0), nullptr, statement->getName());
 
         if (!setAlloca(statement->getName(), alloca))
@@ -244,7 +280,10 @@ void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFuncti
     }
 
     // build function declaration
-    llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), types, false);
+    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
+    if (returnType == nullptr)
+        return;
+    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, types, false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
     if (!setFun(statement->getName(), fun))
         return;
@@ -270,6 +309,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case ExpressionKind::BINARY:
             return valueForBinary(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case ExpressionKind::UNARY:
+            return valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VAR:
@@ -301,10 +342,16 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
             return llvm::UndefValue::get(typeVoid);
         case ValueTypeKind::BOOL:
             return llvm::ConstantInt::get(typeBool, expression->getBoolValue(), true);
-        case ValueTypeKind::SINT32:
-            return llvm::ConstantInt::get(typeSint32, expression->getSint32Value(), true);
-        case ValueTypeKind::REAL32:
-            return llvm::ConstantInt::get(typeReal32, expression->getReal32Value(), true);
+        case ValueTypeKind::U8:
+            return llvm::ConstantInt::get(typeU8, expression->getU8Value(), true);
+        case ValueTypeKind::U32:
+            return llvm::ConstantInt::get(typeU32, expression->getU32Value(), true);
+        case ValueTypeKind::S8:
+            return llvm::ConstantInt::get(typeS8, expression->getS8Value(), true);
+        case ValueTypeKind::S32:
+            return llvm::ConstantInt::get(typeS32, expression->getS32Value(), true);
+        case ValueTypeKind::R32:
+            return llvm::ConstantFP::get(typeR32, expression->getR32Value());
     }
 }
 
@@ -331,9 +378,11 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
 
     if (type == typeBool) {
         return valueForBinaryBool(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeSint32 || type == typeVoid) {
-        return valueForBinaryInteger(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeReal32) {
+    } else if (type == typeU8 || type == typeU32) {
+        return valueForBinaryUnsignedInteger(expression->getOperation(), leftValue, rightValue);
+    } else if (type == typeS8 || type == typeS32) {
+        return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
+    } else if (type == typeR32) {
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
     }
 
@@ -348,35 +397,62 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operati
     case ExpressionBinaryOperation::NOT_EQUAL:
         return builder->CreateICmpNE(leftValue, rightValue);
     default:
-        markError(0, 0, "Unexpecgted operation for boolean operands");
+        markError(0, 0, "Unexpected operation for boolean operands");
         return nullptr;
     }
 }
 
-llvm::Value *ModuleBuilder::valueForBinaryInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+llvm::Value *ModuleBuilder::valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
-    case ExpressionBinaryOperation::EQUAL:
-        return builder->CreateICmpEQ(leftValue, rightValue);
-    case ExpressionBinaryOperation::NOT_EQUAL:
-        return builder->CreateICmpNE(leftValue, rightValue);
-    case ExpressionBinaryOperation::LESS:
-        return builder->CreateICmpSLT(leftValue, rightValue);
-    case ExpressionBinaryOperation::LESS_EQUAL:
-        return builder->CreateICmpSLE(leftValue, rightValue);
-    case ExpressionBinaryOperation::GREATER:
-        return builder->CreateICmpSGT(leftValue, rightValue);
-    case ExpressionBinaryOperation::GREATER_EQUAL:
-        return builder->CreateICmpSGE(leftValue, rightValue);
-    case ExpressionBinaryOperation::ADD:
-        return builder->CreateNSWAdd(leftValue, rightValue);
-    case ExpressionBinaryOperation::SUB:
-        return builder->CreateNSWSub(leftValue, rightValue);
-    case ExpressionBinaryOperation::MUL:
-        return builder->CreateNSWMul(leftValue, rightValue);
-    case ExpressionBinaryOperation::DIV:
-        return builder->CreateSDiv(leftValue, rightValue);
-    case ExpressionBinaryOperation::MOD:
-        return builder->CreateSRem(leftValue, rightValue);
+        case ExpressionBinaryOperation::EQUAL:
+            return builder->CreateICmpEQ(leftValue, rightValue);
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return builder->CreateICmpNE(leftValue, rightValue);
+        case ExpressionBinaryOperation::LESS:
+            return builder->CreateICmpSLT(leftValue, rightValue);
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return builder->CreateICmpSLE(leftValue, rightValue);
+        case ExpressionBinaryOperation::GREATER:
+            return builder->CreateICmpSGT(leftValue, rightValue);
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return builder->CreateICmpSGE(leftValue, rightValue);
+        case ExpressionBinaryOperation::ADD:
+            return builder->CreateNUWAdd(leftValue, rightValue);
+        case ExpressionBinaryOperation::SUB:
+            return builder->CreateNUWSub(leftValue, rightValue);
+        case ExpressionBinaryOperation::MUL:
+            return builder->CreateNUWMul(leftValue, rightValue);
+        case ExpressionBinaryOperation::DIV:
+            return builder->CreateUDiv(leftValue, rightValue);
+        case ExpressionBinaryOperation::MOD:
+            return builder->CreateURem(leftValue, rightValue);
+    }
+}
+
+llvm::Value *ModuleBuilder::valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+    switch (operation) {
+        case ExpressionBinaryOperation::EQUAL:
+            return builder->CreateICmpEQ(leftValue, rightValue);
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return builder->CreateICmpNE(leftValue, rightValue);
+        case ExpressionBinaryOperation::LESS:
+            return builder->CreateICmpSLT(leftValue, rightValue);
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return builder->CreateICmpSLE(leftValue, rightValue);
+        case ExpressionBinaryOperation::GREATER:
+            return builder->CreateICmpSGT(leftValue, rightValue);
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return builder->CreateICmpSGE(leftValue, rightValue);
+        case ExpressionBinaryOperation::ADD:
+            return builder->CreateNSWAdd(leftValue, rightValue);
+        case ExpressionBinaryOperation::SUB:
+            return builder->CreateNSWSub(leftValue, rightValue);
+        case ExpressionBinaryOperation::MUL:
+            return builder->CreateNSWMul(leftValue, rightValue);
+        case ExpressionBinaryOperation::DIV:
+            return builder->CreateSDiv(leftValue, rightValue);
+        case ExpressionBinaryOperation::MOD:
+            return builder->CreateSRem(leftValue, rightValue);
     }
 }
 
@@ -405,6 +481,26 @@ llvm::Value *ModuleBuilder::valueForBinaryReal(ExpressionBinaryOperation operati
     case ExpressionBinaryOperation::MOD:
         return builder->CreateSRem(leftValue, rightValue);
     }
+}
+
+llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression) {
+    llvm::Value *value = valueForExpression(expression->getExpression());
+    llvm::Type *type = value->getType();
+
+    // do nothing for plus
+    if (expression->getOperation() == ExpressionUnaryOperation::PLUS)
+        return value;
+
+    if (type == typeU8 || type == typeU32) {
+        return builder->CreateNeg(value);
+    } else if (type == typeS8 || type == typeS32) {
+        return builder->CreateNSWNeg(value);
+    } else if (type == typeR32) {
+        return builder->CreateFNeg(value);
+    }
+
+    markError(0, 0, "Unexpected operation");
+    return nullptr;
 }
 
 llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expression) {
@@ -481,15 +577,28 @@ llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVariable> expressio
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
     llvm::Function *fun = getFun(expression->getName());
-    if (fun == nullptr)
-        return nullptr;
-    llvm::FunctionType *funType = fun->getFunctionType();
-    vector<llvm::Value*> argValues;
-    for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
-        llvm::Value *argValue = valueForExpression(argumentExpression);
-        argValues.push_back(argValue);
+    if (fun != nullptr) {
+        llvm::FunctionType *funType = fun->getFunctionType();
+        vector<llvm::Value*> argValues;
+        for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
+            llvm::Value *argValue = valueForExpression(argumentExpression);
+            argValues.push_back(argValue);
+        }
+        return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
     }
-    return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
+
+    llvm::InlineAsm *rawFun = getRawFun(expression->getName());
+    if (rawFun != nullptr) {
+        vector<llvm::Value *>argValues;
+        for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
+            llvm::Value *argValue = valueForExpression(argumentExpression);
+            argValues.push_back(argValue);
+        }
+        return builder->CreateCall(rawFun, llvm::ArrayRef(argValues));
+    }
+
+    markError(0, 0, format("Function \"{}\" not defined in scope", expression->getName()));
+    return nullptr;
 }
 
 bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
@@ -518,7 +627,7 @@ llvm::AllocaInst* ModuleBuilder::getAlloca(string name) {
 
 bool ModuleBuilder::setFun(string name, llvm::Function *fun) {
     if (scopes.top().funMap[name] != nullptr) {
-        markError(0, 0, format("Function \"{}\" already defined", name));
+        markError(0, 0, format("Function \"{}\" already defined in scope", name));
         return false;
     }
 
@@ -536,27 +645,59 @@ llvm::Function* ModuleBuilder::getFun(string name) {
         scopes.pop();
     }
 
-    markError(0, 0, format("Function \"{}\" not defined in scope", name));
+    return nullptr;
+}
+
+bool ModuleBuilder::setRawFun(string name, llvm::InlineAsm *rawFun) {
+    if (scopes.top().rawFunMap[name] != nullptr) {
+        markError(0, 0, format("Raw function \"{}\" already defined in scope", name));
+        return false;
+    }
+    
+    scopes.top().rawFunMap[name] = rawFun;
+    return true;
+}
+
+llvm::InlineAsm *ModuleBuilder::getRawFun(string name) {
+    stack<Scope> scopes = this->scopes;
+
+    while (!scopes.empty()) {
+        llvm::InlineAsm *rawFun = scopes.top().rawFunMap[name];
+        if (rawFun != nullptr)
+            return rawFun;
+        scopes.pop();
+    }
+
     return nullptr;
 }
 
 llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int count) {
+    if (valueType == nullptr) {
+        markError(0, 0, "Missing type");
+        return nullptr;
+    }
+
     switch (valueType->getKind()) {
         case ValueTypeKind::NONE:
             return typeVoid;
         case ValueTypeKind::BOOL:
             return typeBool;
-        case ValueTypeKind::SINT32:
-            return typeSint32;
-        case ValueTypeKind::REAL32:
-            return typeReal32;
+        case ValueTypeKind::U8:
+            return typeU8;
+        case ValueTypeKind::U32:
+            return typeU32;
+        case ValueTypeKind::S8:
+            return typeS8;
+        case ValueTypeKind::S32:
+            return typeS32;
+        case ValueTypeKind::R32:
+            return typeR32;
         case ValueTypeKind::DATA: {
             if (valueType->getSubType() == nullptr)
                 return nullptr;
             if (valueType->getValueArg() > 0)
                 count = valueType->getValueArg();
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
-            return nullptr;
         }
     }
 }

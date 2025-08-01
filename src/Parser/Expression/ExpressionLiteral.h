@@ -6,16 +6,22 @@
 class ExpressionLiteral: public Expression {
 private:
     bool boolValue;
-    int32_t sint32Value;
-    float real32Value;
+    uint8_t u8Value;
+    uint32_t u32Value;
+    int8_t s8Value;
+    int32_t s32Value;
+    float r32Value;
 
 public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
     
     ExpressionLiteral();
     bool getBoolValue();
-    int32_t getSint32Value();
-    float getReal32Value();
+    uint8_t getU8Value();
+    uint32_t getU32Value();
+    int8_t getS8Value();
+    int32_t getS32Value();
+    float getR32Value();
 };
 
 #endif

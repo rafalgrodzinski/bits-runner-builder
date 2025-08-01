@@ -30,6 +30,8 @@ enum class TokenKind {
     RIGHT_ARROW,
 
     FUNCTION,
+    RAW_FUNCTION,
+    RAW_SOURCE_LINE,
     RETURN,
     REPEAT,
     IF,
@@ -63,6 +65,7 @@ public:
     static vector<TokenKind> tokensComparison;
     static vector<TokenKind> tokensTerm;
     static vector<TokenKind> tokensFactor;
+    static vector<TokenKind> tokensUnary;
     static vector<TokenKind> tokensBinary;
     static vector<TokenKind> tokensLiteral;
 

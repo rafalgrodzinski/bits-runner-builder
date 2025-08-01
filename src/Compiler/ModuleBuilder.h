@@ -10,6 +10,7 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/IR/InlineAsm.h>
 
 class Error;
 class ValueType;
@@ -22,10 +23,12 @@ class ExpressionVariable;
 class ExpressionCall;
 class ExpressionIfElse;
 class ExpressionBinary;
+class ExpressionUnary;
 enum class ExpressionBinaryOperation;
 
 class Statement;
 class StatementFunction;
+class StatementRawFunction;
 class StatementVariable;
 class StatementAssignment;
 class StatementReturn;
@@ -39,6 +42,7 @@ using namespace std;
 typedef struct {
     map<string, llvm::AllocaInst*> allocaMap;
     map<string, llvm::Function*> funMap;
+    map<string, llvm::InlineAsm*> rawFunMap;
 } Scope;
 
 class ModuleBuilder {
@@ -53,14 +57,18 @@ private:
 
     llvm::Type *typeVoid;
     llvm::Type *typeBool;
-    llvm::IntegerType *typeSint32;
-    llvm::Type *typeReal32;
+    llvm::IntegerType *typeU8;
+    llvm::IntegerType *typeU32;
+    llvm::IntegerType *typeS8;
+    llvm::IntegerType *typeS32;
+    llvm::Type *typeR32;
 
     vector<shared_ptr<Statement>> statements;
     stack<Scope> scopes;
 
     void buildStatement(shared_ptr<Statement> statement);
-    void buildFunctionDeclaration(shared_ptr<StatementFunction> statement);
+    void buildFunction(shared_ptr<StatementFunction> statement);
+    void buildRawFunction(shared_ptr<StatementRawFunction> statement);
     void buildVarDeclaration(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
@@ -76,8 +84,10 @@ private:
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
-    llvm::Value *valueForBinaryInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForUnary(shared_ptr<ExpressionUnary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVar(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
@@ -87,6 +97,9 @@ private:
 
     bool setFun(string name, llvm::Function *fun);
     llvm::Function *getFun(string name);
+
+    bool setRawFun(string name, llvm::InlineAsm *rawFun);
+    llvm::InlineAsm *getRawFun(string name);
 
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
 

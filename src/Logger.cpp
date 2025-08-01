@@ -11,6 +11,7 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -19,6 +20,7 @@
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionGrouping.h"
@@ -97,6 +99,10 @@ string Logger::toString(shared_ptr<Token> token) {
             return "ELSE";
         case TokenKind::FUNCTION:
             return "FUN";
+        case TokenKind::RAW_FUNCTION:
+            return "RAW";
+        case TokenKind::RAW_SOURCE_LINE:
+            return format("RAW_SOURCE_LINE({})", token->getLexme());
         case TokenKind::RETURN:
             return "RET";
         case TokenKind::REPEAT:
@@ -179,6 +185,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "ELSE";
         case TokenKind::FUNCTION:
             return "FUN";
+        case TokenKind::RAW_FUNCTION:
+            return "RAW";
         case TokenKind::RETURN:
             return "RET";
         case TokenKind::REPEAT:
@@ -195,15 +203,24 @@ string Logger::toString(TokenKind tokenKind) {
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {
+    if (valueType == nullptr)
+        return "{INVALID}";
+
     switch (valueType->getKind()) {
         case ValueTypeKind::NONE:
             return "NONE";
         case ValueTypeKind::BOOL:
             return "BOOL";
-        case ValueTypeKind::SINT32:
-            return "SINT32";
-        case ValueTypeKind::REAL32:
-            return "REAL32";
+        case ValueTypeKind::U8:
+            return "U8";
+        case ValueTypeKind::U32:
+            return "U32";
+        case ValueTypeKind::S8:
+            return "S8";
+        case ValueTypeKind::S32:
+            return "S32";
+        case ValueTypeKind::R32:
+            return "R32";
         case ValueTypeKind::DATA:
             return "[]";
     }
@@ -217,6 +234,8 @@ string Logger::toString(shared_ptr<Statement> statement) {
             return toString(dynamic_pointer_cast<StatementVariable>(statement));
         case StatementKind::FUNCTION:
             return toString(dynamic_pointer_cast<StatementFunction>(statement));
+        case StatementKind::RAW_FUNCTION:
+            return toString(dynamic_pointer_cast<StatementRawFunction>(statement));
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement));
         case StatementKind::ASSIGNMENT:
@@ -258,6 +277,21 @@ string Logger::toString(shared_ptr<StatementFunction> statement) {
     }
     text += format("FUN(\"{}\"|{}|{}):\n", statement->getName(), argsString, toString(statement->getReturnValueType()));
     text += toString(statement->getStatementBlock());
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementRawFunction> statement) {
+    string text;
+
+    string argsString;
+    for (int i = 0; i < statement->getArguments().size(); i++) {
+        auto arg = statement->getArguments().at(i);
+        argsString +=  format("ARG({}, {})", arg.first, toString(arg.second));
+    }
+    text += format("RAW(\"{}\"|{}|{}):\n", statement->getName(), argsString, toString(statement->getReturnValueType()));
+
+    text += statement->getRawSource();
 
     return text;
 }
@@ -314,7 +348,9 @@ string Logger::toString(shared_ptr<StatementExpression> statement) {
 string Logger::toString(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
-            return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
+        return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case ExpressionKind::UNARY:
+            return toString(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return toString(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VAR:
@@ -361,6 +397,17 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
     }
 }
 
+string Logger::toString(shared_ptr<ExpressionUnary> expression) {
+    switch (expression->getOperation()) {
+        case ExpressionUnaryOperation::PLUS:
+            return "+" + toString(expression->getExpression());
+        case ExpressionUnaryOperation::MINUS:
+            return "-" + toString(expression->getExpression());
+        case ExpressionUnaryOperation::INVALID:
+            return "{INVALID}";
+    }
+}
+
 string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
     string text;
 
@@ -396,10 +443,16 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
             return "NONE";
         case ValueTypeKind::BOOL:
             return expression->getBoolValue() ? "true" : "false";
-        case ValueTypeKind::SINT32:
-            return to_string(expression->getSint32Value());
-        case ValueTypeKind::REAL32:
-            return to_string(expression->getReal32Value());
+        case ValueTypeKind::U8:
+            return to_string(expression->getU8Value());
+        case ValueTypeKind::U32:
+            return to_string(expression->getU32Value());
+        case ValueTypeKind::S8:
+            return to_string(expression->getS8Value());
+        case ValueTypeKind::S32:
+            return to_string(expression->getS32Value());
+        case ValueTypeKind::R32:
+            return to_string(expression->getR32Value());
         default:
             return "?";
     }
@@ -458,7 +511,7 @@ void Logger::print(shared_ptr<Error> error) {
     switch (error->getKind()) {
         case ErrorKind::LEXER_ERROR: {
             string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("Unexpected token \"{}\" at line: {}, column: {}", lexme, error->getLine() + 1, error->getColumn() + 1);
+            message = format("At line {}, column {}: Unexpected token \"{}\"", error->getLine() + 1, error->getColumn() + 1, lexme);
             break;
         }
         case ErrorKind::PARSER_ERROR: {
@@ -468,13 +521,13 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedTokenKind) {
                 message = format(
-                    "Expected token {} but instead found \"{}\" at line: {}, column: {}",
-                    toString(*expectedTokenKind), token->getLexme(), token->getLine() + 1, token->getColumn() + 1
+                    "At line {}, column {}: Expected token {} but found {} instead",
+                    token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
                 );
             } else {
                 message = format(
-                    "Unexpected token \"{}\" found at line: {}, column: {}",
-                    token->getLexme(), token->getLine() + 1, token->getColumn() + 1
+                    "At line {}, column {}: Unexpected token \"{}\" found",
+                    token->getLine() + 1, token->getColumn() + 1, toString(token)
                 );
             }
             if (errorMessage)
@@ -483,7 +536,7 @@ void Logger::print(shared_ptr<Error> error) {
         }
         case ErrorKind::BUILDER_ERROR: {
             string errorMessage = error->getMessage() ? *(error->getMessage()) : "";
-            message = format("Error at line {}, column {}: {}", error->getLine(), error->getColumn(), errorMessage);
+            message = format("At line {}, column {}: {}", error->getLine(), error->getColumn(), errorMessage);
             break;
         }
     }

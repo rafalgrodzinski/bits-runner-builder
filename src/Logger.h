@@ -11,6 +11,7 @@ class Statement;
 class StatementMetaExternFunction;
 class StatementVariable;
 class StatementFunction;
+class StatementRawFunction;
 class StatementBlock;
 class StatementAssignment;
 class StatementReturn;
@@ -19,6 +20,7 @@ class StatementExpression;
 
 class Expression;
 class ExpressionBinary;
+class ExpressionUnary;
 class ExpressionIfElse;
 class ExpressionVariable;
 class ExpressionGrouping;
@@ -41,6 +43,7 @@ private:
     static string toString(shared_ptr<StatementMetaExternFunction> statement);
     static string toString(shared_ptr<StatementVariable> statement);
     static string toString(shared_ptr<StatementFunction> statement);
+    static string toString(shared_ptr<StatementRawFunction> statement);
     static string toString(shared_ptr<StatementBlock> statement);
     static string toString(shared_ptr<StatementAssignment> statement);
     static string toString(shared_ptr<StatementReturn> statement);
@@ -49,6 +52,7 @@ private:
 
     static string toString(shared_ptr<Expression> expression);
     static string toString(shared_ptr<ExpressionBinary> expression);
+    static string toString(shared_ptr<ExpressionUnary> expression);
     static string toString(shared_ptr<ExpressionIfElse> expression);
     static string toString(shared_ptr<ExpressionVariable> expression);
     static string toString(shared_ptr<ExpressionGrouping> expression);

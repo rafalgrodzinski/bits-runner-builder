@@ -1,3 +1,8 @@
+# ingnore files without extension
+*
+!*.*
+!*/
+
 .DS_Store
 .vscode/settings.json
 
@@ -7,3 +12,4 @@ build/
 
 # brb build artifiacts
 *.o
+*.asm

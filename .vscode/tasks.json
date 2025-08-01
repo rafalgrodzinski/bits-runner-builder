@@ -3,12 +3,17 @@
     "tasks": [
         {
             "label": "Build Bits Runner Builder (Debug)",
-            "type": "cmake",
-            "command": "build",
+            "type": "shell",
+            "command": "cmake -B build && cmake --build build --config Debug",
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "rm -rf build *.o *.asm; find ./ -perm +100 -type f -maxdepth 1 -delete"
         }
     ]
 }
