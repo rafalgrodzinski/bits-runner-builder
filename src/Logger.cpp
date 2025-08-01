@@ -203,6 +203,9 @@ string Logger::toString(TokenKind tokenKind) {
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {
+    if (valueType == nullptr)
+        return "{INVALID}";
+
     switch (valueType->getKind()) {
         case ValueTypeKind::NONE:
             return "NONE";

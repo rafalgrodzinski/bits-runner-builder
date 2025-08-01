@@ -97,9 +97,15 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
 void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     // function types
     llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
+    if (returnType == nullptr)
+        return;
     vector<llvm::Type *> argTypes;
-    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments())
-        argTypes.push_back(typeForValueType(arg.second));
+    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
+        llvm::Type *argType = typeForValueType(arg.second);
+        if (argType == nullptr)
+            return;
+        argTypes.push_back(argType);
+    }
 
     // build function declaration
     llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
@@ -274,7 +280,10 @@ void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFuncti
     }
 
     // build function declaration
-    llvm::FunctionType *funType = llvm::FunctionType::get(typeForValueType(statement->getReturnValueType()), types, false);
+    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
+    if (returnType == nullptr)
+        return;
+    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, types, false);
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
     if (!setFun(statement->getName(), fun))
         return;
@@ -663,6 +672,11 @@ llvm::InlineAsm *ModuleBuilder::getRawFun(string name) {
 }
 
 llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int count) {
+    if (valueType == nullptr) {
+        markError(0, 0, "Missing type");
+        return nullptr;
+    }
+
     switch (valueType->getKind()) {
         case ValueTypeKind::NONE:
             return typeVoid;
@@ -684,7 +698,6 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             if (valueType->getValueArg() > 0)
                 count = valueType->getValueArg();
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
-            return nullptr;
         }
     }
 }
