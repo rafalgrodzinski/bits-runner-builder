@@ -492,7 +492,43 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 }
 
 shared_ptr<Statement> Parser::matchStatementType() {
-    return nullptr;
+    ParseeResultsGroup resultsGroup;
+
+    string identifier;
+    vector<pair<string, shared_ptr<ValueType>>> variables;
+
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+                Parsee::tokenParsee(TokenKind::TYPE, true, false)
+            },
+            ParseeGroup(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
+                    Parsee::valueTypeParsee(true)
+                },
+                {}
+            )
+        )
+    );
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS:
+            identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
+                for (int i=1; i<resultsGroup.getResults().size(); i+=2) {
+                    pair<string, shared_ptr<ValueType>> arg;
+                    arg.first = resultsGroup.getResults().at(i).getToken()->getLexme();
+                    arg.second = resultsGroup.getResults().at(i+1).getValueType();
+                    variables.push_back(arg);
+                }
+        case ParseeResultsGroupKind::NO_MATCH:
+        case ParseeResultsGroupKind::FAILURE:
+            return nullptr;
+            break;
+    }
+
+    return make_shared<StatementType>(identifier, variables);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {

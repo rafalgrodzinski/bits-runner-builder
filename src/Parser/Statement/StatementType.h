@@ -4,16 +4,17 @@
 #include "Statement.h"
 
 class StatementVariable;
+class ValueType;
 
 class StatementType: public Statement {
 private:
     string identifier;
-    vector<shared_ptr<StatementVariable>> statementVariables;
+    vector<pair<string, shared_ptr<ValueType>>> variables;
 
 public:
-    StatementType(string identifier, vector<shared_ptr<StatementVariable>> statementVariables);
+    StatementType(string identifier, vector<pair<string, shared_ptr<ValueType>>> variables);
     string getIdentifier();
-    vector<shared_ptr<StatementVariable>> getStatementVariables();
+    vector<pair<string, shared_ptr<ValueType>>> getVariables();
 };
 
 #endif

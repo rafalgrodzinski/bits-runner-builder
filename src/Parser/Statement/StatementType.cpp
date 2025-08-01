@@ -1,12 +1,14 @@
 #include "StatementType.h"
 
-StatementType::StatementType(string identifier, vector<shared_ptr<StatementVariable>> statementVariable):
-Statement(StatementKind::TYPE), identifier(identifier), statementVariables(statementVariable) { }
+#include "Parser/ValueType.h"
+
+StatementType::StatementType(string identifier, vector<pair<string, shared_ptr<ValueType>>> variables):
+Statement(StatementKind::TYPE), identifier(identifier), variables(variables) { }
 
 string StatementType::getIdentifier() {
     return identifier;
 }
 
-vector<shared_ptr<StatementVariable>> StatementType::getStatementVariables() {
-    return statementVariables;
+vector<pair<string, shared_ptr<ValueType>>> StatementType::getVariables() {
+    return variables;
 }
