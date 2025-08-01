@@ -44,10 +44,11 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             expression->u32Value = *charValue;
             return expression;
         }
-        case TokenKind::REAL:
+        case TokenKind::REAL: {
             expression->r32Value = stof(token->getLexme());
             expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
             break;
+        }
         default:
             return nullptr;
     }
@@ -63,15 +64,15 @@ bool ExpressionLiteral::getBoolValue() {
 }
 
 uint8_t ExpressionLiteral::getU8Value() {
-    return s32Value;
+    return u8Value;
 }
 
 uint32_t ExpressionLiteral::getU32Value() {
-    return s32Value;
+    return u32Value;
 }
 
 int8_t ExpressionLiteral::getS8Value() {
-    return s32Value;
+    return s8Value;
 }
 
 int32_t ExpressionLiteral::getS32Value() {

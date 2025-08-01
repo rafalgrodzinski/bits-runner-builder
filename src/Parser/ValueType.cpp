@@ -37,6 +37,7 @@ shared_ptr<ValueType> ValueType::valueTypeForToken(shared_ptr<Token> token, shar
         case TokenKind::BOOL:
             return make_shared<ValueType>(ValueTypeKind::BOOL, nullptr, 0);
         case TokenKind::INTEGER_DEC:
+            return make_shared<ValueType>(ValueTypeKind::S32, nullptr, 0);
         case TokenKind::INTEGER_HEX:
         case TokenKind::INTEGER_BIN:
         case TokenKind::INTEGER_CHAR:

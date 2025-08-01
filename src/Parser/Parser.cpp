@@ -756,8 +756,8 @@ shared_ptr<Expression> Parser::matchPrimary() {
         return expression;
 
     expression = matchExpressionArrayLiteral();
-        if (expression != nullptr || errors.size() > errorsCount)
-            return expression;
+    if (expression != nullptr || errors.size() > errorsCount)
+        return expression;
 
     expression = matchExpressionLiteral();
     if (expression != nullptr || errors.size() > errorsCount)

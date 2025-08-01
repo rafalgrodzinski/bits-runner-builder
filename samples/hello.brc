@@ -1,9 +1,9 @@
-@extern putchar fun: character sint32 -> sint32
+@extern putchar fun: character u32 -> u32
 
-main fun -> sint32
-    text data<sint32> <- "Hello, world!\n"
+main fun -> u32
+    text data<u32> <- "Hello, world!\n"
     
-    rep i sint32 <- 0, text[i] != 0:
+    rep i u32 <- 0, text[i] != 0:
         putchar(text[i])
         i <- i + 1
     ;
