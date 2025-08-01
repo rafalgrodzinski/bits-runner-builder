@@ -18,6 +18,7 @@
 
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementType.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -77,6 +78,10 @@ shared_ptr<Statement> Parser::nextStatement() {
         return statement;
 
     statement = matchStatementMetaExternFunction();
+    if (statement != nullptr || errors.size() > errorsCount)
+        return statement;
+
+    statement = matchStatementType();
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
@@ -484,6 +489,10 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     }
 
     return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource);
+}
+
+shared_ptr<Statement> Parser::matchStatementType() {
+    return nullptr;
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {

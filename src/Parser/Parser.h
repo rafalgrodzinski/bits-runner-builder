@@ -31,6 +31,7 @@ private:
     shared_ptr<Statement> matchStatementVariable();
     shared_ptr<Statement> matchStatementFunction();
     shared_ptr<Statement> matchStatementRawFunction();
+    shared_ptr<Statement> matchStatementType();
 
     shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
     shared_ptr<Statement> matchStatementAssignment();
