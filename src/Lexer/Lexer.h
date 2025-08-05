@@ -22,11 +22,11 @@ private:
 
     shared_ptr<Token> nextToken();
     shared_ptr<Token> match(TokenKind kind, string lexme, bool needsSeparator);
+    shared_ptr<Token> matchReal();
     shared_ptr<Token> matchIntegerDec();
     shared_ptr<Token> matchIntegerHex();
     shared_ptr<Token> matchIntegerBin();
     shared_ptr<Token> matchIntegerChar();
-    shared_ptr<Token> matchReal();
     shared_ptr<Token> matchString();
     shared_ptr<Token> matchType();
     shared_ptr<Token> matchIdentifier();

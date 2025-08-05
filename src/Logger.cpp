@@ -94,20 +94,22 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::TYPE:
             return "TYPE(" + token->getLexme() + ")";
 
-        case TokenKind::IF:
-            return "IF";
-        case TokenKind::ELSE:
-            return "ELSE";
         case TokenKind::FUNCTION:
             return "FUN";
         case TokenKind::RAW_FUNCTION:
             return "RAW";
         case TokenKind::RAW_SOURCE_LINE:
             return format("RAW_SOURCE_LINE({})", token->getLexme());
+        case TokenKind::BLOB:
+            return "BLOB";
         case TokenKind::RETURN:
             return "RET";
         case TokenKind::REPEAT:
             return "REP";
+        case TokenKind::IF:
+            return "IF";
+        case TokenKind::ELSE:
+            return "ELSE";
 
         case TokenKind::M_EXTERN:
             return "@EXTERN";

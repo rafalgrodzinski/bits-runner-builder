@@ -208,14 +208,6 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // keywords
-    token = match(TokenKind::IF, "if", true);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::ELSE, "else", true);
-    if (token != nullptr)
-        return token;
-
     token = match(TokenKind::FUNCTION, "fun", true);
     if (token != nullptr)
         return token;
@@ -225,12 +217,24 @@ shared_ptr<Token> Lexer::nextToken() {
         foundRawSourceStart = true;
         return token;
     }
+
+    token = match(TokenKind::BLOB, "blob", true);
+    if (token != nullptr)
+        return token;
     
     token = match(TokenKind::RETURN, "ret", true);
     if (token != nullptr)
         return token;
 
     token = match(TokenKind::REPEAT, "rep", true);
+    if (token != nullptr)
+        return token;
+
+     token = match(TokenKind::IF, "if", true);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::ELSE, "else", true);
     if (token != nullptr)
         return token;
     
@@ -309,6 +313,31 @@ shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator
         return nullptr;
 
     shared_ptr<Token> token = make_shared<Token>(kind, lexme, currentLine, currentColumn);
+    advanceWithToken(token);
+    return token;
+}
+
+shared_ptr<Token> Lexer::matchReal() {
+    int nextIndex = currentIndex;
+
+    while (nextIndex < source.length() && isDecDigit(nextIndex))
+        nextIndex++;
+    
+    if (nextIndex >= source.length() || source.at(nextIndex) != '.')
+        return nullptr;
+    else
+        nextIndex++;
+    
+    while (nextIndex < source.length() && isDecDigit(nextIndex))
+        nextIndex++;
+
+    if (!isSeparator(nextIndex)) {
+        markError();
+        return nullptr;
+    }
+
+    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::REAL, lexme, currentLine, currentColumn);
     advanceWithToken(token);
     return token;
 }
@@ -395,31 +424,6 @@ shared_ptr<Token> Lexer::matchIntegerChar() {
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex + 1);
     shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_CHAR, lexme, currentLine, currentColumn);
-    advanceWithToken(token);
-    return token;
-}
-
-shared_ptr<Token> Lexer::matchReal() {
-    int nextIndex = currentIndex;
-
-    while (nextIndex < source.length() && isDecDigit(nextIndex))
-        nextIndex++;
-    
-    if (nextIndex >= source.length() || source.at(nextIndex) != '.')
-        return nullptr;
-    else
-        nextIndex++;
-    
-    while (nextIndex < source.length() && isDecDigit(nextIndex))
-        nextIndex++;
-
-    if (!isSeparator(nextIndex)) {
-        markError();
-        return nullptr;
-    }
-
-    string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::REAL, lexme, currentLine, currentColumn);
     advanceWithToken(token);
     return token;
 }
