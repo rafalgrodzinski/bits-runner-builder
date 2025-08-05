@@ -3,16 +3,15 @@
 
 #include "Statement.h"
 
-class StatementVariable;
 class ValueType;
 
-class StatementType: public Statement {
+class StatementBlob: public Statement {
 private:
     string identifier;
     vector<pair<string, shared_ptr<ValueType>>> variables;
 
 public:
-    StatementType(string identifier, vector<pair<string, shared_ptr<ValueType>>> variables);
+    StatementBlob(string identifier, vector<pair<string, shared_ptr<ValueType>>> variables);
     string getIdentifier();
     vector<pair<string, shared_ptr<ValueType>>> getVariables();
 };

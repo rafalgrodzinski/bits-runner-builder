@@ -16,7 +16,7 @@
 
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
-#include "Parser/Statement/StatementType.h"
+#include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -69,8 +69,8 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         case StatementKind::RAW_FUNCTION:
             buildRawFunction(dynamic_pointer_cast<StatementRawFunction>(statement));
             break;
-        case StatementKind::TYPE:
-            buildType(dynamic_pointer_cast<StatementType>(statement));
+        case StatementKind::BLOB:
+            buildType(dynamic_pointer_cast<StatementBlob>(statement));
             break;
         case StatementKind::VARIABLE:
             buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
@@ -164,7 +164,7 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
         return;
 }
 
-void ModuleBuilder::buildType(shared_ptr<StatementType> statement) {
+void ModuleBuilder::buildType(shared_ptr<StatementBlob> statement) {
     llvm::StructType *structType = llvm::StructType::create(*context, statement->getIdentifier());
     vector<llvm::Type *> elements;
     structType->setBody(elements, false);

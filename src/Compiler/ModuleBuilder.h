@@ -29,7 +29,7 @@ enum class ExpressionBinaryOperation;
 class Statement;
 class StatementFunction;
 class StatementRawFunction;
-class StatementType;
+class StatementBlob;
 class StatementVariable;
 class StatementAssignment;
 class StatementReturn;
@@ -71,7 +71,7 @@ private:
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
-    void buildType(shared_ptr<StatementType> statement);
+    void buildType(shared_ptr<StatementBlob> statement);
     void buildVarDeclaration(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);

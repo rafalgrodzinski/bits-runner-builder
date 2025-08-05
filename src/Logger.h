@@ -12,7 +12,7 @@ class StatementMetaExternFunction;
 class StatementVariable;
 class StatementFunction;
 class StatementRawFunction;
-class StatementType;
+class StatementBlob;
 class StatementBlock;
 class StatementAssignment;
 class StatementReturn;
@@ -45,7 +45,7 @@ private:
     static string toString(shared_ptr<StatementVariable> statement);
     static string toString(shared_ptr<StatementFunction> statement);
     static string toString(shared_ptr<StatementRawFunction> statement);
-    static string toString(shared_ptr<StatementType> statement);
+    static string toString(shared_ptr<StatementBlob> statement);
     static string toString(shared_ptr<StatementBlock> statement);
     static string toString(shared_ptr<StatementAssignment> statement);
     static string toString(shared_ptr<StatementReturn> statement);

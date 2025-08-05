@@ -12,7 +12,7 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
-#include "Parser/Statement/StatementType.h"
+#include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -241,8 +241,8 @@ string Logger::toString(shared_ptr<Statement> statement) {
             return toString(dynamic_pointer_cast<StatementFunction>(statement));
         case StatementKind::RAW_FUNCTION:
             return toString(dynamic_pointer_cast<StatementRawFunction>(statement));
-        case StatementKind::TYPE:
-            return toString(dynamic_pointer_cast<StatementType>(statement));
+        case StatementKind::BLOB:
+            return toString(dynamic_pointer_cast<StatementBlob>(statement));
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement));
         case StatementKind::ASSIGNMENT:
@@ -303,10 +303,10 @@ string Logger::toString(shared_ptr<StatementRawFunction> statement) {
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementType> statement) {
+string Logger::toString(shared_ptr<StatementBlob> statement) {
     string text;
 
-    text += format("TYPE(\"{}\"):\n", statement->getIdentifier());
+    text += format("BLOB(\"{}\"):\n", statement->getIdentifier());
 
     return text;
 }
