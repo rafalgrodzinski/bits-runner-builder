@@ -29,6 +29,7 @@ enum class ExpressionBinaryOperation;
 class Statement;
 class StatementFunction;
 class StatementRawFunction;
+class StatementType;
 class StatementVariable;
 class StatementAssignment;
 class StatementReturn;
@@ -43,6 +44,7 @@ typedef struct {
     map<string, llvm::AllocaInst*> allocaMap;
     map<string, llvm::Function*> funMap;
     map<string, llvm::InlineAsm*> rawFunMap;
+    map<string, llvm::StructType*> structTypeMap;
 } Scope;
 
 class ModuleBuilder {
@@ -69,6 +71,7 @@ private:
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
+    void buildType(shared_ptr<StatementType> statement);
     void buildVarDeclaration(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
@@ -100,6 +103,9 @@ private:
 
     bool setRawFun(string name, llvm::InlineAsm *rawFun);
     llvm::InlineAsm *getRawFun(string name);
+
+    bool setStruct(string name, llvm::StructType *structType);
+    llvm::StructType *getStructType(string name);
 
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
 

@@ -12,6 +12,7 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementType.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -223,6 +224,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "R32";
         case ValueTypeKind::DATA:
             return "[]";
+        case ValueTypeKind::TYPE:
+            return format("TYPE({})", valueType->getTypeName());
     }
 }
 
@@ -236,6 +239,8 @@ string Logger::toString(shared_ptr<Statement> statement) {
             return toString(dynamic_pointer_cast<StatementFunction>(statement));
         case StatementKind::RAW_FUNCTION:
             return toString(dynamic_pointer_cast<StatementRawFunction>(statement));
+        case StatementKind::TYPE:
+            return toString(dynamic_pointer_cast<StatementType>(statement));
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement));
         case StatementKind::ASSIGNMENT:
@@ -292,6 +297,14 @@ string Logger::toString(shared_ptr<StatementRawFunction> statement) {
     text += format("RAW(\"{}\"|{}|{}):\n", statement->getName(), argsString, toString(statement->getReturnValueType()));
 
     text += statement->getRawSource();
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementType> statement) {
+    string text;
+
+    text += format("TYPE(\"{}\"):\n", statement->getIdentifier());
 
     return text;
 }

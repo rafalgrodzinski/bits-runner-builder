@@ -1,8 +1,8 @@
-User type
+User pack
 ;
 
 main fun -> u32
-    //user User
+    user User <- 0
 
     ret 0
 ;

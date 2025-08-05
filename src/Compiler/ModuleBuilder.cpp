@@ -16,6 +16,7 @@
 
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementType.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -67,6 +68,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             break;
         case StatementKind::RAW_FUNCTION:
             buildRawFunction(dynamic_pointer_cast<StatementRawFunction>(statement));
+            break;
+        case StatementKind::TYPE:
+            buildType(dynamic_pointer_cast<StatementType>(statement));
             break;
         case StatementKind::VARIABLE:
             buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
@@ -160,6 +164,14 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
         return;
 }
 
+void ModuleBuilder::buildType(shared_ptr<StatementType> statement) {
+    llvm::StructType *structType = llvm::StructType::create(*context, statement->getIdentifier());
+    vector<llvm::Type *> elements;
+    structType->setBody(elements, false);
+    if (!setStruct(statement->getIdentifier(), structType))
+        return;
+}
+
 void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement) {
     if (statement->getValueType()->getKind() == ValueTypeKind::DATA) {
         vector<llvm::Value *> values = valuesForExpression(statement->getExpression());
@@ -177,6 +189,11 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
 
             builder->CreateStore(values[i], elementPtr);
         }
+    } else if (statement->getValueType()->getKind() == ValueTypeKind::TYPE) {
+        llvm::StructType *type = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
+        llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, statement->getName());
+        if (!setAlloca(statement->getName(), alloca))
+            return;
     } else {
         llvm::Value *value = valueForExpression(statement->getExpression());
         if (value == nullptr)
@@ -671,6 +688,29 @@ llvm::InlineAsm *ModuleBuilder::getRawFun(string name) {
     return nullptr;
 }
 
+bool ModuleBuilder::setStruct(string name, llvm::StructType *structType) {
+    if (scopes.top().structTypeMap[name] != nullptr) {
+        markError(0, 0, format("Type \"{}\" already defined in scope", name));
+        return false;
+    }
+
+    scopes.top().structTypeMap[name] = structType;
+    return true;
+}
+
+llvm::StructType *ModuleBuilder::getStructType(string name) {
+    stack<Scope> scopes = this->scopes;
+
+    while (!scopes.empty()) {
+        llvm::StructType *structType = scopes.top().structTypeMap[name];
+        if (structType != nullptr)
+            return structType;
+        scopes.pop();
+    }
+
+    return nullptr;
+}
+
 llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int count) {
     if (valueType == nullptr) {
         markError(0, 0, "Missing type");
@@ -699,6 +739,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
                 count = valueType->getValueArg();
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
         }
+        case ValueTypeKind::TYPE:
+            return getStructType(valueType->getTypeName());
     }
 }
 
