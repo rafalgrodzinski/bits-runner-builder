@@ -7,6 +7,7 @@ Parsee Parsee::repeatedGroupParsee(ParseeGroup repeatedGroup, bool isRequired, b
     parsee.kind = ParseeKind::REPEATED_GROUP;
     parsee.repeatedGroup = repeatedGroup;
     parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
     parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }

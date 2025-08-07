@@ -510,20 +510,14 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                             Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
                             Parsee::valueTypeParsee(true),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, true, false)
-                        }/*,
-                        {}*/
-                    ), false, true, false
+                        }
+                    ),
+                    false,
+                    true,
+                    false
                 ),
                 Parsee::tokenParsee(TokenKind::SEMICOLON, true, false)
-            }/*,
-            {}
-            ParseeGroup(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true),
-                    Parsee::valueTypeParsee(true)
-                },
-                {}
-            )*/
+            }
         )
     );
 
@@ -544,16 +538,16 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     }
 
      // consume new line
-    if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+    /*if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
         markError(TokenKind::NEW_LINE, {});
         return nullptr;
-    }
+    }*/
 
     // closing semicolon
-    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
+    /*if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
         markError(TokenKind::SEMICOLON, {});
         return nullptr;
-    }
+    }*/
 
     return make_shared<StatementBlob>(identifier, variables);
 }
@@ -1045,10 +1039,9 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
     bool mustFulfill = false;
 
     for (Parsee &parsee : group.getParsees()) {
-        optional<vector<ParseeResult>> subResults;
+        optional<pair<vector<ParseeResult>, int>> subResults;
         switch (parsee.getKind()) {
             case ParseeKind::REPEATED_GROUP:
-                //ParseeResultsGroup results = parseeResultsGroupForParseeGroup(*parsee.getRepeatedGroup());
                 subResults = repeatedGroupParseeResults(*parsee.getRepeatedGroup());
                 break;
             case ParseeKind::TOKEN:
@@ -1069,14 +1062,12 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
         // if doesn't match on optional group
         if (!subResults && parsee.getIsRequired() && !mustFulfill) {
             currentIndex = startIndex;
-            //return vector<ParseeResult>();
             return ParseeResultsGroup::noMatch();
         }
 
         // return matching token?
         if (subResults && parsee.getShouldReturn()) {
-            //parseeResults.push_back(*result);
-            for (ParseeResult &subResult : *subResults)
+            for (ParseeResult &subResult : (*subResults).first)
                 parseeResults.push_back(subResult);
         }
 
@@ -1087,34 +1078,18 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
         // invalid sequence detected?
         if (!subResults && parsee.getIsRequired() && mustFulfill) {
             markError(parsee.getTokenKind(), {});
-            //return {};
             return ParseeResultsGroup::failure();
         }
 
         // got to the next token if we got a match
-        if (subResults) {
-            for (ParseeResult &subResult : *subResults )
-                currentIndex += subResult.getTokensCount();
-            //currentIndex += (*result).getTokensCount();
-        }
+        if (subResults)
+            currentIndex += (*subResults).second;
     }
-
-    /*if (group.getRepeatedGroup()) {
-        ParseeResultsGroup subResultsGroup;
-        do {
-            subResultsGroup = parseeResultsGroupForParseeGroup(*group.getRepeatedGroup());
-            if (subResultsGroup.getKind() == ParseeResultsGroupKind::FAILURE)
-                return ParseeResultsGroup::failure();
-
-            for (ParseeResult &subResult : subResultsGroup.getResults())
-                results.push_back(subResult);
-        } while (subResultsGroup.getKind() == ParseeResultsGroupKind::SUCCESS);
-    }*/
 
     return ParseeResultsGroup::success(parseeResults);
 }
 
-optional<vector<ParseeResult>> Parser::repeatedGroupParseeResults(ParseeGroup group) {
+optional<pair<vector<ParseeResult>, int>> Parser::repeatedGroupParseeResults(ParseeGroup group) {
     int startIndex = currentIndex;
     vector<ParseeResult> results;
     
@@ -1128,18 +1103,19 @@ optional<vector<ParseeResult>> Parser::repeatedGroupParseeResults(ParseeGroup gr
             results.push_back(result);
     } while (resultsGroup.getKind() == ParseeResultsGroupKind::SUCCESS);
     
+    int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
-    return results;
+    return pair(results, tokensCount);
 }
 
-optional<vector<ParseeResult>> Parser::tokenParseeResults(int index, TokenKind tokenKind) {
+optional<pair<vector<ParseeResult>, int>> Parser::tokenParseeResults(int index, TokenKind tokenKind) {
     shared_ptr<Token> token = tokens.at(index);
     if (token->isOfKind({tokenKind}))
-        return vector<ParseeResult>({ParseeResult::tokenResult(token)});
+        return pair(vector<ParseeResult>({ParseeResult::tokenResult(token)}), 1);
     return {};
 }
 
-optional<vector<ParseeResult>> Parser::valueTypeParseeResults(int index) {
+optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int index) {
     int startIndex = index;
 
     if (!tokens.at(index)->isOfKind({TokenKind::TYPE}))
@@ -1151,11 +1127,11 @@ optional<vector<ParseeResult>> Parser::valueTypeParseeResults(int index) {
 
     if (tokens.at(index)->isOfKind({TokenKind::LESS})) {
         index++;
-        optional<vector<ParseeResult>> subResults = valueTypeParseeResults(index);
-        if (!subResults || (*subResults).empty())
+        optional<pair<vector<ParseeResult>, int>> subResults = valueTypeParseeResults(index);
+        if (!subResults || (*subResults).first.empty())
             return {};
-        subType = (*subResults)[0].getValueType();
-        index += (*subResults)[0].getTokensCount();
+        subType = (*subResults).first[0].getValueType();
+        index += (*subResults).second;
 
         if (tokens.at(index)->isOfKind({TokenKind::COMMA})) {
             index++;
@@ -1177,10 +1153,10 @@ optional<vector<ParseeResult>> Parser::valueTypeParseeResults(int index) {
     }
 
     shared_ptr<ValueType> valueType = ValueType::valueTypeForToken(typeToken, subType, typeArg);
-    return vector<ParseeResult>({ParseeResult::valueTypeResult(valueType, index - startIndex)});
+    return pair(vector<ParseeResult>({ParseeResult::valueTypeResult(valueType, index - startIndex)}), index - startIndex);
 }
 
-optional<vector<ParseeResult>> Parser::expressionParseeResults(int index) {
+optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(int index) {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = nextExpression();
@@ -1189,7 +1165,7 @@ optional<vector<ParseeResult>> Parser::expressionParseeResults(int index) {
 
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
-    return vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount)});
+    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount)}), tokensCount);
 }
 
 bool Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {
