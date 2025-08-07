@@ -57,9 +57,10 @@ private:
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
     ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
-    optional<ParseeResult> tokenParseeResult(int index, TokenKind tokenKind);
-    optional<ParseeResult> valueTypeParseeResult(int index);
-    optional<ParseeResult> expressionParseeResult(int index);
+    optional<vector<ParseeResult>> repeatedGroupParseeResults(ParseeGroup group);
+    optional<vector<ParseeResult>> tokenParseeResults(int index, TokenKind tokenKind);
+    optional<vector<ParseeResult>> valueTypeParseeResults(int index);
+    optional<vector<ParseeResult>> expressionParseeResults(int index);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
     void markError(optional<TokenKind> expectedTokenKind, optional<string> message);

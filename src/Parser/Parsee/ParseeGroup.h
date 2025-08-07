@@ -11,12 +11,12 @@ using namespace std;
 class ParseeGroup {
 private:
     vector<Parsee> parsees;
-    optional<reference_wrapper<ParseeGroup>> repeatedGroup;
+    //optional<reference_wrapper<ParseeGroup>> repeatedGroup;
 
 public:
-    ParseeGroup(vector<Parsee> parsees, optional<ParseeGroup> repeatedGroup);
+    ParseeGroup(vector<Parsee> parsees);//, optional<ParseeGroup> repeatedGroup);
     vector<Parsee> getParsees();
-    optional<reference_wrapper<ParseeGroup>> getRepeatedGroup();
+    //optional<reference_wrapper<ParseeGroup>> getRepeatedGroup();
 };
 
 #endif

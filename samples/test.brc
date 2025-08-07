@@ -1,4 +1,6 @@
 User blob
+    num1 s32
+    num2 u8
 ;
 
 main fun -> u32

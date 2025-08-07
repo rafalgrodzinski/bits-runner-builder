@@ -1,5 +1,16 @@
 #include "Parsee.h"
 
+#include "ParseeGroup.h"
+
+Parsee Parsee::repeatedGroupParsee(ParseeGroup repeatedGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::REPEATED_GROUP;
+    parsee.repeatedGroup = repeatedGroup;
+    parsee.isRequired = isRequired;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
+
 Parsee Parsee::tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn) {
     Parsee  parsee;
     parsee.kind = ParseeKind::TOKEN;
@@ -27,6 +38,10 @@ Parsee Parsee::expressionParsee(bool isRequired) {
 
 Parsee::Parsee() { }
 
+optional<ParseeGroup> Parsee::getRepeatedGroup() {
+    return repeatedGroup;
+}
+
 ParseeKind Parsee::getKind() {
     return kind;
 }
@@ -41,4 +56,8 @@ bool Parsee::getIsRequired() {
 
 bool Parsee::getShouldReturn() {
     return shouldReturn;
+}
+
+bool Parsee::getShouldFailOnNoMatch() {
+    return shouldFailOnNoMatch;
 }
