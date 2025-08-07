@@ -70,7 +70,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildRawFunction(dynamic_pointer_cast<StatementRawFunction>(statement));
             break;
         case StatementKind::BLOB:
-            buildType(dynamic_pointer_cast<StatementBlob>(statement));
+            buildBlob(dynamic_pointer_cast<StatementBlob>(statement));
             break;
         case StatementKind::VARIABLE:
             buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
@@ -164,10 +164,18 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
         return;
 }
 
-void ModuleBuilder::buildType(shared_ptr<StatementBlob> statement) {
+void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
     llvm::StructType *structType = llvm::StructType::create(*context, statement->getIdentifier());
-    vector<llvm::Type *> elements;
-    structType->setBody(elements, false);
+
+    // Generate types for body
+    vector<llvm::Type *> types;
+    for (pair<string, shared_ptr<ValueType>> &variable: statement->getVariables()) {
+        llvm::Type *type = typeForValueType(variable.second);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+    structType->setBody(types, false);
     if (!setStruct(statement->getIdentifier(), structType))
         return;
 }

@@ -537,18 +537,6 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             break;
     }
 
-     // consume new line
-    /*if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
-        markError(TokenKind::NEW_LINE, {});
-        return nullptr;
-    }*/
-
-    // closing semicolon
-    /*if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
-        markError(TokenKind::SEMICOLON, {});
-        return nullptr;
-    }*/
-
     return make_shared<StatementBlob>(identifier, variables);
 }
 

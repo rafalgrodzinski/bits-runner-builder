@@ -307,6 +307,8 @@ string Logger::toString(shared_ptr<StatementBlob> statement) {
     string text;
 
     text += format("BLOB(\"{}\"):\n", statement->getIdentifier());
+    for (pair<string, shared_ptr<ValueType>> &variable : statement->getVariables())
+        text += format("{}: {}\n", variable.first, toString(variable.second));
 
     return text;
 }
