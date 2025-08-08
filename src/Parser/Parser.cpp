@@ -192,8 +192,14 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
             {
                 Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
                 Parsee::valueTypeParsee(true, true, false),
-                Parsee::tokenParsee(TokenKind::LEFT_ARROW, true, false, true),
-                Parsee::expressionParsee(true, true, true)
+                Parsee::groupParsee(
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::LEFT_ARROW, true, false, false),
+                            Parsee::expressionParsee(true, true, true)
+                        }
+                    ), false, true, false
+                )
             }
         )
     );
@@ -203,7 +209,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
 
     string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
     shared_ptr<ValueType> valueType = resultsGroup.getResults().at(1).getValueType();
-    shared_ptr<Expression> expression = resultsGroup.getResults().at(2).getExpression();
+    shared_ptr<Expression> expression = resultsGroup.getResults().size() > 2 ? resultsGroup.getResults().at(2).getExpression() : nullptr;
 
     return make_shared<StatementVariable>(identifier, valueType, expression);
 }

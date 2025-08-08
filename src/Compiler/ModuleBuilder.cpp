@@ -203,14 +203,19 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
         if (!setAlloca(statement->getName(), alloca))
             return;
     } else {
-        llvm::Value *value = valueForExpression(statement->getExpression());
-        if (value == nullptr)
-            return;
         llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType(), 0), nullptr, statement->getName());
 
         if (!setAlloca(statement->getName(), alloca))
             return;
-        builder->CreateStore(value, alloca);
+        
+        // set initial value
+        if (statement->getExpression() != nullptr) {
+            llvm::Value *value = nullptr;
+            value = valueForExpression(statement->getExpression());
+            if (value == nullptr)
+                return;
+            builder->CreateStore(value, alloca);
+        }
     }
 }
 

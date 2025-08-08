@@ -271,7 +271,10 @@ string Logger::toString(shared_ptr<StatementMetaExternFunction> statement) {
 }
 
 string Logger::toString(shared_ptr<StatementVariable> statement) {
-    return format("{}({}|{})", statement->getName(), toString(statement->getValueType()), toString(statement->getExpression()));
+    if (statement->getExpression() != nullptr)
+        return format("{}({}|{})", statement->getName(), toString(statement->getValueType()), toString(statement->getExpression()));
+    else
+        return format("{}({})", statement->getName(), toString(statement->getValueType()));
 }
 
 string Logger::toString(shared_ptr<StatementFunction> statement) {
