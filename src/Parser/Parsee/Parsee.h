@@ -7,11 +7,11 @@
 #include "ParseeGroup.h"
 
 enum class TokenKind;
-//class ParseeGroup;
 
 using namespace std;
 
 enum class ParseeKind {
+    GROUP,
     REPEATED_GROUP,
     TOKEN,
     VALUE_TYPE,
@@ -21,6 +21,7 @@ enum class ParseeKind {
 class Parsee {
 private:
     ParseeKind kind;
+    optional<ParseeGroup> group;
     optional<ParseeGroup> repeatedGroup;
     TokenKind tokenKind;
     bool isRequired;
@@ -29,12 +30,14 @@ private:
     Parsee();
 
 public:
+    static Parsee groupParsee(ParseeGroup group, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
     static Parsee repeatedGroupParsee(ParseeGroup repeatedGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
-    static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn);
-    static Parsee valueTypeParsee(bool isRequired); 
-    static Parsee expressionParsee(bool isRequired);
+    static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
+    static Parsee valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch); 
+    static Parsee expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
 
     ParseeKind getKind();
+    optional<ParseeGroup> getGroup();
     optional<ParseeGroup> getRepeatedGroup();
     TokenKind getTokenKind();
     bool getIsRequired();

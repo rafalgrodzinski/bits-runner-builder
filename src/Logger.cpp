@@ -326,7 +326,10 @@ string Logger::toString(shared_ptr<StatementBlock> statement) {
 }
 
 string Logger::toString(shared_ptr<StatementAssignment> statement) {
-    return format("{} <- {}", statement->getName(), toString(statement->getExpression()));
+    if (statement->getIndexExpression() != nullptr)
+        return format("{}[{}] <- {}", statement->getName(), toString(statement->getIndexExpression()), toString(statement->getExpression()));
+    else
+        return format("{} <- {}", statement->getName(), toString(statement->getExpression()));
 }
 
 string Logger::toString(shared_ptr<StatementReturn> statement) {

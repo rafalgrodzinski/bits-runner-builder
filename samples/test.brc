@@ -1,10 +1,19 @@
+@extern putchar fun: character u32 -> u32
+
 User blob
     num1 s32
     num2 u8
 ;
 
+rawAdd raw<"=r,r,r">: num1 u32, num2 u32 -> u32
+    add $1, $2
+    mov $0, $1
+;
+
 main fun -> u32
-    user User <- 0
+    n1 u32 <- 5
+    n2 u32 <- 4
+    n3 u32 <- rawAdd(n1, n2)
 
     ret 0
 ;
