@@ -161,6 +161,10 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = match(TokenKind::DOT, ".", false);
+    if (token != nullptr)
+        return token;
+
     // arithmetic
     token = match(TokenKind::PLUS, "+", false);
     if (token != nullptr)
@@ -573,6 +577,7 @@ bool Lexer::isSeparator(int index) {
         case ' ':
         case '\t':
         case '\n':
+        case '.':
             return true;
         default:
             return false;

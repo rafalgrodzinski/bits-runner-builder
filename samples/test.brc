@@ -12,7 +12,8 @@ User blob
 
 main fun -> u32
     us User
-    us<- 5
+    us.num1 <- 5
+    us.num2 <- 4
 
     ret 0
 ;

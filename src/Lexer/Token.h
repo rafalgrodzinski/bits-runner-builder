@@ -28,6 +28,7 @@ enum class TokenKind {
     SEMICOLON,
     LEFT_ARROW,
     RIGHT_ARROW,
+    DOT,
 
     FUNCTION,
     RAW_FUNCTION,

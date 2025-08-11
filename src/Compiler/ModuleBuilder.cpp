@@ -222,11 +222,11 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
 }
 
 void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
-    llvm::AllocaInst *alloca = getAlloca(statement->getName());
+    llvm::AllocaInst *alloca = getAlloca(statement->getIdentifier());
     if (alloca == nullptr)
         return;
 
-    llvm::Value *value = valueForExpression(statement->getExpression());
+    llvm::Value *value = valueForExpression(statement->getValueExpression());
 
     switch (statement->getAssignmentKind()) {
         case StatementAssignmentKind::VARIABLE: {
@@ -240,7 +240,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
                 indexValue
             };
             llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
-            llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", statement->getName()));
+            llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", statement->getIdentifier()));
 
             builder->CreateStore(value, elementPtr);
             break;
@@ -255,7 +255,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
                 builder->getInt32(0),
                 builder->getInt32(*memberIndex)
             };
-            llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index);
+            llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index, format("{}.{}", statement->getIdentifier(), statement->getMemberName()));
             builder->CreateStore(value, elementPtr);
             break;
         }

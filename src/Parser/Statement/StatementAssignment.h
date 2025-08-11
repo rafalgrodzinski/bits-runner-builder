@@ -11,16 +11,19 @@ enum class StatementAssignmentKind {
 class StatementAssignment: public Statement {
 private:
     StatementAssignmentKind assignmentKind;
-    string name;
+    string identifier;
     shared_ptr<Expression> indexExpression;
-    shared_ptr<Expression> expression;
     string memberName;
-
-public:
-    StatementAssignment(string name, shared_ptr<Expression> indexExpressio, shared_ptr<Expression> expression);
+    shared_ptr<Expression> valueExpression;
+    
+    public:
+    StatementAssignment();
+    static shared_ptr<StatementAssignment> variableAssignment(string identifier, shared_ptr<Expression> expression);
+    static shared_ptr<StatementAssignment> dataAssignment(string identifier, shared_ptr<Expression> indexExpression, shared_ptr<Expression> valueExpression);
+    static shared_ptr<StatementAssignment> blobAssignment(string identifier, string memberName, shared_ptr<Expression> valueExpression);
     StatementAssignmentKind getAssignmentKind();
-    string getName();
+    string getIdentifier();
     shared_ptr<Expression> getIndexExpression();
-    shared_ptr<Expression> getExpression();
     string getMemberName();
+    shared_ptr<Expression> getValueExpression();
 };

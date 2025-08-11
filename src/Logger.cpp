@@ -74,6 +74,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "←";
         case TokenKind::RIGHT_ARROW:
             return "→";
+        case TokenKind::DOT:
+            return ".";
 
         case TokenKind::BOOL:
             return "BOOL(" + token->getLexme() + ")";
@@ -165,6 +167,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "←";
         case TokenKind::RIGHT_ARROW:
             return "→";
+        case TokenKind::DOT:
+            return ".";
 
         case TokenKind::BOOL:
             return "LITERAL(BOOLEAN)";
@@ -329,10 +333,14 @@ string Logger::toString(shared_ptr<StatementBlock> statement) {
 }
 
 string Logger::toString(shared_ptr<StatementAssignment> statement) {
-    if (statement->getIndexExpression() != nullptr)
-        return format("{}[{}] <- {}", statement->getName(), toString(statement->getIndexExpression()), toString(statement->getExpression()));
-    else
-        return format("{} <- {}", statement->getName(), toString(statement->getExpression()));
+    switch (statement->getAssignmentKind()) {
+        case StatementAssignmentKind::VARIABLE:
+            return format("{} <- {}", statement->getIdentifier(), toString(statement->getValueExpression()));
+        case StatementAssignmentKind::DATA:
+            return format("{}[{}] <- {}", statement->getIdentifier(), toString(statement->getIndexExpression()), toString(statement->getValueExpression()));
+        case StatementAssignmentKind::BLOB:
+            return format("{}.{} <- {}", statement->getIdentifier(), statement->getMemberName(), toString(statement->getValueExpression()));
+    }
 }
 
 string Logger::toString(shared_ptr<StatementReturn> statement) {
