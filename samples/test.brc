@@ -12,6 +12,7 @@ User blob
 
 main fun -> u32
     us User
+    us<- 5
 
     ret 0
 ;

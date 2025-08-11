@@ -168,15 +168,17 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
     llvm::StructType *structType = llvm::StructType::create(*context, statement->getIdentifier());
 
     // Generate types for body
+    vector<string> memberNames;
     vector<llvm::Type *> types;
     for (pair<string, shared_ptr<ValueType>> &variable: statement->getVariables()) {
+        memberNames.push_back(variable.first);
         llvm::Type *type = typeForValueType(variable.second);
         if (type == nullptr)
             return;
         types.push_back(type);
     }
     structType->setBody(types, false);
-    if (!setStruct(statement->getIdentifier(), structType))
+    if (!registerStruct(statement->getIdentifier(), structType, memberNames))
         return;
 }
 
@@ -226,18 +228,37 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
 
     llvm::Value *value = valueForExpression(statement->getExpression());
 
-    if (statement->getIndexExpression()) {
-        llvm::Value *indexValue = valueForExpression(statement->getIndexExpression());
-        llvm::Value *index[] = {
-            builder->getInt32(0),
-            indexValue
-        };
-        llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
-        llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", statement->getName()));
+    switch (statement->getAssignmentKind()) {
+        case StatementAssignmentKind::VARIABLE: {
+            builder->CreateStore(value, alloca);
+            break;
+        }
+        case StatementAssignmentKind::DATA: {
+            llvm::Value *indexValue = valueForExpression(statement->getIndexExpression());
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                indexValue
+            };
+            llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
+            llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", statement->getName()));
 
-        builder->CreateStore(value, elementPtr);
-    } else {
-        builder->CreateStore(value, alloca);
+            builder->CreateStore(value, elementPtr);
+            break;
+        }
+        case StatementAssignmentKind::BLOB: {        
+            llvm::StructType *structType = (llvm::StructType *)alloca->getAllocatedType();
+            string structName = string(structType->getName());
+            optional<int> memberIndex = getMemberIndex(structName, statement->getMemberName());
+            if (!memberIndex)
+                return;
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(*memberIndex)
+            };
+            llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index);
+            builder->CreateStore(value, elementPtr);
+            break;
+        }
     }
 }
 
@@ -701,27 +722,46 @@ llvm::InlineAsm *ModuleBuilder::getRawFun(string name) {
     return nullptr;
 }
 
-bool ModuleBuilder::setStruct(string name, llvm::StructType *structType) {
-    if (scopes.top().structTypeMap[name] != nullptr) {
-        markError(0, 0, format("Type \"{}\" already defined in scope", name));
+bool ModuleBuilder::registerStruct(string structName, llvm::StructType *structType, vector<string> memberNames) {
+    if (scopes.top().structTypeMap[structName] != nullptr) {
+        markError(0, 0, format("Blob \"{}\" already defined in scope",structName));
         return false;
     }
 
-    scopes.top().structTypeMap[name] = structType;
+    scopes.top().structTypeMap[structName] = structType;
+    scopes.top().structMembersMap[structName] = memberNames;
+
     return true;
 }
 
-llvm::StructType *ModuleBuilder::getStructType(string name) {
+llvm::StructType *ModuleBuilder::getStructType(string structName) {
     stack<Scope> scopes = this->scopes;
 
     while (!scopes.empty()) {
-        llvm::StructType *structType = scopes.top().structTypeMap[name];
+        llvm::StructType *structType = scopes.top().structTypeMap[structName];
         if (structType != nullptr)
             return structType;
         scopes.pop();
     }
 
     return nullptr;
+}
+
+optional<int> ModuleBuilder::getMemberIndex(string structName, string memberName) {
+        stack<Scope> scopes = this->scopes;
+
+    while (!scopes.empty()) {
+        if (scopes.top().structMembersMap.contains(structName)) {
+            vector<string> memberNames = scopes.top().structMembersMap[structName];
+            for (int i=0; i<memberNames.size(); i++) {
+                if (memberNames[i].compare(memberName) == 0)
+                    return i;
+            }
+        }
+        scopes.pop();
+    }
+
+    return {};
 }
 
 llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int count) {
