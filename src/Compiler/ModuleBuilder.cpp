@@ -365,7 +365,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::IF_ELSE:
             return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VAR:
-            return valueForVar(dynamic_pointer_cast<ExpressionVariable>(expression));
+            return valueForVariable(dynamic_pointer_cast<ExpressionVariable>(expression));
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
         default:
@@ -435,6 +435,8 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
     } else if (type == typeR32) {
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
+    } else { // FIXME (we have missing value types)
+        return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
     }
 
     markError(0, 0, "Unexpected operation");
@@ -606,23 +608,39 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     }
 }
 
-llvm::Value *ModuleBuilder::valueForVar(shared_ptr<ExpressionVariable> expression) {
-    llvm::AllocaInst *alloca = getAlloca(expression->getName());
+llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expression) {
+    llvm::AllocaInst *alloca = getAlloca(expression->getIdentifier());
     if (alloca == nullptr)
         return nullptr;
 
-    if (expression->getIndexExpression()) {
-        llvm::Value *indexValue = valueForExpression(expression->getIndexExpression());
-        llvm::Value *index[] = {
-            builder->getInt32(0),
-            indexValue
-        };
-        llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
-        llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", expression->getName()));
+    switch (expression->getVariableKind()) {
+        case ExpressionVariableKind::SIMPLE: {
+            return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getIdentifier());
+        }
+        case ExpressionVariableKind::DATA: {
+            llvm::Value *indexValue = valueForExpression(expression->getIndexExpression());
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                indexValue
+            };
+            llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
+            llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", expression->getIdentifier()));
 
-        return builder->CreateLoad(type->getArrayElementType(), elementPtr);
-    } else {
-        return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getName());
+            return builder->CreateLoad(type->getArrayElementType(), elementPtr);
+        }
+        case ExpressionVariableKind::BLOB: {
+            llvm::StructType *structType = (llvm::StructType *)alloca->getAllocatedType();
+            string structName = string(structType->getName());
+            optional<int> memberIndex = getMemberIndex(structName, expression->getMemberName());
+            if (!memberIndex)
+                return nullptr;
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(*memberIndex)
+            };
+            llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index, format("{}.{}", expression->getIdentifier(), expression->getMemberName()));
+            return builder->CreateLoad(structType->getElementType(*memberIndex), elementPtr);
+        }
     }
 }
 

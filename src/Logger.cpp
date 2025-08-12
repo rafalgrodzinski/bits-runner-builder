@@ -454,11 +454,14 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionVariable> expression) {
-    string text = format("VAR({}", expression->getName());
-    if (expression->getIndexExpression() != nullptr)
-        text += format("|{}", toString(expression->getIndexExpression()));
-    text += ")";
-    return text;
+    switch (expression->getVariableKind()) {
+        case ExpressionVariableKind::SIMPLE:
+            return format("VAR({})", expression->getIdentifier());
+        case ExpressionVariableKind::DATA:
+            return format("VAR({}|{})", expression->getIdentifier(), toString(expression->getIndexExpression()));
+        case ExpressionVariableKind::BLOB:
+            return format("VAR({}.{})", expression->getIdentifier(), expression->getMemberName());
+    }
 }
 
 string Logger::toString(shared_ptr<ExpressionGrouping> expression) {

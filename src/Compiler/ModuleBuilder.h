@@ -93,7 +93,7 @@ private:
     llvm::Value *valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForUnary(shared_ptr<ExpressionUnary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
-    llvm::Value *valueForVar(shared_ptr<ExpressionVariable> expression);
+    llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);

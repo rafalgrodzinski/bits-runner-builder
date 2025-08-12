@@ -15,5 +15,7 @@ main fun -> u32
     us.num1 <- 5
     us.num2 <- 4
 
+    num3 s32 <- us.num1 + 13
+
     ret 0
 ;
