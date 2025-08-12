@@ -37,3 +37,14 @@ main fun -> u32
 The idea was to build the whole computing environment from scratch which can be its own thing. Many project of this kind try to be sort of recoding of C/Unix, but this is not the point in the case. This project doesn't aim at compatibility so it may hapilly break things in order to make things simpler, more modern, or just different.
 
 It's mostly a learning opportunity and a bit of fun, but maybe you can find some bits of interesting knowledge for your own project.
+
+## Samples
+[Hello World](samples/hello.brc)
+
+[Fibonaci Numbers](samples/fib.brc)
+
+#### How to build the samples
+```
+brb samples/hello.brc
+cc -o hello hello.o
+```
