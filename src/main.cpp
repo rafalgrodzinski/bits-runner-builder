@@ -40,11 +40,21 @@ int main(int argc, char **argv) {
     llvm::cl::extrahelp("\nADDITIONAL HELP:\n\n  This is the extra help\n");
     llvm::cl::opt<bool> isVerbose("v", llvm::cl::desc("Verbos output"), llvm::cl::init(false));
     llvm::cl::opt<CodeGenerator::OutputKind> outputKind(
-        llvm::cl::desc("Choose generated output:"),
+        llvm::cl::desc("Generated output:"),
         llvm::cl::init(CodeGenerator::OutputKind::OBJECT),
         llvm::cl::values(
             clEnumValN(CodeGenerator::OutputKind::OBJECT, "c", "Generate object file"),
             clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "S", "Generate assembly file")
+        )
+    );
+    llvm::cl::opt<CodeGenerator::OptimizationLevel> optimizationLevel(
+        llvm::cl::desc("Optimization level:"),
+        llvm::cl::init(CodeGenerator::OptimizationLevel::O2),
+        llvm::cl::values(
+            clEnumValN(CodeGenerator::OptimizationLevel::O0, "O0", "No optimizations (debug)"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O1, "O1", "Less optimizations"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O2, "O2", "Default optimizations"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O3, "O3", "Aggressive optimizations")
         )
     );
     llvm::cl::opt<string> inputFileName(llvm::cl::Positional, llvm::cl::desc("<input file>"), llvm::cl::Required);
@@ -75,7 +85,7 @@ int main(int argc, char **argv) {
     }
 
     CodeGenerator codeGenerator(module);
-    codeGenerator.generateObjectFile(outputKind);
+    codeGenerator.generateObjectFile(outputKind, optimizationLevel);
 
     return 0;
 }
