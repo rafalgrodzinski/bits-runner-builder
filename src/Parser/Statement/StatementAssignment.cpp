@@ -1,17 +1,14 @@
 #include "StatementAssignment.h"
 
-StatementAssignment::StatementAssignment():
-Statement(StatementKind::ASSIGNMENT) { }
-
-shared_ptr<StatementAssignment> StatementAssignment::variableAssignment(string identifier, shared_ptr<Expression> valueExpression) {
+shared_ptr<StatementAssignment> StatementAssignment::simple(string identifier, shared_ptr<Expression> valueExpression) {
     shared_ptr<StatementAssignment> statement = make_shared<StatementAssignment>();
-    statement->assignmentKind = StatementAssignmentKind::VARIABLE;
+    statement->assignmentKind = StatementAssignmentKind::SIMPLE;
     statement->identifier = identifier;
     statement->valueExpression = valueExpression;
     return statement;
 }
 
-shared_ptr<StatementAssignment> StatementAssignment::dataAssignment(string identifier, shared_ptr<Expression> indexExpression, shared_ptr<Expression> valueExpression) {
+shared_ptr<StatementAssignment> StatementAssignment::data(string identifier, shared_ptr<Expression> indexExpression, shared_ptr<Expression> valueExpression) {
     shared_ptr<StatementAssignment> statement = make_shared<StatementAssignment>();
     statement->assignmentKind = StatementAssignmentKind::DATA;
     statement->identifier = identifier;
@@ -20,7 +17,7 @@ shared_ptr<StatementAssignment> StatementAssignment::dataAssignment(string ident
     return statement;
 }
 
-shared_ptr<StatementAssignment> StatementAssignment::blobAssignment(string identifier, string memberName, shared_ptr<Expression> valueExpression) {
+shared_ptr<StatementAssignment> StatementAssignment::blob(string identifier, string memberName, shared_ptr<Expression> valueExpression) {
     shared_ptr<StatementAssignment> statement = make_shared<StatementAssignment>();
     statement->assignmentKind = StatementAssignmentKind::BLOB;
     statement->identifier = identifier;
@@ -28,6 +25,9 @@ shared_ptr<StatementAssignment> StatementAssignment::blobAssignment(string ident
     statement->valueExpression = valueExpression;
     return statement;
 }
+
+StatementAssignment::StatementAssignment():
+Statement(StatementKind::ASSIGNMENT) { }
 
 StatementAssignmentKind StatementAssignment::getAssignmentKind() {
     return assignmentKind;

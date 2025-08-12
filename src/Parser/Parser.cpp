@@ -495,7 +495,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         case ParseeResultsGroupKind::SUCCESS: {
             string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
             shared_ptr<Expression> valueExpression = resultsGroup.getResults().at(1).getExpression();
-            return StatementAssignment::variableAssignment(identifier, valueExpression);
+            return StatementAssignment::simple(identifier, valueExpression);
         }
         case ParseeResultsGroupKind::NO_MATCH:
             break;
@@ -525,7 +525,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
             string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
             shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(1).getExpression();
             shared_ptr<Expression> valueExpression = resultsGroup.getResults().at(2).getExpression();
-            return StatementAssignment::dataAssignment(identifier, indexExpression, valueExpression);
+            return StatementAssignment::data(identifier, indexExpression, valueExpression);
         }
         case ParseeResultsGroupKind::NO_MATCH:
             break;
@@ -554,7 +554,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
             string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
             string memberName = resultsGroup.getResults().at(1).getToken()->getLexme();
             shared_ptr<Expression> valueExpression = resultsGroup.getResults().at(2).getExpression();
-            return StatementAssignment::blobAssignment(identifier, memberName, valueExpression);
+            return StatementAssignment::blob(identifier, memberName, valueExpression);
         }
         case ParseeResultsGroupKind::NO_MATCH:
             break;
@@ -832,8 +832,8 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
     switch (resultsGroup.getKind()) {
         case ParseeResultsGroupKind::SUCCESS: {
             string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
-            shared_ptr<Expression> indexExpression = indexExpression = resultsGroup.getResults().at(1).getExpression();
-            return ExpressionVariable::dataVariable(identifier, indexExpression);
+            shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(1).getExpression();
+            return ExpressionVariable::data(identifier, indexExpression);
         }
         case ParseeResultsGroupKind::NO_MATCH:
             break;
@@ -858,7 +858,7 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
         case ParseeResultsGroupKind::SUCCESS: {
             string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
             string memberName = resultsGroup.getResults().at(1).getToken()->getLexme();
-            return ExpressionVariable::blobVariable(identifier, memberName);
+            return ExpressionVariable::blob(identifier, memberName);
         }
         case ParseeResultsGroupKind::NO_MATCH:
             break;
@@ -879,7 +879,7 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
     switch (resultsGroup.getKind()) {
         case ParseeResultsGroupKind::SUCCESS: {
             string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
-            return ExpressionVariable::simpleVariable(identifier);
+            return ExpressionVariable::simple(identifier);
         }
         case ParseeResultsGroupKind::NO_MATCH:
             break;

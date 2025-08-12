@@ -229,7 +229,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
     llvm::Value *value = valueForExpression(statement->getValueExpression());
 
     switch (statement->getAssignmentKind()) {
-        case StatementAssignmentKind::VARIABLE: {
+        case StatementAssignmentKind::SIMPLE: {
             builder->CreateStore(value, alloca);
             break;
         }
@@ -364,7 +364,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
-        case ExpressionKind::VAR:
+        case ExpressionKind::VARIABLE:
             return valueForVariable(dynamic_pointer_cast<ExpressionVariable>(expression));
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));

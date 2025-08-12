@@ -1,13 +1,13 @@
 #include "ExpressionVariable.h"
 
-shared_ptr<ExpressionVariable> ExpressionVariable::simpleVariable(string identifier) {
+shared_ptr<ExpressionVariable> ExpressionVariable::simple(string identifier) {
     shared_ptr<ExpressionVariable> expression = make_shared<ExpressionVariable>();
     expression->variableKind = ExpressionVariableKind::SIMPLE;
     expression->identifier = identifier;
     return expression;
 }
 
-shared_ptr<ExpressionVariable> ExpressionVariable::dataVariable(string identifier, shared_ptr<Expression> indexExpression) {
+shared_ptr<ExpressionVariable> ExpressionVariable::data(string identifier, shared_ptr<Expression> indexExpression) {
     shared_ptr<ExpressionVariable> expression = make_shared<ExpressionVariable>();
     expression->variableKind = ExpressionVariableKind::DATA;
     expression->identifier = identifier;
@@ -15,7 +15,7 @@ shared_ptr<ExpressionVariable> ExpressionVariable::dataVariable(string identifie
     return expression;
 }
 
-shared_ptr<ExpressionVariable> ExpressionVariable::blobVariable(string identifier, string memberName) {
+shared_ptr<ExpressionVariable> ExpressionVariable::blob(string identifier, string memberName) {
     shared_ptr<ExpressionVariable> expression = make_shared<ExpressionVariable>();
     expression->variableKind = ExpressionVariableKind::BLOB;
     expression->identifier = identifier;
@@ -24,7 +24,7 @@ shared_ptr<ExpressionVariable> ExpressionVariable::blobVariable(string identifie
 }
 
 ExpressionVariable::ExpressionVariable():
-Expression(ExpressionKind::VAR, nullptr) { }
+Expression(ExpressionKind::VARIABLE, nullptr) { }
 
 ExpressionVariableKind ExpressionVariable::getVariableKind() {
     return variableKind;

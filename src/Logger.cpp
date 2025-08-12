@@ -334,7 +334,7 @@ string Logger::toString(shared_ptr<StatementBlock> statement) {
 
 string Logger::toString(shared_ptr<StatementAssignment> statement) {
     switch (statement->getAssignmentKind()) {
-        case StatementAssignmentKind::VARIABLE:
+        case StatementAssignmentKind::SIMPLE:
             return format("{} <- {}", statement->getIdentifier(), toString(statement->getValueExpression()));
         case StatementAssignmentKind::DATA:
             return format("{}[{}] <- {}", statement->getIdentifier(), toString(statement->getIndexExpression()), toString(statement->getValueExpression()));
@@ -384,7 +384,7 @@ string Logger::toString(shared_ptr<Expression> expression) {
             return toString(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return toString(dynamic_pointer_cast<ExpressionIfElse>(expression));
-        case ExpressionKind::VAR:
+        case ExpressionKind::VARIABLE:
             return toString(dynamic_pointer_cast<ExpressionVariable>(expression));
         case ExpressionKind::GROUPING:
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression));

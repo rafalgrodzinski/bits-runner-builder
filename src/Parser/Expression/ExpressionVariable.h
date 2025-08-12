@@ -14,9 +14,9 @@ private:
     string memberName;
 
 public:
-    static shared_ptr<ExpressionVariable> simpleVariable(string identifer);
-    static shared_ptr<ExpressionVariable> dataVariable(string identifier, shared_ptr<Expression> indexExpression);
-    static shared_ptr<ExpressionVariable> blobVariable(string identifier, string memberName);
+    static shared_ptr<ExpressionVariable> simple(string identifer);
+    static shared_ptr<ExpressionVariable> data(string identifier, shared_ptr<Expression> indexExpression);
+    static shared_ptr<ExpressionVariable> blob(string identifier, string memberName);
 
     ExpressionVariable();
     ExpressionVariableKind getVariableKind();
