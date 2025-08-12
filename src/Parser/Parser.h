@@ -31,6 +31,7 @@ private:
     shared_ptr<Statement> matchStatementVariable();
     shared_ptr<Statement> matchStatementFunction();
     shared_ptr<Statement> matchStatementRawFunction();
+    shared_ptr<Statement> matchStatementBlob();
 
     shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
     shared_ptr<Statement> matchStatementAssignment();
@@ -56,9 +57,11 @@ private:
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
     ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
-    optional<ParseeResult> tokenParseeResult(int index, TokenKind tokenKind);
-    optional<ParseeResult> valueTypeParseeResult(int index);
-    optional<ParseeResult> expressionParseeResult(int index);
+    optional<pair<vector<ParseeResult>, int>> groupParseeResults(ParseeGroup group);
+    optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(ParseeGroup group);
+    optional<pair<vector<ParseeResult>, int>> tokenParseeResults(int index, TokenKind tokenKind);
+    optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index);
+    optional<pair<vector<ParseeResult>, int>> expressionParseeResults(int index);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
     void markError(optional<TokenKind> expectedTokenKind, optional<string> message);

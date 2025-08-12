@@ -29,6 +29,7 @@ enum class ExpressionBinaryOperation;
 class Statement;
 class StatementFunction;
 class StatementRawFunction;
+class StatementBlob;
 class StatementVariable;
 class StatementAssignment;
 class StatementReturn;
@@ -43,6 +44,8 @@ typedef struct {
     map<string, llvm::AllocaInst*> allocaMap;
     map<string, llvm::Function*> funMap;
     map<string, llvm::InlineAsm*> rawFunMap;
+    map<string, llvm::StructType*> structTypeMap;
+    map<string, vector<string>> structMembersMap;
 } Scope;
 
 class ModuleBuilder {
@@ -69,6 +72,7 @@ private:
     void buildStatement(shared_ptr<Statement> statement);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
+    void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVarDeclaration(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
@@ -89,7 +93,7 @@ private:
     llvm::Value *valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForUnary(shared_ptr<ExpressionUnary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
-    llvm::Value *valueForVar(shared_ptr<ExpressionVariable> expression);
+    llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);
@@ -100,6 +104,10 @@ private:
 
     bool setRawFun(string name, llvm::InlineAsm *rawFun);
     llvm::InlineAsm *getRawFun(string name);
+
+    bool registerStruct(string structName, llvm::StructType *structType, vector<string> memberNames);
+    llvm::StructType *getStructType(string structName);
+    optional<int> getMemberIndex(string structName, string memberName);
 
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
 

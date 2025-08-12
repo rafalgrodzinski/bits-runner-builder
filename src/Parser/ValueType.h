@@ -2,6 +2,7 @@
 #define VALUE_TYPE_H
 
 #include <optional>
+#include <string>
 
 class Token;
 
@@ -15,7 +16,8 @@ enum class ValueTypeKind {
     S8,
     S32,
     R32,
-    DATA
+    DATA,
+    TYPE
 };
 
 class ValueType {
@@ -23,6 +25,7 @@ private:
     ValueTypeKind kind;
     shared_ptr<ValueType> subType;
     int valueArg;
+    string typeName;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -34,10 +37,13 @@ public:
     static shared_ptr<ValueType> R32;
     static shared_ptr<ValueType> valueTypeForToken(shared_ptr<Token> token, shared_ptr<ValueType> subType, int valueArg);
 
+    ValueType();
     ValueType(ValueTypeKind kind, shared_ptr<ValueType> subType, int valueArg);
+    static shared_ptr<ValueType> type(string typeName);
     ValueTypeKind getKind();
     shared_ptr<ValueType> getSubType();
     int getValueArg();
+    string getTypeName();
 };
 
 #endif

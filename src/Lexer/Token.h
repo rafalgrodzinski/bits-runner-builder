@@ -28,24 +28,26 @@ enum class TokenKind {
     SEMICOLON,
     LEFT_ARROW,
     RIGHT_ARROW,
+    DOT,
 
     FUNCTION,
     RAW_FUNCTION,
     RAW_SOURCE_LINE,
+    BLOB,
     RETURN,
     REPEAT,
     IF,
     ELSE,
 
     BOOL,
+    REAL,
     INTEGER_DEC,
     INTEGER_HEX,
     INTEGER_BIN,
     INTEGER_CHAR,
-    REAL,
     STRING,
-    IDENTIFIER,
     TYPE,
+    IDENTIFIER,
 
     M_EXTERN,
 

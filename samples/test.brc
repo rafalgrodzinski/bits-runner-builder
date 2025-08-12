@@ -1,61 +1,21 @@
-//@extern putchar fun: character sint32 -> sint32
+//@extern putchar fun: character u32 -> u32
 
-// ./build/brb samples/test.brc -S -x86-asm-syntax=intel
-
-/*
-User type
-    name data<u8, 32>
-    age u32
-    successRatio r32
-    isActive bool
+User blob
+    num1 s32
+    num2 u8
 ;
-*/
 
-/*
-i u32 <- 0, rep text[i] != 0:
-    putchar(text[i])
-    i++
-;
-*/
-
-// text data<u8> <- "Hello world!"
-
-/*addStuff asm<"+r, r">: num1 u32, num2 u32 -> u32
-    add $1, $0
-;*/
-
-/*normAdd fun: num1 sint32, num2 sint32 -> sint32
-    ret num1 + num2
-;*/
-
-/*rawAdd raw<"=r,r,r">: num1 sint32, num2 sint32 -> sint32
+/*rawAdd raw<"=r,r,r">: num1 u32, num2 u32 -> u32
     add $1, $2
     mov $0, $1
-;*/
-
-/*rawAdd raw: num1 sint32, num2 sint32 -> sint32
-    add $1, $2
-    mov $0, $1
-;*/
-
-/*printChar raw
-    .global REGISTER
-    .text
-    .REGISTER:
-    .byte "Hello", 0xa0
-    .long RegisterTable
-    //push 0x21
-
 ;*/
 
 main fun -> u32
-    num1 u8 <- 42
-    num2 s8 <- 3 - +15
-    num3 u32 <- 1234123
-    num4 s32 <- -345345
-    num5 r32 <- -42.58
+    us User
+    us.num1 <- 5
+    us.num2 <- 4
 
-    num5 + num3
+    num3 s32 <- us.num1 + 13
 
     ret 0
 ;
