@@ -14,7 +14,8 @@ enum class StatementKind {
     VARIABLE,
     ASSIGNMENT,
     REPEAT,
-    META_EXTERN_FUNCTION
+    META_EXTERN_FUNCTION,
+    BLOB
 };
 
 class Statement {

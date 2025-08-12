@@ -12,6 +12,7 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -73,6 +74,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "←";
         case TokenKind::RIGHT_ARROW:
             return "→";
+        case TokenKind::DOT:
+            return ".";
 
         case TokenKind::BOOL:
             return "BOOL(" + token->getLexme() + ")";
@@ -93,20 +96,22 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::TYPE:
             return "TYPE(" + token->getLexme() + ")";
 
-        case TokenKind::IF:
-            return "IF";
-        case TokenKind::ELSE:
-            return "ELSE";
         case TokenKind::FUNCTION:
             return "FUN";
         case TokenKind::RAW_FUNCTION:
             return "RAW";
         case TokenKind::RAW_SOURCE_LINE:
             return format("RAW_SOURCE_LINE({})", token->getLexme());
+        case TokenKind::BLOB:
+            return "BLOB";
         case TokenKind::RETURN:
             return "RET";
         case TokenKind::REPEAT:
             return "REP";
+        case TokenKind::IF:
+            return "IF";
+        case TokenKind::ELSE:
+            return "ELSE";
 
         case TokenKind::M_EXTERN:
             return "@EXTERN";
@@ -162,6 +167,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "←";
         case TokenKind::RIGHT_ARROW:
             return "→";
+        case TokenKind::DOT:
+            return ".";
 
         case TokenKind::BOOL:
             return "LITERAL(BOOLEAN)";
@@ -223,6 +230,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "R32";
         case ValueTypeKind::DATA:
             return "[]";
+        case ValueTypeKind::TYPE:
+            return format("TYPE({})", valueType->getTypeName());
     }
 }
 
@@ -236,6 +245,8 @@ string Logger::toString(shared_ptr<Statement> statement) {
             return toString(dynamic_pointer_cast<StatementFunction>(statement));
         case StatementKind::RAW_FUNCTION:
             return toString(dynamic_pointer_cast<StatementRawFunction>(statement));
+        case StatementKind::BLOB:
+            return toString(dynamic_pointer_cast<StatementBlob>(statement));
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement));
         case StatementKind::ASSIGNMENT:
@@ -264,7 +275,10 @@ string Logger::toString(shared_ptr<StatementMetaExternFunction> statement) {
 }
 
 string Logger::toString(shared_ptr<StatementVariable> statement) {
-    return format("{}({}|{})", statement->getName(), toString(statement->getValueType()), toString(statement->getExpression()));
+    if (statement->getExpression() != nullptr)
+        return format("{}({}|{})", statement->getName(), toString(statement->getValueType()), toString(statement->getExpression()));
+    else
+        return format("{}({})", statement->getName(), toString(statement->getValueType()));
 }
 
 string Logger::toString(shared_ptr<StatementFunction> statement) {
@@ -296,6 +310,16 @@ string Logger::toString(shared_ptr<StatementRawFunction> statement) {
     return text;
 }
 
+string Logger::toString(shared_ptr<StatementBlob> statement) {
+    string text;
+
+    text += format("BLOB(\"{}\"):\n", statement->getIdentifier());
+    for (pair<string, shared_ptr<ValueType>> &variable : statement->getVariables())
+        text += format("{}: {}\n", variable.first, toString(variable.second));
+
+    return text;
+}
+
 string Logger::toString(shared_ptr<StatementBlock> statement) {
     string text;
 
@@ -309,7 +333,14 @@ string Logger::toString(shared_ptr<StatementBlock> statement) {
 }
 
 string Logger::toString(shared_ptr<StatementAssignment> statement) {
-    return format("{} <- {}", statement->getName(), toString(statement->getExpression()));
+    switch (statement->getAssignmentKind()) {
+        case StatementAssignmentKind::SIMPLE:
+            return format("{} <- {}", statement->getIdentifier(), toString(statement->getValueExpression()));
+        case StatementAssignmentKind::DATA:
+            return format("{}[{}] <- {}", statement->getIdentifier(), toString(statement->getIndexExpression()), toString(statement->getValueExpression()));
+        case StatementAssignmentKind::BLOB:
+            return format("{}.{} <- {}", statement->getIdentifier(), statement->getMemberName(), toString(statement->getValueExpression()));
+    }
 }
 
 string Logger::toString(shared_ptr<StatementReturn> statement) {
@@ -353,7 +384,7 @@ string Logger::toString(shared_ptr<Expression> expression) {
             return toString(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return toString(dynamic_pointer_cast<ExpressionIfElse>(expression));
-        case ExpressionKind::VAR:
+        case ExpressionKind::VARIABLE:
             return toString(dynamic_pointer_cast<ExpressionVariable>(expression));
         case ExpressionKind::GROUPING:
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression));
@@ -423,11 +454,14 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionVariable> expression) {
-    string text = format("VAR({}", expression->getName());
-    if (expression->getIndexExpression() != nullptr)
-        text += format("|{}", toString(expression->getIndexExpression()));
-    text += ")";
-    return text;
+    switch (expression->getVariableKind()) {
+        case ExpressionVariableKind::SIMPLE:
+            return format("VAR({})", expression->getIdentifier());
+        case ExpressionVariableKind::DATA:
+            return format("VAR({}|{})", expression->getIdentifier(), toString(expression->getIndexExpression()));
+        case ExpressionVariableKind::BLOB:
+            return format("VAR({}.{})", expression->getIdentifier(), expression->getMemberName());
+    }
 }
 
 string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
