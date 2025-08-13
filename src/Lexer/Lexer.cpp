@@ -286,6 +286,10 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // meta
+    token = match(TokenKind::M_MODULE, "@module", true);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::M_EXTERN, "@extern", true);
     if (token != nullptr)
         return token;

@@ -25,11 +25,10 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 
-ModuleBuilder::ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements):
-moduleName(moduleName), sourceFileName(sourceFileName), statements(statements) {
+ModuleBuilder::ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements):
+moduleName(moduleName), statements(statements) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
-    module->setSourceFileName(sourceFileName);
     builder = make_shared<llvm::IRBuilder<>>(*context);
 
     typeVoid = llvm::Type::getVoidTy(*context);

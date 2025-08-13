@@ -6,6 +6,7 @@
 using namespace std;
 
 enum class StatementKind {
+    MODULE,
     EXPRESSION,
     BLOCK,
     RETURN,

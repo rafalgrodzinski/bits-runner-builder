@@ -52,7 +52,6 @@ class ModuleBuilder {
 private:
     vector<shared_ptr<Error>> errors;
     string moduleName;
-    string sourceFileName;
 
     shared_ptr<llvm::LLVMContext> context;
     shared_ptr<llvm::Module> module;
@@ -114,7 +113,7 @@ private:
     void markError(int line, int column, string message);
 
 public:
-    ModuleBuilder(string moduleName, string sourceFileName, vector<shared_ptr<Statement>> statements);
+    ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements);
     shared_ptr<llvm::Module> getModule();
 };
 

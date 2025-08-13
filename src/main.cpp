@@ -9,6 +9,7 @@
 
 #include "Parser/Parser.h"
 #include "Parser/Statement/Statement.h"
+#include "Parser/Statement/StatementModule.h"
 
 #include "Compiler/ModuleBuilder.h"
 #include "Compiler/CodeGenerator.h"
@@ -57,35 +58,62 @@ int main(int argc, char **argv) {
             clEnumValN(CodeGenerator::OptimizationLevel::O3, "O3", "Aggressive optimizations")
         )
     );
-    llvm::cl::opt<string> inputFileName(llvm::cl::Positional, llvm::cl::desc("<input file>"), llvm::cl::Required);
+    llvm::cl::list<string> inputFileNames(llvm::cl::Positional, llvm::cl::desc("<input file>"), llvm::cl::OneOrMore);
     llvm::cl::ParseCommandLineOptions(argc, argv, "Bits Runner Builder - LLVM based compiler for the Bits Runner Code language");
 
-    filesystem::path inputFilePath((string(inputFileName)));
-    string source = readFile(inputFilePath);
-    string moduleName = inputFilePath.filename().replace_extension();
-
-    Lexer lexer(source);
-    vector<shared_ptr<Token>> tokens = lexer.getTokens();
-    if (isVerbose) {
-        Logger::print(tokens);
-        cout << endl;
+    // Read each source
+    vector<string> sources;
+    for (string &inputFileName : inputFileNames) {
+        filesystem::path inputFilePath(inputFileName);
+        string source = readFile(inputFilePath);
+        sources.push_back(source);
     }
 
-    Parser parser(tokens);
-    vector<shared_ptr<Statement>> statements = parser.getStatements();
-    if (isVerbose) {
-        Logger::print(statements);
-        cout << endl;
+    map<string, vector<shared_ptr<Statement>>> statementsMap;
+    // For each source, scan it, parse it, and then fill appropriate maps (corresponding to the defined modules)
+    for (int i=0; i<sources.size(); i++) {
+        if (isVerbose)
+            cout << format("🔍 Scanning {}", inputFileNames[i]) << endl << endl;
+
+        Lexer lexer(sources[i]);
+        vector<shared_ptr<Token>> tokens = lexer.getTokens();
+        if (isVerbose) {
+            Logger::print(tokens);
+            cout << endl;
+        }
+
+        if (isVerbose)
+            cout << format("🧸 Parsing {}", inputFileNames[i]) << endl << endl;
+        Parser parser(tokens);
+        shared_ptr<StatementModule> statementModule = parser.getStatementModule();
+
+        if (isVerbose) {
+            Logger::print(statementModule);
+            cout << endl;
+        }
+
+        // Append statements to existing module or create a new one
+        if (statementsMap.contains(statementModule->getName())) {
+            for (shared_ptr<Statement> &statement : statementModule->getStatements())
+                statementsMap[statementModule->getName()].push_back(statement);
+        } else {
+            statementsMap[statementModule->getName()] = statementModule->getStatements();
+        }
     }
 
-    ModuleBuilder moduleBuilder(moduleName, inputFilePath, statements);
-    shared_ptr<llvm::Module> module = moduleBuilder.getModule();
-    if (isVerbose) {
-        module->print(llvm::outs(), nullptr);
-    }
+    for (const auto &statementsEntry : statementsMap) {
+        if (isVerbose)
+            cout << format("🪄 Compiling module {}", statementsEntry.first) << endl << endl;
 
-    CodeGenerator codeGenerator(module);
-    codeGenerator.generateObjectFile(outputKind, optimizationLevel);
+        ModuleBuilder moduleBuilder(statementsEntry.first, statementsEntry.second);
+        shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+
+        if (isVerbose)
+            module->print(llvm::outs(), nullptr);
+
+        CodeGenerator codeGenerator(module);
+        codeGenerator.generateObjectFile(outputKind, optimizationLevel);
+    }
 
     return 0;
 }

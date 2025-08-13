@@ -16,6 +16,7 @@
 #include "Parser/Expression/ExpressionBinary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
+#include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlob.h"
@@ -35,27 +36,14 @@
 Parser::Parser(vector<shared_ptr<Token>> tokens) :
 tokens(tokens) { }
 
-vector<shared_ptr<Statement>> Parser::getStatements() {
-    vector<shared_ptr<Statement>> statements;
-
-    while (!tryMatchingTokenKinds({TokenKind::END}, true, false)) {
-        shared_ptr<Statement> statement = nextStatement();
-        if (statement != nullptr) {
-            statements.push_back(statement);
-
-            // Expect new line after statement
-            if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
-                markError(TokenKind::NEW_LINE, {});
-        }
-    }
-
+shared_ptr<StatementModule> Parser::getStatementModule() {
+    shared_ptr<Statement> statement = matchStatementModule();
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
             Logger::print(error);
-        exit(1);
+        exit(1); 
     }
-
-    return statements;
+    return dynamic_pointer_cast<StatementModule>(statement);
 }
 
 //
@@ -115,6 +103,45 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
 
     markError({}, {});
     return nullptr;
+}
+
+shared_ptr<Statement> Parser::matchStatementModule() {
+    string name;
+    vector<shared_ptr<Statement>> statements;
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
+            ParseeGroup(
+                {
+                    Parsee::tokenParsee(TokenKind::M_MODULE, true, false, false),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true)
+                }
+            )
+    );
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS:
+            name = resultsGroup.getResults().at(0).getToken()->getLexme();
+            break;
+        case ParseeResultsGroupKind::NO_MATCH:
+            name = "main";
+            break;
+        case ParseeResultsGroupKind::FAILURE:
+            return nullptr;
+    }
+
+    while (!tryMatchingTokenKinds({TokenKind::END}, true, false)) {
+        shared_ptr<Statement> statement = nextStatement();
+        if (statement != nullptr) {
+            statements.push_back(statement);
+
+            // Expect new line after statement
+            if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+                markError(TokenKind::NEW_LINE, {});
+        }
+    }
+
+    return make_shared<StatementModule>(name, statements);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
