@@ -1,19 +1,19 @@
 # Bits Runner Builder
-Welcome to Bits Runner Builder!
+Welcome to Bits Runner Builder! Compiler for the Bits Runner Code (BRC) language. 🤘
 
 ## Quick links
-- [Language Reference](Reference.md)
+- [BRC Language Reference](Reference.md)
 - [Detailed Syntax](Syntax.md)
 
 ## Overview
-Bits Runner Builder (brb) is a compiler for Bits Runner Code (brc) language, which has been designed for the Bits Runner operating system. It aims to be an opinionated, low-level language, a sort of improved C while providing a revised syntax and a couple of quality of life improvement. It's a simple system programming language, so no class hierarchies, templates, or other unnecessary fluff.
+Bits Runner Builder is a compiler for Bits Runner Code (brc) language, which has been designed for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system. It aims to be an opinionated, low-level language, a sort of improved C while providing a revised syntax and a couple of quality of life improvement. It's a simple system programming language, so no class hierarchies, templates, or other unnecessary fluff.
 
-It has been been built with LLVM so it should be fairly performant.
+It has been been built with LLVM so it should be fairly performant. Keep in mind that it is still work in progress so not everything is finished and there is still probably plenty of bugs and gremlins hiding around. 🙈
 
 ## Main features
-BRC allows for low-level system programming, so one of the main features is a seamless support for embeded assembly, pointers mainipulation and explicit data handling. For this reason data types have explicit byte-sizes, there is no runtime and the memory is manually managed.
+BRC allows for low-level system programming, so one of the main features is a seamless support for embeded assembly, pointers mainipulation, and explicit data handling. For this reason data types have explicit byte-sizes, there is no runtime and the memory is manually managed.
 
-The language aims to be simple, easy to reason about and predictable. For this reason there a class-like features, but no inheritance. Composition is much better anyway and doesn't lead to incomprehensible codebases (did I mention that it's opinionated?).
+The language aims to be simple, easy to reason about, and predictable. Because of this there a class-like features, but no inheritance. Composition is much better anyway and doesn't lead to incomprehensible codebases (did I mention that it's opinionated?).
 
 ## Examples
 ```
@@ -38,10 +38,24 @@ The idea was to build the whole computing environment from scratch which can be 
 
 It's mostly a learning opportunity and a bit of fun, but maybe you can find some bits of interesting knowledge for your own project.
 
-## Samples
-[Hello World](samples/hello.brc)
+## Quick Start
+Make sure that you have cmake, llvm, and lld installed on your system.
+```
+cmake -B build
+cmake --build build --config Release
+// or
+cmake --build build --config Debug
+```
+You'll then be able to finde the executable under `build/brb`.
 
-[Fibonaci Numbers](samples/fib.brc)
+There are also "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 will will then build and start debugging using command `brb -v samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode.
+
+## Samples
+Hello World
+[samples/hello.brc](samples/hello.brc)
+
+Fibonaci Numbers
+[samples/fib.brc]()
 
 #### How to build the samples
 ```
