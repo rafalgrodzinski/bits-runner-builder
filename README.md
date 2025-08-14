@@ -1,42 +1,64 @@
 # Bits Runner Builder
+Welcome to Bits Runner Builder! Compiler for the Bits Runner Code (BRC) language 🤘
+
+## Quick links
+- [BRC Language Reference](Reference.md)
+- [Detailed Syntax](Syntax.md)
 
 ## Overview
-Bits Runner Builder (brb) is a compiler for Bits Runner Code (brc) language, which has been designed for the Bits Runner Builder operating system. It aims to be a low-level language, which can be a replacement for C while providing a revised syntax and a couple of quality of life improvement. It's a simple system programming language, so no class hierarchies, templates, or other unnecessary fluff.
+Bits Runner Builder is a compiler for Bits Runner Code (brc) language, which has been designed for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system. It aims to be an opinionated, low-level language, a sort of improved C while providing a revised syntax and a couple of quality of life improvement. It's a simple system programming language, so no class hierarchies, templates, or other unnecessary fluff.
 
-It has been been built on top of LLVM.
+It has been been built with LLVM so it should be fairly performant. Keep in mind that it is still work in progress so not everything is finished and there is still probably plenty of bugs and gremlins hiding around 🙈
 
-## Show me the code!
+## Main features
+BRC allows for low-level system programming, so one of the main features is a seamless support for embeded assembly, pointers mainipulation, and explicit data handling. For this reason data types have explicit byte-sizes, there is no runtime and the memory is manually managed.
 
-### Comments
-Like in C, comments can specified using either `\\` which will run until the end of the line or through `/* */` block. However, unlike C, the `/* bla bla /* bla */ */` comments can be also embeded inside each other.
+The language aims to be simple, easy to reason about, and predictable. Because of this there a class-like features, but no inheritance. Composition is much better anyway and doesn't lead to incomprehensible codebases (did I mention that it's opinionated?).
 
-### Literals
-**Number literals** can be specified as decimal, hexadecimal, and binary numbers. Digits can be separated by an '_' but it cannot be the first or the last character (otherwise it will get interpreted as and identifier).
-
+## Examples
 ```
-// Valid examples:
-1024
-1_024
-1.245
+// Basic hello world
+//
+@extern putchar fun: character u32 -> u32
 
-1_000.
+main fun -> u32
+    text data<u8> <- "Hello, world!\n"
+    
+    rep i u32 <- 0, text[i] != 0:
+        putchar(text[i])
+        i <- i + 1
+    ;
 
-0xffa
-0xffaa_42bb
-
-0b1101
-0b1010_0101
-
-// Invalid examples:
-_100
-1000_.100
-
-0x_fa
-
-0b10_
-_0b1101
+    ret 0
+;
 ```
 
-### Control flow
+## But why?
+The idea was to build the whole computing environment from scratch which can be its own thing. Many project of this kind try to be sort of recoding of C/Unix, but this is not the point in the case. This project doesn't aim at compatibility so it may hapilly break things in order to make things simpler, more modern, or just different.
 
-### Functions
+It's mostly a learning opportunity and a bit of fun, but maybe you can find some bits of interesting knowledge for your own project.
+
+## Quick Start
+Make sure that you have cmake, llvm, and lld installed on your system.
+```
+cmake -B build
+cmake --build build --config Release
+// or
+cmake --build build --config Debug
+```
+You'll then be able to finde the executable under `build/brb`.
+
+There are also "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 will will then build and start debugging using command `brb -v samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode.
+
+## Samples
+Hello World
+[samples/hello.brc](samples/hello.brc)
+
+Fibonaci Numbers
+[samples/fib.brc]()
+
+#### How to build the samples
+```
+brb samples/hello.brc
+cc -o hello hello.o
+```

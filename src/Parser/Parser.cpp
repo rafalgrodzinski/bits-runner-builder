@@ -253,8 +253,8 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
                 Parsee::groupParsee(
                     ParseeGroup(
                         {
-                            Parsee::tokenParsee(TokenKind::RIGHT_ARROW, true, false, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                            Parsee::tokenParsee(TokenKind::RIGHT_ARROW, true, false, false),
                             Parsee::valueTypeParsee(true, true, true)
                         }
                     ), false, true, false
