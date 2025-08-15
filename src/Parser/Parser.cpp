@@ -18,6 +18,7 @@
 
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementVariable.h"
@@ -108,6 +109,7 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
 shared_ptr<Statement> Parser::matchStatementModule() {
     string name;
     vector<shared_ptr<Statement>> statements;
+    vector<shared_ptr<Statement>> headerStatements;
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
             ParseeGroup(
@@ -135,13 +137,20 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         if (statement != nullptr) {
             statements.push_back(statement);
 
+            // Generate header
+            if (statement->getKind() == StatementKind::FUNCTION) {
+                shared_ptr<StatementFunction>statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
+                shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(statementFunction->getName(), statementFunction->getArguments(), statementFunction->getReturnValueType());
+                headerStatements.push_back(statementFunctionDeclaration);
+            }
+
             // Expect new line after statement
             if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
                 markError(TokenKind::NEW_LINE, {});
         }
     }
 
-    return make_shared<StatementModule>(name, statements);
+    return make_shared<StatementModule>(name, statements, headerStatements);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {

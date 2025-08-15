@@ -10,6 +10,7 @@ enum class StatementKind {
     EXPRESSION,
     BLOCK,
     RETURN,
+    FUNCTION_DECLARATION,
     FUNCTION,
     RAW_FUNCTION,
     VARIABLE,

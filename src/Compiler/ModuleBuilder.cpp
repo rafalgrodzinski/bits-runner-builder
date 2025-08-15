@@ -14,6 +14,7 @@
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
+#include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlob.h"
@@ -25,8 +26,8 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 
-ModuleBuilder::ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements):
-moduleName(moduleName), statements(statements) {
+ModuleBuilder::ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements):
+moduleName(moduleName), statements(statements), headerStatements(headerStatements) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -42,6 +43,12 @@ moduleName(moduleName), statements(statements) {
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     scopes.push(Scope());
+
+    // build header
+    for (shared_ptr<Statement> &headerStatement : headerStatements)
+        buildStatement(headerStatement);
+
+    // build body
     for (shared_ptr<Statement> &statement : statements)
         buildStatement(statement);
 
@@ -62,6 +69,9 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
+        case StatementKind::FUNCTION_DECLARATION:
+            buildFunctionDeclaration(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+            break;
         case StatementKind::FUNCTION:
             buildFunction(dynamic_pointer_cast<StatementFunction>(statement));
             break;
@@ -97,11 +107,13 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     }
 }
 
-void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
-    // function types
+void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement) {
+    // return type
     llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
     if (returnType == nullptr)
         return;
+    
+    // arguments
     vector<llvm::Type *> argTypes;
     for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
         llvm::Type *argType = typeForValueType(arg.second);
@@ -115,6 +127,26 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
     if (!setFun(statement->getName(), fun))
         return;
+}
+
+void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
+    llvm::Function *fun = getFun(statement->getName());
+
+    // Check if function not yet defined
+    llvm::BasicBlock &entryBlock = fun->getEntryBlock();
+    if (entryBlock.getParent() != nullptr) {
+        markError(0, 0, format("Function \"{}\" already defined in scope", statement->getName()));
+        return;
+    }
+    llvm::Function *par = entryBlock.getParent();
+
+    vector<llvm::Type *> argTypes;
+    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
+        llvm::Type *argType = typeForValueType(arg.second);
+        if (argType == nullptr)
+            return;
+        argTypes.push_back(argType);
+    }
 
     // define function body
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
@@ -147,6 +179,10 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
     if (llvm::verifyFunction(*fun, &llvmErrorMessage))
         markError(0, 0, errorMessage);
+
+    llvm::Function *fun2 = getFun(statement->getName());
+    llvm::BasicBlock &entryBlock2 = fun2->getEntryBlock();
+    llvm::Function *par2 = entryBlock2.getParent();
 }
 
 void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
@@ -695,7 +731,7 @@ llvm::AllocaInst* ModuleBuilder::getAlloca(string name) {
 
 bool ModuleBuilder::setFun(string name, llvm::Function *fun) {
     if (scopes.top().funMap[name] != nullptr) {
-        markError(0, 0, format("Function \"{}\" already defined in scope", name));
+        markError(0, 0, format("Function \"{}\" already declared in scope", name));
         return false;
     }
 
@@ -718,7 +754,7 @@ llvm::Function* ModuleBuilder::getFun(string name) {
 
 bool ModuleBuilder::setRawFun(string name, llvm::InlineAsm *rawFun) {
     if (scopes.top().rawFunMap[name] != nullptr) {
-        markError(0, 0, format("Raw function \"{}\" already defined in scope", name));
+        markError(0, 0, format("Raw function \"{}\" already declared in scope", name));
         return false;
     }
     

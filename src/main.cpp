@@ -70,10 +70,11 @@ int main(int argc, char **argv) {
     }
 
     map<string, vector<shared_ptr<Statement>>> statementsMap;
+    map<string, vector<shared_ptr<Statement>>> headerStatementsMap;
     // For each source, scan it, parse it, and then fill appropriate maps (corresponding to the defined modules)
     for (int i=0; i<sources.size(); i++) {
         if (isVerbose)
-            cout << format("🔍 Scanning {}", inputFileNames[i]) << endl << endl;
+            cout << format("🔍 Scanning \"{}\"", inputFileNames[i]) << endl << endl;
 
         Lexer lexer(sources[i]);
         vector<shared_ptr<Token>> tokens = lexer.getTokens();
@@ -83,7 +84,7 @@ int main(int argc, char **argv) {
         }
 
         if (isVerbose)
-            cout << format("🧸 Parsing {}", inputFileNames[i]) << endl << endl;
+            cout << format("🧸 Parsing \"{}\"", inputFileNames[i]) << endl << endl;
         Parser parser(tokens);
         shared_ptr<StatementModule> statementModule = parser.getStatementModule();
 
@@ -96,16 +97,23 @@ int main(int argc, char **argv) {
         if (statementsMap.contains(statementModule->getName())) {
             for (shared_ptr<Statement> &statement : statementModule->getStatements())
                 statementsMap[statementModule->getName()].push_back(statement);
+            for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements())
+                headerStatementsMap[statementModule->getName()].push_back(headerStatement);
         } else {
             statementsMap[statementModule->getName()] = statementModule->getStatements();
+            headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
         }
     }
 
     for (const auto &statementsEntry : statementsMap) {
         if (isVerbose)
-            cout << format("🪄 Compiling module {}", statementsEntry.first) << endl << endl;
+            cout << format("🪄 Building module \"{}\"", statementsEntry.first) << endl << endl;
 
-        ModuleBuilder moduleBuilder(statementsEntry.first, statementsEntry.second);
+        string name = statementsEntry.first;
+        vector<shared_ptr<Statement>> statements = statementsEntry.second;
+        vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[name];
+
+        ModuleBuilder moduleBuilder(name, statements, headerStatements);
         shared_ptr<llvm::Module> module = moduleBuilder.getModule();
 
         if (isVerbose)

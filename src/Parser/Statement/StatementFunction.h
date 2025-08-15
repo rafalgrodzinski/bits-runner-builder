@@ -1,3 +1,6 @@
+#ifndef STATEMENT_FUNCTION_H
+#define STATEMENT_FUNCTION_H
+
 #include "Parser/Statement/Statement.h"
 
 class StatementBlock;
@@ -17,3 +20,5 @@ public:
     shared_ptr<ValueType> getReturnValueType();
     shared_ptr<StatementBlock> getStatementBlock();
 };
+
+#endif

@@ -1,21 +1,13 @@
-//@extern putchar fun: character u32 -> u32
-
-User blob
-    num1 s32
-    num2 u8
-;
-
-/*rawAdd raw<"=r,r,r">: num1 u32, num2 u32 -> u32
-    add $1, $2
-    mov $0, $1
-;*/
+@extern putchar fun: character u32 -> u32
 
 main fun -> u32
-    us User
-    us.num1 <- 5
-    us.num2 <- 4
-
-    num3 s32 <- us.num1 + 13
+    sum s32 <- addNums(5, 4)
+    putchar('0' + sum)
+    putchar('\n')
 
     ret 0
+;
+
+addNums fun: num1 s32, num2 s32 -> s32
+    ret num1 + num2
 ;
