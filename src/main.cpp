@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
 
     map<string, vector<shared_ptr<Statement>>> statementsMap;
     map<string, vector<shared_ptr<Statement>>> headerStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
     // For each source, scan it, parse it, and then fill appropriate maps (corresponding to the defined modules)
     for (int i=0; i<sources.size(); i++) {
         if (isVerbose)
@@ -99,9 +100,12 @@ int main(int argc, char **argv) {
                 statementsMap[statementModule->getName()].push_back(statement);
             for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements())
                 headerStatementsMap[statementModule->getName()].push_back(headerStatement);
+            for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements())
+                exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
         } else {
             statementsMap[statementModule->getName()] = statementModule->getStatements();
             headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
+            exportedHeaderStatementsMap[statementModule->getName()] = statementModule->getExportedHeaderStatements();
         }
     }
 
@@ -113,11 +117,13 @@ int main(int argc, char **argv) {
         vector<shared_ptr<Statement>> statements = statementsEntry.second;
         vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[name];
 
-        ModuleBuilder moduleBuilder(name, statements, headerStatements);
+        ModuleBuilder moduleBuilder(name, statements, headerStatements, exportedHeaderStatementsMap);
         shared_ptr<llvm::Module> module = moduleBuilder.getModule();
 
-        if (isVerbose)
+        if (isVerbose) {
             module->print(llvm::outs(), nullptr);
+            cout << endl;
+        }
 
         CodeGenerator codeGenerator(module);
         codeGenerator.generateObjectFile(outputKind, optimizationLevel);

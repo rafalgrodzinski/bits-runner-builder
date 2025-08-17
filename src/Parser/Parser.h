@@ -29,6 +29,7 @@ private:
     shared_ptr<Statement> nextInBlockStatement();
 
     shared_ptr<Statement> matchStatementModule();
+    shared_ptr<Statement> matchStatementImport();
     shared_ptr<Statement> matchStatementMetaExternFunction();
     shared_ptr<Statement> matchStatementVariable();
     shared_ptr<Statement> matchStatementFunction();

@@ -17,6 +17,7 @@
 #include "Parser/Expression/ExpressionBlock.h"
 
 #include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementImport.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
@@ -53,6 +54,10 @@ shared_ptr<StatementModule> Parser::getStatementModule() {
 shared_ptr<Statement> Parser::nextStatement() {
     shared_ptr<Statement> statement;
     int errorsCount = errors.size();
+
+    statement = matchStatementImport();
+    if (statement != nullptr || errors.size() > errorsCount)
+        return statement;
 
     statement = matchStatementFunction();
     if (statement != nullptr || errors.size() > errorsCount)
@@ -110,6 +115,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     string name;
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
+    vector<shared_ptr<Statement>> exportedHeaderStatements;
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
             ParseeGroup(
@@ -137,11 +143,14 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         if (statement != nullptr) {
             statements.push_back(statement);
 
-            // Generate header
+            // Generate headers
             if (statement->getKind() == StatementKind::FUNCTION) {
                 shared_ptr<StatementFunction>statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
                 shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(statementFunction->getShouldExport(), statementFunction->getName(), statementFunction->getArguments(), statementFunction->getReturnValueType());
                 headerStatements.push_back(statementFunctionDeclaration);
+
+                if (statementFunction->getShouldExport())
+                    exportedHeaderStatements.push_back(statementFunctionDeclaration);
             }
 
             // Expect new line after statement
@@ -150,7 +159,27 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         }
     }
 
-    return make_shared<StatementModule>(name, statements, headerStatements);
+    return make_shared<StatementModule>(name, statements, headerStatements, exportedHeaderStatements);
+}
+
+shared_ptr<Statement> Parser::matchStatementImport() {
+    string name;
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::M_IMPORT, true, false, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true)
+            }
+        )
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    name = resultsGroup.getResults().at(0).getToken()->getLexme();
+
+    return make_shared<StatementImport>(name);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {

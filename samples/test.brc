@@ -1,4 +1,4 @@
-@extern putchar fun: character u32 -> u32
+/*@extern putchar fun: character u32 -> u32
 
 main fun -> u32
     sum s32 <- addNums(5, 4)
@@ -10,4 +10,22 @@ main fun -> u32
 
 addNums fun: num1 s32, num2 s32 -> s32
     ret num1 + num2
+;
+
+@import console
+
+main fun -> u32
+    console.printChar('!')
+    console.printChar('\n')
+    ret 0
+;*/
+
+@module app
+
+@import console
+
+@export main fun -> u32
+    printChar('!')
+    printChar('\n')
+    ret 0
 ;

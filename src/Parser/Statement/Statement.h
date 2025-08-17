@@ -17,6 +17,7 @@ enum class StatementKind {
     ASSIGNMENT,
     REPEAT,
     META_EXTERN_FUNCTION,
+    META_IMPORT,
     BLOB
 };
 

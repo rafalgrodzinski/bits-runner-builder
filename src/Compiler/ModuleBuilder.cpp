@@ -14,6 +14,7 @@
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
+#include "Parser/Statement/StatementImport.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
@@ -26,8 +27,8 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 
-ModuleBuilder::ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements):
-moduleName(moduleName), statements(statements), headerStatements(headerStatements) {
+ModuleBuilder::ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap):
+moduleName(moduleName), statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -69,6 +70,9 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
+        case StatementKind::META_IMPORT:
+            buildImport(dynamic_pointer_cast<StatementImport>(statement));
+            break;
         case StatementKind::FUNCTION_DECLARATION:
             buildFunctionDeclaration(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
             break;
@@ -105,6 +109,11 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         default:
             markError(0, 0, "Unexpected statement");
     }
+}
+
+void ModuleBuilder::buildImport(shared_ptr<StatementImport> statement) {
+    for (shared_ptr<Statement> &importStatement : exportedHeaderStatementsMap[statement->getName()])
+        buildStatement(importStatement);
 }
 
 void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement) {

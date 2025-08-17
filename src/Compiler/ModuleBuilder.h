@@ -27,6 +27,7 @@ class ExpressionUnary;
 enum class ExpressionBinaryOperation;
 
 class Statement;
+class StatementImport;
 class StatementFunction;
 class StatementFunctionDeclaration;
 class StatementRawFunction;
@@ -68,9 +69,11 @@ private:
 
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
+    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
     stack<Scope> scopes;
 
     void buildStatement(shared_ptr<Statement> statement);
+    void buildImport(shared_ptr<StatementImport> statement);
     void buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
@@ -116,7 +119,7 @@ private:
     void markError(int line, int column, string message);
 
 public:
-    ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements);
+    ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap);
     shared_ptr<llvm::Module> getModule();
 };
 

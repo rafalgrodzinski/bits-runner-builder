@@ -9,6 +9,7 @@ class ValueType;
 
 class Statement;
 class StatementModule;
+class StatementImport;
 class StatementMetaExternFunction;
 class StatementVariable;
 class StatementFunction;
@@ -43,6 +44,7 @@ private:
 
     static string toString(shared_ptr<Statement> statement);
     static string toString(shared_ptr<StatementModule> statement);
+    static string toString(shared_ptr<StatementImport> statement);
     static string toString(shared_ptr<StatementMetaExternFunction> statement);
     static string toString(shared_ptr<StatementVariable> statement);
     static string toString(shared_ptr<StatementFunction> statement);

@@ -9,6 +9,7 @@
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementImport.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
@@ -253,6 +254,8 @@ string Logger::toString(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::MODULE:
             return toString(dynamic_pointer_cast<StatementModule>(statement));
+        case StatementKind::META_IMPORT:
+            return toString(dynamic_pointer_cast<StatementImport>(statement));
         case StatementKind::META_EXTERN_FUNCTION:
             return toString(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
         case StatementKind::VARIABLE:
@@ -286,6 +289,10 @@ string Logger::toString(shared_ptr<StatementModule> statement) {
     }
 
     return text;
+}
+
+string Logger::toString(shared_ptr<StatementImport> statement) {
+    return format("IMPORT({})", statement->getName());
 }
 
 string Logger::toString(shared_ptr<StatementMetaExternFunction> statement) {
