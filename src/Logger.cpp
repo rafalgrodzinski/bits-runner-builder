@@ -116,6 +116,10 @@ string Logger::toString(shared_ptr<Token> token) {
         
         case TokenKind::M_MODULE:
             return "@MODULE";
+        case TokenKind::M_IMPORT:
+            return "@IMPORT";
+        case TokenKind::M_EXPORT:
+            return "@EXPORT";
         case TokenKind::M_EXTERN:
             return "@EXTERN";
 
@@ -204,6 +208,11 @@ string Logger::toString(TokenKind tokenKind) {
 
         case TokenKind::M_MODULE:
             return "@MODULE";
+        case TokenKind::M_IMPORT:
+            return "@IMPORT";
+        case TokenKind::M_EXPORT:
+            return "@EXPORT";
+            break;
         case TokenKind::M_EXTERN:
             return "@EXTERN";
 

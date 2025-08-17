@@ -140,7 +140,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
             // Generate header
             if (statement->getKind() == StatementKind::FUNCTION) {
                 shared_ptr<StatementFunction>statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
-                shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(statementFunction->getName(), statementFunction->getArguments(), statementFunction->getReturnValueType());
+                shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(statementFunction->getShouldExport(), statementFunction->getName(), statementFunction->getArguments(), statementFunction->getReturnValueType());
                 headerStatements.push_back(statementFunctionDeclaration);
             }
 
@@ -251,6 +251,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
 }
 
 shared_ptr<Statement> Parser::matchStatementFunction() {
+    bool shouldExport = false;
     string identifier;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueType::NONE;
@@ -259,6 +260,8 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
+                // meta
+                Parsee::tokenParsee(TokenKind::M_EXPORT, false, true, false),
                 // identifier
                 Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
                 Parsee::tokenParsee(TokenKind::FUNCTION, true, false, false),
@@ -304,6 +307,11 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     switch (resultsGroup.getKind()) {
         case ParseeResultsGroupKind::SUCCESS: {
             int i = 0;
+            //
+            if (resultsGroup.getResults().at(i).getToken()->isOfKind({TokenKind::M_EXPORT})) {
+                shouldExport = true;
+                i++;
+            }
             // identifier
             identifier = resultsGroup.getResults().at(i++).getToken()->getLexme();
             // arguments
@@ -335,7 +343,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementFunction>(identifier, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
+    return make_shared<StatementFunction>(shouldExport, identifier, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {

@@ -124,7 +124,12 @@ void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclara
 
     // build function declaration
     llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
-    llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
+    llvm::Function *fun = llvm::Function::Create(
+        funType,
+        statement->getShouldExport() ? llvm::GlobalValue::ExternalLinkage : llvm::GlobalValue::InternalLinkage,
+        statement->getName(),
+        module.get()
+    );
     if (!setFun(statement->getName(), fun))
         return;
 }
@@ -179,10 +184,6 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
     if (llvm::verifyFunction(*fun, &llvmErrorMessage))
         markError(0, 0, errorMessage);
-
-    llvm::Function *fun2 = getFun(statement->getName());
-    llvm::BasicBlock &entryBlock2 = fun2->getEntryBlock();
-    llvm::Function *par2 = entryBlock2.getParent();
 }
 
 void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {

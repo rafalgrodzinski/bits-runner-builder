@@ -290,6 +290,14 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = match(TokenKind::M_IMPORT, "@import", true);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::M_EXPORT, "@export", true);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::M_EXTERN, "@extern", true);
     if (token != nullptr)
         return token;

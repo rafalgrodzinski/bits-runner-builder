@@ -50,6 +50,8 @@ enum class TokenKind {
     IDENTIFIER,
 
     M_MODULE,
+    M_IMPORT,
+    M_EXPORT,
     M_EXTERN,
 
     NEW_LINE,

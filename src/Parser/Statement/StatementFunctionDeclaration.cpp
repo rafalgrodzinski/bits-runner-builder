@@ -2,8 +2,12 @@
 
 #include "Parser/Statement/StatementReturn.h"
 
-StatementFunctionDeclaration::StatementFunctionDeclaration(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType):
-Statement(StatementKind::FUNCTION_DECLARATION), name(name), arguments(arguments), returnValueType(returnValueType) { }
+StatementFunctionDeclaration::StatementFunctionDeclaration(bool shouldExport, string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType):
+Statement(StatementKind::FUNCTION_DECLARATION), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType) { }
+
+bool StatementFunctionDeclaration::getShouldExport() {
+    return shouldExport;
+}
 
 string StatementFunctionDeclaration::getName() {
     return name;
