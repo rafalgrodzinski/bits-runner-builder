@@ -18,6 +18,8 @@
 
 using namespace std;
 
+#define DEFAULT_MODULE_NAME "main"
+
 string readFile(filesystem::path filePath) {
     ifstream file(filePath, ios::in | ios::binary | ios::ate);
     if (!file.is_open()) {
@@ -86,7 +88,7 @@ int main(int argc, char **argv) {
 
         if (isVerbose)
             cout << format("🧸 Parsing \"{}\"", inputFileNames[i]) << endl << endl;
-        Parser parser(tokens);
+        Parser parser(DEFAULT_MODULE_NAME, tokens);
         shared_ptr<StatementModule> statementModule = parser.getStatementModule();
 
         if (isVerbose) {
@@ -113,11 +115,12 @@ int main(int argc, char **argv) {
         if (isVerbose)
             cout << format("🪄 Building module \"{}\"", statementsEntry.first) << endl << endl;
 
-        string name = statementsEntry.first;
+        // we don't want any prefix for the default module
+        string moduleName = statementsEntry.first;
         vector<shared_ptr<Statement>> statements = statementsEntry.second;
-        vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[name];
+        vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
 
-        ModuleBuilder moduleBuilder(name, statements, headerStatements, exportedHeaderStatementsMap);
+        ModuleBuilder moduleBuilder(moduleName, DEFAULT_MODULE_NAME, statements, headerStatements, exportedHeaderStatementsMap);
         shared_ptr<llvm::Module> module = moduleBuilder.getModule();
 
         if (isVerbose) {

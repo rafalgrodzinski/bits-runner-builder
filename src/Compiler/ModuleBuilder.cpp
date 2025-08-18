@@ -27,8 +27,8 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 
-ModuleBuilder::ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap):
-moduleName(moduleName), statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
+ModuleBuilder::ModuleBuilder(string moduleName, string defaultModuleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap):
+moduleName(moduleName), defaultModuleName(defaultModuleName), statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -73,9 +73,17 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         case StatementKind::META_IMPORT:
             buildImport(dynamic_pointer_cast<StatementImport>(statement));
             break;
-        case StatementKind::FUNCTION_DECLARATION:
-            buildFunctionDeclaration(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+        case StatementKind::FUNCTION_DECLARATION: {
+            shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
+            buildFunctionDeclaration(
+                moduleName,
+                statementFunctionDeclaration->getName(),
+                statementFunctionDeclaration->getShouldExport(),
+                statementFunctionDeclaration->getArguments(),
+                statementFunctionDeclaration->getReturnValueType()
+            );
             break;
+        }
         case StatementKind::FUNCTION:
             buildFunction(dynamic_pointer_cast<StatementFunction>(statement));
             break;
@@ -100,9 +108,17 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         case StatementKind::REPEAT:
             buildLoop(dynamic_pointer_cast<StatementRepeat>(statement));
             break;
-        case StatementKind::META_EXTERN_FUNCTION:
-            buildMetaExternFunction(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
+        case StatementKind::META_EXTERN_FUNCTION: {
+            shared_ptr<StatementMetaExternFunction> statementFunctionDeclaration = dynamic_pointer_cast<StatementMetaExternFunction>(statement);
+            buildFunctionDeclaration(
+                "",
+                statementFunctionDeclaration->getName(),
+                true,
+                statementFunctionDeclaration->getArguments(),
+                statementFunctionDeclaration->getReturnValueType()
+            );
             break;
+        }
         case StatementKind::EXPRESSION:
             buildExpression(dynamic_pointer_cast<StatementExpression>(statement));
             return;
@@ -111,36 +127,27 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     }
 }
 
-void ModuleBuilder::buildImport(shared_ptr<StatementImport> statement) {
-    for (shared_ptr<Statement> &importStatement : exportedHeaderStatementsMap[statement->getName()])
-        buildStatement(importStatement);
+void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string moduleName) {
+    switch (statement->getKind()) {
+        case StatementKind::FUNCTION_DECLARATION: {
+            shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
+            buildFunctionDeclaration(
+                moduleName,
+                statementFunctionDeclaration->getName(),
+                true,
+                statementFunctionDeclaration->getArguments(),
+                statementFunctionDeclaration->getReturnValueType()
+            );
+            break;
+        }
+        default:
+            markError(0, 0, "Unexpected imported statement");
+    }
 }
 
-void ModuleBuilder::buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement) {
-    // return type
-    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
-    if (returnType == nullptr)
-        return;
-    
-    // arguments
-    vector<llvm::Type *> argTypes;
-    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
-        llvm::Type *argType = typeForValueType(arg.second);
-        if (argType == nullptr)
-            return;
-        argTypes.push_back(argType);
-    }
-
-    // build function declaration
-    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
-    llvm::Function *fun = llvm::Function::Create(
-        funType,
-        statement->getShouldExport() ? llvm::GlobalValue::ExternalLinkage : llvm::GlobalValue::InternalLinkage,
-        statement->getName(),
-        module.get()
-    );
-    if (!setFun(statement->getName(), fun))
-        return;
+void ModuleBuilder::buildImport(shared_ptr<StatementImport> statement) {
+    for (shared_ptr<Statement> &importStatement : exportedHeaderStatementsMap[statement->getName()])
+        buildImportStatement(importStatement, statement->getName());
 }
 
 void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
@@ -366,31 +373,6 @@ void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
     builder->SetInsertPoint(afterBlock);
 
     scopes.pop();
-}
-
-void ModuleBuilder::buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement) {
-    // get argument types
-    vector<llvm::Type *> types;
-    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
-        types.push_back(typeForValueType(arg.second));
-    }
-
-    // build function declaration
-    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
-    if (returnType == nullptr)
-        return;
-    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, types, false);
-    llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::ExternalLinkage, statement->getName(), module.get());
-    if (!setFun(statement->getName(), fun))
-        return;
-    
-    // build arguments
-    int i=0;
-    for (auto &arg : fun->args()) {
-        string name = statement->getArguments()[i].first;
-        arg.setName(name);
-        i++;
-    }
 }
 
 void ModuleBuilder::buildExpression(shared_ptr<StatementExpression> statement) {
@@ -713,6 +695,42 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
 
     markError(0, 0, format("Function \"{}\" not defined in scope", expression->getName()));
     return nullptr;
+}
+
+void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
+    // name
+    string funName = name;
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        funName = format("{}.{}", moduleName, name);
+
+    // arguments
+    vector<llvm::Type *> funArgTypes;
+    for (pair<string, shared_ptr<ValueType>> &argument : arguments) {
+        llvm::Type *funArgType = typeForValueType(argument.second);
+        if (funArgType == nullptr)
+            return;
+        funArgTypes.push_back(funArgType);
+    }
+
+    // return type
+    llvm::Type *funReturnType = typeForValueType(returnType);
+    if (funReturnType == nullptr)
+        return;
+    
+    // linkage
+    llvm::GlobalValue::LinkageTypes funLinkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
+    if (isExtern)
+        funLinkage = llvm::GlobalValue::ExternalLinkage;
+
+    // build function declaration
+    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgTypes, false);
+    llvm::Function *fun = llvm::Function::Create(funType, funLinkage, funName, *module);
+
+    // register
+    string internalName = name;
+    if (moduleName.compare(this->moduleName) != 0)
+        internalName = funName;
+    setFun(internalName, fun);
 }
 
 bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {

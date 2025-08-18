@@ -54,6 +54,7 @@ class ModuleBuilder {
 private:
     vector<shared_ptr<Error>> errors;
     string moduleName;
+    string defaultModuleName;
 
     shared_ptr<llvm::LLVMContext> context;
     shared_ptr<llvm::Module> module;
@@ -73,8 +74,9 @@ private:
     stack<Scope> scopes;
 
     void buildStatement(shared_ptr<Statement> statement);
+    void buildImportStatement(shared_ptr<Statement> statement, string moduleName);
+
     void buildImport(shared_ptr<StatementImport> statement);
-    void buildFunctionDeclaration(shared_ptr<StatementFunctionDeclaration> statement);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
@@ -83,7 +85,6 @@ private:
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
     void buildLoop(shared_ptr<StatementRepeat> statement);
-    void buildMetaExternFunction(shared_ptr<StatementMetaExternFunction> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);
@@ -100,6 +101,8 @@ private:
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
+
+    void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);
     llvm::AllocaInst *getAlloca(string name);
@@ -119,7 +122,7 @@ private:
     void markError(int line, int column, string message);
 
 public:
-    ModuleBuilder(string moduleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap);
+    ModuleBuilder(string moduleName, string defaultModuleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap);
     shared_ptr<llvm::Module> getModule();
 };
 

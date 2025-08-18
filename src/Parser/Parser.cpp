@@ -35,8 +35,8 @@
 #include "Parsee/ParseeResult.h"
 #include "Parsee/ParseeResultsGroup.h"
 
-Parser::Parser(vector<shared_ptr<Token>> tokens) :
-tokens(tokens) { }
+Parser::Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens) :
+defaultModuleName(defaultModuleName), tokens(tokens) { }
 
 shared_ptr<StatementModule> Parser::getStatementModule() {
     shared_ptr<Statement> statement = matchStatementModule();
@@ -132,7 +132,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
             name = resultsGroup.getResults().at(0).getToken()->getLexme();
             break;
         case ParseeResultsGroupKind::NO_MATCH:
-            name = "main";
+            name = defaultModuleName;
             break;
         case ParseeResultsGroupKind::FAILURE:
             return nullptr;
