@@ -1,7 +1,0 @@
-@import console
-
-@export main fun -> u32
-    //printChar('!')
-    //printChar('\n')
-    ret 0
-;

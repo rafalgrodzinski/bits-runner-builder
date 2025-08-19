@@ -123,6 +123,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "@EXPORT";
         case TokenKind::M_EXTERN:
             return "@EXTERN";
+        case TokenKind::META:
+            return "@";
 
         case TokenKind::NEW_LINE:
             return "↲";
@@ -213,9 +215,10 @@ string Logger::toString(TokenKind tokenKind) {
             return "@IMPORT";
         case TokenKind::M_EXPORT:
             return "@EXPORT";
-            break;
         case TokenKind::M_EXTERN:
             return "@EXTERN";
+        case TokenKind::META:
+            return "@";
 
         case TokenKind::NEW_LINE:
             return "↲";

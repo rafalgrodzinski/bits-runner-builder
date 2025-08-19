@@ -289,7 +289,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
-                // meta
+                // export
                 Parsee::tokenParsee(TokenKind::M_EXPORT, false, true, false),
                 // identifier
                 Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
@@ -336,7 +336,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     switch (resultsGroup.getKind()) {
         case ParseeResultsGroupKind::SUCCESS: {
             int i = 0;
-            //
+            // export
             if (resultsGroup.getResults().at(i).getToken()->isOfKind({TokenKind::M_EXPORT})) {
                 shouldExport = true;
                 i++;
@@ -964,32 +964,70 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionCall() {
-    if (!tryMatchingTokenKinds({TokenKind::IDENTIFIER, TokenKind::LEFT_PAREN}, true, false))
+    string identifier;
+    vector<shared_ptr<Expression>> argumentExpressions;
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                // identifier - module prefix
+                Parsee::groupParsee(
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::META, true, true, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true),
+                            Parsee::tokenParsee(TokenKind::DOT, true, false, true)
+                        }
+                    ), false, true, false
+                ),
+                // identifier - name
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
+                // arguments
+                Parsee::tokenParsee(TokenKind::LEFT_PAREN, true, false, false),
+                Parsee::groupParsee(
+                    ParseeGroup(
+                        {
+                            // first argument
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                            Parsee::expressionParsee(true, true, false),
+                            // additional arguments
+                            Parsee::repeatedGroupParsee(
+                                ParseeGroup(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::COMMA, true, false, false),
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                                        Parsee::expressionParsee(true, true, true)
+                                    }
+                                ), false, true, false
+                            ),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false)
+                        }
+                    ), false, true, false
+                ),
+                Parsee::tokenParsee(TokenKind::RIGHT_PAREN, true, false, true),
+            }
+        )
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    shared_ptr<Token> identifierToken = tokens.at(currentIndex);
-    currentIndex++; // identifier
-    currentIndex++; // left parenthesis
-
-    vector<shared_ptr<Expression>> argumentExpressions;
-    if (!tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
-        do {
-            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
-
-            shared_ptr<Expression> argumentExpression = nextExpression();
-            if (argumentExpression == nullptr)
-                return nullptr;
-            argumentExpressions.push_back(argumentExpression);
-        } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
-
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true); // optional new line
-        if (!tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
-            markError(TokenKind::RIGHT_PAREN, {});
-            return nullptr;
-        }
+    int i = 0;
+    // identifier
+    identifier = "";
+    if (resultsGroup.getResults().at(i).getToken()->isOfKind({TokenKind::META})) {
+        i++;
+        identifier += resultsGroup.getResults().at(i++).getToken()->getLexme();
+        identifier += ".";
+    }
+    identifier += resultsGroup.getResults().at(i++).getToken()->getLexme();
+    // arguments
+    while (i < resultsGroup.getResults().size()) {
+        argumentExpressions.push_back(resultsGroup.getResults().at(i).getExpression());
+        i++;
     }
 
-    return make_shared<ExpressionCall>(identifierToken->getLexme(), argumentExpressions);
+    return make_shared<ExpressionCall>(identifier, argumentExpressions);
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {

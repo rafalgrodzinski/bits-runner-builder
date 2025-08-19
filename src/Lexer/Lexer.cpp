@@ -302,6 +302,10 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = match(TokenKind::META, "@", false);
+    if (token != nullptr)
+        return token;
+
     // new line
     token = match(TokenKind::NEW_LINE, "\n", false);
     if (token != nullptr) {
