@@ -11,6 +11,7 @@ class ValueType;
 
 class Expression;
 class Statement;
+class StatementModule;
 
 class ParseeGroup;
 class ParseeResult;
@@ -20,6 +21,7 @@ using namespace std;
 
 class Parser {
 private:
+    string defaultModuleName;
     vector<shared_ptr<Error>> errors;
     vector<shared_ptr<Token>> tokens;
     int currentIndex = 0;
@@ -27,6 +29,8 @@ private:
     shared_ptr<Statement> nextStatement();
     shared_ptr<Statement> nextInBlockStatement();
 
+    shared_ptr<Statement> matchStatementModule();
+    shared_ptr<Statement> matchStatementImport();
     shared_ptr<Statement> matchStatementMetaExternFunction();
     shared_ptr<Statement> matchStatementVariable();
     shared_ptr<Statement> matchStatementFunction();
@@ -67,8 +71,8 @@ private:
     void markError(optional<TokenKind> expectedTokenKind, optional<string> message);
 
 public:
-    Parser(vector<shared_ptr<Token>> tokens);
-    vector<shared_ptr<Statement>> getStatements();
+    Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens);
+    shared_ptr<StatementModule> getStatementModule();
 };
 
 #endif

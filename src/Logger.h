@@ -8,6 +8,8 @@ enum class TokenKind;
 class ValueType;
 
 class Statement;
+class StatementModule;
+class StatementImport;
 class StatementMetaExternFunction;
 class StatementVariable;
 class StatementFunction;
@@ -41,6 +43,8 @@ private:
     static string toString(shared_ptr<ValueType> valueType);
 
     static string toString(shared_ptr<Statement> statement);
+    static string toString(shared_ptr<StatementModule> statement);
+    static string toString(shared_ptr<StatementImport> statement);
     static string toString(shared_ptr<StatementMetaExternFunction> statement);
     static string toString(shared_ptr<StatementVariable> statement);
     static string toString(shared_ptr<StatementFunction> statement);
@@ -65,7 +69,7 @@ private:
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);
-    static void print(vector<shared_ptr<Statement>> statements);
+    static void print(shared_ptr<StatementModule> statement);
     static void print(shared_ptr<Error> error);
 };
 

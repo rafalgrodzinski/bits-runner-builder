@@ -19,9 +19,11 @@ The language aims to be simple, easy to reason about, and predictable. Because o
 ```
 // Basic hello world
 //
+@module main
+
 @extern putchar fun: character u32 -> u32
 
-main fun -> u32
+@export main fun -> u32
     text data<u8> <- "Hello, world!\n"
     
     rep i u32 <- 0, text[i] != 0:
@@ -55,10 +57,17 @@ Hello World
 [samples/hello.brc](samples/hello.brc)
 
 Fibonaci Numbers
-[samples/fib.brc]()
+[samples/fib.brc](samples/fib.brc)
+
+Multi Module
+[samples/multi_module/](samples/multi_module/)
 
 #### How to build the samples
 ```
 brb samples/hello.brc
 cc -o hello hello.o
+
+// or
+
+./samples/multi_module/build.sh
 ```

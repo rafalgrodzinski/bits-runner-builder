@@ -20,12 +20,19 @@ public:
         OBJECT
     };
 
+    enum class OptimizationLevel {
+        O0,
+        O1,
+        O2,
+        O3
+    };
+
 private:
     shared_ptr<llvm::Module> module;
 
 public:
     CodeGenerator(shared_ptr<llvm::Module> module);
-    void generateObjectFile(OutputKind outputKind);
+    void generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel);
 };
 
 #endif

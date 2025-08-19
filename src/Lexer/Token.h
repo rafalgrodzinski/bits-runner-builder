@@ -49,7 +49,11 @@ enum class TokenKind {
     TYPE,
     IDENTIFIER,
 
+    M_MODULE,
+    M_IMPORT,
+    M_EXPORT,
     M_EXTERN,
+    META,
 
     NEW_LINE,
     END

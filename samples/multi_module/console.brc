@@ -1,0 +1,7 @@
+@module console
+
+@extern putchar fun: character u32 -> u32
+
+@export printChar fun: character u32
+    putchar(character)
+;

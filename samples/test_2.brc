@@ -1,0 +1,9 @@
+@module test
+
+main fun -> u32
+    sum s32 <- addNums(5, 4)
+    putchar('0' + sum)
+    putchar('\n')
+
+    ret 0
+;

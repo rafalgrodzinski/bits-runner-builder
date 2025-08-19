@@ -13,3 +13,10 @@ build/
 # brb build artifiacts
 *.o
 *.asm
+
+# Merge artifacts
+*.swp
+*.orig
+*_LOCAL_*
+*_REMOTE_*
+*_BASE_*

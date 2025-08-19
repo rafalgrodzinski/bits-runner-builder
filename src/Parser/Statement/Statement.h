@@ -6,15 +6,18 @@
 using namespace std;
 
 enum class StatementKind {
+    MODULE,
     EXPRESSION,
     BLOCK,
     RETURN,
+    FUNCTION_DECLARATION,
     FUNCTION,
     RAW_FUNCTION,
     VARIABLE,
     ASSIGNMENT,
     REPEAT,
     META_EXTERN_FUNCTION,
+    META_IMPORT,
     BLOB
 };
 

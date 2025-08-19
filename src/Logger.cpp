@@ -8,6 +8,8 @@
 #include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
+#include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementImport.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
@@ -112,9 +114,17 @@ string Logger::toString(shared_ptr<Token> token) {
             return "IF";
         case TokenKind::ELSE:
             return "ELSE";
-
+        
+        case TokenKind::M_MODULE:
+            return "@MODULE";
+        case TokenKind::M_IMPORT:
+            return "@IMPORT";
+        case TokenKind::M_EXPORT:
+            return "@EXPORT";
         case TokenKind::M_EXTERN:
             return "@EXTERN";
+        case TokenKind::META:
+            return "@";
 
         case TokenKind::NEW_LINE:
             return "↲";
@@ -199,8 +209,16 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::REPEAT:
             return "REP";
 
+        case TokenKind::M_MODULE:
+            return "@MODULE";
+        case TokenKind::M_IMPORT:
+            return "@IMPORT";
+        case TokenKind::M_EXPORT:
+            return "@EXPORT";
         case TokenKind::M_EXTERN:
             return "@EXTERN";
+        case TokenKind::META:
+            return "@";
 
         case TokenKind::NEW_LINE:
             return "↲";
@@ -237,6 +255,10 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
 
 string Logger::toString(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
+        case StatementKind::MODULE:
+            return toString(dynamic_pointer_cast<StatementModule>(statement));
+        case StatementKind::META_IMPORT:
+            return toString(dynamic_pointer_cast<StatementImport>(statement));
         case StatementKind::META_EXTERN_FUNCTION:
             return toString(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
         case StatementKind::VARIABLE:
@@ -258,6 +280,22 @@ string Logger::toString(shared_ptr<Statement> statement) {
         case StatementKind::EXPRESSION:
             return toString(dynamic_pointer_cast<StatementExpression>(statement));
     }
+}
+
+string Logger::toString(shared_ptr<StatementModule> statement) {
+    string text;
+
+    text += format("MODULE({})", statement->getName());
+    for (shared_ptr<Statement> &statement : statement->getStatements()) {
+        text += "\n";
+        text += toString(statement);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementImport> statement) {
+    return format("IMPORT({})", statement->getName());
 }
 
 string Logger::toString(shared_ptr<StatementMetaExternFunction> statement) {
@@ -534,10 +572,8 @@ void Logger::print(vector<shared_ptr<Token>> tokens) {
         cout << endl;
 }
 
-void Logger::print(vector<shared_ptr<Statement>> statements) {
-    for (shared_ptr<Statement> &statement : statements) {
-        cout << toString(statement) << endl << endl;
-    }
+void Logger::print(shared_ptr<StatementModule> statement) {
+    cout << toString(statement) << endl << endl;
 }
 
 void Logger::print(shared_ptr<Error> error) {

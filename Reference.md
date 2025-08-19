@@ -18,6 +18,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - Raw Functions (`raw`)
 - Conditional Expressions (`if`, `else`)
 - Loops (`rep`)
+- Modules (`@module`, `@import`, `@export`, `@extern`)
 
 ## Comments
 Like in C, comments can specified using either `\\` which will run until the end of the line or through `/* */` block. However, unlike C, the `/* bla bla /* bla */ */` comments can be also embeded inside each other.
@@ -238,3 +239,31 @@ rep i u32 <- 0, true, i < someValue:
   doStuff(i)
 ;
 ```
+
+## Modules
+Each source forms a module and each module can be made out of multiple source files. `@module someModule` must be placed at the beginning of the file. If no `@module` is specified, then `@module main` is assumed. Main module lives in the global namespace.
+
+Each module can export functionality using the `@export` prefix. In order to use a different module it has to be iported with `@import` and then we can use its exported symbols by prefixing them with `@moduleName.`.
+
+```
+// app.brc
+// @module main is assumed
+@import console
+
+// we need to export main so it's available to the OS
+@export main fun -> u32
+  @console.print("Hello, world!)
+;
+
+
+// console.brc
+@module console
+
+@export print fun: text data<u32, 32> 
+  [..]
+;
+```
+
+We can then build both of the sources together with `brb app.brc console.brc` which will produce object files `main.o` and `console.o`.
+
+Separately linked symbosl can be specified using `@extern`. For example, we we want to use something from the standard library we can use `@extern putchar fun: character u32 -> u32`, which can then be resolved by linker.

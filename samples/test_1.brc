@@ -1,0 +1,5 @@
+@extern putchar fun: character u32 -> u32
+
+@addNums fun: num1 s32, num2 s32 -> s32
+    ret num1 + num2
+;

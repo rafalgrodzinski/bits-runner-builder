@@ -5,7 +5,7 @@ using namespace std;
 CodeGenerator::CodeGenerator(shared_ptr<llvm::Module> module): module(module) {
 }
 
-void CodeGenerator::generateObjectFile(OutputKind outputKind) {
+void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
@@ -19,9 +19,36 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind) {
         cerr << errorString << endl;
         exit(1);
     }
+    string architecture = "generic";
+    string features = "";
+    llvm::Reloc::Model relocationModel = llvm::Reloc::PIC_;
+    llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Medium;
+    llvm::CodeGenOptLevel optimizationLevel;
+    switch (optLevel) {
+        case OptimizationLevel::O0:
+            optimizationLevel = llvm::CodeGenOptLevel::None;
+            break;
+        case OptimizationLevel::O1:
+            optimizationLevel = llvm::CodeGenOptLevel::Less;
+            break;
+        case OptimizationLevel::O2:
+            optimizationLevel = llvm::CodeGenOptLevel::Default;
+            break;
+        case OptimizationLevel::O3:
+            optimizationLevel = llvm::CodeGenOptLevel::Aggressive;
+            break;
+    }
 
     llvm::TargetOptions options;
-    llvm::TargetMachine *targetMachine = target->createTargetMachine(targetTriple, "generic", "", options, llvm::Reloc::PIC_);
+    llvm::TargetMachine *targetMachine = target->createTargetMachine(
+        targetTriple,
+        architecture,
+        features,
+        options,
+        relocationModel,
+        codeModel,
+        optimizationLevel
+    );
 
     module->setDataLayout(targetMachine->createDataLayout());
     module->setTargetTriple(targetTriple);

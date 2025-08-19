@@ -3,8 +3,8 @@
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementReturn.h"
 
-StatementFunction::StatementFunction(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<StatementBlock> statementBlock):
-Statement(StatementKind::FUNCTION), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
+StatementFunction::StatementFunction(bool shouldExport, string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<StatementBlock> statementBlock):
+Statement(StatementKind::FUNCTION), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
     vector<shared_ptr<Statement>> statements = statementBlock->getStatements();
     if (!statements.empty() && statements.back()->getKind() == StatementKind::RETURN)
         return;
@@ -13,6 +13,10 @@ Statement(StatementKind::FUNCTION), name(name), arguments(arguments), returnValu
     shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(nullptr);
     statements.push_back(statementReturn);
     this->statementBlock = make_shared<StatementBlock>(statements);
+}
+
+bool StatementFunction::getShouldExport() {
+    return shouldExport;
 }
 
 string StatementFunction::getName() {
