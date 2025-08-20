@@ -340,19 +340,24 @@ shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator
 shared_ptr<Token> Lexer::matchReal() {
     int nextIndex = currentIndex;
 
-    while (nextIndex < source.length() && isDecDigit(nextIndex))
+    // Match digit or _ if it's not in the first position
+    while (nextIndex < source.length() && (isDecDigit(nextIndex) || (source.at(nextIndex) == '_' && nextIndex > currentIndex)))
         nextIndex++;
     
-    if (nextIndex >= source.length() || source.at(nextIndex) != '.')
+    // Last character should be . and it shouldn't be preceeded by _
+    if (nextIndex >= source.length() || source.at(nextIndex) != '.' || source.at(nextIndex-1) == '_')
         return nullptr;
     else
         nextIndex++;
+
+    int fractionalIndex = nextIndex;
     
-    while (nextIndex < source.length() && isDecDigit(nextIndex))
+    // Match digit or _ if it's not in the first position
+    while (nextIndex < source.length() && (isDecDigit(nextIndex) || (source.at(nextIndex) == '_' && nextIndex > fractionalIndex)))
         nextIndex++;
 
-    if (!isSeparator(nextIndex)) {
-        markError();
+    // Next symbol should be separator and the last symbol shouldn't be _ or .
+    if (nextIndex == fractionalIndex || !isSeparator(nextIndex) || source.at(nextIndex-1) == '_') {
         return nullptr;
     }
 
@@ -365,8 +370,8 @@ shared_ptr<Token> Lexer::matchReal() {
 shared_ptr<Token> Lexer::matchIntegerDec() {
     int nextIndex = currentIndex;
 
-    // Include _ which is not on the first position
-    while (nextIndex < source.length() && (isDecDigit(nextIndex) || (nextIndex > currentIndex && source.at(nextIndex) == '_')))
+    // Match digit or _ if it's not in the first position
+    while (nextIndex < source.length() && (isDecDigit(nextIndex) || (source.at(nextIndex) == '_' && nextIndex > currentIndex)))
         nextIndex++;
     
     // Resulting number shouldn't be empty, should be separated on the right, and _ shouldn't be the last character

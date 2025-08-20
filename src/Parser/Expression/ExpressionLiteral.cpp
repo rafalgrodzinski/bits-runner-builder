@@ -45,7 +45,9 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             return expression;
         }
         case TokenKind::REAL: {
-            expression->r32Value = stof(token->getLexme());
+            string numString = token->getLexme();
+            erase(numString, '_');
+            expression->r32Value = stof(numString);
             expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
             break;
         }
