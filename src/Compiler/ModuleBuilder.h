@@ -103,6 +103,7 @@ private:
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
+    void buildAssignment(llvm::Value *elementPtr, shared_ptr<Expression> valueExpression);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);
     llvm::AllocaInst *getAlloca(string name);

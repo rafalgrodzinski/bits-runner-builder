@@ -278,11 +278,15 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
     if (alloca == nullptr)
         return;
 
-    llvm::Value *value = valueForExpression(statement->getValueExpression());
+    //llvm::Value *value = valueForExpression(statement->getValueExpression());
+    //shared_ptr<ValueType> vt = statement->getValueExpression()->getValueType();
+    //vt->getKind();
+    //ValueTypeKind::
 
     switch (statement->getAssignmentKind()) {
         case StatementAssignmentKind::SIMPLE: {
-            builder->CreateStore(value, alloca);
+            //builder->CreateStore(value, alloca);
+            buildAssignment(alloca, statement->getValueExpression());
             break;
         }
         case StatementAssignmentKind::DATA: {
@@ -294,7 +298,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
             llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
             llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", statement->getIdentifier()));
 
-            builder->CreateStore(value, elementPtr);
+            //builder->CreateStore(value, elementPtr);
+            buildAssignment(elementPtr, statement->getValueExpression());
             break;
         }
         case StatementAssignmentKind::BLOB: {        
@@ -308,7 +313,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
                 builder->getInt32(*memberIndex)
             };
             llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index, format("{}.{}", statement->getIdentifier(), statement->getMemberName()));
-            builder->CreateStore(value, elementPtr);
+            //builder->CreateStore(value, elementPtr);
+            buildAssignment(elementPtr, statement->getValueExpression());
             break;
         }
     }
@@ -731,6 +737,40 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     if (moduleName.compare(this->moduleName) != 0)
         internalName = funName;
     setFun(internalName, fun);
+}
+
+void ModuleBuilder::buildAssignment(llvm::Value *targetValue, shared_ptr<Expression> valueExpression) {
+    switch (valueExpression->getKind()) {
+        case ExpressionKind::ARRAY_LITERAL: {
+            vector<llvm::Value *> sourceValues = valuesForExpression(valueExpression);
+            llvm::Type *targetType = targetValue->getType();
+            if (targetType->isArrayTy()) {
+                int targetSize = ((llvm::ArrayType *)targetType)->getNumElements();
+                int count = targetSize < sourceValues.size() ? targetSize : sourceValues.size();
+
+                for (int i=0; i<count; i++) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+                    llvm::Value *elementPtr = builder->CreateGEP(targetType, targetValue, index, format("{}_{}", "as", i));
+
+                    builder->CreateStore(sourceValues[i], elementPtr);
+                }
+            }
+            break;
+        }
+        /*case ValueTypeKind::BLOB: {
+            break;
+        }*/
+        default: {
+            llvm::Value *sourceValue = valueForExpression(valueExpression);
+            if (sourceValue == nullptr)
+                return;
+            builder->CreateStore(sourceValue, targetValue);
+            break;
+        }
+    }
 }
 
 bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
