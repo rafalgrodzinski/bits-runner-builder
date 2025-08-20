@@ -1,5 +1,7 @@
 @export main fun -> u32
-    num r32 <- 3_.4_
+    num1 r32 <- 3.0
+    num2 r32 <- 3.1
+    num3 u32 <- 3
 
     ret 0
 ;
