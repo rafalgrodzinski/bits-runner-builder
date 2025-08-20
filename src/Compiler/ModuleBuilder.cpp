@@ -94,7 +94,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildBlob(dynamic_pointer_cast<StatementBlob>(statement));
             break;
         case StatementKind::VARIABLE:
-            buildVarDeclaration(dynamic_pointer_cast<StatementVariable>(statement));
+            buildVariable(dynamic_pointer_cast<StatementVariable>(statement));
             break;
         case StatementKind::ASSIGNMENT:
             buildAssignment(dynamic_pointer_cast<StatementAssignment>(statement));
@@ -234,7 +234,7 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
         return;
 }
 
-void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement) {
+void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
     if (statement->getValueType()->getKind() == ValueTypeKind::DATA) {
         vector<llvm::Value *> values = valuesForExpression(statement->getExpression());
 
@@ -242,7 +242,7 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, statement->getName());
         if (!setAlloca(statement->getName(), alloca))
             return;
-        for (int i=0; i < type->getNumElements(); i++) {
+        for (int i=0; i < type->getNumElements() && i < values.size(); i++) {
             llvm::Value *index[] = {
                 builder->getInt32(0),
                 builder->getInt32(i)
@@ -251,7 +251,7 @@ void ModuleBuilder::buildVarDeclaration(shared_ptr<StatementVariable> statement)
 
             builder->CreateStore(values[i], elementPtr);
         }
-    } else if (statement->getValueType()->getKind() == ValueTypeKind::TYPE) {
+    } else if (statement->getValueType()->getKind() == ValueTypeKind::BLOB) {
         llvm::StructType *type = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, statement->getName());
         if (!setAlloca(statement->getName(), alloca))
@@ -873,7 +873,7 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
                 count = valueType->getValueArg();
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
         }
-        case ValueTypeKind::TYPE:
+        case ValueTypeKind::BLOB:
             return getStructType(valueType->getTypeName());
     }
 }

@@ -17,7 +17,7 @@ enum class ValueTypeKind {
     S32,
     R32,
     DATA,
-    TYPE
+    BLOB
 };
 
 class ValueType {

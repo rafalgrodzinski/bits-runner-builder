@@ -248,8 +248,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "R32";
         case ValueTypeKind::DATA:
             return "[]";
-        case ValueTypeKind::TYPE:
-            return format("TYPE({})", valueType->getTypeName());
+        case ValueTypeKind::BLOB:
+            return format("BLOB({})", valueType->getTypeName());
     }
 }
 

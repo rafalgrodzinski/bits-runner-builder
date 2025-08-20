@@ -1248,7 +1248,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
             int storedIndex = currentIndex;
             currentIndex = index;
             shared_ptr<Expression> expressionValue = matchExpressionLiteral();
-            typeArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getU32Value();
+            typeArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getS32Value();
             currentIndex = storedIndex;
             index++;
         }
