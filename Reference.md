@@ -44,7 +44,7 @@ main fun -> u32
 1_024
 1.245
 
-1_000.
+1_000.0
 
 0xffa
 0xffaa_42bb
@@ -55,6 +55,8 @@ main fun -> u32
 // Invalid examples:
 _100
 1000_.100
+3.
+3._14
 
 0x_fa
 

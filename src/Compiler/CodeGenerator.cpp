@@ -22,7 +22,7 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
     string architecture = "generic";
     string features = "";
     llvm::Reloc::Model relocationModel = llvm::Reloc::PIC_;
-    llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Medium;
+    llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Small;
     llvm::CodeGenOptLevel optimizationLevel;
     switch (optLevel) {
         case OptimizationLevel::O0:
