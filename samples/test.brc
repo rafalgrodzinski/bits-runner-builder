@@ -1,16 +1,29 @@
-@extern putchar fun: character u32 -> u32
+//@extern putchar fun: character u32 -> u32
 
-print fun: text data<u32, 20>
+/*print fun: text data<u32, 20>
     text <- "testing\n"
     rep i u32 <- 0, text[i] != 0:
         putchar(text[i])
         i <- i + 1
     ;
-;
+;*/
+
+/*justPrint fun: text data<u32, 20>
+    rep i u32 <- 0, text[i] != 0:
+        putchar(text[i])
+        i <- i + 1
+    ;
+;*/
 
 @export main fun -> u32
-    text data<u32, 20> <- "Hello!\n"
-    print(text)
+    //t u32 <- 5
+    text data<u32, 4> <- "Hello!\n"
+    //text2 data<u32, 20> <- "Alt\n"
+    //print(text)
+    //text <- text2
+    //text2[0] <- 'B'
+    //justPrint(text)
+    //justPrint(text2)
 
     ret 0
 ;

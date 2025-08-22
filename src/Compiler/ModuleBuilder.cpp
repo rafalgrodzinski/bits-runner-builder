@@ -235,42 +235,43 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
 }
 
 void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
-    if (statement->getValueType()->getKind() == ValueTypeKind::DATA) {
-        vector<llvm::Value *> values = valuesForExpression(statement->getExpression());
+    llvm::AllocaInst *alloca;
+    llvm::Type *valueType;
 
-        llvm::ArrayType *type = (llvm::ArrayType *)typeForValueType(statement->getValueType(), values.size());
-        llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, statement->getName());
-        if (!setAlloca(statement->getName(), alloca))
-            return;
-        for (int i=0; i < type->getNumElements() && i < values.size(); i++) {
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                builder->getInt32(i)
-            };
-            llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}_{}", statement->getName(), i));
-
-            builder->CreateStore(values[i], elementPtr);
-        }
-    } else if (statement->getValueType()->getKind() == ValueTypeKind::BLOB) {
-        llvm::StructType *type = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
-        llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, statement->getName());
-        if (!setAlloca(statement->getName(), alloca))
-            return;
-    } else {
-        llvm::AllocaInst *alloca = builder->CreateAlloca(typeForValueType(statement->getValueType(), 0), nullptr, statement->getName());
-
-        if (!setAlloca(statement->getName(), alloca))
-            return;
-        
-        // set initial value
-        if (statement->getExpression() != nullptr) {
-            llvm::Value *value = nullptr;
-            value = valueForExpression(statement->getExpression());
-            if (value == nullptr)
+    switch (statement->getValueType()->getKind()) {
+        case ValueTypeKind::DATA: {
+            int count = 0;
+            if (statement->getExpression() != nullptr && statement->getExpression()->getKind() == ExpressionKind::ARRAY_LITERAL)
+                count = dynamic_pointer_cast<ExpressionArrayLiteral>(statement->getExpression())->getExpressions().size();
+            // TODO: get number of values from existing array
+            valueType = (llvm::ArrayType *)typeForValueType(statement->getValueType(), count);
+            if (valueType == nullptr)
                 return;
-            builder->CreateStore(value, alloca);
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            break;
+        }
+        case ValueTypeKind::BLOB: {
+            llvm::StructType *valueType = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
+            if (valueType == nullptr)
+                return;
+            llvm::AllocaInst *alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            break;
+        }
+        default: {
+            valueType = typeForValueType(statement->getValueType());
+            if (valueType == nullptr)
+                return;
+            alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getName());
+            break;
         }
     }
+
+    // try registering new variable in scope
+    if (!setAlloca(statement->getName(), alloca))
+            return;
+
+    if (statement->getExpression() != nullptr)
+        buildAssignment(alloca, valueType, statement->getExpression());
 }
 
 void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
@@ -278,28 +279,21 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
     if (alloca == nullptr)
         return;
 
-    //llvm::Value *value = valueForExpression(statement->getValueExpression());
-    //shared_ptr<ValueType> vt = statement->getValueExpression()->getValueType();
-    //vt->getKind();
-    //ValueTypeKind::
-
     switch (statement->getAssignmentKind()) {
         case StatementAssignmentKind::SIMPLE: {
-            //builder->CreateStore(value, alloca);
-            buildAssignment(alloca, statement->getValueExpression());
+            buildAssignment(alloca, alloca->getAllocatedType(), statement->getValueExpression());
             break;
         }
         case StatementAssignmentKind::DATA: {
+            llvm::ArrayType *arrayType = (llvm::ArrayType *)alloca->getAllocatedType();
             llvm::Value *indexValue = valueForExpression(statement->getIndexExpression());
             llvm::Value *index[] = {
                 builder->getInt32(0),
                 indexValue
             };
-            llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
-            llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", statement->getIdentifier()));
-
-            //builder->CreateStore(value, elementPtr);
-            buildAssignment(elementPtr, statement->getValueExpression());
+            llvm::Value *elementPtr = builder->CreateGEP(arrayType, alloca, index, format("{}[]", statement->getIdentifier()));
+            llvm::Type *elementType = arrayType->getElementType();
+            buildAssignment(elementPtr, elementType, statement->getValueExpression());
             break;
         }
         case StatementAssignmentKind::BLOB: {        
@@ -313,8 +307,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
                 builder->getInt32(*memberIndex)
             };
             llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index, format("{}.{}", statement->getIdentifier(), statement->getMemberName()));
-            //builder->CreateStore(value, elementPtr);
-            buildAssignment(elementPtr, statement->getValueExpression());
+            llvm::Type *elementType = structType->getElementType(*memberIndex);
+            buildAssignment(elementPtr, elementType, statement->getValueExpression());
             break;
         }
     }
@@ -739,14 +733,16 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     setFun(internalName, fun);
 }
 
-void ModuleBuilder::buildAssignment(llvm::Value *targetValue, shared_ptr<Expression> valueExpression) {
-    switch (valueExpression->getKind()) {
-        case ExpressionKind::ARRAY_LITERAL: {
-            vector<llvm::Value *> sourceValues = valuesForExpression(valueExpression);
-            llvm::Type *targetType = targetValue->getType();
-            if (targetType->isArrayTy()) {
-                int targetSize = ((llvm::ArrayType *)targetType)->getNumElements();
-                int count = targetSize < sourceValues.size() ? targetSize : sourceValues.size();
+void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression) {
+    // data
+    if (targetType->isArrayTy()) {
+        switch (valueExpression->getKind()) {
+            // data <- array literal
+            case ExpressionKind::ARRAY_LITERAL: {
+                vector<llvm::Value *> sourceValues = valuesForExpression(valueExpression);
+                int count = ((llvm::ArrayType *)targetType)->getNumElements();
+                if (sourceValues.size() < count)
+                    count = sourceValues.size();
 
                 for (int i=0; i<count; i++) {
                     llvm::Value *index[] = {
@@ -757,18 +753,36 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, shared_ptr<Express
 
                     builder->CreateStore(sourceValues[i], elementPtr);
                 }
+                break;
             }
-            break;
-        }
-        /*case ValueTypeKind::BLOB: {
-            break;
-        }*/
-        default: {
-            llvm::Value *sourceValue = valueForExpression(valueExpression);
-            if (sourceValue == nullptr)
+            // data <- var
+            case ExpressionKind::VARIABLE:
+                break;
+            // other
+            default:
+                markError(0, 0, "Invalid assignment to data type");
                 return;
-            builder->CreateStore(sourceValue, targetValue);
-            break;
+        }
+    // blob
+    } else if (targetType->isStructTy()) {
+        // TODO (no blob literal yet)
+    // simple
+    } else {
+        switch (valueExpression->getKind()) {
+            // simple <- literal
+            case ExpressionKind::LITERAL:
+            // simple <- var
+            case ExpressionKind::VARIABLE: {
+                llvm::Value *sourceValue = valueForExpression(valueExpression);
+                if (sourceValue == nullptr)
+                    return;
+                builder->CreateStore(sourceValue, targetValue);
+                break;
+            }
+            // other
+            default:
+                markError(0, 0, "Invalid assignment to blob type");
+                return;
         }
     }
 }
