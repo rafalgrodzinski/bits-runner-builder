@@ -1,12 +1,8 @@
 @import console
 
 @export main fun -> u32
-    text data<u32> <- "Hello, world!\n"
-    
-    rep i u32 <- 0, text[i] != 0:
-        @console.printChar(text[i])
-        i <- i + 1
-    ;
+    text data<u32, 64> <- "Hello, world!\n"
+    @console.print(text)
 
     ret 0
 ;

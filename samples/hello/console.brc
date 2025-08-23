@@ -2,6 +2,9 @@
 
 @extern putchar fun: character u32 -> u32
 
-@export printChar fun: character u32
-    putchar(character)
+@export print fun: text data<u32, 64>
+    rep i u32 <- 0, text[i] != 0:
+        putchar(text[i])
+        i <- i + 1
+    ;
 ;
