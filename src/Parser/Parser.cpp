@@ -1266,7 +1266,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(int in
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = nextExpression();
-    if (errors.size() > errorsCount)
+    if (errors.size() > errorsCount || expression == nullptr)
         return {};
 
     int tokensCount = currentIndex - startIndex;
