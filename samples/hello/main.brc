@@ -1,10 +1,10 @@
-@extern putchar fun: character u32 -> u32
+@import console
 
-main fun -> u32
+@export main fun -> u32
     text data<u32> <- "Hello, world!\n"
     
     rep i u32 <- 0, text[i] != 0:
-        putchar(text[i])
+        @console.printChar(text[i])
         i <- i + 1
     ;
 
