@@ -275,13 +275,17 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
 }
 
 void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
+    llvm::Value *targetValue;
+    llvm::Type *targetType;
+
     llvm::AllocaInst *alloca = getAlloca(statement->getIdentifier());
     if (alloca == nullptr)
         return;
 
     switch (statement->getAssignmentKind()) {
         case StatementAssignmentKind::SIMPLE: {
-            buildAssignment(alloca, alloca->getAllocatedType(), statement->getValueExpression());
+            targetValue = alloca;
+            targetType = alloca->getAllocatedType();
             break;
         }
         case StatementAssignmentKind::DATA: {
@@ -291,9 +295,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
                 builder->getInt32(0),
                 indexValue
             };
-            llvm::Value *elementPtr = builder->CreateGEP(arrayType, alloca, index, format("{}[]", statement->getIdentifier()));
-            llvm::Type *elementType = arrayType->getElementType();
-            buildAssignment(elementPtr, elementType, statement->getValueExpression());
+            targetValue = builder->CreateGEP(arrayType, alloca, index, format("{}[]", statement->getIdentifier()));
+            targetType = arrayType->getElementType();
             break;
         }
         case StatementAssignmentKind::BLOB: {        
@@ -306,12 +309,13 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
                 builder->getInt32(0),
                 builder->getInt32(*memberIndex)
             };
-            llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index, format("{}.{}", statement->getIdentifier(), statement->getMemberName()));
-            llvm::Type *elementType = structType->getElementType(*memberIndex);
-            buildAssignment(elementPtr, elementType, statement->getValueExpression());
+            targetValue = builder->CreateGEP(structType, alloca, index, format("{}.{}", statement->getIdentifier(), statement->getMemberName()));
+            targetType = structType->getElementType(*memberIndex);
             break;
         }
     }
+
+    buildAssignment(targetValue, targetType, statement->getValueExpression());
 }
 
 void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
@@ -738,26 +742,60 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
     if (targetType->isArrayTy()) {
         switch (valueExpression->getKind()) {
             // data <- array literal
+            // copy values from literal expression into an allocated array
             case ExpressionKind::ARRAY_LITERAL: {
                 vector<llvm::Value *> sourceValues = valuesForExpression(valueExpression);
-                int count = ((llvm::ArrayType *)targetType)->getNumElements();
-                if (sourceValues.size() < count)
-                    count = sourceValues.size();
-
+                int sourceCount = sourceValues.size();
+                int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
+                string targetName = string(targetValue->getName());
+                int count = min(sourceCount, targetCount);
                 for (int i=0; i<count; i++) {
                     llvm::Value *index[] = {
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Value *elementPtr = builder->CreateGEP(targetType, targetValue, index, format("{}_{}", "as", i));
+                    llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index, format("{}[{}]", targetName, i));
 
-                    builder->CreateStore(sourceValues[i], elementPtr);
+                    builder->CreateStore(sourceValues[i], targetPtr);
                 }
                 break;
             }
             // data <- var
-            case ExpressionKind::VARIABLE:
+            // copy each value from one allocated array to another allocated array
+            case ExpressionKind::VARIABLE: {
+                shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
+                llvm::AllocaInst *sourceValue = getAlloca(expressionVariable->getIdentifier());
+                if (sourceValue == nullptr)
+                    return;
+
+                llvm::Type *sourceType = sourceValue->getAllocatedType();
+                if (sourceType->isArrayTy()) {
+                    // make sure we don't go over the bounds
+                    int sourceCount = ((llvm::ArrayType *)sourceType)->getNumElements();
+                    int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
+                    int count = min(sourceCount, targetCount);
+
+                    string sourceName = string(sourceValue->getName());
+                    string targetName = string(targetValue->getName());
+
+                    for (int i=0; i<count; i++) {
+                        llvm::Value *index[] = {
+                            builder->getInt32(0),
+                            builder->getInt32(i)
+                        };
+
+                        // get pointers for both source and target
+                        llvm::Value *sourcePtr = builder->CreateGEP(sourceType, sourceValue, index, format("{}[{}]", sourceName, i));
+                        llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index, format("{}[{}]", targetName, i));
+
+                        // load value from source pointer
+                        llvm::Value *sourcePtrValue = builder->CreateLoad(sourceType->getArrayElementType(), sourcePtr);
+                        // and then store it in the target pointer
+                        builder->CreateStore(sourcePtrValue, targetPtr);
+                    }
+                }
                 break;
+            }
             // other
             default:
                 markError(0, 0, "Invalid assignment to data type");
@@ -771,6 +809,14 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
         switch (valueExpression->getKind()) {
             // simple <- literal
             case ExpressionKind::LITERAL:
+            // simple <- binary expression
+            case ExpressionKind::BINARY:
+            // simple <- ( expression )
+            case ExpressionKind::GROUPING:
+            // simple <- if else
+            case ExpressionKind::IF_ELSE:
+            // simple <- function call
+            case ExpressionKind::CALL:
             // simple <- var
             case ExpressionKind::VARIABLE: {
                 llvm::Value *sourceValue = valueForExpression(valueExpression);
