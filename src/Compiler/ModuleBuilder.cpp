@@ -597,8 +597,11 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(*context, "elseBlock");
     llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "mergeBlock");
 
-    int valuesCount = 1;
-    builder->CreateCondBr(conditionValue, thenBlock, elseBlock);
+    if (expression->getElseBlock() != nullptr) {
+        builder->CreateCondBr(conditionValue, thenBlock, elseBlock);
+    } else {
+        builder->CreateCondBr(conditionValue, thenBlock, mergeBlock);
+    }
 
     // Then
     scopes.push(Scope());
@@ -610,30 +613,29 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     scopes.pop();
 
     // Else
-    scopes.push(Scope());
-    fun->insert(fun->end(), elseBlock);
-    builder->SetInsertPoint(elseBlock);
     llvm::Value *elseValue = nullptr;
     if (expression->getElseBlock() != nullptr) {
-        valuesCount++;
+        scopes.push(Scope());
+        fun->insert(fun->end(), elseBlock);
+        builder->SetInsertPoint(elseBlock);
         buildStatement(expression->getElseBlock()->getStatementBlock());
         elseValue = valueForExpression(expression->getElseBlock()->getResultStatementExpression()->getExpression());
+        builder->CreateBr(mergeBlock);
+        elseBlock = builder->GetInsertBlock();
+        scopes.pop();
     }
-    builder->CreateBr(mergeBlock);
-    elseBlock = builder->GetInsertBlock();
-    scopes.pop();
 
     // Merge
     fun->insert(fun->end(), mergeBlock);
     builder->SetInsertPoint(mergeBlock);
 
-    if (elseValue != nullptr && thenValue->getType() != elseValue->getType()) {
+    // we can only have a return value if else is also present and both then & else return the same type
+    if (thenValue->getType()->isVoidTy() || elseValue == nullptr || thenValue->getType() != elseValue->getType()) {
         return llvm::UndefValue::get(typeVoid);
     } else {
-        llvm::PHINode *phi = builder->CreatePHI(thenValue->getType(), valuesCount, "ifElseResult");
+        llvm::PHINode *phi = builder->CreatePHI(thenValue->getType(), 2, "ifElseResult");
         phi->addIncoming(thenValue, thenBlock);
-        if (elseValue != nullptr)
-            phi->addIncoming(elseValue, elseBlock);
+        phi->addIncoming(elseValue, elseBlock);
 
         return phi;
     }

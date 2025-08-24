@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 
     for (const auto &statementsEntry : statementsMap) {
         if (isVerbose)
-            cout << format("🪄 Building module \"{}\"", statementsEntry.first) << endl << endl;
+            cout << format("🦖 Building module \"{}\"", statementsEntry.first) << endl << endl;
 
         // we don't want any prefix for the default module
         string moduleName = statementsEntry.first;

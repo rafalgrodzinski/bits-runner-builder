@@ -59,14 +59,22 @@ Hello World
 Fibonaci Numbers
 [samples/fib.brc](samples/fib.brc)
 
-Multi Module
-[samples/multi_module/](samples/multi_module/)
+Merge Sort
+[samples/merge_sort/](samples/merge_sort/)
 
 #### How to build & run the samples
 
 Execute from the main directory
 ```
-// Hello world
+// Hello World
 ./samples/hello/build.sh
 ./hello
+
+// Fibonaci Numbers
+./samples/fib/build.sh
+./fib
+
+// Merge Sort
+./samples/merge_sort/build.sh
+./merge_sort
 ```

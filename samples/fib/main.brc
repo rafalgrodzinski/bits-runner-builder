@@ -22,7 +22,7 @@ printNum fun: number u32
 ;
 
 // Print first 20 fibonaci numbers
-main fun -> u32
+@export main fun -> u32
     rep i u32 <- 0, i < 20:
         res u32 <- fib(i)
         printNum(res)
