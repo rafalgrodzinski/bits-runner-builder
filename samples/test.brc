@@ -1,19 +1,22 @@
 @extern putchar fun: character u32 -> u32
 
-getData fun -> data<u32, 7>
-    hello data<u32> <- "Hello\n"
-    helloCopy data<u32, 7> <- hello
-    ret hello
-;
-
-@export main fun -> u32
-    text data<u32, 3>
-    text <- getData()
-    text[2] <- 0
-
+print fun: text data<u32, 8>
     rep i u32 <- 0, text[i] != 0:
         putchar(text[i])
         i <- i + 1
+    ;
+;
+
+@export main fun -> u32
+    a bool <- true
+    b bool <- false
+
+    if a and b: print("true\n\0\0\0") else: print("false\n\0\0")
+
+    if a and b
+        print("true\n\0\0\0")
+    else
+        print("false\n\0\0")
     ;
 
     ret 0

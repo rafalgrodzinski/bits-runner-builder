@@ -125,11 +125,11 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // structural
-    token = match(TokenKind::LEFT_PAREN, "(", false);
+    token = match(TokenKind::LEFT_ROUND_BRACKET, "(", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::RIGHT_PAREN, ")", false);
+    token = match(TokenKind::RIGHT_ROUND_BRACKET, ")", false);
     if (token != nullptr)
         return token;
 

@@ -58,9 +58,9 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
-        case TokenKind::LEFT_PAREN:
+        case TokenKind::LEFT_ROUND_BRACKET:
             return "(";
-        case TokenKind::RIGHT_PAREN:
+        case TokenKind::RIGHT_ROUND_BRACKET:
             return ")";
         case TokenKind::LEFT_SQUARE_BRACKET:
             return "[";
@@ -159,9 +159,9 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
-        case TokenKind::LEFT_PAREN:
+        case TokenKind::LEFT_ROUND_BRACKET:
             return "(";
-        case TokenKind::RIGHT_PAREN:
+        case TokenKind::RIGHT_ROUND_BRACKET:
             return ")";
         case TokenKind::LEFT_SQUARE_BRACKET:
             return "[";

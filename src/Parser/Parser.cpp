@@ -837,15 +837,15 @@ shared_ptr<Expression> Parser::matchPrimary() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
-    if (tryMatchingTokenKinds({TokenKind::LEFT_PAREN}, true, true)) {
+    if (tryMatchingTokenKinds({TokenKind::LEFT_ROUND_BRACKET}, true, true)) {
         shared_ptr<Expression> expression = matchTerm();
         // has grouped expression failed?
         if (expression == nullptr) {
             return nullptr;
-        } else if (tryMatchingTokenKinds({TokenKind::RIGHT_PAREN}, true, true)) {
+        } else if (tryMatchingTokenKinds({TokenKind::RIGHT_ROUND_BRACKET}, true, true)) {
             return make_shared<ExpressionGrouping>(expression);
         } else {
-            markError(TokenKind::RIGHT_PAREN, {});
+            markError(TokenKind::RIGHT_ROUND_BRACKET, {});
         }
     }
 
@@ -983,7 +983,7 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
                 // identifier - name
                 Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
                 // arguments
-                Parsee::tokenParsee(TokenKind::LEFT_PAREN, true, false, false),
+                Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, true, false, false),
                 Parsee::groupParsee(
                     ParseeGroup(
                         {
@@ -1004,7 +1004,7 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
                         }
                     ), false, true, false
                 ),
-                Parsee::tokenParsee(TokenKind::RIGHT_PAREN, true, false, true),
+                Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, true, false, true),
             }
         )
     );
