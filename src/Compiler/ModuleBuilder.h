@@ -80,7 +80,7 @@ private:
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
-    void buildVarDeclaration(shared_ptr<StatementVariable> statement);
+    void buildVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
@@ -101,8 +101,10 @@ private:
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
+    llvm::Value *valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
+    void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);
     llvm::AllocaInst *getAlloca(string name);

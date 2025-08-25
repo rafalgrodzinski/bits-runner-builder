@@ -486,6 +486,14 @@ shared_ptr<Token> Lexer::matchType() {
     if (nextIndex == currentIndex || !isSeparator(nextIndex))
         return nullptr;
 
+    // TODO:
+    // this is hack to handle following case:
+    // if low < high: ('high' is identified as type)
+    // this still won't work
+    // Array <- [true, false, this < that, true] (for 'that')
+    if (source.at(nextIndex) == ':' || source.at(nextIndex) == '[')
+        return nullptr;
+
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
     shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, currentLine, currentColumn);
     advanceWithToken(token);

@@ -1248,7 +1248,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
             int storedIndex = currentIndex;
             currentIndex = index;
             shared_ptr<Expression> expressionValue = matchExpressionLiteral();
-            typeArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getU32Value();
+            typeArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getS32Value();
             currentIndex = storedIndex;
             index++;
         }
@@ -1266,7 +1266,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(int in
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = nextExpression();
-    if (errors.size() > errorsCount)
+    if (errors.size() > errorsCount || expression == nullptr)
         return {};
 
     int tokensCount = currentIndex - startIndex;

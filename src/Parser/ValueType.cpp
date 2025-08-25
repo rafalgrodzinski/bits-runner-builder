@@ -17,7 +17,7 @@ kind(kind), subType(subType), valueArg(valueArg) { }
 
 shared_ptr<ValueType> ValueType::type(string typeName) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::TYPE;
+    valueType->kind = ValueTypeKind::BLOB;
     valueType->typeName = typeName;
     return valueType;
 }

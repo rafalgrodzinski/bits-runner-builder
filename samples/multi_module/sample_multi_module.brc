@@ -1,8 +1,0 @@
-@import console
-
-@export main fun -> u32
-    @console.printChar('!')
-    @console.printChar('\n')
-
-    ret 0
-;

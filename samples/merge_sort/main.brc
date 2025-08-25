@@ -1,0 +1,75 @@
+@import console
+
+@extern rand fun -> u32
+@extern srand fun: seed u32
+@extern time fun: second u32 -> u32
+
+merge fun: numbers data<u32, 32>, low u32, mid u32, high u32 -> data<u32, 32>
+    temp data<u32, 32> <- numbers
+    iTemp u32 <- low
+    iLeft u32 <- low
+    iRight u32 <- mid
+    
+    rep iTemp < high:
+        val u32
+        if iLeft < mid:
+            if iRight < high:
+                if numbers[iLeft] < numbers[iRight]:
+                    val <- numbers[iLeft]
+                    iLeft <- iLeft + 1
+                else
+                    val <- numbers[iRight]
+                    iRight <- iRight + 1
+                ;
+            else
+                val <- numbers[iLeft]
+                iLeft <- iLeft + 1
+            ;
+        else
+            val <- numbers[iRight]
+            iRight <- iRight + 1
+        ;
+        
+        temp[iTemp] <- val
+        iTemp <- iTemp + 1
+    ;
+    ret temp
+;
+
+mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
+    if low < (high-1):
+        mid u32 <- low + (high - low) / 2
+        numbers <- mergeSort(numbers, low, mid)
+        numbers <- mergeSort(numbers, mid, high)
+        numbers <- merge(numbers, low, mid, high)
+    ;
+
+    ret numbers
+;
+
+@export main fun -> u32
+    srand(time(0))
+
+    // generate random numbers
+    @console.print("Before\n\0\0\0\0\0\0\0\0\0")
+    numbers data<u32, 32>
+    rep i u32 <- 0, i < 32:
+        num u32 <- rand() % 10_000
+        numbers[i] <- num
+        @console.printNum(num)
+        @console.printChar('\n')
+        i <- i + 1
+    ;
+
+    numbers <- mergeSort(numbers, 0, 32)
+
+    // print out result
+    @console.print("After\n\0\0\0\0\0\0\0\0\0\0")
+    rep i u32 <- 0, i <32:
+        @console.printNum(numbers[i])
+        @console.printChar('\n')
+        i <- i + 1
+    ;
+
+    ret 0
+;

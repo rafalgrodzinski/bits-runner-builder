@@ -54,20 +54,27 @@ There are also "Build (Debug)" and "Clean" tasks specified for VSCode. There is 
 
 ## Samples
 Hello World
-[samples/hello.brc](samples/hello.brc)
+[samples/hello/](samples/hello/)
 
 Fibonaci Numbers
 [samples/fib.brc](samples/fib.brc)
 
-Multi Module
-[samples/multi_module/](samples/multi_module/)
+Merge Sort
+[samples/merge_sort/](samples/merge_sort/)
 
-#### How to build the samples
+#### How to build & run the samples
+
+Execute from the main directory
 ```
-brb samples/hello.brc
-cc -o hello hello.o
+// Hello World
+./samples/hello/build.sh
+./hello
 
-// or
+// Fibonaci Numbers
+./samples/fib/build.sh
+./fib
 
-./samples/multi_module/build.sh
+// Merge Sort
+./samples/merge_sort/build.sh
+./merge_sort
 ```
