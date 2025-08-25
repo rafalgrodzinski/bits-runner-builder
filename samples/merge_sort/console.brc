@@ -6,6 +6,13 @@
     putchar(character)
 ;
 
+@export print fun: text data<u32, 16>
+    rep i u32 <- 0, text[i] != 0:
+        putchar(text[i])
+        i <- i + 1
+    ;
+;
+
 @export printNum fun: number u32
     biggest u32 <- 10
     rep biggest <= number: biggest <- biggest * 10

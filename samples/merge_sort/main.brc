@@ -50,15 +50,8 @@ mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
 @export main fun -> u32
     srand(time(0))
 
-    @console.printChar('B')
-    @console.printChar('e')
-    @console.printChar('f')
-    @console.printChar('o')
-    @console.printChar('r')
-    @console.printChar('e')
-    @console.printChar('\n')
-
     // generate random numbers
+    @console.print("Before\n\0\0\0\0\0\0\0\0\0")
     numbers data<u32, 32>
     rep i u32 <- 0, i < 32:
         num u32 <- rand() % 10_000
@@ -68,18 +61,10 @@ mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
         i <- i + 1
     ;
 
-    //numbers <- quickSort(numbers, 0, 31)
     numbers <- mergeSort(numbers, 0, 32)
 
-    @console.printChar('\n')
-    @console.printChar('A')
-    @console.printChar('f')
-    @console.printChar('t')
-    @console.printChar('e')
-    @console.printChar('r')
-    @console.printChar('\n')
-
     // print out result
+    @console.print("After\n\0\0\0\0\0\0\0\0\0\0")
     rep i u32 <- 0, i <32:
         @console.printNum(numbers[i])
         @console.printChar('\n')

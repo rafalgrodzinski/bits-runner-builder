@@ -1,8 +1,14 @@
-@import console
+@extern putchar fun: character u32 -> u32
+
+print fun: text data<u32, 16>
+    rep i u32 <- 0, text[i] != 0:
+        putchar(text[i])
+        i <- i + 1
+    ;
+;
 
 @export main fun -> u32
-    text data<u32, 64> <- "Hello, world!\n"
-    @console.print(text)
+    print("Hello, world\n\0\0\0")
 
     ret 0
 ;

@@ -399,6 +399,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForVariable(dynamic_pointer_cast<ExpressionVariable>(expression));
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
+        case ExpressionKind::ARRAY_LITERAL:
+            return valueForArrayLiteral(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
         default:
             markError(0, 0, "Unexpected expression");
             return nullptr;
@@ -680,7 +682,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
     llvm::Function *fun = getFun(expression->getName());
     if (fun != nullptr) {
-        llvm::FunctionType *funType = fun->getFunctionType();
+        llvm::FunctionType *funType = fun->getFunctionType();        
         vector<llvm::Value*> argValues;
         for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
             llvm::Value *argValue = valueForExpression(argumentExpression);
@@ -701,6 +703,19 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
 
     markError(0, 0, format("Function \"{}\" not defined in scope", expression->getName()));
     return nullptr;
+}
+
+llvm::Value *ModuleBuilder::valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression) {
+    int count = expression->getExpressions().size();
+    llvm::Type *valueType = llvm::ArrayType::get(typeU32, count);
+    llvm::AllocaInst *alloca = builder->CreateAlloca(valueType, nullptr);
+
+    if (valueType == nullptr)
+        return nullptr;
+
+    buildAssignment(alloca, valueType, expression);
+
+    return builder->CreateLoad(alloca->getAllocatedType(), alloca);
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
