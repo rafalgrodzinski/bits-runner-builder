@@ -737,7 +737,7 @@ shared_ptr<Expression> Parser::nextExpression() {
     shared_ptr<Expression> expression;
     int errorsCount = errors.size();
 
-    expression = matchEquality();
+    expression = matchLogicalSecond();
     if (expression != nullptr || errors.size() > errorsCount)
         return expression;
     
@@ -750,6 +750,28 @@ shared_ptr<Expression> Parser::nextExpression() {
         return expression;
 
     return nullptr;
+}
+
+shared_ptr<Expression> Parser::matchLogicalSecond() {
+    shared_ptr<Expression> expression = matchLogicalFirst();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds({TokenKind::OR}, false, false))
+        expression = matchExpressionBinary(expression);
+
+    return expression;
+}
+
+shared_ptr<Expression> Parser::matchLogicalFirst() {
+    shared_ptr<Expression> expression = matchEquality();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds({TokenKind::AND}, false, false))
+        expression = matchExpressionBinary(expression);
+
+    return expression;
 }
 
 shared_ptr<Expression> Parser::matchEquality() {
@@ -1082,7 +1104,11 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     shared_ptr<Token> token = tokens.at(currentIndex);
     shared_ptr<Expression> right;
     // What level of binary expression are we having?
-    if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
+    if (tryMatchingTokenKinds(Token::tokensLogicalSecond, false, true)) {
+        right = matchLogicalFirst();
+    } else if (tryMatchingTokenKinds(Token::tokensLogicalFirst, false, true)) {
+        right = matchEquality();
+    } else if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
     } else if (tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
         right = matchTerm();

@@ -4,6 +4,8 @@
 #include "Expression.h"
 
 enum class ExpressionBinaryOperation {
+    OR,
+    AND,
     EQUAL,
     NOT_EQUAL,
     LESS,

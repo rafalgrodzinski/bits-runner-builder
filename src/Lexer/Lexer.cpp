@@ -211,6 +211,15 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    // logical
+    token = match(TokenKind::AND, "and", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(TokenKind::OR, "or", false);
+    if (token != nullptr)
+        return token;
+
     // keywords
     token = match(TokenKind::FUNCTION, "fun", true);
     if (token != nullptr)

@@ -478,6 +478,10 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
 
 llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
+    case ExpressionBinaryOperation::OR:
+        return builder->CreateOr(leftValue, rightValue);
+    case ExpressionBinaryOperation::AND:
+        return builder->CreateAnd(leftValue, rightValue);
     case ExpressionBinaryOperation::EQUAL:
         return builder->CreateICmpEQ(leftValue, rightValue);
     case ExpressionBinaryOperation::NOT_EQUAL:

@@ -6,6 +6,14 @@
 ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
 Expression(ExpressionKind::BINARY, nullptr), operation(ExpressionBinaryOperation::INVALID), left(left), right(right) {
     switch (token->getKind()) {
+        case TokenKind::OR:
+            operation = ExpressionBinaryOperation::OR;
+            valueType = ValueType::BOOL;
+            break;
+        case TokenKind::AND:
+            operation = ExpressionBinaryOperation::AND;
+            valueType = ValueType::BOOL;
+            break;
         case TokenKind::EQUAL:
             operation = ExpressionBinaryOperation::EQUAL;
             valueType = ValueType::BOOL;

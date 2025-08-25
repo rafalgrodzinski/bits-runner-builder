@@ -18,6 +18,8 @@ enum class TokenKind {
     LESS_EQUAL,
     GREATER,
     GREATER_EQUAL,
+    AND,
+    OR,
     
     LEFT_ROUND_BRACKET,
     RIGHT_ROUND_BRACKET,
@@ -67,6 +69,8 @@ private:
     int column;
 
 public:
+    static vector<TokenKind> tokensLogicalSecond;
+    static vector<TokenKind> tokensLogicalFirst;
     static vector<TokenKind> tokensEquality;
     static vector<TokenKind> tokensComparison;
     static vector<TokenKind> tokensTerm;

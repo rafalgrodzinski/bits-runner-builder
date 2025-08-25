@@ -1,5 +1,13 @@
 #include "Token.h"
 
+vector<TokenKind> Token::tokensLogicalSecond = {
+    TokenKind::OR
+};
+
+vector<TokenKind> Token::tokensLogicalFirst = {
+    TokenKind::AND
+};
+
 vector<TokenKind> Token::tokensEquality = {
     TokenKind::EQUAL,
     TokenKind::NOT_EQUAL

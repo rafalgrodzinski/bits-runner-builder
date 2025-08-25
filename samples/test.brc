@@ -9,15 +9,15 @@ print fun: text data<u32, 8>
 
 @export main fun -> u32
     a bool <- true
-    b bool <- false
+    b bool <- true
 
-    if a and b: print("true\n\0\0\0") else: print("false\n\0\0")
+    if a or b: print("true\n\0\0\0") else print("false\n\0\0")
 
-    if a and b
+    /*if a and b:
         print("true\n\0\0\0")
     else
         print("false\n\0\0")
-    ;
+    ;*/
 
     ret 0
 ;
