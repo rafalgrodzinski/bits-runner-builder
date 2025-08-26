@@ -44,6 +44,15 @@ string Logger::toString(shared_ptr<Token> token) {
             return "/";
         case TokenKind::PERCENT:
             return "%";
+
+        case TokenKind::OR:
+            return "OR";
+        case TokenKind::XOR:
+            return "XOR";
+        case TokenKind::AND:
+            return "AND";
+        case TokenKind::NOT:
+            return "NOT";
         
         case TokenKind::EQUAL:
             return "=";
@@ -58,9 +67,9 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
-        case TokenKind::LEFT_PAREN:
+        case TokenKind::LEFT_ROUND_BRACKET:
             return "(";
-        case TokenKind::RIGHT_PAREN:
+        case TokenKind::RIGHT_ROUND_BRACKET:
             return ")";
         case TokenKind::LEFT_SQUARE_BRACKET:
             return "[";
@@ -145,6 +154,15 @@ string Logger::toString(TokenKind tokenKind) {
             return "/";
         case TokenKind::PERCENT:
             return "%";
+
+        case TokenKind::OR:
+            return "OR";
+        case TokenKind::XOR:
+            return "XOR";
+        case TokenKind::AND:
+            return "AND";
+        case TokenKind::NOT:
+            return "NOT";
         
         case TokenKind::EQUAL:
             return "=";
@@ -159,9 +177,9 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
-        case TokenKind::LEFT_PAREN:
+        case TokenKind::LEFT_ROUND_BRACKET:
             return "(";
-        case TokenKind::RIGHT_PAREN:
+        case TokenKind::RIGHT_ROUND_BRACKET:
             return ")";
         case TokenKind::LEFT_SQUARE_BRACKET:
             return "[";
@@ -439,6 +457,12 @@ string Logger::toString(shared_ptr<Expression> expression) {
 
 string Logger::toString(shared_ptr<ExpressionBinary> expression) {
     switch (expression->getOperation()) {
+        case ExpressionBinaryOperation::OR:
+            return "{OR " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::XOR:
+            return "{XOR " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::AND:
+            return "{AND " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
         case ExpressionBinaryOperation::EQUAL:
             return "{= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
         case ExpressionBinaryOperation::NOT_EQUAL:
@@ -468,6 +492,8 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
 
 string Logger::toString(shared_ptr<ExpressionUnary> expression) {
     switch (expression->getOperation()) {
+        case ExpressionUnaryOperation::NOT:
+            return "{NOT " + toString(expression->getExpression()) + "}";
         case ExpressionUnaryOperation::PLUS:
             return "+" + toString(expression->getExpression());
         case ExpressionUnaryOperation::MINUS:

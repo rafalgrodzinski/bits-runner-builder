@@ -13,6 +13,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - Comments (`//`, `/* */`)
 - Literals (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
 - Operators (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
+- Logical Operators (`or`, `xor`, `and`, `not`)
 - Variables (`u8`, `u32`, `s8`, `s32`, `r32`, `data`, `blob`)
 - Functions (`fun`)
 - Raw Functions (`raw`)
@@ -102,6 +103,15 @@ All the standard operators, such as `+`, `-`, `*`, `/`, `%` are available. The b
 <- // assignment
 ( ) // precdence
 ```
+
+## Logical Operators
+There's a couple of standard logical operations that can be performed on bool values.
+```
+not // highest priority
+and // lower priority
+or, xor // lowest piority
+```
+`=` and `!=` can also be used on booleans, but they are effectively equivalent to `and` and `xor`.
 
 ## Variables
 Variables are specified by first providing the name and then the type. There is also an optional initializer.

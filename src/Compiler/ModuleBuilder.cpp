@@ -478,6 +478,12 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
 
 llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
+    case ExpressionBinaryOperation::OR:
+        return builder->CreateOr(leftValue, rightValue);
+    case ExpressionBinaryOperation::XOR:
+        return builder->CreateXor(leftValue, rightValue);
+    case ExpressionBinaryOperation::AND:
+        return builder->CreateAnd(leftValue, rightValue);
     case ExpressionBinaryOperation::EQUAL:
         return builder->CreateICmpEQ(leftValue, rightValue);
     case ExpressionBinaryOperation::NOT_EQUAL:
@@ -573,16 +579,28 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
     llvm::Value *value = valueForExpression(expression->getExpression());
     llvm::Type *type = value->getType();
 
-    // do nothing for plus
-    if (expression->getOperation() == ExpressionUnaryOperation::PLUS)
-        return value;
-
-    if (type == typeU8 || type == typeU32) {
-        return builder->CreateNeg(value);
+    if (type == typeBool) {
+        if (expression->getOperation() == ExpressionUnaryOperation::NOT) {
+            return builder->CreateNot(value);
+        }
+    } else if (type == typeU8 || type == typeU32) {
+        if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
+            return builder->CreateNeg(value);
+        } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
+            return value;
+        }
     } else if (type == typeS8 || type == typeS32) {
-        return builder->CreateNSWNeg(value);
+        if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
+            return builder->CreateNSWNeg(value);
+        } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
+            return value;
+        }
     } else if (type == typeR32) {
-        return builder->CreateFNeg(value);
+        if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
+            return builder->CreateFNeg(value);
+        } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
+            return value;
+        }
     }
 
     markError(0, 0, "Unexpected operation");
@@ -632,7 +650,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     builder->SetInsertPoint(mergeBlock);
 
     // we can only have a return value if else is also present and both then & else return the same type
-    if (thenValue->getType()->isVoidTy() || elseValue == nullptr || thenValue->getType() != elseValue->getType()) {
+    if (thenValue == nullptr || thenValue->getType()->isVoidTy() || elseValue == nullptr || thenValue->getType() != elseValue->getType()) {
         return llvm::UndefValue::get(typeVoid);
     } else {
         llvm::PHINode *phi = builder->CreatePHI(thenValue->getType(), 2, "ifElseResult");

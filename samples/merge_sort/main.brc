@@ -10,29 +10,29 @@ merge fun: numbers data<u32, 32>, low u32, mid u32, high u32 -> data<u32, 32>
     iLeft u32 <- low
     iRight u32 <- mid
     
-    rep iTemp < high:
-        val u32
-        if iLeft < mid:
-            if iRight < high:
-                if numbers[iLeft] < numbers[iRight]:
-                    val <- numbers[iLeft]
-                    iLeft <- iLeft + 1
-                else
-                    val <- numbers[iRight]
-                    iRight <- iRight + 1
-                ;
-            else
-                val <- numbers[iLeft]
-                iLeft <- iLeft + 1
-            ;
+    rep iLeft < (mid) and iRight < (high):
+        if numbers[iLeft] < numbers[iRight]:
+            temp[iTemp] <- numbers[iLeft]
+            iLeft <- iLeft + 1
         else
-            val <- numbers[iRight]
+            temp[iTemp] <- numbers[iRight]
             iRight <- iRight + 1
         ;
-        
-        temp[iTemp] <- val
         iTemp <- iTemp + 1
     ;
+
+    rep iLeft < mid:
+        temp[iTemp] <- numbers[iLeft]
+        iTemp <- iTemp + 1
+        iLeft <- iLeft + 1
+    ;
+
+    rep iRight < high:
+        temp[iTemp] <- numbers[iRight]
+        iTemp <- iTemp + 1
+        iRight <- iRight + 1
+    ;
+
     ret temp
 ;
 
@@ -62,6 +62,7 @@ mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
     ;
 
     numbers <- mergeSort(numbers, 0, 32)
+    @console.printChar('\n')
 
     // print out result
     @console.print("After\n\0\0\0\0\0\0\0\0\0\0")

@@ -125,11 +125,11 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // structural
-    token = match(TokenKind::LEFT_PAREN, "(", false);
+    token = match(TokenKind::LEFT_ROUND_BRACKET, "(", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::RIGHT_PAREN, ")", false);
+    token = match(TokenKind::RIGHT_ROUND_BRACKET, ")", false);
     if (token != nullptr)
         return token;
 
@@ -185,7 +185,7 @@ shared_ptr<Token> Lexer::nextToken() {
     token = match(TokenKind::PERCENT, "%", false);
     if (token != nullptr)
         return token;
-    
+
     // comparison
     token = match(TokenKind::NOT_EQUAL, "!=", false);
     if (token != nullptr)
@@ -208,6 +208,23 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     token = match(TokenKind::GREATER, ">", false);
+    if (token != nullptr)
+        return token;
+
+    // logical
+    token = match(TokenKind::OR, "or", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::XOR, "xor", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::AND, "and", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::NOT, "not", false);
     if (token != nullptr)
         return token;
 
