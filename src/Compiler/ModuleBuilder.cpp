@@ -577,16 +577,28 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
     llvm::Value *value = valueForExpression(expression->getExpression());
     llvm::Type *type = value->getType();
 
-    // do nothing for plus
-    if (expression->getOperation() == ExpressionUnaryOperation::PLUS)
-        return value;
-
-    if (type == typeU8 || type == typeU32) {
-        return builder->CreateNeg(value);
+    if (type == typeBool) {
+        if (expression->getOperation() == ExpressionUnaryOperation::NOT) {
+            return builder->CreateNot(value);
+        }
+    } else if (type == typeU8 || type == typeU32) {
+        if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
+            return builder->CreateNeg(value);
+        } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
+            return value;
+        }
     } else if (type == typeS8 || type == typeS32) {
-        return builder->CreateNSWNeg(value);
+        if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
+            return builder->CreateNSWNeg(value);
+        } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
+            return value;
+        }
     } else if (type == typeR32) {
-        return builder->CreateFNeg(value);
+        if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
+            return builder->CreateFNeg(value);
+        } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
+            return value;
+        }
     }
 
     markError(0, 0, "Unexpected operation");

@@ -44,6 +44,13 @@ string Logger::toString(shared_ptr<Token> token) {
             return "/";
         case TokenKind::PERCENT:
             return "%";
+
+        case TokenKind::OR:
+            return "OR";
+        case TokenKind::AND:
+            return "AND";
+        case TokenKind::NOT:
+            return "NOT";
         
         case TokenKind::EQUAL:
             return "=";
@@ -57,10 +64,6 @@ string Logger::toString(shared_ptr<Token> token) {
             return ">";
         case TokenKind::GREATER_EQUAL:
             return "≥";
-        case TokenKind::AND:
-            return "AND";
-        case TokenKind::OR:
-            return "OR";
 
         case TokenKind::LEFT_ROUND_BRACKET:
             return "(";
@@ -149,6 +152,13 @@ string Logger::toString(TokenKind tokenKind) {
             return "/";
         case TokenKind::PERCENT:
             return "%";
+
+        case TokenKind::OR:
+            return "OR";
+        case TokenKind::AND:
+            return "AND";
+        case TokenKind::NOT:
+            return "NOT";
         
         case TokenKind::EQUAL:
             return "=";
@@ -162,10 +172,6 @@ string Logger::toString(TokenKind tokenKind) {
             return ">";
         case TokenKind::GREATER_EQUAL:
             return "≥";
-        case TokenKind::AND:
-            return "AND";
-        case TokenKind::OR:
-            return "OR";
 
         case TokenKind::LEFT_ROUND_BRACKET:
             return "(";
@@ -480,6 +486,8 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
 
 string Logger::toString(shared_ptr<ExpressionUnary> expression) {
     switch (expression->getOperation()) {
+        case ExpressionUnaryOperation::NOT:
+            return "{NOT " + toString(expression->getExpression()) + "}";
         case ExpressionUnaryOperation::PLUS:
             return "+" + toString(expression->getExpression());
         case ExpressionUnaryOperation::MINUS:

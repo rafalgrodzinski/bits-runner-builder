@@ -46,6 +46,7 @@ private:
     shared_ptr<Expression> nextExpression();
     shared_ptr<Expression> matchLogicalSecond(); // or
     shared_ptr<Expression> matchLogicalFirst(); // and
+    shared_ptr<Expression> matchLogicalUnary(); // not
     shared_ptr<Expression> matchEquality(); // =, !=
     shared_ptr<Expression> matchComparison(); // <, <=, >, >=
     shared_ptr<Expression> matchTerm(); // +, -

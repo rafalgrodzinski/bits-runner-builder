@@ -4,6 +4,7 @@
 #include "Expression.h"
 
 enum class ExpressionUnaryOperation {
+    NOT,
     PLUS,
     MINUS,
     INVALID

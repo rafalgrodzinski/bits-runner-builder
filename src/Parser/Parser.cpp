@@ -757,21 +757,34 @@ shared_ptr<Expression> Parser::matchLogicalSecond() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds({TokenKind::OR}, false, false))
+    if (tryMatchingTokenKinds(Token::tokensLogicalSecond, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
 }
 
 shared_ptr<Expression> Parser::matchLogicalFirst() {
-    shared_ptr<Expression> expression = matchEquality();
+    shared_ptr<Expression> expression = matchLogicalUnary();
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds({TokenKind::AND}, false, false))
+    if (tryMatchingTokenKinds(Token::tokensLogicalFirst, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
+}
+
+shared_ptr<Expression> Parser::matchLogicalUnary() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
+
+    if (tryMatchingTokenKinds(Token::tokensLogicalUnary, false, true)) {
+        shared_ptr<Expression> expression = matchLogicalUnary();
+        if (expression == nullptr)
+            return nullptr;
+        return make_shared<ExpressionUnary>(token, expression);
+    }
+
+    return matchEquality();
 }
 
 shared_ptr<Expression> Parser::matchEquality() {
@@ -860,7 +873,7 @@ shared_ptr<Expression> Parser::matchPrimary() {
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
     if (tryMatchingTokenKinds({TokenKind::LEFT_ROUND_BRACKET}, true, true)) {
-        shared_ptr<Expression> expression = matchTerm();
+        shared_ptr<Expression> expression = matchLogicalSecond();
         // has grouped expression failed?
         if (expression == nullptr) {
             return nullptr;
@@ -1105,17 +1118,17 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     shared_ptr<Expression> right;
     // What level of binary expression are we having?
     if (tryMatchingTokenKinds(Token::tokensLogicalSecond, false, true)) {
-        right = matchLogicalFirst();
+        right = matchLogicalSecond();
     } else if (tryMatchingTokenKinds(Token::tokensLogicalFirst, false, true)) {
-        right = matchEquality();
+        right = matchLogicalFirst();
     } else if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
     } else if (tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
         right = matchTerm();
     } else if (tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
-        right = matchFactor();
+        right = matchTerm();
     } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
-        right = matchPrimary();
+        right = matchFactor();
     }
 
     if (right == nullptr) {

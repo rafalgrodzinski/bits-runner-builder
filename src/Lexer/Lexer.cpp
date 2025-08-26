@@ -185,7 +185,7 @@ shared_ptr<Token> Lexer::nextToken() {
     token = match(TokenKind::PERCENT, "%", false);
     if (token != nullptr)
         return token;
-    
+
     // comparison
     token = match(TokenKind::NOT_EQUAL, "!=", false);
     if (token != nullptr)
@@ -212,11 +212,15 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // logical
+    token = match(TokenKind::OR, "or", false);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::AND, "and", false);
     if (token != nullptr)
         return token;
-    
-    token = match(TokenKind::OR, "or", false);
+
+    token = match(TokenKind::NOT, "not", false);
     if (token != nullptr)
         return token;
 

@@ -1,17 +1,18 @@
-@extern putchar fun: character u32 -> u32
+/*@extern putchar fun: character u32 -> u32
 
 print fun: text data<u32, 8>
     rep i u32 <- 0, text[i] != 0:
         putchar(text[i])
         i <- i + 1
     ;
-;
+;*/
 
 @export main fun -> u32
-    a bool <- true
+    /*a bool <- false
     b bool <- true
+    c bool <- false*/
 
-    if a or b: print("true\n\0\0\0") else print("false\n\0\0")
+    //if a and not b: print("true\n\0\0\0") else print("false\n\0\0")
 
     /*if a and b:
         print("true\n\0\0\0")
