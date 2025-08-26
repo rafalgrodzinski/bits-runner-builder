@@ -480,6 +480,8 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operati
     switch (operation) {
     case ExpressionBinaryOperation::OR:
         return builder->CreateOr(leftValue, rightValue);
+    case ExpressionBinaryOperation::XOR:
+        return builder->CreateXor(leftValue, rightValue);
     case ExpressionBinaryOperation::AND:
         return builder->CreateAnd(leftValue, rightValue);
     case ExpressionBinaryOperation::EQUAL:
@@ -648,7 +650,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     builder->SetInsertPoint(mergeBlock);
 
     // we can only have a return value if else is also present and both then & else return the same type
-    if (thenValue->getType()->isVoidTy() || elseValue == nullptr || thenValue->getType() != elseValue->getType()) {
+    if (thenValue == nullptr || thenValue->getType()->isVoidTy() || elseValue == nullptr || thenValue->getType() != elseValue->getType()) {
         return llvm::UndefValue::get(typeVoid);
     } else {
         llvm::PHINode *phi = builder->CreatePHI(thenValue->getType(), 2, "ifElseResult");

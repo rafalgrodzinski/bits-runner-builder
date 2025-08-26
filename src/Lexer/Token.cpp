@@ -1,7 +1,8 @@
 #include "Token.h"
 
 vector<TokenKind> Token::tokensLogicalSecond = {
-    TokenKind::OR
+    TokenKind::OR,
+    TokenKind::XOR
 };
 
 vector<TokenKind> Token::tokensLogicalFirst = {

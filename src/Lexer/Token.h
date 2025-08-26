@@ -13,6 +13,7 @@ enum class TokenKind {
     PERCENT,
 
     OR,
+    XOR,
     AND,
     NOT,
 

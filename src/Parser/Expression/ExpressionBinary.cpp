@@ -10,6 +10,10 @@ Expression(ExpressionKind::BINARY, nullptr), operation(ExpressionBinaryOperation
             operation = ExpressionBinaryOperation::OR;
             valueType = ValueType::BOOL;
             break;
+        case TokenKind::XOR:
+            operation = ExpressionBinaryOperation::XOR;
+            valueType = ValueType::BOOL;
+            break;
         case TokenKind::AND:
             operation = ExpressionBinaryOperation::AND;
             valueType = ValueType::BOOL;

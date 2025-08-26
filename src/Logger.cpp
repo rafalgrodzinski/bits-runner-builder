@@ -47,6 +47,8 @@ string Logger::toString(shared_ptr<Token> token) {
 
         case TokenKind::OR:
             return "OR";
+        case TokenKind::XOR:
+            return "XOR";
         case TokenKind::AND:
             return "AND";
         case TokenKind::NOT:
@@ -155,6 +157,8 @@ string Logger::toString(TokenKind tokenKind) {
 
         case TokenKind::OR:
             return "OR";
+        case TokenKind::XOR:
+            return "XOR";
         case TokenKind::AND:
             return "AND";
         case TokenKind::NOT:
@@ -455,6 +459,8 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
     switch (expression->getOperation()) {
         case ExpressionBinaryOperation::OR:
             return "{OR " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+        case ExpressionBinaryOperation::XOR:
+            return "{XOR " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
         case ExpressionBinaryOperation::AND:
             return "{AND " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
         case ExpressionBinaryOperation::EQUAL:

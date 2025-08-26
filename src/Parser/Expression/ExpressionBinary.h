@@ -5,6 +5,7 @@
 
 enum class ExpressionBinaryOperation {
     OR,
+    XOR,
     AND,
     EQUAL,
     NOT_EQUAL,
