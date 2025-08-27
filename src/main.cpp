@@ -75,12 +75,12 @@ int main(int argc, char **argv) {
         llvm::cl::cat(mainOptions)
     );
     llvm::cl::OptionCategory targetOptions(" Target Options");
-    llvm::cl::opt<string> triple(
+    llvm::cl::opt<string> targetTriple(
         "triple",
         llvm::cl::desc("Target triple"),
         llvm::cl::cat(targetOptions)
     );
-    llvm::cl::opt<string> arch(
+    llvm::cl::opt<string> architecture(
         "arch",
         llvm::cl::desc("Target architecture"),
         llvm::cl::cat(targetOptions)
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
         }
 
         CodeGenerator codeGenerator(module);
-        codeGenerator.generateObjectFile(outputKind, optimizationLevel);
+        codeGenerator.generateObjectFile(outputKind, optimizationLevel, targetTriple, architecture, isVerbose);
     }
 
     return 0;

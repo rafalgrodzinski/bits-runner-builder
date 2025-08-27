@@ -5,7 +5,7 @@ using namespace std;
 CodeGenerator::CodeGenerator(shared_ptr<llvm::Module> module): module(module) {
 }
 
-void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel) {
+void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel, string targetTripleOption, string architectureOption, bool isVerbose) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
@@ -13,6 +13,8 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
     llvm::InitializeAllAsmPrinters();
 
     string targetTriple = llvm::sys::getDefaultTargetTriple();
+    if (!targetTripleOption.empty())
+        targetTriple = targetTripleOption;
     string errorString;
     const llvm::Target *target = llvm::TargetRegistry::lookupTarget(targetTriple, errorString);
     if (!target) {
@@ -20,6 +22,8 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
         exit(1);
     }
     string architecture = "generic";
+    if (!architectureOption.empty())
+        architecture = architectureOption;
     string features = "";
     llvm::Reloc::Model relocationModel = llvm::Reloc::PIC_;
     llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Small;
@@ -77,6 +81,10 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
     if (targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, codeGenFileType)) {
         cerr << "Failed to generate file " << fileName << endl;
         exit(1);
+    }
+
+    if (isVerbose) {
+        cout << format("🐉 Generating code for module \"{}\" targeting {}, {}...\n", string(module->getName()), targetTriple, architecture);
     }
 
     passManager.run(*module);
