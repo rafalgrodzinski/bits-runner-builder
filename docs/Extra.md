@@ -23,3 +23,5 @@ Target triple is specified in form `<target><vendor><platform>`. Examples of pos
 `brb --triple=x86_64-unknown-linux-gnu [..]`
 * Generate 64bit ARM ELF:
 `brb --triple=aarch64-unknown-linux-gnu [..]`
+* Generate 64bit x86 PE/COFF
+`brb --triple=x86_64-pc-windows-msvc [..]`
