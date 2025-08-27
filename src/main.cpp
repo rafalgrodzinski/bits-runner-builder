@@ -40,27 +40,52 @@ void versionPrinter(llvm::raw_ostream &os) {
 
 int main(int argc, char **argv) {
     llvm::cl::SetVersionPrinter(versionPrinter);
-    llvm::cl::extrahelp("\nADDITIONAL HELP:\n\n  This is the extra help\n");
-    llvm::cl::opt<bool> isVerbose("v", llvm::cl::desc("Verbos output"), llvm::cl::init(false));
+    llvm::cl::OptionCategory mainOptions(" Main Options");
+    llvm::cl::opt<bool> isVerbose(
+        "v",
+        llvm::cl::desc("Verbos output"),
+        llvm::cl::init(false),
+        llvm::cl::cat(mainOptions)
+    );
     llvm::cl::opt<CodeGenerator::OutputKind> outputKind(
         llvm::cl::desc("Generated output:"),
         llvm::cl::init(CodeGenerator::OutputKind::OBJECT),
         llvm::cl::values(
             clEnumValN(CodeGenerator::OutputKind::OBJECT, "c", "Generate object file"),
             clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "S", "Generate assembly file")
-        )
+        ),
+        llvm::cl::cat(mainOptions)
     );
     llvm::cl::opt<CodeGenerator::OptimizationLevel> optimizationLevel(
         llvm::cl::desc("Optimization level:"),
         llvm::cl::init(CodeGenerator::OptimizationLevel::O2),
         llvm::cl::values(
-            clEnumValN(CodeGenerator::OptimizationLevel::O0, "O0", "No optimizations (debug)"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O0, "g", "No optimizations (debug mode)"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O0, "O0", "No optimizations"),
             clEnumValN(CodeGenerator::OptimizationLevel::O1, "O1", "Less optimizations"),
             clEnumValN(CodeGenerator::OptimizationLevel::O2, "O2", "Default optimizations"),
             clEnumValN(CodeGenerator::OptimizationLevel::O3, "O3", "Aggressive optimizations")
-        )
+        ),
+        llvm::cl::cat(mainOptions)
     );
-    llvm::cl::list<string> inputFileNames(llvm::cl::Positional, llvm::cl::desc("<input file>"), llvm::cl::OneOrMore);
+    llvm::cl::list<string> inputFileNames(
+        llvm::cl::Positional,
+        llvm::cl::desc("<input file>"),
+        llvm::cl::OneOrMore,
+        llvm::cl::cat(mainOptions)
+    );
+    llvm::cl::OptionCategory targetOptions(" Target Options");
+    llvm::cl::opt<string> triple(
+        "triple",
+        llvm::cl::desc("Target triple"),
+        llvm::cl::cat(targetOptions)
+    );
+    llvm::cl::opt<string> arch(
+        "arch",
+        llvm::cl::desc("Target architecture"),
+        llvm::cl::cat(targetOptions)
+    );
+    llvm::cl::extrahelp("\n More Info:\n\n  Check the GitHub page at https://github.com/rafalgrodzinski/bits-runner-builder for more information in Bits Runner Builder\n");
     llvm::cl::ParseCommandLineOptions(argc, argv, "Bits Runner Builder - LLVM based compiler for the Bits Runner Code language");
 
     // Read each source
