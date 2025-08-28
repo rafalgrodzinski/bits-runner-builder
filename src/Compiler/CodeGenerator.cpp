@@ -5,7 +5,7 @@ using namespace std;
 CodeGenerator::CodeGenerator(shared_ptr<llvm::Module> module): module(module) {
 }
 
-void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel, string targetTripleOption, string architectureOption, bool isVerbose) {
+void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel, string targetTripleOption, string architectureOption, bool isVerbose, unsigned int optionBits) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
@@ -43,12 +43,13 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
             break;
     }
 
-    llvm::TargetOptions options;
+    llvm::TargetOptions targetOptions;
+    targetOptions.FunctionSections = optionBits & 1 << 0;
     llvm::TargetMachine *targetMachine = target->createTargetMachine(
         targetTriple,
         architecture,
         features,
-        options,
+        targetOptions,
         relocationModel,
         codeModel,
         optimizationLevel

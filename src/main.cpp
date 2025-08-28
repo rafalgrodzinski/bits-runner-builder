@@ -85,6 +85,13 @@ int main(int argc, char **argv) {
         llvm::cl::desc("Target architecture"),
         llvm::cl::cat(targetOptions)
     );
+    llvm::cl::bits<CodeGenerator::Options> options(
+        llvm::cl::desc("Target gneration options"),
+        llvm::cl::values(
+            clEnumValN(CodeGenerator::Options::FUNCTION_SECTIONS, "function-sections", "Place each function in its own section")
+        ),
+        llvm::cl::cat(targetOptions)
+    );
     llvm::cl::extrahelp("\n More Info:\n\n  Check the GitHub page at https://github.com/rafalgrodzinski/bits-runner-builder for more information in Bits Runner Builder\n");
     llvm::cl::ParseCommandLineOptions(argc, argv, "Bits Runner Builder - LLVM based compiler for the Bits Runner Code language");
 
@@ -154,7 +161,7 @@ int main(int argc, char **argv) {
         }
 
         CodeGenerator codeGenerator(module);
-        codeGenerator.generateObjectFile(outputKind, optimizationLevel, targetTriple, architecture, isVerbose);
+        codeGenerator.generateObjectFile(outputKind, optimizationLevel, targetTriple, architecture, isVerbose, options.getBits());
     }
 
     return 0;
