@@ -10,7 +10,7 @@ merge fun: numbers data<u32, 32>, low u32, mid u32, high u32 -> data<u32, 32>
     iLeft u32 <- low
     iRight u32 <- mid
     
-    rep iLeft < (mid) and iRight < (high):
+    rep iLeft < mid and iRight < high:
         if numbers[iLeft] < numbers[iRight]:
             temp[iTemp] <- numbers[iLeft]
             iLeft <- iLeft + 1
@@ -37,7 +37,7 @@ merge fun: numbers data<u32, 32>, low u32, mid u32, high u32 -> data<u32, 32>
 ;
 
 mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
-    if low < (high-1):
+    if low < high-1:
         mid u32 <- low + (high - low) / 2
         numbers <- mergeSort(numbers, low, mid)
         numbers <- mergeSort(numbers, mid, high)
