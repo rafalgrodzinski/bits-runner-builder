@@ -8,10 +8,10 @@ print fun: text data<u32, 8>
 ;
 
 @export main fun -> u32
-    a bool <- false
-    b bool <- false
+    a u32 <- 5
+    b u32 <- 6
 
-    if a xor b: print("true\n\0\0\0") else print("false\n\0\0")
+    if a < b: print("true\n\0\0\0") else print("false\n\0\0")
 
     ret 0
 ;
