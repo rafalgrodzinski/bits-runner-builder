@@ -1,12 +1,9 @@
-# ingnore files without extension
+# Ingnore files without extension
 *
 !*.*
 !*/
 
-.DS_Store
-.vscode/settings.json
-
-# project build artifacts
+# Project build artifacts
 *.dSYM
 build/
 
@@ -20,3 +17,7 @@ build/
 *_LOCAL_*
 *_REMOTE_*
 *_BASE_*
+
+# Other
+.DS_Store
+.vscode/settings.json

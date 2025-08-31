@@ -27,12 +27,16 @@ public:
         O3
     };
 
+    enum class Options {
+        FUNCTION_SECTIONS
+    };
+
 private:
     shared_ptr<llvm::Module> module;
 
 public:
     CodeGenerator(shared_ptr<llvm::Module> module);
-    void generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel);
+    void generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel, string targetTripleOption, string architectureOption, bool isVerbose, unsigned int optionBits);
 };
 
 #endif

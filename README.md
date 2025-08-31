@@ -2,8 +2,9 @@
 Welcome to Bits Runner Builder! Compiler for the Bits Runner Code (BRC) language 🤘
 
 ## Quick links
-- [BRC Language Reference](Reference.md)
-- [Detailed Syntax](Syntax.md)
+- [BRC Language Reference](docs/Reference.md)
+- [Detailed Syntax](docs/Syntax.md)
+- [Extra Information](docs/Extra.md)
 
 ## Overview
 Bits Runner Builder is a compiler for Bits Runner Code (brc) language, which has been designed for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system. It aims to be an opinionated, low-level language, a sort of improved C while providing a revised syntax and a couple of quality of life improvement. It's a simple system programming language, so no class hierarchies, templates, or other unnecessary fluff.

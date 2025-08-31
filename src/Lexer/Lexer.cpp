@@ -497,18 +497,14 @@ shared_ptr<Token> Lexer::matchType() {
     if (tokens.empty() || !tokens.back()->isOfKind({TokenKind::IDENTIFIER, TokenKind::LESS, TokenKind::RIGHT_ARROW}))
         return nullptr;
 
+    // TYPE < TYPE [..]
+    if (tokens.size() >= 2 && tokens.back()->isOfKind({TokenKind::LESS}) && !tokens.at(tokens.size() - 2)->isOfKind({TokenKind::TYPE}))
+        return nullptr;
+
     while (nextIndex < source.length() && isIdentifier(nextIndex))
         nextIndex++;
 
     if (nextIndex == currentIndex || !isSeparator(nextIndex))
-        return nullptr;
-
-    // TODO:
-    // this is hack to handle following case:
-    // if low < high: ('high' is identified as type)
-    // this still won't work
-    // Array <- [true, false, this < that, true] (for 'that')
-    if (source.at(nextIndex) == ':' || source.at(nextIndex) == '[')
         return nullptr;
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
