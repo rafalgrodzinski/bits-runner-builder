@@ -348,6 +348,12 @@ void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
     // loop init
     if (initStatement != nullptr)
         buildStatement(statement->getInitStatement());
+    
+    // Store the current stack location, stack shouldn't change accross the runs, for example because of allocas
+    llvm::Type *ptrType = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
+    llvm::Function *stackSaveIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(module.get(), llvm::Intrinsic::stacksave, {ptrType});
+    llvm::Value *stackValue = builder->CreateCall(stackSaveIntrinscic);
+
     builder->CreateBr(preBlock);
 
     // pre condition
@@ -362,6 +368,11 @@ void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
     // body
     fun->insert(fun->end(), bodyBlock);
     builder->SetInsertPoint(bodyBlock);
+
+    // Restore stack to expected location
+    llvm::Function *stackRestoreIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(module.get(), llvm::Intrinsic::stackrestore, {ptrType});
+    builder->CreateCall(stackRestoreIntrinscic, llvm::ArrayRef({stackValue}));
+
     buildBlock(bodyStatement);
 
     // post condition
