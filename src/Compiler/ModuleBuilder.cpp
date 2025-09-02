@@ -40,6 +40,7 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
     typeS8 = llvm::Type::getInt8Ty(*context);
     typeS32 = llvm::Type::getInt32Ty(*context);
     typeR32 = llvm::Type::getFloatTy(*context);
+    typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
@@ -257,11 +258,36 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
             llvm::AllocaInst *alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
             break;
         }
+        case ValueTypeKind::PTR: {
+            llvm::PointerType *valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
+            if (valueType == nullptr)
+                return;
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            break;
+        }
         default: {
             valueType = typeForValueType(statement->getValueType());
             if (valueType == nullptr)
                 return;
             alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getName());
+
+            llvm::PointerType *pt = (llvm::PointerType *)typePtr;
+            llvm::AllocaInst *pa = builder->CreateAlloca(pt, 0, format("p->{}", statement->getName()));
+            builder->CreateStore(alloca, pa);
+            alloca->print(llvm::outs());
+            alloca->getType()->print(llvm::outs());
+
+            llvm::Value *rA = builder->CreateLoad(typePtr, pa, "dereferenced");
+            llvm::Value *rV = llvm::ConstantInt::get(typeU32, 4, true);
+            builder->CreateStore(rV, rA, "def saved");
+            //llvm::ConstantExpr::getIntToPtr();
+            //llvm::ConstantExpr::getPtrToInt()
+            
+            llvm::Value *adr = builder->CreatePtrToInt(pa, pt);
+            llvm::AllocaInst *adrAlloca = builder->CreateAlloca(typeU32, 0, "adrAlloca");
+            builder->CreateStore(adr, adrAlloca);
+
+
             break;
         }
     }
@@ -1061,7 +1087,11 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
         }
         case ValueTypeKind::BLOB:
             return getStructType(valueType->getTypeName());
+        case ValueTypeKind::PTR:
+            return typePtr;
     }
+
+    return nullptr;
 }
 
 void ModuleBuilder::markError(int line, int column, string message) {

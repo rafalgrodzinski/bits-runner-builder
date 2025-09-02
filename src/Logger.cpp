@@ -268,6 +268,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "[]";
         case ValueTypeKind::BLOB:
             return format("BLOB({})", valueType->getTypeName());
+        case ValueTypeKind::PTR:
+            return format("PTR<{}>", toString(valueType->getSubType()));
     }
 }
 

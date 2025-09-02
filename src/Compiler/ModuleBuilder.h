@@ -68,6 +68,7 @@ private:
     llvm::IntegerType *typeS8;
     llvm::IntegerType *typeS32;
     llvm::Type *typeR32;
+    llvm::Type *typePtr;
 
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
