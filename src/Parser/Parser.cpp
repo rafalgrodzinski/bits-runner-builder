@@ -1076,10 +1076,12 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                 Parsee::tokenParsee(TokenKind::IF, true, false, false),
                 Parsee::expressionParsee(true, true, true),
                 Parsee::orParsee(
+                    // Single line
                     ParseeGroup(
                         {
                             Parsee::tokenParsee(TokenKind::COLON, true, false, false),
                             Parsee::expressionBlockSingleLineParsee(true, true, true),
+                            // Else block
                             Parsee::groupParsee(
                                 ParseeGroup(
                                     {
@@ -1091,10 +1093,12 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                             )
                         }
                     ),
+                    // Multi line
                     ParseeGroup(
                         {
-                            Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, false),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true),
                             Parsee::expressionBlockMultiLineParsee(true, true, true),
+                            // Else blcok
                             Parsee::groupParsee(
                                 ParseeGroup(
                                     {

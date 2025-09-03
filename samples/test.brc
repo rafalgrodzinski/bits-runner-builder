@@ -13,13 +13,13 @@ print fun
 @export main fun -> u32
     flag bool <- true
 
-    if flag
+    /*if flag
         print()
     else
         print()
-    ;
+    ;*/
 
-    if flag: print() else: print()
+    if flag print() else: print()
 
     ret 0
 ;
