@@ -15,7 +15,10 @@ enum class ParseeKind {
     REPEATED_GROUP,
     TOKEN,
     VALUE_TYPE,
-    EXPRESSION
+    EXPRESSION,
+    OR,
+    EXPRESSION_BLOCK_SINGLE_LINE,
+    EXPRESSION_BLOCK_MULTI_LINE
 };
 
 class Parsee {
@@ -23,6 +26,8 @@ private:
     ParseeKind kind;
     optional<ParseeGroup> group;
     optional<ParseeGroup> repeatedGroup;
+    optional<ParseeGroup> firstGroup;
+    optional<ParseeGroup> secondGroup;
     TokenKind tokenKind;
     bool isRequired;
     bool shouldReturn;
@@ -35,10 +40,15 @@ public:
     static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
     static Parsee valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch); 
     static Parsee expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
+    static Parsee orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
+    static Parsee expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
+    static Parsee expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
 
     ParseeKind getKind();
     optional<ParseeGroup> getGroup();
     optional<ParseeGroup> getRepeatedGroup();
+    optional<ParseeGroup> getFirstGroup();
+    optional<ParseeGroup> getSecondGroup();
     TokenKind getTokenKind();
     bool getIsRequired();
     bool getShouldReturn();
