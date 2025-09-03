@@ -1066,49 +1066,59 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
-    if (!tryMatchingTokenKinds({TokenKind::IF}, true, true))
-        return nullptr;
-
     shared_ptr<Expression> condition;
     shared_ptr<Expression> thenBlock;
     shared_ptr<Expression> elseBlock;
 
-    // condition expression
-    condition = nextExpression();
-    if (condition == nullptr)
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::IF, true, false, false),
+                Parsee::expressionParsee(true, true, true),
+                Parsee::orParsee(
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::COLON, true, false, false),
+                            Parsee::expressionBlockSingleLineParsee(true, true, true),
+                            Parsee::groupParsee(
+                                ParseeGroup(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::ELSE, true, false, false),
+                                        Parsee::tokenParsee(TokenKind::COLON, true, false, true),
+                                        Parsee::expressionBlockSingleLineParsee(true, true, true)
+                                    }
+                                ), false, true, false
+                            )
+                        }
+                    ),
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, false),
+                            Parsee::expressionBlockMultiLineParsee(true, true, true),
+                            Parsee::groupParsee(
+                                ParseeGroup(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::ELSE, true, false, false),
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true),
+                                        Parsee::expressionBlockMultiLineParsee(true, true, true)
+                                    }
+                                ), false, true, false
+                            ),
+                            Parsee::tokenParsee(TokenKind::SEMICOLON, true, false, true)
+                        }
+                    ), true, true, true
+                )
+            }
+        )
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
-    
-    if (!tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
-        markError(TokenKind::COLON, {});
-        return nullptr;
-    }
-    
-    // then
-    bool isMultiLine = tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
 
-    // then block
-    if (isMultiLine)
-        thenBlock = matchExpressionBlock({TokenKind::ELSE, TokenKind::SEMICOLON});
-    else
-        thenBlock = matchExpressionBlock({TokenKind::ELSE, TokenKind::NEW_LINE});
-
-    if (thenBlock == nullptr)
-        return nullptr;
-
-    // else
-    if (tryMatchingTokenKinds({TokenKind::ELSE}, true, true)) {
-        isMultiLine = (tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true));
-
-        // else block
-        if (isMultiLine)
-            elseBlock = matchExpressionBlock({TokenKind::SEMICOLON});
-        else
-            elseBlock = matchExpressionBlock({TokenKind::NEW_LINE});
-
-        if (elseBlock == nullptr)
-            return nullptr;
-    }
-    tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true);
+    condition = resultsGroup.getResults().at(0).getExpression();
+    thenBlock = resultsGroup.getResults().at(1).getExpression();
+    if (resultsGroup.getResults().size() > 2)
+        elseBlock = resultsGroup.getResults().at(2).getExpression();
 
     return make_shared<ExpressionIfElse>(condition, dynamic_pointer_cast<ExpressionBlock>(thenBlock), dynamic_pointer_cast<ExpressionBlock>(elseBlock));
 }
@@ -1178,13 +1188,22 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
                 subResults = repeatedGroupParseeResults(*parsee.getRepeatedGroup());
                 break;
             case ParseeKind::TOKEN:
-                subResults = tokenParseeResults(currentIndex, parsee.getTokenKind());
+                subResults = tokenParseeResults(parsee.getTokenKind());
                 break;
             case ParseeKind::VALUE_TYPE:
                 subResults = valueTypeParseeResults(currentIndex);
                 break;
             case ParseeKind::EXPRESSION:
-                subResults = expressionParseeResults(currentIndex);
+                subResults = expressionParseeResults();
+                break;
+            case ParseeKind::OR:
+                subResults = orParseeResults(*parsee.getFirstGroup(), *parsee.getSecondGroup());
+                break;
+            case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
+                subResults = expressionBlockSingleLineParseeResults();
+                break;
+            case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
+                subResults = expressionBlockMultiLineParseeResults();
                 break;
         }
 
@@ -1253,8 +1272,8 @@ optional<pair<vector<ParseeResult>, int>> Parser::repeatedGroupParseeResults(Par
     return pair(results, tokensCount);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::tokenParseeResults(int index, TokenKind tokenKind) {
-    shared_ptr<Token> token = tokens.at(index);
+optional<pair<vector<ParseeResult>, int>> Parser::tokenParseeResults( TokenKind tokenKind) {
+    shared_ptr<Token> token = tokens.at(currentIndex);
     if (token->isOfKind({tokenKind}))
         return pair(vector<ParseeResult>({ParseeResult::tokenResult(token)}), 1);
     return {};
@@ -1301,10 +1320,59 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
     return pair(vector<ParseeResult>({ParseeResult::valueTypeResult(valueType, index - startIndex)}), index - startIndex);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(int index) {
+optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults() {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = nextExpression();
+    if (errors.size() > errorsCount || expression == nullptr)
+        return {};
+
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount)}), tokensCount);
+}
+
+optional<pair<vector<ParseeResult>, int>> Parser::orParseeResults(ParseeGroup first, ParseeGroup second) {
+    int startIndex = currentIndex;
+    vector<ParseeResult> results;
+    ParseeResultsGroup resultsGroup;
+
+    // try matching first or second group
+    resultsGroup = parseeResultsGroupForParseeGroup(first);
+    if (resultsGroup.getKind() == ParseeResultsGroupKind::FAILURE) {
+        return {};
+    } else if (resultsGroup.getKind() == ParseeResultsGroupKind::NO_MATCH) {
+        currentIndex = startIndex;
+        resultsGroup = parseeResultsGroupForParseeGroup(second);
+    }
+
+    if (resultsGroup.getKind() == ParseeResultsGroupKind::FAILURE)
+        return {};
+
+    for (ParseeResult &result : resultsGroup.getResults())
+        results.push_back(result);
+
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(results, tokensCount);
+}
+
+optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockSingleLineParseeResults() {
+    int startIndex = currentIndex;
+    int errorsCount = errors.size();
+    shared_ptr<Expression> expression = matchExpressionBlock({TokenKind::ELSE, TokenKind::NEW_LINE});
+    if (errors.size() > errorsCount || expression == nullptr)
+        return {};
+
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount)}), tokensCount);
+}
+
+optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockMultiLineParseeResults() {
+    int startIndex = currentIndex;
+    int errorsCount = errors.size();
+    shared_ptr<Expression> expression = matchExpressionBlock({TokenKind::ELSE, TokenKind::SEMICOLON});
     if (errors.size() > errorsCount || expression == nullptr)
         return {};
 
