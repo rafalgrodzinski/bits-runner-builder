@@ -7,18 +7,19 @@ print fun: text data<u32, 8>
     ;
 ;*/
 
-getVal fun -> u32
-    ret 5
+print fun
 ;
 
 @export main fun -> u32
-    //ascii u32 <- 0
-    rep:
-        ascii u32 <- getVal()
-        if ascii != 0:
-            ascii <- 4
-        ;
-    ;
+    flag bool <- true
+
+    /*if flag
+        print()
+    else
+        print()
+    ;*/
+
+    if flag print() else: print()
 
     ret 0
 ;

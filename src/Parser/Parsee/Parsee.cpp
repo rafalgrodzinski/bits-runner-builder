@@ -50,6 +50,35 @@ Parsee Parsee::expressionParsee(bool isRequired, bool shouldReturn, bool shouldF
     return parsee;
 }
 
+Parsee Parsee::orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::OR;
+    parsee.firstGroup = firstGroup;
+    parsee.secondGroup = secondGroup;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
+
+Parsee Parsee::expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
+
+Parsee Parsee::expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::EXPRESSION_BLOCK_MULTI_LINE;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
+
 Parsee::Parsee() { }
 
 optional<ParseeGroup> Parsee::getGroup() {
@@ -58,6 +87,14 @@ optional<ParseeGroup> Parsee::getGroup() {
 
 optional<ParseeGroup> Parsee::getRepeatedGroup() {
     return repeatedGroup;
+}
+
+optional<ParseeGroup> Parsee::getFirstGroup() {
+    return firstGroup;
+}
+
+optional<ParseeGroup> Parsee::getSecondGroup() {
+    return secondGroup;
 }
 
 ParseeKind Parsee::getKind() {
