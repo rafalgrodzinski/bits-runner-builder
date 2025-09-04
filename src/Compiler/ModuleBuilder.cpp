@@ -792,14 +792,14 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string mem
     if (isArray && memberName.compare("count") == 0) {
         llvm::ArrayType *arrayType = (llvm::ArrayType*)alloca->getAllocatedType();
         return llvm::ConstantInt::get(typeU32, arrayType->getNumElements());
-    if (isPointer && memberName.compare("val")) {
+    } else if (isPointer && memberName.compare("val")) {
         // Maybe works?
         llvm::AllocaInst *pointeeAlloca = (llvm::AllocaInst*)builder->CreateLoad(typePtr, alloca);
         pointeeAlloca->print(llvm::outs());
         llvm::Type *pointeeType = pointeeAlloca->getAllocatedType();
         pointeeType->print(llvm::outs());
         return builder->CreateLoad(pointeeType, pointeeAlloca);
-    } if (memberName.compare("adr") == 0) {
+    } else if (memberName.compare("adr") == 0) {
         return builder->CreatePtrToInt(alloca, typePtr);
     }
 
