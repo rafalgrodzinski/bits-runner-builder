@@ -271,7 +271,7 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
                 return;
             alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getName());
 
-            llvm::PointerType *pt = (llvm::PointerType *)typePtr;
+            /*llvm::PointerType *pt = (llvm::PointerType *)typePtr;
             llvm::AllocaInst *pa = builder->CreateAlloca(pt, 0, format("p->{}", statement->getName()));
             builder->CreateStore(alloca, pa);
             alloca->print(llvm::outs());
@@ -285,8 +285,7 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
             
             llvm::Value *adr = builder->CreatePtrToInt(pa, pt);
             llvm::AllocaInst *adrAlloca = builder->CreateAlloca(typeU32, 0, "adrAlloca");
-            builder->CreateStore(adr, adrAlloca);
-
+            builder->CreateStore(adr, adrAlloca);*/
 
             break;
         }
@@ -719,7 +718,20 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
             return builder->CreateLoad(type->getArrayElementType(), elementPtr);
         }
         case ExpressionVariableKind::BLOB: {
+            // First check for built-ins
+            llvm::Value *builtInValue = valueForBuiltIn(alloca, expression->getMemberName());
+            if (builtInValue != nullptr) {
+                builtInValue->getType()->print(llvm::outs());
+                builtInValue->print(llvm::outs());
+                return builtInValue;
+            }
+
+            // Then do a normal member check
             llvm::StructType *structType = (llvm::StructType *)alloca->getAllocatedType();
+            if (!structType->isStructTy()) {
+                markError(0, 0, format("Variable {} is not of type blob", expression->getIdentifier()));
+                return nullptr;
+            }
             string structName = string(structType->getName());
             optional<int> memberIndex = getMemberIndex(structName, expression->getMemberName());
             if (!memberIndex)
@@ -771,6 +783,27 @@ llvm::Value *ModuleBuilder::valueForArrayLiteral(shared_ptr<ExpressionArrayLiter
     buildAssignment(alloca, valueType, expression);
 
     return builder->CreateLoad(alloca->getAllocatedType(), alloca);
+}
+
+llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string memberName) {
+    bool isArray = alloca->getAllocatedType()->isArrayTy();
+    bool isPointer = alloca->getAllocatedType()->isPointerTy();
+
+    if (isArray && memberName.compare("count") == 0) {
+        llvm::ArrayType *arrayType = (llvm::ArrayType*)alloca->getAllocatedType();
+        return llvm::ConstantInt::get(typeU32, arrayType->getNumElements());
+    if (isPointer && memberName.compare("val")) {
+        // Maybe works?
+        llvm::AllocaInst *pointeeAlloca = (llvm::AllocaInst*)builder->CreateLoad(typePtr, alloca);
+        pointeeAlloca->print(llvm::outs());
+        llvm::Type *pointeeType = pointeeAlloca->getAllocatedType();
+        pointeeType->print(llvm::outs());
+        return builder->CreateLoad(pointeeType, pointeeAlloca);
+    } if (memberName.compare("adr") == 0) {
+        return builder->CreatePtrToInt(alloca, typePtr);
+    }
+
+    return nullptr;
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
