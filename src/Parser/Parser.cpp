@@ -183,6 +183,13 @@ shared_ptr<Statement> Parser::matchStatementImport() {
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
+    enum {
+        TAG_ID,
+        TAG_ARG_ID,
+        TAG_ARG_TYPE,
+        TAG_RET_TYPE
+    };
+
     string identifier;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueType::NONE;
@@ -192,7 +199,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
             {
                 // identifier
                 Parsee::tokenParsee(TokenKind::M_EXTERN, true, false, false),
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_ID),
                 Parsee::tokenParsee(TokenKind::FUNCTION, true, false, false),
                 // arguments
                 Parsee::groupParsee(
@@ -201,16 +208,16 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
                             // first argument
                             Parsee::tokenParsee(TokenKind::COLON, true, false, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true),
-                            Parsee::valueTypeParsee(true, true, true),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true, TAG_ARG_ID),
+                            Parsee::valueTypeParsee(true, true, true, TAG_ARG_TYPE),
                             // additional arguments
                             Parsee::repeatedGroupParsee(
                                 ParseeGroup(
                                     {
                                         Parsee::tokenParsee(TokenKind::COMMA, true, false, false),
                                         Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
-                                        Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true),
-                                        Parsee::valueTypeParsee(true, true, true)
+                                        Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true, TAG_ID),
+                                        Parsee::valueTypeParsee(true, true, true, TAG_ARG_TYPE)
                                     }
                                 ), false, true, false
                             )
@@ -223,7 +230,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
                         {
                             Parsee::tokenParsee(TokenKind::RIGHT_ARROW, true, false, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
-                            Parsee::valueTypeParsee(true, true, true)
+                            Parsee::valueTypeParsee(true, true, true, TAG_RET_TYPE)
                         }
                     ), false, true, false
                 )
@@ -234,19 +241,24 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    int i = 0;
-    // identifier
-    identifier = resultsGroup.getResults().at(i++).getToken()->getLexme();
-    // arguments
-    while (i < resultsGroup.getResults().size()-1 && resultsGroup.getResults().at(i).getKind() == ParseeResultKind::TOKEN) {
-            pair<string, shared_ptr<ValueType>> argument;
-            argument.first = resultsGroup.getResults().at(i++).getToken()->getLexme();
-            argument.second = resultsGroup.getResults().at(i++).getValueType();
-            arguments.push_back(argument);
+    for (int i=0; i<resultsGroup.getResults().size(); i++) {
+        ParseeResult parseeResult = resultsGroup.getResults().at(i);
+        switch (parseeResult.getTag()) {
+            case TAG_ID:
+                identifier = parseeResult.getToken()->getLexme();
+                break;
+            case TAG_ARG_ID: {
+                pair<string, shared_ptr<ValueType>> argument;
+                argument.first = parseeResult.getToken()->getLexme();
+                argument.second = resultsGroup.getResults().at(++i).getValueType();
+                arguments.push_back(argument);
+                break;
+            }
+            case TAG_RET_TYPE:
+                returnType = parseeResult.getValueType();
+                break;
+        }
     }
-    // return type
-    if (i < resultsGroup.getResults().size())
-        returnType = resultsGroup.getResults().at(i).getValueType();
 
     return make_shared<StatementMetaExternFunction>(identifier, arguments, returnType);
 }
@@ -1088,6 +1100,12 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
+    enum Tag {
+        TAG_CONDITION,
+        TAG_THEN,
+        TAG_ELSE
+    };
+
     shared_ptr<Expression> condition;
     shared_ptr<Expression> thenBlock;
     shared_ptr<Expression> elseBlock;
@@ -1096,20 +1114,20 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         ParseeGroup(
             {
                 Parsee::tokenParsee(TokenKind::IF, true, false, false),
-                Parsee::expressionParsee(true, true, true),
+                Parsee::expressionParsee(true, true, true, TAG_CONDITION),
                 Parsee::orParsee(
                     // Single line
                     ParseeGroup(
                         {
                             Parsee::tokenParsee(TokenKind::COLON, true, false, false),
-                            Parsee::expressionBlockSingleLineParsee(true, true, true),
+                            Parsee::expressionBlockSingleLineParsee(true, true, true, TAG_THEN),
                             // Else block
                             Parsee::groupParsee(
                                 ParseeGroup(
                                     {
                                         Parsee::tokenParsee(TokenKind::ELSE, true, false, false),
                                         Parsee::tokenParsee(TokenKind::COLON, true, false, true),
-                                        Parsee::expressionBlockSingleLineParsee(true, true, true)
+                                        Parsee::expressionBlockSingleLineParsee(true, true, true, TAG_ELSE)
                                     }
                                 ), false, true, false
                             )
@@ -1119,14 +1137,14 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                     ParseeGroup(
                         {
                             Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true),
-                            Parsee::expressionBlockMultiLineParsee(true, true, true),
+                            Parsee::expressionBlockMultiLineParsee(true, true, true, TAG_THEN),
                             // Else blcok
                             Parsee::groupParsee(
                                 ParseeGroup(
                                     {
                                         Parsee::tokenParsee(TokenKind::ELSE, true, false, false),
                                         Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true),
-                                        Parsee::expressionBlockMultiLineParsee(true, true, true)
+                                        Parsee::expressionBlockMultiLineParsee(true, true, true, TAG_ELSE)
                                     }
                                 ), false, true, false
                             ),
@@ -1141,10 +1159,20 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    condition = resultsGroup.getResults().at(0).getExpression();
-    thenBlock = resultsGroup.getResults().at(1).getExpression();
-    if (resultsGroup.getResults().size() > 2)
-        elseBlock = resultsGroup.getResults().at(2).getExpression();
+    for (int i=0; i<resultsGroup.getResults().size(); i++) {
+        ParseeResult parseeResult = resultsGroup.getResults().at(i);
+        switch (parseeResult.getTag()) {
+            case TAG_CONDITION:
+                condition = parseeResult.getExpression();
+                break;
+            case TAG_THEN:
+                thenBlock = parseeResult.getExpression();
+                break;
+            case TAG_ELSE:
+                elseBlock = parseeResult.getExpression();
+                break;
+        }
+    }
 
     return make_shared<ExpressionIfElse>(condition, dynamic_pointer_cast<ExpressionBlock>(thenBlock), dynamic_pointer_cast<ExpressionBlock>(elseBlock));
 }
@@ -1220,16 +1248,16 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
                 subResults = valueTypeParseeResults(currentIndex, parsee.getTag());
                 break;
             case ParseeKind::EXPRESSION:
-                subResults = expressionParseeResults();
+                subResults = expressionParseeResults(parsee.getTag());
                 break;
             case ParseeKind::OR:
                 subResults = orParseeResults(*parsee.getFirstGroup(), *parsee.getSecondGroup());
                 break;
             case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
-                subResults = expressionBlockSingleLineParseeResults();
+                subResults = expressionBlockSingleLineParseeResults(parsee.getTag());
                 break;
             case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
-                subResults = expressionBlockMultiLineParseeResults();
+                subResults = expressionBlockMultiLineParseeResults(parsee.getTag());
                 break;
         }
 
@@ -1346,7 +1374,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
     return pair(vector<ParseeResult>({ParseeResult::valueTypeResult(valueType, index - startIndex, tag)}), index - startIndex);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults() {
+optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(int tag) {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = nextExpression();
@@ -1355,7 +1383,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults() {
 
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
-    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount)}), tokensCount);
+    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount, tag)}), tokensCount);
 }
 
 optional<pair<vector<ParseeResult>, int>> Parser::orParseeResults(ParseeGroup first, ParseeGroup second) {
@@ -1383,7 +1411,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::orParseeResults(ParseeGroup fi
     return pair(results, tokensCount);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockSingleLineParseeResults() {
+optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockSingleLineParseeResults(int tag) {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = matchExpressionBlock({TokenKind::ELSE, TokenKind::NEW_LINE});
@@ -1392,10 +1420,10 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockSingleLineParse
 
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
-    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount)}), tokensCount);
+    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount, tag)}), tokensCount);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockMultiLineParseeResults() {
+optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockMultiLineParseeResults(int tag) {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = matchExpressionBlock({TokenKind::ELSE, TokenKind::SEMICOLON});
@@ -1404,7 +1432,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockMultiLineParsee
 
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
-    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount)}), tokensCount);
+    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount, tag)}), tokensCount);
 }
 
 bool Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {

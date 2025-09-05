@@ -40,10 +40,10 @@ public:
     static Parsee repeatedGroupParsee(ParseeGroup repeatedGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
     static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1); 
-    static Parsee expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
+    static Parsee expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
-    static Parsee expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
-    static Parsee expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
+    static Parsee expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
+    static Parsee expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
 
     ParseeKind getKind();
     int getTag();

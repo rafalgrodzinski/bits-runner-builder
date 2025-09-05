@@ -43,9 +43,10 @@ Parsee Parsee::valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFa
     return parsee;
 }
 
-Parsee Parsee::expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+Parsee Parsee::expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::EXPRESSION;
+    parsee.tag = tag;
     parsee.isRequired = isRequired;
     parsee.shouldReturn = shouldReturn;
     parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
@@ -63,18 +64,20 @@ Parsee Parsee::orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool is
     return parsee;
 }
 
-Parsee Parsee::expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+Parsee Parsee::expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE;
+    parsee.tag = tag;
     parsee.isRequired = isRequired;
     parsee.shouldReturn = shouldReturn;
     parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+Parsee Parsee::expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::EXPRESSION_BLOCK_MULTI_LINE;
+    parsee.tag = tag;
     parsee.isRequired = isRequired;
     parsee.shouldReturn = shouldReturn;
     parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
