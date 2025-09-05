@@ -66,8 +66,8 @@ private:
     ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> groupParseeResults(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(ParseeGroup group);
-    optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind);
-    optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index);
+    optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
+    optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionParseeResults();
     optional<pair<vector<ParseeResult>, int>> orParseeResults(ParseeGroup first, ParseeGroup second);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults();
