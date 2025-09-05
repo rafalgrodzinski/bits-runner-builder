@@ -1,7 +1,7 @@
 @extern putchar fun: character u32 -> u32
 
 fib fun: number u32 -> u32
-    ret if number < 2:
+    ret if number < 2
         number
     else
         fib(number - 1) + fib(number - 2)
