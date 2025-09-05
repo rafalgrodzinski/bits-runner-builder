@@ -272,23 +272,6 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
             if (valueType == nullptr)
                 return;
             alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getName());
-
-            /*llvm::PointerType *pt = (llvm::PointerType *)typePtr;
-            llvm::AllocaInst *pa = builder->CreateAlloca(pt, 0, format("p->{}", statement->getName()));
-            builder->CreateStore(alloca, pa);
-            alloca->print(llvm::outs());
-            alloca->getType()->print(llvm::outs());
-
-            llvm::Value *rA = builder->CreateLoad(typePtr, pa, "dereferenced");
-            llvm::Value *rV = llvm::ConstantInt::get(typeU32, 4, true);
-            builder->CreateStore(rV, rA, "def saved");
-            //llvm::ConstantExpr::getIntToPtr();
-            //llvm::ConstantExpr::getPtrToInt()
-            
-            llvm::Value *adr = builder->CreatePtrToInt(pa, pt);
-            llvm::AllocaInst *adrAlloca = builder->CreateAlloca(typeU32, 0, "adrAlloca");
-            builder->CreateStore(adr, adrAlloca);*/
-
             break;
         }
     }
@@ -326,8 +309,18 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
             targetType = arrayType->getElementType();
             break;
         }
-        case StatementAssignmentKind::BLOB: {        
+        case StatementAssignmentKind::BLOB: {      
+            // First check for built-ins
+            if (buildAssignmentForBuiltIn(alloca, statement->getMemberName(), statement->getValueExpression())) {
+                return;
+            }
+            
+            // Thend do a normal member assign
             llvm::StructType *structType = (llvm::StructType *)alloca->getAllocatedType();
+            if (!structType->isStructTy()) {
+                markError(0, 0, format("Variable {} is not of type blob", statement->getIdentifier()));
+                return;
+            }
             string structName = string(structType->getName());
             optional<int> memberIndex = getMemberIndex(structName, statement->getMemberName());
             if (!memberIndex)
@@ -727,8 +720,6 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
             // First check for built-ins
             llvm::Value *builtInValue = valueForBuiltIn(alloca, expression->getMemberName());
             if (builtInValue != nullptr) {
-                builtInValue->getType()->print(llvm::outs());
-                builtInValue->print(llvm::outs());
                 return builtInValue;
             }
 
@@ -798,13 +789,15 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string mem
     if (isArray && memberName.compare("count") == 0) {
         llvm::ArrayType *arrayType = (llvm::ArrayType*)alloca->getAllocatedType();
         return llvm::ConstantInt::get(typeU32, arrayType->getNumElements());
-    } else if (isPointer && memberName.compare("val")) {
-        // Maybe works?
+    } else if (isPointer && memberName.compare("val") == 0) {
+        llvm::Value *pointee = builder->CreateLoad(typePtr, alloca);
+        llvm::Type *pointeeType = pointee->getType();
+        // TODO: This needs to get proper type from the pointee
+        //return builder->CreateLoad(pointeeType, pointeeAlloca);
+        return builder->CreateLoad(typeU32, pointee);
+    } else if (isPointer && memberName.compare("vAddr") == 0) {
         llvm::AllocaInst *pointeeAlloca = (llvm::AllocaInst*)builder->CreateLoad(typePtr, alloca);
-        pointeeAlloca->print(llvm::outs());
-        llvm::Type *pointeeType = pointeeAlloca->getAllocatedType();
-        pointeeType->print(llvm::outs());
-        return builder->CreateLoad(pointeeType, pointeeAlloca);
+        return builder->CreatePtrToInt(pointeeAlloca, typePtr);
     } else if (memberName.compare("adr") == 0) {
         return builder->CreatePtrToInt(alloca, typePtr);
     }
@@ -982,6 +975,24 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 return;
         }
     }
+}
+
+bool ModuleBuilder::buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, string memberName, shared_ptr<Expression> valueExpression) {
+    bool isPointer = alloca->getAllocatedType()->isPointerTy();
+
+    if (isPointer && memberName.compare("vAdr") == 0) {
+        llvm::Value *adrValue = valueForExpression(valueExpression);
+        llvm::Value *newPtr = builder->CreateIntToPtr(adrValue, typePtr);
+        builder->CreateStore(newPtr, alloca);
+        return true;
+    } else if (isPointer && memberName.compare("val") == 0) {
+        llvm::Value *newValue = valueForExpression(valueExpression);
+        llvm::Value *pointee = builder->CreateLoad(typePtr, alloca);
+        builder->CreateStore(newValue, pointee);
+        return true;
+    }
+
+    return false;
 }
 
 bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {

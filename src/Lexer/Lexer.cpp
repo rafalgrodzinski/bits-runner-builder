@@ -27,7 +27,7 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
                 continue;
             
             // Insert an additional new line just before end
-            if (token->getKind() == TokenKind::END && tokens.back()->getKind() != TokenKind::NEW_LINE)
+            if (token->getKind() == TokenKind::END && !tokens.empty() && tokens.back()->getKind() != TokenKind::NEW_LINE)
                 tokens.push_back(make_shared<Token>(TokenKind::NEW_LINE, "\n", token->getLine(), token->getColumn()));
 
             // filter out multiple new lines

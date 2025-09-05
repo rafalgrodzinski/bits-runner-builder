@@ -21,16 +21,33 @@ printNum fun: number u32
 ;
 
 @export main fun -> u32
-    things data<u32> <- [7, 12, 55, 4]
+    num u32 <- 5
+    num2 u32 <- num
 
-    rep i u32 <- 0, i < things.count:
-        printNum(things[i])
-        putchar('\n')
-        i <- i + 1
-    ;
-    a u32 <- things.adr
-    printNum(a)
+    pNum ptr<u32>
+    pNum.vAdr <- num.adr
+    printNum(num)
+    putchar('\n')
+
+    pNum.val <- 4
+    printNum(num)
+    putchar('\n')
+
+    printNum(num2)
+    putchar('\n')
+
+    num <- 9
+    printNum(pNum.val)
     putchar('\n')
 
     ret 0
 ;
+
+/*@export main fun
+    num u32 <- 5
+    pNum ptr<u32>
+    pNum.vAdr <- num.adr
+    pNum.val <- 4
+    num2 u32 <- pNum.val
+    printNum(num2)
+;*/
