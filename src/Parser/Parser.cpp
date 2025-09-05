@@ -360,12 +360,12 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
                         break;
                     }
                     case TAG_RET_TYPE:
-                    returnType = parseeResult.getValueType();
+                        returnType = parseeResult.getValueType();
                         break;
                 }
             }
-        }
             break;
+        }
         case ParseeResultsGroupKind::NO_MATCH:
             return nullptr;
         case ParseeResultsGroupKind::FAILURE:
@@ -387,6 +387,14 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
+    enum {
+        TAG_ID,
+        TAG_CONSTRAINTS,
+        TAG_ARG_ID,
+        TAG_ARG_TYPE,
+        TAG_RET_TYPE
+    };
+
     string identifier;
     string constraints;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
@@ -397,14 +405,14 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         ParseeGroup(
             {
                 // identifier
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_ID),
                 Parsee::tokenParsee(TokenKind::RAW_FUNCTION, true, false, false),
                 // constraints
                 Parsee::groupParsee(
                     ParseeGroup(
                         {
                             Parsee::tokenParsee(TokenKind::LESS, true, false, true),
-                            Parsee::tokenParsee(TokenKind::STRING, true, true, true),
+                            Parsee::tokenParsee(TokenKind::STRING, true, true, true, TAG_CONSTRAINTS),
                             Parsee::tokenParsee(TokenKind::GREATER, true, false, true)
                         }
                     ), true, true, true
@@ -416,16 +424,16 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                             // first argument
                             Parsee::tokenParsee(TokenKind::COLON, true, false, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true),
-                            Parsee::valueTypeParsee(true, true, true),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true, TAG_ARG_ID),
+                            Parsee::valueTypeParsee(true, true, true, TAG_ARG_TYPE),
                             // additional arguments
                             Parsee::repeatedGroupParsee(
                                 ParseeGroup(
                                     {
                                         Parsee::tokenParsee(TokenKind::COMMA, true, false, false),
                                         Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
-                                        Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true),
-                                        Parsee::valueTypeParsee(true, true, true)
+                                        Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true, TAG_ARG_ID),
+                                        Parsee::valueTypeParsee(true, true, true, TAG_ARG_TYPE)
                                     }
                                 ), false, true, false
                             )
@@ -438,7 +446,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                         {
                             Parsee::tokenParsee(TokenKind::RIGHT_ARROW, true, false, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
-                            Parsee::valueTypeParsee(true, true, true)
+                            Parsee::valueTypeParsee(true, true, true, TAG_RET_TYPE)
                         }
                     ), false, true, false
                 ),
@@ -450,26 +458,29 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     switch (resultsGroup.getKind()) {
         case ParseeResultsGroupKind::SUCCESS: {
-            int i = 0;
-            // identifier
-            identifier = resultsGroup.getResults().at(i++).getToken()->getLexme();
-            // constraints
-            constraints = resultsGroup.getResults().at(i++).getToken()->getLexme();
-            // remove enclosing quotes
-                if (constraints.length() >= 2)
-                    constraints = constraints.substr(1, constraints.length() - 2);
-            // arguments
-            while (i < resultsGroup.getResults().size()-1 && resultsGroup.getResults().at(i).getKind() == ParseeResultKind::TOKEN) {
-                    pair<string, shared_ptr<ValueType>> argument;
-                    argument.first = resultsGroup.getResults().at(i++).getToken()->getLexme();
-                    argument.second = resultsGroup.getResults().at(i++).getValueType();
-                    arguments.push_back(argument);
+            for (int i=0; i<resultsGroup.getResults().size(); i++) {
+                ParseeResult parseeResult = resultsGroup.getResults().at(i);
+                switch (parseeResult.getTag()) {
+                    case TAG_ID:
+                        identifier = parseeResult.getToken()->getLexme();
+                        break;
+                    case TAG_CONSTRAINTS:
+                        constraints = parseeResult.getToken()->getLexme();
+                        break;
+                    case TAG_ARG_ID: {
+                        pair<string, shared_ptr<ValueType>> argument;
+                        argument.first = parseeResult.getToken()->getLexme();
+                        argument.second = resultsGroup.getResults().at(++i).getValueType();
+                        arguments.push_back(argument);
+                        break;
+                    }
+                    case TAG_RET_TYPE:
+                        returnType = parseeResult.getValueType();
+                        break;
+                }
             }
-            // return type
-            if (i < resultsGroup.getResults().size())
-                returnType = resultsGroup.getResults().at(i).getValueType();
-        }
             break;
+        }
         case ParseeResultsGroupKind::NO_MATCH:
             return nullptr;
         case ParseeResultsGroupKind::FAILURE:

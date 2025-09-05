@@ -20,6 +20,13 @@ printNum fun: number u32
     ;
 ;
 
+printCharRaw raw<"m, m">: character u32, attribute u32
+    mov ah, 0x00
+    mov bl, $0
+    mov al, $1
+    int 0x30
+;
+
 @export main fun -> u32
     num u32 <- 5
     num2 u32 <- num
