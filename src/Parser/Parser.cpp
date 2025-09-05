@@ -1320,7 +1320,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
         index++;
     }
 
-    shared_ptr<ValueType> valueType = ValueType::valueTypeForToken(typeToken, subType, typeArg);
+    shared_ptr<ValueType> valueType = ValueType::valueTypeForToken(typeToken, subType, typeArg, "");
     return pair(vector<ParseeResult>({ParseeResult::valueTypeResult(valueType, index - startIndex)}), index - startIndex);
 }
 

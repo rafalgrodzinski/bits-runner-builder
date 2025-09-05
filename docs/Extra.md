@@ -1,5 +1,7 @@
 # Extra Information
 
+- LLVM Language Reference Manual
+[https://llvm.org/docs/LangRef.html](https://llvm.org/docs/LangRef.html)
 - Processing command line arguments with LLVM
 [https://llvm.org/docs/CommandLine.html](https://llvm.org/docs/CommandLine.html)
 - What the Hell Is a Target Triple?

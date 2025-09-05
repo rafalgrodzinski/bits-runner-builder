@@ -37,9 +37,12 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
     typeBool = llvm::Type::getInt1Ty(*context);
     typeU8 = llvm::Type::getInt8Ty(*context);
     typeU32 = llvm::Type::getInt32Ty(*context);
+    typeU64 = llvm::Type::getInt64Ty(*context);
     typeS8 = llvm::Type::getInt8Ty(*context);
     typeS32 = llvm::Type::getInt32Ty(*context);
+    typeS64 = llvm::Type::getInt64Ty(*context);
     typeR32 = llvm::Type::getFloatTy(*context);
+    typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
@@ -257,6 +260,13 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
             llvm::AllocaInst *alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
             break;
         }
+        case ValueTypeKind::PTR: {
+            llvm::PointerType *valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
+            if (valueType == nullptr)
+                return;
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            break;
+        }
         default: {
             valueType = typeForValueType(statement->getValueType());
             if (valueType == nullptr)
@@ -299,8 +309,18 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
             targetType = arrayType->getElementType();
             break;
         }
-        case StatementAssignmentKind::BLOB: {        
+        case StatementAssignmentKind::BLOB: {      
+            // First check for built-ins
+            if (buildAssignmentForBuiltIn(alloca, statement->getMemberName(), statement->getValueExpression())) {
+                return;
+            }
+            
+            // Thend do a normal member assign
             llvm::StructType *structType = (llvm::StructType *)alloca->getAllocatedType();
+            if (!structType->isStructTy()) {
+                markError(0, 0, format("Variable {} is not of type blob", statement->getIdentifier()));
+                return;
+            }
             string structName = string(structType->getName());
             optional<int> memberIndex = getMemberIndex(structName, statement->getMemberName());
             if (!memberIndex)
@@ -441,10 +461,14 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
             return llvm::ConstantInt::get(typeU8, expression->getU8Value(), true);
         case ValueTypeKind::U32:
             return llvm::ConstantInt::get(typeU32, expression->getU32Value(), true);
+        case ValueTypeKind::U64:
+            return llvm::ConstantInt::get(typeU64, expression->getU64Value(), true);
         case ValueTypeKind::S8:
             return llvm::ConstantInt::get(typeS8, expression->getS8Value(), true);
         case ValueTypeKind::S32:
             return llvm::ConstantInt::get(typeS32, expression->getS32Value(), true);
+        case ValueTypeKind::S64:
+            return llvm::ConstantInt::get(typeS64, expression->getS64Value(), true);
         case ValueTypeKind::R32:
             return llvm::ConstantFP::get(typeR32, expression->getR32Value());
     }
@@ -473,9 +497,9 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
 
     if (type == typeBool) {
         return valueForBinaryBool(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeU8 || type == typeU32) {
+    } else if (type == typeU8 || type == typeU32 || type == typeU64) {
         return valueForBinaryUnsignedInteger(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeS8 || type == typeS32) {
+    } else if (type == typeS8 || type == typeS32 || type == typeS64) {
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
     } else if (type == typeR32) {
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
@@ -594,13 +618,13 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
         if (expression->getOperation() == ExpressionUnaryOperation::NOT) {
             return builder->CreateNot(value);
         }
-    } else if (type == typeU8 || type == typeU32) {
+    } else if (type == typeU8 || type == typeU32 || type == typeU64) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
             return value;
         }
-    } else if (type == typeS8 || type == typeS32) {
+    } else if (type == typeS8 || type == typeS32 || type == typeS64) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateNSWNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
@@ -693,7 +717,18 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
             return builder->CreateLoad(type->getArrayElementType(), elementPtr);
         }
         case ExpressionVariableKind::BLOB: {
+            // First check for built-ins
+            llvm::Value *builtInValue = valueForBuiltIn(alloca, expression->getMemberName());
+            if (builtInValue != nullptr) {
+                return builtInValue;
+            }
+
+            // Then do a normal member check
             llvm::StructType *structType = (llvm::StructType *)alloca->getAllocatedType();
+            if (!structType->isStructTy()) {
+                markError(0, 0, format("Variable {} is not of type blob", expression->getIdentifier()));
+                return nullptr;
+            }
             string structName = string(structType->getName());
             optional<int> memberIndex = getMemberIndex(structName, expression->getMemberName());
             if (!memberIndex)
@@ -745,6 +780,29 @@ llvm::Value *ModuleBuilder::valueForArrayLiteral(shared_ptr<ExpressionArrayLiter
     buildAssignment(alloca, valueType, expression);
 
     return builder->CreateLoad(alloca->getAllocatedType(), alloca);
+}
+
+llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string memberName) {
+    bool isArray = alloca->getAllocatedType()->isArrayTy();
+    bool isPointer = alloca->getAllocatedType()->isPointerTy();
+
+    if (isArray && memberName.compare("count") == 0) {
+        llvm::ArrayType *arrayType = (llvm::ArrayType*)alloca->getAllocatedType();
+        return llvm::ConstantInt::get(typeU32, arrayType->getNumElements());
+    } else if (isPointer && memberName.compare("val") == 0) {
+        llvm::Value *pointee = builder->CreateLoad(typePtr, alloca);
+        llvm::Type *pointeeType = pointee->getType();
+        // TODO: This needs to get proper type from the pointee
+        //return builder->CreateLoad(pointeeType, pointeeAlloca);
+        return builder->CreateLoad(typeU32, pointee);
+    } else if (isPointer && memberName.compare("vAddr") == 0) {
+        llvm::AllocaInst *pointeeAlloca = (llvm::AllocaInst*)builder->CreateLoad(typePtr, alloca);
+        return builder->CreatePtrToInt(pointeeAlloca, typePtr);
+    } else if (memberName.compare("adr") == 0) {
+        return builder->CreatePtrToInt(alloca, typePtr);
+    }
+
+    return nullptr;
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
@@ -919,6 +977,24 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
     }
 }
 
+bool ModuleBuilder::buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, string memberName, shared_ptr<Expression> valueExpression) {
+    bool isPointer = alloca->getAllocatedType()->isPointerTy();
+
+    if (isPointer && memberName.compare("vAdr") == 0) {
+        llvm::Value *adrValue = valueForExpression(valueExpression);
+        llvm::Value *newPtr = builder->CreateIntToPtr(adrValue, typePtr);
+        builder->CreateStore(newPtr, alloca);
+        return true;
+    } else if (isPointer && memberName.compare("val") == 0) {
+        llvm::Value *newValue = valueForExpression(valueExpression);
+        llvm::Value *pointee = builder->CreateLoad(typePtr, alloca);
+        builder->CreateStore(newValue, pointee);
+        return true;
+    }
+
+    return false;
+}
+
 bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
     if (scopes.top().allocaMap[name] != nullptr) {
         markError(0, 0, format("Variable \"{}\" already defined", name));
@@ -1046,10 +1122,14 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return typeU8;
         case ValueTypeKind::U32:
             return typeU32;
+        case ValueTypeKind::U64:
+            return typeU64;
         case ValueTypeKind::S8:
             return typeS8;
         case ValueTypeKind::S32:
             return typeS32;
+        case ValueTypeKind::S64:
+            return typeS64;
         case ValueTypeKind::R32:
             return typeR32;
         case ValueTypeKind::DATA: {
@@ -1061,7 +1141,11 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
         }
         case ValueTypeKind::BLOB:
             return getStructType(valueType->getTypeName());
+        case ValueTypeKind::PTR:
+            return typePtr;
     }
+
+    return nullptr;
 }
 
 void ModuleBuilder::markError(int line, int column, string message) {

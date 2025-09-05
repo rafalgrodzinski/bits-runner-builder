@@ -10,20 +10,20 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
     switch (token->getKind()) {
         case TokenKind::BOOL:
             expression->boolValue = token->getLexme().compare("true") == 0;
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
+            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
             break;
         case TokenKind::INTEGER_DEC: {
             string numString = token->getLexme();
             erase(numString, '_');
             expression->s32Value = stoi(numString, nullptr, 10);
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
+            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
             break;
         }
         case TokenKind::INTEGER_HEX: {
             string numString = token->getLexme();
             erase(numString, '_');
             expression->u32Value = stoul(numString, nullptr, 16);
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
+            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
             break;
         }
         case TokenKind::INTEGER_BIN: {
@@ -31,7 +31,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             erase(numString, '_');
             numString = numString.substr(2, numString.size()-1);
             expression->u32Value = stoul(numString, nullptr, 2);
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
+            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
             break;
         }
         case TokenKind::INTEGER_CHAR: {
@@ -40,7 +40,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             if (!charValue)
                 return nullptr;
             
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
+            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
             expression->u32Value = *charValue;
             return expression;
         }
@@ -48,7 +48,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             string numString = token->getLexme();
             erase(numString, '_');
             expression->r32Value = stof(numString);
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0);
+            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
             break;
         }
         default:
@@ -73,12 +73,21 @@ uint32_t ExpressionLiteral::getU32Value() {
     return u32Value;
 }
 
+uint64_t ExpressionLiteral::getU64Value() {
+    return u64Value;
+}
+
+
 int8_t ExpressionLiteral::getS8Value() {
     return s8Value;
 }
 
 int32_t ExpressionLiteral::getS32Value() {
     return s32Value;
+}
+
+int64_t ExpressionLiteral::getS64Value() {
+    return s64Value;
 }
 
 float ExpressionLiteral::getR32Value() {

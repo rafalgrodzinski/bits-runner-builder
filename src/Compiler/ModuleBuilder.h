@@ -65,9 +65,12 @@ private:
     llvm::Type *typeBool;
     llvm::IntegerType *typeU8;
     llvm::IntegerType *typeU32;
+    llvm::IntegerType *typeU64;
     llvm::IntegerType *typeS8;
     llvm::IntegerType *typeS32;
+    llvm::IntegerType *typeS64;
     llvm::Type *typeR32;
+    llvm::Type *typePtr;
 
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
@@ -103,9 +106,11 @@ private:
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
     llvm::Value *valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
+    llvm::Value *valueForBuiltIn(llvm::AllocaInst *alloca, string memberName);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
+    bool buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, string memberName, shared_ptr<Expression> valueExpression);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);
     llvm::AllocaInst *getAlloca(string name);

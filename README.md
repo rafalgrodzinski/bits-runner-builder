@@ -78,3 +78,6 @@ Execute from the main directory
 ./samples/merge_sort/build.sh
 ./merge_sort
 ```
+
+## Additional Stuff
+Language support for Visual Studio Code: [https://github.com/rafalgrodzinski/brc-vscode](https://github.com/rafalgrodzinski/brc-vscode).
