@@ -6,8 +6,10 @@ shared_ptr<ValueType> ValueType::NONE = make_shared<ValueType>(ValueTypeKind::NO
 shared_ptr<ValueType> ValueType::BOOL = make_shared<ValueType>(ValueTypeKind::BOOL, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::U8 = make_shared<ValueType>(ValueTypeKind::U8, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::U32 = make_shared<ValueType>(ValueTypeKind::U32, nullptr, 0, "");
+shared_ptr<ValueType> ValueType::U64 = make_shared<ValueType>(ValueTypeKind::U64, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::S8 = make_shared<ValueType>(ValueTypeKind::S8, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::S32 = make_shared<ValueType>(ValueTypeKind::S32, nullptr, 0, "");
+shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::R32 = make_shared<ValueType>(ValueTypeKind::R32, nullptr, 0, "");
 
 ValueType::ValueType() { }
@@ -25,10 +27,14 @@ shared_ptr<ValueType> ValueType::valueTypeForToken(shared_ptr<Token> token, shar
                 return make_shared<ValueType>(ValueTypeKind::U8, nullptr, 0, "");
             else if (lexme.compare("u32") == 0)
                 return make_shared<ValueType>(ValueTypeKind::U32, nullptr, 0, "");
+            else if (lexme.compare("u64") == 0)
+                return make_shared<ValueType>(ValueTypeKind::U64, nullptr, 0, "");
             else if (lexme.compare("s8") == 0)
                 return make_shared<ValueType>(ValueTypeKind::S8, nullptr, 0, "");
             else if (lexme.compare("s32") == 0)
                 return make_shared<ValueType>(ValueTypeKind::S32, nullptr, 0, "");
+            else if (lexme.compare("s64") == 0)
+                return make_shared<ValueType>(ValueTypeKind::S64, nullptr, 0, "");
             else if (lexme.compare("r32") == 0)
                 return make_shared<ValueType>(ValueTypeKind::R32, nullptr, 0, "");
             else if (lexme.compare("data") == 0)

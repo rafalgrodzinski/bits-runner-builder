@@ -73,12 +73,21 @@ uint32_t ExpressionLiteral::getU32Value() {
     return u32Value;
 }
 
+uint64_t ExpressionLiteral::getU64Value() {
+    return u64Value;
+}
+
+
 int8_t ExpressionLiteral::getS8Value() {
     return s8Value;
 }
 
 int32_t ExpressionLiteral::getS32Value() {
     return s32Value;
+}
+
+int64_t ExpressionLiteral::getS64Value() {
+    return s64Value;
 }
 
 float ExpressionLiteral::getR32Value() {

@@ -258,10 +258,14 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "U8";
         case ValueTypeKind::U32:
             return "U32";
+        case ValueTypeKind::U64:
+            return "U64";
         case ValueTypeKind::S8:
             return "S8";
         case ValueTypeKind::S32:
             return "S32";
+        case ValueTypeKind::S64:
+            return "S64";
         case ValueTypeKind::R32:
             return "R32";
         case ValueTypeKind::DATA:

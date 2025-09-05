@@ -37,8 +37,10 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
     typeBool = llvm::Type::getInt1Ty(*context);
     typeU8 = llvm::Type::getInt8Ty(*context);
     typeU32 = llvm::Type::getInt32Ty(*context);
+    typeU64 = llvm::Type::getInt64Ty(*context);
     typeS8 = llvm::Type::getInt8Ty(*context);
     typeS32 = llvm::Type::getInt32Ty(*context);
+    typeS64 = llvm::Type::getInt64Ty(*context);
     typeR32 = llvm::Type::getFloatTy(*context);
     typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
 }
@@ -466,10 +468,14 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
             return llvm::ConstantInt::get(typeU8, expression->getU8Value(), true);
         case ValueTypeKind::U32:
             return llvm::ConstantInt::get(typeU32, expression->getU32Value(), true);
+        case ValueTypeKind::U64:
+            return llvm::ConstantInt::get(typeU64, expression->getU64Value(), true);
         case ValueTypeKind::S8:
             return llvm::ConstantInt::get(typeS8, expression->getS8Value(), true);
         case ValueTypeKind::S32:
             return llvm::ConstantInt::get(typeS32, expression->getS32Value(), true);
+        case ValueTypeKind::S64:
+            return llvm::ConstantInt::get(typeS64, expression->getS64Value(), true);
         case ValueTypeKind::R32:
             return llvm::ConstantFP::get(typeR32, expression->getR32Value());
     }
@@ -498,9 +504,9 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
 
     if (type == typeBool) {
         return valueForBinaryBool(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeU8 || type == typeU32) {
+    } else if (type == typeU8 || type == typeU32 || type == typeU64) {
         return valueForBinaryUnsignedInteger(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeS8 || type == typeS32) {
+    } else if (type == typeS8 || type == typeS32 || type == typeS64) {
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
     } else if (type == typeR32) {
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
@@ -619,13 +625,13 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
         if (expression->getOperation() == ExpressionUnaryOperation::NOT) {
             return builder->CreateNot(value);
         }
-    } else if (type == typeU8 || type == typeU32) {
+    } else if (type == typeU8 || type == typeU32 || type == typeU64) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
             return value;
         }
-    } else if (type == typeS8 || type == typeS32) {
+    } else if (type == typeS8 || type == typeS32 || type == typeS64) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateNSWNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
@@ -1105,10 +1111,14 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return typeU8;
         case ValueTypeKind::U32:
             return typeU32;
+        case ValueTypeKind::U64:
+            return typeU64;
         case ValueTypeKind::S8:
             return typeS8;
         case ValueTypeKind::S32:
             return typeS32;
+        case ValueTypeKind::S64:
+            return typeS64;
         case ValueTypeKind::R32:
             return typeR32;
         case ValueTypeKind::DATA: {

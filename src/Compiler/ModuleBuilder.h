@@ -65,8 +65,10 @@ private:
     llvm::Type *typeBool;
     llvm::IntegerType *typeU8;
     llvm::IntegerType *typeU32;
+    llvm::IntegerType *typeU64;
     llvm::IntegerType *typeS8;
     llvm::IntegerType *typeS32;
+    llvm::IntegerType *typeS64;
     llvm::Type *typeR32;
     llvm::Type *typePtr;
 
