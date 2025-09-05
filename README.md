@@ -57,7 +57,7 @@ Hello World
 [samples/hello/](samples/hello/)
 
 Fibonaci Numbers
-[samples/fib.brc](samples/fib.brc)
+[samples/fib/](samples/fib/)
 
 Merge Sort
 [samples/merge_sort/](samples/merge_sort/)

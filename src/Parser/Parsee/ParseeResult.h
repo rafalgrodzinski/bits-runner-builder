@@ -18,6 +18,7 @@ enum class ParseeResultKind {
 class ParseeResult {
 private:
     ParseeResultKind kind;
+    int tag;
     shared_ptr<Token> token;
     shared_ptr<ValueType> valueType;
     shared_ptr<Expression> expression;
@@ -25,11 +26,12 @@ private:
     ParseeResult();
 
 public:
-    static ParseeResult tokenResult(shared_ptr<Token> token);
-    static ParseeResult valueTypeResult(shared_ptr<ValueType> valueType, int tokensCount);
-    static ParseeResult expressionResult(shared_ptr<Expression> expression, int tokensCount);
+    static ParseeResult tokenResult(shared_ptr<Token> token, int tag = -1);
+    static ParseeResult valueTypeResult(shared_ptr<ValueType> valueType, int tokensCount, int tag = -1);
+    static ParseeResult expressionResult(shared_ptr<Expression> expression, int tokensCount, int tag = -1);
 
     ParseeResultKind getKind();
+    int getTag();
     shared_ptr<Token> getToken();
     shared_ptr<ValueType> getValueType();
     shared_ptr<Expression> getExpression();
