@@ -14,7 +14,9 @@ Source code is grouped into named modules, each module can be compromised of num
 - Literals (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
 - Operators (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
 - Logical Operators (`or`, `xor`, `and`, `not`)
-- Variables (`u8`, `u32`, `s8`, `s32`, `r32`, `data`, `blob`)
+- Variables (`u8`, `u32`, `u64`, `s8`, `s32`, `s64`, `r32`, `data`, `blob`, `ptr`)
+- Data (`data<>`)
+- Pointers (`ptr<>`)
 - Functions (`fun`)
 - Raw Functions (`raw`)
 - Conditional Expressions (`if`, `else`)
@@ -114,11 +116,32 @@ or, xor // lowest piority
 `=` and `!=` can also be used on booleans, but they are effectively equivalent to `and` and `xor`.
 
 ## Variables
-Variables are specified by first providing the name and then the type. There is also an optional initializer.
+Variables are specified by first providing the name and then the type. They can have an optional initializer.
 ```
 bytesInKilobyte u32 <- 1_024
 text data<u8> <- "Hello world!"
 pi r32 <- 3.14
+```
+
+## Data
+Data types specify a constant-sized array of identical types. It has a built-in membr `.count`, which is equivalent to the number of elements of the array. An array can be assigned to another array of the same type, which will create a shallow copy. If their sizes don't mach, only number of elements equivalent to the smaller array will be copied.
+```
+text <u32> <- "Hello, world!"
+rep i u32 <- 0, text[i] != '\0'
+  printChar(text[i])
+;
+
+numbers <u32, 24> <- [..]
+copiedNumbers <u32, 8> <- numbers // Only 8 values will be copied
+```
+
+## Pointers
+Pointers, just like in C, allow for low-level data manipulation and passing. They have an associated type, which is essential when reading/writing pointee's value. Each variable has a built-in member `.adr`, which will provide a system-dependant (32bit or 64bit) memory address value. Pointers have also `.val`, which is equivalent to its pointee and `vAdr`, which is the address of the thing it is pointing at. Don't confuse `.vAdr` with `.adr`, as the later is the address of the pointer itself.
+```
+a u32 <- 5
+pA ptr<u32>
+pA.vAdr <- a.adr // now both a & pA.val indicate the same value
+pA.val <- 6
 ```
 
 **Simple variables**
