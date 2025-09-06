@@ -957,6 +957,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             case ExpressionKind::BINARY:
             // simple <- ( expression )
             case ExpressionKind::GROUPING:
+            case ExpressionKind::UNARY:
             // simple <- if else
             case ExpressionKind::IF_ELSE:
             // simple <- function call

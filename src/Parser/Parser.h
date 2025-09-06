@@ -68,8 +68,10 @@ private:
     optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
+    optional<pair<vector<ParseeResult>, int>> statementParseeResults(bool getShouldIncludeExpressionStatement, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> orParseeResults(ParseeGroup first, ParseeGroup second);
+    optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);

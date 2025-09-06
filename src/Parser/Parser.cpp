@@ -691,68 +691,133 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
 }
 
 shared_ptr<Statement> Parser::matchStatementRepeat() {
-    if (!tryMatchingTokenKinds({TokenKind::REPEAT}, true, true))
-        return nullptr;
+    enum Tag {
+        TAG_STATEMENT_INIT,
+        TAG_STATEMENT_POST,
+        TAG_PRE_CONDITION,
+        TAG_POST_CONDITION,
+        TAG_STATEMENT_BLOCK
+    };
 
     shared_ptr<Statement> initStatement;
+    shared_ptr<Statement> postStatement;
     shared_ptr<Expression> preConditionExpression;
     shared_ptr<Expression> postConditionExpression;
     shared_ptr<Statement> bodyBlockStatement;
 
-    bool isMultiLine;
-
-    // initial
-    initStatement = matchStatementVariable() ?: matchStatementAssignment();
-
-    if (!tryMatchingTokenKinds({TokenKind::COLON}, false, true)) {
-        // got initial, expect comma
-        if (initStatement != nullptr && !tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
-            markError(TokenKind::COMMA, {});
-            goto afterIf;
-        }
-
-        // optional new line
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
-
-        // pre condition
-        preConditionExpression = nextExpression();
-
-        if (!tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
-            // got pre-condition, expect comma
-            if (!tryMatchingTokenKinds({TokenKind::COMMA}, true, true)) {
-                markError(TokenKind::COMMA, {});
-                goto afterIf;
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::REPEAT, true, false, false),
+                Parsee::orParsee(
+                    // Has init
+                    ParseeGroup(
+                        {
+                            // init statement
+                            Parsee::statementParsee(false, true, true, false, TAG_STATEMENT_INIT),
+                            // condition
+                            Parsee::groupParsee(
+                                ParseeGroup(
+                                    {
+                                        // pre-condition
+                                        Parsee::tokenParsee(TokenKind::COMMA, true, false, false),
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                                        Parsee::expressionParsee(true, true, true, TAG_PRE_CONDITION),
+                                        // post-condtion
+                                        Parsee::groupParsee(
+                                            ParseeGroup(
+                                                {
+                                                    Parsee::tokenParsee(TokenKind::COMMA, true, false, false),
+                                                    Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                                                    Parsee::expressionParsee(true, true, false, TAG_POST_CONDITION),
+                                                }
+                                            ), false, true, false
+                                        )
+                                    }
+                                ), false, true, false
+                            )
+                        }
+                    ),
+                    // No init
+                    ParseeGroup(
+                        {
+                            // pre-condition
+                            Parsee::expressionParsee(true, true, false, TAG_PRE_CONDITION),
+                            // post-condtion
+                            Parsee::groupParsee(
+                                ParseeGroup(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::COMMA, true, false, false),
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                                        Parsee::expressionParsee(true, true, false, TAG_POST_CONDITION),
+                                    }
+                                ), false, true, false
+                            )
+                        }
+                    ),
+                    false, true, false
+                ),
+                // post statement
+                Parsee::groupParsee(
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::COMMA, true, false, false),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                            Parsee::statementParsee(true, true, true, true, TAG_STATEMENT_POST),
+                        }
+                    ), false, true, false
+                ),
+                // Statements
+                Parsee::orParsee(
+                    // single line
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::COLON, true, false, false),
+                            Parsee::statementBlockSingleLineParsee(true, true, true, TAG_STATEMENT_BLOCK)
+                        }
+                    ),
+                    // multi line
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, false),
+                            Parsee::statementBlockMultiLineParsee(true, true, true, TAG_STATEMENT_BLOCK),
+                            Parsee::tokenParsee(TokenKind::SEMICOLON, true, false, true)
+                        }
+                    ), true, true, true
+                )
             }
+        )
+    );
 
-            // optional new line
-            tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
 
-            // post condition
-            postConditionExpression = nextExpression();
-            
-            // expect colon
-            if (!tryMatchingTokenKinds({TokenKind::COLON}, true, true)) {
-                markError(TokenKind::COLON, {});
-                goto afterIf;
-            }
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_STATEMENT_INIT:
+                initStatement = parseeResult.getStatement();
+                break;
+            case TAG_STATEMENT_POST:
+                postStatement = parseeResult.getStatement();
+                break;
+            case TAG_PRE_CONDITION:
+                preConditionExpression = parseeResult.getExpression();
+                break;
+            case TAG_POST_CONDITION:
+                postConditionExpression = parseeResult.getExpression();
+                break;
+            case TAG_STATEMENT_BLOCK:
+                bodyBlockStatement = parseeResult.getStatement();
+                break;
         }
     }
-    afterIf:
 
-    isMultiLine = tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
-
-    // body
-    if (isMultiLine)
-        bodyBlockStatement = matchStatementBlock({TokenKind::SEMICOLON});
-    else
-        bodyBlockStatement = matchStatementBlock({TokenKind::NEW_LINE});
-
-    if (bodyBlockStatement == nullptr)
-        return nullptr;
-    
-    tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true);
-
-    return make_shared<StatementRepeat>(initStatement, preConditionExpression, postConditionExpression, dynamic_pointer_cast<StatementBlock>(bodyBlockStatement));
+    return make_shared<StatementRepeat>(
+        initStatement,
+        preConditionExpression,
+        postConditionExpression,
+        dynamic_pointer_cast<StatementBlock>(bodyBlockStatement)
+    );
 }
 
 shared_ptr<Statement> Parser::matchStatementExpression() {
@@ -793,6 +858,10 @@ shared_ptr<Expression> Parser::matchLogicalSecond() {
 
     if (tryMatchingTokenKinds(Token::tokensLogicalSecond, false, false))
         expression = matchExpressionBinary(expression);
+
+    // Expression cannot be on left hand side of an assignment
+    if (tokens.at(currentIndex)->isOfKind({TokenKind::LEFT_ARROW}))
+        return nullptr;
 
     return expression;
 }
@@ -1247,11 +1316,20 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
             case ParseeKind::VALUE_TYPE:
                 subResults = valueTypeParseeResults(currentIndex, parsee.getTag());
                 break;
+            case ParseeKind::STATEMENT:
+                subResults = statementParseeResults(parsee.getShouldIncludeExpressionStatement(), parsee.getTag());
+                break;
             case ParseeKind::EXPRESSION:
                 subResults = expressionParseeResults(parsee.getTag());
                 break;
             case ParseeKind::OR:
                 subResults = orParseeResults(*parsee.getFirstGroup(), *parsee.getSecondGroup());
+                break;
+            case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
+                subResults = statementBlockParseeResults(false, parsee.getTag());
+                break;
+            case ParseeKind::STATEMENT_BLOCK_MULTI_LINE:
+                subResults = statementBlockParseeResults(true, parsee.getTag());
                 break;
             case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
                 subResults = expressionBlockSingleLineParseeResults(parsee.getTag());
@@ -1374,6 +1452,23 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
     return pair(vector<ParseeResult>({ParseeResult::valueTypeResult(valueType, index - startIndex, tag)}), index - startIndex);
 }
 
+optional<pair<vector<ParseeResult>, int>> Parser::statementParseeResults(bool shouldIncludeExpressionStatement, int tag) {
+    int startIndex = currentIndex;
+    int errorsCount = errors.size();
+    shared_ptr<Statement> statement;
+    if (shouldIncludeExpressionStatement) {
+        statement = nextInBlockStatement();
+    } else {
+        statement = matchStatementVariable() ?: matchStatementAssignment();
+    }
+    if (errors.size() > errorsCount || statement == nullptr)
+        return {};
+
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(vector<ParseeResult>({ParseeResult::statementResult(statement, tokensCount, tag)}), tokensCount);
+}
+
 optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(int tag) {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
@@ -1409,6 +1504,23 @@ optional<pair<vector<ParseeResult>, int>> Parser::orParseeResults(ParseeGroup fi
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
     return pair(results, tokensCount);
+}
+
+optional<pair<vector<ParseeResult>, int>> Parser::statementBlockParseeResults(bool isMultiline, int tag) {
+    int startIndex = currentIndex;
+    int errorsCount = errors.size();
+    shared_ptr<Statement> statement;
+    if (isMultiline)
+        statement = matchStatementBlock({TokenKind::SEMICOLON});
+    else
+        statement = matchStatementBlock({TokenKind::NEW_LINE, TokenKind::COMMA});
+
+    if (errors.size() > errorsCount || statement == nullptr)
+        return {};
+    
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(vector<ParseeResult>({ParseeResult::statementResult(statement, tokensCount, tag)}), tokensCount);
 }
 
 optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockSingleLineParseeResults(int tag) {

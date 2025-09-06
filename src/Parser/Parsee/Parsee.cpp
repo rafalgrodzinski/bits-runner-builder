@@ -42,6 +42,16 @@ Parsee Parsee::valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFa
     parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
+Parsee Parsee::statementParsee(bool shouldIncludeExpressionStatement, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::STATEMENT;
+    parsee.tag = tag;
+    parsee.shouldIncludeExpressionStatement = shouldIncludeExpressionStatement;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
 
 Parsee Parsee::expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
     Parsee parsee;
@@ -58,6 +68,26 @@ Parsee Parsee::orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool is
     parsee.kind = ParseeKind::OR;
     parsee.firstGroup = firstGroup;
     parsee.secondGroup = secondGroup;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
+
+Parsee Parsee::statementBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::STATEMENT_BLOCK_SINGLE_LINE;
+    parsee.tag = tag;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
+
+Parsee Parsee::statementBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::STATEMENT_BLOCK_MULTI_LINE;
+    parsee.tag = tag;
     parsee.isRequired = isRequired;
     parsee.shouldReturn = shouldReturn;
     parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
@@ -112,6 +142,10 @@ optional<ParseeGroup> Parsee::getSecondGroup() {
 
 TokenKind Parsee::getTokenKind() {
     return tokenKind;
+}
+
+bool Parsee::getShouldIncludeExpressionStatement() {
+    return shouldIncludeExpressionStatement;
 }
 
 bool Parsee::getIsRequired() {

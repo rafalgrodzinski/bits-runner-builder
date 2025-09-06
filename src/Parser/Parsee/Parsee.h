@@ -15,8 +15,11 @@ enum class ParseeKind {
     REPEATED_GROUP,
     TOKEN,
     VALUE_TYPE,
+    STATEMENT,
     EXPRESSION,
     OR,
+    STATEMENT_BLOCK_SINGLE_LINE,
+    STATEMENT_BLOCK_MULTI_LINE,
     EXPRESSION_BLOCK_SINGLE_LINE,
     EXPRESSION_BLOCK_MULTI_LINE
 };
@@ -30,6 +33,7 @@ private:
     optional<ParseeGroup> firstGroup;
     optional<ParseeGroup> secondGroup;
     TokenKind tokenKind;
+    bool shouldIncludeExpressionStatement;
     bool isRequired;
     bool shouldReturn;
     bool shouldFailOnNoMatch;
@@ -40,8 +44,11 @@ public:
     static Parsee repeatedGroupParsee(ParseeGroup repeatedGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
     static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1); 
+    static Parsee statementParsee(bool shouldIncludeExpressionStatement, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
+    static Parsee statementBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
+    static Parsee statementBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
 
@@ -52,6 +59,7 @@ public:
     optional<ParseeGroup> getFirstGroup();
     optional<ParseeGroup> getSecondGroup();
     TokenKind getTokenKind();
+    bool getShouldIncludeExpressionStatement();
     bool getIsRequired();
     bool getShouldReturn();
     bool getShouldFailOnNoMatch();
