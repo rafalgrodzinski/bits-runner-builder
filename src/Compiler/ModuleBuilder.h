@@ -88,7 +88,7 @@ private:
     void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
-    void buildLoop(shared_ptr<StatementRepeat> statement);
+    void buildRepeat(shared_ptr<StatementRepeat> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);

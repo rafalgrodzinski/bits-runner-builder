@@ -814,6 +814,7 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
 
     return make_shared<StatementRepeat>(
         initStatement,
+        postStatement,
         preConditionExpression,
         postConditionExpression,
         dynamic_pointer_cast<StatementBlock>(bodyBlockStatement)
