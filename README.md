@@ -26,9 +26,8 @@ The language aims to be simple, easy to reason about, and predictable. Because o
 @export main fun -> u32
     text data<u8> <- "Hello, world!\n"
     
-    rep i u32 <- 0, text[i] != 0:
+    rep i u32 <- 0, text[i] != 0, i <- i + 1
         putchar(text[i])
-        i <- i + 1
     ;
 
     ret 0

@@ -10,7 +10,7 @@ merge fun: numbers data<u32, 32>, low u32, mid u32, high u32 -> data<u32, 32>
     iLeft u32 <- low
     iRight u32 <- mid
     
-    rep iLeft < mid and iRight < high:
+    rep iLeft < mid and iRight < high, iTemp <- iTemp + 1
         if numbers[iLeft] < numbers[iRight]
             temp[iTemp] <- numbers[iLeft]
             iLeft <- iLeft + 1
@@ -18,19 +18,16 @@ merge fun: numbers data<u32, 32>, low u32, mid u32, high u32 -> data<u32, 32>
             temp[iTemp] <- numbers[iRight]
             iRight <- iRight + 1
         ;
-        iTemp <- iTemp + 1
     ;
 
-    rep iLeft < mid:
+    rep iLeft < mid, iLeft <- iLeft + 1
         temp[iTemp] <- numbers[iLeft]
         iTemp <- iTemp + 1
-        iLeft <- iLeft + 1
     ;
 
-    rep iRight < high:
+    rep iRight < high, iRight <- iRight + 1
         temp[iTemp] <- numbers[iRight]
         iTemp <- iTemp + 1
-        iRight <- iRight + 1
     ;
 
     ret temp
@@ -53,12 +50,11 @@ mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
     // generate random numbers
     @console.print("Before\n\0\0\0\0\0\0\0\0\0")
     numbers data<u32, 32>
-    rep i u32 <- 0, i < 32:
+    rep i u32 <- 0, i < 32, i <- i + 1
         num u32 <- rand() % 10_000
         numbers[i] <- num
         @console.printNum(num)
         @console.printChar('\n')
-        i <- i + 1
     ;
 
     numbers <- mergeSort(numbers, 0, 32)
@@ -66,10 +62,9 @@ mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
 
     // print out result
     @console.print("After\n\0\0\0\0\0\0\0\0\0\0")
-    rep i u32 <- 0, i <32:
+    rep i u32 <- 0, i <32, i <- i + 1
         @console.printNum(numbers[i])
         @console.printChar('\n')
-        i <- i + 1
     ;
 
     ret 0

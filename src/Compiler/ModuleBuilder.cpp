@@ -109,7 +109,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildReturn(dynamic_pointer_cast<StatementReturn>(statement));
             break;
         case StatementKind::REPEAT:
-            buildLoop(dynamic_pointer_cast<StatementRepeat>(statement));
+            buildRepeat(dynamic_pointer_cast<StatementRepeat>(statement));
             break;
         case StatementKind::META_EXTERN_FUNCTION: {
             shared_ptr<StatementMetaExternFunction> statementFunctionDeclaration = dynamic_pointer_cast<StatementMetaExternFunction>(statement);
@@ -352,8 +352,9 @@ void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
     }
 }
 
-void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
+void ModuleBuilder::buildRepeat(shared_ptr<StatementRepeat> statement) {
     shared_ptr<Statement> initStatement = statement->getInitStatement();
+    shared_ptr<Statement> postStatement = statement->getPostStatement();
     shared_ptr<StatementBlock> bodyStatement= statement->getBodyBlockStatement();
     shared_ptr<Expression> preExpression = statement->getPreConditionExpression();
     shared_ptr<Expression> postExpression = statement->getPostConditionExpression();
@@ -394,6 +395,10 @@ void ModuleBuilder::buildLoop(shared_ptr<StatementRepeat> statement) {
     builder->CreateCall(stackRestoreIntrinscic, llvm::ArrayRef({stackValue}));
 
     buildBlock(bodyStatement);
+
+    // post statement
+    if (postStatement != nullptr)
+        buildStatement(postStatement);
 
     // post condition
     if (postExpression != nullptr) {
@@ -957,6 +962,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             case ExpressionKind::BINARY:
             // simple <- ( expression )
             case ExpressionKind::GROUPING:
+            case ExpressionKind::UNARY:
             // simple <- if else
             case ExpressionKind::IF_ELSE:
             // simple <- function call

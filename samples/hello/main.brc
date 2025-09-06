@@ -1,9 +1,8 @@
 @extern putchar fun: character u32 -> u32
 
 print fun: text data<u32, 16>
-    rep i u32 <- 0, text[i] != 0:
+    rep i u32 <- 0, text[i] != 0, i <- i + 1
         putchar(text[i])
-        i <- i + 1
     ;
 ;
 
