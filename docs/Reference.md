@@ -20,7 +20,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - Functions (`fun`)
 - Raw Functions (`raw`)
 - Conditional Expressions (`if`, `else`)
-- Loops (`rep`)
+- Repeats (`rep`)
 - Modules (`@module`, `@import`, `@export`, `@extern`)
 
 ## Comments
@@ -259,22 +259,19 @@ else
 ;
 ```
 
-## Loops
-C-style for, while, and do-while are all combined into a single `rep` loop. The format is `rep init, pre-condition, post-condition`. `init` allows to setup a counter, pre-condition is evaluated before and post after each loop. Each part is optional, but if you include post-condition, pre-condition must also be include. Body can be specified on the same line as the loop, in which case the final semicolon should not be included.
+## Repeats
+C-style for, while, and do-while are all combined into a single `rep` loop. The format is `rep init-statement, pre-condition, post-condition, post-statement`. `init-statement` allows to setup a counter, pre-condition is evaluated before and post after each loop. `post-statement` is evaluated at the end of each loop. Each part is optional, but if you include post-condition, pre-condition must also be include. If you include `post-statement` then `init-statement` also has to be included. Body can be specified on the same line as the loop, in which case the final semicolon should be also included.
 ```
 // infinite loop
 rep: doStuff()
 
 // do things ten times
-rep i u32 <- 0, i < 10:
+rep i u32 <- 0, i < 10, i <- i + 1
   doStuff(i)
-  i <- i + 1
 ;
 
 // do things at least once
-rep i u32 <- 0, true, i < someValue:
-  doStuff(i)
-;
+rep i u32 <- 0, true, i < someValue: doStuff(i)
 ```
 
 ## Modules
