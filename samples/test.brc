@@ -1,8 +1,5 @@
 @export main fun -> u32
-
-    rep i u32 <- 5, i < 10, i > 20, i <- i + 2
-        i <- + 5
-    ;
+    num u8 <- 42
 
     ret 0
 ;

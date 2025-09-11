@@ -1,0 +1,13 @@
+@import io
+
+user blob
+    name data<u32, 16>
+    id u32
+    next ptr<user>
+;
+
+@export main fun -> u32
+    head ptr<user>
+
+    ret 0
+;
