@@ -79,7 +79,7 @@ shared_ptr<Statement> Parser::nextStatement() {
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
-    markError({}, {});
+    markError({}, {}, {});
     return nullptr;
 }
 
@@ -107,7 +107,7 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
-    markError({}, {});
+    markError({}, {}, {});
     return nullptr;
 }
 
@@ -155,7 +155,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
 
             // Expect new line after statement
             if (!tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
-                markError(TokenKind::NEW_LINE, {});
+                markError(TokenKind::NEW_LINE, {}, {});
         }
     }
 
@@ -391,7 +391,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 
     // closing semicolon
     if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
-        markError(TokenKind::SEMICOLON, {});
+        markError(TokenKind::SEMICOLON, {}, {});
         return nullptr;
     }
 
@@ -511,7 +511,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     // closing semicolon
     if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
-        markError(TokenKind::SEMICOLON, {});
+        markError(TokenKind::SEMICOLON, {}, {});
         return nullptr;
     }
 
@@ -576,7 +576,7 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 
         // except new line
         if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
-            markError(TokenKind::NEW_LINE, {});
+            markError(TokenKind::NEW_LINE, {}, {});
     }
 
     return make_shared<StatementBlock>(statements);
@@ -984,7 +984,7 @@ shared_ptr<Expression> Parser::matchExpressionGrouping() {
         } else if (tryMatchingTokenKinds({TokenKind::RIGHT_ROUND_BRACKET}, true, true)) {
             return make_shared<ExpressionGrouping>(expression);
         } else {
-            markError(TokenKind::RIGHT_ROUND_BRACKET, {});
+            markError(TokenKind::RIGHT_ROUND_BRACKET, {}, {});
         }
     }
 
@@ -1013,7 +1013,7 @@ shared_ptr<Expression> Parser::matchExpressionArrayLiteral() {
             } while (tryMatchingTokenKinds({TokenKind::COMMA}, true, true));
 
             if (!tryMatchingTokenKinds({TokenKind::RIGHT_SQUARE_BRACKET}, true, true)) {
-                markError(TokenKind::RIGHT_SQUARE_BRACKET, {});
+                markError(TokenKind::RIGHT_SQUARE_BRACKET, {}, {});
                 return nullptr;
             }
         }
@@ -1266,7 +1266,7 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     }
 
     if (right == nullptr) {
-        markError({}, "Expected expression");
+        markError({}, {}, "Expected expression");
         return nullptr;
     } else {
         return make_shared<ExpressionBinary>(token, left, right);
@@ -1289,7 +1289,7 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
 
         // except new line
         if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
-            markError(TokenKind::NEW_LINE, {});
+            markError(TokenKind::NEW_LINE, {}, {});
             return nullptr;
         }
     }
@@ -1358,7 +1358,7 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
 
         // invalid sequence detected?
         if (!subResults && parsee.getShouldFailOnNoMatch()) {
-            markError(parsee.getTokenKind(), {});
+            markError({}, parsee, {});
             return ParseeResultsGroup::failure();
         }
 
@@ -1576,7 +1576,7 @@ bool Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll,
     }
 }
 
-void Parser::markError(optional<TokenKind> expectedTokenKind, optional<string> message) {
+void Parser::markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message) {
     shared_ptr<Token> actualToken = tokens.at(currentIndex);
 
     // Try reaching the next safe token
@@ -1593,5 +1593,5 @@ void Parser::markError(optional<TokenKind> expectedTokenKind, optional<string> m
     if (currentIndex > tokens.size() - 1)
         currentIndex = tokens.size() - 1;
 
-    errors.push_back(Error::parserError(actualToken, expectedTokenKind, message));
+    errors.push_back(Error::parserError(actualToken, expectedTokenKind, expectedParsee, message));
 }

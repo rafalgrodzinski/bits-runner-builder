@@ -1,5 +1,9 @@
+print fun: data<u8, 32>
+;
+
 @export main fun -> u32
-    num u8 <- 42
+    text data<u8> <- "Hello, world!\n"
+    print(text)
 
     ret 0
 ;

@@ -13,6 +13,7 @@ class Expression;
 class Statement;
 class StatementModule;
 
+class Parsee;
 class ParseeGroup;
 class ParseeResult;
 class ParseeResultsGroup;
@@ -76,7 +77,7 @@ private:
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
-    void markError(optional<TokenKind> expectedTokenKind, optional<string> message);
+    void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
 
 public:
     Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens);

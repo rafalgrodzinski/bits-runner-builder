@@ -5,6 +5,7 @@
 
 class Token;
 enum class TokenKind;
+enum class ParseeKind;
 class ValueType;
 
 class Statement;
@@ -40,6 +41,7 @@ class Logger {
 private:
     static string toString(shared_ptr<Token> token);
     static string toString(TokenKind tokenKind);
+    static string toString(ParseeKind parseeKind);
     static string toString(shared_ptr<ValueType> valueType);
 
     static string toString(shared_ptr<Statement> statement);

@@ -143,7 +143,8 @@ string Logger::toString(shared_ptr<Token> token) {
 }
 
 string Logger::toString(TokenKind tokenKind) {
-        switch (tokenKind) {
+    TokenKind tk = tokenKind;
+    switch (tokenKind) {
         case TokenKind::PLUS:
             return "+";
         case TokenKind::MINUS:
@@ -242,6 +243,21 @@ string Logger::toString(TokenKind tokenKind) {
             return "↲";
         case TokenKind::END:
             return "END";
+    }
+}
+
+string Logger::toString(ParseeKind parseeKind) {
+    switch (parseeKind) {
+        case ParseeKind::TOKEN:
+            return "Token";
+        case ParseeKind::VALUE_TYPE:
+            return "Value Type";
+        case ParseeKind::STATEMENT:
+            return "Statement";
+        case ParseeKind::EXPRESSION:
+            return "Expression";
+        default:
+            return "Other";
     }
 }
 
@@ -619,9 +635,15 @@ void Logger::print(shared_ptr<Error> error) {
         case ErrorKind::PARSER_ERROR: {
             shared_ptr<Token> token = error->getActualToken();
             optional<TokenKind> expectedTokenKind = error->getExpectedTokenKind();
+            optional<Parsee> expectedParsee = error->getExpectedParsee();
             optional<string> errorMessage = error->getMessage();
 
-            if (expectedTokenKind) {
+            if (expectedParsee) {
+                message = format(
+                    "At line {}, column {}, Expected {} but found {} instead",
+                    token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee).getKind()), toString(token)
+                );
+            } else if (expectedTokenKind) {
                 message = format(
                     "At line {}, column {}: Expected token {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
