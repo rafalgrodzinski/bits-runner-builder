@@ -555,26 +555,15 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
-    if (expression->getValueType() == nullptr)
-        return "?";
-
-    switch (expression->getValueType()->getKind()) {
-        case ValueTypeKind::NONE:
-            return "NONE";
-        case ValueTypeKind::BOOL:
-            return expression->getBoolValue() ? "true" : "false";
-        case ValueTypeKind::U8:
-            return to_string(expression->getU8Value());
-        case ValueTypeKind::U32:
-            return to_string(expression->getU32Value());
-        case ValueTypeKind::S8:
-            return to_string(expression->getS8Value());
-        case ValueTypeKind::S32:
-            return to_string(expression->getS32Value());
-        case ValueTypeKind::R32:
-            return to_string(expression->getR32Value());
-        default:
-            return "?";
+    switch (expression->getLiteralKind()) {
+        case LiteralKind::BOOL:
+        return expression->getBoolValue() ? "true" : "false";
+        case LiteralKind::UINT:
+            return to_string(expression->getUIntValue());
+        case LiteralKind::SINT:
+            return to_string(expression->getSIntValue());
+        case LiteralKind::REAL:
+            return to_string(expression->getRealValue());
     }
 }
 

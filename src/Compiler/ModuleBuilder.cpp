@@ -345,7 +345,8 @@ void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
 
 void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
     if (statement->getExpression() != nullptr) {
-        llvm::Value *value = valueForExpression(statement->getExpression());
+        llvm::Function *fun = builder->GetInsertBlock()->getParent();
+        llvm::Value *value = valueForExpression(statement->getExpression(), fun->getReturnType());
         builder->CreateRet(value);
     } else {
         builder->CreateRetVoid();
@@ -419,10 +420,10 @@ void ModuleBuilder::buildExpression(shared_ptr<StatementExpression> statement) {
     valueForExpression(statement->getExpression());
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression) {
+llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType) {
     switch (expression->getKind()) {
         case ExpressionKind::LITERAL:
-            return valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression));
+            return valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression), castToType);
         case ExpressionKind::GROUPING:
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case ExpressionKind::BINARY:
@@ -453,30 +454,53 @@ vector<llvm::Value*> ModuleBuilder::valuesForExpression(shared_ptr<Expression> e
     }
 }
 
-llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expression) {
-    if (expression->getValueType() == nullptr)
-        return llvm::UndefValue::get(typeVoid);
-
-    switch (expression->getValueType()->getKind()) {
-        case ValueTypeKind::NONE:
-            return llvm::UndefValue::get(typeVoid);
-        case ValueTypeKind::BOOL:
+llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType) {
+    if (expression->getLiteralKind() == LiteralKind::BOOL) {
+        if (castToType == nullptr)
             return llvm::ConstantInt::get(typeBool, expression->getBoolValue(), true);
-        case ValueTypeKind::U8:
-            return llvm::ConstantInt::get(typeU8, expression->getU8Value(), true);
-        case ValueTypeKind::U32:
-            return llvm::ConstantInt::get(typeU32, expression->getU32Value(), true);
-        case ValueTypeKind::U64:
-            return llvm::ConstantInt::get(typeU64, expression->getU64Value(), true);
-        case ValueTypeKind::S8:
-            return llvm::ConstantInt::get(typeS8, expression->getS8Value(), true);
-        case ValueTypeKind::S32:
-            return llvm::ConstantInt::get(typeS32, expression->getS32Value(), true);
-        case ValueTypeKind::S64:
-            return llvm::ConstantInt::get(typeS64, expression->getS64Value(), true);
-        case ValueTypeKind::R32:
-            return llvm::ConstantFP::get(typeR32, expression->getR32Value());
+        else if (castToType != typeBool)
+            return nullptr;
     }
+
+    if (expression->getLiteralKind() == LiteralKind::UINT) {
+        if (castToType == nullptr)
+            return llvm::ConstantInt::get(typeU64, expression->getUIntValue(), true);
+        else if (castToType == typeBool)
+            return nullptr;
+    }
+
+    if (expression->getLiteralKind() == LiteralKind::SINT) {
+        if (castToType == nullptr)
+            return llvm::ConstantInt::get(typeS64, expression->getSIntValue(), true);
+        else if (castToType == typeBool)
+            return nullptr;
+    }
+
+    if (expression->getLiteralKind() == LiteralKind::REAL) {
+        if (castToType == nullptr)
+            return llvm::ConstantFP::get(typeR32, expression->getSIntValue());
+        else if (castToType == typeBool)
+            return nullptr;
+    }
+
+    if (castToType == typeBool)
+        return llvm::ConstantInt::get(typeBool, expression->getBoolValue(), true);
+    else if (castToType == typeU8)
+        return llvm::ConstantInt::get(typeU8, expression->getUIntValue(), true);
+    else if (castToType == typeU32)
+        return llvm::ConstantInt::get(typeU32, expression->getUIntValue(), true);
+    else if (castToType == typeU64)
+        return llvm::ConstantInt::get(typeU64, expression->getUIntValue(), true);
+    else if (castToType == typeS8)
+        return llvm::ConstantInt::get(typeU8, expression->getSIntValue(), true);
+    else if (castToType == typeS32)
+        return llvm::ConstantInt::get(typeU32, expression->getSIntValue(), true);
+    else if (castToType == typeS64)
+        return llvm::ConstantInt::get(typeU64, expression->getSIntValue(), true);
+    else if (castToType == typeR32)
+        return llvm::ConstantFP::get(typeR32, expression->getSIntValue());
+
+    return nullptr;
 }
 
 vector<llvm::Value*> ModuleBuilder::valuesForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression) {
@@ -955,9 +979,11 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
         // TODO (no blob literal yet)
     // simple
     } else {
+        llvm::Type *castToType = nullptr;
         switch (valueExpression->getKind()) {
             // simple <- literal
             case ExpressionKind::LITERAL:
+                castToType = targetType;
             // simple <- binary expression
             case ExpressionKind::BINARY:
             // simple <- ( expression )
@@ -969,7 +995,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             case ExpressionKind::CALL:
             // simple <- var
             case ExpressionKind::VARIABLE: {
-                llvm::Value *sourceValue = valueForExpression(valueExpression);
+                llvm::Value *sourceValue = valueForExpression(valueExpression, castToType);
                 if (sourceValue == nullptr)
                     return;
                 builder->CreateStore(sourceValue, targetValue);
@@ -977,7 +1003,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             }
             // other
             default:
-                markError(0, 0, "Invalid assignment to blob type");
+                markError(0, 0, "Invalid assignment");
                 return;
         }
     }
@@ -1149,9 +1175,9 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return getStructType(valueType->getTypeName());
         case ValueTypeKind::PTR:
             return typePtr;
+        default:
+            return nullptr;
     }
-
-    return nullptr;
 }
 
 void ModuleBuilder::markError(int line, int column, string message) {

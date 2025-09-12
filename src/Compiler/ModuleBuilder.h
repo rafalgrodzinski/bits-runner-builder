@@ -91,9 +91,9 @@ private:
     void buildRepeat(shared_ptr<StatementRepeat> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 
-    llvm::Value *valueForExpression(shared_ptr<Expression> expression);
+    llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
     vector<llvm::Value*> valuesForExpression(shared_ptr<Expression> expression);
-    llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression);
+    llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType = nullptr);
     vector<llvm::Value*> valuesForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);

@@ -1420,7 +1420,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
 
     shared_ptr<Token> typeToken = tokens.at(index++);
     shared_ptr<ValueType> subType;
-    int typeArg = 0;
+    uint64_t typeValueArg = 0;
 
     if (tokens.at(index)->isOfKind({TokenKind::LESS})) {
         index++;
@@ -1439,7 +1439,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
             int storedIndex = currentIndex;
             currentIndex = index;
             shared_ptr<Expression> expressionValue = matchExpressionLiteral();
-            typeArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getS32Value();
+            typeValueArg = dynamic_pointer_cast<ExpressionLiteral>(expressionValue)->getUIntValue();
             currentIndex = storedIndex;
             index++;
         }
@@ -1449,7 +1449,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
         index++;
     }
 
-    shared_ptr<ValueType> valueType = ValueType::valueTypeForToken(typeToken, subType, typeArg, "");
+    shared_ptr<ValueType> valueType = ValueType::valueTypeForToken(typeToken, subType, typeValueArg, "");
     return pair(vector<ParseeResult>({ParseeResult::valueTypeResult(valueType, index - startIndex, tag)}), index - startIndex);
 }
 

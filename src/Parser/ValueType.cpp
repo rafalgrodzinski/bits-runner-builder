@@ -11,6 +11,7 @@ shared_ptr<ValueType> ValueType::S8 = make_shared<ValueType>(ValueTypeKind::S8, 
 shared_ptr<ValueType> ValueType::S32 = make_shared<ValueType>(ValueTypeKind::S32, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::R32 = make_shared<ValueType>(ValueTypeKind::R32, nullptr, 0, "");
+shared_ptr<ValueType> ValueType::LITERAL = make_shared<ValueType>(ValueTypeKind::LITERAL, nullptr, 0, "");
 
 ValueType::ValueType() { }
 
