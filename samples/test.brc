@@ -1,6 +1,8 @@
+doStuff fun: first u8, second s32
+;
+
 @export main fun -> u32
-    num1 u8 <- 258
-    num2 u32 <- -4
+    doStuff(258, 15)
 
     ret 0
 ;

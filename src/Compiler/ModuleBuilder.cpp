@@ -777,8 +777,12 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
     if (fun != nullptr) {
         llvm::FunctionType *funType = fun->getFunctionType();        
         vector<llvm::Value*> argValues;
-        for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
-            llvm::Value *argValue = valueForExpression(argumentExpression);
+        vector<shared_ptr<Expression>> argumentExpressions = expression->getArgumentExpressions();
+        for (int i=0; i<argumentExpressions.size(); i++) {
+            // pass along type for the specified argument
+            llvm::Type *argumentType = funType->getParamType(i);
+            shared_ptr<Expression> argumentExpression = argumentExpressions.at(i);
+            llvm::Value *argValue = valueForExpression(argumentExpression, argumentType);
             argValues.push_back(argValue);
         }
         return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
