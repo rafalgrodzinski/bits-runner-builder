@@ -1,8 +1,11 @@
-doStuff fun: first u8, second s32
+@extern putchar fun: character u64 -> u32
+
+print fun: text data<u64, 32>
+    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1: putchar(text[i])
 ;
 
 @export main fun -> u32
-    doStuff(258, 15)
+    print("Hello, world!\n")
 
     ret 0
 ;

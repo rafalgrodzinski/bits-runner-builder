@@ -93,6 +93,17 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
     return expression;
 }
 
+shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForUInt(uint64_t value) {
+    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>();
+    expression->literalKind = LiteralKind::UINT;
+    expression->valueType = ValueType::LITERAL;
+    expression->boolValue = false;
+    expression->uIntValue = value;
+    expression->sIntValue = value;
+    expression->realValue = value;
+    return expression;
+}
+
 ExpressionLiteral::ExpressionLiteral():
 Expression(ExpressionKind::LITERAL, nullptr) { }
 

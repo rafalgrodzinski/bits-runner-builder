@@ -92,9 +92,8 @@ private:
     void buildExpression(shared_ptr<StatementExpression> statement);
 
     llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
-    vector<llvm::Value*> valuesForExpression(shared_ptr<Expression> expression);
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType = nullptr);
-    vector<llvm::Value*> valuesForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
+    llvm::Value *valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression, llvm::Type *castToType = nullptr);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
@@ -105,7 +104,6 @@ private:
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
-    llvm::Value *valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
     llvm::Value *valueForBuiltIn(llvm::AllocaInst *alloca, string memberName);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);

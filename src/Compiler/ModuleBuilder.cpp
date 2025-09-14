@@ -424,6 +424,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
     switch (expression->getKind()) {
         case ExpressionKind::LITERAL:
             return valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression), castToType);
+        case ExpressionKind::ARRAY_LITERAL:
+            return valueForArrayLiteral(dynamic_pointer_cast<ExpressionArrayLiteral>(expression), castToType);
         case ExpressionKind::GROUPING:
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case ExpressionKind::BINARY:
@@ -436,21 +438,9 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForVariable(dynamic_pointer_cast<ExpressionVariable>(expression));
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
-        case ExpressionKind::ARRAY_LITERAL:
-            return valueForArrayLiteral(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
         default:
             markError(0, 0, "Unexpected expression");
             return nullptr;
-    }
-}
-
-vector<llvm::Value*> ModuleBuilder::valuesForExpression(shared_ptr<Expression> expression) {
-    switch (expression->getKind()) {
-        case ExpressionKind::ARRAY_LITERAL:
-            return valuesForArrayLiteral(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
-        default:
-            markError(0, 0, "Unexpected expression");
-            return vector<llvm::Value*>();
     }
 }
 
@@ -501,14 +491,6 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
         return llvm::ConstantFP::get(typeR32, expression->getSIntValue());
 
     return nullptr;
-}
-
-vector<llvm::Value*> ModuleBuilder::valuesForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression) {
-    vector<llvm::Value*> values;
-    for (shared_ptr<Expression> &expression : expression->getExpressions()) {
-        values.push_back(valueForExpression(expression));
-    }
-    return values;
 }
 
 llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expression) {
@@ -802,17 +784,25 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression) {
-    int count = expression->getExpressions().size();
-    llvm::Type *valueType = llvm::ArrayType::get(typeU32, count);
-    llvm::AllocaInst *alloca = builder->CreateAlloca(valueType, nullptr);
+llvm::Value *ModuleBuilder::valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression, llvm::Type *castToType) {
+    int count;
+    llvm::Type *elementType;
+    if (castToType != nullptr) {
+        elementType = ((llvm::ArrayType*)castToType)->getElementType();
+        count = ((llvm::ArrayType*)castToType)->getArrayNumElements();
+    } else if (!expression->getExpressions().empty()) {
+        elementType = valueForExpression(expression->getExpressions().at(0))->getType();
+        count = expression->getExpressions().size();
+    } else {
+        elementType = typeU64;
+        count = 0;
+    }
 
-    if (valueType == nullptr)
-        return nullptr;
+    llvm::Type *targetType = llvm::ArrayType::get(elementType, count);
+    llvm::AllocaInst *targetAlloca = builder->CreateAlloca(targetType, nullptr);
 
-    buildAssignment(alloca, valueType, expression);
-
-    return builder->CreateLoad(alloca->getAllocatedType(), alloca);
+    buildAssignment(targetAlloca, targetType, expression);
+    return builder->CreateLoad(targetType, targetAlloca);
 }
 
 llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string memberName) {
@@ -821,7 +811,8 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string mem
 
     if (isArray && memberName.compare("count") == 0) {
         llvm::ArrayType *arrayType = (llvm::ArrayType*)alloca->getAllocatedType();
-        return llvm::ConstantInt::get(typeU32, arrayType->getNumElements());
+        return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements()));
+        //return llvm::ConstantInt::get(typeU32, arrayType->getNumElements());
     } else if (isPointer && memberName.compare("val") == 0) {
         llvm::Value *pointee = builder->CreateLoad(typePtr, alloca);
         llvm::Type *pointeeType = pointee->getType();
@@ -881,19 +872,20 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             // data <- array literal
             // copy values from literal expression into an allocated array
             case ExpressionKind::ARRAY_LITERAL: {
-                vector<llvm::Value *> sourceValues = valuesForExpression(valueExpression);
-                int sourceCount = sourceValues.size();
+                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionArrayLiteral>(valueExpression)->getExpressions();
+                int sourceCount = valueExpressions.size();
                 int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
-                string targetName = string(targetValue->getName());
                 int count = min(sourceCount, targetCount);
+                string targetName = string(targetValue->getName());
+                llvm::Type *elementType = ((llvm::ArrayType *)targetType)->getArrayElementType();
                 for (int i=0; i<count; i++) {
                     llvm::Value *index[] = {
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
                     llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index, format("{}[{}]", targetName, i));
-
-                    builder->CreateStore(sourceValues[i], targetPtr);
+                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), elementType);
+                    builder->CreateStore(sourceValue, targetPtr);
                 }
                 break;
             }
