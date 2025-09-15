@@ -1,11 +1,14 @@
 user blob
-    age u32
+    age u64
     isOk bool
 ;
 
 @export main fun -> u32
     u1 blob<user>
-    t data<u32>
+    u1.age <- 24
+    u1.isOk <- true
+    u2 blob<user>
+    u2 <- u1
 
     ret 0
 ;

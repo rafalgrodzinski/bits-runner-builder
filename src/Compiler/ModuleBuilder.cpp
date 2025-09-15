@@ -257,7 +257,7 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
             llvm::StructType *valueType = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            llvm::AllocaInst *alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
             break;
         }
         case ValueTypeKind::PTR: {
@@ -972,7 +972,39 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
         }
     // blob
     } else if (targetType->isStructTy()) {
-        // TODO (no blob literal yet)
+        switch (valueExpression->getKind()) {
+            // TODO (no blob literal yet)
+            case ExpressionKind::VARIABLE: {
+                shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
+                llvm::AllocaInst *sourceValue = getAlloca(expressionVariable->getIdentifier());
+                llvm::Type *sourceType = sourceValue->getAllocatedType();
+                if (!sourceType->isStructTy()) {
+                    markError(0, 0, "Not a blob type");
+                    return;
+                }
+                string targetTypeName = string(targetType->getStructName());
+                string sourceTypeName = string(sourceType->getStructName());
+                if (targetTypeName.compare(sourceTypeName) != 0) {
+                    markError(0, 0, "Incompatible blob types");
+                    return;
+                }
+
+                int membersCount = ((llvm::StructType*)targetType)->getStructNumElements();
+                for (int i=0; i<membersCount; i++) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+                    llvm::Value *sourceMemberValue = builder->CreateGEP(sourceType, sourceValue, index);
+                    llvm::Value *targetMemberValue = builder->CreateGEP(targetType, targetValue, index);
+                    builder->CreateStore(sourceMemberValue, targetMemberValue);
+                }
+                break;
+            }
+            default:
+                markError(0, 0, "Invalid assignment");
+                break;
+        }
     // simple
     } else {
         llvm::Type *castToType = nullptr;
