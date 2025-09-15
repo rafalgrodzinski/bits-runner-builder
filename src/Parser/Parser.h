@@ -58,6 +58,7 @@ private:
     shared_ptr<Expression> matchExpressionGrouping();
     shared_ptr<Expression> matchExpressionLiteral();
     shared_ptr<Expression> matchExpressionArrayLiteral();
+    shared_ptr<Expression> matchExpressionCompositeLiteral();
     shared_ptr<Expression> matchExpressionVariable();
     shared_ptr<Expression> matchExpressionCall();
     shared_ptr<Expression> matchExpressionIfElse();

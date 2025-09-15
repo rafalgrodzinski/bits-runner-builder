@@ -9,6 +9,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionArrayLiteral.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
@@ -988,6 +989,10 @@ shared_ptr<Expression> Parser::matchPrimary() {
     if (expression != nullptr || errors.size() > errorsCount)
         return expression;
 
+    expression = matchExpressionCompositeLiteral();
+    if (expression != nullptr || errors.size() > errorsCount)
+        return expression;
+
     expression = matchExpressionLiteral();
     if (expression != nullptr || errors.size() > errorsCount)
         return expression;
@@ -1050,6 +1055,48 @@ shared_ptr<Expression> Parser::matchExpressionArrayLiteral() {
     }
 
     return nullptr;
+}
+
+shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
+    vector<shared_ptr<Expression>> expressions;
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::tokenParsee(TokenKind::LEFT_CURLY_BRACKET, true, false, false),
+                // expressions
+                Parsee::groupParsee(
+                    ParseeGroup(
+                        {
+                            // first expression
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                            Parsee::expressionParsee(true, true, false),
+                            // additional expressions
+                            Parsee::repeatedGroupParsee(
+                                ParseeGroup(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::COMMA, true, false, false),
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false),
+                                        Parsee::expressionParsee(true, true, true)
+                                    }
+                                ), false, true, false
+                            ),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, false, false, false)
+                        }
+                    ), false, true, false
+                ),
+                Parsee::tokenParsee(TokenKind::RIGHT_CURLY_BRACKET, true, false, true)
+            }
+        )
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults())
+        expressions.push_back(parseeResult.getExpression());
+
+    return ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(expressions);
 }
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {
@@ -1257,8 +1304,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    for (int i=0; i<resultsGroup.getResults().size(); i++) {
-        ParseeResult parseeResult = resultsGroup.getResults().at(i);
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_CONDITION:
                 condition = parseeResult.getExpression();

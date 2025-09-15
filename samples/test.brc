@@ -4,11 +4,7 @@ user blob
 ;
 
 @export main fun -> u32
-    u1 blob<user>
-    u1.age <- 24
-    u1.isOk <- true
-    u2 blob<user>
-    u2 <- u1
+    u1 blob<user> <- {24, true}
 
     ret 0
 ;

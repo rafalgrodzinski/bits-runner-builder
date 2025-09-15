@@ -141,6 +141,14 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = match(TokenKind::LEFT_CURLY_BRACKET, "{", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::RIGHT_CURLY_BRACKET, "}", false);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::COMMA, ",", false);
     if (token != nullptr)
         return token;
@@ -627,6 +635,8 @@ bool Lexer::isSeparator(int index) {
         case ')':
         case '[':
         case ']':
+        case '{':
+        case '}':
         case ',':
         case ':':
         case ';':

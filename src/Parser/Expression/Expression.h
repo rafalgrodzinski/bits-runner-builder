@@ -11,6 +11,7 @@ using namespace std;
 enum class ExpressionKind {
     LITERAL,
     ARRAY_LITERAL,
+    COMPOSITE_LITERAL,
     GROUPING,
     UNARY,
     BINARY,
