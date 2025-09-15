@@ -7,6 +7,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionArrayLiteral.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
@@ -254,14 +255,14 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
             break;
         }
         case ValueTypeKind::BLOB: {
-            llvm::StructType *valueType = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
+            valueType = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
             alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
             break;
         }
         case ValueTypeKind::PTR: {
-            llvm::PointerType *valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
+            valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
             alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
@@ -973,7 +974,21 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
     // blob
     } else if (targetType->isStructTy()) {
         switch (valueExpression->getKind()) {
-            // TODO (no blob literal yet)
+            case ExpressionKind::COMPOSITE_LITERAL: {
+                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
+                int membersCount = ((llvm::StructType*)targetType)->getStructNumElements();
+                for (int i=0; i<membersCount; i++) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+                    llvm::Type *memberType = ((llvm::StructType*)targetType)->getElementType(i);
+                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), memberType);
+                    llvm::Value *targetMember = builder->CreateGEP(targetType, targetValue, index);
+                    builder->CreateStore(sourceValue, targetMember);
+                }
+                break;
+            }
             case ExpressionKind::VARIABLE: {
                 shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
                 llvm::AllocaInst *sourceValue = getAlloca(expressionVariable->getIdentifier());
