@@ -19,6 +19,7 @@
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -93,6 +94,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             break;
         case StatementKind::RAW_FUNCTION:
             buildRawFunction(dynamic_pointer_cast<StatementRawFunction>(statement));
+            break;
+        case StatementKind::BLOB_DECLARATION:
+            buildBlobDeclaration(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
             break;
         case StatementKind::BLOB:
             buildBlob(dynamic_pointer_cast<StatementBlob>(statement));
@@ -220,8 +224,16 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
         return;
 }
 
+void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement) {
+    llvm::StructType::create(*context, statement->getIdentifier());
+}
+
 void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
-    llvm::StructType *structType = llvm::StructType::create(*context, statement->getIdentifier());
+    llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getIdentifier());
+    if (structType == nullptr) {
+        markError(0, 0, "Blob not declared");
+        return;
+    }
 
     // Generate types for body
     vector<string> memberNames;
@@ -813,7 +825,6 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string mem
     if (isArray && memberName.compare("count") == 0) {
         llvm::ArrayType *arrayType = (llvm::ArrayType*)alloca->getAllocatedType();
         return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements()));
-        //return llvm::ConstantInt::get(typeU32, arrayType->getNumElements());
     } else if (isPointer && memberName.compare("val") == 0) {
         llvm::Value *pointee = builder->CreateLoad(typePtr, alloca);
         llvm::Type *pointeeType = pointee->getType();
@@ -992,10 +1003,24 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             // blob <- blob
-            case ExpressionKind::VARIABLE: {
-                shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
-                llvm::AllocaInst *sourceValue = getAlloca(expressionVariable->getIdentifier());
-                llvm::Type *sourceType = sourceValue->getAllocatedType();
+            case ExpressionKind::VARIABLE:
+            // blob <- function()
+            case ExpressionKind::CALL: {
+                llvm::Value *sourceValue;
+                llvm::Type *sourceType;
+
+                if (valueExpression->getKind() == ExpressionKind::VARIABLE) {
+                    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
+                    sourceValue = getAlloca(expressionVariable->getIdentifier());
+                    sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
+                } else {
+                    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
+                    sourceValue = valueForCall(expressionCall);
+                    sourceType = sourceValue->getType();
+                }
+
+                sourceType->print(llvm::outs());
+                llvm::outs() << "\n";
                 if (!sourceType->isStructTy()) {
                     markError(0, 0, "Not a blob type");
                     return;
@@ -1020,9 +1045,22 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             // blob <- function()
-            case ExpressionKind::CALL: {
+            /*case ExpressionKind::CALL: {
+                shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
+                llvm::Value *sourceValue = valueForCall(expressionCall);
+                if (sourceValue == nullptr) {
+                    markError(0, 0, "Not a blob type");
+                    return;
+                }
+                llvm::Type *sourceType = sourceValue->getType();
+                sourceType->print(llvm::outs());
+                llvm::outs() << "\n";
+                if (!sourceType->isStructTy()) {
+                    markError(0, 0, "Not a blob type");
+                    return;
+                }
                 break;
-            }
+            }*/
             default:
                 markError(0, 0, "Invalid assignment");
                 break;

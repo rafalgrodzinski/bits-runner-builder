@@ -1,8 +1,17 @@
-@export main fun -> u32
-    num u32 <- 4
-    stuff ptr<u32> <- { num.adr }
-    stuff2 ptr<u32> <- stuff
-    stuff2.val <- 5
+user blob
+    id u64
+    isOk bool
+;
 
-    ret num
+getU fun -> blob<user>
+    u blob<user> <- {13, false}
+    ret u
+;
+
+@export main fun -> u32
+    u1 blob<user> <- {7, true}
+    u2 blob<user> <- u1
+    //u3 blob<user> <- getU()
+
+    ret 0
 ;

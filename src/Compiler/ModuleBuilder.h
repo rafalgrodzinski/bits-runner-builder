@@ -32,6 +32,7 @@ class StatementImport;
 class StatementFunction;
 class StatementFunctionDeclaration;
 class StatementRawFunction;
+class StatementBlobDeclaration;
 class StatementBlob;
 class StatementVariable;
 class StatementAssignment;
@@ -83,6 +84,7 @@ private:
     void buildImport(shared_ptr<StatementImport> statement);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
+    void buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);

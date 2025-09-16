@@ -42,9 +42,20 @@ Parsee Parsee::valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFa
     parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
-Parsee Parsee::statementParsee(bool shouldIncludeExpressionStatement, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+
+Parsee Parsee::statementParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT;
+    parsee.tag = tag;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
+
+Parsee Parsee::statementInBlockParsee(bool shouldIncludeExpressionStatement, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::STATEMENT_IN_BLOCK;
     parsee.tag = tag;
     parsee.shouldIncludeExpressionStatement = shouldIncludeExpressionStatement;
     parsee.isRequired = isRequired;

@@ -16,6 +16,7 @@ enum class ParseeKind {
     TOKEN,
     VALUE_TYPE,
     STATEMENT,
+    STATEMENT_IN_BLOCK,
     EXPRESSION,
     OR,
     STATEMENT_BLOCK_SINGLE_LINE,
@@ -44,7 +45,8 @@ public:
     static Parsee repeatedGroupParsee(ParseeGroup repeatedGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
     static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1); 
-    static Parsee statementParsee(bool shouldIncludeExpressionStatement, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
+    static Parsee statementParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1); 
+    static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
     static Parsee statementBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);

@@ -263,6 +263,8 @@ string Logger::toString(ParseeKind parseeKind) {
             return "Value Type";
         case ParseeKind::STATEMENT:
             return "Statement";
+        case ParseeKind::STATEMENT_IN_BLOCK:
+            return "Statement in Block";
         case ParseeKind::EXPRESSION:
             return "Expression";
         default:

@@ -30,6 +30,15 @@ ParseeResult ParseeResult::statementResult(shared_ptr<Statement> statement, int 
     return parseeResult;
 }
 
+ParseeResult ParseeResult::statementInBlockResult(shared_ptr<Statement> statement, int tokensCount, int tag) {
+    ParseeResult parseeResult;
+    parseeResult.kind = ParseeResultKind::STATEMENT_IN_BLOCK;
+    parseeResult.tag = tag;
+    parseeResult.statement = statement;
+    parseeResult.tokensCount = tokensCount;
+    return parseeResult;
+}
+
 ParseeResult ParseeResult::expressionResult(shared_ptr<Expression> expression, int tokensCount, int tag) {
     ParseeResult parseeResult;
     parseeResult.kind = ParseeResultKind::EXPRESSION;
