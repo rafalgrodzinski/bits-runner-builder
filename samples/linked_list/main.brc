@@ -1,13 +1,27 @@
 @import io
 
+@extern malloc fun: size u64 -> u64
+
 user blob
-    name data<u32, 16>
-    id u32
-    next ptr<user>
+    name data<u64, 16>
+    id u64
+    next ptr<blob<user>>
+;
+
+newUser fun: userPtr ptr<blob<user>>, name data<u64, 16>, id u64
+    rep userPtr.vAdr != 0x00
+        user blob<user> <- userPtr.val
+        userPtr <- user.next
+    ;
+
+    userPtr <- { malloc(130) }
+    userPtr.val <- { name, id, 0x00 }
 ;
 
 @export main fun -> u32
-    head ptr<user>
+    userPtr ptr<blob<user>> <- { 0x00 }
+    newUser(userPtr, "Bob", 14)
+    newUser(userPtr, "John", 7)
 
     ret 0
 ;
