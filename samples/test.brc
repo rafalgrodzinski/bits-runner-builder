@@ -1,17 +1,11 @@
-user blob
-    id u64
-    isOk bool
-;
-
-getU fun -> blob<user>
-    u blob<user> <- {17, false}
-    ret u
+getU fun -> data<u64, 8>
+    //ret {4, 8, 7}
+    ret [4, 8, 7]
 ;
 
 @export main fun -> u64
-    u1 blob<user> <- {9, true}
-    u2 blob<user> <- u1
-    u3 blob<user> <- getU()
+    nums data<u64, 8> <- getU()
+    nums2 data<u64, 4> <- nums
 
-    ret u3.id
+    ret nums2[1]
 ;

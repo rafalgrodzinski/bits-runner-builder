@@ -903,82 +903,55 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             }
             // data <- data
             // copy each value from one allocated array to another allocated array
-            case ExpressionKind::VARIABLE: {
-                shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
-                llvm::AllocaInst *sourceValue = getAlloca(expressionVariable->getIdentifier());
-                if (sourceValue == nullptr)
-                    return;
-
-                llvm::Type *sourceType = sourceValue->getAllocatedType();
-                if (sourceType->isArrayTy()) {
-                    // make sure we don't go over the bounds
-                    int sourceCount = ((llvm::ArrayType *)sourceType)->getNumElements();
-                    int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
-                    int count = min(sourceCount, targetCount);
-
-                    string sourceName = string(sourceValue->getName());
-                    string targetName = string(targetValue->getName());
-
-                    for (int i=0; i<count; i++) {
-                        llvm::Value *index[] = {
-                            builder->getInt32(0),
-                            builder->getInt32(i)
-                        };
-
-                        // get pointers for both source and target
-                        llvm::Value *sourcePtr = builder->CreateGEP(sourceType, sourceValue, index, format("{}[{}]", sourceName, i));
-                        llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index, format("{}[{}]", targetName, i));
-
-                        // load value from source pointer
-                        llvm::Value *sourcePtrValue = builder->CreateLoad(sourceType->getArrayElementType(), sourcePtr);
-
-                        // and then store it in the target pointer
-                        builder->CreateStore(sourcePtrValue, targetPtr);
-                    }
-                }
-                break;
-            }
+            case ExpressionKind::VARIABLE:
             // data <- function()
             case ExpressionKind::CALL: {
-                shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
-                llvm::Value *sourceValue = valueForCall(expressionCall);
-                if (sourceValue == nullptr)
-                    return;
-                    
-                llvm::Type *sourceType = sourceValue->getType();
-                if (sourceType->isArrayTy()) {
+                llvm::Value *sourceValue;
+                llvm::Type *sourceType;
+
+                if (valueExpression->getKind() == ExpressionKind::VARIABLE) {
+                    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
+                    sourceValue = getAlloca(expressionVariable->getIdentifier());
+                    if (sourceValue == nullptr)
+                        return;
+                    sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
+                } else {
+                    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
+                    llvm::Value *sourceExpressionValue = valueForCall(expressionCall);
+                    if (sourceExpressionValue == nullptr)
+                        return;
                     // store call result in a temporary alloca
-                    llvm::AllocaInst *sourceAlloca = builder->CreateAlloca(sourceType);
-                    builder->CreateStore(sourceValue, sourceAlloca);
-
-                    // make sure we don't go over the bounds
-                    int sourceCount = ((llvm::ArrayType *)sourceType)->getNumElements();
-                    int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
-                    int count = min(sourceCount, targetCount);
-
-                    string targetName = string(targetValue->getName());
-
-                    // copy from the temporary alloca
-                    for (int i=0; i<count; i++) {
-                        llvm::Value *index[] = {
-                            builder->getInt32(0),
-                            builder->getInt32(i)
-                        };
-
-                        // get pointers for both source and target
-                        llvm::Value *sourcePtr = builder->CreateGEP(sourceType, sourceAlloca, index, format("[{}]", i));
-                        llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index, format("{}[{}]", targetName, i));
-
-                        // load value from source pointer
-                        llvm::Value *sourcePtrValue = builder->CreateLoad(sourceType->getArrayElementType(), sourcePtr);
-
-                        builder->CreateStore(sourcePtrValue, targetPtr);
-                    }
+                    sourceType = sourceExpressionValue->getType();
+                    sourceValue = builder->CreateAlloca(sourceType);
+                    builder->CreateStore(sourceExpressionValue, sourceValue);
                 }
 
+                if (!sourceType->isArrayTy()) {
+                    markError(0, 0, "Not an array type");
+                    return;
+                }
+
+                // make sure we don't go over the bounds
+                int sourceCount = ((llvm::ArrayType *)sourceType)->getNumElements();
+                int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
+                int count = min(sourceCount, targetCount);
+
+                for (int i=0; i<count; i++) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+
+                    // get pointers for both source and target
+                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceType, sourceValue, index);
+                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
+                    // load value from source pointer
+                    llvm::Value *sourceMemberValue = builder->CreateLoad(sourceType->getArrayElementType(), sourceMemberPtr);
+                    // and then store it at the target pointer
+                    builder->CreateStore(sourceMemberValue, targetMemberPtr);
+                }
                 break;
             }
-            // other
             default:
                 markError(0, 0, "Invalid assignment to data type");
                 return;
@@ -1025,10 +998,13 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
+                    // get pointers for both source and target
                     llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceType, sourceValue, index);
+                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
+                    // load value from source pointer
                     llvm::Type *sourceMemberType = ((llvm::StructType*)targetType)->getTypeAtIndex(i);
                     llvm::Value *sourceMemberValue = builder->CreateLoad(sourceMemberType, sourceMemberPtr);
-                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
+                    // and then store it at the target pointer
                     builder->CreateStore(sourceMemberValue, targetMemberPtr);
                 }
                 break;
