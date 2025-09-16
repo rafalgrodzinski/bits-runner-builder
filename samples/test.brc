@@ -1,6 +1,6 @@
 getU fun -> data<u64, 8>
     //ret {4, 8, 7}
-    ret [4, 8, 7]
+    ret {4, 8, 7}
 ;
 
 @export main fun -> u64
