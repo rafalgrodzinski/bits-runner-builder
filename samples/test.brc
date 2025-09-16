@@ -4,14 +4,14 @@ user blob
 ;
 
 getU fun -> blob<user>
-    u blob<user> <- {13, false}
+    u blob<user> <- {17, false}
     ret u
 ;
 
-@export main fun -> u32
-    u1 blob<user> <- {7, true}
+@export main fun -> u64
+    u1 blob<user> <- {9, true}
     u2 blob<user> <- u1
-    //u3 blob<user> <- getU()
+    u3 blob<user> <- getU()
 
-    ret 0
+    ret u3.id
 ;

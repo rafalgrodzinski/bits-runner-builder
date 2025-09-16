@@ -118,7 +118,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         TAG_STATEMENT
     };
 
-    string name;
+    string name = defaultModuleName;
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
     vector<shared_ptr<Statement>> exportedHeaderStatements;

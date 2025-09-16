@@ -1003,24 +1003,11 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             // blob <- blob
-            case ExpressionKind::VARIABLE:
-            // blob <- function()
-            case ExpressionKind::CALL: {
-                llvm::Value *sourceValue;
-                llvm::Type *sourceType;
+            case ExpressionKind::VARIABLE: {
+                shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
+                llvm::Value *sourceValue = getAlloca(expressionVariable->getIdentifier());
+                llvm::Type *sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
 
-                if (valueExpression->getKind() == ExpressionKind::VARIABLE) {
-                    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
-                    sourceValue = getAlloca(expressionVariable->getIdentifier());
-                    sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
-                } else {
-                    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
-                    sourceValue = valueForCall(expressionCall);
-                    sourceType = sourceValue->getType();
-                }
-
-                sourceType->print(llvm::outs());
-                llvm::outs() << "\n";
                 if (!sourceType->isStructTy()) {
                     markError(0, 0, "Not a blob type");
                     return;
@@ -1038,29 +1025,21 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Value *sourceMemberValue = builder->CreateGEP(sourceType, sourceValue, index);
-                    llvm::Value *targetMemberValue = builder->CreateGEP(targetType, targetValue, index);
-                    builder->CreateStore(sourceMemberValue, targetMemberValue);
+                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceType, sourceValue, index);
+                    llvm::Type *sourceMemberType = ((llvm::StructType*)targetType)->getTypeAtIndex(i);
+                    llvm::Value *sourceMemberValue = builder->CreateLoad(sourceMemberType, sourceMemberPtr);
+                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
+                    builder->CreateStore(sourceMemberValue, targetMemberPtr);
                 }
                 break;
             }
             // blob <- function()
-            /*case ExpressionKind::CALL: {
+            case ExpressionKind::CALL: {
                 shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
                 llvm::Value *sourceValue = valueForCall(expressionCall);
-                if (sourceValue == nullptr) {
-                    markError(0, 0, "Not a blob type");
-                    return;
-                }
-                llvm::Type *sourceType = sourceValue->getType();
-                sourceType->print(llvm::outs());
-                llvm::outs() << "\n";
-                if (!sourceType->isStructTy()) {
-                    markError(0, 0, "Not a blob type");
-                    return;
-                }
+                builder->CreateStore(sourceValue, targetValue);
                 break;
-            }*/
+            }
             default:
                 markError(0, 0, "Invalid assignment");
                 break;
