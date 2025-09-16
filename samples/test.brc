@@ -1,10 +1,8 @@
-user blob
-    age u64
-    isOk bool
-;
-
 @export main fun -> u32
-    u1 blob<user> <- {24, true}
+    num u32 <- 4
+    stuff ptr<u32> <- { num.adr }
+    stuff2 ptr<u32> <- stuff
+    stuff2.val <- 5
 
-    ret 0
+    ret num
 ;
