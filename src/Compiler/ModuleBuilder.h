@@ -50,6 +50,7 @@ typedef struct {
     map<string, llvm::InlineAsm*> rawFunMap;
     map<string, llvm::StructType*> structTypeMap;
     map<string, vector<string>> structMembersMap;
+    map<string, shared_ptr<ValueType>> ptrTypeMap;
 } Scope;
 
 class ModuleBuilder {
@@ -120,6 +121,9 @@ private:
 
     bool setRawFun(string name, llvm::InlineAsm *rawFun);
     llvm::InlineAsm *getRawFun(string name);
+
+    bool setPtrType(string name, shared_ptr<ValueType> ptrType);
+    shared_ptr<ValueType> getPtrType(string name);
 
     bool registerStruct(string structName, llvm::StructType *structType, vector<string> memberNames);
     llvm::StructType *getStructType(string structName);

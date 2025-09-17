@@ -299,6 +299,8 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
             valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
+            if (!setPtrType(statement->getName(), statement->getValueType()->getSubType()))
+                return;
             alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
             break;
         }
@@ -839,10 +841,17 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string mem
         return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements()));
     } else if (isPointer && memberName.compare("val") == 0) {
         llvm::Value *pointee = builder->CreateLoad(typePtr, alloca);
-        llvm::Type *pointeeType = pointee->getType();
-        // TODO: This needs to get proper type from the pointee
-        //return builder->CreateLoad(pointeeType, pointeeAlloca);
-        return builder->CreateLoad(typeU32, pointee);
+        shared_ptr<ValueType> pointeeValueType = getPtrType(string(alloca->getName()));
+        if (pointeeValueType == nullptr) {
+            markError(0, 0, "No type for ptr");
+            return nullptr;
+        }
+        llvm::Type *pointeeType = typeForValueType(pointeeValueType);
+        if (pointeeType == nullptr) {
+            markError(0, 0, "No type for ptr");
+            return nullptr; 
+        }
+        return builder->CreateLoad(pointeeType, pointee);
     } else if (isPointer && memberName.compare("vAdr") == 0) {
         llvm::AllocaInst *pointeeAlloca = (llvm::AllocaInst*)builder->CreateLoad(typePtr, alloca);
         return builder->CreatePtrToInt(pointeeAlloca, typePtr);
@@ -1176,6 +1185,29 @@ llvm::InlineAsm *ModuleBuilder::getRawFun(string name) {
         llvm::InlineAsm *rawFun = scopes.top().rawFunMap[name];
         if (rawFun != nullptr)
             return rawFun;
+        scopes.pop();
+    }
+
+    return nullptr;
+}
+
+bool ModuleBuilder::setPtrType(string name, shared_ptr<ValueType> ptrType) {
+    if (scopes.top().ptrTypeMap[name] != nullptr) {
+        markError(0, 0, format("Ptr type \"{}\" already declared in scope", name));
+        return false;
+    }
+
+    scopes.top().ptrTypeMap[name] = ptrType;
+    return true;
+}
+
+shared_ptr<ValueType> ModuleBuilder::getPtrType(string name) {
+    stack<Scope> scopes = this->scopes;
+
+    while (!scopes.empty()) {
+        shared_ptr<ValueType> ptrType = scopes.top().ptrTypeMap[name];
+        if (ptrType != nullptr)
+            return ptrType;
         scopes.pop();
     }
 

@@ -1,11 +1,7 @@
-getNums fun -> data<u64, 7>
-    ret {1,2,3}
-;
-
 @export main fun -> u64
-    //nums data<u64> <- {1,2,3,4,5}
-    //nums2 data<u64, 16> <- nums
-    nums3 data<u64> <- getNums()
+    num u8 <- 1
+    pNum ptr<u32> <- { num.adr }
+    num2 u8 <- pNum.val
 
     ret 0
 ;
