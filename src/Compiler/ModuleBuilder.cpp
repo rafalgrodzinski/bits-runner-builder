@@ -256,9 +256,32 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
     switch (statement->getValueType()->getKind()) {
         case ValueTypeKind::DATA: {
             int count = 0;
-            if (statement->getExpression() != nullptr && statement->getExpression()->getKind() == ExpressionKind::COMPOSITE_LITERAL)
-                count = dynamic_pointer_cast<ExpressionCompositeLiteral>(statement->getExpression())->getExpressions().size();
-            // TODO: get number of values from existing array
+            if (statement->getExpression() != nullptr) {
+                switch (statement->getExpression()->getKind()) {
+                    case ExpressionKind::COMPOSITE_LITERAL: {
+                        count = dynamic_pointer_cast<ExpressionCompositeLiteral>(statement->getExpression())->getExpressions().size();
+                        break;
+                    }
+                    case ExpressionKind::VARIABLE: {
+                        string identifier = dynamic_pointer_cast<ExpressionVariable>(statement->getExpression())->getIdentifier();
+                        llvm::AllocaInst *alloca = getAlloca(identifier);
+                        if (alloca != nullptr && alloca->getAllocatedType()->isArrayTy()) {
+                            count = ((llvm::ArrayType*)alloca->getAllocatedType())->getNumElements();
+                        }
+                        break;
+                    }
+                    case ExpressionKind::CALL: {
+                        string funName = dynamic_pointer_cast<ExpressionCall>(statement->getExpression())->getName();
+                        llvm::Function *fun = getFun(funName);
+                        if (fun != nullptr && fun->getReturnType()->isArrayTy()) {
+                            count = ((llvm::ArrayType*)fun->getReturnType())->getNumElements();
+                        }
+                    }
+                    default:
+                        // should get it from the type itself
+                        break;
+                }
+            }
             valueType = (llvm::ArrayType *)typeForValueType(statement->getValueType(), count);
             if (valueType == nullptr)
                 return;
