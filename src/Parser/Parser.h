@@ -13,6 +13,7 @@ class Expression;
 class Statement;
 class StatementModule;
 
+class Parsee;
 class ParseeGroup;
 class ParseeResult;
 class ParseeResultsGroup;
@@ -56,7 +57,7 @@ private:
 
     shared_ptr<Expression> matchExpressionGrouping();
     shared_ptr<Expression> matchExpressionLiteral();
-    shared_ptr<Expression> matchExpressionArrayLiteral();
+    shared_ptr<Expression> matchExpressionCompositeLiteral();
     shared_ptr<Expression> matchExpressionVariable();
     shared_ptr<Expression> matchExpressionCall();
     shared_ptr<Expression> matchExpressionIfElse();
@@ -68,7 +69,8 @@ private:
     optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
-    optional<pair<vector<ParseeResult>, int>> statementParseeResults(bool getShouldIncludeExpressionStatement, int tag);
+    optional<pair<vector<ParseeResult>, int>> statementParseeResults(int tag);
+    optional<pair<vector<ParseeResult>, int>> statementInBlockParseeResults(bool getShouldIncludeExpressionStatement, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> orParseeResults(ParseeGroup first, ParseeGroup second);
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
@@ -76,7 +78,7 @@ private:
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
-    void markError(optional<TokenKind> expectedTokenKind, optional<string> message);
+    void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
 
 public:
     Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens);

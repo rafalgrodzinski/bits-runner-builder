@@ -8,47 +8,82 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
     shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>();
 
     switch (token->getKind()) {
-        case TokenKind::BOOL:
-            expression->boolValue = token->getLexme().compare("true") == 0;
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
+        case TokenKind::BOOL: {
+            expression->literalKind = LiteralKind::BOOL;
+            expression->valueType = ValueType::LITERAL;
+
+            bool value = token->getLexme().compare("true") == 0;
+            expression->boolValue = value;
+            expression->uIntValue = 0;
+            expression->sIntValue = 0;
+            expression->realValue = 0;
             break;
+        }
         case TokenKind::INTEGER_DEC: {
+            expression->literalKind = LiteralKind::SINT;
+            expression->valueType = ValueType::LITERAL;
+
             string numString = token->getLexme();
             erase(numString, '_');
-            expression->s32Value = stoi(numString, nullptr, 10);
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
+            int64_t value = stol(numString, nullptr, 10);
+            expression->boolValue = false;
+            expression->uIntValue = value;
+            expression->sIntValue = value;
+            expression->realValue = value;
             break;
         }
         case TokenKind::INTEGER_HEX: {
+            expression->literalKind = LiteralKind::UINT;
+            expression->valueType = ValueType::LITERAL;
+
             string numString = token->getLexme();
             erase(numString, '_');
-            expression->u32Value = stoul(numString, nullptr, 16);
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
+            uint64_t value = stoul(numString, nullptr, 16);
+            expression->boolValue = false;
+            expression->uIntValue = value;
+            expression->sIntValue = value;
+            expression->realValue = value;
             break;
         }
         case TokenKind::INTEGER_BIN: {
+            expression->literalKind = LiteralKind::UINT;
+            expression->valueType = ValueType::LITERAL;
+
             string numString = token->getLexme();
             erase(numString, '_');
             numString = numString.substr(2, numString.size()-1);
-            expression->u32Value = stoul(numString, nullptr, 2);
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
+            uint64_t value = stoul(numString, nullptr, 2);
+            expression->boolValue = false;
+            expression->uIntValue = value;
+            expression->sIntValue = value;
+            expression->realValue = value;
             break;
         }
         case TokenKind::INTEGER_CHAR: {
+            expression->literalKind = LiteralKind::UINT;
+            expression->valueType = ValueType::LITERAL;
+
             string charString = token->getLexme();
-            optional<int> charValue = Utils::charStringToInt(charString);
-            if (!charValue)
+            optional<uint64_t> value = Utils::charStringToInt(charString);
+            if (!value)
                 return nullptr;
-            
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
-            expression->u32Value = *charValue;
-            return expression;
+            expression->boolValue = false;
+            expression->uIntValue = *value;
+            expression->sIntValue = *value;
+            expression->realValue = *value;            
+            break;
         }
         case TokenKind::REAL: {
+            expression->literalKind = LiteralKind::REAL;
+            expression->valueType = ValueType::LITERAL;
+
             string numString = token->getLexme();
             erase(numString, '_');
-            expression->r32Value = stof(numString);
-            expression->valueType = ValueType::valueTypeForToken(token, nullptr, 0, "");
+            double value = stof(numString);
+            expression->boolValue = false;
+            expression->uIntValue = value;
+            expression->sIntValue = value;
+            expression->realValue = value;
             break;
         }
         default:
@@ -58,38 +93,36 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
     return expression;
 }
 
+shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForUInt(uint64_t value) {
+    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>();
+    expression->literalKind = LiteralKind::UINT;
+    expression->valueType = ValueType::LITERAL;
+    expression->boolValue = false;
+    expression->uIntValue = value;
+    expression->sIntValue = value;
+    expression->realValue = value;
+    return expression;
+}
+
 ExpressionLiteral::ExpressionLiteral():
 Expression(ExpressionKind::LITERAL, nullptr) { }
+
+LiteralKind ExpressionLiteral::getLiteralKind() {
+    return literalKind;
+}
 
 bool ExpressionLiteral::getBoolValue() {
     return boolValue;
 }
 
-uint8_t ExpressionLiteral::getU8Value() {
-    return u8Value;
+uint64_t ExpressionLiteral::getUIntValue() {
+    return uIntValue;
 }
 
-uint32_t ExpressionLiteral::getU32Value() {
-    return u32Value;
+int64_t ExpressionLiteral::getSIntValue() {
+    return sIntValue;
 }
 
-uint64_t ExpressionLiteral::getU64Value() {
-    return u64Value;
-}
-
-
-int8_t ExpressionLiteral::getS8Value() {
-    return s8Value;
-}
-
-int32_t ExpressionLiteral::getS32Value() {
-    return s32Value;
-}
-
-int64_t ExpressionLiteral::getS64Value() {
-    return s64Value;
-}
-
-float ExpressionLiteral::getR32Value() {
-    return r32Value;
+double ExpressionLiteral::getRealValue() {
+    return realValue;
 }

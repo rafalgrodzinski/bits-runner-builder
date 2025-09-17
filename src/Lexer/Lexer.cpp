@@ -141,6 +141,14 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    token = match(TokenKind::LEFT_CURLY_BRACKET, "{", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::RIGHT_CURLY_BRACKET, "}", false);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::COMMA, ",", false);
     if (token != nullptr)
         return token;
@@ -523,6 +531,20 @@ shared_ptr<Token> Lexer::matchIdentifier() {
         return nullptr;
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
+
+    // Special case for misplaced type tokens
+    if (
+        lexme.compare("u8") == 0 || lexme.compare("u32") == 0 || lexme.compare("u64") == 0 ||
+        lexme.compare("s8") == 0 || lexme.compare("s32") == 0 || lexme.compare("s64") == 0 ||
+        lexme.compare("r32") == 0 ||
+        lexme.compare("bool") == 0 ||
+        lexme.compare("data") == 0 || lexme.compare("blob") == 0 || lexme.compare("ptr") == 0
+    ){
+        shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, currentLine, currentColumn);
+        advanceWithToken(token);
+        return token;
+    }
+
     shared_ptr<Token> token = make_shared<Token>(TokenKind::IDENTIFIER, lexme, currentLine, currentColumn);
     advanceWithToken(token);
     return token;
@@ -613,6 +635,8 @@ bool Lexer::isSeparator(int index) {
         case ')':
         case '[':
         case ']':
+        case '{':
+        case '}':
         case ',':
         case ':':
         case ';':

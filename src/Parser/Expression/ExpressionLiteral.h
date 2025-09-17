@@ -3,29 +3,32 @@
 
 #include "Expression.h"
 
+enum class LiteralKind {
+    BOOL,
+    UINT,
+    SINT,
+    REAL
+};
+
+
 class ExpressionLiteral: public Expression {
 private:
+    LiteralKind literalKind;
     bool boolValue;
-    uint8_t u8Value;
-    uint32_t u32Value;
-    uint64_t u64Value;
-    int8_t s8Value;
-    int32_t s32Value;
-    int64_t s64Value;
-    float r32Value;
+    uint64_t uIntValue;
+    int64_t sIntValue;
+    double realValue;
 
 public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
-    
+    static shared_ptr<ExpressionLiteral> expressionLiteralForUInt(uint64_t value);
     ExpressionLiteral();
+    
+    LiteralKind getLiteralKind();
     bool getBoolValue();
-    uint8_t getU8Value();
-    uint32_t getU32Value();
-    uint64_t getU64Value();
-    int8_t getS8Value();
-    int32_t getS32Value();
-    int64_t getS64Value();
-    float getR32Value();
+    uint64_t getUIntValue();
+    int64_t getSIntValue();
+    double getRealValue();
 };
 
 #endif

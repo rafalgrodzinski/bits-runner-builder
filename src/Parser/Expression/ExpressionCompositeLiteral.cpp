@@ -1,19 +1,19 @@
-#include "ExpressionArrayLiteral.h"
+#include "ExpressionCompositeLiteral.h"
 
 #include "Lexer/Token.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 
-shared_ptr<ExpressionArrayLiteral> ExpressionArrayLiteral::expressionArrayLiteralForExpressions(vector<shared_ptr<Expression>> expressions) {
-    shared_ptr<ExpressionArrayLiteral> expression = make_shared<ExpressionArrayLiteral>();
+shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(vector<shared_ptr<Expression>> expressions) {
+    shared_ptr<ExpressionCompositeLiteral> expression = make_shared<ExpressionCompositeLiteral>();
     expression->expressions = expressions;
     return expression;
 }
 
-shared_ptr<ExpressionArrayLiteral> ExpressionArrayLiteral::expressionArrayLiteralForTokenString(shared_ptr<Token> tokenString) {
+shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCompositeLiteralForTokenString(shared_ptr<Token> tokenString) {
     if (tokenString->getKind() != TokenKind::STRING)
         return nullptr;
 
-    shared_ptr<ExpressionArrayLiteral> expression = make_shared<ExpressionArrayLiteral>();
+    shared_ptr<ExpressionCompositeLiteral> expression = make_shared<ExpressionCompositeLiteral>();
 
     vector<shared_ptr<Expression>> expressions;
     string stringValue = tokenString->getLexme();
@@ -39,9 +39,9 @@ shared_ptr<ExpressionArrayLiteral> ExpressionArrayLiteral::expressionArrayLitera
     return expression;
 }
 
-ExpressionArrayLiteral::ExpressionArrayLiteral():
-Expression(ExpressionKind::ARRAY_LITERAL, nullptr) { }
+ExpressionCompositeLiteral::ExpressionCompositeLiteral():
+Expression(ExpressionKind::COMPOSITE_LITERAL, nullptr) { }
 
-vector<shared_ptr<Expression>> ExpressionArrayLiteral::getExpressions() {
+vector<shared_ptr<Expression>> ExpressionCompositeLiteral::getExpressions() {
     return expressions;
 } 

@@ -19,7 +19,7 @@ class ValueType;
 class Expression;
 class ExpressionGrouping;
 class ExpressionLiteral;
-class ExpressionArrayLiteral;
+class ExpressionCompositeLiteral;
 class ExpressionVariable;
 class ExpressionCall;
 class ExpressionIfElse;
@@ -32,6 +32,7 @@ class StatementImport;
 class StatementFunction;
 class StatementFunctionDeclaration;
 class StatementRawFunction;
+class StatementBlobDeclaration;
 class StatementBlob;
 class StatementVariable;
 class StatementAssignment;
@@ -83,6 +84,7 @@ private:
     void buildImport(shared_ptr<StatementImport> statement);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
+    void buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
@@ -91,10 +93,9 @@ private:
     void buildRepeat(shared_ptr<StatementRepeat> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 
-    llvm::Value *valueForExpression(shared_ptr<Expression> expression);
-    vector<llvm::Value*> valuesForExpression(shared_ptr<Expression> expression);
-    llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression);
-    vector<llvm::Value*> valuesForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
+    llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType = nullptr);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
@@ -105,7 +106,6 @@ private:
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
-    llvm::Value *valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression);
     llvm::Value *valueForBuiltIn(llvm::AllocaInst *alloca, string memberName);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);

@@ -1,13 +1,13 @@
-@extern putchar fun: character u32 -> u32
+@extern putchar fun: character u64 -> u32
 
-print fun: text data<u32, 16>
-    rep i u32 <- 0, text[i] != 0, i <- i + 1
+print fun: text data<u64, 16>
+    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
         putchar(text[i])
     ;
 ;
 
 @export main fun -> u32
-    print("Hello, world\n\0\0\0")
+    print("Hello, world!\n")
 
     ret 0
 ;

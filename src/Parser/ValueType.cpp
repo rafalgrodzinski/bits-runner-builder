@@ -11,6 +11,7 @@ shared_ptr<ValueType> ValueType::S8 = make_shared<ValueType>(ValueTypeKind::S8, 
 shared_ptr<ValueType> ValueType::S32 = make_shared<ValueType>(ValueTypeKind::S32, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64, nullptr, 0, "");
 shared_ptr<ValueType> ValueType::R32 = make_shared<ValueType>(ValueTypeKind::R32, nullptr, 0, "");
+shared_ptr<ValueType> ValueType::LITERAL = make_shared<ValueType>(ValueTypeKind::LITERAL, nullptr, 0, "");
 
 ValueType::ValueType() { }
 
@@ -37,12 +38,16 @@ shared_ptr<ValueType> ValueType::valueTypeForToken(shared_ptr<Token> token, shar
                 return make_shared<ValueType>(ValueTypeKind::S64, nullptr, 0, "");
             else if (lexme.compare("r32") == 0)
                 return make_shared<ValueType>(ValueTypeKind::R32, nullptr, 0, "");
-            else if (lexme.compare("data") == 0)
+            else if (lexme.compare("data") == 0 && subType != nullptr)
                 return make_shared<ValueType>(ValueTypeKind::DATA, subType, valueArg, "");
-            else if (lexme.compare("blob") == 0)
-                return make_shared<ValueType>(ValueTypeKind::BLOB, nullptr, 0, typeName);
-            else if (lexme.compare("ptr") == 0)
+            else if (lexme.compare("ptr") == 0 && subType != nullptr)
                 return make_shared<ValueType>(ValueTypeKind::PTR, subType, 0, "");
+            else
+                return nullptr;
+        }
+        case TokenKind::BLOB: {
+            if (!typeName.empty())
+                return make_shared<ValueType>(ValueTypeKind::BLOB, nullptr, 0, typeName);
             else
                 return nullptr;
         }

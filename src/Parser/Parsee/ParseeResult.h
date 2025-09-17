@@ -14,6 +14,7 @@ enum class ParseeResultKind {
     TOKEN,
     VALUE_TYPE,
     STATEMENT,
+    STATEMENT_IN_BLOCK,
     EXPRESSION
 };
 
@@ -32,6 +33,7 @@ public:
     static ParseeResult tokenResult(shared_ptr<Token> token, int tag = -1);
     static ParseeResult valueTypeResult(shared_ptr<ValueType> valueType, int tokensCount, int tag = -1);
     static ParseeResult statementResult(shared_ptr<Statement> statement, int tokensCount, int tag = -1);
+    static ParseeResult statementInBlockResult(shared_ptr<Statement> statement, int tokensCount, int tag = -1);
     static ParseeResult expressionResult(shared_ptr<Expression> expression, int tokensCount, int tag = -1);
 
     ParseeResultKind getKind();

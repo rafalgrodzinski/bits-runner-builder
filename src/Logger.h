@@ -5,6 +5,7 @@
 
 class Token;
 enum class TokenKind;
+enum class ParseeKind;
 class ValueType;
 
 class Statement;
@@ -28,7 +29,7 @@ class ExpressionIfElse;
 class ExpressionVariable;
 class ExpressionGrouping;
 class ExpressionLiteral;
-class ExpressionArrayLiteral;
+class ExpressionCompositeLiteral;
 class ExpressionCall;
 class ExpressionBlock;
 
@@ -40,6 +41,7 @@ class Logger {
 private:
     static string toString(shared_ptr<Token> token);
     static string toString(TokenKind tokenKind);
+    static string toString(ParseeKind parseeKind);
     static string toString(shared_ptr<ValueType> valueType);
 
     static string toString(shared_ptr<Statement> statement);
@@ -63,7 +65,7 @@ private:
     static string toString(shared_ptr<ExpressionVariable> expression);
     static string toString(shared_ptr<ExpressionGrouping> expression);
     static string toString(shared_ptr<ExpressionLiteral> expression);
-    static string toString(shared_ptr<ExpressionArrayLiteral> expression);
+    static string toString(shared_ptr<ExpressionCompositeLiteral> expression);
     static string toString(shared_ptr<ExpressionCall> expression);
     static string toString(shared_ptr<ExpressionBlock> expression);
 

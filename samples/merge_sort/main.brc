@@ -1,14 +1,14 @@
-@import console
+@import io
 
-@extern rand fun -> u32
-@extern srand fun: seed u32
-@extern time fun: second u32 -> u32
+@extern rand fun -> u64
+@extern srand fun: seed u64
+@extern time fun: second u64 -> u64
 
-merge fun: numbers data<u32, 32>, low u32, mid u32, high u32 -> data<u32, 32>
-    temp data<u32, 32> <- numbers
-    iTemp u32 <- low
-    iLeft u32 <- low
-    iRight u32 <- mid
+merge fun: numbers data<u64, 32>, low u64, mid u64, high u64 -> data<u64, 32>
+    temp data<u64, 32> <- numbers
+    iTemp u64 <- low
+    iLeft u64 <- low
+    iRight u64 <- mid
     
     rep iLeft < mid and iRight < high, iTemp <- iTemp + 1
         if numbers[iLeft] < numbers[iRight]
@@ -33,9 +33,9 @@ merge fun: numbers data<u32, 32>, low u32, mid u32, high u32 -> data<u32, 32>
     ret temp
 ;
 
-mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
+mergeSort fun: numbers data<u64, 32>, low u64, high u64 -> data<u64, 32>
     if low < high-1
-        mid u32 <- low + (high - low) / 2
+        mid u64 <- low + (high - low) / 2
         numbers <- mergeSort(numbers, low, mid)
         numbers <- mergeSort(numbers, mid, high)
         numbers <- merge(numbers, low, mid, high)
@@ -44,27 +44,27 @@ mergeSort fun: numbers data<u32, 32>, low u32, high u32 -> data<u32, 32>
     ret numbers
 ;
 
-@export main fun -> u32
+@export main fun -> u64
     srand(time(0))
 
     // generate random numbers
-    @console.print("Before\n\0\0\0\0\0\0\0\0\0")
-    numbers data<u32, 32>
-    rep i u32 <- 0, i < 32, i <- i + 1
-        num u32 <- rand() % 10_000
+    @io.print("Before")
+    numbers data<u64, 32>
+    rep i u64 <- 0, i < 32, i <- i + 1
+        num u64 <- rand() % 10_000
         numbers[i] <- num
-        @console.printNum(num)
-        @console.printChar('\n')
+        @io.printNum(num)
+        @io.printChar('\n')
     ;
 
     numbers <- mergeSort(numbers, 0, 32)
-    @console.printChar('\n')
+    @io.printChar('\n')
 
     // print out result
-    @console.print("After\n\0\0\0\0\0\0\0\0\0\0")
-    rep i u32 <- 0, i <32, i <- i + 1
-        @console.printNum(numbers[i])
-        @console.printChar('\n')
+    @io.print("After\n")
+    rep i u64 <- 0, i <32, i <- i + 1
+        @io.printNum(numbers[i])
+        @io.printChar('\n')
     ;
 
     ret 0

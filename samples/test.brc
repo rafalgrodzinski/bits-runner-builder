@@ -1,8 +1,11 @@
-@export main fun -> u32
+getNums fun -> data<u64, 7>
+    ret {1,2,3}
+;
 
-    rep i u32 <- 5, i < 10, i > 20, i <- i + 2
-        i <- + 5
-    ;
+@export main fun -> u64
+    //nums data<u64> <- {1,2,3,4,5}
+    //nums2 data<u64, 16> <- nums
+    nums3 data<u64> <- getNums()
 
     ret 0
 ;

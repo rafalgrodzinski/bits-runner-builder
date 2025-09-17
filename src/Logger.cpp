@@ -28,7 +28,7 @@
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
-#include "Parser/Expression/ExpressionArrayLiteral.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionBlock.h"
 
@@ -75,6 +75,10 @@ string Logger::toString(shared_ptr<Token> token) {
             return "[";
         case TokenKind::RIGHT_SQUARE_BRACKET:
             return "]";
+        case TokenKind::LEFT_CURLY_BRACKET:
+            return "{";
+        case TokenKind::RIGHT_CURLY_BRACKET:
+            return "}";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -143,7 +147,8 @@ string Logger::toString(shared_ptr<Token> token) {
 }
 
 string Logger::toString(TokenKind tokenKind) {
-        switch (tokenKind) {
+    TokenKind tk = tokenKind;
+    switch (tokenKind) {
         case TokenKind::PLUS:
             return "+";
         case TokenKind::MINUS:
@@ -185,6 +190,10 @@ string Logger::toString(TokenKind tokenKind) {
             return "[";
         case TokenKind::RIGHT_SQUARE_BRACKET:
             return "]";
+        case TokenKind::LEFT_CURLY_BRACKET:
+            return "{";
+        case TokenKind::RIGHT_CURLY_BRACKET:
+            return "}";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -242,6 +251,23 @@ string Logger::toString(TokenKind tokenKind) {
             return "↲";
         case TokenKind::END:
             return "END";
+    }
+}
+
+string Logger::toString(ParseeKind parseeKind) {
+    switch (parseeKind) {
+        case ParseeKind::TOKEN:
+            return "Token";
+        case ParseeKind::VALUE_TYPE:
+            return "Value Type";
+        case ParseeKind::STATEMENT:
+            return "Statement";
+        case ParseeKind::STATEMENT_IN_BLOCK:
+            return "Statement in Block";
+        case ParseeKind::EXPRESSION:
+            return "Expression";
+        default:
+            return "Other";
     }
 }
 
@@ -452,8 +478,8 @@ string Logger::toString(shared_ptr<Expression> expression) {
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::LITERAL:
             return toString(dynamic_pointer_cast<ExpressionLiteral>(expression));
-        case ExpressionKind::ARRAY_LITERAL:
-            return toString(dynamic_pointer_cast<ExpressionArrayLiteral>(expression));
+        case ExpressionKind::COMPOSITE_LITERAL:
+            return toString(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression));
         case ExpressionKind::CALL:
             return toString(dynamic_pointer_cast<ExpressionCall>(expression));
         case ExpressionKind::BLOCK:
@@ -539,38 +565,27 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
 }
 
 string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
-    if (expression->getValueType() == nullptr)
-        return "?";
-
-    switch (expression->getValueType()->getKind()) {
-        case ValueTypeKind::NONE:
-            return "NONE";
-        case ValueTypeKind::BOOL:
-            return expression->getBoolValue() ? "true" : "false";
-        case ValueTypeKind::U8:
-            return to_string(expression->getU8Value());
-        case ValueTypeKind::U32:
-            return to_string(expression->getU32Value());
-        case ValueTypeKind::S8:
-            return to_string(expression->getS8Value());
-        case ValueTypeKind::S32:
-            return to_string(expression->getS32Value());
-        case ValueTypeKind::R32:
-            return to_string(expression->getR32Value());
-        default:
-            return "?";
+    switch (expression->getLiteralKind()) {
+        case LiteralKind::BOOL:
+        return expression->getBoolValue() ? "true" : "false";
+        case LiteralKind::UINT:
+            return to_string(expression->getUIntValue());
+        case LiteralKind::SINT:
+            return to_string(expression->getSIntValue());
+        case LiteralKind::REAL:
+            return to_string(expression->getRealValue());
     }
 }
 
-string Logger::toString(shared_ptr<ExpressionArrayLiteral> expression) {
+string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression) {
     string text;
-    text += "[";
+    text += "{";
     for (int i=0; i<expression->getExpressions().size(); i++) {
         text += toString(expression->getExpressions().at(i));
         if (i < expression->getExpressions().size() - 1)
             text += ", ";
     }
-    text += "]";
+    text += "}";
     return text;
 }
 
@@ -619,9 +634,15 @@ void Logger::print(shared_ptr<Error> error) {
         case ErrorKind::PARSER_ERROR: {
             shared_ptr<Token> token = error->getActualToken();
             optional<TokenKind> expectedTokenKind = error->getExpectedTokenKind();
+            optional<Parsee> expectedParsee = error->getExpectedParsee();
             optional<string> errorMessage = error->getMessage();
 
-            if (expectedTokenKind) {
+            if (expectedParsee) {
+                message = format(
+                    "At line {}, column {}, Expected {} but found {} instead",
+                    token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee).getKind()), toString(token)
+                );
+            } else if (expectedTokenKind) {
                 message = format(
                     "At line {}, column {}: Expected token {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
