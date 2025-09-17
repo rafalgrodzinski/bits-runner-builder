@@ -6,7 +6,6 @@
 
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
-#include "Parser/Expression/ExpressionArrayLiteral.h"
 #include "Parser/Expression/ExpressionCompositeLiteral.h"
 #include "Parser/Expression/ExpressionVariable.h"
 #include "Parser/Expression/ExpressionCall.h"
@@ -257,8 +256,8 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
     switch (statement->getValueType()->getKind()) {
         case ValueTypeKind::DATA: {
             int count = 0;
-            if (statement->getExpression() != nullptr && statement->getExpression()->getKind() == ExpressionKind::ARRAY_LITERAL)
-                count = dynamic_pointer_cast<ExpressionArrayLiteral>(statement->getExpression())->getExpressions().size();
+            if (statement->getExpression() != nullptr && statement->getExpression()->getKind() == ExpressionKind::COMPOSITE_LITERAL)
+                count = dynamic_pointer_cast<ExpressionCompositeLiteral>(statement->getExpression())->getExpressions().size();
             // TODO: get number of values from existing array
             valueType = (llvm::ArrayType *)typeForValueType(statement->getValueType(), count);
             if (valueType == nullptr)
@@ -437,8 +436,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
     switch (expression->getKind()) {
         case ExpressionKind::LITERAL:
             return valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression), castToType);
-        case ExpressionKind::ARRAY_LITERAL:
-            return valueForArrayLiteral(dynamic_pointer_cast<ExpressionArrayLiteral>(expression), castToType);
+        case ExpressionKind::COMPOSITE_LITERAL:
+            return valueForCompositeLiteral(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), castToType);
         case ExpressionKind::GROUPING:
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
         case ExpressionKind::BINARY:
@@ -797,25 +796,15 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression, llvm::Type *castToType) {
-    int count;
-    llvm::Type *elementType;
-    if (castToType != nullptr) {
-        elementType = ((llvm::ArrayType*)castToType)->getElementType();
-        count = ((llvm::ArrayType*)castToType)->getArrayNumElements();
-    } else if (!expression->getExpressions().empty()) {
-        elementType = valueForExpression(expression->getExpressions().at(0))->getType();
-        count = expression->getExpressions().size();
-    } else {
-        elementType = typeU64;
-        count = 0;
+llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
+    if (castToType == nullptr) {
+        markError(0, 0, "Don't know what to do with the composite");
+        return nullptr;
     }
 
-    llvm::Type *targetType = llvm::ArrayType::get(elementType, count);
-    llvm::AllocaInst *targetAlloca = builder->CreateAlloca(targetType, nullptr);
-
-    buildAssignment(targetAlloca, targetType, expression);
-    return builder->CreateLoad(targetType, targetAlloca);
+    llvm::AllocaInst *targetAlloca = builder->CreateAlloca(castToType, nullptr);
+    buildAssignment(targetAlloca, castToType, expression);
+    return builder->CreateLoad(castToType, targetAlloca);
 }
 
 llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, string memberName) {
@@ -883,19 +872,18 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
         switch (valueExpression->getKind()) {
             // data <- { }
             // copy values from literal expression into an allocated array
-            case ExpressionKind::ARRAY_LITERAL: {
-                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionArrayLiteral>(valueExpression)->getExpressions();
+            case ExpressionKind::COMPOSITE_LITERAL: {
+                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
                 int sourceCount = valueExpressions.size();
                 int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
                 int count = min(sourceCount, targetCount);
-                string targetName = string(targetValue->getName());
                 llvm::Type *elementType = ((llvm::ArrayType *)targetType)->getArrayElementType();
                 for (int i=0; i<count; i++) {
                     llvm::Value *index[] = {
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index, format("{}[{}]", targetName, i));
+                    llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index);
                     llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), elementType);
                     builder->CreateStore(sourceValue, targetPtr);
                 }

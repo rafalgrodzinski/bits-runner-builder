@@ -1,11 +1,12 @@
 getU fun -> data<u64, 8>
     //ret {4, 8, 7}
-    ret {4, 8, 7}
+    ret {4, 8, 7, 13}
 ;
 
 @export main fun -> u64
-    nums data<u64, 8> <- getU()
-    nums2 data<u64, 4> <- nums
+    nums data<u64, 4> <- getU()
+    nums2 data<u64, 4> <- ""
 
-    ret nums2[1]
+    //ret nums2[1]
+    ret 0//nums[4]
 ;

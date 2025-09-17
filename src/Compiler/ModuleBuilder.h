@@ -19,7 +19,7 @@ class ValueType;
 class Expression;
 class ExpressionGrouping;
 class ExpressionLiteral;
-class ExpressionArrayLiteral;
+class ExpressionCompositeLiteral;
 class ExpressionVariable;
 class ExpressionCall;
 class ExpressionIfElse;
@@ -95,7 +95,7 @@ private:
 
     llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType = nullptr);
-    llvm::Value *valueForArrayLiteral(shared_ptr<ExpressionArrayLiteral> expression, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType = nullptr);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
