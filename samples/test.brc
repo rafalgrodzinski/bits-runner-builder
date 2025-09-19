@@ -1,7 +1,11 @@
+user blob
+    name data<u64, 16>
+    id u64
+;
+
 @export main fun -> u64
-    num u8 <- 1
-    pNum ptr<u32> <- { num.adr }
-    num2 u8 <- pNum.val
+    u1 blob<user> <- {"john", 14}
+    u2 blob<user> <- u1
 
     ret 0
 ;

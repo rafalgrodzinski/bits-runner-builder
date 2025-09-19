@@ -15,7 +15,7 @@ newUser fun: userPtr ptr<blob<user>>, name data<u64, 16>, id u64
     ;
 
     userPtr <- { malloc(130) }
-    userPtr.val <- { name, id, 0x00 }
+    userPtr.val <- { name, id, { 0x00 } }
 ;
 
 printUsers fun: userPtr ptr<blob<user>>
@@ -32,14 +32,32 @@ printUsers fun: userPtr ptr<blob<user>>
     ;
 ;
 
+printU fun: user blob<user>
+    //user blob<user> <- userPtr.val
+
+    @io.print("id: ")
+    @io.printNum(user.id)
+    @io.print("\n")
+    @io.print("name: ")
+    @io.print(user.name)
+    @io.print("\n")
+;
+
 @export main fun -> u32
-    userPtr ptr<blob<user>> <- { 0x00 }
+    /*userPtr ptr<blob<user>> <- { 0x00 }
     newUser(userPtr, "Bob", 14)
     newUser(userPtr, "John", 7)
     newUser(userPtr, "Alice", 9)
     newUser(userPtr, "Mike", 3)
 
-    printUsers(userPtr)
+    printUsers(userPtr)*/
+
+    userPtr ptr<blob<user>> <- { malloc(130) }
+    //user blob<user> <- userPtr.val
+    //user.id <- 14
+    //user.name <- "Kuma"
+    userPtr.val.id <- 7
+    printU(userPtr.val)
 
     ret 0
 ;

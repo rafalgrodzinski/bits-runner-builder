@@ -107,11 +107,11 @@ private:
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
-    llvm::Value *valueForBuiltIn(llvm::AllocaInst *alloca, string memberName);
+    llvm::Value *valueForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<ExpressionVariable> expression);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
-    bool buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, string memberName, shared_ptr<Expression> valueExpression);
+    bool buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<StatementAssignment> statement);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);
     llvm::AllocaInst *getAlloca(string name);
