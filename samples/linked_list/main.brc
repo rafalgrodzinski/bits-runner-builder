@@ -8,14 +8,24 @@ user blob
     next ptr<blob<user>>
 ;
 
-newUser fun: userPtr ptr<blob<user>>, name data<u64, 16>, id u64
-    rep userPtr.vAdr != 0x00
-        user blob<user> <- userPtr.val
-        userPtr <- user.next
-    ;
+newUser fun: userPtrPtr ptr<ptr<blob<user>>>, name data<u64, 16>, id u64
+    newUserPtr ptr<blob<user>> <- { malloc(130) }
+    newUserPtr.val <- { name, id, { 0x00 } }
 
-    userPtr <- { malloc(130) }
-    userPtr.val <- { name, id, 0x00 }
+    userPtr ptr<blob<user>> <- userPtrPtr.val
+    if userPtr.vAdr = 0x00
+        userPtrPtr.val <- newUserPtr
+    else
+        user blob<user> <- userPtr.val
+        userNextPtr ptr<blob<user>> <- user.next
+        rep userNextPtr.vAdr != 0x00
+            userPtr <- user.next
+            user <- userPtr.val
+            userNextPtr <- user.next
+        ;
+        user.next <- newUserPtr
+        userPtr.val <- user
+    ;
 ;
 
 printUsers fun: userPtr ptr<blob<user>>
@@ -34,10 +44,10 @@ printUsers fun: userPtr ptr<blob<user>>
 
 @export main fun -> u32
     userPtr ptr<blob<user>> <- { 0x00 }
-    newUser(userPtr, "Bob", 14)
-    newUser(userPtr, "John", 7)
-    newUser(userPtr, "Alice", 9)
-    newUser(userPtr, "Mike", 3)
+    newUser( { userPtr.adr }, "Bob", 14)
+    newUser( { userPtr.adr }, "John", 7)
+    newUser( { userPtr.adr }, "Alice", 9)
+    newUser( { userPtr.adr }, "Mike", 3)
 
     printUsers(userPtr)
 
