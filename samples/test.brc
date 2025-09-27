@@ -1,54 +1,21 @@
-@extern putchar fun: character u64 -> u32
-@extern malloc fun: size u64 -> u64
-
-print fun: text data<u64, 16>
-    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
-        putchar(text[i])
-    ;
+engine blob
+    size u64
 ;
 
-printNum fun: number u64
-    biggest u64 <- 10
-    rep biggest <= number: biggest <- biggest * 10
-    biggest <- biggest / 10
-
-    rep biggest > 0, biggest <- biggest / 10
-        digit u64 <- number / biggest
-        putchar(digit + '0')
-        number <- number % biggest
-    ;
-;
-
-user blob
+car blob
     name data<u64, 16>
-    id u64
-;
-
-printPUser fun: pUser ptr<blob<user>>
-    user blob<user> <- pUser.val
-
-    print("id: ")
-    printNum(user.id)
-    print("\n")
-    print("name: ")
-    print(user.name)
-    print("\n")
-;
-
-printUser fun: user blob<user>
-    print("id: ")
-    printNum(user.id)
-    print("\n")
-    print("name: ")
-    print(user.name)
-    print("\n")
+    eng blob<engine>
 ;
 
 @export main fun -> u64
-    pUser ptr<blob<user>> <- { malloc(130) }
-    pUser.val <- { "Kuma", 7 }
-    printPUser(pUser)
-    printUser(pUser.val)
+    toyota blob<car>
+
+    toyota.name <- "toyo"
+    toyota.eng <- { 1200 }
+    //toyota.eng.size <- 1200
+
+    //s u64 <- toyota.eng.size
+    toyota.eng.size
 
     ret 0
 ;

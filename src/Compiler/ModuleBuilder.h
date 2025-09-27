@@ -25,6 +25,7 @@ class ExpressionCall;
 class ExpressionIfElse;
 class ExpressionBinary;
 class ExpressionUnary;
+class ExpressionChained;
 enum class ExpressionBinaryOperation;
 
 class Statement;
@@ -107,6 +108,8 @@ private:
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
+    llvm::Value *valueForChained(shared_ptr<ExpressionChained> expression);
+    llvm::Value *valueForChained(llvm::Value *parentValue, shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<ExpressionVariable> expression);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);

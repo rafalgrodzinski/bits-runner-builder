@@ -17,7 +17,8 @@ enum class ExpressionKind {
     IF_ELSE,
     VARIABLE,
     CALL,
-    BLOCK
+    BLOCK,
+    CHAINED
 };
 
 class Expression {

@@ -13,6 +13,7 @@
 #include "Parser/Expression/ExpressionBinary.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionChained.h"
 
 #include "Parser/Statement/StatementImport.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -481,6 +482,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForVariable(dynamic_pointer_cast<ExpressionVariable>(expression));
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
+        case ExpressionKind::CHAINED:
+            return valueForChained(dynamic_pointer_cast<ExpressionChained>(expression));
         default:
             markError(0, 0, "Unexpected expression");
             return nullptr;
@@ -770,7 +773,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
 
             return builder->CreateLoad(type->getArrayElementType(), elementPtr);
         }
-        case ExpressionVariableKind::BLOB: {
+        /*case ExpressionVariableKind::BLOB: {
             // First check for built-ins
             llvm::Value *builtInValue = valueForBuiltIn(alloca, expression);
             if (builtInValue != nullptr) {
@@ -793,7 +796,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
             };
             llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index, format("{}.{}", expression->getIdentifier(), expression->getMemberName()));
             return builder->CreateLoad(structType->getElementType(*memberIndex), elementPtr);
-        }
+        }*/
     }
 }
 
@@ -827,6 +830,47 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
     return nullptr;
 }
 
+llvm::Value *ModuleBuilder::valueForChained(shared_ptr<ExpressionChained> expression) {
+    if (expression->getParentExpression() == nullptr) 
+        return valueForExpression(expression->getExpression());
+
+    llvm::Value *parentValue = valueForExpression(expression->getParentExpression());
+    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(expression->getExpression());
+    if (expressionVariable == nullptr)
+        return nullptr;
+    return valueForChained(parentValue, expressionVariable);
+}
+
+llvm::Value *ModuleBuilder::valueForChained(llvm::Value *parentValue, shared_ptr<ExpressionVariable> expression) {
+    // Figure out opearand for the load operation
+    llvm::Value *sourceOperand;
+    llvm::LoadInst *sourceLoad = llvm::dyn_cast<llvm::LoadInst>(parentValue);
+    if (sourceLoad != nullptr)
+        sourceOperand = sourceLoad->getOperand(0);
+    else
+        sourceOperand = parentValue;
+    
+    // First check for built-ins
+
+    // Then do a normal member check
+    llvm::StructType *structType = (llvm::StructType*)parentValue->getType();
+    if (!structType->isStructTy()) {
+        markError(0, 0, "Something's fucky");
+        return nullptr;
+    }
+    string structName = string(structType->getName());
+    optional<int> memberIndex = getMemberIndex(structName, expression->getIdentifier());
+    if (!memberIndex)
+        return nullptr;
+    llvm::Value *index[] = {
+        builder->getInt32(0),
+        builder->getInt32(*memberIndex)
+    };
+
+    llvm::Value *elementPtr = builder->CreateGEP(structType, sourceOperand, index);
+    return builder->CreateLoad(structType->getElementType(*memberIndex), elementPtr);
+}
+
 llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
     if (castToType == nullptr) {
         markError(0, 0, "Don't know what to do with the composite");
@@ -842,7 +886,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, shared_ptr
     bool isArray = alloca->getAllocatedType()->isArrayTy();
     bool isPointer = alloca->getAllocatedType()->isPointerTy();
 
-    if (isArray && expression->getMemberName().compare("count") == 0) {
+    /*if (isArray && expression->getMemberName().compare("count") == 0) {
         llvm::ArrayType *arrayType = (llvm::ArrayType*)alloca->getAllocatedType();
         return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements()));
     } else if (isPointer && expression->getMemberName().compare("val") == 0) {
@@ -863,7 +907,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, shared_ptr
         return builder->CreatePtrToInt(pointeeAlloca, typeU64);
     } else if (expression->getMemberName().compare("adr") == 0) {
         return builder->CreatePtrToInt(alloca, typePtr);
-    }
+    }*/
 
     return nullptr;
 }

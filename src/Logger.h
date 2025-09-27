@@ -32,6 +32,7 @@ class ExpressionLiteral;
 class ExpressionCompositeLiteral;
 class ExpressionCall;
 class ExpressionBlock;
+class ExpressionChained;
 
 class Error;
 
@@ -68,6 +69,7 @@ private:
     static string toString(shared_ptr<ExpressionCompositeLiteral> expression);
     static string toString(shared_ptr<ExpressionCall> expression);
     static string toString(shared_ptr<ExpressionBlock> expression);
+    static string toString(shared_ptr<ExpressionChained> expression);
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);

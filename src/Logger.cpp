@@ -31,6 +31,7 @@
 #include "Parser/Expression/ExpressionCompositeLiteral.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionChained.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -484,6 +485,8 @@ string Logger::toString(shared_ptr<Expression> expression) {
             return toString(dynamic_pointer_cast<ExpressionCall>(expression));
         case ExpressionKind::BLOCK:
             return toString(dynamic_pointer_cast<ExpressionBlock>(expression));
+        case ExpressionKind::CHAINED:
+            return toString(dynamic_pointer_cast<ExpressionChained>(expression));
     }
 }
 
@@ -555,8 +558,6 @@ string Logger::toString(shared_ptr<ExpressionVariable> expression) {
             return format("VAR({})", expression->getIdentifier());
         case ExpressionVariableKind::DATA:
             return format("VAR({}|{})", expression->getIdentifier(), toString(expression->getIndexExpression()));
-        case ExpressionVariableKind::BLOB:
-            return format("VAR({}.{})", expression->getIdentifier(), expression->getMemberName());
     }
 }
 
@@ -609,6 +610,17 @@ string Logger::toString(shared_ptr<ExpressionBlock> expression) {
     return text;
 }
 
+string Logger::toString(shared_ptr<ExpressionChained> expression) {
+    string text;
+
+    if (expression->getParentExpression() != nullptr) {
+        text += toString(expression->getParentExpression());
+        text += ".";
+    }
+    text += toString(expression->getExpression());
+
+    return text;
+}
 
 void Logger::print(vector<shared_ptr<Token>> tokens) {
         for (int i=0; i<tokens.size(); i++) {
