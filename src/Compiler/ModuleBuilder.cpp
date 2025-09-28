@@ -22,7 +22,6 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementVariable.h"
-#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementAssignmentChained.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
@@ -104,9 +103,6 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             break;
         case StatementKind::VARIABLE:
             buildVariable(dynamic_pointer_cast<StatementVariable>(statement));
-            break;
-        case StatementKind::ASSIGNMENT:
-            buildAssignment(dynamic_pointer_cast<StatementAssignment>(statement));
             break;
         case StatementKind::ASSIGNMENT_CHAINED:
             buildAssignmentChained(dynamic_pointer_cast<StatementAssignmentChained>(statement));
@@ -332,7 +328,7 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
         buildAssignment(alloca, valueType, statement->getExpression());
 }
 
-void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
+/*void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
     llvm::Value *targetValue;
     llvm::Type *targetType;
 
@@ -384,7 +380,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
     }
 
     buildAssignment(targetValue, targetType, statement->getValueExpression());
-}
+}*/
 
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignmentChained> statement) {
     llvm::Value *targetValue = valueForChainExpressions(statement->getChainExpressions());
@@ -1147,7 +1143,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
     }
 }
 
-bool ModuleBuilder::buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<StatementAssignment> statement) {
+/*bool ModuleBuilder::buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<StatementAssignment> statement) {
     bool isPointer = alloca->getAllocatedType()->isPointerTy();
 
     if (isPointer && statement->getMemberName().compare("vAdr") == 0) {
@@ -1172,7 +1168,7 @@ bool ModuleBuilder::buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, shared_p
     }
 
     return false;
-}
+}*/
 
 bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
     if (scopes.top().allocaMap[name] != nullptr) {

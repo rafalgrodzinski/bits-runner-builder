@@ -36,7 +36,6 @@ class StatementRawFunction;
 class StatementBlobDeclaration;
 class StatementBlob;
 class StatementVariable;
-class StatementAssignment;
 class StatementAssignmentChained;
 class StatementReturn;
 class StatementExpression;
@@ -90,7 +89,6 @@ private:
     void buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVariable(shared_ptr<StatementVariable> statement);
-    void buildAssignment(shared_ptr<StatementAssignment> statement);
     void buildAssignmentChained(shared_ptr<StatementAssignmentChained> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
@@ -116,7 +114,7 @@ private:
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
-    bool buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<StatementAssignment> statement);
+    //bool buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<StatementAssignment> statement);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);
     llvm::AllocaInst *getAlloca(string name);

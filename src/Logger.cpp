@@ -16,7 +16,6 @@
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlock.h"
-#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementAssignmentChained.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementRepeat.h"
@@ -323,8 +322,6 @@ string Logger::toString(shared_ptr<Statement> statement) {
             return toString(dynamic_pointer_cast<StatementBlob>(statement));
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement));
-        case StatementKind::ASSIGNMENT:
-            return toString(dynamic_pointer_cast<StatementAssignment>(statement));
         case StatementKind::ASSIGNMENT_CHAINED:
             return toString(dynamic_pointer_cast<StatementAssignmentChained>(statement));
         case StatementKind::RETURN:
@@ -422,17 +419,6 @@ string Logger::toString(shared_ptr<StatementBlock> statement) {
     }
 
     return text;
-}
-
-string Logger::toString(shared_ptr<StatementAssignment> statement) {
-    switch (statement->getAssignmentKind()) {
-        case StatementAssignmentKind::SIMPLE:
-            return format("{} <- {}", statement->getIdentifier(), toString(statement->getValueExpression()));
-        case StatementAssignmentKind::DATA:
-            return format("{}[{}] <- {}", statement->getIdentifier(), toString(statement->getIndexExpression()), toString(statement->getValueExpression()));
-        case StatementAssignmentKind::BLOB:
-            return format("{}.{} <- {}", statement->getIdentifier(), statement->getMemberName(), toString(statement->getValueExpression()));
-    }
 }
 
 string Logger::toString(shared_ptr<StatementAssignmentChained> statement) {
