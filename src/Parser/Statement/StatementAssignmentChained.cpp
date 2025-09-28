@@ -1,10 +1,10 @@
 #include "StatementAssignmentChained.h"
 
-StatementAssignmentChained::StatementAssignmentChained(shared_ptr<ExpressionChained> chainExpression, shared_ptr<Expression> valueExpression):
-Statement(StatementKind::ASSIGNMENT_CHAINED), chainExpression(chainExpression), valueExpression(valueExpression) { }
+StatementAssignmentChained::StatementAssignmentChained(vector<shared_ptr<Expression>> chainExpressions, shared_ptr<Expression> valueExpression):
+Statement(StatementKind::ASSIGNMENT_CHAINED), chainExpressions(chainExpressions), valueExpression(valueExpression) { }
 
-shared_ptr<ExpressionChained> StatementAssignmentChained::getChainExpression() {
-    return chainExpression;
+vector<shared_ptr<Expression>> StatementAssignmentChained::getChainExpressions() {
+    return chainExpressions;
 }
 
 shared_ptr<Expression> StatementAssignmentChained::getValueExpression() {

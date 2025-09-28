@@ -1,12 +1,8 @@
 #include "ExpressionChained.h"
 
-ExpressionChained::ExpressionChained(shared_ptr<ExpressionChained> parentExpression, shared_ptr<Expression> expression):
-Expression(ExpressionKind::CHAINED, nullptr), parentExpression(parentExpression), expression(expression) { }
+ExpressionChained::ExpressionChained(vector<shared_ptr<Expression>> chainExpressions):
+Expression(ExpressionKind::CHAINED, nullptr), chainExpressions(chainExpressions) { }
 
-shared_ptr<ExpressionChained> ExpressionChained::getParentExpression() {
-    return parentExpression;
-}
-
-shared_ptr<Expression> ExpressionChained::getExpression() {
-    return expression;
+vector<shared_ptr<Expression>> ExpressionChained::getChainExpressions() {
+    return chainExpressions;
 }

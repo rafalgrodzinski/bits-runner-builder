@@ -441,7 +441,7 @@ string Logger::toString(shared_ptr<StatementAssignmentChained> statement) {
         text += toString(statement->getParentStatement());
         text += ".";
     }*/
-    text += toString(statement->getChainExpression());
+    //text += toString(statement->getChainExpression());
     return text;
 }
 
@@ -626,11 +626,11 @@ string Logger::toString(shared_ptr<ExpressionBlock> expression) {
 string Logger::toString(shared_ptr<ExpressionChained> expression) {
     string text;
 
-    if (expression->getParentExpression() != nullptr) {
+    /*if (expression->getParentExpression() != nullptr) {
         text += toString(expression->getParentExpression());
         text += ".";
     }
-    text += toString(expression->getExpression());
+    text += toString(expression->getExpression());*/
 
     return text;
 }

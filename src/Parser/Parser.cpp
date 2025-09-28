@@ -25,7 +25,6 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementVariable.h"
-//#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementAssignmentChained.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
@@ -664,8 +663,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         TAG_VALUE_EXPRESSION
     };
 
-    //shared_ptr<StatementAssignmentChained> parentStatement;
-    shared_ptr<ExpressionChained> chainedExpression;
+    vector<shared_ptr<Expression>> chainExpressions;
     shared_ptr<Expression> valueExpression;
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
@@ -729,9 +727,6 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    // extract chain and value expressions
-    vector<shared_ptr<ExpressionVariable>> chainExpressions;
-
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
@@ -754,15 +749,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         }
     }
 
-    // convert chain and value expressiosn into chained expression
-    for (shared_ptr<ExpressionVariable> &expression : chainExpressions)
-        chainedExpression = make_shared<ExpressionChained>(chainedExpression, expression);
-    /*for (int i=0; i<chainExpressions.size(); i++) {
-        //shared_ptr<Expression> currentValueExpression = i == chainExpressions.size()-1 ? valueExpression : nullptr;
-        //parentStatement = make_shared<StatementAssignmentChained>(parentStatement, chainExpressions.at(i), currentValueExpression);
-    }*/
-
-    return make_shared<StatementAssignmentChained>(chainedExpression, valueExpression);
+    return make_shared<StatementAssignmentChained>(chainExpressions, valueExpression);
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {
@@ -1042,18 +1029,22 @@ shared_ptr<Expression> Parser::matchUnary() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChained> parentExpression) {
-    shared_ptr<Expression> expression = matchPrimary();
-    if (expression == nullptr)
-        return nullptr;
+    vector<shared_ptr<Expression>> chainExpressions;
 
-    if (tryMatchingTokenKinds({TokenKind::DOT}, false, true)) {
-        shared_ptr<ExpressionChained> newParentExpression = make_shared<ExpressionChained>(parentExpression, expression);
-        expression = matchExpressionChained(newParentExpression);
-    } else if (parentExpression != nullptr) {
-        expression = make_shared<ExpressionChained>(parentExpression, expression);
+    do {
+        shared_ptr<Expression> expression = matchPrimary();
+        if (expression != nullptr)
+            chainExpressions.push_back(expression);
+    } while (tryMatchingTokenKinds({TokenKind::DOT}, false, true));
+
+    switch (chainExpressions.size()) {
+        case 0:
+            return nullptr;
+        case 1:
+            return chainExpressions.at(0);
+        default:
+            return make_shared<ExpressionChained>(chainExpressions);
     }
-
-    return expression;
 }
 
 shared_ptr<Expression> Parser::matchPrimary() {

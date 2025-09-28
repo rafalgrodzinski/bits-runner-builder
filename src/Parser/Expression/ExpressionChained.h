@@ -5,13 +5,11 @@
 
 class ExpressionChained: public Expression {
 private:
-    shared_ptr<ExpressionChained> parentExpression;
-    shared_ptr<Expression> expression;
+    vector<shared_ptr<Expression>> chainExpressions;
 
 public:
-    ExpressionChained(shared_ptr<ExpressionChained> parentExpression, shared_ptr<Expression> expression);
-    shared_ptr<ExpressionChained> getParentExpression();
-    shared_ptr<Expression> getExpression();
+    ExpressionChained(vector<shared_ptr<Expression>> chainExpressions);
+    vector<shared_ptr<Expression>> getChainExpressions();
 };
 
 #endif

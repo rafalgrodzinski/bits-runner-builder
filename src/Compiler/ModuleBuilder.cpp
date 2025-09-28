@@ -387,17 +387,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
 }
 
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignmentChained> statement) {
-    /*llvm::Value *targetValue;
-    if (statement->getParentStatement() == nullptr) {
-        targetValue = valueForExpression(statement->getChainExpression())
-    } else {
-
-    }*/
-   llvm::Value *targetValue = valueForChained(statement->getChainExpression());
-   targetValue->print(llvm::outs());
-   llvm::outs() << "\n";
-   targetValue->getType()->print(llvm::outs());
-    llvm::outs() << "\n";
+    llvm::Value *targetValue = valueForChainExpressions(statement->getChainExpressions());
 
     // Figure out opearand for the store operation
     llvm::Value *targetOperand;
@@ -406,11 +396,6 @@ void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignmentChained
         targetOperand = targetLoad->getOperand(0);
     else
         targetOperand = targetValue;
-
-       targetOperand->print(llvm::outs());
-   llvm::outs() << "\n";
-   targetOperand->getType()->print(llvm::outs());
-    llvm::outs() << "\n";
 
     buildAssignment(targetOperand, targetValue->getType(), statement->getValueExpression());
 }
@@ -864,44 +849,52 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
 }
 
 llvm::Value *ModuleBuilder::valueForChained(shared_ptr<ExpressionChained> expression) {
-    if (expression->getParentExpression() == nullptr) 
-        return valueForExpression(expression->getExpression());
-
-    llvm::Value *parentValue = valueForExpression(expression->getParentExpression());
-    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(expression->getExpression());
-    if (expressionVariable == nullptr)
-        return nullptr;
-    return valueForChained(parentValue, expressionVariable);
+    return valueForChainExpressions(expression->getChainExpressions());
 }
 
-llvm::Value *ModuleBuilder::valueForChained(llvm::Value *parentValue, shared_ptr<ExpressionVariable> expression) {
-    // Figure out opearand for the load operation
-    llvm::Value *sourceOperand;
-    llvm::LoadInst *sourceLoad = llvm::dyn_cast<llvm::LoadInst>(parentValue);
-    if (sourceLoad != nullptr)
-        sourceOperand = sourceLoad->getOperand(0);
-    else
-        sourceOperand = parentValue;
-    
-    // First check for built-ins
+llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions) {
+    llvm::Value *currentValue = nullptr;
 
-    // Then do a normal member check
-    llvm::StructType *structType = (llvm::StructType*)parentValue->getType();
-    if (!structType->isStructTy()) {
-        markError(0, 0, "Something's fucky");
-        return nullptr;
+    for (shared_ptr<Expression> &chainExpression : chainExpressions) {
+        if (currentValue == nullptr) {
+            currentValue = valueForExpression(chainExpression);
+        } else {
+            // Figure out opearand for the load operation
+            llvm::Value *sourceOperand;
+            llvm::LoadInst *sourceLoad = llvm::dyn_cast<llvm::LoadInst>(currentValue);
+            if (sourceLoad != nullptr)
+                sourceOperand = sourceLoad->getOperand(0);
+            else
+                sourceOperand = currentValue;
+
+            // First check for built-ins
+
+            // Then do a normal member check
+            llvm::StructType *structType = (llvm::StructType*)currentValue->getType();
+            if (!structType->isStructTy()) {
+                markError(0, 0, "Something's fucky");
+                return nullptr;
+            }
+            string structName = string(structType->getName());
+            shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
+            if (expressionVariable == nullptr) {
+                markError(0, 0, "Invalid expression type");
+                return nullptr;
+            }
+            optional<int> memberIndex = getMemberIndex(structName, expressionVariable->getIdentifier());
+            if (!memberIndex)
+                return nullptr;
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(*memberIndex)
+            };
+
+            llvm::Value *elementPtr = builder->CreateGEP(structType, sourceOperand, index);
+            currentValue = builder->CreateLoad(structType->getElementType(*memberIndex), elementPtr);
+        }
     }
-    string structName = string(structType->getName());
-    optional<int> memberIndex = getMemberIndex(structName, expression->getIdentifier());
-    if (!memberIndex)
-        return nullptr;
-    llvm::Value *index[] = {
-        builder->getInt32(0),
-        builder->getInt32(*memberIndex)
-    };
 
-    llvm::Value *elementPtr = builder->CreateGEP(structType, sourceOperand, index);
-    return builder->CreateLoad(structType->getElementType(*memberIndex), elementPtr);
+    return currentValue;
 }
 
 llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
