@@ -16,7 +16,7 @@
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlock.h"
-#include "Parser/Statement/StatementAssignmentChained.h"
+#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementExpression.h"
@@ -322,8 +322,8 @@ string Logger::toString(shared_ptr<Statement> statement) {
             return toString(dynamic_pointer_cast<StatementBlob>(statement));
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement));
-        case StatementKind::ASSIGNMENT_CHAINED:
-            return toString(dynamic_pointer_cast<StatementAssignmentChained>(statement));
+        case StatementKind::ASSIGNMENT:
+            return toString(dynamic_pointer_cast<StatementAssignment>(statement));
         case StatementKind::RETURN:
             return toString(dynamic_pointer_cast<StatementReturn>(statement));
         case StatementKind::REPEAT:
@@ -421,7 +421,7 @@ string Logger::toString(shared_ptr<StatementBlock> statement) {
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementAssignmentChained> statement) {
+string Logger::toString(shared_ptr<StatementAssignment> statement) {
     string text;
     /*if (statement->getParentStatement() != nullptr) {
         text += toString(statement->getParentStatement());

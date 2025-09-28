@@ -25,7 +25,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementVariable.h"
-#include "Parser/Statement/StatementAssignmentChained.h"
+#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
@@ -749,7 +749,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         }
     }
 
-    return make_shared<StatementAssignmentChained>(chainExpressions, valueExpression);
+    return make_shared<StatementAssignment>(chainExpressions, valueExpression);
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {

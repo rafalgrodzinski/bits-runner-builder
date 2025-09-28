@@ -36,7 +36,7 @@ class StatementRawFunction;
 class StatementBlobDeclaration;
 class StatementBlob;
 class StatementVariable;
-class StatementAssignmentChained;
+class StatementAssignment;
 class StatementReturn;
 class StatementExpression;
 class StatementRepeat;
@@ -89,7 +89,7 @@ private:
     void buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVariable(shared_ptr<StatementVariable> statement);
-    void buildAssignmentChained(shared_ptr<StatementAssignmentChained> statement);
+    void buildAssignmentChained(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
     void buildRepeat(shared_ptr<StatementRepeat> statement);

@@ -22,7 +22,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementVariable.h"
-#include "Parser/Statement/StatementAssignmentChained.h"
+#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementRepeat.h"
@@ -104,8 +104,8 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         case StatementKind::VARIABLE:
             buildVariable(dynamic_pointer_cast<StatementVariable>(statement));
             break;
-        case StatementKind::ASSIGNMENT_CHAINED:
-            buildAssignmentChained(dynamic_pointer_cast<StatementAssignmentChained>(statement));
+        case StatementKind::ASSIGNMENT:
+            buildAssignmentChained(dynamic_pointer_cast<StatementAssignment>(statement));
             break;
         case StatementKind::BLOCK:
             buildBlock(dynamic_pointer_cast<StatementBlock>(statement));
@@ -382,7 +382,7 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
     buildAssignment(targetValue, targetType, statement->getValueExpression());
 }*/
 
-void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignmentChained> statement) {
+void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
     llvm::Value *targetValue = valueForChainExpressions(statement->getChainExpressions());
 
     // Figure out opearand for the store operation
