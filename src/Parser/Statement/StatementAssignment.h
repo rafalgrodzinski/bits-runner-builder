@@ -1,4 +1,7 @@
-#include "Parser/Statement/Statement.h"
+#ifndef STATEMENT_ASSIGNMENT_H
+#define STATEMENT_ASSIGNMENT_H
+
+#include "Statement.h"
 
 class Expression;
 
@@ -28,3 +31,5 @@ public:
     string getMemberName();
     shared_ptr<Expression> getValueExpression();
 };
+
+#endif

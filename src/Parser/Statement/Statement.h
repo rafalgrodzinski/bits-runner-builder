@@ -15,6 +15,7 @@ enum class StatementKind {
     RAW_FUNCTION,
     VARIABLE,
     ASSIGNMENT,
+    ASSIGNMENT_CHAINED,
     REPEAT,
     META_EXTERN_FUNCTION,
     META_IMPORT,

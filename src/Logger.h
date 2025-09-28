@@ -18,6 +18,7 @@ class StatementRawFunction;
 class StatementBlob;
 class StatementBlock;
 class StatementAssignment;
+class StatementAssignmentChained;
 class StatementReturn;
 class StatementRepeat;
 class StatementExpression;
@@ -55,6 +56,7 @@ private:
     static string toString(shared_ptr<StatementBlob> statement);
     static string toString(shared_ptr<StatementBlock> statement);
     static string toString(shared_ptr<StatementAssignment> statement);
+    static string toString(shared_ptr<StatementAssignmentChained> statement);
     static string toString(shared_ptr<StatementReturn> statement);
     static string toString(shared_ptr<StatementRepeat> statement);
     static string toString(shared_ptr<StatementExpression> statement);

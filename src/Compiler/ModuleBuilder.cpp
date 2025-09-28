@@ -23,6 +23,7 @@
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
+#include "Parser/Statement/StatementAssignmentChained.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementRepeat.h"
@@ -106,6 +107,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             break;
         case StatementKind::ASSIGNMENT:
             buildAssignment(dynamic_pointer_cast<StatementAssignment>(statement));
+            break;
+        case StatementKind::ASSIGNMENT_CHAINED:
+            buildAssignmentChained(dynamic_pointer_cast<StatementAssignmentChained>(statement));
             break;
         case StatementKind::BLOCK:
             buildBlock(dynamic_pointer_cast<StatementBlock>(statement));
@@ -380,6 +384,35 @@ void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
     }
 
     buildAssignment(targetValue, targetType, statement->getValueExpression());
+}
+
+void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignmentChained> statement) {
+    /*llvm::Value *targetValue;
+    if (statement->getParentStatement() == nullptr) {
+        targetValue = valueForExpression(statement->getChainExpression())
+    } else {
+
+    }*/
+   llvm::Value *targetValue = valueForChained(statement->getChainExpression());
+   targetValue->print(llvm::outs());
+   llvm::outs() << "\n";
+   targetValue->getType()->print(llvm::outs());
+    llvm::outs() << "\n";
+
+    // Figure out opearand for the store operation
+    llvm::Value *targetOperand;
+    llvm::LoadInst *targetLoad = llvm::dyn_cast<llvm::LoadInst>(targetValue);
+    if (targetLoad != nullptr)
+        targetOperand = targetLoad->getOperand(0);
+    else
+        targetOperand = targetValue;
+
+       targetOperand->print(llvm::outs());
+   llvm::outs() << "\n";
+   targetOperand->getType()->print(llvm::outs());
+    llvm::outs() << "\n";
+
+    buildAssignment(targetOperand, targetValue->getType(), statement->getValueExpression());
 }
 
 void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
@@ -1105,7 +1138,8 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             // simple <- function call
             case ExpressionKind::CALL:
             // simple <- var
-            case ExpressionKind::VARIABLE: {
+            case ExpressionKind::VARIABLE:
+            case ExpressionKind::CHAINED: {
                 llvm::Value *sourceValue = valueForExpression(valueExpression, castToType);
                 if (sourceValue == nullptr)
                     return;

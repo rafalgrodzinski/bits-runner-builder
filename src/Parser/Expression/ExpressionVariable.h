@@ -10,7 +10,6 @@ private:
     ExpressionVariableKind variableKind;
     string identifier;
     shared_ptr<Expression> indexExpression;
-    string memberName;
 
 public:
     static shared_ptr<ExpressionVariable> simple(string identifer);

@@ -37,6 +37,7 @@ class StatementBlobDeclaration;
 class StatementBlob;
 class StatementVariable;
 class StatementAssignment;
+class StatementAssignmentChained;
 class StatementReturn;
 class StatementExpression;
 class StatementRepeat;
@@ -90,6 +91,7 @@ private:
     void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<StatementAssignment> statement);
+    void buildAssignmentChained(shared_ptr<StatementAssignmentChained> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
     void buildRepeat(shared_ptr<StatementRepeat> statement);
