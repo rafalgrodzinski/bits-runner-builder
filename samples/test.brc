@@ -13,25 +13,27 @@ printNum fun: number u64
 ;
 
 engine blob
-    size u64
+    sizes data<u64, 2>
 ;
 
 car blob
     name data<u64, 16>
-    eng blob<engine>
+    eng data<blob<engine>, 2>
 ;
 
 @export main fun -> u64
     toyota blob<car>
 
     //toyota.name <- "toyo"
-    //toyota.eng <- { 1200 }
+    toyota.eng[0] <- { {1200, 1500} }
+    toyota.eng[1] <- { {14, 18}}
+    //toyota.eng.sizes[0] <- 13
     //toyota.eng.size <- 1200
 
     //s u64 <- toyota.eng.size
     //toyota.eng.size
-    toyota.eng.size <- 3400
-    printNum(toyota.eng.size)
+    //toyota.eng.size <- 3400
+    printNum(toyota.eng[1].sizes[0])
 
     ret 0
 ;

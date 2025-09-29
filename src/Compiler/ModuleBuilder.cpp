@@ -772,7 +772,9 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
     if (alloca == nullptr)
         return nullptr;
 
-    switch (expression->getVariableKind()) {
+    return valueForSourceValue(alloca, alloca->getAllocatedType(), expression);
+
+    /*switch (expression->getVariableKind()) {
         case ExpressionVariableKind::SIMPLE: {
             return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getIdentifier());
         }
@@ -786,7 +788,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
             llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", expression->getIdentifier()));
 
             return builder->CreateLoad(type->getArrayElementType(), elementPtr);
-        }
+        }*/
         /*case ExpressionVariableKind::BLOB: {
             // First check for built-ins
             llvm::Value *builtInValue = valueForBuiltIn(alloca, expression);
@@ -811,7 +813,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
             llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index, format("{}.{}", expression->getIdentifier(), expression->getMemberName()));
             return builder->CreateLoad(structType->getElementType(*memberIndex), elementPtr);
         }*/
-    }
+    //}
 }
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
@@ -886,11 +888,31 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
             };
 
             llvm::Value *elementPtr = builder->CreateGEP(structType, sourceOperand, index);
-            currentValue = builder->CreateLoad(structType->getElementType(*memberIndex), elementPtr);
+            llvm::Type *elementType = structType->getElementType(*memberIndex);
+
+            currentValue = valueForSourceValue(elementPtr, elementType, expressionVariable);
         }
     }
 
     return currentValue;
+}
+
+llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType, shared_ptr<ExpressionVariable> expression) {
+    switch (expression->getVariableKind()) {
+        case ExpressionVariableKind::SIMPLE: {
+            return builder->CreateLoad(sourceType, sourceValue, expression->getIdentifier());
+        }
+        case ExpressionVariableKind::DATA: {
+            llvm::Value *indexValue = valueForExpression(expression->getIndexExpression());
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                indexValue
+            };
+            llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(sourceType);
+            llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expression->getIdentifier()));
+            return builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr);
+        }
+    }
 }
 
 llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
