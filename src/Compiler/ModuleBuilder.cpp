@@ -328,60 +328,6 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
         buildAssignment(alloca, valueType, statement->getExpression());
 }
 
-/*void ModuleBuilder::buildAssignment(shared_ptr<StatementAssignment> statement) {
-    llvm::Value *targetValue;
-    llvm::Type *targetType;
-
-    llvm::AllocaInst *alloca = getAlloca(statement->getIdentifier());
-    if (alloca == nullptr)
-        return;
-
-    switch (statement->getAssignmentKind()) {
-        case StatementAssignmentKind::SIMPLE: {
-            targetValue = alloca;
-            targetType = alloca->getAllocatedType();
-            break;
-        }
-        case StatementAssignmentKind::DATA: {
-            llvm::ArrayType *arrayType = (llvm::ArrayType *)alloca->getAllocatedType();
-            llvm::Value *indexValue = valueForExpression(statement->getIndexExpression());
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                indexValue
-            };
-            targetValue = builder->CreateGEP(arrayType, alloca, index, format("{}[]", statement->getIdentifier()));
-            targetType = arrayType->getElementType();
-            break;
-        }
-        case StatementAssignmentKind::BLOB: {      
-            // First check for built-ins
-            if (buildAssignmentForBuiltIn(alloca, statement)) {
-                return;
-            }
-            
-            // Thend do a normal member assign
-            llvm::StructType *structType = (llvm::StructType *)alloca->getAllocatedType();
-            if (!structType->isStructTy()) {
-                markError(0, 0, format("Variable {} is not of type blob", statement->getIdentifier()));
-                return;
-            }
-            string structName = string(structType->getName());
-            optional<int> memberIndex = getMemberIndex(structName, statement->getMemberName());
-            if (!memberIndex)
-                return;
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                builder->getInt32(*memberIndex)
-            };
-            targetValue = builder->CreateGEP(structType, alloca, index, format("{}.{}", statement->getIdentifier(), statement->getMemberName()));
-            targetType = structType->getElementType(*memberIndex);
-            break;
-        }
-    }
-
-    buildAssignment(targetValue, targetType, statement->getValueExpression());
-}*/
-
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
     llvm::Value *targetValue = valueForChainExpressions(statement->getChainExpressions());
 
@@ -773,47 +719,6 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
         return nullptr;
 
     return valueForSourceValue(alloca, alloca->getAllocatedType(), expression);
-
-    /*switch (expression->getVariableKind()) {
-        case ExpressionVariableKind::SIMPLE: {
-            return builder->CreateLoad(alloca->getAllocatedType(), alloca, expression->getIdentifier());
-        }
-        case ExpressionVariableKind::DATA: {
-            llvm::Value *indexValue = valueForExpression(expression->getIndexExpression());
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                indexValue
-            };
-            llvm::ArrayType *type = (llvm::ArrayType *)alloca->getAllocatedType();
-            llvm::Value *elementPtr = builder->CreateGEP(type, alloca, index, format("{}[]", expression->getIdentifier()));
-
-            return builder->CreateLoad(type->getArrayElementType(), elementPtr);
-        }*/
-        /*case ExpressionVariableKind::BLOB: {
-            // First check for built-ins
-            llvm::Value *builtInValue = valueForBuiltIn(alloca, expression);
-            if (builtInValue != nullptr) {
-                return builtInValue;
-            }
-
-            // Then do a normal member check
-            llvm::StructType *structType = (llvm::StructType *)alloca->getAllocatedType();
-            if (!structType->isStructTy()) {
-                markError(0, 0, format("Variable {} is not of type blob", expression->getIdentifier()));
-                return nullptr;
-            }
-            string structName = string(structType->getName());
-            optional<int> memberIndex = getMemberIndex(structName, expression->getMemberName());
-            if (!memberIndex)
-                return nullptr;
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                builder->getInt32(*memberIndex)
-            };
-            llvm::Value *elementPtr = builder->CreateGEP(structType, alloca, index, format("{}.{}", expression->getIdentifier(), expression->getMemberName()));
-            return builder->CreateLoad(structType->getElementType(*memberIndex), elementPtr);
-        }*/
-    //}
 }
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
@@ -854,44 +759,67 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
     llvm::Value *currentValue = nullptr;
 
     for (shared_ptr<Expression> &chainExpression : chainExpressions) {
+        // First in chain is treated as a single variable
         if (currentValue == nullptr) {
             currentValue = valueForExpression(chainExpression);
-        } else {
-            // Figure out opearand for the load operation
-            llvm::Value *sourceOperand;
-            llvm::LoadInst *sourceLoad = llvm::dyn_cast<llvm::LoadInst>(currentValue);
-            if (sourceLoad != nullptr)
-                sourceOperand = sourceLoad->getOperand(0);
-            else
-                sourceOperand = currentValue;
-
-            // First check for built-ins
-
-            // Then do a normal member check
-            llvm::StructType *structType = (llvm::StructType*)currentValue->getType();
-            if (!structType->isStructTy()) {
-                markError(0, 0, "Something's fucky");
-                return nullptr;
-            }
-            string structName = string(structType->getName());
-            shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
-            if (expressionVariable == nullptr) {
-                markError(0, 0, "Invalid expression type");
-                return nullptr;
-            }
-            optional<int> memberIndex = getMemberIndex(structName, expressionVariable->getIdentifier());
-            if (!memberIndex)
-                return nullptr;
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                builder->getInt32(*memberIndex)
-            };
-
-            llvm::Value *elementPtr = builder->CreateGEP(structType, sourceOperand, index);
-            llvm::Type *elementType = structType->getElementType(*memberIndex);
-
-            currentValue = valueForSourceValue(elementPtr, elementType, expressionVariable);
+            continue;
         }
+
+        // Figure out opearand for the load operation
+        llvm::Value *sourceOperand;
+        llvm::LoadInst *sourceLoad = llvm::dyn_cast<llvm::LoadInst>(currentValue);
+        if (sourceLoad != nullptr)
+            sourceOperand = sourceLoad->getOperand(0);
+        else
+            sourceOperand = currentValue;
+
+        currentValue->print(llvm::outs());
+        llvm::outs() << "\n";
+        currentValue->getType()->print(llvm::outs());
+        llvm::outs() << "\n";
+
+        sourceOperand->print(llvm::outs());
+        llvm::outs() << "\n";
+        sourceOperand->getType()->print(llvm::outs());
+        llvm::outs() << "\n";
+
+        // Make sure the expression is correct
+        shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
+        if (expressionVariable == nullptr) {
+            markError(0, 0, "Invalid expression type");
+            return nullptr;
+        }
+
+        // First check for built-ins
+        currentValue->print(llvm::outs());
+        llvm::outs() << "\n";
+        currentValue->getType()->print(llvm::outs());
+        llvm::outs() << "\n";
+        llvm::Value *builtInValue = valueForBuiltIn(currentValue, expressionVariable);
+        if (builtInValue != nullptr) {
+            currentValue = builtInValue;
+            continue;
+        }
+
+        // Then do a normal member check
+        llvm::StructType *structType = (llvm::StructType*)currentValue->getType();
+        if (!structType->isStructTy()) {
+            markError(0, 0, "Something's fucky");
+            return nullptr;
+        }
+        string structName = string(structType->getName());
+        optional<int> memberIndex = getMemberIndex(structName, expressionVariable->getIdentifier());
+        if (!memberIndex)
+            return nullptr;
+        llvm::Value *index[] = {
+            builder->getInt32(0),
+            builder->getInt32(*memberIndex)
+        };
+
+        llvm::Value *elementPtr = builder->CreateGEP(structType, sourceOperand, index);
+        llvm::Type *elementType = structType->getElementType(*memberIndex);
+
+        currentValue = valueForSourceValue(elementPtr, elementType, expressionVariable);
     }
 
     return currentValue;
@@ -926,15 +854,41 @@ llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompos
     return builder->CreateLoad(castToType, targetAlloca);
 }
 
-llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<ExpressionVariable> expression) {
-    bool isArray = alloca->getAllocatedType()->isArrayTy();
-    bool isPointer = alloca->getAllocatedType()->isPointerTy();
+llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> expression) {
+        /*llvm::AllocaInst *parentAlloca = llvm::dyn_cast<llvm::AllocaInst>(parentValue);
+        parentValue->print(llvm::outs());
+        llvm::outs() << "\n";
+        parentValue->getType()->print(llvm::outs());
+        llvm::outs() << "\n";
+        parentAlloca->getAllocatedType()->print(llvm::outs());
+        llvm::outs() << "\n";*/
 
-    /*if (isArray && expression->getMemberName().compare("count") == 0) {
-        llvm::ArrayType *arrayType = (llvm::ArrayType*)alloca->getAllocatedType();
+    bool isArray = parentValue->getType()->isArrayTy();
+    bool isPointer = parentValue->getType()->isPointerTy();
+
+    bool isCount = expression->getIdentifier().compare("count") == 0;
+    bool isVal = expression->getIdentifier().compare("val") == 0;
+    bool isVadr = expression->getIdentifier().compare("vAdr") == 0;
+    bool isAdr = expression->getIdentifier().compare("adr") == 0;
+
+    if (isArray && isCount) {
+        llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(parentValue->getType());
         return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements()));
-    } else if (isPointer && expression->getMemberName().compare("val") == 0) {
-        llvm::Value *pointee = builder->CreateLoad(typePtr, alloca);
+    } /*else if (isPointer && isVal) {
+        parentValue->print(llvm::outs());
+        llvm::outs() << "\n";
+        parentValue->getType()->print(llvm::outs());
+        llvm::outs() << "\n";
+        llvm::ValueName *vn = parentValue->getValueName();
+        vn->print(llvm::outs());
+
+        llvm::Value *pointee = builder->CreateLoad(typePtr, parentValue);
+
+        pointee->print(llvm::outs());
+        llvm::outs() << "\n";
+        pointee->getType()->print(llvm::outs());
+        llvm::outs() << "\n";
+
         shared_ptr<ValueType> pointeeValueType = getPtrType(expression->getIdentifier());
         if (pointeeValueType == nullptr) {
             markError(0, 0, "No type for ptr");
@@ -946,12 +900,12 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::AllocaInst *alloca, shared_ptr
             return nullptr; 
         }
         return builder->CreateLoad(pointeeType, pointee);
-    } else if (isPointer && expression->getMemberName().compare("vAdr") == 0) {
-        llvm::AllocaInst *pointeeAlloca = (llvm::AllocaInst*)builder->CreateLoad(typePtr, alloca);
+    }*/ else if (isPointer && isVadr) {
+        llvm::AllocaInst *pointeeAlloca = (llvm::AllocaInst*)builder->CreateLoad(typePtr, parentValue);
         return builder->CreatePtrToInt(pointeeAlloca, typeU64);
-    } else if (expression->getMemberName().compare("adr") == 0) {
-        return builder->CreatePtrToInt(alloca, typePtr);
-    }*/
+    } else if (isAdr) {
+        return builder->CreatePtrToInt(parentValue, typeU64);
+    }
 
     return nullptr;
 }

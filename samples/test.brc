@@ -33,7 +33,16 @@ car blob
     //s u64 <- toyota.eng.size
     //toyota.eng.size
     //toyota.eng.size <- 3400
-    printNum(toyota.eng[1].sizes[0])
+    //n ptr<u64> <- { toyota.eng[1].sizes[0].adr }
+    //n.val <- 5
+    //printNum(toyota.eng[1].sizes[0])
+    rep i u64 <- 0, i < toyota.eng.count, i <- i + 1
+        rep j u64 <- 0, j < toyota.eng[i].sizes.count, j <- j + 1
+            toyota.eng[i].sizes[j] <- toyota.eng[i].sizes[j] * 2
+            printNum(toyota.eng[i].sizes[j])
+            putchar('\n')
+        ;
+    ;
 
     ret 0
 ;
