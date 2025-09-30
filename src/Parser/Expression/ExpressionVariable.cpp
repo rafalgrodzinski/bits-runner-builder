@@ -15,14 +15,6 @@ shared_ptr<ExpressionVariable> ExpressionVariable::data(string identifier, share
     return expression;
 }
 
-shared_ptr<ExpressionVariable> ExpressionVariable::blob(string identifier, string memberName) {
-    shared_ptr<ExpressionVariable> expression = make_shared<ExpressionVariable>();
-    expression->variableKind = ExpressionVariableKind::BLOB;
-    expression->identifier = identifier;
-    expression->memberName = memberName;
-    return expression;
-}
-
 ExpressionVariable::ExpressionVariable():
 Expression(ExpressionKind::VARIABLE, nullptr) { }
 
@@ -36,8 +28,4 @@ string ExpressionVariable::getIdentifier() {
 
 shared_ptr<Expression> ExpressionVariable::getIndexExpression() {
     return indexExpression;
-}
-
-string ExpressionVariable::getMemberName() {
-    return memberName;
 }

@@ -1,30 +1,19 @@
-#include "Parser/Statement/Statement.h"
+#ifndef STATEMENT_ASSIGNMENT_H
+#define STATEMENT_ASSIGNMENT_H
+
+#include "Statement.h"
 
 class Expression;
 
-enum class StatementAssignmentKind {
-    SIMPLE,
-    DATA,
-    BLOB
-};
-
 class StatementAssignment: public Statement {
 private:
-    StatementAssignmentKind assignmentKind;
-    string identifier;
-    shared_ptr<Expression> indexExpression;
-    string memberName;
+    vector<shared_ptr<Expression>> chainExpressions;
     shared_ptr<Expression> valueExpression;
-    
-public:
-    static shared_ptr<StatementAssignment> simple(string identifier, shared_ptr<Expression> valueExpression);
-    static shared_ptr<StatementAssignment> data(string identifier, shared_ptr<Expression> indexExpression, shared_ptr<Expression> valueExpression);
-    static shared_ptr<StatementAssignment> blob(string identifier, string memberName, shared_ptr<Expression> valueExpression);
 
-    StatementAssignment();
-    StatementAssignmentKind getAssignmentKind();
-    string getIdentifier();
-    shared_ptr<Expression> getIndexExpression();
-    string getMemberName();
+public:
+    StatementAssignment(vector<shared_ptr<Expression>> chainExpressions, shared_ptr<Expression> valueExpression);
+    vector<shared_ptr<Expression>> getChainExpressions();
     shared_ptr<Expression> getValueExpression();
 };
+
+#endif

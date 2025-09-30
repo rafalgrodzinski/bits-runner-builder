@@ -10,6 +10,7 @@ enum class TokenKind;
 class ValueType;
 
 class Expression;
+class ExpressionChained;
 class Statement;
 class StatementModule;
 
@@ -53,6 +54,7 @@ private:
     shared_ptr<Expression> matchTerm(); // +, -
     shared_ptr<Expression> matchFactor(); // *, /, %
     shared_ptr<Expression> matchUnary(); // +, -
+    shared_ptr<Expression> matchExpressionChained(shared_ptr<ExpressionChained> expression); // .stuff
     shared_ptr<Expression> matchPrimary(); // literal, ()
 
     shared_ptr<Expression> matchExpressionGrouping();

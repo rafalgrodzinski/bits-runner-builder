@@ -1,11 +1,4 @@
 @extern putchar fun: character u64 -> u32
-@extern malloc fun: size u64 -> u64
-
-print fun: text data<u64, 16>
-    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
-        putchar(text[i])
-    ;
-;
 
 printNum fun: number u64
     biggest u64 <- 10
@@ -19,36 +12,50 @@ printNum fun: number u64
     ;
 ;
 
-user blob
+engine blob
+    sizes data<u64, 2>
+;
+
+car blob
     name data<u64, 16>
-    id u64
-;
-
-printPUser fun: pUser ptr<blob<user>>
-    user blob<user> <- pUser.val
-
-    print("id: ")
-    printNum(user.id)
-    print("\n")
-    print("name: ")
-    print(user.name)
-    print("\n")
-;
-
-printUser fun: user blob<user>
-    print("id: ")
-    printNum(user.id)
-    print("\n")
-    print("name: ")
-    print(user.name)
-    print("\n")
+    eng data<blob<engine>, 2>
 ;
 
 @export main fun -> u64
-    pUser ptr<blob<user>> <- { malloc(130) }
-    pUser.val <- { "Kuma", 7 }
-    printPUser(pUser)
-    printUser(pUser.val)
+    toyota blob<car>
+
+    //toyota.name <- "toyo"
+    toyota.eng[0] <- { {1200, 1500} }
+    toyota.eng[1] <- { {14, 18}}
+    //toyota.eng.sizes[0] <- 13
+    //toyota.eng.size <- 1200
+
+    //s u64 <- toyota.eng.size
+    //toyota.eng.size
+    //toyota.eng.size <- 3400
+    nPtr ptr<u64> <- { toyota.eng[1].sizes[0].adr }
+    //printNum(n.vAdr)
+    nPtr.val <- 5
+
+    n2Ptr ptr<u64> <- { nPtr.vAdr }
+    n2Ptr.val <- 7
+    //nPtr.vAdr <- { 8 }
+
+    printNum(toyota.eng[1].sizes[0])
+    /*rep i u64 <- 0, i < toyota.eng.count, i <- i + 1
+        rep j u64 <- 0, j < toyota.eng[i].sizes.count, j <- j + 1
+            toyota.eng[i].sizes[j] <- toyota.eng[i].sizes[j] * 2
+            printNum(toyota.eng[i].sizes[j])
+            putchar('\n')
+        ;
+    ;*/
+
+    //n u64 <- 15
+
+    //nPtr ptr<u64> <- { n.adr }
+    //nPtr.val <- 7
+    //printNum(n)
+    //printNum(nPtr.val)
 
     ret 0
 ;

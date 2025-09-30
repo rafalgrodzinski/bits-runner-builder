@@ -22,6 +22,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - Raw Functions (`raw`)
 - Conditional Expressions (`if`, `else`)
 - Repeats (`rep`)
+- Chaining (`thing.sutff[5].something`)
 - Modules (`@module`, `@import`, `@export`, `@extern`)
 
 ## Comments
@@ -104,7 +105,7 @@ All the standard operators, such as `+`, `-`, `*`, `/`, `%` are available. The b
 => // is greater than
 > // is gearter or equal
 <- // assignment
-( ) // precdence
+( ) // precedence
 ```
 
 ## Logical Operators
@@ -116,12 +117,19 @@ or, xor // lowest piority
 ```
 `=` and `!=` can also be used on booleans, but they are effectively equivalent to `and` and `xor`.
 
-## Variables
-Variables are specified by first providing the name and then the type. They can have an optional initializer.
+## Simple Variables
+Simple ariables are specified by first providing the name and then the type. They can have an optional initializer. There are standard float and integer types available, but unlike in C, you have to be explicit about their size and signiness. You can only perform `=` and `!=` operations on booleans. There is no `void` type or an equivalent.
 ```
 bytesInKilobyte u32 <- 1_024
 text data<u8> <- "Hello world!"
 pi r32 <- 3.14
+
+u8 // unsigned integer, 8 bits
+u32 // unsigned integer, 32 bits
+s8 // signed integer, 8 bits
+s32 // signed integer, 32 bits
+r32 // floating point (real), 32 bits
+bool // true or false
 ```
 
 ## Data
@@ -157,37 +165,6 @@ a u32 <- 5
 pA ptr<u32>
 pA.vAdr <- a.adr // now both a & pA.val indicate the same value
 pA.val <- 6
-```
-
-**Simple variables**
-There are standard float and integer types available, but unlike in C, you have to be explicit about their size and signiness. You can only perform `=` and `!=` operations on booleans. There is no `void` type or an equivalent.
-```
-u8 // unsigned integer, 8 bits
-u32 // unsigned integer, 32 bits
-s8 // signed integer, 8 bits
-s32 // signed integer, 32 bits
-r32 // floating point (real), 32 bits
-bool // true or false
-```
-
-**Data variables** or arrays, as known in C. They are a sequence of static length or elements of the same type. Length has to be specified either explicitly or through and initializer.
-```
-text data<u8> <- "Hello world!"
-fibonaciNumbers<u32, 4> <- [1, 1, 2, 3, 5, 8] // Anything past the first 4 numbers will be ignored
-```
-
-**Blob variables**, otherwise known as structures. Composite types which we can specify by ourselves. The usage is fairly smillar as in C. Semicolon and new line are required in the definition.
-```
-user blob
-  age u32
-  name data<u8, 10>
-  isActive bool
-;
-
-bob blob<user>
-bob.age <- 18
-bob.name <- "Bob"
-bob.isActive <- true
 ```
 
 ## Functions
@@ -287,6 +264,35 @@ rep i u32 <- 0, i < 10, i <- i + 1
 
 // do things at least once
 rep i u32 <- 0, true, i < someValue: doStuff(i)
+```
+
+## Chaining
+Expressions and assignment statments can be chained, which allows for some complex logic to be created in a clearer way. This is Especially useful when dealing with pointers.
+```
+tree blob
+    branches data<u64, 8>
+;
+
+forest blob
+    name data<u64, 16>
+    trees data<blob<tree>, 8>
+;
+
+niceOne blob<forest>
+niceOne.name <- "Nice one!"
+niceOne.trees[0].branches[0] <- 1
+niceOne.trees[0].branches[1] <- 2
+niceOne.trees[0].branches[2] <- 4
+
+//
+
+thing blob
+  id u64
+;
+
+something blob<thing> <- { 7 }
+pThing ptr<blob<thing>> <- { thing.adr }
+pThing.val.id <- 8
 ```
 
 ## Modules

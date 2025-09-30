@@ -1,48 +1,10 @@
 #include "StatementAssignment.h"
 
-shared_ptr<StatementAssignment> StatementAssignment::simple(string identifier, shared_ptr<Expression> valueExpression) {
-    shared_ptr<StatementAssignment> statement = make_shared<StatementAssignment>();
-    statement->assignmentKind = StatementAssignmentKind::SIMPLE;
-    statement->identifier = identifier;
-    statement->valueExpression = valueExpression;
-    return statement;
-}
+StatementAssignment::StatementAssignment(vector<shared_ptr<Expression>> chainExpressions, shared_ptr<Expression> valueExpression):
+Statement(StatementKind::ASSIGNMENT), chainExpressions(chainExpressions), valueExpression(valueExpression) { }
 
-shared_ptr<StatementAssignment> StatementAssignment::data(string identifier, shared_ptr<Expression> indexExpression, shared_ptr<Expression> valueExpression) {
-    shared_ptr<StatementAssignment> statement = make_shared<StatementAssignment>();
-    statement->assignmentKind = StatementAssignmentKind::DATA;
-    statement->identifier = identifier;
-    statement->indexExpression = indexExpression;
-    statement->valueExpression = valueExpression;
-    return statement;
-}
-
-shared_ptr<StatementAssignment> StatementAssignment::blob(string identifier, string memberName, shared_ptr<Expression> valueExpression) {
-    shared_ptr<StatementAssignment> statement = make_shared<StatementAssignment>();
-    statement->assignmentKind = StatementAssignmentKind::BLOB;
-    statement->identifier = identifier;
-    statement->memberName = memberName;
-    statement->valueExpression = valueExpression;
-    return statement;
-}
-
-StatementAssignment::StatementAssignment():
-Statement(StatementKind::ASSIGNMENT) { }
-
-StatementAssignmentKind StatementAssignment::getAssignmentKind() {
-    return assignmentKind;
-}
-
-string StatementAssignment::getIdentifier() {
-    return identifier;
-}
-
-shared_ptr<Expression> StatementAssignment::getIndexExpression() {
-    return indexExpression;
-}
-
-string StatementAssignment::getMemberName() {
-    return memberName;
+vector<shared_ptr<Expression>> StatementAssignment::getChainExpressions() {
+    return chainExpressions;
 }
 
 shared_ptr<Expression> StatementAssignment::getValueExpression() {

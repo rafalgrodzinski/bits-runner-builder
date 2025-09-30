@@ -25,6 +25,7 @@ class ExpressionCall;
 class ExpressionIfElse;
 class ExpressionBinary;
 class ExpressionUnary;
+class ExpressionChained;
 enum class ExpressionBinaryOperation;
 
 class Statement;
@@ -88,7 +89,7 @@ private:
     void buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVariable(shared_ptr<StatementVariable> statement);
-    void buildAssignment(shared_ptr<StatementAssignment> statement);
+    void buildAssignmentChained(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
     void buildRepeat(shared_ptr<StatementRepeat> statement);
@@ -107,11 +108,14 @@ private:
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
-    llvm::Value *valueForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<ExpressionVariable> expression);
+    llvm::Value *valueForChained(shared_ptr<ExpressionChained> expression);
+    
+    llvm::Value *valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions);
+    llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<ExpressionVariable> expression);
+    llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<ExpressionVariable> expression);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
-    bool buildAssignmentForBuiltIn(llvm::AllocaInst *alloca, shared_ptr<StatementAssignment> statement);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);
     llvm::AllocaInst *getAlloca(string name);
