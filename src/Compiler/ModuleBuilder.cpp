@@ -775,16 +775,6 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         else
             sourceOperand = currentValue;
 
-        currentValue->print(llvm::outs());
-        llvm::outs() << "\n";
-        currentValue->getType()->print(llvm::outs());
-        llvm::outs() << "\n";
-
-        sourceOperand->print(llvm::outs());
-        llvm::outs() << "\n";
-        sourceOperand->getType()->print(llvm::outs());
-        llvm::outs() << "\n";
-
         // Make sure the expression is correct
         shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
         shared_ptr<ExpressionVariable> parentExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(i-1));
@@ -794,10 +784,6 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         }
 
         // First check for built-ins
-        currentValue->print(llvm::outs());
-        llvm::outs() << "\n";
-        currentValue->getType()->print(llvm::outs());
-        llvm::outs() << "\n";
         llvm::Value *builtInValue = valueForBuiltIn(currentValue, parentExpressionVariable, expressionVariable);
         if (builtInValue != nullptr) {
             currentValue = builtInValue;
@@ -899,12 +885,6 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
         return builder->CreateLoad(pointeeType, pointeeLoad);
     } else if (isPointer && isVadr) {
         llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentOperand);
-
-        pointeeLoad->print(llvm::outs());
-        llvm::outs() << "\n";
-        pointeeLoad->getType()->print(llvm::outs());
-        llvm::outs() << "\n";
-
         return builder->CreatePtrToInt(pointeeLoad, typeU64);
     } else if (isAdr) {
         return builder->CreatePtrToInt(parentOperand, typeU64);
@@ -1049,6 +1029,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             }
             // blob <- blob
             case ExpressionKind::VARIABLE:
+            case ExpressionKind::CHAINED:
             // blob <- function()
             case ExpressionKind::CALL: {
                 llvm::Value *sourceValue = valueForExpression(valueExpression);
@@ -1080,6 +1061,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             }
             // ptr <- ptr
             case ExpressionKind::VARIABLE:
+            case ExpressionKind::CHAINED:
             // ptr <- function()
             case ExpressionKind::CALL: {
                 llvm::Value *sourceValue = valueForExpression(valueExpression);

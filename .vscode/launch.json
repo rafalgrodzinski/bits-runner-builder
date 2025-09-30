@@ -7,6 +7,8 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": ["-v", "${workspaceFolder}/samples/test.brc"],
+            //"args": ["-v", "${workspaceFolder}/samples/linked_list/io.brc", "${workspaceFolder}/samples/linked_list/main.brc"],
+            //"args": ["-v", "${workspaceFolder}/samples/linked_list/main.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }
