@@ -325,11 +325,11 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::ASSIGNMENT:
             return toString(dynamic_pointer_cast<StatementAssignment>(statement));
         case StatementKind::RETURN:
-            return toString(dynamic_pointer_cast<StatementReturn>(statement));
+            return toString(dynamic_pointer_cast<StatementReturn>(statement), indents);
         case StatementKind::REPEAT:
             return toString(dynamic_pointer_cast<StatementRepeat>(statement), indents);
         case StatementKind::EXPRESSION:
-            return toString(dynamic_pointer_cast<StatementExpression>(statement));
+            return toString(dynamic_pointer_cast<StatementExpression>(statement), indents);
     }
 }
 
@@ -388,7 +388,7 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
     // initializer
     if (statement->getExpression() != nullptr) {
         indents.at(indents.size()-1) = IndentKind::BRANCH;
-        line = format("← {}", toString(statement->getExpression()));
+        line = format("← {}", toString(statement->getExpression(), { }));
         text += formattedLine(line, indents);
     }
 
@@ -469,10 +469,21 @@ string Logger::toString(shared_ptr<StatementAssignment> statement) {
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementReturn> statement) {
-    string text = "RET";
-    if (statement->getExpression() != nullptr)
-        text += format("({})", toString(statement->getExpression()));
+string Logger::toString(shared_ptr<StatementReturn> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = "RET";
+    text += formattedLine(line, indents);
+
+    // expression
+    if (statement->getExpression() != nullptr) {
+        indents.at(indents.size()-1) = IndentKind::NONE;
+        line = toString(statement->getExpression(), { });
+        text = formattedLine(line, indents);
+    }
+
     return text;
 }
 
@@ -487,56 +498,46 @@ string Logger::toString(shared_ptr<StatementRepeat> statement, vector<IndentKind
 
     // init-statement
     if (statement->getInitStatement() != nullptr) {
-        line = toString(statement->getInitStatement(), indents);
-        text += formattedLine(line, indents);
+        text += toString(statement->getInitStatement(), indents);
+        //text += formattedLine(line, indents);
     }
 
     // pre-condition
     if (statement->getPreConditionExpression() != nullptr) {
-        line = toString(statement->getPreConditionExpression());
-        text += formattedLine(line, indents);
+        text += toString(statement->getPreConditionExpression(), indents);
+        //text += formattedLine(line, indents);
     }
 
     // post-condition
     if (statement->getPostConditionExpression() != nullptr) {
-        line = toString(statement->getPostConditionExpression());
-        text += formattedLine(line, indents);
+        text += toString(statement->getPostConditionExpression(), indents);
+        //text += formattedLine(line, indents);
     }
 
     // post-statement
         if (statement->getPostStatement() != nullptr) {
-        line = toString(statement->getPostStatement(), indents);
-        text += formattedLine(line, indents);
+        text += toString(statement->getPostStatement(), indents);
+        //text += formattedLine(line, indents);
     }
 
     // body
     text += toString(statement->getBodyBlockStatement(), indents);
 
+    return text;
+}
 
-    /*string initStatement;
-    string preCondition;
-    string postCondition;
+string Logger::toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents) {
+    //return format("EXPR({})", toString(statement->getExpression()));
+    string text;
 
-    if (statement->getInitStatement() != nullptr)
-        initStatement = toString(statement->getInitStatement(), {});
-    
-    if (statement->getPostConditionExpression() != nullptr)
-        preCondition = toString(statement->getPreConditionExpression());
-    
-    if (statement->getPostConditionExpression() != nullptr)
-        postCondition = toString(statement->getPostConditionExpression());
-
-    text += format("REP({}|{}|{}):\n", initStatement, preCondition, postCondition);
-    text += toString(statement->getBodyBlockStatement(), { });*/
+    text += formattedLine("EXPR", indents);
+    indents.at(indents.size()-1) = IndentKind::NONE;
+    text += toString(statement->getExpression(), indents);
 
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementExpression> statement) {
-    return format("EXPR({})", toString(statement->getExpression()));
-}
-
-string Logger::toString(shared_ptr<Expression> expression) {
+string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> indents) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
         return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
@@ -564,33 +565,33 @@ string Logger::toString(shared_ptr<Expression> expression) {
 string Logger::toString(shared_ptr<ExpressionBinary> expression) {
     switch (expression->getOperation()) {
         case ExpressionBinaryOperation::OR:
-            return "{OR " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{OR " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::XOR:
-            return "{XOR " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{XOR " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::AND:
-            return "{AND " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{AND " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::EQUAL:
-            return "{= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{= " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::NOT_EQUAL:
-            return "{!= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{!= " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::LESS:
-            return "{< " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{< " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::LESS_EQUAL:
-            return "{<= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{<= " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::GREATER:
-            return "{> " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{> " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::GREATER_EQUAL:
-            return "{<= " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{<= " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::ADD:
-            return "{+ " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{+ " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::SUB:
-            return "{- " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{- " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::MUL:
-            return "{* " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{* " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::DIV:
-            return "{/ " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{/ " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::MOD:
-            return "{% " + toString(expression->getLeft()) + " " + toString(expression->getRight()) + "}";
+            return "{% " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
         case ExpressionBinaryOperation::INVALID:
             return "{INVALID}";
     }
@@ -599,11 +600,11 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression) {
 string Logger::toString(shared_ptr<ExpressionUnary> expression) {
     switch (expression->getOperation()) {
         case ExpressionUnaryOperation::NOT:
-            return "{NOT " + toString(expression->getExpression()) + "}";
+            return "{NOT " + toString(expression->getExpression(), { }) + "}";
         case ExpressionUnaryOperation::PLUS:
-            return "+" + toString(expression->getExpression());
+            return "+" + toString(expression->getExpression(), { });
         case ExpressionUnaryOperation::MINUS:
-            return "-" + toString(expression->getExpression());
+            return "-" + toString(expression->getExpression(), { });
         case ExpressionUnaryOperation::INVALID:
             return "{INVALID}";
     }
@@ -612,7 +613,7 @@ string Logger::toString(shared_ptr<ExpressionUnary> expression) {
 string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
     string text;
 
-    text += format("IF({}):\n", toString(expression->getCondition()));
+    text += format("IF({}):\n", toString(expression->getCondition(), { }));
     text += toString(expression->getThenBlock());
     if (expression->getElseBlock() != nullptr) {
         text += "\nELSE:\n";
@@ -628,12 +629,12 @@ string Logger::toString(shared_ptr<ExpressionVariable> expression) {
         case ExpressionVariableKind::SIMPLE:
             return format("VAR({})", expression->getIdentifier());
         case ExpressionVariableKind::DATA:
-            return format("VAR({}|{})", expression->getIdentifier(), toString(expression->getIndexExpression()));
+            return format("VAR({}|{})", expression->getIdentifier(), toString(expression->getIndexExpression(), { }));
     }
 }
 
 string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
-    return format("({})", toString(expression->getExpression()));
+    return format("({})", toString(expression->getExpression(), { }));
 }
 
 string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
@@ -653,7 +654,7 @@ string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression) {
     string text;
     text += "{";
     for (int i=0; i<expression->getExpressions().size(); i++) {
-        text += toString(expression->getExpressions().at(i));
+        text += toString(expression->getExpressions().at(i), { });
         if (i < expression->getExpressions().size() - 1)
             text += ", ";
     }
@@ -664,7 +665,7 @@ string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression) {
 string Logger::toString(shared_ptr<ExpressionCall> expression) {
     string argsString;
     for (int i = 0; i < expression->getArgumentExpressions().size(); i++) {
-        argsString += toString(expression->getArgumentExpressions().at(i));
+        argsString += toString(expression->getArgumentExpressions().at(i), { });
         if (i < expression->getArgumentExpressions().size() - 1)
             argsString += ", ";
     }
@@ -677,7 +678,7 @@ string Logger::toString(shared_ptr<ExpressionBlock> expression) {
     if (!text.empty())
         text += '\n';
     if (expression->getResultStatementExpression() != nullptr)
-        text += toString(expression->getResultStatementExpression());
+        text += toString(expression->getResultStatementExpression(), { });
     return text;
 }
 

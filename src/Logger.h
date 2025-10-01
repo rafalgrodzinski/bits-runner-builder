@@ -62,11 +62,11 @@ private:
     static string toString(shared_ptr<StatementBlob> statement);
     static string toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementAssignment> statement);
-    static string toString(shared_ptr<StatementReturn> statement);
+    static string toString(shared_ptr<StatementReturn> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementRepeat> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementExpression> statement);
+    static string toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents);
 
-    static string toString(shared_ptr<Expression> expression);
+    static string toString(shared_ptr<Expression> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionBinary> expression);
     static string toString(shared_ptr<ExpressionUnary> expression);
     static string toString(shared_ptr<ExpressionIfElse> expression);
