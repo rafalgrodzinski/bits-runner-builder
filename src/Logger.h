@@ -38,6 +38,13 @@ class Error;
 
 using namespace std;
 
+enum class IndentKind {
+    NONE,
+    NODE,
+    NODE_LAST,
+    BRANCH
+};
+
 class Logger {
 private:
     static string toString(shared_ptr<Token> token);
@@ -45,18 +52,18 @@ private:
     static string toString(ParseeKind parseeKind);
     static string toString(shared_ptr<ValueType> valueType);
 
-    static string toString(shared_ptr<Statement> statement);
-    static string toString(shared_ptr<StatementModule> statement);
+    static string toString(shared_ptr<Statement> statement, vector<IndentKind> indents);
+    static string toString(shared_ptr<StatementModule> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementImport> statement);
-    static string toString(shared_ptr<StatementMetaExternFunction> statement);
-    static string toString(shared_ptr<StatementVariable> statement);
-    static string toString(shared_ptr<StatementFunction> statement);
+    static string toString(shared_ptr<StatementMetaExternFunction> statement, vector<IndentKind> indents);
+    static string toString(shared_ptr<StatementVariable> statement, vector<IndentKind> indents);
+    static string toString(shared_ptr<StatementFunction> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementRawFunction> statement);
     static string toString(shared_ptr<StatementBlob> statement);
-    static string toString(shared_ptr<StatementBlock> statement);
+    static string toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementAssignment> statement);
     static string toString(shared_ptr<StatementReturn> statement);
-    static string toString(shared_ptr<StatementRepeat> statement);
+    static string toString(shared_ptr<StatementRepeat> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementExpression> statement);
 
     static string toString(shared_ptr<Expression> expression);
@@ -70,6 +77,8 @@ private:
     static string toString(shared_ptr<ExpressionCall> expression);
     static string toString(shared_ptr<ExpressionBlock> expression);
     static string toString(shared_ptr<ExpressionChained> expression);
+
+    static string formattedLine(string line, vector<IndentKind> indents);
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);
