@@ -618,7 +618,7 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
         case ExpressionKind::UNARY:
             return toString(dynamic_pointer_cast<ExpressionUnary>(expression), indents);
         case ExpressionKind::IF_ELSE:
-            return toString(dynamic_pointer_cast<ExpressionIfElse>(expression));
+            return toString(dynamic_pointer_cast<ExpressionIfElse>(expression), indents);
         case ExpressionKind::VARIABLE:
             return toString(dynamic_pointer_cast<ExpressionVariable>(expression), indents);
         case ExpressionKind::GROUPING:
@@ -630,7 +630,7 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
         case ExpressionKind::CALL:
             return toString(dynamic_pointer_cast<ExpressionCall>(expression), indents);
         case ExpressionKind::BLOCK:
-            return toString(dynamic_pointer_cast<ExpressionBlock>(expression));
+            return toString(dynamic_pointer_cast<ExpressionBlock>(expression), indents);
         case ExpressionKind::CHAINED:
             return toString(dynamic_pointer_cast<ExpressionChained>(expression), indents);
     }
@@ -708,16 +708,34 @@ string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKin
     return formattedLine(line, indents);
 }
 
-string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
+string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKind> indents) {
     string text;
+    string line;
 
-    text += format("IF({}):\n", toString(expression->getCondition(), { }));
-    text += toString(expression->getThenBlock());
+    // name
+    text += formattedLine("IF", indents);
+    
+    //condition
+    indents = adjustedLastIndent(indents);
+    text += toString(expression->getCondition(), indents);
+
+    // then
+    if (expression->getElseBlock() != nullptr)
+        indents.push_back(IndentKind::NODE);
+    else
+        indents.push_back(IndentKind::NODE_LAST);
+
+    text += formattedLine("THEN", indents);
+    indents = adjustedLastIndent(indents);
+    text += toString(expression->getThenBlock(), indents);
+
+    // else
     if (expression->getElseBlock() != nullptr) {
-        text += "\nELSE:\n";
-        text += toString(expression->getElseBlock());
+        indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+        text += formattedLine("ELSE", indents);
+        indents.at(indents.size()-1) = IndentKind::NONE;
+        text += toString(expression->getElseBlock(), indents);
     }
-    text += "\n;";
 
     return text;
 }
@@ -807,13 +825,17 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
     return text;
 }
 
-string Logger::toString(shared_ptr<ExpressionBlock> expression) {
+string Logger::toString(shared_ptr<ExpressionBlock> expression, vector<IndentKind> indents) {
     string text;
-    text += toString(expression->getStatementBlock(), { });
-    if (!text.empty())
-        text += '\n';
-    if (expression->getResultStatementExpression() != nullptr)
-        text += toString(expression->getResultStatementExpression(), { });
+
+    indents.push_back(IndentKind::NODE);
+    for (shared_ptr<Statement> &statement : expression->getStatementBlock()->getStatements()) {
+        text += toString(statement, indents);
+    }
+
+    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+    text += toString(expression->getResultStatementExpression(), indents);
+
     return text;
 }
 
