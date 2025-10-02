@@ -13,8 +13,10 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlob.h"
+#include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -316,10 +318,14 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
             return toString(dynamic_pointer_cast<StatementVariable>(statement), indents);
         case StatementKind::FUNCTION:
             return toString(dynamic_pointer_cast<StatementFunction>(statement), indents);
+        case StatementKind::FUNCTION_DECLARATION:
+            return toString(dynamic_pointer_cast<StatementFunctionDeclaration>(statement), indents);
         case StatementKind::RAW_FUNCTION:
             return toString(dynamic_pointer_cast<StatementRawFunction>(statement));
         case StatementKind::BLOB:
-            return toString(dynamic_pointer_cast<StatementBlob>(statement));
+            return toString(dynamic_pointer_cast<StatementBlob>(statement), indents);
+        case StatementKind::BLOB_DECLARATION:
+            return toString(dynamic_pointer_cast<StatementBlobDeclaration>(statement), indents);
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
         case StatementKind::ASSIGNMENT:
@@ -336,9 +342,30 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
 string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind> indents) {
     string text;
 
-    string line = format("MODULE: `{}`", statement->getName());
+    string line = format("MODULE `{}`:", statement->getName());
     text += formattedLine(line, indents);
 
+    indents.at(indents.size()-1) = IndentKind::NONE;
+    
+    // header
+    indents.push_back(IndentKind::NODE);
+    text += formattedLine("HEADER", indents);
+    indents.at(indents.size()-1) = IndentKind::BRANCH;
+
+    int headerStatementsCount = statement->getHeaderStatements().size();
+    for (int i=0; i<headerStatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < headerStatementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getHeaderStatements().at(i), currentIndents);
+    }
+
+    // body
+    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+    text += formattedLine("BODY", indents);
     indents.at(indents.size()-1) = IndentKind::NONE;
 
     int statementsCount = statement->getStatements().size();
@@ -348,6 +375,7 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
             currentIndents.push_back(IndentKind::NODE);
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
+
         text += toString(statement->getStatements().at(i), currentIndents);
     }
 
@@ -429,6 +457,30 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
     return text;
 }
 
+string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("FUN `{}`", statement->getName());
+    if (!statement->getArguments().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
+        indents.at(indents.size()-1) = IndentKind::NONE;
+    else
+        indents.at(indents.size()-1) = IndentKind::BRANCH;
+
+    // arguments
+    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
+        line = format("`{}` {}", arg.first, toString(arg.second));
+        text += formattedLine(line, indents);
+    }
+
+    return text;
+}
+
 string Logger::toString(shared_ptr<StatementRawFunction> statement) {
     string text;
 
@@ -444,14 +496,32 @@ string Logger::toString(shared_ptr<StatementRawFunction> statement) {
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementBlob> statement) {
+string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> indents) {
     string text;
+    string line;
 
-    text += format("BLOB(\"{}\"):\n", statement->getIdentifier());
-    for (pair<string, shared_ptr<ValueType>> &variable : statement->getVariables())
-        text += format("{}: {}\n", variable.first, toString(variable.second));
+    // name
+    line = format("BLOB `{}`", statement->getIdentifier());
+    if (!statement->getVariables().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    // members
+    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
+        indents.at(indents.size()-1) = IndentKind::NONE;
+    else
+        indents.at(indents.size()-1) = IndentKind::BRANCH;
+    for (pair<string, shared_ptr<ValueType>> &member : statement->getVariables()) {
+        line = format("`{}` {}", member.first, toString(member.second));
+        text += formattedLine(line, indents);
+    }
 
     return text;
+}
+
+string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents) {
+    string line = format ("BLOB `{}`", statement->getIdentifier());
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents) {
