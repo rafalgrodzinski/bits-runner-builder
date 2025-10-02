@@ -311,7 +311,7 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::MODULE:
             return toString(dynamic_pointer_cast<StatementModule>(statement), indents);
         case StatementKind::META_IMPORT:
-            return toString(dynamic_pointer_cast<StatementImport>(statement));
+            return toString(dynamic_pointer_cast<StatementImport>(statement), indents);
         case StatementKind::META_EXTERN_FUNCTION:
             return toString(dynamic_pointer_cast<StatementMetaExternFunction>(statement), indents);
         case StatementKind::VARIABLE:
@@ -382,8 +382,9 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementImport> statement) {
-    return format("IMPORT({})", statement->getName());
+string Logger::toString(shared_ptr<StatementImport> statement, vector<IndentKind> indents) {
+    string line = format("@IMPORT `{}`", statement->getName());
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vector<IndentKind> indents) {
@@ -432,7 +433,7 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("FUN `{}`", statement->getName());
+    line = format("{}FUN `{}` → {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getReturnValueType()));
     if (!statement->getArguments().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -726,9 +727,11 @@ string Logger::toString(shared_ptr<ExpressionVariable> expression, vector<Indent
 
     switch (expression->getVariableKind()) {
         case ExpressionVariableKind::SIMPLE:
-            return format("`{}`", expression->getIdentifier());
+            line = format("`{}`", expression->getIdentifier());
+            break;
         case ExpressionVariableKind::DATA:
-            return format("`{}`[{}]", expression->getIdentifier(), toString(expression->getIndexExpression(), {}));
+            line = format("`{}`[{}]", expression->getIdentifier(), toString(expression->getIndexExpression(), {}));
+            break;
     }
 
     return formattedLine(line, indents);
