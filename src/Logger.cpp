@@ -345,7 +345,7 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     string line = format("MODULE `{}`:", statement->getName());
     text += formattedLine(line, indents);
 
-    indents.at(indents.size()-1) = IndentKind::NONE;
+    indents = adjustedLastIndent(indents);
     
     // header
     indents.push_back(IndentKind::NODE);
@@ -419,10 +419,7 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
 
     // initializer
     if (statement->getExpression() != nullptr) {
-        if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
-            indents.at(indents.size()-1) = IndentKind::NONE;
-        else
-            indents.at(indents.size()-1) = IndentKind::BRANCH;
+        indents = adjustedLastIndent(indents);
         line = format("← {}", toString(statement->getExpression(), { }));
         text += formattedLine(line, indents);
     }
@@ -440,10 +437,7 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
         line += ":";
     text += formattedLine(line, indents);
 
-    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
-        indents.at(indents.size()-1) = IndentKind::NONE;
-    else
-        indents.at(indents.size()-1) = IndentKind::BRANCH;
+    indents = adjustedLastIndent(indents);
 
     // arguments
     for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
@@ -467,10 +461,7 @@ string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vect
         line += ":";
     text += formattedLine(line, indents);
 
-    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
-        indents.at(indents.size()-1) = IndentKind::NONE;
-    else
-        indents.at(indents.size()-1) = IndentKind::BRANCH;
+    indents = adjustedLastIndent(indents);
 
     // arguments
     for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
@@ -507,10 +498,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     text += formattedLine(line, indents);
 
     // members
-    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
-        indents.at(indents.size()-1) = IndentKind::NONE;
-    else
-        indents.at(indents.size()-1) = IndentKind::BRANCH;
+    indents = adjustedLastIndent(indents);
     for (pair<string, shared_ptr<ValueType>> &member : statement->getVariables()) {
         line = format("`{}` {}", member.first, toString(member.second));
         text += formattedLine(line, indents);
@@ -572,10 +560,7 @@ string Logger::toString(shared_ptr<StatementReturn> statement, vector<IndentKind
 
     // expression
     if (statement->getExpression() != nullptr) {
-        if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
-            indents.at(indents.size()-1) = IndentKind::NONE;
-        else
-            indents.at(indents.size()-1) = IndentKind::BRANCH;
+        indents = adjustedLastIndent(indents);
         text += toString(statement->getExpression(), indents);
     }
 
@@ -597,10 +582,7 @@ string Logger::toString(shared_ptr<StatementRepeat> statement, vector<IndentKind
     }
     text += formattedLine(line, indents);
 
-    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
-        indents.at(indents.size()-1) = IndentKind::NONE;
-    else
-        indents.at(indents.size()-1) = IndentKind::BRANCH;
+    indents = adjustedLastIndent(indents);
 
     // init-statement
     if (statement->getInitStatement() != nullptr)
@@ -804,10 +786,7 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
             line += ":";
         text += formattedLine(line, indents);
 
-        if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
-            indents.at(indents.size()-1) = IndentKind::NONE;
-        else
-            indents.at(indents.size()-1) = IndentKind::BRANCH;
+        indents = adjustedLastIndent(indents);
 
         for (shared_ptr<Expression> argExpression : expression->getArgumentExpressions())
             text += toString(argExpression, indents);
@@ -879,6 +858,15 @@ string Logger::formattedLine(string line, vector<IndentKind> indents) {
     text += "\n";
 
     return text;
+}
+
+vector<IndentKind> Logger::adjustedLastIndent(vector<IndentKind> indents) {
+    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
+        indents.at(indents.size()-1) = IndentKind::NONE;
+    else
+        indents.at(indents.size()-1) = IndentKind::BRANCH;
+
+    return indents;
 }
 
 void Logger::print(vector<shared_ptr<Token>> tokens) {

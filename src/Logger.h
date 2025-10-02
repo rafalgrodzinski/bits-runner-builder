@@ -83,6 +83,7 @@ private:
     static string toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents);
 
     static string formattedLine(string line, vector<IndentKind> indents);
+    static vector<IndentKind> adjustedLastIndent(vector<IndentKind> indents);
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);
