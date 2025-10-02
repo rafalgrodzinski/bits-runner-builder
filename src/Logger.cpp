@@ -114,15 +114,15 @@ string Logger::toString(shared_ptr<Token> token) {
             return "ID(" + token->getLexme() + ")";
         case TokenKind::TYPE:
             return "TYPE(" + token->getLexme() + ")";
+        case TokenKind::BLOB:
+            return "BLOB";
+        case TokenKind::RAW_SOURCE_LINE:
+            return format("RAW_SOURCE_LINE({})", token->getLexme());
 
         case TokenKind::FUNCTION:
             return "FUN";
         case TokenKind::RAW_FUNCTION:
             return "RAW";
-        case TokenKind::RAW_SOURCE_LINE:
-            return format("RAW_SOURCE_LINE({})", token->getLexme());
-        case TokenKind::BLOB:
-            return "BLOB";
         case TokenKind::RETURN:
             return "RET";
         case TokenKind::REPEAT:
@@ -151,7 +151,6 @@ string Logger::toString(shared_ptr<Token> token) {
 }
 
 string Logger::toString(TokenKind tokenKind) {
-    TokenKind tk = tokenKind;
     switch (tokenKind) {
         case TokenKind::PLUS:
             return "+";
@@ -226,11 +225,11 @@ string Logger::toString(TokenKind tokenKind) {
             return "LITERAL(ID)";
         case TokenKind::TYPE:
             return "TYPE";
+        case TokenKind::BLOB:
+            return "BLOB";
+        case TokenKind::RAW_SOURCE_LINE:
+            return "RAW_SOURCE_LINE";
 
-        case TokenKind::IF:
-            return "IF";
-        case TokenKind::ELSE:
-            return "ELSE";
         case TokenKind::FUNCTION:
             return "FUN";
         case TokenKind::RAW_FUNCTION:
@@ -239,6 +238,10 @@ string Logger::toString(TokenKind tokenKind) {
             return "RET";
         case TokenKind::REPEAT:
             return "REP";
+        case TokenKind::IF:
+            return "IF";
+        case TokenKind::ELSE:
+            return "ELSE";
 
         case TokenKind::M_MODULE:
             return "@MODULE";
