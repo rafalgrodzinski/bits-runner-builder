@@ -557,23 +557,23 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
         case ExpressionKind::BINARY:
         return toString(dynamic_pointer_cast<ExpressionBinary>(expression), indents);
         case ExpressionKind::UNARY:
-            return toString(dynamic_pointer_cast<ExpressionUnary>(expression));
+            return toString(dynamic_pointer_cast<ExpressionUnary>(expression), indents);
         case ExpressionKind::IF_ELSE:
             return toString(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::VARIABLE:
-            return toString(dynamic_pointer_cast<ExpressionVariable>(expression));
+            return toString(dynamic_pointer_cast<ExpressionVariable>(expression), indents);
         case ExpressionKind::GROUPING:
-            return toString(dynamic_pointer_cast<ExpressionGrouping>(expression));
+            return toString(dynamic_pointer_cast<ExpressionGrouping>(expression), indents);
         case ExpressionKind::LITERAL:
             return toString(dynamic_pointer_cast<ExpressionLiteral>(expression), indents);
         case ExpressionKind::COMPOSITE_LITERAL:
-            return toString(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression));
+            return toString(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), indents);
         case ExpressionKind::CALL:
             return toString(dynamic_pointer_cast<ExpressionCall>(expression), indents);
         case ExpressionKind::BLOCK:
             return toString(dynamic_pointer_cast<ExpressionBlock>(expression));
         case ExpressionKind::CHAINED:
-            return toString(dynamic_pointer_cast<ExpressionChained>(expression));
+            return toString(dynamic_pointer_cast<ExpressionChained>(expression), indents);
     }
 }
 
@@ -632,17 +632,21 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
     return formattedLine(line, indents);
 }
 
-string Logger::toString(shared_ptr<ExpressionUnary> expression) {
+string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents) {
+    string line;
+
     switch (expression->getOperation()) {
         case ExpressionUnaryOperation::NOT:
-            return "{NOT " + toString(expression->getExpression(), { }) + "}";
+            line = format("NOT {}", toString(expression->getExpression(), {}));
         case ExpressionUnaryOperation::PLUS:
-            return "+" + toString(expression->getExpression(), { });
+            line = format("+({})", toString(expression->getExpression(), {}));
         case ExpressionUnaryOperation::MINUS:
-            return "-" + toString(expression->getExpression(), { });
+            line = format("-({})", toString(expression->getExpression(), {}));
         case ExpressionUnaryOperation::INVALID:
             return "{INVALID}";
     }
+
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
@@ -659,17 +663,22 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression) {
     return text;
 }
 
-string Logger::toString(shared_ptr<ExpressionVariable> expression) {
+string Logger::toString(shared_ptr<ExpressionVariable> expression, vector<IndentKind> indents) {
+    string line;
+
     switch (expression->getVariableKind()) {
         case ExpressionVariableKind::SIMPLE:
-            return format("VAR({})", expression->getIdentifier());
+            return format("`{}`", expression->getIdentifier());
         case ExpressionVariableKind::DATA:
-            return format("VAR({}|{})", expression->getIdentifier(), toString(expression->getIndexExpression(), { }));
+            return format("`{}`[{}]", expression->getIdentifier(), toString(expression->getIndexExpression(), {}));
     }
+
+    return formattedLine(line, indents);
 }
 
-string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
-    return format("({})", toString(expression->getExpression(), { }));
+string Logger::toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents) {
+    string line = format("({})", toString(expression->getExpression(), {}));
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents) {
@@ -693,16 +702,20 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
     return formattedLine(line, indents);
 }
 
-string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression) {
-    string text;
-    text += "{";
-    for (int i=0; i<expression->getExpressions().size(); i++) {
-        text += toString(expression->getExpressions().at(i), { });
-        if (i < expression->getExpressions().size() - 1)
-            text += ", ";
+string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression, vector<IndentKind> indents) {
+    string line;
+
+    int expressionsCount = expression->getExpressions().size();
+    line += "{ ";
+    for (int i=0; i<expressionsCount; i++) {
+        line += toString(expression->getExpressions().at(i), { });
+        if (i < expressionsCount-1)
+            line += ",";
+        line += " ";
     }
-    text += "}";
-    return text;
+    line += "}";
+
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents) {
@@ -723,19 +736,17 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
         for (shared_ptr<Expression> argExpression : expression->getArgumentExpressions())
             text += toString(argExpression, indents);
     } else {
-
+        text = format("`{}`(", expression->getName());
+        int expressionsCount = expression->getArgumentExpressions().size();
+        for (int i=0; i<expressionsCount; i++) {
+            text += toString(expression->getArgumentExpressions().at(i), {});
+            if (i < expressionsCount-1)
+                text += ", ";
+        }
+        text += ")";
     }
 
     return text;
-
-
-    string argsString;
-    for (int i = 0; i < expression->getArgumentExpressions().size(); i++) {
-        argsString += toString(expression->getArgumentExpressions().at(i), { });
-        if (i < expression->getArgumentExpressions().size() - 1)
-            argsString += ", ";
-    }
-    return format("CALL({}|{})", expression->getName(), argsString);
 }
 
 string Logger::toString(shared_ptr<ExpressionBlock> expression) {
@@ -748,16 +759,17 @@ string Logger::toString(shared_ptr<ExpressionBlock> expression) {
     return text;
 }
 
-string Logger::toString(shared_ptr<ExpressionChained> expression) {
-    string text;
+string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents) {
+    string line;
 
-    /*if (expression->getParentExpression() != nullptr) {
-        text += toString(expression->getParentExpression());
-        text += ".";
+    int expressionsCount = expression->getChainExpressions().size();
+    for (int i=0; i<expressionsCount; i++) {
+        line += toString(expression->getChainExpressions().at(i), {});
+        if (i < expressionsCount-1)
+            line += ".";
     }
-    text += toString(expression->getExpression());*/
 
-    return text;
+    return formattedLine(line, indents);
 }
 
 string Logger::formattedLine(string line, vector<IndentKind> indents) {
@@ -775,13 +787,13 @@ string Logger::formattedLine(string line, vector<IndentKind> indents) {
                 text += "   ";
                 break;
             case IndentKind::NODE:
-                text += "  ┣━";
+                text += " ┣━";
                 break;
             case IndentKind::NODE_LAST:
-                text += "  ┗━";
+                text += " ┗━";
                 break;
             case IndentKind::BRANCH:
-                text += "  ┃ ";
+                text += " ┃ ";
                 break;
         }
     }

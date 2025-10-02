@@ -68,15 +68,15 @@ private:
 
     static string toString(shared_ptr<Expression> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionBinary> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionUnary> expression);
+    static string toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionIfElse> expression);
-    static string toString(shared_ptr<ExpressionVariable> expression);
-    static string toString(shared_ptr<ExpressionGrouping> expression);
+    static string toString(shared_ptr<ExpressionVariable> expression, vector<IndentKind> indents);
+    static string toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionCompositeLiteral> expression);
+    static string toString(shared_ptr<ExpressionCompositeLiteral> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionBlock> expression);
-    static string toString(shared_ptr<ExpressionChained> expression);
+    static string toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents);
 
     static string formattedLine(string line, vector<IndentKind> indents);
 
