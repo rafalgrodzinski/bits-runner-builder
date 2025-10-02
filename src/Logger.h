@@ -61,20 +61,20 @@ private:
     static string toString(shared_ptr<StatementRawFunction> statement);
     static string toString(shared_ptr<StatementBlob> statement);
     static string toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementAssignment> statement);
+    static string toString(shared_ptr<StatementAssignment> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementReturn> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementRepeat> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents);
 
     static string toString(shared_ptr<Expression> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionBinary> expression);
+    static string toString(shared_ptr<ExpressionBinary> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionUnary> expression);
     static string toString(shared_ptr<ExpressionIfElse> expression);
     static string toString(shared_ptr<ExpressionVariable> expression);
     static string toString(shared_ptr<ExpressionGrouping> expression);
-    static string toString(shared_ptr<ExpressionLiteral> expression);
+    static string toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionCompositeLiteral> expression);
-    static string toString(shared_ptr<ExpressionCall> expression);
+    static string toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionBlock> expression);
     static string toString(shared_ptr<ExpressionChained> expression);
 

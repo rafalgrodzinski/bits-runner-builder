@@ -323,7 +323,7 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
         case StatementKind::ASSIGNMENT:
-            return toString(dynamic_pointer_cast<StatementAssignment>(statement));
+            return toString(dynamic_pointer_cast<StatementAssignment>(statement), indents);
         case StatementKind::RETURN:
             return toString(dynamic_pointer_cast<StatementReturn>(statement), indents);
         case StatementKind::REPEAT:
@@ -370,7 +370,7 @@ string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vecto
     vector<IndentKind> argIndents = indents;
     argIndents.at(argIndents.size()-1) = IndentKind::BRANCH;
     for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
-        line = format("`{}`: {}", arg.first, toString(arg.second));
+        line = format("`{}` {}", arg.first, toString(arg.second));
         text += formattedLine(line, argIndents);
     }
 
@@ -382,12 +382,15 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("VAR: `{}`: {}", statement->getName(), toString(statement->getValueType()));
+    line = format("VAR: `{}` {}", statement->getName(), toString(statement->getValueType()));
     text += formattedLine(line, indents);
 
     // initializer
     if (statement->getExpression() != nullptr) {
-        indents.at(indents.size()-1) = IndentKind::BRANCH;
+        if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
+            indents.at(indents.size()-1) = IndentKind::NONE;
+        else
+            indents.at(indents.size()-1) = IndentKind::BRANCH;
         line = format("← {}", toString(statement->getExpression(), { }));
         text += formattedLine(line, indents);
     }
@@ -403,7 +406,10 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
     line = format("FUN: `{}`", statement->getName());
     text += formattedLine(line, indents);
 
-    indents.at(indents.size()-1) = IndentKind::BRANCH;
+    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
+        indents.at(indents.size()-1) = IndentKind::NONE;
+    else
+        indents.at(indents.size()-1) = IndentKind::BRANCH;
 
     // arguments
     for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
@@ -459,14 +465,23 @@ string Logger::toString(shared_ptr<StatementBlock> statement, vector<IndentKind>
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementAssignment> statement) {
-    string text;
-    /*if (statement->getParentStatement() != nullptr) {
-        text += toString(statement->getParentStatement());
-        text += ".";
-    }*/
-    //text += toString(statement->getChainExpression());
-    return text;
+string Logger::toString(shared_ptr<StatementAssignment> statement, vector<IndentKind> indents) {
+    string line;
+
+    // left hand
+    int expressionsCount = statement->getChainExpressions().size();
+    for (int i=0; i<expressionsCount; i++) {
+        line += toString(statement->getChainExpressions().at(i), {});
+        if (i < expressionsCount-1)
+            line += ".";
+    }
+
+    line += " ← ";
+
+    // right hand
+    line += toString(statement->getValueExpression(), {});
+
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<StatementReturn> statement, vector<IndentKind> indents) {
@@ -475,13 +490,17 @@ string Logger::toString(shared_ptr<StatementReturn> statement, vector<IndentKind
 
     // name
     line = "RET";
+    if (statement->getExpression() != nullptr)
+    line += ":";
     text += formattedLine(line, indents);
 
     // expression
     if (statement->getExpression() != nullptr) {
-        indents.at(indents.size()-1) = IndentKind::NONE;
-        line = toString(statement->getExpression(), { });
-        text = formattedLine(line, indents);
+        if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
+            indents.at(indents.size()-1) = IndentKind::NONE;
+        else
+            indents.at(indents.size()-1) = IndentKind::BRANCH;
+        text += toString(statement->getExpression(), indents);
     }
 
     return text;
@@ -492,33 +511,36 @@ string Logger::toString(shared_ptr<StatementRepeat> statement, vector<IndentKind
     string line;
 
     // name
-    text += formattedLine("REP", indents);
+    line = "REP";
+    if (
+        statement->getInitStatement() != nullptr ||
+        statement->getPreConditionExpression() != nullptr ||
+        statement->getPostConditionExpression() != nullptr ||
+        statement->getPostStatement() != nullptr) {
+        line += ":";
+    }
+    text += formattedLine(line, indents);
 
-    indents.at(indents.size()-1) = IndentKind::NONE;
+    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
+        indents.at(indents.size()-1) = IndentKind::NONE;
+    else
+        indents.at(indents.size()-1) = IndentKind::BRANCH;
 
     // init-statement
-    if (statement->getInitStatement() != nullptr) {
+    if (statement->getInitStatement() != nullptr)
         text += toString(statement->getInitStatement(), indents);
-        //text += formattedLine(line, indents);
-    }
 
     // pre-condition
-    if (statement->getPreConditionExpression() != nullptr) {
+    if (statement->getPreConditionExpression() != nullptr)
         text += toString(statement->getPreConditionExpression(), indents);
-        //text += formattedLine(line, indents);
-    }
 
     // post-condition
-    if (statement->getPostConditionExpression() != nullptr) {
+    if (statement->getPostConditionExpression() != nullptr)
         text += toString(statement->getPostConditionExpression(), indents);
-        //text += formattedLine(line, indents);
-    }
 
     // post-statement
-        if (statement->getPostStatement() != nullptr) {
+        if (statement->getPostStatement() != nullptr)
         text += toString(statement->getPostStatement(), indents);
-        //text += formattedLine(line, indents);
-    }
 
     // body
     text += toString(statement->getBodyBlockStatement(), indents);
@@ -527,20 +549,13 @@ string Logger::toString(shared_ptr<StatementRepeat> statement, vector<IndentKind
 }
 
 string Logger::toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents) {
-    //return format("EXPR({})", toString(statement->getExpression()));
-    string text;
-
-    text += formattedLine("EXPR", indents);
-    indents.at(indents.size()-1) = IndentKind::NONE;
-    text += toString(statement->getExpression(), indents);
-
-    return text;
+    return toString(statement->getExpression(), indents); 
 }
 
 string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> indents) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
-        return toString(dynamic_pointer_cast<ExpressionBinary>(expression));
+        return toString(dynamic_pointer_cast<ExpressionBinary>(expression), indents);
         case ExpressionKind::UNARY:
             return toString(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
@@ -550,11 +565,11 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
         case ExpressionKind::GROUPING:
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::LITERAL:
-            return toString(dynamic_pointer_cast<ExpressionLiteral>(expression));
+            return toString(dynamic_pointer_cast<ExpressionLiteral>(expression), indents);
         case ExpressionKind::COMPOSITE_LITERAL:
             return toString(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression));
         case ExpressionKind::CALL:
-            return toString(dynamic_pointer_cast<ExpressionCall>(expression));
+            return toString(dynamic_pointer_cast<ExpressionCall>(expression), indents);
         case ExpressionKind::BLOCK:
             return toString(dynamic_pointer_cast<ExpressionBlock>(expression));
         case ExpressionKind::CHAINED:
@@ -562,39 +577,59 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
     }
 }
 
-string Logger::toString(shared_ptr<ExpressionBinary> expression) {
+string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKind> indents) {
+    string op;
+
     switch (expression->getOperation()) {
         case ExpressionBinaryOperation::OR:
-            return "{OR " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "OR";
+            break;
         case ExpressionBinaryOperation::XOR:
-            return "{XOR " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "XOR";
+            break;
         case ExpressionBinaryOperation::AND:
-            return "{AND " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "AND";
+            break;
         case ExpressionBinaryOperation::EQUAL:
-            return "{= " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "=";
+            break;
         case ExpressionBinaryOperation::NOT_EQUAL:
-            return "{!= " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "!=";
+            break;
         case ExpressionBinaryOperation::LESS:
-            return "{< " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "<";
+            break;
         case ExpressionBinaryOperation::LESS_EQUAL:
-            return "{<= " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "<=";
+            break;
         case ExpressionBinaryOperation::GREATER:
-            return "{> " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = ">";
+            break;
         case ExpressionBinaryOperation::GREATER_EQUAL:
-            return "{<= " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = ">=";
+            break;
         case ExpressionBinaryOperation::ADD:
-            return "{+ " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "+";
+            break;
         case ExpressionBinaryOperation::SUB:
-            return "{- " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "-";
+            break;
         case ExpressionBinaryOperation::MUL:
-            return "{* " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "*";
+            break;
         case ExpressionBinaryOperation::DIV:
-            return "{/ " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "/";
+            break;
         case ExpressionBinaryOperation::MOD:
-            return "{% " + toString(expression->getLeft(), { }) + " " + toString(expression->getRight(), { }) + "}";
+            op = "%";
+            break;
         case ExpressionBinaryOperation::INVALID:
             return "{INVALID}";
     }
+
+    string line = format("{} {} {}", toString(expression->getLeft(), {}), op, toString(expression->getRight(), {}));
+
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<ExpressionUnary> expression) {
@@ -637,17 +672,25 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression) {
     return format("({})", toString(expression->getExpression(), { }));
 }
 
-string Logger::toString(shared_ptr<ExpressionLiteral> expression) {
+string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents) {
+    string line;
+
     switch (expression->getLiteralKind()) {
         case LiteralKind::BOOL:
-        return expression->getBoolValue() ? "true" : "false";
+            line = expression->getBoolValue() ? "true" : "false";
+            break;
         case LiteralKind::UINT:
-            return to_string(expression->getUIntValue());
+            line = to_string(expression->getUIntValue());
+            break;
         case LiteralKind::SINT:
-            return to_string(expression->getSIntValue());
+            line = to_string(expression->getSIntValue());
+            break;
         case LiteralKind::REAL:
-            return to_string(expression->getRealValue());
+            line = to_string(expression->getRealValue());
+            break;
     }
+
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression) {
@@ -662,7 +705,30 @@ string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression) {
     return text;
 }
 
-string Logger::toString(shared_ptr<ExpressionCall> expression) {
+string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents) {
+    string text;
+
+    if (indents.size() > 0) {
+        string line;
+        line = format("CALL `{}`", expression->getName());
+        if (!expression->getArgumentExpressions().empty())
+            line += ":";
+        text += formattedLine(line, indents);
+
+        if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
+            indents.at(indents.size()-1) = IndentKind::NONE;
+        else
+            indents.at(indents.size()-1) = IndentKind::BRANCH;
+
+        for (shared_ptr<Expression> argExpression : expression->getArgumentExpressions())
+            text += toString(argExpression, indents);
+    } else {
+
+    }
+
+    return text;
+
+
     string argsString;
     for (int i = 0; i < expression->getArgumentExpressions().size(); i++) {
         argsString += toString(expression->getArgumentExpressions().at(i), { });
@@ -695,22 +761,27 @@ string Logger::toString(shared_ptr<ExpressionChained> expression) {
 }
 
 string Logger::formattedLine(string line, vector<IndentKind> indents) {
+    // Just return the input, if no indents (useful for inline expressions)
+    if (indents.empty())
+        return line;
+
+    // Otherwise figure out the tree structure
     string text;
 
     // Draw tree
     for (IndentKind &indent : indents) {
         switch (indent) {
             case IndentKind::NONE:
-                text += "  ";
+                text += "   ";
                 break;
             case IndentKind::NODE:
-                text += "┣━";
+                text += "  ┣━";
                 break;
             case IndentKind::NODE_LAST:
-                text += "┗━";
+                text += "  ┗━";
                 break;
             case IndentKind::BRANCH:
-                text += "┃ ";
+                text += "  ┃ ";
                 break;
         }
     }
