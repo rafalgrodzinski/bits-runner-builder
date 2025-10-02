@@ -363,7 +363,9 @@ string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vecto
     string line;
 
     // name
-    line = format("@EXTERN FUN: `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
+    line = format("@EXTERN FUN `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
+    if (!statement->getArguments().empty())
+        line += ":";
     text += formattedLine(line, indents);
 
     // arguments
@@ -382,7 +384,9 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("VAR: `{}` {}", statement->getName(), toString(statement->getValueType()));
+    line = format("VAR `{}` {}", statement->getName(), toString(statement->getValueType()));
+    if (statement->getExpression() != nullptr)
+        line += ":";
     text += formattedLine(line, indents);
 
     // initializer
@@ -403,7 +407,9 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("FUN: `{}`", statement->getName());
+    line = format("FUN `{}`", statement->getName());
+    if (!statement->getArguments().empty())
+        line += ":";
     text += formattedLine(line, indents);
 
     if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
@@ -413,7 +419,7 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
 
     // arguments
     for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
-        line = format("`{}`: {}", arg.first, toString(arg.second));
+        line = format("`{}` {}", arg.first, toString(arg.second));
         text += formattedLine(line, indents);
     }
 
