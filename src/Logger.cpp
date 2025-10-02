@@ -1,6 +1,7 @@
 #include "Logger.h"
 
 #include <iostream>
+#include <sstream>
 
 #include "Error.h"
 
@@ -323,7 +324,7 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::FUNCTION_DECLARATION:
             return toString(dynamic_pointer_cast<StatementFunctionDeclaration>(statement), indents);
         case StatementKind::RAW_FUNCTION:
-            return toString(dynamic_pointer_cast<StatementRawFunction>(statement));
+            return toString(dynamic_pointer_cast<StatementRawFunction>(statement), indents);
         case StatementKind::BLOB:
             return toString(dynamic_pointer_cast<StatementBlob>(statement), indents);
         case StatementKind::BLOB_DECLARATION:
@@ -475,17 +476,42 @@ string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vect
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementRawFunction> statement) {
+string Logger::toString(shared_ptr<StatementRawFunction> statement, vector<IndentKind> indents) {
     string text;
+    string line;
 
-    string argsString;
-    for (int i = 0; i < statement->getArguments().size(); i++) {
-        auto arg = statement->getArguments().at(i);
-        argsString +=  format("ARG({}, {})", arg.first, toString(arg.second));
+    // name
+    line = format("RAW `{}`, `{}` → {}", statement->getName(), statement->getConstraints(), toString(statement->getReturnValueType()));
+    if (!statement->getArguments().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+
+    // arguments
+    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
+        line = format("`{}` {}", arg.first, toString(arg.second));
+        text += formattedLine(line, indents);
     }
-    text += format("RAW(\"{}\"|{}|{}):\n", statement->getName(), argsString, toString(statement->getReturnValueType()));
 
-    text += statement->getRawSource();
+    indents = adjustedLastIndent(indents);
+
+    // body
+    vector<string> sourceLines;
+    stringstream stream(statement->getRawSource());
+    for (string sourceLine; getline(stream, sourceLine, '\n');) {
+        sourceLines.push_back(sourceLine);
+    }
+
+    for (int i=0; i<sourceLines.size(); i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < sourceLines.size() - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += formattedLine(sourceLines.at(i), currentIndents);
+    }
 
     return text;
 }
@@ -925,7 +951,7 @@ void Logger::print(vector<shared_ptr<Token>> tokens) {
 }
 
 void Logger::print(shared_ptr<StatementModule> statement) {
-    cout << toString(statement, {IndentKind::ROOT}) << endl << endl;
+    cout << toString(statement, {IndentKind::ROOT});
 }
 
 void Logger::print(shared_ptr<Error> error) {

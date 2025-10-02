@@ -62,7 +62,7 @@ private:
     static string toString(shared_ptr<StatementVariable> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementFunction> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementRawFunction> statement);
+    static string toString(shared_ptr<StatementRawFunction> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementBlob> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents);

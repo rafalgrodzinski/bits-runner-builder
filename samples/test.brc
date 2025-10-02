@@ -12,6 +12,13 @@ printNum fun: number u64
     ;
 ;
 
+printCharRaw raw<"m, m">: character u32, attribute u32
+    mov ah, 0x00
+    mov bl, $0
+    mov al, $1
+    int 0x30
+;
+
 engine blob
     sizes data<u64, 2>
 ;
