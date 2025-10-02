@@ -41,7 +41,8 @@ class Error;
 using namespace std;
 
 enum class IndentKind {
-    NONE,
+    ROOT,
+    EMPTY,
     NODE,
     NODE_LAST,
     BRANCH

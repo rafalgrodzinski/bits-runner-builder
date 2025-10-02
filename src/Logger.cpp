@@ -368,7 +368,7 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     // body
     indents.at(indents.size()-1) = IndentKind::NODE_LAST;
     text += formattedLine("BODY", indents);
-    indents.at(indents.size()-1) = IndentKind::NONE;
+    indents.at(indents.size()-1) = IndentKind::EMPTY;
 
     int statementsCount = statement->getStatements().size();
     for (int i=0; i<statementsCount; i++) {
@@ -735,7 +735,7 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
     if (expression->getElseBlock() != nullptr) {
         indents.at(indents.size()-1) = IndentKind::NODE_LAST;
         text += formattedLine("ELSE", indents);
-        indents.at(indents.size()-1) = IndentKind::NONE;
+        indents.at(indents.size()-1) = IndentKind::EMPTY;
         text += toString(expression->getElseBlock(), indents);
     }
 
@@ -865,7 +865,10 @@ string Logger::formattedLine(string line, vector<IndentKind> indents) {
     // Draw tree
     for (IndentKind &indent : indents) {
         switch (indent) {
-            case IndentKind::NONE:
+            case IndentKind::ROOT:
+                text = "";
+                break;
+            case IndentKind::EMPTY:
                 text += "   ";
                 break;
             case IndentKind::NODE:
@@ -888,10 +891,26 @@ string Logger::formattedLine(string line, vector<IndentKind> indents) {
 }
 
 vector<IndentKind> Logger::adjustedLastIndent(vector<IndentKind> indents) {
-    if (indents.at(indents.size()-1) == IndentKind::NODE_LAST)
-        indents.at(indents.size()-1) = IndentKind::NONE;
-    else
-        indents.at(indents.size()-1) = IndentKind::BRANCH;
+    if (indents.empty())
+        return indents;
+
+    IndentKind newKind;
+
+    switch (indents.at(indents.size()-1)) {
+        case IndentKind::EMPTY:
+        case IndentKind::NODE_LAST:
+            newKind = IndentKind::EMPTY;
+            break;
+        case IndentKind::BRANCH:
+        case IndentKind::NODE:
+            newKind = IndentKind::BRANCH;
+            break;
+        case IndentKind::ROOT:
+            newKind = IndentKind::ROOT;
+            break;
+    }
+
+    indents.at(indents.size()-1) = newKind;
 
     return indents;
 }
@@ -906,7 +925,7 @@ void Logger::print(vector<shared_ptr<Token>> tokens) {
 }
 
 void Logger::print(shared_ptr<StatementModule> statement) {
-    cout << toString(statement, {IndentKind::NODE_LAST}) << endl << endl;
+    cout << toString(statement, {IndentKind::ROOT}) << endl << endl;
 }
 
 void Logger::print(shared_ptr<Error> error) {
