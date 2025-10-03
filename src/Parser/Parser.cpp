@@ -81,6 +81,8 @@ shared_ptr<Statement> Parser::nextStatement() {
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
+    markError({}, {}, {});
+
     return nullptr;
 }
 
@@ -444,9 +446,8 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
             break;
         }
         case ParseeResultsGroupKind::NO_MATCH:
-            return nullptr;
         case ParseeResultsGroupKind::FAILURE:
-            break;
+            return nullptr;
     }
 
     // block
