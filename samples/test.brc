@@ -1,5 +1,17 @@
 @extern putchar fun: character u64 -> u32
 
+print fun: text data<u64, 16>
+    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
+        putchar(text[i])
+    ;
+;
 
-blah fun
-  abc s32 <- 42 * 2;
+main fun:
+  abc sint32 <- 42 * 2 ;
+
+
+@export main fun -> u32
+    print("Hello, world!\n")
+
+    ret 0
+;

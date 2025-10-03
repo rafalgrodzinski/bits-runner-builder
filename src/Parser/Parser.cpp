@@ -81,6 +81,9 @@ shared_ptr<Statement> Parser::nextStatement() {
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
+    if (tryMatchingTokenKinds({TokenKind::END}, true, false))
+        return nullptr;
+
     markError({}, {}, {});
 
     return nullptr;
@@ -144,7 +147,8 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true)
                         }
                     ), false, true, false
-                )
+                ),
+                Parsee::tokenParsee(TokenKind::END, true, false, true)
             }
         )
     );

@@ -270,21 +270,21 @@ string Logger::toString(Parsee parsee) {
         case ParseeKind::TOKEN:
             return toString(parsee.getTokenKind());
         case ParseeKind::VALUE_TYPE:
-            return "PARSEE_VALUE_TYPE";
+            return "Value Type";
         case ParseeKind::STATEMENT:
-            return "STATEMENT";
+            return "Statement";
         case ParseeKind::STATEMENT_IN_BLOCK:
-            return "STATEMENT_IN_BLOCK";
+            return "Statement in Block";
         case ParseeKind::EXPRESSION:
-            return "EXPRESSION";
+            return "Expression";
         case ParseeKind::OR:
             return "PARSEE_OR";
         case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
         case ParseeKind::STATEMENT_BLOCK_MULTI_LINE:
-            return "STATEMENT_BLOCK";
+            return "Statement Block";
         case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
         case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
-            return "EXPRESSION_BLOCK";
+            return "Expression Block";
     }
 }
 
