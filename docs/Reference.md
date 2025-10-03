@@ -10,20 +10,20 @@ Single equal sign `=` denotes comparion and instead left arrow `<-` is used as a
 Source code is grouped into named modules, each module can be compromised of number of files. There is no separate header file, instead prefix `@pub` if attached to externally visible symbols.
 
 ## Language Elements
-- Comments (`//`, `/* */`)
-- Literals (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
-- Operators (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
-- Logical Operators (`or`, `xor`, `and`, `not`)
-- Variables (`u8`, `u32`, `u64`, `s8`, `s32`, `s64`, `r32`, `data`, `blob`, `ptr`)
-- Data (`data<>`)
-- Blob (`blob<>`)
-- Pointers (`ptr<>`)
-- Functions (`fun`)
-- Raw Functions (`raw`)
-- Conditional Expressions (`if`, `else`)
-- Repeats (`rep`)
-- Chaining (`thing.sutff[5].something`)
-- Modules (`@module`, `@import`, `@export`, `@extern`)
+- [Comments](Reference.md#comments) (`//`, `/* */`)
+- [Literals](Reference.md#literals) (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
+- [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
+- [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
+- [Simple Variables](Reference.md#simple-variables) (`u8`, `u32`, `u64`, `s8`, `s32`, `s64`, `r32`, `data`, `blob`, `ptr`)
+- [Data](Reference.md#data) (`data<>`)
+- [Blob](Reference.md#blob) (`blob<>`)
+- [Pointers](Reference.md#pointers) (`ptr<>`)
+- [Functions](Reference.md#functions) (`fun`)
+- [Raw Functions](Reference.md#raw-functions) (`raw`)
+- [Conditional Expressions](Reference.md#conditional-expressions) (`if`, `else`)
+- [Repeats](Reference.md#repeats) (`rep`)
+- [Chaining](Reference.md#chaining) (`thing.sutff[5].something`)
+- [Modules](Reference.md#modules) (`@module`, `@import`, `@export`, `@extern`)
 
 ## Comments
 Like in C, comments can specified using either `\\` which will run until the end of the line or through `/* */` block. However, unlike C, the `/* bla bla /* bla */ */` comments can be also embeded inside each other.

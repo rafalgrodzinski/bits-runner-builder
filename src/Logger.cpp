@@ -261,10 +261,14 @@ string Logger::toString(TokenKind tokenKind) {
     }
 }
 
-string Logger::toString(ParseeKind parseeKind) {
-    switch (parseeKind) {
+string Logger::toString(Parsee parsee) {
+    switch (parsee.getKind()) {
+        case ParseeKind::GROUP:
+            return "PARSEE_GROUP";
+        case ParseeKind::REPEATED_GROUP:
+            return "PARSEE_REPEATED_GROUP";
         case ParseeKind::TOKEN:
-            return "Token";
+            return toString(parsee.getTokenKind());
         case ParseeKind::VALUE_TYPE:
             return "Value Type";
         case ParseeKind::STATEMENT:
@@ -273,8 +277,14 @@ string Logger::toString(ParseeKind parseeKind) {
             return "Statement in Block";
         case ParseeKind::EXPRESSION:
             return "Expression";
-        default:
-            return "Other";
+        case ParseeKind::OR:
+            return "PARSEE_OR";
+        case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
+        case ParseeKind::STATEMENT_BLOCK_MULTI_LINE:
+            return "Statement Block";
+        case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
+        case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
+            return "Expression Block";
     }
 }
 
@@ -404,8 +414,8 @@ string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vecto
     text += formattedLine(line, indents);
 
     // arguments
+    indents = adjustedLastIndent(indents);
     vector<IndentKind> argIndents = indents;
-    argIndents.at(argIndents.size()-1) = IndentKind::BRANCH;
     for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
         line = format("`{}` {}", arg.first, toString(arg.second));
         text += formattedLine(line, argIndents);
@@ -974,7 +984,7 @@ void Logger::print(shared_ptr<Error> error) {
             if (expectedParsee) {
                 message = format(
                     "At line {}, column {}, Expected {} but found {} instead",
-                    token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee).getKind()), toString(token)
+                    token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee)), toString(token)
                 );
             } else if (expectedTokenKind) {
                 message = format(
@@ -983,7 +993,7 @@ void Logger::print(shared_ptr<Error> error) {
                 );
             } else {
                 message = format(
-                    "At line {}, column {}: Unexpected token \"{}\" found",
+                    "At line {}, column {}: Unexpected token {} found",
                     token->getLine() + 1, token->getColumn() + 1, toString(token)
                 );
             }
