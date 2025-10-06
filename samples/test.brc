@@ -20,16 +20,18 @@ print fun: text data<u64, 16>
 
 user blob
     age u64
-    name data<u8, 16>
+    name data<u64, 16>
 ;
 
-//u2 blob<user>
+u2 blob<user> <- { }
 //num u64
 nums data<u64> <- {2, 4, 8, 16, 32}
 
 @export main fun -> u32
     //u1 blob<user> <- { 24, "bob" }
-    printNum(nums[2])
+    printNum(u2.age)
+    print("\n")
+    print(u2.name)
 
     ret 0
 ;

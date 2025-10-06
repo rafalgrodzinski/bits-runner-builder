@@ -352,12 +352,6 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     llvm::Constant *initConst = llvm::Constant::getNullValue(type);
     if (statement->getExpression() != nullptr) {
         initConst = constantValueForExpression(statement->getExpression(), type);
-        /*llvm::Value *initValue = valueForExpression(statement->getExpression(), type);
-        if (initValue == nullptr) {
-            markError(0, 0, "Not a constant expression");
-            return;
-        }
-        initConst = llvm::dyn_cast<llvm::Constant>(initValue);*/
         if (initConst == nullptr) {
             markError(0, 0, "Not a constant expression");
             return;
@@ -952,7 +946,16 @@ llvm::Constant *ModuleBuilder::constantValueForCompositeLiteral(shared_ptr<Expre
         }
         return llvm::ConstantArray::get(llvm::ArrayType::get(elementType, count) , constantValues);
     } else if (isStruct) {
+        llvm::StructType *structType = llvm::dyn_cast<llvm::StructType>(castToType);
 
+        vector<llvm::Constant*> constantValues;
+        for (int i=0; i<expression->getExpressions().size(); i++) {
+            shared_ptr<Expression> valueExpression = expression->getExpressions().at(i);
+            llvm::Constant *constantValue = constantValueForExpression(valueExpression, structType->getTypeAtIndex(i));
+            constantValues.push_back(constantValue);
+        }
+
+        return llvm::ConstantStruct::get(structType, constantValues);
     } else if (isPointer) {
 
     }
