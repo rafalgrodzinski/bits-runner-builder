@@ -26,6 +26,7 @@ user blob
 u2 blob<user> <- { }
 //num u64
 nums data<u64> <- {2, 4, 8, 16, 32}
+buffer ptr<u8> <- { 0xb800 }
 
 @export main fun -> u32
     //u1 blob<user> <- { 24, "bob" }

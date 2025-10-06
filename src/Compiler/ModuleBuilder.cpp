@@ -507,6 +507,9 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
         case ExpressionKind::UNARY:
             value = valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
             break;
+        default:
+            markError(0, 0, "Invalid constant expression");
+            return nullptr;
     }
     return llvm::dyn_cast<llvm::Constant>(value);
 }
@@ -957,7 +960,12 @@ llvm::Constant *ModuleBuilder::constantValueForCompositeLiteral(shared_ptr<Expre
 
         return llvm::ConstantStruct::get(structType, constantValues);
     } else if (isPointer) {
-
+        if (expression->getExpressions().size() != 1) {
+            markError(0, 0, "Invalid pointer literal");
+            return nullptr;
+        }
+        llvm::Constant *adrValue = constantValueForExpression(expression->getExpressions().at(0), typeU64);
+        return llvm::ConstantExpr::getIntToPtr(adrValue, typePtr);
     }
     
     markError(0, 0, "Invalid type");
