@@ -209,6 +209,8 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
 
     scopes.pop();
 
+    builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
+
     // verify
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
@@ -257,6 +259,13 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
 }
 
 void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
+    if (builder->GetInsertBlock() != nullptr)
+        buildLocalVariable(statement);
+    else
+        buildGlobalVariable(statement);
+}
+
+void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
     llvm::AllocaInst *alloca;
     llvm::Type *valueType;
 
@@ -316,16 +325,44 @@ void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
             if (valueType == nullptr)
                 return;
             alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getName());
-            break;
         }
     }
 
     // try registering new variable in scope
     if (!setAlloca(statement->getName(), alloca))
-            return;
+        return;
 
     if (statement->getExpression() != nullptr)
         buildAssignment(alloca, valueType, statement->getExpression());
+}
+
+void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
+    llvm::Type *type = typeForValueType(statement->getValueType());
+    if (type == nullptr)
+        return;
+
+    // linkage
+    llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
+
+    // initialization
+    llvm::Value *initValue = valueForExpression(statement->getExpression());
+    if (initValue == nullptr) {
+        markError(0, 0, "Not a constant expression");
+        return;
+    }
+    llvm::Constant *initConst = llvm::dyn_cast<llvm::Constant>(initValue);
+    if (initConst == nullptr) {
+        markError(0, 0, "Not a constant expression");
+        return;
+    }
+
+    llvm::Value *global = new llvm::GlobalVariable(*module, type, false, linkage, initConst, statement->getName());
+
+    if (!setGlobal(statement->getName(), global))
+        return;
+
+    if (!setPtrType(statement->getName(), statement->getValueType()))
+        return;
 }
 
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
@@ -714,11 +751,26 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 }
 
 llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expression) {
-    llvm::AllocaInst *alloca = getAlloca(expression->getIdentifier());
-    if (alloca == nullptr)
-        return nullptr;
+    llvm::Value *value = nullptr;
+    llvm::Type *type = nullptr;
 
-    return valueForSourceValue(alloca, alloca->getAllocatedType(), expression);
+    llvm::AllocaInst *localAlloca = getAlloca(expression->getIdentifier());
+    llvm::Value *globalValue = getGlobal(expression->getIdentifier());
+    if (localAlloca != nullptr) {
+        value = localAlloca;
+        type = localAlloca->getAllocatedType();
+    } else if (globalValue != nullptr) {
+        value = globalValue;
+        shared_ptr<ValueType> valueType = getPtrType(expression->getIdentifier());
+        type = typeForValueType(valueType);
+    }
+
+    if (value == nullptr) {
+        markError(0, 0, format("Variable \"{}\" not defined in scope", expression->getIdentifier()));
+        return nullptr;
+    }
+
+    return valueForSourceValue(value, type, expression);
 }
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
@@ -815,6 +867,9 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
 }
 
 llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType, shared_ptr<ExpressionVariable> expression) {
+    if (builder->GetInsertBlock() == nullptr)
+        return nullptr;
+
     switch (expression->getVariableKind()) {
         case ExpressionVariableKind::SIMPLE: {
             return builder->CreateLoad(sourceType, sourceValue, expression->getIdentifier());
@@ -1125,7 +1180,6 @@ llvm::AllocaInst* ModuleBuilder::getAlloca(string name) {
         scopes.pop();
     }
 
-    markError(0, 0, format("Variable \"{}\" not defined in scope", name));
     return nullptr;
 }
 
@@ -1192,6 +1246,29 @@ shared_ptr<ValueType> ModuleBuilder::getPtrType(string name) {
         shared_ptr<ValueType> ptrType = scopes.top().ptrTypeMap[name];
         if (ptrType != nullptr)
             return ptrType;
+        scopes.pop();
+    }
+
+    return nullptr;
+}
+
+bool ModuleBuilder::setGlobal(string name, llvm::Value *global) {
+    if (scopes.top().globalMap[name] != nullptr) {
+        markError(0, 0, format("Global \"{}\" already declared in scope", name));
+        return false;
+    }
+
+    scopes.top().globalMap[name] = global;
+    return true;
+}
+
+llvm::Value *ModuleBuilder::getGlobal(string name) {
+    stack<Scope> scopes = this->scopes;
+
+    while (!scopes.empty()) {
+        llvm::Value *global = scopes.top().globalMap[name];
+        if (global != nullptr)
+            return global;
         scopes.pop();
     }
 

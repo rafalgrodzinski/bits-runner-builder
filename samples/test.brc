@@ -6,12 +6,26 @@ print fun: text data<u64, 16>
     ;
 ;
 
-main fun:
-  abc sint32 <- 42 * 2 ;
+@export printNum fun: number u64
+    biggest u64 <- 10
+    rep biggest <= number: biggest <- biggest * 10
+    biggest <- biggest / 10
 
+    rep biggest > 0, biggest <- biggest / 10
+        digit u64 <- number / biggest
+        putchar(digit + '0')
+        number <- number % biggest
+    ;
+;
+
+num1 u64 <- 2 * 3
+num2 u64 <- 3 / 2
 
 @export main fun -> u32
-    print("Hello, world!\n")
+    num3 u64 <- num1 + num1
+    num2 <- 7
+
+    printNum(num2)
 
     ret 0
 ;

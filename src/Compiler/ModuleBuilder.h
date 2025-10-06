@@ -52,6 +52,7 @@ typedef struct {
     map<string, llvm::StructType*> structTypeMap;
     map<string, vector<string>> structMembersMap;
     map<string, shared_ptr<ValueType>> ptrTypeMap;
+    map<string, llvm::Value*> globalMap;
 } Scope;
 
 class ModuleBuilder {
@@ -89,6 +90,8 @@ private:
     void buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVariable(shared_ptr<StatementVariable> statement);
+    void buildLocalVariable(shared_ptr<StatementVariable> statement);
+    void buildGlobalVariable(shared_ptr<StatementVariable> statement);
     void buildAssignmentChained(shared_ptr<StatementAssignment> statement);
     void buildBlock(shared_ptr<StatementBlock> statement);
     void buildReturn(shared_ptr<StatementReturn> statement);
@@ -128,6 +131,9 @@ private:
 
     bool setPtrType(string name, shared_ptr<ValueType> ptrType);
     shared_ptr<ValueType> getPtrType(string name);
+
+    bool setGlobal(string name, llvm::Value *global);
+    llvm::Value *getGlobal(string name);
 
     bool registerStruct(string structName, llvm::StructType *structType, vector<string> memberNames);
     llvm::StructType *getStructType(string structName);
