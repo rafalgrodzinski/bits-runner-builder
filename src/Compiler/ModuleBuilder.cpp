@@ -345,19 +345,22 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
     // initialization
-    llvm::Value *initValue = valueForExpression(statement->getExpression());
-    if (initValue == nullptr) {
-        markError(0, 0, "Not a constant expression");
-        return;
-    }
-    llvm::Constant *initConst = llvm::dyn_cast<llvm::Constant>(initValue);
-    if (initConst == nullptr) {
-        markError(0, 0, "Not a constant expression");
-        return;
+    llvm::Constant *initConst = llvm::Constant::getNullValue(type);
+    if (statement->getExpression() != nullptr) {
+        llvm::Value *initValue = valueForExpression(statement->getExpression());
+        if (initValue == nullptr) {
+            markError(0, 0, "Not a constant expression");
+            return;
+        }
+        initConst = llvm::dyn_cast<llvm::Constant>(initValue);
+        if (initConst == nullptr) {
+            markError(0, 0, "Not a constant expression");
+            return;
+        }
     }
 
-    llvm::Value *global = new llvm::GlobalVariable(*module, type, false, linkage, initConst, statement->getName());
-
+    llvm::GlobalVariable *global = new llvm::GlobalVariable(*module, type, false, linkage, initConst, statement->getName());
+    
     if (!setGlobal(statement->getName(), global))
         return;
 

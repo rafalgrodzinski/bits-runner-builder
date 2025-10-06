@@ -18,14 +18,17 @@ print fun: text data<u64, 16>
     ;
 ;
 
-num1 u64 <- 2 * 3
-num2 u64 <- 3 / 2
+user blob
+    age u64
+    name data<u8, 16>
+;
+
+u2 blob<user>
+//num u64
 
 @export main fun -> u32
-    num3 u64 <- num1 + num1
-    num2 <- 7
-
-    printNum(num2)
+    //u1 blob<user> <- { 24, "bob" }
+    printNum(u2.age)
 
     ret 0
 ;
