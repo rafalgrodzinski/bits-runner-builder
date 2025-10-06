@@ -99,8 +99,10 @@ private:
     void buildExpression(shared_ptr<StatementExpression> statement);
 
     llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
+    llvm::Constant *constantValueForExpression(shared_ptr<Expression> expression, llvm::Type *targetType);
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType = nullptr);
     llvm::Value *valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType = nullptr);
+    llvm::Constant *constantValueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType);
     llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
     llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);

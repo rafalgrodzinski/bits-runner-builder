@@ -23,12 +23,13 @@ user blob
     name data<u8, 16>
 ;
 
-u2 blob<user>
+//u2 blob<user>
 //num u64
+nums data<u64> <- {2, 4, 8, 16, 32}
 
 @export main fun -> u32
     //u1 blob<user> <- { 24, "bob" }
-    printNum(u2.age)
+    printNum(nums[2])
 
     ret 0
 ;
