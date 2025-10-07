@@ -76,8 +76,10 @@ private:
     llvm::Type *typeR32;
     llvm::Type *typePtr;
 
-    llvm::IntegerType *typeInt;
-    llvm::IntegerType *typePtrInt;
+    llvm::IntegerType *typeUInt;
+    llvm::IntegerType *typeSInt;
+    llvm::Type *typeFloat;
+    llvm::IntegerType *typeIntPtr;
 
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;

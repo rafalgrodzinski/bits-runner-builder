@@ -6,7 +6,8 @@
             "type": "lldb-dap",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["-v", "${workspaceFolder}/samples/test.brc", "--triple=i686-unknown-linux-gnu"],
+            //"args": ["-v", "${workspaceFolder}/samples/test.brc", "--triple=i686-unknown-linux-gnu"],
+            "args": ["-v", "${workspaceFolder}/samples/test.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }
