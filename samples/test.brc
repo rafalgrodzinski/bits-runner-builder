@@ -6,12 +6,33 @@ print fun: text data<u64, 16>
     ;
 ;
 
-main fun:
-  abc sint32 <- 42 * 2 ;
+@export printNum fun: number u64
+    biggest u64 <- 10
+    rep biggest <= number: biggest <- biggest * 10
+    biggest <- biggest / 10
 
+    rep biggest > 0, biggest <- biggest / 10
+        digit u64 <- number / biggest
+        putchar(digit + '0')
+        number <- number % biggest
+    ;
+;
+
+user blob
+    age u64
+    name data<u64, 16>
+;
+
+u2 blob<user> <- { }
+//num u64
+nums data<u64> <- {2, 4, 8, 16, 32}
+buffer ptr<u8> <- { 0xb800 }
 
 @export main fun -> u32
-    print("Hello, world!\n")
+    //u1 blob<user> <- { 24, "bob" }
+    printNum(u2.age)
+    print("\n")
+    print(u2.name)
 
     ret 0
 ;
