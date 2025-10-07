@@ -29,7 +29,15 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 
-ModuleBuilder::ModuleBuilder(string moduleName, string defaultModuleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap):
+ModuleBuilder::ModuleBuilder(
+    string moduleName,
+    string defaultModuleName,
+    int intSize,
+    int pointerSize,
+    vector<shared_ptr<Statement>> statements,
+    vector<shared_ptr<Statement>> headerStatements,
+    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+):
 moduleName(moduleName), defaultModuleName(defaultModuleName), statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
@@ -37,14 +45,23 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
 
     typeVoid = llvm::Type::getVoidTy(*context);
     typeBool = llvm::Type::getInt1Ty(*context);
+
     typeU8 = llvm::Type::getInt8Ty(*context);
     typeU32 = llvm::Type::getInt32Ty(*context);
     typeU64 = llvm::Type::getInt64Ty(*context);
+    typeUInt = llvm::Type::getIntNTy(*context, intSize);
+
     typeS8 = llvm::Type::getInt8Ty(*context);
     typeS32 = llvm::Type::getInt32Ty(*context);
     typeS64 = llvm::Type::getInt64Ty(*context);
-    typeR32 = llvm::Type::getFloatTy(*context);
+    typeSInt = llvm::Type::getIntNTy(*context, intSize);
+
+    typeF32 = llvm::Type::getFloatTy(*context);
+    typeF64 = llvm::Type::getDoubleTy(*context);
+    typeFloat = llvm::Type::getFloatTy(*context);
+
     typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
+    typeIntPtr = llvm::Type::getIntNTy(*context, pointerSize);
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
@@ -524,41 +541,34 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
 
     if (expression->getLiteralKind() == LiteralKind::UINT) {
         if (castToType == nullptr)
-            return llvm::ConstantInt::get(typeU64, expression->getUIntValue(), true);
+            return llvm::ConstantInt::get(typeUInt, expression->getUIntValue(), true);
         else if (castToType == typeBool)
             return nullptr;
     }
 
     if (expression->getLiteralKind() == LiteralKind::SINT) {
         if (castToType == nullptr)
-            return llvm::ConstantInt::get(typeS64, expression->getSIntValue(), true);
+            return llvm::ConstantInt::get(typeSInt, expression->getSIntValue(), true);
         else if (castToType == typeBool)
             return nullptr;
     }
 
-    if (expression->getLiteralKind() == LiteralKind::REAL) {
+    if (expression->getLiteralKind() == LiteralKind::FLOAT) {
         if (castToType == nullptr)
-            return llvm::ConstantFP::get(typeR32, expression->getSIntValue());
+            return llvm::ConstantFP::get(typeFloat, expression->getFloatValue());
         else if (castToType == typeBool)
             return nullptr;
     }
 
-    if (castToType == typeBool)
+    if (castToType == typeBool) {
         return llvm::ConstantInt::get(typeBool, expression->getBoolValue(), true);
-    else if (castToType == typeU8)
-        return llvm::ConstantInt::get(typeU8, expression->getUIntValue(), true);
-    else if (castToType == typeU32)
-        return llvm::ConstantInt::get(typeU32, expression->getUIntValue(), true);
-    else if (castToType == typeU64)
-        return llvm::ConstantInt::get(typeU64, expression->getUIntValue(), true);
-    else if (castToType == typeS8)
-        return llvm::ConstantInt::get(typeU8, expression->getSIntValue(), true);
-    else if (castToType == typeS32)
-        return llvm::ConstantInt::get(typeU32, expression->getSIntValue(), true);
-    else if (castToType == typeS64)
-        return llvm::ConstantInt::get(typeU64, expression->getSIntValue(), true);
-    else if (castToType == typeR32)
-        return llvm::ConstantFP::get(typeR32, expression->getSIntValue());
+    } else if (castToType == typeU8 || castToType == typeU32 || castToType == typeU64 || castToType == typeUInt) {
+        return llvm::ConstantInt::get(castToType, expression->getUIntValue(), true);
+    } else if (castToType == typeS8 || castToType == typeS32 || castToType == typeS64 || castToType == typeSInt) {
+        return llvm::ConstantInt::get(castToType, expression->getSIntValue(), true);
+    } else if (castToType == typeF32 || castToType == typeF64 || castToType == typeFloat) {
+        return llvm::ConstantFP::get(castToType, expression->getFloatValue());
+    }
 
     return nullptr;
 }
@@ -582,8 +592,8 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinaryUnsignedInteger(expression->getOperation(), leftValue, rightValue);
     } else if (type == typeS8 || type == typeS32 || type == typeS64) {
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeR32) {
-        return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
+    } else if (type == typeF32 || type == typeF64 || type == typeFloat) {
+        return valueForBinaryFloat(expression->getOperation(), leftValue, rightValue);
     } else { // FIXME (we have missing value types)
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
     }
@@ -664,7 +674,7 @@ llvm::Value *ModuleBuilder::valueForBinarySignedInteger(ExpressionBinaryOperatio
     }
 }
 
-llvm::Value *ModuleBuilder::valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+llvm::Value *ModuleBuilder::valueForBinaryFloat(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
     case ExpressionBinaryOperation::EQUAL:
         return builder->CreateFCmpOEQ(leftValue, rightValue);
@@ -699,19 +709,19 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
         if (expression->getOperation() == ExpressionUnaryOperation::NOT) {
             return builder->CreateNot(value);
         }
-    } else if (type == typeU8 || type == typeU32 || type == typeU64) {
+    } else if (type == typeU8 || type == typeU32 || type == typeU64 || type == typeUInt) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
             return value;
         }
-    } else if (type == typeS8 || type == typeS32 || type == typeS64) {
+    } else if (type == typeS8 || type == typeS32 || type == typeS64 || type == typeSInt) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateNSWNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
             return value;
         }
-    } else if (type == typeR32) {
+    } else if (type == typeF32 || type == typeF64 || type == typeFloat) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateFNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
@@ -964,7 +974,7 @@ llvm::Constant *ModuleBuilder::constantValueForCompositeLiteral(shared_ptr<Expre
             markError(0, 0, "Invalid pointer literal");
             return nullptr;
         }
-        llvm::Constant *adrValue = constantValueForExpression(expression->getExpressions().at(0), typeU64);
+        llvm::Constant *adrValue = constantValueForExpression(expression->getExpressions().at(0), typeIntPtr);
         return llvm::ConstantExpr::getIntToPtr(adrValue, typePtr);
     }
     
@@ -1014,9 +1024,9 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
         return builder->CreateLoad(pointeeType, pointeeLoad);
     } else if (isPointer && isVadr) {
         llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentOperand);
-        return builder->CreatePtrToInt(pointeeLoad, typeU64);
+        return builder->CreatePtrToInt(pointeeLoad, typeIntPtr);
     } else if (isAdr) {
-        return builder->CreatePtrToInt(parentOperand, typeU64);
+        return builder->CreatePtrToInt(parentOperand, typeIntPtr);
     }
 
     markError(0, 0, "Invalid built-in operation");
@@ -1414,8 +1424,10 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return typeS32;
         case ValueTypeKind::S64:
             return typeS64;
-        case ValueTypeKind::R32:
-            return typeR32;
+        case ValueTypeKind::F32:
+            return typeF32;
+        case ValueTypeKind::F64:
+            return typeF64;
         case ValueTypeKind::DATA: {
             if (valueType->getSubType() == nullptr)
                 return nullptr;

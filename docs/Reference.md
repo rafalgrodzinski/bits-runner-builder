@@ -14,7 +14,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Literals](Reference.md#literals) (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
 - [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
 - [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
-- [Simple Variables](Reference.md#simple-variables) (`u8`, `u32`, `u64`, `s8`, `s32`, `s64`, `r32`, `data`, `blob`, `ptr`)
+- [Simple Variables](Reference.md#simple-variables) (`u8`, `u32`, `u64`, `s8`, `s32`, `s64`, `f32`, `f64`, `data`, `blob`, `ptr`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
 - [Pointers](Reference.md#pointers) (`ptr<>`)
@@ -122,13 +122,13 @@ Simple ariables are specified by first providing the name and then the type. The
 ```
 bytesInKilobyte u32 <- 1_024
 text data<u8> <- "Hello world!"
-pi r32 <- 3.14
+pi f32 <- 3.14
 
 u8 // unsigned integer, 8 bits
 u32 // unsigned integer, 32 bits
 s8 // signed integer, 8 bits
 s32 // signed integer, 32 bits
-r32 // floating point (real), 32 bits
+f32 // floating point, 32 bits
 bool // true or false
 ```
 

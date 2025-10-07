@@ -16,7 +16,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             expression->boolValue = value;
             expression->uIntValue = 0;
             expression->sIntValue = 0;
-            expression->realValue = 0;
+            expression->floatValue = 0;
             break;
         }
         case TokenKind::INTEGER_DEC: {
@@ -29,7 +29,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             expression->boolValue = false;
             expression->uIntValue = value;
             expression->sIntValue = value;
-            expression->realValue = value;
+            expression->floatValue = value;
             break;
         }
         case TokenKind::INTEGER_HEX: {
@@ -42,7 +42,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             expression->boolValue = false;
             expression->uIntValue = value;
             expression->sIntValue = value;
-            expression->realValue = value;
+            expression->floatValue = value;
             break;
         }
         case TokenKind::INTEGER_BIN: {
@@ -56,7 +56,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             expression->boolValue = false;
             expression->uIntValue = value;
             expression->sIntValue = value;
-            expression->realValue = value;
+            expression->floatValue = value;
             break;
         }
         case TokenKind::INTEGER_CHAR: {
@@ -70,11 +70,11 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             expression->boolValue = false;
             expression->uIntValue = *value;
             expression->sIntValue = *value;
-            expression->realValue = *value;            
+            expression->floatValue = *value;            
             break;
         }
-        case TokenKind::REAL: {
-            expression->literalKind = LiteralKind::REAL;
+        case TokenKind::FLOAT: {
+            expression->literalKind = LiteralKind::FLOAT;
             expression->valueType = ValueType::LITERAL;
 
             string numString = token->getLexme();
@@ -83,7 +83,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             expression->boolValue = false;
             expression->uIntValue = value;
             expression->sIntValue = value;
-            expression->realValue = value;
+            expression->floatValue = value;
             break;
         }
         default:
@@ -100,7 +100,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForUInt(uint64
     expression->boolValue = false;
     expression->uIntValue = value;
     expression->sIntValue = value;
-    expression->realValue = value;
+    expression->floatValue = value;
     return expression;
 }
 
@@ -123,6 +123,6 @@ int64_t ExpressionLiteral::getSIntValue() {
     return sIntValue;
 }
 
-double ExpressionLiteral::getRealValue() {
-    return realValue;
+double ExpressionLiteral::getFloatValue() {
+    return floatValue;
 }

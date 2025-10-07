@@ -47,7 +47,7 @@ enum class TokenKind {
     ELSE,
 
     BOOL,
-    REAL,
+    FLOAT,
     INTEGER_DEC,
     INTEGER_HEX,
     INTEGER_BIN,

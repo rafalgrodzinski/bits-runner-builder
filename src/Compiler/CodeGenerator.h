@@ -32,11 +32,16 @@ public:
     };
 
 private:
-    shared_ptr<llvm::Module> module;
+    string targetTriple;
+    string architecture;
+    llvm::TargetMachine *targetMachine;
+    llvm::DataLayout dataLayout;
 
 public:
-    CodeGenerator(shared_ptr<llvm::Module> module);
-    void generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel, string targetTripleOption, string architectureOption, bool isVerbose, unsigned int optionBits);
+    CodeGenerator(OptimizationLevel optLevel, string targetTripleOption, string architectureOption, unsigned int optionBits);
+    void generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose);
+    int getIntSize();
+    int getPointerSize();
 };
 
 #endif

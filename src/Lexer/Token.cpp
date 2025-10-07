@@ -60,7 +60,7 @@ vector<TokenKind> Token::tokensBinary = {
 
 vector<TokenKind> Token::tokensLiteral = {
     TokenKind::BOOL,
-    TokenKind::REAL,
+    TokenKind::FLOAT,
     TokenKind::INTEGER_DEC,
     TokenKind::INTEGER_HEX,
     TokenKind::INTEGER_BIN,

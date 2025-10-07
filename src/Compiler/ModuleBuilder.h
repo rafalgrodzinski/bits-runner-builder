@@ -67,14 +67,23 @@ private:
 
     llvm::Type *typeVoid;
     llvm::Type *typeBool;
+    
     llvm::IntegerType *typeU8;
     llvm::IntegerType *typeU32;
     llvm::IntegerType *typeU64;
+    llvm::IntegerType *typeUInt;
+
     llvm::IntegerType *typeS8;
     llvm::IntegerType *typeS32;
     llvm::IntegerType *typeS64;
-    llvm::Type *typeR32;
+    llvm::IntegerType *typeSInt;
+
+    llvm::Type *typeF32;
+    llvm::Type *typeF64;
+    llvm::Type *typeFloat;
+
     llvm::Type *typePtr;
+    llvm::IntegerType *typeIntPtr;
 
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
@@ -108,7 +117,7 @@ private:
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
-    llvm::Value *valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryFloat(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForUnary(shared_ptr<ExpressionUnary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
@@ -146,7 +155,15 @@ private:
     void markError(int line, int column, string message);
 
 public:
-    ModuleBuilder(string moduleName, string defaultModuleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap);
+    ModuleBuilder(
+        string moduleName,
+        string defaultModuleName,
+        int intSize,
+        int pointerSize,
+        vector<shared_ptr<Statement>> statements,
+        vector<shared_ptr<Statement>> headerStatements,
+        map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+    );
     shared_ptr<llvm::Module> getModule();
 };
 
