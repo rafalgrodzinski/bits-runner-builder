@@ -548,6 +548,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                         break;
                     case TAG_CONSTRAINTS:
                         constraints = parseeResult.getToken()->getLexme();
+                        constraints = constraints.substr(1, constraints.length()-2);
                         break;
                     case TAG_ARG_ID: {
                         pair<string, shared_ptr<ValueType>> argument;
