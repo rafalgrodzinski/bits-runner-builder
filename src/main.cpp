@@ -143,6 +143,9 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Specify code generator for deired target
+    CodeGenerator codeGenerator(optimizationLevel, targetTriple, architecture, options.getBits());
+
     for (const auto &statementsEntry : statementsMap) {
         if (isVerbose)
             cout << format("🦖 Building module \"{}\"", statementsEntry.first) << endl << endl;
@@ -152,7 +155,15 @@ int main(int argc, char **argv) {
         vector<shared_ptr<Statement>> statements = statementsEntry.second;
         vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
 
-        ModuleBuilder moduleBuilder(moduleName, DEFAULT_MODULE_NAME, statements, headerStatements, exportedHeaderStatementsMap);
+        ModuleBuilder moduleBuilder(
+            moduleName,
+            DEFAULT_MODULE_NAME,
+            codeGenerator.getIntSize(),
+            codeGenerator.getPointerSize(),
+            statements,
+            headerStatements,
+            exportedHeaderStatementsMap
+        );
         shared_ptr<llvm::Module> module = moduleBuilder.getModule();
 
         if (isVerbose) {
@@ -160,8 +171,8 @@ int main(int argc, char **argv) {
             cout << endl;
         }
 
-        CodeGenerator codeGenerator(module);
-        codeGenerator.generateObjectFile(outputKind, optimizationLevel, targetTriple, architecture, isVerbose, options.getBits());
+        // Generate native machine code
+        codeGenerator.generateObjectFile(module, outputKind, isVerbose);
     }
 
     return 0;

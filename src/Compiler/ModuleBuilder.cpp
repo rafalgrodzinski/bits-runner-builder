@@ -29,7 +29,15 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 
-ModuleBuilder::ModuleBuilder(string moduleName, string defaultModuleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap):
+ModuleBuilder::ModuleBuilder(
+    string moduleName,
+    string defaultModuleName,
+    int intSize,
+    int pointerSize,
+    vector<shared_ptr<Statement>> statements,
+    vector<shared_ptr<Statement>> headerStatements,
+    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+):
 moduleName(moduleName), defaultModuleName(defaultModuleName), statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
@@ -45,6 +53,9 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
     typeS64 = llvm::Type::getInt64Ty(*context);
     typeR32 = llvm::Type::getFloatTy(*context);
     typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
+
+    typeInt = llvm::Type::getIntNTy(*context, intSize);
+    typePtrInt = llvm::Type::getIntNTy(*context, pointerSize);
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {

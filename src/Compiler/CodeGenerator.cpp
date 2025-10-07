@@ -2,17 +2,14 @@
 
 using namespace std;
 
-CodeGenerator::CodeGenerator(shared_ptr<llvm::Module> module): module(module) {
-}
-
-void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel optLevel, string targetTripleOption, string architectureOption, bool isVerbose, unsigned int optionBits) {
+CodeGenerator::CodeGenerator(OptimizationLevel optLevel, string targetTripleOption, string architectureOption, unsigned int optionBits) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
     llvm::InitializeAllAsmParsers();
     llvm::InitializeAllAsmPrinters();
 
-    string targetTriple = llvm::sys::getDefaultTargetTriple();
+    targetTriple = llvm::sys::getDefaultTargetTriple();
     if (!targetTripleOption.empty())
         targetTriple = targetTripleOption;
     string errorString;
@@ -21,7 +18,7 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
         cerr << errorString << endl;
         exit(1);
     }
-    string architecture = "generic";
+    architecture = "generic";
     if (!architectureOption.empty())
         architecture = architectureOption;
     string features = "";
@@ -45,7 +42,7 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
 
     llvm::TargetOptions targetOptions;
     targetOptions.FunctionSections = optionBits & 1 << 0;
-    llvm::TargetMachine *targetMachine = target->createTargetMachine(
+    targetMachine = target->createTargetMachine(
         targetTriple,
         architecture,
         features,
@@ -55,7 +52,11 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
         optimizationLevel
     );
 
-    module->setDataLayout(targetMachine->createDataLayout());
+    dataLayout = targetMachine->createDataLayout();
+}
+
+void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose) {
+    module->setDataLayout(dataLayout);
     module->setTargetTriple(targetTriple);
 
     string fileName;
@@ -90,4 +91,12 @@ void CodeGenerator::generateObjectFile(OutputKind outputKind, OptimizationLevel 
 
     passManager.run(*module);
     outputFile.flush();
+}
+
+int CodeGenerator::getIntSize() {
+    return dataLayout.getLargestLegalIntTypeSizeInBits();
+}
+
+int CodeGenerator::getPointerSize() {
+    return dataLayout.getPointerSizeInBits();
 }

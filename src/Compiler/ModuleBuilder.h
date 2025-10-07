@@ -76,6 +76,9 @@ private:
     llvm::Type *typeR32;
     llvm::Type *typePtr;
 
+    llvm::IntegerType *typeInt;
+    llvm::IntegerType *typePtrInt;
+
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
@@ -146,7 +149,15 @@ private:
     void markError(int line, int column, string message);
 
 public:
-    ModuleBuilder(string moduleName, string defaultModuleName, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap);
+    ModuleBuilder(
+        string moduleName,
+        string defaultModuleName,
+        int intSize,
+        int pointerSize,
+        vector<shared_ptr<Statement>> statements,
+        vector<shared_ptr<Statement>> headerStatements,
+        map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+    );
     shared_ptr<llvm::Module> getModule();
 };
 
