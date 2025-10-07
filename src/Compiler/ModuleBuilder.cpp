@@ -45,17 +45,22 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
 
     typeVoid = llvm::Type::getVoidTy(*context);
     typeBool = llvm::Type::getInt1Ty(*context);
+
     typeU8 = llvm::Type::getInt8Ty(*context);
     typeU32 = llvm::Type::getInt32Ty(*context);
     typeU64 = llvm::Type::getInt64Ty(*context);
+    typeUInt = llvm::Type::getIntNTy(*context, intSize);
+
     typeS8 = llvm::Type::getInt8Ty(*context);
     typeS32 = llvm::Type::getInt32Ty(*context);
     typeS64 = llvm::Type::getInt64Ty(*context);
-    typeR32 = llvm::Type::getFloatTy(*context);
-    typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
-
-    typeUInt = llvm::Type::getIntNTy(*context, intSize);
     typeSInt = llvm::Type::getIntNTy(*context, intSize);
+
+    typeR32 = llvm::Type::getFloatTy(*context);
+    typeF64 = llvm::Type::getDoubleTy(*context);
+    typeFloat = llvm::Type::getFloatTy(*context);
+
+    typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
     typeIntPtr = llvm::Type::getIntNTy(*context, pointerSize);
 }
 
@@ -561,7 +566,7 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
         return llvm::ConstantInt::get(castToType, expression->getUIntValue(), true);
     } else if (castToType == typeS8 || castToType == typeS32 || castToType == typeS64 || castToType == typeSInt) {
         return llvm::ConstantInt::get(castToType, expression->getSIntValue(), true);
-    } else if (castToType == typeR32 || castToType == typeFloat) {
+    } else if (castToType == typeR32 || castToType == typeF64 || castToType == typeFloat) {
         return llvm::ConstantFP::get(castToType, expression->getRealValue());
     }
 
@@ -587,7 +592,7 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinaryUnsignedInteger(expression->getOperation(), leftValue, rightValue);
     } else if (type == typeS8 || type == typeS32 || type == typeS64) {
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeR32) {
+    } else if (type == typeR32 || type == typeF64 || type == typeFloat) {
         return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
     } else { // FIXME (we have missing value types)
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
@@ -716,7 +721,7 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
             return value;
         }
-    } else if (type == typeR32 || type == typeFloat) {
+    } else if (type == typeR32 || type == typeF64 || type == typeFloat) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateFNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
@@ -1421,6 +1426,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return typeS64;
         case ValueTypeKind::R32:
             return typeR32;
+        case ValueTypeKind::F64:
+            return typeF64;
         case ValueTypeKind::DATA: {
             if (valueType->getSubType() == nullptr)
                 return nullptr;

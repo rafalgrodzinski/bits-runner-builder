@@ -67,18 +67,22 @@ private:
 
     llvm::Type *typeVoid;
     llvm::Type *typeBool;
+    
     llvm::IntegerType *typeU8;
     llvm::IntegerType *typeU32;
     llvm::IntegerType *typeU64;
+    llvm::IntegerType *typeUInt;
+
     llvm::IntegerType *typeS8;
     llvm::IntegerType *typeS32;
     llvm::IntegerType *typeS64;
-    llvm::Type *typeR32;
-    llvm::Type *typePtr;
-
-    llvm::IntegerType *typeUInt;
     llvm::IntegerType *typeSInt;
+
+    llvm::Type *typeR32;
+    llvm::Type *typeF64;
     llvm::Type *typeFloat;
+
+    llvm::Type *typePtr;
     llvm::IntegerType *typeIntPtr;
 
     vector<shared_ptr<Statement>> statements;
