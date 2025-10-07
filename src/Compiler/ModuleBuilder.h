@@ -78,7 +78,7 @@ private:
     llvm::IntegerType *typeS64;
     llvm::IntegerType *typeSInt;
 
-    llvm::Type *typeR32;
+    llvm::Type *typeF32;
     llvm::Type *typeF64;
     llvm::Type *typeFloat;
 
@@ -117,7 +117,7 @@ private:
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
-    llvm::Value *valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
+    llvm::Value *valueForBinaryFloat(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForUnary(shared_ptr<ExpressionUnary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);

@@ -17,7 +17,7 @@ enum class ValueTypeKind {
     S8,
     S32,
     S64,
-    R32,
+    F32,
     F64,
     DATA,
     BLOB,
@@ -41,7 +41,7 @@ public:
     static shared_ptr<ValueType> S8;
     static shared_ptr<ValueType> S32;
     static shared_ptr<ValueType> S64;
-    static shared_ptr<ValueType> R32;
+    static shared_ptr<ValueType> F32;
     static shared_ptr<ValueType> F64;
     static shared_ptr<ValueType> LITERAL;
     static shared_ptr<ValueType> valueTypeForToken(shared_ptr<Token> token, shared_ptr<ValueType> subType, int valueArg, string typeName);

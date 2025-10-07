@@ -106,8 +106,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "INT_BIN(" + token->getLexme() + ")";
         case TokenKind::INTEGER_CHAR:
             return "INT_CHAR(" + token->getLexme() + ")";
-        case TokenKind::REAL:
-            return "REAL(" + token->getLexme() + ")";
+        case TokenKind::FLOAT:
+            return "FLOAT(" + token->getLexme() + ")";
         case TokenKind::STRING:
             return "STRING(" + token->getLexme() + ")";
         case TokenKind::IDENTIFIER:
@@ -217,8 +217,8 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::INTEGER_BIN:
         case TokenKind::INTEGER_CHAR:
             return "LITERAL(INTEGER)";
-        case TokenKind::REAL:
-            return "LITERAL(REAL)";
+        case TokenKind::FLOAT:
+            return "LITERAL(FLOAT)";
         case TokenKind::STRING:
             return "LITERAL(STRING)";
         case TokenKind::IDENTIFIER:
@@ -309,8 +309,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "S32";
         case ValueTypeKind::S64:
             return "S64";
-        case ValueTypeKind::R32:
-            return "R32";
+        case ValueTypeKind::F32:
+            return "F32";
         case ValueTypeKind::DATA:
             return "[]";
         case ValueTypeKind::BLOB:
@@ -814,8 +814,8 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
         case LiteralKind::SINT:
             line = to_string(expression->getSIntValue());
             break;
-        case LiteralKind::REAL:
-            line = to_string(expression->getRealValue());
+        case LiteralKind::FLOAT:
+            line = to_string(expression->getFloatValue());
             break;
     }
 

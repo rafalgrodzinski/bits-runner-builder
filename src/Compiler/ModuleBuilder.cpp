@@ -56,7 +56,7 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
     typeS64 = llvm::Type::getInt64Ty(*context);
     typeSInt = llvm::Type::getIntNTy(*context, intSize);
 
-    typeR32 = llvm::Type::getFloatTy(*context);
+    typeF32 = llvm::Type::getFloatTy(*context);
     typeF64 = llvm::Type::getDoubleTy(*context);
     typeFloat = llvm::Type::getFloatTy(*context);
 
@@ -553,9 +553,9 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
             return nullptr;
     }
 
-    if (expression->getLiteralKind() == LiteralKind::REAL) {
+    if (expression->getLiteralKind() == LiteralKind::FLOAT) {
         if (castToType == nullptr)
-            return llvm::ConstantFP::get(typeFloat, expression->getRealValue());
+            return llvm::ConstantFP::get(typeFloat, expression->getFloatValue());
         else if (castToType == typeBool)
             return nullptr;
     }
@@ -566,8 +566,8 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
         return llvm::ConstantInt::get(castToType, expression->getUIntValue(), true);
     } else if (castToType == typeS8 || castToType == typeS32 || castToType == typeS64 || castToType == typeSInt) {
         return llvm::ConstantInt::get(castToType, expression->getSIntValue(), true);
-    } else if (castToType == typeR32 || castToType == typeF64 || castToType == typeFloat) {
-        return llvm::ConstantFP::get(castToType, expression->getRealValue());
+    } else if (castToType == typeF32 || castToType == typeF64 || castToType == typeFloat) {
+        return llvm::ConstantFP::get(castToType, expression->getFloatValue());
     }
 
     return nullptr;
@@ -592,8 +592,8 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinaryUnsignedInteger(expression->getOperation(), leftValue, rightValue);
     } else if (type == typeS8 || type == typeS32 || type == typeS64) {
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
-    } else if (type == typeR32 || type == typeF64 || type == typeFloat) {
-        return valueForBinaryReal(expression->getOperation(), leftValue, rightValue);
+    } else if (type == typeF32 || type == typeF64 || type == typeFloat) {
+        return valueForBinaryFloat(expression->getOperation(), leftValue, rightValue);
     } else { // FIXME (we have missing value types)
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
     }
@@ -674,7 +674,7 @@ llvm::Value *ModuleBuilder::valueForBinarySignedInteger(ExpressionBinaryOperatio
     }
 }
 
-llvm::Value *ModuleBuilder::valueForBinaryReal(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
+llvm::Value *ModuleBuilder::valueForBinaryFloat(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
     case ExpressionBinaryOperation::EQUAL:
         return builder->CreateFCmpOEQ(leftValue, rightValue);
@@ -721,7 +721,7 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
             return value;
         }
-    } else if (type == typeR32 || type == typeF64 || type == typeFloat) {
+    } else if (type == typeF32 || type == typeF64 || type == typeFloat) {
         if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateFNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
@@ -1424,8 +1424,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return typeS32;
         case ValueTypeKind::S64:
             return typeS64;
-        case ValueTypeKind::R32:
-            return typeR32;
+        case ValueTypeKind::F32:
+            return typeF32;
         case ValueTypeKind::F64:
             return typeF64;
         case ValueTypeKind::DATA: {

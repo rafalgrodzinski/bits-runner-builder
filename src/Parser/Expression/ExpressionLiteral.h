@@ -7,7 +7,7 @@ enum class LiteralKind {
     BOOL,
     UINT,
     SINT,
-    REAL
+    FLOAT
 };
 
 
@@ -17,7 +17,7 @@ private:
     bool boolValue;
     uint64_t uIntValue;
     int64_t sIntValue;
-    double realValue;
+    double floatValue;
 
 public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
@@ -28,7 +28,7 @@ public:
     bool getBoolValue();
     uint64_t getUIntValue();
     int64_t getSIntValue();
-    double getRealValue();
+    double getFloatValue();
 };
 
 #endif

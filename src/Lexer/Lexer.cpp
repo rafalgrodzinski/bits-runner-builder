@@ -276,7 +276,7 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
     
-    token = matchReal();
+    token = matchFloat();
     if (token != nullptr)
         return token;
 
@@ -362,7 +362,7 @@ shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator
     return token;
 }
 
-shared_ptr<Token> Lexer::matchReal() {
+shared_ptr<Token> Lexer::matchFloat() {
     int nextIndex = currentIndex;
 
     // Match digit or _ if it's not in the first position
@@ -387,7 +387,7 @@ shared_ptr<Token> Lexer::matchReal() {
     }
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::REAL, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::FLOAT, lexme, currentLine, currentColumn);
     advanceWithToken(token);
     return token;
 }
