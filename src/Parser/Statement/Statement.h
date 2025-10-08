@@ -13,6 +13,7 @@ enum class StatementKind {
     FUNCTION_DECLARATION,
     FUNCTION,
     RAW_FUNCTION,
+    VARIABLE_DECLARATION,
     VARIABLE,
     ASSIGNMENT,
     REPEAT,
