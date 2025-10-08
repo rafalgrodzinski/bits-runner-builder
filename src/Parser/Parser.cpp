@@ -209,6 +209,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         statements.push_back(statementVariable);
                         if (statementVariable->getShouldExport())
                             exportedHeaderStatements.push_back(statementVariableDeclaration);
+                        break;
                     }
                     default:
                         statements.push_back(statement);
@@ -432,6 +433,19 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
                 expression = parseeResult.getExpression();
                 break;
             }
+        }
+    }
+
+    // Try infering data elements count
+    if (valueType->getKind() == ValueTypeKind::DATA && valueType->getValueArg() == 0 && expression != nullptr) {
+        shared_ptr<ExpressionCompositeLiteral> compositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
+        if (compositeLiteral != nullptr) {
+            valueType = make_shared<ValueType>(
+                valueType->getKind(),
+                valueType->getSubType(),
+                compositeLiteral->getExpressions().size(),
+                valueType->getTypeName()
+            );
         }
     }
 
