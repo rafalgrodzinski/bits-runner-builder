@@ -774,9 +774,10 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
     if (expression->getElseExpression() != nullptr) {
         indents.at(indents.size()-1) = IndentKind::NODE_LAST;
         text += formattedLine("ELSE", indents);
-        indents.at(indents.size()-1) = IndentKind::EMPTY;
-        indents.push_back(IndentKind::NODE_LAST);
-        //indents = adjustedLastIndent(indents);
+        indents = adjustedLastIndent(indents);
+        // expression blocks add node_last themselves
+        if (expression->getElseExpression()->getKind() != ExpressionKind::BLOCK)
+            indents.push_back(IndentKind::NODE_LAST);
         text += toString(expression->getElseExpression(), indents);
     }
 
