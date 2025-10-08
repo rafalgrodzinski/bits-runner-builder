@@ -11,6 +11,7 @@
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementImport.h"
+#include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/Statement/StatementVariable.h"
@@ -404,6 +405,17 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
 string Logger::toString(shared_ptr<StatementImport> statement, vector<IndentKind> indents) {
     string line = format("@IMPORT `{}`", statement->getName());
     return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<StatementMetaExternVariable> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("@EXTERN VAR `{}` {}", statement->getName(), toString(statement->getValueType()));
+    text += formattedLine(line, indents);
+
+    return text;
 }
 
 string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vector<IndentKind> indents) {
