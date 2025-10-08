@@ -22,7 +22,8 @@ enum class ParseeKind {
     STATEMENT_BLOCK_SINGLE_LINE,
     STATEMENT_BLOCK_MULTI_LINE,
     EXPRESSION_BLOCK_SINGLE_LINE,
-    EXPRESSION_BLOCK_MULTI_LINE
+    EXPRESSION_BLOCK_MULTI_LINE,
+    IF_ELSE
 };
 
 class Parsee {
@@ -53,6 +54,7 @@ public:
     static Parsee statementBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
     static Parsee expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
+    static Parsee ifElseParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
 
     ParseeKind getKind();
     int getTag();
