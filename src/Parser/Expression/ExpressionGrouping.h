@@ -1,4 +1,7 @@
-#include "Parser/Expression/Expression.h"
+#ifndef EXPRESSION_GROUPING_H
+#define EXPRESSION_GROUPING_H
+
+#include "Expression.h"
 
 class ExpressionGrouping: public Expression {
 private:
@@ -8,3 +11,5 @@ public:
     ExpressionGrouping(shared_ptr<Expression> expression);
     shared_ptr<Expression> getExpression();
 };
+
+#endif

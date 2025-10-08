@@ -86,7 +86,7 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     }
 
     if (isVerbose) {
-        cout << format("🐉 Generating code for module \"{}\" targeting {}, {}...\n", string(module->getName()), targetTriple, architecture);
+        cout << format("🐉 Generating code for module \"{}\" targeting {}, {}...\n\n", string(module->getName()), targetTriple, architecture);
     }
 
     passManager.run(*module);

@@ -500,6 +500,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
         case ExpressionKind::CHAINED:
             return valueForChained(dynamic_pointer_cast<ExpressionChained>(expression));
+        case ExpressionKind::BLOCK:
+            return valueForBlock(dynamic_pointer_cast<ExpressionBlock>(expression));
         default:
             markError(0, 0, "Unexpected expression");
             return nullptr;
@@ -743,7 +745,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(*context, "elseBlock");
     llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "mergeBlock");
 
-    if (expression->getElseBlock() != nullptr) {
+    if (expression->getElseExpression() != nullptr) {
         builder->CreateCondBr(conditionValue, thenBlock, elseBlock);
     } else {
         builder->CreateCondBr(conditionValue, thenBlock, mergeBlock);
@@ -760,12 +762,11 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
 
     // Else
     llvm::Value *elseValue = nullptr;
-    if (expression->getElseBlock() != nullptr) {
+    if (expression->getElseExpression() != nullptr) {
         scopes.push(Scope());
         fun->insert(fun->end(), elseBlock);
         builder->SetInsertPoint(elseBlock);
-        buildStatement(expression->getElseBlock()->getStatementBlock());
-        elseValue = valueForExpression(expression->getElseBlock()->getResultStatementExpression()->getExpression());
+        elseValue = valueForExpression(expression->getElseExpression());
         builder->CreateBr(mergeBlock);
         elseBlock = builder->GetInsertBlock();
         scopes.pop();
@@ -842,6 +843,11 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
 
 llvm::Value *ModuleBuilder::valueForChained(shared_ptr<ExpressionChained> expression) {
     return valueForChainExpressions(expression->getChainExpressions());
+}
+
+llvm::Value *ModuleBuilder::valueForBlock(shared_ptr<ExpressionBlock> expression) {
+    buildStatement(expression->getStatementBlock());
+    return valueForExpression(expression->getResultStatementExpression()->getExpression());
 }
 
 llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions) {

@@ -1,38 +1,8 @@
-@extern putchar fun: character u64 -> u32
-
-print fun: text data<u64, 16>
-    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
-        putchar(text[i])
-    ;
+rebootRaw raw<"">
+    mov ah, 0x05
+    int 0x30
 ;
 
-@export printNum fun: number u64
-    biggest u64 <- 10
-    rep biggest <= number: biggest <- biggest * 10
-    biggest <- biggest / 10
-
-    rep biggest > 0, biggest <- biggest / 10
-        digit u64 <- number / biggest
-        putchar(digit + '0')
-        number <- number % biggest
-    ;
-;
-
-user blob
-    age u64
-    name data<u64, 16>
-;
-
-u2 blob<user> <- { }
-//num u64
-nums data<u64> <- {2, 4, 8, 16, 32}
-buffer ptr<u8> <- { 0xb800 }
-
-@export main fun -> u32
-    //u1 blob<user> <- { 24, "bob" }
-    printNum(u2.age)
-    print("\n")
-    print(u2.name)
-
-    ret 0
+@export reboot fun
+    rebootRaw()
 ;

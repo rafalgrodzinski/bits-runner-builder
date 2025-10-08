@@ -124,6 +124,15 @@ Parsee Parsee::expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn
     parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
+Parsee Parsee::ifElseParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::IF_ELSE;
+    parsee.tag = tag;
+    parsee.isRequired = isRequired;
+    parsee.shouldReturn = shouldReturn;
+    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
+    return parsee;
+}
 
 Parsee::Parsee() { }
 
