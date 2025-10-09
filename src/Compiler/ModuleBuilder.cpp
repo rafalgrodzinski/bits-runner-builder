@@ -213,7 +213,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
 
         if (type->isPointerTy()) {
             shared_ptr<ValueType> valueType = statement->getArguments().at(i).second;
-            if(!setPtrType(name, valueType->getSubType()))
+            if(!setPtrType(name, valueType))
                 return;
         }
 
@@ -356,7 +356,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
             valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            if (!setPtrType(statement->getName(), statement->getValueType()->getSubType()))
+            if (!setPtrType(statement->getName(), statement->getValueType()))
                 return;
             alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
             break;
@@ -811,14 +811,14 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
     llvm::Type *type = nullptr;
 
     llvm::AllocaInst *localAlloca = getAlloca(expression->getIdentifier());
-    llvm::Value *globalValue = getGlobal(expression->getIdentifier());
+    llvm::Value *globalValuePtr = getGlobal(expression->getIdentifier());
     if (localAlloca != nullptr) {
         value = localAlloca;
         type = localAlloca->getAllocatedType();
-    } else if (globalValue != nullptr) {
-        value = globalValue;
+    } else if (globalValuePtr != nullptr) {
         shared_ptr<ValueType> valueType = getPtrType(expression->getIdentifier());
         type = typeForValueType(valueType);
+        value = globalValuePtr;
     }
 
     if (value == nullptr) {
@@ -1029,7 +1029,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
-        shared_ptr<ValueType> pointeeValueType = getPtrType(parentExpression->getIdentifier());
+        shared_ptr<ValueType> pointeeValueType = getPtrType(parentExpression->getIdentifier())->getSubType();
         if (pointeeValueType == nullptr) {
             markError(0, 0, "No type for ptr");
             return nullptr;

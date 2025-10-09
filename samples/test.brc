@@ -23,16 +23,25 @@ user blob
     name data<u64, 16>
 ;
 
-u2 blob<user> <- { }
+u2 blob<user> <- { 4, "hello" }
 //num u64
-nums data<u64> <- {2, 4, 8, 16, 32}
-buffer ptr<u8> <- { 0xb800 }
+//nums data<u64> <- {2, 4, 8, 16, 32}
+//buffer ptr<u64>
+pu2 ptr<blob<user>>
+num u64 <- 77
 
 @export main fun -> u32
-    //u1 blob<user> <- { 24, "bob" }
+    pu2 <- { u2.adr }
+    //u2.adr
+    pu2.val.age <- 7
+    pu2.val.age <- num
+
+    u3 blob<user> <- pu2.val
+    u3.age <- 44
+
+    printNum(u3.age)
+    print(u3.name)
     printNum(u2.age)
-    print("\n")
-    print(u2.name)
 
     ret 0
 ;
