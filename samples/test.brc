@@ -1,9 +1,6 @@
-@extern putchar fun: character u64 -> u32
-
-print fun: text data<u64, 16>
-    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
-        putchar(text[i])
-    ;
+rebootRaw raw<"">
+    mov ah, 0x05
+    int 0x30
 ;
 
 @export printNum fun: number u64

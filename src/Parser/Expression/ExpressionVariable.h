@@ -1,4 +1,7 @@
-#include "Parser/Expression/Expression.h"
+#ifndef EXPRESSION_VARIABLE_H
+#define EXPRESSION_VARIABLE_H
+
+#include "Expression.h"
 
 enum class ExpressionVariableKind {
     SIMPLE,
@@ -20,3 +23,5 @@ public:
     string getIdentifier();
     shared_ptr<Expression> getIndexExpression();
 };
+
+#endif

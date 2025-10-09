@@ -61,6 +61,12 @@ Fibonaci Numbers
 Merge Sort
 [samples/merge_sort/](samples/merge_sort/)
 
+Linked List
+[samples/linked_list/](samples/linked_list/)
+
+Fizz Buzz
+[samples/fizz_buzz/](samples/fizz_buzz/)
+
 #### How to build & run the samples
 
 Execute from the main directory
@@ -76,6 +82,14 @@ Execute from the main directory
 // Merge Sort
 ./samples/merge_sort/build.sh
 ./merge_sort
+
+// Linked List
+./samples/linked_list/build.sh
+./linked_list
+
+// Fizz Buzz
+./samples/fizz_buzz/build.sh
+./fizz_buzz
 ```
 
 ## Additional Stuff

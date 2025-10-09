@@ -636,6 +636,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                         break;
                     case TAG_CONSTRAINTS:
                         constraints = parseeResult.getToken()->getLexme();
+                        constraints = constraints.substr(1, constraints.length()-2);
                         break;
                     case TAG_ARG_ID: {
                         pair<string, shared_ptr<ValueType>> argument;
@@ -1389,10 +1390,6 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         TAG_ELSE
     };
 
-    shared_ptr<Expression> condition;
-    shared_ptr<Expression> thenBlock;
-    shared_ptr<Expression> elseBlock;
-
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
@@ -1421,17 +1418,36 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                         {
                             Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true),
                             Parsee::expressionBlockMultiLineParsee(true, true, true, TAG_THEN),
-                            // Else blcok
-                            Parsee::groupParsee(
+                            Parsee::orParsee(
+                                // else
                                 ParseeGroup(
                                     {
                                         Parsee::tokenParsee(TokenKind::ELSE, true, false, false),
-                                        Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true),
-                                        Parsee::expressionBlockMultiLineParsee(true, true, true, TAG_ELSE)
+                                        Parsee::orParsee(
+                                            // else if
+                                            ParseeGroup(
+                                                {
+                                                    Parsee::ifElseParsee(true, true, false, TAG_ELSE)
+                                                }
+                                            ),
+                                            // just else
+                                            ParseeGroup(
+                                                {
+                                                    Parsee::tokenParsee(TokenKind::NEW_LINE, true, false, true),
+                                                    Parsee::expressionBlockMultiLineParsee(true, true, true, TAG_ELSE),
+                                                    Parsee::tokenParsee(TokenKind::SEMICOLON, true, false, true)
+                                                }
+                                            ), true, true, true
+                                        )
                                     }
-                                ), false, true, false
-                            ),
-                            Parsee::tokenParsee(TokenKind::SEMICOLON, true, false, true)
+                                ),
+                                // no else
+                                ParseeGroup(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::SEMICOLON, true, false, true)
+                                    }
+                                ), true, true, true
+                            )                            
                         }
                     ), true, true, true
                 )
@@ -1442,13 +1458,17 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    shared_ptr<Expression> condition;
+    shared_ptr<ExpressionBlock> thenBlock;
+    shared_ptr<Expression> elseBlock;
+
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_CONDITION:
                 condition = parseeResult.getExpression();
                 break;
             case TAG_THEN:
-                thenBlock = parseeResult.getExpression();
+                thenBlock = dynamic_pointer_cast<ExpressionBlock>(parseeResult.getExpression());
                 break;
             case TAG_ELSE:
                 elseBlock = parseeResult.getExpression();
@@ -1456,7 +1476,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         }
     }
 
-    return make_shared<ExpressionIfElse>(condition, dynamic_pointer_cast<ExpressionBlock>(thenBlock), dynamic_pointer_cast<ExpressionBlock>(elseBlock));
+    return make_shared<ExpressionIfElse>(condition, thenBlock, elseBlock);
 }
 
 shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left) {
@@ -1552,6 +1572,9 @@ ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
                 break;
             case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
                 subResults = expressionBlockMultiLineParseeResults(parsee.getTag());
+                break;
+            case ParseeKind::IF_ELSE:
+                subResults = ifElseParseeResults(parsee.getTag());
                 break;
         }
 
@@ -1777,6 +1800,18 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockMultiLineParsee
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = matchExpressionBlock({TokenKind::ELSE, TokenKind::SEMICOLON});
+    if (errors.size() > errorsCount || expression == nullptr)
+        return {};
+
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount, tag)}), tokensCount);
+}
+
+optional<pair<vector<ParseeResult>, int>> Parser::ifElseParseeResults(int tag) {
+    int startIndex = currentIndex;
+    int errorsCount = errors.size();
+    shared_ptr<Expression> expression = matchExpressionIfElse();
     if (errors.size() > errorsCount || expression == nullptr)
         return {};
 

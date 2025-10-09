@@ -1,4 +1,7 @@
-#include "Parser/Expression/Expression.h"
+#ifndef EXPRESSION_BLOCK_H
+#define EXPRESSION_BLOCK_H
+
+#include "Expression.h"
 
 class Statement;
 class StatementBlock;
@@ -14,3 +17,5 @@ public:
     shared_ptr<StatementBlock> getStatementBlock();
     shared_ptr<StatementExpression> getResultStatementExpression();
 };
+
+#endif

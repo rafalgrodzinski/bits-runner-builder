@@ -79,6 +79,7 @@ private:
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
+    optional<pair<vector<ParseeResult>, int>> ifElseParseeResults(int tag);
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
     void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);

@@ -26,6 +26,7 @@ class ExpressionIfElse;
 class ExpressionBinary;
 class ExpressionUnary;
 class ExpressionChained;
+class ExpressionBlock;
 enum class ExpressionBinaryOperation;
 
 class Statement;
@@ -125,6 +126,7 @@ private:
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
     llvm::Value *valueForChained(shared_ptr<ExpressionChained> expression);
+    llvm::Value *valueForBlock(shared_ptr<ExpressionBlock> expression);
     
     llvm::Value *valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions);
     llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<ExpressionVariable> expression);
