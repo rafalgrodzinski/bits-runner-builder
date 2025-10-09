@@ -24,10 +24,12 @@
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlob.h"
+#include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementExpression.h"
+#include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementRepeat.h"
@@ -70,6 +72,10 @@ shared_ptr<Statement> Parser::nextStatement() {
         return statement;
 
     statement = matchStatementVariable();
+    if (statement != nullptr || errors.size() > errorsCount)
+        return statement;
+
+    statement = matchStatementMetaExternVariable();
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
@@ -158,6 +164,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
 
     vector<shared_ptr<Statement>> blobDeclarationStatements;
     vector<shared_ptr<Statement>> blobStatements;
+    vector<shared_ptr<Statement>> variableDeclarationStatements;
     vector<shared_ptr<Statement>> functionDeclarationStatements;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
@@ -191,6 +198,19 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         blobDeclarationStatements.push_back(statementBlobDeclaration);
                         break;
                     }
+                    case StatementKind::VARIABLE: {
+                        shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
+                        shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = make_shared<StatementVariableDeclaration>(
+                            statementVariable->getShouldExport(),
+                            statementVariable->getName(),
+                            statementVariable->getValueType()
+                        );
+                        variableDeclarationStatements.push_back(statementVariableDeclaration);
+                        statements.push_back(statementVariable);
+                        if (statementVariable->getShouldExport())
+                            exportedHeaderStatements.push_back(statementVariableDeclaration);
+                        break;
+                    }
                     default:
                         statements.push_back(statement);
                         break;
@@ -205,6 +225,9 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         headerStatements.push_back(statement);
 
     for (shared_ptr<Statement> &statement : blobStatements)
+        headerStatements.push_back(statement);
+
+    for (shared_ptr<Statement> &statement : variableDeclarationStatements)
         headerStatements.push_back(statement);
 
     for (shared_ptr<Statement> &statement : functionDeclarationStatements)
@@ -233,6 +256,46 @@ shared_ptr<Statement> Parser::matchStatementImport() {
     return make_shared<StatementImport>(name);
 }
 
+shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
+    enum {
+        TAG_IDENTIFIER,
+        TAG_VALUE_TYPE
+    };
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                // @extern
+                Parsee::tokenParsee(TokenKind::M_EXTERN, true, false, false),
+                // identifier
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER),
+                Parsee::valueTypeParsee(true, true, false, TAG_VALUE_TYPE)
+            }
+        )
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    string identifier;
+    shared_ptr<ValueType> valueType;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_IDENTIFIER: {
+                identifier = parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_VALUE_TYPE: {
+                valueType = parseeResult.getValueType();
+                break;
+            }
+        }
+    }
+
+    return make_shared<StatementMetaExternVariable>(identifier, valueType);
+}
+
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     enum {
         TAG_ID,
@@ -248,8 +311,9 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
-                // identifier
+                // @extern
                 Parsee::tokenParsee(TokenKind::M_EXTERN, true, false, false),
+                // identifier
                 Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_ID),
                 Parsee::tokenParsee(TokenKind::FUNCTION, true, false, false),
                 // arguments
@@ -316,16 +380,21 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
 
 shared_ptr<Statement> Parser::matchStatementVariable() {
     enum Tag {
+        TAG_SHOULD_EXPORT,
         TAG_IDENTIFIER,
-        TAG_TYPE,
+        TAG_VALUE_TYPE,
         TAG_EXPRESSION
     };
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
+                // export
+                Parsee::tokenParsee(TokenKind::M_EXPORT, false, true, false, TAG_SHOULD_EXPORT),
+                // identifier
                 Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER),
-                Parsee::valueTypeParsee(true, true, false, TAG_TYPE),
+                Parsee::valueTypeParsee(true, true, false, TAG_VALUE_TYPE),
+                // initializer
                 Parsee::groupParsee(
                     ParseeGroup(
                         {
@@ -341,25 +410,46 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    bool shouldExport = false;
     string identifier;
     shared_ptr<ValueType> valueType;
     shared_ptr<Expression> expression = nullptr;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_IDENTIFIER:
+            case TAG_SHOULD_EXPORT: {
+                shouldExport =  true;
+                break;
+            }
+            case TAG_IDENTIFIER: {
                 identifier = parseeResult.getToken()->getLexme();
                 break;
-            case TAG_TYPE:
+            }
+            case TAG_VALUE_TYPE: {
                 valueType = parseeResult.getValueType();
                 break;
-            case TAG_EXPRESSION:
+            }
+            case TAG_EXPRESSION: {
                 expression = parseeResult.getExpression();
                 break;
+            }
         }
     }
 
-    return make_shared<StatementVariable>(identifier, valueType, expression);
+    // Try infering data elements count
+    if (valueType->getKind() == ValueTypeKind::DATA && valueType->getValueArg() == 0 && expression != nullptr) {
+        shared_ptr<ExpressionCompositeLiteral> compositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
+        if (compositeLiteral != nullptr) {
+            valueType = make_shared<ValueType>(
+                valueType->getKind(),
+                valueType->getSubType(),
+                compositeLiteral->getExpressions().size(),
+                valueType->getTypeName()
+            );
+        }
+    }
+
+    return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression);
 }
 
 shared_ptr<Statement> Parser::matchStatementFunction() {
@@ -370,12 +460,6 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         TAG_ARG_TYPE,
         TAG_RET_TYPE
     };
-
-    bool shouldExport = false;
-    string identifier;
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnType = ValueType::NONE;
-    shared_ptr<Statement> statementBlock;
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
@@ -424,34 +508,38 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         )
     );
 
-    switch (resultsGroup.getKind()) {
-        case ParseeResultsGroupKind::SUCCESS: {
-            for (int i=0; i<resultsGroup.getResults().size(); i++) {
-                ParseeResult parseeResult = resultsGroup.getResults().at(i);
-                switch (parseeResult.getTag()) {
-                    case TAG_SHOULD_EXPORT:
-                        shouldExport = true;
-                        break;
-                    case TAG_ID:
-                        identifier = parseeResult.getToken()->getLexme();
-                        break;
-                    case TAG_ARG_ID: {
-                        pair<string, shared_ptr<ValueType>> argument;
-                        argument.first = parseeResult.getToken()->getLexme();
-                        argument.second = resultsGroup.getResults().at(++i).getValueType();
-                        arguments.push_back(argument);
-                        break;
-                    }
-                    case TAG_RET_TYPE:
-                        returnType = parseeResult.getValueType();
-                        break;
-                }
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    bool shouldExport = false;
+    string identifier;
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnType = ValueType::NONE;
+    shared_ptr<Statement> statementBlock;
+
+    for (int i=0; i<resultsGroup.getResults().size(); i++) {
+        ParseeResult parseeResult = resultsGroup.getResults().at(i);
+        switch (parseeResult.getTag()) {
+            case TAG_SHOULD_EXPORT: {
+                shouldExport = true;
+                break;
             }
-            break;
+            case TAG_ID: {
+                identifier = parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_ARG_ID: {
+                pair<string, shared_ptr<ValueType>> argument;
+                argument.first = parseeResult.getToken()->getLexme();
+                argument.second = resultsGroup.getResults().at(++i).getValueType();
+                arguments.push_back(argument);
+                break;
+            }
+            case TAG_RET_TYPE: {
+                returnType = parseeResult.getValueType();
+                break;
+            }
         }
-        case ParseeResultsGroupKind::NO_MATCH:
-        case ParseeResultsGroupKind::FAILURE:
-            return nullptr;
     }
 
     // block

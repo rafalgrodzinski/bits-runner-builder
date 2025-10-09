@@ -1,4 +1,7 @@
-#include "Parser/Statement/Statement.h"
+#ifndef STATEMENT_META_EXTERN_FUNCTION_H
+#define STATEMENT_META_EXTERN_FUNCTION_H
+
+#include "Statement.h"
 
 class ValueType;
 
@@ -14,3 +17,5 @@ public:
     vector<pair<string, shared_ptr<ValueType>>> getArguments();
     shared_ptr<ValueType> getReturnValueType();
 };
+
+#endif

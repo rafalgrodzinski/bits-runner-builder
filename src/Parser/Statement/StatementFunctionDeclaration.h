@@ -1,7 +1,7 @@
 #ifndef STATEMENT_FUNCTION_DECLARATION_H
 #define STATEMENT_FUNCTION_DECLARATION_H
 
-#include "Parser/Statement/Statement.h"
+#include "Statement.h"
 
 class ValueType;
 

@@ -21,6 +21,7 @@
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlob.h"
+#include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -118,6 +119,9 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
         case StatementKind::BLOB:
             buildBlob(dynamic_pointer_cast<StatementBlob>(statement));
             break;
+        case StatementKind::VARIABLE_DECLARATION:
+            buildVariableDeclaration(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+            break;
         case StatementKind::VARIABLE:
             buildVariable(dynamic_pointer_cast<StatementVariable>(statement));
             break;
@@ -209,7 +213,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
 
         if (type->isPointerTy()) {
             shared_ptr<ValueType> valueType = statement->getArguments().at(i).second;
-            if(!setPtrType(name, valueType->getSubType()))
+            if(!setPtrType(name, valueType))
                 return;
         }
 
@@ -275,6 +279,26 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
         return;
 }
 
+void ModuleBuilder::buildVariableDeclaration(shared_ptr<StatementVariableDeclaration> statement) {
+    // type
+    llvm::Type *type = typeForValueType(statement->getValueType(), 0);
+    if (type == nullptr)
+        return;
+
+    // linkage
+    llvm::GlobalValue::LinkageTypes linkage = statement->getShouldExport() ?
+        linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage :
+        llvm::GlobalValue::LinkageTypes::InternalLinkage;
+
+    llvm::GlobalVariable *global = new llvm::GlobalVariable(*module, type, false, linkage, nullptr, statement->getName());
+
+    if (!setGlobal(statement->getName(), global))
+        return;
+
+    if (!setPtrType(statement->getName(), statement->getValueType()))
+        return;
+}
+
 void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
     if (builder->GetInsertBlock() != nullptr)
         buildLocalVariable(statement);
@@ -332,7 +356,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
             valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            if (!setPtrType(statement->getName(), statement->getValueType()->getSubType()))
+            if (!setPtrType(statement->getName(), statement->getValueType()))
                 return;
             alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
             break;
@@ -354,34 +378,29 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
 }
 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
-    int count = 0;
-    shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(statement->getExpression());
-    if (expressionCompositeLiteral != nullptr)
-        count = expressionCompositeLiteral->getExpressions().size();
-    llvm::Type *type = typeForValueType(statement->getValueType(), count);
-    if (type == nullptr)
-        return;
+    // variable
+    llvm::GlobalVariable *global = (llvm::GlobalVariable*)getGlobal(statement->getName());
 
-    // linkage
-    llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
+    if (global->hasInitializer()) {
+        markError(0, 0, format("Global variable \"{}\" already defined in scope", statement->getName()));
+        return;
+    }
+
+    // type
+    shared_ptr<ValueType> valueType = getPtrType(statement->getName());
+    llvm::Type *type = typeForValueType(valueType);
 
     // initialization
-    llvm::Constant *initConst = llvm::Constant::getNullValue(type);
+    llvm::Constant *initConstant = llvm::Constant::getNullValue(type);
     if (statement->getExpression() != nullptr) {
-        initConst = constantValueForExpression(statement->getExpression(), type);
-        if (initConst == nullptr) {
+        initConstant = constantValueForExpression(statement->getExpression(), type);
+        if (initConstant == nullptr) {
             markError(0, 0, "Not a constant expression");
             return;
         }
     }
 
-    llvm::GlobalVariable *global = new llvm::GlobalVariable(*module, type, false, linkage, initConst, statement->getName());
-
-    if (!setGlobal(statement->getName(), global))
-        return;
-
-    if (!setPtrType(statement->getName(), statement->getValueType()))
-        return;
+    global->setInitializer(initConstant);
 }
 
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
@@ -793,14 +812,14 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
     llvm::Type *type = nullptr;
 
     llvm::AllocaInst *localAlloca = getAlloca(expression->getIdentifier());
-    llvm::Value *globalValue = getGlobal(expression->getIdentifier());
+    llvm::Value *globalValuePtr = getGlobal(expression->getIdentifier());
     if (localAlloca != nullptr) {
         value = localAlloca;
         type = localAlloca->getAllocatedType();
-    } else if (globalValue != nullptr) {
-        value = globalValue;
+    } else if (globalValuePtr != nullptr) {
         shared_ptr<ValueType> valueType = getPtrType(expression->getIdentifier());
         type = typeForValueType(valueType);
+        value = globalValuePtr;
     }
 
     if (value == nullptr) {
@@ -1016,7 +1035,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
-        shared_ptr<ValueType> pointeeValueType = getPtrType(parentExpression->getIdentifier());
+        shared_ptr<ValueType> pointeeValueType = getPtrType(parentExpression->getIdentifier())->getSubType();
         if (pointeeValueType == nullptr) {
             markError(0, 0, "No type for ptr");
             return nullptr;

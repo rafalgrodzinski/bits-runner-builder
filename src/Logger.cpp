@@ -11,7 +11,9 @@
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementImport.h"
+#include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
+#include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -312,7 +314,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::F32:
             return "F32";
         case ValueTypeKind::DATA:
-            return "[]";
+            return format("DATA<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::BLOB:
             return format("BLOB<`{}`>", valueType->getTypeName());
         case ValueTypeKind::PTR:
@@ -330,12 +332,14 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
             return toString(dynamic_pointer_cast<StatementImport>(statement), indents);
         case StatementKind::META_EXTERN_FUNCTION:
             return toString(dynamic_pointer_cast<StatementMetaExternFunction>(statement), indents);
+        case StatementKind::VARIABLE_DECLARATION:
+            return toString(dynamic_pointer_cast<StatementVariableDeclaration>(statement), indents);
         case StatementKind::VARIABLE:
             return toString(dynamic_pointer_cast<StatementVariable>(statement), indents);
-        case StatementKind::FUNCTION:
-            return toString(dynamic_pointer_cast<StatementFunction>(statement), indents);
         case StatementKind::FUNCTION_DECLARATION:
             return toString(dynamic_pointer_cast<StatementFunctionDeclaration>(statement), indents);
+        case StatementKind::FUNCTION:
+            return toString(dynamic_pointer_cast<StatementFunction>(statement), indents);
         case StatementKind::RAW_FUNCTION:
             return toString(dynamic_pointer_cast<StatementRawFunction>(statement), indents);
         case StatementKind::BLOB:
@@ -403,6 +407,17 @@ string Logger::toString(shared_ptr<StatementImport> statement, vector<IndentKind
     return formattedLine(line, indents);
 }
 
+string Logger::toString(shared_ptr<StatementMetaExternVariable> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("@EXTERN VAR `{}` {}", statement->getName(), toString(statement->getValueType()));
+    text += formattedLine(line, indents);
+
+    return text;
+}
+
 string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vector<IndentKind> indents) {
     string text;
     string line;
@@ -424,12 +439,23 @@ string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vecto
     return text;
 }
 
+string Logger::toString(shared_ptr<StatementVariableDeclaration> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getValueType()));
+    text += formattedLine(line, indents);
+
+    return text;
+}
+
 string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKind> indents) {
     string text;
     string line;
 
     // name
-    line = format("VAR `{}` {}", statement->getName(), toString(statement->getValueType()));
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getValueType()));
     if (statement->getExpression() != nullptr)
         line += ":";
     text += formattedLine(line, indents);
@@ -438,6 +464,27 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
     if (statement->getExpression() != nullptr) {
         indents = adjustedLastIndent(indents);
         line = format("← {}", toString(statement->getExpression(), { }));
+        text += formattedLine(line, indents);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("FUN `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
+    if (!statement->getArguments().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+
+    // arguments
+    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
+        line = format("`{}` {}", arg.first, toString(arg.second));
         text += formattedLine(line, indents);
     }
 
@@ -464,27 +511,6 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
 
     // body
     text += toString(statement->getStatementBlock(), indents);
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("FUN `{}`", statement->getName());
-    if (!statement->getArguments().empty())
-        line += ":";
-    text += formattedLine(line, indents);
-
-    indents = adjustedLastIndent(indents);
-
-    // arguments
-    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
-        line = format("`{}` {}", arg.first, toString(arg.second));
-        text += formattedLine(line, indents);
-    }
 
     return text;
 }
