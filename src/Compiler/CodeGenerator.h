@@ -28,7 +28,8 @@ public:
     };
 
     enum class Options {
-        FUNCTION_SECTIONS
+        FUNCTION_SECTIONS,
+        NO_BSS
     };
 
 private:

@@ -41,7 +41,8 @@ CodeGenerator::CodeGenerator(OptimizationLevel optLevel, string targetTripleOpti
     }
 
     llvm::TargetOptions targetOptions;
-    targetOptions.FunctionSections = optionBits & 1 << 0;
+    targetOptions.FunctionSections = (optionBits >> int(Options::FUNCTION_SECTIONS)) & 0x01;
+    targetOptions.NoZerosInBSS = (optionBits >> int(Options::NO_BSS)) & 0x01;
     targetMachine = target->createTargetMachine(
         targetTriple,
         architecture,

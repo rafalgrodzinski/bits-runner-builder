@@ -88,7 +88,8 @@ int main(int argc, char **argv) {
     llvm::cl::bits<CodeGenerator::Options> options(
         llvm::cl::desc("Target gneration options"),
         llvm::cl::values(
-            clEnumValN(CodeGenerator::Options::FUNCTION_SECTIONS, "function-sections", "Place each function in its own section")
+            clEnumValN(CodeGenerator::Options::FUNCTION_SECTIONS, "function-sections", "Place each function in its own section"),
+            clEnumValN(CodeGenerator::Options::NO_BSS, "no-zero-initialized-in-bss", "Don't place zero initialized data in BSS")
         ),
         llvm::cl::cat(targetOptions)
     );
