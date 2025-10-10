@@ -31,7 +31,7 @@ CodeGenerator::CodeGenerator(OptimizationLevel optLevel, RelocationModel relocat
             relocationModel = llvm::Reloc::PIC_;
             break;
     }
-    llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Kernel;
+    llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Small;
     llvm::CodeGenOptLevel optimizationLevel;
     switch (optLevel) {
         case OptimizationLevel::O0:
