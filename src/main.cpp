@@ -51,8 +51,8 @@ int main(int argc, char **argv) {
         llvm::cl::desc("Generated output:"),
         llvm::cl::init(CodeGenerator::OutputKind::OBJECT),
         llvm::cl::values(
-            clEnumValN(CodeGenerator::OutputKind::OBJECT, "c", "Generate object file"),
-            clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "S", "Generate assembly file")
+            clEnumValN(CodeGenerator::OutputKind::OBJECT, "c", "Generate object file."),
+            clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "S", "Generate assembly file.")
         ),
         llvm::cl::cat(mainOptions)
     );
@@ -60,11 +60,20 @@ int main(int argc, char **argv) {
         llvm::cl::desc("Optimization level:"),
         llvm::cl::init(CodeGenerator::OptimizationLevel::O2),
         llvm::cl::values(
-            clEnumValN(CodeGenerator::OptimizationLevel::O0, "g", "No optimizations (debug mode)"),
-            clEnumValN(CodeGenerator::OptimizationLevel::O0, "O0", "No optimizations"),
-            clEnumValN(CodeGenerator::OptimizationLevel::O1, "O1", "Less optimizations"),
-            clEnumValN(CodeGenerator::OptimizationLevel::O2, "O2", "Default optimizations"),
-            clEnumValN(CodeGenerator::OptimizationLevel::O3, "O3", "Aggressive optimizations")
+            clEnumValN(CodeGenerator::OptimizationLevel::O0, "g", "No optimizations (debug mode)."),
+            clEnumValN(CodeGenerator::OptimizationLevel::O0, "O0", "No optimizations."),
+            clEnumValN(CodeGenerator::OptimizationLevel::O1, "O1", "Less optimizations."),
+            clEnumValN(CodeGenerator::OptimizationLevel::O2, "O2", "Default optimizations."),
+            clEnumValN(CodeGenerator::OptimizationLevel::O3, "O3", "Aggressive optimizations.")
+        ),
+        llvm::cl::cat(mainOptions)
+    );
+    llvm::cl::opt<CodeGenerator::RelocationModel> relocationModel(
+        llvm::cl::desc("Relocation model:"),
+        llvm::cl::init(CodeGenerator::RelocationModel::PIC),
+        llvm::cl::values(
+            clEnumValN(CodeGenerator::RelocationModel::STATIC, "static", "Non-relocatable code, machine instructions may use absolute addressing modes."),
+            clEnumValN(CodeGenerator::RelocationModel::PIC, "pic", "Fully relocatable position independent code, machine instructions need to use relative addressing modes.")
         ),
         llvm::cl::cat(mainOptions)
     );
@@ -145,7 +154,7 @@ int main(int argc, char **argv) {
     }
 
     // Specify code generator for deired target
-    CodeGenerator codeGenerator(optimizationLevel, targetTriple, architecture, options.getBits());
+    CodeGenerator codeGenerator(optimizationLevel, relocationModel, targetTriple, architecture, options.getBits());
 
     for (const auto &statementsEntry : statementsMap) {
         if (isVerbose)

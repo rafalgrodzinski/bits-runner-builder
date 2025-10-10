@@ -2,7 +2,7 @@
 
 using namespace std;
 
-CodeGenerator::CodeGenerator(OptimizationLevel optLevel, string targetTripleOption, string architectureOption, unsigned int optionBits) {
+CodeGenerator::CodeGenerator(OptimizationLevel optLevel, RelocationModel relocationModelOption, string targetTripleOption, string architectureOption, unsigned int optionBits) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
@@ -22,8 +22,16 @@ CodeGenerator::CodeGenerator(OptimizationLevel optLevel, string targetTripleOpti
     if (!architectureOption.empty())
         architecture = architectureOption;
     string features = "";
-    llvm::Reloc::Model relocationModel = llvm::Reloc::PIC_;
-    llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Small;
+    llvm::Reloc::Model relocationModel;
+    switch (relocationModelOption) {
+        case RelocationModel::STATIC:
+            relocationModel = llvm::Reloc::Static;
+            break;
+        case RelocationModel::PIC:
+            relocationModel = llvm::Reloc::PIC_;
+            break;
+    }
+    llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Kernel;
     llvm::CodeGenOptLevel optimizationLevel;
     switch (optLevel) {
         case OptimizationLevel::O0:
