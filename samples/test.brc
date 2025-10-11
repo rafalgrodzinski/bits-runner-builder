@@ -1,70 +1,20 @@
-@module mem
+@extern putchar fun: character u64 -> u32
 
-@extern terminal_print_character fun
-printChar raw<"m, ~{eax}">: character u32
-    mov al, 7
-    mov ah, $0
-    call terminal_print_character
-;
+printNum fun: number u64
+    biggest u64 <- 10
+    rep biggest <= number: biggest <- biggest * 10
+    biggest <- biggest / 10
 
-@extern terminal_print_hex fun
-printHexRaw raw<"m, m">: number u32, attribute u32
-    mov ebx, $0
-    mov eax, $1
-    call terminal_print_hex
-;
-
-printHexRaw8 raw<"m, m">: number u8, attribute u32
-    mov ebx, 0
-    mov bl, $0
-    mov eax, $1
-    call terminal_print_hex
-;
-
-
-@export heap u32
-
-Layout blob
-    memSize u32
-    pageSize u32
-    pagesCount u32
-    //memPages ptr<u8>
-    memPages data<u8>
-    //memPages u8
-;
-pMemLayout ptr<blob<Layout>>
-
-@export init fun
-    pMemLayout <- { heap.adr }
-    pMemLayout.val.memPages <- { pMemLayout.val.pagesCount.adr + 4 }
-
-    //printHexRaw(pMemLayout.val.memSize, 1)
-    printChar('\n')
-    //printHexRaw(pMemLayout.val.pageSize, 1)
-    //printChar('\n')
-    //printHexRaw(pMemLayout.val.pagesCount, 1)
-    //printChar('\n')
-
-    /*rep i u32 <- 0, i < 8, i <- i + 1
-        //memPage ptr<u8> <- { pMemLayout.val.memPages.vAdr + i }
-        //v u32 <- memPage.val
-        //printHexRaw8(pMemLayout.val.memPages[i], 7)
-        //printChar(' ')
-    ;*/
-
-    
-    //i <- i + 1
-    rep i u32 <- 0, i < 8, i <- i + 1
+    rep biggest > 0, biggest <- biggest / 10
+        digit u64 <- number / biggest
+        putchar(digit + '0')
+        number <- number % biggest
     ;
+;
 
-    /*printHexRaw8(pMemLayout.val.memPages[0], 7)
-    printChar(' ')
-    printHexRaw8(pMemLayout.val.memPages[1], 7)
-    printChar(' ')
-    printHexRaw8(pMemLayout.val.memPages[2], 7)
-    printChar(' ')*/
-
-
-    //dummy u32 <- 0
-    //rep: dummy <- dummy + 1
+@export main fun
+    nums data<u64> <- {5, 8, 7, 13}
+    pNums ptr<data<u64>> <- { nums.adr }
+    pNums.val[0] <- 9
+    printNum(pNums.val[0])
 ;

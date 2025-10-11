@@ -1051,7 +1051,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
             return nullptr; 
         }
 
-        return builder->CreateLoad(pointeeType, pointeeLoad);
+        return valueForSourceValue(pointeeLoad, pointeeType, expression);
     } else if (isPointer && isVadr) {
         llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentOperand);
         return builder->CreatePtrToInt(pointeeLoad, typeIntPtr);
