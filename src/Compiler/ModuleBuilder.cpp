@@ -248,7 +248,12 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
 
     // build function declaration & body
     llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
+    if(llvm::InlineAsm::verify(funType, statement->getConstraints())) {
+        markError(0, 0, format("Constraints \"{}\", are invalid", statement->getConstraints()));
+        return;
+    }
     llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
+
     if (!setRawFun(statement->getName(), rawFun))
         return;
 }

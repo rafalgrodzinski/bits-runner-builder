@@ -2,7 +2,7 @@
 
 using namespace std;
 
-CodeGenerator::CodeGenerator(OptimizationLevel optLevel, string targetTripleOption, string architectureOption, unsigned int optionBits) {
+CodeGenerator::CodeGenerator(OptimizationLevel optLevel, RelocationModel relocationModelOption, string targetTripleOption, string architectureOption, unsigned int optionBits) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
@@ -22,7 +22,15 @@ CodeGenerator::CodeGenerator(OptimizationLevel optLevel, string targetTripleOpti
     if (!architectureOption.empty())
         architecture = architectureOption;
     string features = "";
-    llvm::Reloc::Model relocationModel = llvm::Reloc::PIC_;
+    llvm::Reloc::Model relocationModel;
+    switch (relocationModelOption) {
+        case RelocationModel::STATIC:
+            relocationModel = llvm::Reloc::Static;
+            break;
+        case RelocationModel::PIC:
+            relocationModel = llvm::Reloc::PIC_;
+            break;
+    }
     llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Small;
     llvm::CodeGenOptLevel optimizationLevel;
     switch (optLevel) {
@@ -41,7 +49,8 @@ CodeGenerator::CodeGenerator(OptimizationLevel optLevel, string targetTripleOpti
     }
 
     llvm::TargetOptions targetOptions;
-    targetOptions.FunctionSections = optionBits & 1 << 0;
+    targetOptions.FunctionSections = (optionBits >> int(Options::FUNCTION_SECTIONS)) & 0x01;
+    targetOptions.NoZerosInBSS = (optionBits >> int(Options::NO_BSS)) & 0x01;
     targetMachine = target->createTargetMachine(
         targetTriple,
         architecture,

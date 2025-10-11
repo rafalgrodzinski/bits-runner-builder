@@ -1,44 +1,70 @@
-rebootRaw raw<"">
-    mov ah, 0x05
-    int 0x30
+@module mem
+
+@extern terminal_print_character fun
+printChar raw<"m, ~{eax}">: character u32
+    mov al, 7
+    mov ah, $0
+    call terminal_print_character
 ;
 
-@export printNum fun: number u64
-    biggest u64 <- 10
-    rep biggest <= number: biggest <- biggest * 10
-    biggest <- biggest / 10
+@extern terminal_print_hex fun
+printHexRaw raw<"m, m">: number u32, attribute u32
+    mov ebx, $0
+    mov eax, $1
+    call terminal_print_hex
+;
 
-    rep biggest > 0, biggest <- biggest / 10
-        digit u64 <- number / biggest
-        putchar(digit + '0')
-        number <- number % biggest
+printHexRaw8 raw<"m, m">: number u8, attribute u32
+    mov ebx, 0
+    mov bl, $0
+    mov eax, $1
+    call terminal_print_hex
+;
+
+
+@export heap u32
+
+Layout blob
+    memSize u32
+    pageSize u32
+    pagesCount u32
+    //memPages ptr<u8>
+    memPages data<u8>
+    //memPages u8
+;
+pMemLayout ptr<blob<Layout>>
+
+@export init fun
+    pMemLayout <- { heap.adr }
+    pMemLayout.val.memPages <- { pMemLayout.val.pagesCount.adr + 4 }
+
+    //printHexRaw(pMemLayout.val.memSize, 1)
+    printChar('\n')
+    //printHexRaw(pMemLayout.val.pageSize, 1)
+    //printChar('\n')
+    //printHexRaw(pMemLayout.val.pagesCount, 1)
+    //printChar('\n')
+
+    /*rep i u32 <- 0, i < 8, i <- i + 1
+        //memPage ptr<u8> <- { pMemLayout.val.memPages.vAdr + i }
+        //v u32 <- memPage.val
+        //printHexRaw8(pMemLayout.val.memPages[i], 7)
+        //printChar(' ')
+    ;*/
+
+    
+    //i <- i + 1
+    rep i u32 <- 0, i < 8, i <- i + 1
     ;
-;
 
-user blob
-    age u64
-    name data<u64, 16>
-;
+    /*printHexRaw8(pMemLayout.val.memPages[0], 7)
+    printChar(' ')
+    printHexRaw8(pMemLayout.val.memPages[1], 7)
+    printChar(' ')
+    printHexRaw8(pMemLayout.val.memPages[2], 7)
+    printChar(' ')*/
 
-u2 blob<user> <- { 4, "hello" }
-//num u64
-//nums data<u64> <- {2, 4, 8, 16, 32}
-//buffer ptr<u64>
-pu2 ptr<blob<user>>
-num u64 <- 77
 
-@export main fun -> u32
-    pu2 <- { u2.adr }
-    //u2.adr
-    pu2.val.age <- 7
-    pu2.val.age <- num
-
-    u3 blob<user> <- pu2.val
-    u3.age <- 44
-
-    printNum(u3.age)
-    print(u3.name)
-    printNum(u2.age)
-
-    ret 0
+    //dummy u32 <- 0
+    //rep: dummy <- dummy + 1
 ;

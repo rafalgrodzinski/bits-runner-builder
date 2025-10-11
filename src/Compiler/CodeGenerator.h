@@ -27,8 +27,14 @@ public:
         O3
     };
 
+    enum class RelocationModel {
+        STATIC,
+        PIC
+    };
+
     enum class Options {
-        FUNCTION_SECTIONS
+        FUNCTION_SECTIONS,
+        NO_BSS
     };
 
 private:
@@ -38,7 +44,7 @@ private:
     llvm::DataLayout dataLayout;
 
 public:
-    CodeGenerator(OptimizationLevel optLevel, string targetTripleOption, string architectureOption, unsigned int optionBits);
+    CodeGenerator(OptimizationLevel optLevel, RelocationModel relocationModelOption, string targetTripleOption, string architectureOption, unsigned int optionBits);
     void generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose);
     int getIntSize();
     int getPointerSize();
