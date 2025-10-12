@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
         llvm::cl::init(CodeGenerator::RelocationModel::PIC),
         llvm::cl::values(
             clEnumValN(CodeGenerator::RelocationModel::STATIC, "static", "Non-relocatable code"),
-            clEnumValN(CodeGenerator::RelocationModel::PIC, "pic", "Fully relocatable position independent code")
+            clEnumValN(CodeGenerator::RelocationModel::PIC, "pic", "Fully relocatable position independent code (Default)")
         ),
         llvm::cl::cat(targetOptions)
     );
