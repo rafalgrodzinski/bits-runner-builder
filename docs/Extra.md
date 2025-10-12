@@ -46,3 +46,6 @@ Details on what each option do are burries somewhere inside of LLVM's source cod
 `--function-sections` Places each function in a separate section, which can be useful if we want to manually arrange functions in a linker script. For example to place startup code at the beginning.
 
 `--no-zero-initialized-in-bss` By default zero-initialized global data is not included in the binary but rather just marked as existing in the `.bss`. This requires a loader support to work properly. We can disable this so even zero-initialized global variables will be directly placed in the `.data` section, which is useful when generating flat binaries.
+
+## LLVM Options
+LLVM itself provides a whole bunch of different options that can be used. Use `--help-hidden` to display all of them.
