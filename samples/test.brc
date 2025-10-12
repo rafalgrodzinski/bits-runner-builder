@@ -1,9 +1,6 @@
-rebootRaw raw<"">
-    mov ah, 0x05
-    int 0x30
-;
+@extern putchar fun: character u64 -> u32
 
-@export printNum fun: number u64
+printNum fun: number u64
     biggest u64 <- 10
     rep biggest <= number: biggest <- biggest * 10
     biggest <- biggest / 10
@@ -15,30 +12,9 @@ rebootRaw raw<"">
     ;
 ;
 
-user blob
-    age u64
-    name data<u64, 16>
-;
-
-u2 blob<user> <- { 4, "hello" }
-//num u64
-//nums data<u64> <- {2, 4, 8, 16, 32}
-//buffer ptr<u64>
-pu2 ptr<blob<user>>
-num u64 <- 77
-
-@export main fun -> u32
-    pu2 <- { u2.adr }
-    //u2.adr
-    pu2.val.age <- 7
-    pu2.val.age <- num
-
-    u3 blob<user> <- pu2.val
-    u3.age <- 44
-
-    printNum(u3.age)
-    print(u3.name)
-    printNum(u2.age)
-
-    ret 0
+@export main fun
+    nums data<u64> <- {5, 8, 7, 13}
+    pNums ptr<data<u64>> <- { nums.adr }
+    pNums.val[0] <- 9
+    printNum(pNums.val[0])
 ;

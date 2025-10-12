@@ -12,6 +12,7 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/Support/NVPTXAddrSpace.h>
+#include <llvm/Support/Error.h>
 
 class Error;
 class ValueType;

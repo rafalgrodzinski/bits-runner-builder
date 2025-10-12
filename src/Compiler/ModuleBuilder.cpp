@@ -248,7 +248,12 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
 
     // build function declaration & body
     llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
+    if(llvm::InlineAsm::verify(funType, statement->getConstraints())) {
+        markError(0, 0, format("Constraints \"{}\", are invalid", statement->getConstraints()));
+        return;
+    }
     llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
+
     if (!setRawFun(statement->getName(), rawFun))
         return;
 }
@@ -1046,7 +1051,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
             return nullptr; 
         }
 
-        return builder->CreateLoad(pointeeType, pointeeLoad);
+        return valueForSourceValue(pointeeLoad, pointeeType, expression);
     } else if (isPointer && isVadr) {
         llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentOperand);
         return builder->CreatePtrToInt(pointeeLoad, typeIntPtr);
