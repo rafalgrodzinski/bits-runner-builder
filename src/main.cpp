@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     // verbosity
     llvm::cl::opt<bool> isVerbose(
         "v",
-        llvm::cl::desc("Verbos output"),
+        llvm::cl::desc("Verbose output"),
         llvm::cl::init(false),
         llvm::cl::cat(mainOptions)
     );
