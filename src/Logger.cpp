@@ -288,6 +288,8 @@ string Logger::toString(Parsee parsee) {
         case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
         case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
             return "Expression Block";
+        case ParseeKind::IF_ELSE:
+            return "Expression If-Else";
     }
 }
 
@@ -314,6 +316,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "S64";
         case ValueTypeKind::F32:
             return "F32";
+        case ValueTypeKind::F64:
+            return "F64";
         case ValueTypeKind::DATA:
             return format("DATA<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::BLOB:

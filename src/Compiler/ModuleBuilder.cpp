@@ -14,6 +14,7 @@
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 #include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCast.h"
 
 #include "Parser/Statement/StatementImport.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -894,7 +895,6 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         else
             sourceOperand = currentValue;
 
-        // Make sure the expression is correct
         shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
         shared_ptr<ExpressionVariable> parentExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(i-1));
         if (expressionVariable == nullptr || parentExpressionVariable == nullptr) {
@@ -902,14 +902,20 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
             return nullptr;
         }
 
-        // First check for built-ins
+        // Built-in expression?
         llvm::Value *builtInValue = valueForBuiltIn(currentValue, parentExpressionVariable, expressionVariable);
         if (builtInValue != nullptr) {
             currentValue = builtInValue;
             continue;
         }
 
-        // Then do a normal member check
+        // Cast expression?
+        shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression);
+        if (expressionCast != nullptr) {
+            return valueForCast(currentValue, expressionCast);
+        }
+
+        // Variable expression?
         llvm::StructType *structType = (llvm::StructType*)currentValue->getType();
         if (!structType->isStructTy()) {
             markError(0, 0, "Something's fucky");
@@ -1061,6 +1067,27 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
 
     markError(0, 0, "Invalid built-in operation");
     return nullptr;
+}
+
+llvm::Value *ModuleBuilder::valueForCast(llvm::Value *value, shared_ptr<ExpressionCast> expression) {
+    llvm::Type *targetType = typeForValueType(expression->getValueType());
+    llvm::Type *sourceType = value->getType();
+
+    if (targetType == sourceType)
+        return value;
+
+    ValueTypeKind valueTypeKind = expression->getValueType()->getKind();
+    bool isTargetUInt = valueTypeKind == ValueTypeKind::U8 || valueTypeKind == ValueTypeKind::U32 || valueTypeKind == ValueTypeKind::U64;
+    bool isTargetSInt = valueTypeKind == ValueTypeKind::S8 || valueTypeKind == ValueTypeKind::S32 || valueTypeKind == ValueTypeKind::S64;
+
+    bool isSorceUInt;
+
+    switch (expression->getValueType()->getKind()) {
+        case ValueTypeKind::U8:
+
+            ((llvm::IntegerType*)sourceType)->getB
+    }
+    //llvm::CastInst::Create(llvm::Instruction::CastOps::fp)
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
