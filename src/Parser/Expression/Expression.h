@@ -18,7 +18,8 @@ enum class ExpressionKind {
     VARIABLE,
     CALL,
     BLOCK,
-    CHAINED
+    CHAINED,
+    CAST
 };
 
 class Expression {

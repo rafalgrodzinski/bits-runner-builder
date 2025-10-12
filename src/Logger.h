@@ -37,6 +37,7 @@ class ExpressionCompositeLiteral;
 class ExpressionCall;
 class ExpressionBlock;
 class ExpressionChained;
+class ExpressionCast;
 
 class Error;
 
@@ -86,6 +87,7 @@ private:
     static string toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionBlock> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents);
+    static string toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents);
 
     static string formattedLine(string line, vector<IndentKind> indents);
     static vector<IndentKind> adjustedLastIndent(vector<IndentKind> indents);

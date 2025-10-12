@@ -37,6 +37,7 @@
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionBlock.h"
 #include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCast.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -700,6 +701,8 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
             return toString(dynamic_pointer_cast<ExpressionBlock>(expression), indents);
         case ExpressionKind::CHAINED:
             return toString(dynamic_pointer_cast<ExpressionChained>(expression), indents);
+        case ExpressionKind::CAST:
+            return toString(dynamic_pointer_cast<ExpressionCast>(expression), indents);
     }
 }
 
@@ -919,6 +922,11 @@ string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentK
             line += ".";
     }
 
+    return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents) {
+    string line = toString(expression->getValueType());
     return formattedLine(line, indents);
 }
 
