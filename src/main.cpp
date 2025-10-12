@@ -40,68 +40,107 @@ void versionPrinter(llvm::raw_ostream &os) {
 
 int main(int argc, char **argv) {
     llvm::cl::SetVersionPrinter(versionPrinter);
+
+    // Main Options
     llvm::cl::OptionCategory mainOptions(" Main Options");
+
+    // verbosity
     llvm::cl::opt<bool> isVerbose(
         "v",
         llvm::cl::desc("Verbos output"),
         llvm::cl::init(false),
         llvm::cl::cat(mainOptions)
     );
+
+    // output kind
     llvm::cl::opt<CodeGenerator::OutputKind> outputKind(
+        "gen",
         llvm::cl::desc("Generated output:"),
         llvm::cl::init(CodeGenerator::OutputKind::OBJECT),
         llvm::cl::values(
-            clEnumValN(CodeGenerator::OutputKind::OBJECT, "c", "Generate object file."),
-            clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "S", "Generate assembly file.")
+            clEnumValN(CodeGenerator::OutputKind::OBJECT, "obj", "Generate object file (Default)"),
+            clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "asm", "Generate assembly file")
         ),
         llvm::cl::cat(mainOptions)
     );
-    llvm::cl::opt<CodeGenerator::OptimizationLevel> optimizationLevel(
-        llvm::cl::desc("Optimization level:"),
-        llvm::cl::init(CodeGenerator::OptimizationLevel::O2),
-        llvm::cl::values(
-            clEnumValN(CodeGenerator::OptimizationLevel::O0, "g", "No optimizations (debug mode)."),
-            clEnumValN(CodeGenerator::OptimizationLevel::O0, "O0", "No optimizations."),
-            clEnumValN(CodeGenerator::OptimizationLevel::O1, "O1", "Less optimizations."),
-            clEnumValN(CodeGenerator::OptimizationLevel::O2, "O2", "Default optimizations."),
-            clEnumValN(CodeGenerator::OptimizationLevel::O3, "O3", "Aggressive optimizations.")
-        ),
-        llvm::cl::cat(mainOptions)
-    );
-    llvm::cl::opt<CodeGenerator::RelocationModel> relocationModel(
-        llvm::cl::desc("Relocation model:"),
-        llvm::cl::init(CodeGenerator::RelocationModel::PIC),
-        llvm::cl::values(
-            clEnumValN(CodeGenerator::RelocationModel::STATIC, "static", "Non-relocatable code, machine instructions may use absolute addressing modes."),
-            clEnumValN(CodeGenerator::RelocationModel::PIC, "pic", "Fully relocatable position independent code, machine instructions need to use relative addressing modes.")
-        ),
-        llvm::cl::cat(mainOptions)
-    );
+
+    // input files
     llvm::cl::list<string> inputFileNames(
         llvm::cl::Positional,
         llvm::cl::desc("<input file>"),
         llvm::cl::OneOrMore,
         llvm::cl::cat(mainOptions)
     );
+
+    // Target Options
     llvm::cl::OptionCategory targetOptions(" Target Options");
+
+    // target triple
     llvm::cl::opt<string> targetTriple(
         "triple",
         llvm::cl::desc("Target triple"),
         llvm::cl::cat(targetOptions)
     );
+
+    // architecture
     llvm::cl::opt<string> architecture(
         "arch",
         llvm::cl::desc("Target architecture"),
         llvm::cl::cat(targetOptions)
     );
+
+    // relocation model
+    llvm::cl::opt<CodeGenerator::RelocationModel> relocationModel(
+        "reloc",
+        llvm::cl::desc("Relocation model:"),
+        llvm::cl::init(CodeGenerator::RelocationModel::PIC),
+        llvm::cl::values(
+            clEnumValN(CodeGenerator::RelocationModel::STATIC, "static", "Non-relocatable code"),
+            clEnumValN(CodeGenerator::RelocationModel::PIC, "pic", "Fully relocatable position independent code")
+        ),
+        llvm::cl::cat(targetOptions)
+    );
+
+    // code model
+    llvm::cl::opt<CodeGenerator::CodeModel> codeModel(
+        "code",
+        llvm::cl::desc("Code model:"),
+        llvm::cl::init(CodeGenerator::CodeModel::SMALL),
+        llvm::cl::values(
+            clEnumValN(CodeGenerator::CodeModel::TINY, "tiny", "Tiny code model"),
+            clEnumValN(CodeGenerator::CodeModel::SMALL, "small", "Small code model (Default)"),
+            clEnumValN(CodeGenerator::CodeModel::KERNEL, "kernel", "Kernel code model"),
+            clEnumValN(CodeGenerator::CodeModel::MEDIUM, "medium", "Medium code model"),
+            clEnumValN(CodeGenerator::CodeModel::LARGE, "large", "Large code model")
+        ),
+        llvm::cl::cat(targetOptions)
+    );
+
+    // optimization level
+    llvm::cl::opt<CodeGenerator::OptimizationLevel> optimizationLevel(
+        "opt",
+        llvm::cl::desc("Optimization level:"),
+        llvm::cl::init(CodeGenerator::OptimizationLevel::O2),
+        llvm::cl::values(
+            clEnumValN(CodeGenerator::OptimizationLevel::O0, "g", "No optimizations with debug symbols"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O0, "O0", "No optimizations"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O1, "O1", "Basic optimizations"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O2, "O2", "Some optimizations (Default)"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O3, "O3", "Aggressive optimizations")
+        ),
+        llvm::cl::cat(targetOptions)
+    );
+
+    // options
     llvm::cl::bits<CodeGenerator::Options> options(
-        llvm::cl::desc("Target gneration options"),
+        llvm::cl::desc("Additional options"),
         llvm::cl::values(
             clEnumValN(CodeGenerator::Options::FUNCTION_SECTIONS, "function-sections", "Place each function in its own section"),
             clEnumValN(CodeGenerator::Options::NO_BSS, "no-zero-initialized-in-bss", "Don't place zero initialized data in BSS")
         ),
         llvm::cl::cat(targetOptions)
     );
+
     llvm::cl::extrahelp("\n More Info:\n\n  Check the GitHub page at https://github.com/rafalgrodzinski/bits-runner-builder for more information in Bits Runner Builder\n");
     llvm::cl::ParseCommandLineOptions(argc, argv, "Bits Runner Builder - LLVM based compiler for the Bits Runner Code language");
 
@@ -154,7 +193,7 @@ int main(int argc, char **argv) {
     }
 
     // Specify code generator for deired target
-    CodeGenerator codeGenerator(optimizationLevel, relocationModel, targetTriple, architecture, options.getBits());
+    CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel,  options.getBits());
 
     for (const auto &statementsEntry : statementsMap) {
         if (isVerbose)

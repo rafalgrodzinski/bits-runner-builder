@@ -15,9 +15,17 @@ using namespace std;
 
 class CodeGenerator {
 public:
-    enum class OutputKind {
-        ASSEMBLY,
-        OBJECT
+    enum class RelocationModel {
+        STATIC,
+        PIC
+    };
+
+    enum class CodeModel {
+        TINY,
+        SMALL,
+        KERNEL,
+        MEDIUM,
+        LARGE
     };
 
     enum class OptimizationLevel {
@@ -27,14 +35,15 @@ public:
         O3
     };
 
-    enum class RelocationModel {
-        STATIC,
-        PIC
-    };
-
     enum class Options {
         FUNCTION_SECTIONS,
         NO_BSS
+    };
+
+
+    enum class OutputKind {
+        ASSEMBLY,
+        OBJECT
     };
 
 private:
@@ -44,7 +53,14 @@ private:
     llvm::DataLayout dataLayout;
 
 public:
-    CodeGenerator(OptimizationLevel optLevel, RelocationModel relocationModelOption, string targetTripleOption, string architectureOption, unsigned int optionBits);
+    CodeGenerator(
+        string targetTripleOption,
+        string architectureOption,
+        RelocationModel relocationModelOption,
+        CodeModel codeModelOption,
+        OptimizationLevel optimizationLevelOption,
+        unsigned int optionBits
+    );
     void generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose);
     int getIntSize();
     int getPointerSize();

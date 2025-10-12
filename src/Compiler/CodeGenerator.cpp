@@ -2,13 +2,21 @@
 
 using namespace std;
 
-CodeGenerator::CodeGenerator(OptimizationLevel optLevel, RelocationModel relocationModelOption, string targetTripleOption, string architectureOption, unsigned int optionBits) {
+CodeGenerator::CodeGenerator(
+    string targetTripleOption,
+    string architectureOption,
+    RelocationModel relocationModelOption,
+    CodeModel codeModelOption,
+    OptimizationLevel optimizationLevelOption,
+    unsigned int optionBits
+) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
     llvm::InitializeAllAsmParsers();
     llvm::InitializeAllAsmPrinters();
 
+    // target triple
     targetTriple = llvm::sys::getDefaultTargetTriple();
     if (!targetTripleOption.empty())
         targetTriple = targetTripleOption;
@@ -18,10 +26,14 @@ CodeGenerator::CodeGenerator(OptimizationLevel optLevel, RelocationModel relocat
         cerr << errorString << endl;
         exit(1);
     }
+
+    // architecture
     architecture = "generic";
     if (!architectureOption.empty())
         architecture = architectureOption;
     string features = "";
+
+    // relocation model
     llvm::Reloc::Model relocationModel;
     switch (relocationModelOption) {
         case RelocationModel::STATIC:
@@ -31,9 +43,30 @@ CodeGenerator::CodeGenerator(OptimizationLevel optLevel, RelocationModel relocat
             relocationModel = llvm::Reloc::PIC_;
             break;
     }
+
+    // code model
     llvm::CodeModel::Model codeModel = llvm::CodeModel::Model::Small;
+    switch (codeModelOption) {
+        case CodeModel::TINY:
+            codeModel = llvm::CodeModel::Model::Tiny;
+            break;
+        case CodeModel::SMALL:
+            codeModel = llvm::CodeModel::Model::Small;
+            break;
+        case CodeModel::KERNEL:
+            codeModel = llvm::CodeModel::Model::Kernel;
+            break;
+        case CodeModel::MEDIUM:
+            codeModel = llvm::CodeModel::Model::Medium;
+            break;
+        case CodeModel::LARGE:
+            codeModel = llvm::CodeModel::Model::Large;
+            break;
+    }
+
+    // optimization level
     llvm::CodeGenOptLevel optimizationLevel;
-    switch (optLevel) {
+    switch (optimizationLevelOption) {
         case OptimizationLevel::O0:
             optimizationLevel = llvm::CodeGenOptLevel::None;
             break;
@@ -48,9 +81,11 @@ CodeGenerator::CodeGenerator(OptimizationLevel optLevel, RelocationModel relocat
             break;
     }
 
+    // options
     llvm::TargetOptions targetOptions;
     targetOptions.FunctionSections = (optionBits >> int(Options::FUNCTION_SECTIONS)) & 0x01;
     targetOptions.NoZerosInBSS = (optionBits >> int(Options::NO_BSS)) & 0x01;
+
     targetMachine = target->createTargetMachine(
         targetTriple,
         architecture,
