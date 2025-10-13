@@ -64,6 +64,7 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
 
     typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
     typeIntPtr = llvm::Type::getIntNTy(*context, pointerSize);
+
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
@@ -1071,15 +1072,12 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
 }
 
 llvm::Value *ModuleBuilder::valueForCast(llvm::Value *value, shared_ptr<ExpressionCast> expression) {
+    // Figure out target type
     llvm::Type *targetType = typeForValueType(expression->getValueType());
-    llvm::Type *sourceType = value->getType();
-
-    if (targetType == sourceType)
-        return value;
-
     bool isTargetUInt = false;
     bool isTargetSInt = false;
     bool isTargetFloat = false;
+    bool isTargetData = false;
     int targetSize = 0;
     switch (expression->getValueType()->getKind()) {
         case ValueTypeKind::U8:
@@ -1114,65 +1112,68 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *value, shared_ptr<Expressi
             isTargetFloat = true;
             targetSize = 64;
             break;
+        case ValueTypeKind::DATA:
+            isTargetData = true;
+            targetSize = expression->getValueType()->getValueArg();
+            break;
+        default:
+            markError(0, 0, "Invalid cast");
+            return nullptr;
     }
 
-    value->print(llvm::outs());
-    llvm::outs() << "\n";
-    sourceType->print(llvm::outs());
-    llvm::outs() << "\n";
-
+    // Figure out source type
+    llvm::Type *sourceType = value->getType();
     bool isSourceUInt = false;
     bool isSourceSInt = false;
     bool isSourceFloat = false;
+    bool isSourceData = false;
     int sourceSize = 0;
-    if (sourceType == typeU8) {
+    if (sourceType->isIntegerTy()) {
         isSourceUInt = true;
-        sourceSize = 8;
-    } else if (sourceType == typeU32) {
-        isSourceUInt = true;
-        sourceSize = 32;
-    } else if (sourceType == typeU64) {
-        isSourceUInt = true;
-        sourceSize = 64;
-    } else if (sourceType == typeS8) {
-        isSourceSInt = true;
-        sourceSize = 8;
-    } else if (sourceType == typeS32) {
-        isSourceSInt = true;
-        sourceSize = 32;
-    } else if (sourceType == typeS64) {
-        isSourceSInt = true;
-        sourceSize = 64;
-    } else if (sourceType == typeF32) {
+        sourceSize = sourceType->getIntegerBitWidth();
+    } else if (sourceType->isFloatTy()) {
         isSourceFloat = true;
         sourceSize = 32;
-    } else if (sourceType == typeF64) {
+    } else if (sourceType->isDoubleTy()) {
         isSourceFloat = true;
         sourceSize = 64;
+    } else if (sourceType->isArrayTy()) {
+        isSourceData = true;
+        sourceSize = llvm::dyn_cast<llvm::ArrayType>(sourceType)->getNumElements();
+    } else {
+        markError(0, 0, "Invalid cast");
+        return nullptr;
     }
 
+    // Match source to target
+    // int to int TODO: handle sint to uint
     if ((isSourceUInt || isSourceSInt) && (isTargetUInt || isTargetSInt)) {
         return builder->CreateZExtOrTrunc(value, targetType);
-    } else if (isSourceFloat && isTargetUInt) {
-        return builder->CreateFPToUI(value, targetType);
-    } else if (isSourceFloat && isTargetSInt) {
-        return builder->CreateFPToSI(value, targetType);
+    // uint to float
+    } else if (isSourceUInt && isTargetFloat) {
+        return builder->CreateUIToFP(value, targetType);
+    // sint to float
+    } else if (isSourceSInt && isTargetFloat) {
+        return builder->CreateSIToFP(value, targetType);
+    // float to float+
     } else if (isSourceFloat && isTargetFloat && targetSize >= sourceSize) {
         return builder->CreateFPExt(value, targetType);
-    // f+ to f-
+    // float to float-
     } else if (isSourceFloat && isTargetFloat && targetSize < sourceSize) {
         return builder->CreateFPTrunc(value, targetType);
+    // float to uint
+    } else if (isSourceFloat && isTargetUInt) {
+        return builder->CreateFPToUI(value, targetType);
+    // float to sint
+    } else if (isSourceFloat && isTargetSInt) {
+        return builder->CreateFPToSI(value, targetType);
+    // data to data
+    } else if (isSourceData && isTargetData) {
+        // TODO
+    } else {
+        markError(0, 0, "Invalid cast");
+        return nullptr;
     }
-
-    llvm::Instruction::CastOps castOp;
-    if (isSourceUInt && isTargetUInt && targetSize >= sourceSize) {
-        castOp = llvm::Instruction::CastOps::ZExt;
-    }
-   // llvm::CastInst::Create(castOp, value, targetType);
-
-    //llvm::CastInst::Create(llvm::Instruction::CastOps::fp)
-    return builder->CreateZExtOrTrunc(value, targetType);
-    builder->CreateFTr
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
