@@ -895,6 +895,13 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         else
             sourceOperand = currentValue;
 
+        // Cast expression?
+        shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression);
+        if (expressionCast != nullptr) {
+            return valueForCast(currentValue, expressionCast);
+        }
+
+        // Check required types
         shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
         shared_ptr<ExpressionVariable> parentExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(i-1));
         if (expressionVariable == nullptr || parentExpressionVariable == nullptr) {
@@ -907,12 +914,6 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         if (builtInValue != nullptr) {
             currentValue = builtInValue;
             continue;
-        }
-
-        // Cast expression?
-        shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression);
-        if (expressionCast != nullptr) {
-            return valueForCast(currentValue, expressionCast);
         }
 
         // Variable expression?
@@ -1076,18 +1077,102 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *value, shared_ptr<Expressi
     if (targetType == sourceType)
         return value;
 
-    ValueTypeKind valueTypeKind = expression->getValueType()->getKind();
-    bool isTargetUInt = valueTypeKind == ValueTypeKind::U8 || valueTypeKind == ValueTypeKind::U32 || valueTypeKind == ValueTypeKind::U64;
-    bool isTargetSInt = valueTypeKind == ValueTypeKind::S8 || valueTypeKind == ValueTypeKind::S32 || valueTypeKind == ValueTypeKind::S64;
-
-    bool isSorceUInt;
-
+    bool isTargetUInt = false;
+    bool isTargetSInt = false;
+    bool isTargetFloat = false;
+    int targetSize = 0;
     switch (expression->getValueType()->getKind()) {
         case ValueTypeKind::U8:
-
-            ((llvm::IntegerType*)sourceType)->getB
+            isTargetUInt = true;
+            targetSize = 8;
+            break;
+        case ValueTypeKind::U32:
+            isTargetUInt = true;
+            targetSize = 32;
+            break;
+        case ValueTypeKind::U64:
+            isTargetUInt = true;
+            targetSize = 64;
+            break;
+        case ValueTypeKind::S8:
+            isTargetSInt = true;
+            targetSize = 8;
+            break;
+        case ValueTypeKind::S32:
+            isTargetSInt = true;
+            targetSize = 32;
+            break;
+        case ValueTypeKind::S64:
+            isTargetSInt = true;
+            targetSize = 64;
+            break;
+        case ValueTypeKind::F32:
+            isTargetFloat = true;
+            targetSize = 32;
+            break;
+        case ValueTypeKind::F64:
+            isTargetFloat = true;
+            targetSize = 64;
+            break;
     }
+
+    value->print(llvm::outs());
+    llvm::outs() << "\n";
+    sourceType->print(llvm::outs());
+    llvm::outs() << "\n";
+
+    bool isSourceUInt = false;
+    bool isSourceSInt = false;
+    bool isSourceFloat = false;
+    int sourceSize = 0;
+    if (sourceType == typeU8) {
+        isSourceUInt = true;
+        sourceSize = 8;
+    } else if (sourceType == typeU32) {
+        isSourceUInt = true;
+        sourceSize = 32;
+    } else if (sourceType == typeU64) {
+        isSourceUInt = true;
+        sourceSize = 64;
+    } else if (sourceType == typeS8) {
+        isSourceSInt = true;
+        sourceSize = 8;
+    } else if (sourceType == typeS32) {
+        isSourceSInt = true;
+        sourceSize = 32;
+    } else if (sourceType == typeS64) {
+        isSourceSInt = true;
+        sourceSize = 64;
+    } else if (sourceType == typeF32) {
+        isSourceFloat = true;
+        sourceSize = 32;
+    } else if (sourceType == typeF64) {
+        isSourceFloat = true;
+        sourceSize = 64;
+    }
+
+    if ((isSourceUInt || isSourceSInt) && (isTargetUInt || isTargetSInt)) {
+        return builder->CreateZExtOrTrunc(value, targetType);
+    } else if (isSourceFloat && isTargetUInt) {
+        return builder->CreateFPToUI(value, targetType);
+    } else if (isSourceFloat && isTargetSInt) {
+        return builder->CreateFPToSI(value, targetType);
+    } else if (isSourceFloat && isTargetFloat && targetSize >= sourceSize) {
+        return builder->CreateFPExt(value, targetType);
+    // f+ to f-
+    } else if (isSourceFloat && isTargetFloat && targetSize < sourceSize) {
+        return builder->CreateFPTrunc(value, targetType);
+    }
+
+    llvm::Instruction::CastOps castOp;
+    if (isSourceUInt && isTargetUInt && targetSize >= sourceSize) {
+        castOp = llvm::Instruction::CastOps::ZExt;
+    }
+   // llvm::CastInst::Create(castOp, value, targetType);
+
     //llvm::CastInst::Create(llvm::Instruction::CastOps::fp)
+    return builder->CreateZExtOrTrunc(value, targetType);
+    builder->CreateFTr
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
