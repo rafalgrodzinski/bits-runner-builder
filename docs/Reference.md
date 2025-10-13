@@ -24,6 +24,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Repeats](Reference.md#repeats) (`rep`)
 - [Chaining](Reference.md#chaining) (`thing.sutff[5].something`)
 - [Modules](Reference.md#modules) (`@module`, `@import`, `@export`, `@extern`)
+- [Casts](Reference.md#casts) (`.u32`, `.data<u8>`)
 
 ## Comments
 Like in C, comments can specified using either `\\` which will run until the end of the line or through `/* */` block. However, unlike C, the `/* bla bla /* bla */ */` comments can be also embeded inside each other.
@@ -322,3 +323,6 @@ Each module can export functionality using the `@export` prefix. In order to use
 We can then build both of the sources together with `brb app.brc console.brc` which will produce object files `main.o` and `console.o`.
 
 Separately linked symbosl can be specified using `@extern`. For example, we we want to use something from the standard library we can use `@extern putchar fun: character u32 -> u32`, which can then be resolved by linker.
+
+## Casts
+It's possible to cast between simple and data types (as long as data types don't contain blobs). It is done by appending a chain expression equivalent to the desired type such as `.u8` or `.data<f32>`.
