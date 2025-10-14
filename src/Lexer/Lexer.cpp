@@ -220,19 +220,19 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // logical
-    token = match(TokenKind::OR, "or", false);
+    token = match(TokenKind::OR, "or", true);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::XOR, "xor", false);
+    token = match(TokenKind::XOR, "xor", true);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::AND, "and", false);
+    token = match(TokenKind::AND, "and", true);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::NOT, "not", false);
+    token = match(TokenKind::NOT, "not", true);
     if (token != nullptr)
         return token;
 
