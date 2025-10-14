@@ -1,0 +1,50 @@
+@import io
+
+@export main fun -> u32
+    //uint
+    @io.print("100 to u8 to s64: ")
+    num1 u8 <- 100
+    @io.printNum(num1.s64)
+    @io.printChar('\n')
+
+    @io.print("300 to u8 to s64: ")
+    num2 u8 <- 300
+    @io.printNum(num2.s64)
+    @io.printChar('\n')
+
+    @io.print("100 + 300 to u8 to s64: ")
+    num3 u8 <- 100 + 300
+    @io.printNum(num3.s64)
+    @io.printChar('\n')
+
+    // sint
+    @io.print("-7.1234 to s64: ")
+    num4 s64 <- -7.1234
+    @io.printNum(num4)
+    @io.printChar('\n')
+
+    @io.print("-4 to s64: ")
+    num5 s64 <- -4
+    @io.printNum(num5)
+    @io.printChar('\n')
+
+    // float
+    @io.print("3.141592 to f32 to s64: ")
+    num6 f32 <- 3.141592
+    @io.printNum(num6.s64)
+    @io.printChar('\n')
+
+    @io.print("-7.1234 to f32 to s64: ")
+    num7 f32 <- -7.1234
+    @io.printNum(num7.s64)
+    @io.printChar('\n')
+
+    @io.print("6.66 to f64 to u64 to s64: ")
+    num8 f64 <- 6.66
+    @io.printNum(num8.u64.s64)
+    @io.printChar('\n')
+
+    // data
+
+    ret 0
+;

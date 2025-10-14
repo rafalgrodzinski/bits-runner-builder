@@ -771,10 +771,13 @@ string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKin
     switch (expression->getOperation()) {
         case ExpressionUnaryOperation::NOT:
             line = format("NOT {}", toString(expression->getExpression(), {}));
+            break;
         case ExpressionUnaryOperation::PLUS:
             line = format("+({})", toString(expression->getExpression(), {}));
+            break;
         case ExpressionUnaryOperation::MINUS:
             line = format("-({})", toString(expression->getExpression(), {}));
+            break;
         case ExpressionUnaryOperation::INVALID:
             return "{INVALID}";
     }
