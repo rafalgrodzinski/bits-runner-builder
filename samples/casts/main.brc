@@ -48,7 +48,7 @@
     @io.print("data<f32> to data<s64>:")
     nums9 data<f32> <- {-7.2, -4.4, 12.8, 3.333, 0, 745.88}
     nums10 data<s64> <- nums9.data<s64>
-    rep i u32 <- 0, i < nums10.count.u32, i <- i + 1.u32
+    rep i u32 <- 0, i < nums9.count.u32, i <- i + 1.u32
         @io.printChar(' ')
         @io.printNum(nums10[i])
     ;

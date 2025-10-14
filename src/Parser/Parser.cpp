@@ -807,7 +807,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                                     {
                                         Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER_SIMPLE)
                                     }
-                                ), true, true, true
+                                ), true, true, false
                             )
                         }
                     ), false, true, false

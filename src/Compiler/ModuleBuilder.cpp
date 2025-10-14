@@ -899,7 +899,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         // Cast expression?
         shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression);
         if (expressionCast != nullptr) {
-            return valueForCast(currentValue, expressionCast);
+            return valueForCast(currentValue, expressionCast->getValueType());
         }
 
         // Check required types
@@ -1071,15 +1071,15 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForCast(llvm::Value *value, shared_ptr<ExpressionCast> expression) {
+llvm::Value *ModuleBuilder::valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType) {
     // Figure out target type
-    llvm::Type *targetType = typeForValueType(expression->getValueType());
+    llvm::Type *targetType = typeForValueType(targetValueType);
     bool isTargetUInt = false;
     bool isTargetSInt = false;
     bool isTargetFloat = false;
     bool isTargetData = false;
     int targetSize = 0;
-    switch (expression->getValueType()->getKind()) {
+    switch (targetValueType->getKind()) {
         case ValueTypeKind::U8:
             isTargetUInt = true;
             targetSize = 8;
@@ -1114,7 +1114,7 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *value, shared_ptr<Expressi
             break;
         case ValueTypeKind::DATA:
             isTargetData = true;
-            targetSize = expression->getValueType()->getValueArg();
+            targetSize = targetValueType->getValueArg();
             break;
         default:
             markError(0, 0, "Invalid cast");
@@ -1122,7 +1122,9 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *value, shared_ptr<Expressi
     }
 
     // Figure out source type
-    llvm::Type *sourceType = value->getType();
+    llvm::Type *sourceType = sourceValue->getType();
+    if (llvm::dyn_cast<llvm::AllocaInst>(sourceValue) != nullptr)
+        sourceType = llvm::dyn_cast<llvm::AllocaInst>(sourceValue)->getAllocatedType();
     bool isSourceUInt = false;
     bool isSourceSInt = false;
     bool isSourceFloat = false;
@@ -1148,28 +1150,56 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *value, shared_ptr<Expressi
     // Match source to target
     // int to int TODO: handle sint to uint
     if ((isSourceUInt || isSourceSInt) && (isTargetUInt || isTargetSInt)) {
-        return builder->CreateZExtOrTrunc(value, targetType);
+        return builder->CreateZExtOrTrunc(sourceValue, targetType);
     // uint to float
     } else if (isSourceUInt && isTargetFloat) {
-        return builder->CreateUIToFP(value, targetType);
+        return builder->CreateUIToFP(sourceValue, targetType);
     // sint to float
     } else if (isSourceSInt && isTargetFloat) {
-        return builder->CreateSIToFP(value, targetType);
+        return builder->CreateSIToFP(sourceValue, targetType);
     // float to float+
     } else if (isSourceFloat && isTargetFloat && targetSize >= sourceSize) {
-        return builder->CreateFPExt(value, targetType);
+        return builder->CreateFPExt(sourceValue, targetType);
     // float to float-
     } else if (isSourceFloat && isTargetFloat && targetSize < sourceSize) {
-        return builder->CreateFPTrunc(value, targetType);
+        return builder->CreateFPTrunc(sourceValue, targetType);
     // float to uint
     } else if (isSourceFloat && isTargetUInt) {
-        return builder->CreateFPToUI(value, targetType);
+        return builder->CreateFPToUI(sourceValue, targetType);
     // float to sint
     } else if (isSourceFloat && isTargetSInt) {
-        return builder->CreateFPToSI(value, targetType);
+        return builder->CreateFPToSI(sourceValue, targetType);
     // data to data
     } else if (isSourceData && isTargetData) {
-        // TODO
+        llvm::LoadInst *sourceLoad = llvm::dyn_cast<llvm::LoadInst>(sourceValue);
+        if (sourceLoad != nullptr)
+            sourceValue = sourceLoad->getOperand(0);
+
+        llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(sourceType);
+
+        int targetCount = targetValueType->getValueArg();
+        int sourceCount = sourceArrayType->getNumElements();
+        if (targetCount == 0)
+            targetCount = sourceCount;
+        int copyCount = min(targetCount, sourceCount);
+
+        llvm::Type *targetMemberType = typeForValueType(targetValueType->getSubType());
+        llvm::ArrayType *targetArrayType = llvm::ArrayType::get(targetMemberType, targetCount);
+        llvm::Value *targetValue = builder->CreateAlloca(targetArrayType, targetCount);
+
+        for (int i=0; i<copyCount; i++) {
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(i)
+            };
+
+            llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceArrayType, sourceValue, index);
+            llvm::Value *sourceMemberLoad = builder->CreateLoad(sourceArrayType->getArrayElementType(), sourceMemberPtr);
+            llvm::Value *castSourceMember = valueForCast(sourceMemberLoad, targetValueType->getSubType());
+            llvm::Value *targetMemberPtr = builder->CreateGEP(targetArrayType, targetValue, index);
+            builder->CreateStore(castSourceMember, targetMemberPtr);
+        }
+        return targetValue;
     } else {
         markError(0, 0, "Invalid cast");
         return nullptr;
@@ -1239,7 +1269,9 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             // copy each value from one allocated array to another allocated array
             case ExpressionKind::VARIABLE:
             // data <- function()
-            case ExpressionKind::CALL: {
+            case ExpressionKind::CALL: 
+            // data <- .var
+            case ExpressionKind::CHAINED: {
                 llvm::Value *sourceValue;
                 llvm::Type *sourceType;
 
@@ -1249,7 +1281,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                     if (sourceValue == nullptr)
                         return;
                     sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
-                } else {
+                } else if (valueExpression->getKind() == ExpressionKind::CALL) {
                     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
                     llvm::Value *sourceExpressionValue = valueForCall(expressionCall);
                     if (sourceExpressionValue == nullptr)
@@ -1258,6 +1290,10 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                     sourceType = sourceExpressionValue->getType();
                     sourceValue = builder->CreateAlloca(sourceType);
                     builder->CreateStore(sourceExpressionValue, sourceValue);
+                } else {
+                    shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(valueExpression);
+                    sourceValue = valueForChained(expressionChained);
+                    sourceType = llvm::dyn_cast<llvm::AllocaInst>(sourceValue)->getAllocatedType();
                 }
 
                 if (!sourceType->isArrayTy()) {
