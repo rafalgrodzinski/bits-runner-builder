@@ -67,6 +67,9 @@ Linked List
 Fizz Buzz
 [samples/fizz_buzz/](samples/fizz_buzz/)
 
+Casts
+[samples/casts/](samples/casts/)
+
 #### How to build & run the samples
 
 Execute from the main directory
