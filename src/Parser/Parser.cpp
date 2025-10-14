@@ -16,6 +16,7 @@
 #include "Parser/Expression/ExpressionBinary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 #include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCast.h"
 
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementImport.h"
@@ -806,7 +807,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                                     {
                                         Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER_SIMPLE)
                                     }
-                                ), true, true, true
+                                ), true, true, false
                             )
                         }
                     ), false, true, false
@@ -1163,7 +1164,11 @@ shared_ptr<Expression> Parser::matchPrimary() {
 
     expression = matchExpressionVariable();
     if (expression != nullptr || errors.size() > errorsCount)
-    return expression;
+        return expression;
+
+    expression = matchExpressionCast();
+    if (expression != nullptr || errors.size() > errorsCount)
+        return expression;
 
     return nullptr;
 }
@@ -1527,6 +1532,23 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
     }
 
     return make_shared<ExpressionBlock>(statements);
+}
+
+shared_ptr<Expression> Parser::matchExpressionCast() {
+    ParseeResultsGroup parseeResults = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::valueTypeParsee(true, true, false)
+            }
+        )
+    );
+
+    if (parseeResults.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    shared_ptr<ValueType> valueType = parseeResults.getResults().at(0).getValueType();
+
+    return make_shared<ExpressionCast>(valueType);
 }
 
 ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {

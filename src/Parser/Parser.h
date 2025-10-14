@@ -66,6 +66,7 @@ private:
     shared_ptr<Expression> matchExpressionIfElse();
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
+    shared_ptr<Expression> matchExpressionCast();
 
     ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> groupParseeResults(ParseeGroup group);

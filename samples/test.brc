@@ -1,4 +1,4 @@
-@extern putchar fun: character u64 -> u32
+/*@extern putchar fun: character u64 -> u32
 
 printNum fun: number u64
     biggest u64 <- 10
@@ -10,11 +10,10 @@ printNum fun: number u64
         putchar(digit + '0')
         number <- number % biggest
     ;
-;
+;*/
 
 @export main fun
-    nums data<u64> <- {5, 8, 7, 13}
-    pNums ptr<data<u64>> <- { nums.adr }
-    pNums.val[0] <- 9
-    printNum(pNums.val[0])
+    num1 u64 <- 14
+    num2 s32 <- 15
+    num1 + num2.u64
 ;

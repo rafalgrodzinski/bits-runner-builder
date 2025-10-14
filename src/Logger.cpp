@@ -37,6 +37,7 @@
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionBlock.h"
 #include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCast.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -287,6 +288,8 @@ string Logger::toString(Parsee parsee) {
         case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
         case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
             return "Expression Block";
+        case ParseeKind::IF_ELSE:
+            return "Expression If-Else";
     }
 }
 
@@ -313,6 +316,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "S64";
         case ValueTypeKind::F32:
             return "F32";
+        case ValueTypeKind::F64:
+            return "F64";
         case ValueTypeKind::DATA:
             return format("DATA<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::BLOB:
@@ -700,6 +705,8 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
             return toString(dynamic_pointer_cast<ExpressionBlock>(expression), indents);
         case ExpressionKind::CHAINED:
             return toString(dynamic_pointer_cast<ExpressionChained>(expression), indents);
+        case ExpressionKind::CAST:
+            return toString(dynamic_pointer_cast<ExpressionCast>(expression), indents);
     }
 }
 
@@ -764,10 +771,13 @@ string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKin
     switch (expression->getOperation()) {
         case ExpressionUnaryOperation::NOT:
             line = format("NOT {}", toString(expression->getExpression(), {}));
+            break;
         case ExpressionUnaryOperation::PLUS:
             line = format("+({})", toString(expression->getExpression(), {}));
+            break;
         case ExpressionUnaryOperation::MINUS:
             line = format("-({})", toString(expression->getExpression(), {}));
+            break;
         case ExpressionUnaryOperation::INVALID:
             return "{INVALID}";
     }
@@ -919,6 +929,11 @@ string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentK
             line += ".";
     }
 
+    return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents) {
+    string line = toString(expression->getValueType());
     return formattedLine(line, indents);
 }
 
