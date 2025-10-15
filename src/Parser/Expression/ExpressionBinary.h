@@ -7,17 +7,26 @@ enum class ExpressionBinaryOperation {
     OR,
     XOR,
     AND,
+
+    BIT_OR,
+    BIT_XOR,
+    BIT_AND,
+    BIT_SHL,
+    BIT_SHR,
+
     EQUAL,
     NOT_EQUAL,
     LESS,
     LESS_EQUAL,
     GREATER,
     GREATER_EQUAL,
+
     ADD,
     SUB,
     MUL,
     DIV,
     MOD,
+
     INVALID
 };
 

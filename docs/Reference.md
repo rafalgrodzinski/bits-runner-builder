@@ -14,6 +14,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Literals](Reference.md#literals) (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
 - [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
 - [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
+- [Bitwise Operators](Reference.md#bitwise-operators) (`|`, `^`, `&`, `<<`, `>>`, `~`)
 - [Simple Variables](Reference.md#simple-variables) (`u8`, `u32`, `u64`, `s8`, `s32`, `s64`, `f32`, `f64`, `data`, `blob`, `ptr`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
@@ -118,6 +119,15 @@ or, xor // lowest piority
 ```
 `=` and `!=` can also be used on booleans, but they are effectively equivalent to `and` and `xor`.
 
+## Bitwise Operators
+Bitwise operators work just like in C.
+```
+~ // bitwise not, highest priority
+<<, >> // shift bits left or right
+& // bitwise and
+|, ^ // bitwise or, xor, lowest priority
+```
+
 ## Simple Variables
 Simple ariables are specified by first providing the name and then the type. They can have an optional initializer. There are standard float and integer types available, but unlike in C, you have to be explicit about their size and signiness. You can only perform `=` and `!=` operations on booleans. There is no `void` type or an equivalent.
 ```
@@ -216,7 +226,7 @@ addNums: num1 s32, num2 s32 ->
 ```
 
 ## Raw Functions
-A unique feature of BRC is a seamless use of inline assembly. Raw functions can be used just like normal functions, altoght there is a couple of limitations and they require so called constraints to be specified. It's the same as in gcc or clang, but they are specified as a single string instead of splitting them into input, output, and clobbers. Some more information can be found here [A Practical Guide to GCC Inline Assembly](https://blog.alex.balgavy.eu/a-practical-guide-to-gcc-inline-assembly/). Intel syntax is used for the assembly.
+A unique feature of BRC is a seamless use of inline assembly. Raw functions can be used just like normal functions, altoght there is a couple of limitations and they require so called constraints to be specified. It's the same as in gcc or clang, but they are specified as a single string instead of splitting them into input, output, and clobbers. Some more information can be found here . Intel syntax is used for the assembly.
 ```
 rawAdd raw<"=r,r,r">: num1 u32, num2 u32 -> u32
     add $1, $2

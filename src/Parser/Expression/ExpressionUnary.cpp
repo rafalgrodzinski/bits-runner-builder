@@ -10,6 +10,10 @@ Expression(ExpressionKind::UNARY, nullptr), expression(expression) {
             operation = ExpressionUnaryOperation::NOT;
             valueType = ValueType::BOOL;
             break;
+        case TokenKind::BIT_NOT:
+            operation = ExpressionUnaryOperation::BIT_NOT;
+            valueType = ValueType::BOOL;
+            break;
         case TokenKind::PLUS:
             operation = ExpressionUnaryOperation::PLUS;
             valueType = expression->getValueType();

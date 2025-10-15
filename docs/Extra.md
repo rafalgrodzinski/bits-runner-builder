@@ -49,3 +49,12 @@ Details on what each option do are burries somewhere inside of LLVM's source cod
 
 ## LLVM Options
 LLVM itself provides a whole bunch of different options that can be used. Use `--help-hidden` to display all of them.
+
+## Inline assembly
+BRC supports inline assembly, which is declared simillary to a function, but requires a list of constraints.
+
+### Useful links
+- LLVM: Inline Assembler Expressions
+[https://llvm.org/docs/LangRef.html#inline-assembler-expressions](https://llvm.org/docs/LangRef.html#inline-assembler-expressions)
+- GCC's assembler syntax [https://www.felixcloutier.com/documents/gcc-asm.html](https://www.felixcloutier.com/documents/gcc-asm.html)
+- A Practical Guide to GCC Inline Assembly [https://blog.alex.balgavy.eu/a-practical-guide-to-gcc-inline-assembly/](https://blog.alex.balgavy.eu/a-practical-guide-to-gcc-inline-assembly/)
