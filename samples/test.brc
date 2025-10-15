@@ -13,7 +13,6 @@ printNum fun: number u64
 ;*/
 
 @export main fun
-    num1 u64 <- 14
-    num2 s32 <- 15
-    num1 + num2.u64
+    u32 num1 <- 0xabcd
+    u32 num2 <- num1 & 0xff
 ;
