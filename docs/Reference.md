@@ -14,6 +14,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Literals](Reference.md#literals) (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
 - [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
 - [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
+- [Bitwise Operators](Reference.md#bitwise-operators) (`|`, `^`, `&`, `<<`, `>>`, `~`)
 - [Simple Variables](Reference.md#simple-variables) (`u8`, `u32`, `u64`, `s8`, `s32`, `s64`, `f32`, `f64`, `data`, `blob`, `ptr`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
@@ -117,6 +118,15 @@ and // lower priority
 or, xor // lowest piority
 ```
 `=` and `!=` can also be used on booleans, but they are effectively equivalent to `and` and `xor`.
+
+## Bitwise Operators
+Bitwise operators work just like in C.
+```
+~ // bitwise not, highest priority
+<<, >> // shift bits left or right
+& // bitwise and
+|, ^ // bitwise or, xor, lowest priority
+```
 
 ## Simple Variables
 Simple ariables are specified by first providing the name and then the type. They can have an optional initializer. There are standard float and integer types available, but unlike in C, you have to be explicit about their size and signiness. You can only perform `=` and `!=` operations on booleans. There is no `void` type or an equivalent.
