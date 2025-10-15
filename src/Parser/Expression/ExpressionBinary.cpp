@@ -18,6 +18,18 @@ Expression(ExpressionKind::BINARY, nullptr), operation(ExpressionBinaryOperation
             operation = ExpressionBinaryOperation::AND;
             valueType = ValueType::BOOL;
             break;
+        case TokenKind::BIT_OR:
+            operation = ExpressionBinaryOperation::BIT_OR;
+            valueType = left->getValueType();
+            break;
+        case TokenKind::BIT_XOR:
+            operation = ExpressionBinaryOperation::BIT_XOR;
+            valueType = left->getValueType();
+            break;
+        case TokenKind::BIT_AND:
+            operation = ExpressionBinaryOperation::BIT_AND;
+            valueType = left->getValueType();
+            break;
         case TokenKind::EQUAL:
             operation = ExpressionBinaryOperation::EQUAL;
             valueType = ValueType::BOOL;

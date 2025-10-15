@@ -61,13 +61,13 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::NOT:
             return "NOT";
 
-        case TokenKind::B_OR:
+        case TokenKind::BIT_OR:
             return "|";
-        case TokenKind::B_XOR:
+        case TokenKind::BIT_XOR:
             return "^";
-        case TokenKind::B_AND:
+        case TokenKind::BIT_AND:
             return "&";
-        case TokenKind::B_NOT:
+        case TokenKind::BIT_NOT:
             return "~";
         case TokenKind::SHL:
             return "<<";
@@ -560,6 +560,15 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
         case ExpressionBinaryOperation::AND:
             op = "AND";
             break;
+        case ExpressionBinaryOperation::BIT_AND:
+            op = "&";
+            break;
+        case ExpressionBinaryOperation::BIT_OR:
+            op = "|";
+            break;
+        case ExpressionBinaryOperation::BIT_XOR:
+            op = "^";
+            break;
         case ExpressionBinaryOperation::EQUAL:
             op = "=";
             break;
@@ -608,6 +617,9 @@ string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKin
     switch (expression->getOperation()) {
         case ExpressionUnaryOperation::NOT:
             line = format("NOT {}", toString(expression->getExpression(), {}));
+            break;
+        case ExpressionUnaryOperation::BIT_NOT:
+            line = format("~{}", toString(expression->getExpression(), {}));
             break;
         case ExpressionUnaryOperation::PLUS:
             line = format("+({})", toString(expression->getExpression(), {}));
@@ -922,13 +934,13 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::NOT:
             return "NOT";
 
-        case TokenKind::B_OR:
+        case TokenKind::BIT_OR:
             return "|";
-        case TokenKind::B_XOR:
+        case TokenKind::BIT_XOR:
             return "^";
-        case TokenKind::B_AND:
+        case TokenKind::BIT_AND:
             return "&";
-        case TokenKind::B_NOT:
+        case TokenKind::BIT_NOT:
             return "~";
         case TokenKind::SHL:
             return "<<";

@@ -25,6 +25,19 @@ vector<TokenKind> Token::tokensComparison = {
     TokenKind::GREATER_EQUAL
 };
 
+vector<TokenKind> Token::tokensBitwiseAnd = {
+    TokenKind::BIT_AND
+};
+
+vector<TokenKind> Token::tokensBitwiseOrXor = {
+    TokenKind::BIT_OR,
+    TokenKind::BIT_XOR
+};
+
+vector<TokenKind> Token::tokensBitwiseNot = {
+    TokenKind::BIT_NOT
+};
+
 vector<TokenKind> Token::tokensTerm = {
     TokenKind::PLUS,
     TokenKind::MINUS

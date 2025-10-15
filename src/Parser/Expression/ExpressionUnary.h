@@ -5,6 +5,7 @@
 
 enum class ExpressionUnaryOperation {
     NOT,
+    BIT_NOT,
     PLUS,
     MINUS,
     INVALID

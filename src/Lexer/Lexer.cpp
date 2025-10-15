@@ -212,19 +212,19 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // bitwise
-    token = match(TokenKind::B_OR, "|", false);
+    token = match(TokenKind::BIT_OR, "|", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::B_XOR, "^", false);
+    token = match(TokenKind::BIT_XOR, "^", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::B_AND, "&", false);
+    token = match(TokenKind::BIT_AND, "&", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::B_NOT, "~", false);
+    token = match(TokenKind::BIT_NOT, "~", false);
     if (token != nullptr)
         return token;
 

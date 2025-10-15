@@ -1078,7 +1078,7 @@ shared_ptr<Expression> Parser::matchEquality() {
 }
 
 shared_ptr<Expression> Parser::matchComparison() {
-    shared_ptr<Expression> expression = matchTerm();
+    shared_ptr<Expression> expression = matchBitwiseOrXor();
     if (expression == nullptr)
         return nullptr;
     
@@ -1086,6 +1086,41 @@ shared_ptr<Expression> Parser::matchComparison() {
         expression = matchExpressionBinary(expression);
     
     return expression;
+}
+
+shared_ptr<Expression> Parser::matchBitwiseOrXor() {
+    shared_ptr<Expression> expression = matchBitwiseAnd();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, false))
+        expression = matchExpressionBinary(expression);
+
+    return expression;
+}
+
+shared_ptr<Expression> Parser::matchBitwiseAnd() {
+    shared_ptr<Expression> expression = matchBitwiseNot();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, false))
+        expression = matchExpressionBinary(expression);
+
+    return expression;
+}
+
+shared_ptr<Expression> Parser::matchBitwiseNot() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseNot, false, true)) {
+        shared_ptr<Expression> expression = matchBitwiseNot();
+        if (expression == nullptr)
+            return nullptr;
+        return make_shared<ExpressionUnary>(token, expression);
+    }
+
+    return matchTerm();
 }
 
 shared_ptr<Expression> Parser::matchTerm() {
@@ -1495,7 +1530,11 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     } else if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
     } else if (tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
-        right = matchTerm();
+        right = matchBitwiseAnd();
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
+        right = matchBitwiseOrXor();
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
+        right = matchBitwiseAnd();
     } else if (tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
         right = matchTerm();
     } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {

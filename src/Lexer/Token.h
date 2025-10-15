@@ -17,10 +17,10 @@ enum class TokenKind {
     AND,
     NOT,
 
-    B_OR,
-    B_XOR,
-    B_AND,
-    B_NOT,
+    BIT_OR,
+    BIT_XOR,
+    BIT_AND,
+    BIT_NOT,
     SHL,
     SHR,
 
@@ -86,6 +86,9 @@ public:
     static vector<TokenKind> tokensLogicalUnary;
     static vector<TokenKind> tokensEquality;
     static vector<TokenKind> tokensComparison;
+    static vector<TokenKind> tokensBitwiseAnd;
+    static vector<TokenKind> tokensBitwiseOrXor;
+    static vector<TokenKind> tokensBitwiseNot;
     static vector<TokenKind> tokensTerm;
     static vector<TokenKind> tokensFactor;
     static vector<TokenKind> tokensUnary;
