@@ -173,27 +173,6 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    // arithmetic
-    token = match(TokenKind::PLUS, "+", false);
-    if (token != nullptr)
-        return token;
-    
-    token = match(TokenKind::MINUS, "-", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::STAR, "*", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::SLASH, "/", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::PERCENT, "%", false);
-    if (token != nullptr)
-        return token;
-
     // logical
     token = match(TokenKind::OR, "or", false);
     if (token != nullptr)
@@ -265,6 +244,27 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     token = match(TokenKind::GREATER, ">", false);
+    if (token != nullptr)
+        return token;
+
+    // arithmetic
+    token = match(TokenKind::PLUS, "+", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(TokenKind::MINUS, "-", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::STAR, "*", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::SLASH, "/", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::PERCENT, "%", false);
     if (token != nullptr)
         return token;
 
