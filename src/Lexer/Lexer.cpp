@@ -173,26 +173,54 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    // arithmetic
-    token = match(TokenKind::PLUS, "+", false);
-    if (token != nullptr)
-        return token;
-    
-    token = match(TokenKind::MINUS, "-", false);
+    // logical
+    token = match(TokenKind::OR, "or", true);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::STAR, "*", false);
+    token = match(TokenKind::XOR, "xor", true);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::SLASH, "/", false);
+    token = match(TokenKind::AND, "and", true);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::PERCENT, "%", false);
+    token = match(TokenKind::NOT, "not", true);
     if (token != nullptr)
         return token;
+
+    // bitwise
+    token = match(TokenKind::BIT_OR, "|", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::BIT_XOR, "^", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::BIT_AND, "&", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::BIT_NOT, "~", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::BIT_SHL, "<<", false);
+    if (token != nullptr)
+        return token;
+
+    // avoid matching <type>> as right shift
+    // and triple >>> pattern
+    if (
+        (tokens.size() < 2 || !tokens.at(tokens.size() - 2)->isOfKind({TokenKind::LESS})) &&
+        (tokens.size() < 1 || !tokens.back()->isOfKind({TokenKind::GREATER}))
+    ) {
+        token = match(TokenKind::BIT_SHR, ">>", false);
+        if (token != nullptr)
+            return token;
+    }
 
     // comparison
     token = match(TokenKind::NOT_EQUAL, "!=", false);
@@ -219,20 +247,24 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    // logical
-    token = match(TokenKind::OR, "or", true);
+    // arithmetic
+    token = match(TokenKind::PLUS, "+", false);
+    if (token != nullptr)
+        return token;
+    
+    token = match(TokenKind::MINUS, "-", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::XOR, "xor", true);
+    token = match(TokenKind::STAR, "*", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::AND, "and", true);
+    token = match(TokenKind::SLASH, "/", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::NOT, "not", true);
+    token = match(TokenKind::PERCENT, "%", false);
     if (token != nullptr)
         return token;
 

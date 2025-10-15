@@ -28,6 +28,7 @@ private:
     vector<shared_ptr<Token>> tokens;
     int currentIndex = 0;
 
+    // Statements
     shared_ptr<Statement> nextStatement();
     shared_ptr<Statement> nextInBlockStatement();
 
@@ -46,28 +47,39 @@ private:
     shared_ptr<Statement> matchStatementRepeat();
     shared_ptr<Statement> matchStatementExpression();
 
+    // Expressions
     shared_ptr<Expression> nextExpression();
-    shared_ptr<Expression> matchLogicalSecond(); // or
-    shared_ptr<Expression> matchLogicalFirst(); // and
-    shared_ptr<Expression> matchLogicalUnary(); // not
+    shared_ptr<Expression> matchLogicalOrXor(); // or, xor
+    shared_ptr<Expression> matchLogicalAnd(); // and
+    shared_ptr<Expression> matchLogicalNot(); // not
+
     shared_ptr<Expression> matchEquality(); // =, !=
     shared_ptr<Expression> matchComparison(); // <, <=, >, >=
+
+    shared_ptr<Expression> matchBitwiseOrXor(); // |, ^
+    shared_ptr<Expression> matchBitwiseAnd(); // &
+    shared_ptr<Expression> matchBitwiseShift(); // <<, >>
+    shared_ptr<Expression> matchBitwiseNot(); // ~
+
     shared_ptr<Expression> matchTerm(); // +, -
     shared_ptr<Expression> matchFactor(); // *, /, %
     shared_ptr<Expression> matchUnary(); // +, -
-    shared_ptr<Expression> matchExpressionChained(shared_ptr<ExpressionChained> expression); // .stuff
-    shared_ptr<Expression> matchPrimary(); // literal, ()
 
+    shared_ptr<Expression> matchExpressionChained(shared_ptr<ExpressionChained> expression); // .stuff
+
+    shared_ptr<Expression> matchPrimary(); // literal, ()
     shared_ptr<Expression> matchExpressionGrouping();
-    shared_ptr<Expression> matchExpressionLiteral();
     shared_ptr<Expression> matchExpressionCompositeLiteral();
-    shared_ptr<Expression> matchExpressionVariable();
+    shared_ptr<Expression> matchExpressionLiteral();
     shared_ptr<Expression> matchExpressionCall();
+    shared_ptr<Expression> matchExpressionVariable();
+    shared_ptr<Expression> matchExpressionCast();
+
     shared_ptr<Expression> matchExpressionIfElse();
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
-    shared_ptr<Expression> matchExpressionCast();
 
+    // Parsee
     ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> groupParseeResults(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(ParseeGroup group);
@@ -81,8 +93,9 @@ private:
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> ifElseParseeResults(int tag);
-    bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
 
+    // Support
+    bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
     void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
 
 public:

@@ -1012,7 +1012,7 @@ shared_ptr<Expression> Parser::nextExpression() {
     shared_ptr<Expression> expression;
     int errorsCount = errors.size();
 
-    expression = matchLogicalSecond();
+    expression = matchLogicalOrXor();
     if (expression != nullptr || errors.size() > errorsCount)
         return expression;
     
@@ -1027,12 +1027,12 @@ shared_ptr<Expression> Parser::nextExpression() {
     return nullptr;
 }
 
-shared_ptr<Expression> Parser::matchLogicalSecond() {
-    shared_ptr<Expression> expression = matchLogicalFirst();
+shared_ptr<Expression> Parser::matchLogicalOrXor() {
+    shared_ptr<Expression> expression = matchLogicalAnd();
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensLogicalSecond, false, false))
+    if (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, false))
         expression = matchExpressionBinary(expression);
 
     // Expression cannot be on left hand side of an assignment
@@ -1042,22 +1042,22 @@ shared_ptr<Expression> Parser::matchLogicalSecond() {
     return expression;
 }
 
-shared_ptr<Expression> Parser::matchLogicalFirst() {
-    shared_ptr<Expression> expression = matchLogicalUnary();
+shared_ptr<Expression> Parser::matchLogicalAnd() {
+    shared_ptr<Expression> expression = matchLogicalNot();
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensLogicalFirst, false, false))
+    if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
 }
 
-shared_ptr<Expression> Parser::matchLogicalUnary() {
+shared_ptr<Expression> Parser::matchLogicalNot() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
-    if (tryMatchingTokenKinds(Token::tokensLogicalUnary, false, true)) {
-        shared_ptr<Expression> expression = matchLogicalUnary();
+    if (tryMatchingTokenKinds(Token::tokensLogicalNot, false, true)) {
+        shared_ptr<Expression> expression = matchLogicalNot();
         if (expression == nullptr)
             return nullptr;
         return make_shared<ExpressionUnary>(token, expression);
@@ -1071,21 +1071,67 @@ shared_ptr<Expression> Parser::matchEquality() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds({Token::tokensEquality}, false, false))
+    if (tryMatchingTokenKinds(Token::tokensEquality, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
 }
 
 shared_ptr<Expression> Parser::matchComparison() {
-    shared_ptr<Expression> expression = matchTerm();
+    shared_ptr<Expression> expression = matchBitwiseOrXor();
     if (expression == nullptr)
         return nullptr;
     
-    if (tryMatchingTokenKinds({Token::tokensComparison}, false, false))
+    if (tryMatchingTokenKinds(Token::tokensComparison, false, false))
         expression = matchExpressionBinary(expression);
     
     return expression;
+}
+
+shared_ptr<Expression> Parser::matchBitwiseOrXor() {
+    shared_ptr<Expression> expression = matchBitwiseAnd();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, false))
+        expression = matchExpressionBinary(expression);
+
+    return expression;
+}
+
+shared_ptr<Expression> Parser::matchBitwiseAnd() {
+    shared_ptr<Expression> expression = matchBitwiseShift();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, false))
+        expression = matchExpressionBinary(expression);
+
+    return expression;
+}
+
+shared_ptr<Expression> Parser::matchBitwiseShift() {
+    shared_ptr<Expression> expression = matchBitwiseNot();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, false))
+        expression = matchExpressionBinary(expression);
+
+    return expression; 
+}
+
+shared_ptr<Expression> Parser::matchBitwiseNot() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseNot, false, true)) {
+        shared_ptr<Expression> expression = matchBitwiseNot();
+        if (expression == nullptr)
+            return nullptr;
+        return make_shared<ExpressionUnary>(token, expression);
+    }
+
+    return matchTerm();
 }
 
 shared_ptr<Expression> Parser::matchTerm() {
@@ -1093,7 +1139,7 @@ shared_ptr<Expression> Parser::matchTerm() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds({Token::tokensTerm}, false, false))
+    if (tryMatchingTokenKinds(Token::tokensTerm, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1175,7 +1221,7 @@ shared_ptr<Expression> Parser::matchPrimary() {
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
     if (tryMatchingTokenKinds({TokenKind::LEFT_ROUND_BRACKET}, true, true)) {
-        shared_ptr<Expression> expression = matchLogicalSecond();
+        shared_ptr<Expression> expression = matchLogicalOrXor();
         // has grouped expression failed?
         if (expression == nullptr) {
             return nullptr;
@@ -1185,15 +1231,6 @@ shared_ptr<Expression> Parser::matchExpressionGrouping() {
             markError(TokenKind::RIGHT_ROUND_BRACKET, {}, {});
         }
     }
-
-    return nullptr;
-}
-
-shared_ptr<Expression> Parser::matchExpressionLiteral() {
-    shared_ptr<Token> token = tokens.at(currentIndex);
-
-    if (tryMatchingTokenKinds(Token::tokensLiteral, false, true))
-        return ExpressionLiteral::expressionLiteralForToken(token);
 
     return nullptr;
 }
@@ -1268,55 +1305,11 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
         return ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(expressions);
 }
 
-shared_ptr<Expression> Parser::matchExpressionVariable() {
-    ParseeResultsGroup resultsGroup;
+shared_ptr<Expression> Parser::matchExpressionLiteral() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
 
-    // data
-    resultsGroup = parseeResultsGroupForParseeGroup(
-        ParseeGroup(
-            {
-                // identifier
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
-                // index expression
-                Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false, false),
-                Parsee::expressionParsee(true, true, true),
-                Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true)
-            }
-        )
-    );
-
-    switch (resultsGroup.getKind()) {
-        case ParseeResultsGroupKind::SUCCESS: {
-            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
-            shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(1).getExpression();
-            return ExpressionVariable::data(identifier, indexExpression);
-        }
-        case ParseeResultsGroupKind::NO_MATCH:
-            break;
-        case ParseeResultsGroupKind::FAILURE:
-            return nullptr;
-    }
-
-    // simple
-    resultsGroup = parseeResultsGroupForParseeGroup(
-        ParseeGroup(
-            {
-                // identifier
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false)
-            }
-        )
-    );
-
-    switch (resultsGroup.getKind()) {
-        case ParseeResultsGroupKind::SUCCESS: {
-            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
-            return ExpressionVariable::simple(identifier);
-        }
-        case ParseeResultsGroupKind::NO_MATCH:
-            break;
-        case ParseeResultsGroupKind::FAILURE:
-            return nullptr;
-    }
+    if (tryMatchingTokenKinds(Token::tokensLiteral, false, true))
+        return ExpressionLiteral::expressionLiteralForToken(token);
 
     return nullptr;
 }
@@ -1386,6 +1379,76 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
     }
 
     return make_shared<ExpressionCall>(identifier, argumentExpressions);
+}
+
+shared_ptr<Expression> Parser::matchExpressionVariable() {
+    ParseeResultsGroup resultsGroup;
+
+    // data
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                // identifier
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
+                // index expression
+                Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false, false),
+                Parsee::expressionParsee(true, true, true),
+                Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true)
+            }
+        )
+    );
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS: {
+            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
+            shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(1).getExpression();
+            return ExpressionVariable::data(identifier, indexExpression);
+        }
+        case ParseeResultsGroupKind::NO_MATCH:
+            break;
+        case ParseeResultsGroupKind::FAILURE:
+            return nullptr;
+    }
+
+    // simple
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                // identifier
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false)
+            }
+        )
+    );
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS: {
+            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
+            return ExpressionVariable::simple(identifier);
+        }
+        case ParseeResultsGroupKind::NO_MATCH:
+            break;
+        case ParseeResultsGroupKind::FAILURE:
+            return nullptr;
+    }
+
+    return nullptr;
+}
+
+shared_ptr<Expression> Parser::matchExpressionCast() {
+    ParseeResultsGroup parseeResults = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::valueTypeParsee(true, true, false)
+            }
+        )
+    );
+
+    if (parseeResults.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    shared_ptr<ValueType> valueType = parseeResults.getResults().at(0).getValueType();
+
+    return make_shared<ExpressionCast>(valueType);
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
@@ -1488,14 +1551,20 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     shared_ptr<Token> token = tokens.at(currentIndex);
     shared_ptr<Expression> right;
     // What level of binary expression are we having?
-    if (tryMatchingTokenKinds(Token::tokensLogicalSecond, false, true)) {
-        right = matchLogicalSecond();
-    } else if (tryMatchingTokenKinds(Token::tokensLogicalFirst, false, true)) {
-        right = matchLogicalFirst();
+    if (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true)) {
+        right = matchLogicalOrXor();
+    } else if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true)) {
+        right = matchLogicalAnd();
     } else if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
     } else if (tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
-        right = matchTerm();
+        right = matchBitwiseAnd();
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
+        right = matchBitwiseOrXor();
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
+        right = matchBitwiseAnd();
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, true)) {
+        right = matchBitwiseShift();
     } else if (tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
         right = matchTerm();
     } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
@@ -1532,23 +1601,6 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
     }
 
     return make_shared<ExpressionBlock>(statements);
-}
-
-shared_ptr<Expression> Parser::matchExpressionCast() {
-    ParseeResultsGroup parseeResults = parseeResultsGroupForParseeGroup(
-        ParseeGroup(
-            {
-                Parsee::valueTypeParsee(true, true, false)
-            }
-        )
-    );
-
-    if (parseeResults.getKind() != ParseeResultsGroupKind::SUCCESS)
-        return nullptr;
-
-    shared_ptr<ValueType> valueType = parseeResults.getResults().at(0).getValueType();
-
-    return make_shared<ExpressionCast>(valueType);
 }
 
 ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {

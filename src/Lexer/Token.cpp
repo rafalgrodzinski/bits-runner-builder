@@ -1,16 +1,34 @@
 #include "Token.h"
 
-vector<TokenKind> Token::tokensLogicalSecond = {
+vector<TokenKind> Token::tokensLogicalOrXor = {
     TokenKind::OR,
     TokenKind::XOR
 };
 
-vector<TokenKind> Token::tokensLogicalFirst = {
+vector<TokenKind> Token::tokensLogicalAnd = {
     TokenKind::AND
 };
 
-vector<TokenKind> Token::tokensLogicalUnary = {
+vector<TokenKind> Token::tokensLogicalNot = {
     TokenKind::NOT
+};
+
+vector<TokenKind> Token::tokensBitwiseOrXor = {
+    TokenKind::BIT_OR,
+    TokenKind::BIT_XOR
+};
+
+vector<TokenKind> Token::tokensBitwiseAnd = {
+    TokenKind::BIT_AND
+};
+
+vector<TokenKind> Token::tokensBitwiseShift = {
+    TokenKind::BIT_SHL,
+    TokenKind::BIT_SHR
+};
+
+vector<TokenKind> Token::tokensBitwiseNot = {
+    TokenKind::BIT_NOT
 };
 
 vector<TokenKind> Token::tokensEquality = {
@@ -39,23 +57,6 @@ vector<TokenKind> Token::tokensFactor = {
 vector<TokenKind> Token::tokensUnary = {
     TokenKind::PLUS,
     TokenKind::MINUS
-};
-
-vector<TokenKind> Token::tokensBinary = {
-    TokenKind::EQUAL,
-    TokenKind::NOT_EQUAL,
-
-    TokenKind::LESS,
-    TokenKind::LESS_EQUAL,
-    TokenKind::GREATER,
-    TokenKind::GREATER_EQUAL,
-
-    TokenKind::PLUS,
-    TokenKind::MINUS,
-    
-    TokenKind::STAR,
-    TokenKind::SLASH,
-    TokenKind::PERCENT
 };
 
 vector<TokenKind> Token::tokensLiteral = {
