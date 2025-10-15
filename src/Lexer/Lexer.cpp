@@ -672,6 +672,10 @@ bool Lexer::isSeparator(int index) {
         case ',':
         case ':':
         case ';':
+        case '|':
+        case '^':
+        case '&':
+        case '~':
         case ' ':
         case '\t':
         case '\n':
