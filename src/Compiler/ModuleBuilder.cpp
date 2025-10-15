@@ -637,7 +637,7 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operati
     case ExpressionBinaryOperation::XOR:
         return builder->CreateXor(leftValue, rightValue);
     case ExpressionBinaryOperation::AND:
-        return builder->CreateAnd(leftValue, rightValue);
+        return builder->CreateLogicalAnd(leftValue, rightValue);
     case ExpressionBinaryOperation::EQUAL:
         return builder->CreateICmpEQ(leftValue, rightValue);
     case ExpressionBinaryOperation::NOT_EQUAL:
@@ -650,6 +650,17 @@ llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operati
 
 llvm::Value *ModuleBuilder::valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
+        case ExpressionBinaryOperation::BIT_OR:
+            return builder->CreateOr(leftValue, rightValue);
+        case ExpressionBinaryOperation::BIT_XOR:
+            return builder->CreateXor(leftValue, rightValue);
+        case ExpressionBinaryOperation::BIT_AND:
+            return builder->CreateAnd(leftValue, rightValue);
+        case ExpressionBinaryOperation::BIT_SHL:
+            return builder->CreateShl(leftValue, rightValue);
+        case ExpressionBinaryOperation::BIT_SHR:
+            return builder->CreateLShr(leftValue, rightValue);
+
         case ExpressionBinaryOperation::EQUAL:
             return builder->CreateICmpEQ(leftValue, rightValue);
         case ExpressionBinaryOperation::NOT_EQUAL:
@@ -677,6 +688,17 @@ llvm::Value *ModuleBuilder::valueForBinaryUnsignedInteger(ExpressionBinaryOperat
 
 llvm::Value *ModuleBuilder::valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
     switch (operation) {
+        case ExpressionBinaryOperation::BIT_OR:
+            return builder->CreateOr(leftValue, rightValue);
+        case ExpressionBinaryOperation::BIT_XOR:
+            return builder->CreateXor(leftValue, rightValue);
+        case ExpressionBinaryOperation::BIT_AND:
+            return builder->CreateAnd(leftValue, rightValue);
+        case ExpressionBinaryOperation::BIT_SHL:
+            return builder->CreateShl(leftValue, rightValue);
+        case ExpressionBinaryOperation::BIT_SHR:
+            return builder->CreateAShr(leftValue, rightValue);
+
         case ExpressionBinaryOperation::EQUAL:
             return builder->CreateICmpEQ(leftValue, rightValue);
         case ExpressionBinaryOperation::NOT_EQUAL:
@@ -738,13 +760,17 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
             return builder->CreateNot(value);
         }
     } else if (type == typeU8 || type == typeU32 || type == typeU64 || type == typeUInt) {
-        if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
+        if (expression->getOperation() == ExpressionUnaryOperation::BIT_NOT) {
+            return builder->CreateNot(value);
+        } else if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
             return value;
         }
     } else if (type == typeS8 || type == typeS32 || type == typeS64 || type == typeSInt) {
-        if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
+        if (expression->getOperation() == ExpressionUnaryOperation::BIT_NOT) {
+            return builder->CreateNot(value);
+        } else if (expression->getOperation() == ExpressionUnaryOperation::MINUS) {
             return builder->CreateNSWNeg(value);
         } else if (expression->getOperation() == ExpressionUnaryOperation::PLUS) {
             return value;
