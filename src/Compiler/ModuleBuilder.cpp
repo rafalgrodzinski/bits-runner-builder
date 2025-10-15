@@ -171,6 +171,9 @@ void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string
             );
             break;
         }
+        case StatementKind::VARIABLE_DECLARATION:
+            buildVariableDeclaration(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+            break;
         default:
             markError(0, 0, "Unexpected imported statement");
     }
