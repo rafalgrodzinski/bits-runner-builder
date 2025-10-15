@@ -166,195 +166,6 @@ string Logger::toString(shared_ptr<Token> token) {
     }
 }
 
-string Logger::toString(TokenKind tokenKind) {
-    switch (tokenKind) {
-        case TokenKind::PLUS:
-            return "+";
-        case TokenKind::MINUS:
-            return "-";
-        case TokenKind::STAR:
-            return "*";
-        case TokenKind::SLASH:
-            return "/";
-        case TokenKind::PERCENT:
-            return "%";
-
-        case TokenKind::OR:
-            return "OR";
-        case TokenKind::XOR:
-            return "XOR";
-        case TokenKind::AND:
-            return "AND";
-        case TokenKind::NOT:
-            return "NOT";
-
-        case TokenKind::B_OR:
-            return "|";
-        case TokenKind::B_XOR:
-            return "^";
-        case TokenKind::B_AND:
-            return "&";
-        case TokenKind::B_NOT:
-            return "~";
-        case TokenKind::SHL:
-            return "<<";
-        case TokenKind::SHR:
-            return ">>";
-        
-        case TokenKind::EQUAL:
-            return "=";
-        case TokenKind::NOT_EQUAL:
-            return "≠";
-        case TokenKind::LESS:
-            return "<";
-        case TokenKind::LESS_EQUAL:
-            return "≤";
-        case TokenKind::GREATER:
-            return ">";
-        case TokenKind::GREATER_EQUAL:
-            return "≥";
-
-        case TokenKind::LEFT_ROUND_BRACKET:
-            return "(";
-        case TokenKind::RIGHT_ROUND_BRACKET:
-            return ")";
-        case TokenKind::LEFT_SQUARE_BRACKET:
-            return "[";
-        case TokenKind::RIGHT_SQUARE_BRACKET:
-            return "]";
-        case TokenKind::LEFT_CURLY_BRACKET:
-            return "{";
-        case TokenKind::RIGHT_CURLY_BRACKET:
-            return "}";
-        case TokenKind::COMMA:
-            return ",";
-        case TokenKind::COLON:
-            return ":";
-        case TokenKind::SEMICOLON:
-            return ";";
-        case TokenKind::LEFT_ARROW:
-            return "←";
-        case TokenKind::RIGHT_ARROW:
-            return "→";
-        case TokenKind::DOT:
-            return ".";
-
-        case TokenKind::BOOL:
-            return "LITERAL(BOOLEAN)";
-        case TokenKind::INTEGER_DEC:
-        case TokenKind::INTEGER_HEX:
-        case TokenKind::INTEGER_BIN:
-        case TokenKind::INTEGER_CHAR:
-            return "LITERAL(INTEGER)";
-        case TokenKind::FLOAT:
-            return "LITERAL(FLOAT)";
-        case TokenKind::STRING:
-            return "LITERAL(STRING)";
-        case TokenKind::IDENTIFIER:
-            return "LITERAL(ID)";
-        case TokenKind::TYPE:
-            return "TYPE";
-        case TokenKind::BLOB:
-            return "BLOB";
-        case TokenKind::RAW_SOURCE_LINE:
-            return "RAW_SOURCE_LINE";
-
-        case TokenKind::FUNCTION:
-            return "FUN";
-        case TokenKind::RAW_FUNCTION:
-            return "RAW";
-        case TokenKind::RETURN:
-            return "RET";
-        case TokenKind::REPEAT:
-            return "REP";
-        case TokenKind::IF:
-            return "IF";
-        case TokenKind::ELSE:
-            return "ELSE";
-
-        case TokenKind::M_MODULE:
-            return "@MODULE";
-        case TokenKind::M_IMPORT:
-            return "@IMPORT";
-        case TokenKind::M_EXPORT:
-            return "@EXPORT";
-        case TokenKind::M_EXTERN:
-            return "@EXTERN";
-        case TokenKind::META:
-            return "@";
-
-        case TokenKind::NEW_LINE:
-            return "↲";
-        case TokenKind::END:
-            return "END";
-    }
-}
-
-string Logger::toString(Parsee parsee) {
-    switch (parsee.getKind()) {
-        case ParseeKind::GROUP:
-            return "PARSEE_GROUP";
-        case ParseeKind::REPEATED_GROUP:
-            return "PARSEE_REPEATED_GROUP";
-        case ParseeKind::TOKEN:
-            return toString(parsee.getTokenKind());
-        case ParseeKind::VALUE_TYPE:
-            return "Value Type";
-        case ParseeKind::STATEMENT:
-            return "Statement";
-        case ParseeKind::STATEMENT_IN_BLOCK:
-            return "Statement in Block";
-        case ParseeKind::EXPRESSION:
-            return "Expression";
-        case ParseeKind::OR:
-            return "PARSEE_OR";
-        case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
-        case ParseeKind::STATEMENT_BLOCK_MULTI_LINE:
-            return "Statement Block";
-        case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
-        case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
-            return "Expression Block";
-        case ParseeKind::IF_ELSE:
-            return "Expression If-Else";
-    }
-}
-
-string Logger::toString(shared_ptr<ValueType> valueType) {
-    if (valueType == nullptr)
-        return "{INVALID}";
-
-    switch (valueType->getKind()) {
-        case ValueTypeKind::NONE:
-            return "NONE";
-        case ValueTypeKind::BOOL:
-            return "BOOL";
-        case ValueTypeKind::U8:
-            return "U8";
-        case ValueTypeKind::U32:
-            return "U32";
-        case ValueTypeKind::U64:
-            return "U64";
-        case ValueTypeKind::S8:
-            return "S8";
-        case ValueTypeKind::S32:
-            return "S32";
-        case ValueTypeKind::S64:
-            return "S64";
-        case ValueTypeKind::F32:
-            return "F32";
-        case ValueTypeKind::F64:
-            return "F64";
-        case ValueTypeKind::DATA:
-            return format("DATA<{}>", toString(valueType->getSubType()));
-        case ValueTypeKind::BLOB:
-            return format("BLOB<`{}`>", valueType->getTypeName());
-        case ValueTypeKind::PTR:
-            return format("PTR<{}>", toString(valueType->getSubType()));
-        case ValueTypeKind::LITERAL:
-            return "LITERAL";
-    }
-}
-
 string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> indents) {
     switch (statement->getKind()) {
         case StatementKind::MODULE:
@@ -963,6 +774,42 @@ string Logger::toString(shared_ptr<ExpressionCast> expression, vector<IndentKind
     return formattedLine(line, indents);
 }
 
+string Logger::toString(shared_ptr<ValueType> valueType) {
+    if (valueType == nullptr)
+        return "{INVALID}";
+
+    switch (valueType->getKind()) {
+        case ValueTypeKind::NONE:
+            return "NONE";
+        case ValueTypeKind::BOOL:
+            return "BOOL";
+        case ValueTypeKind::U8:
+            return "U8";
+        case ValueTypeKind::U32:
+            return "U32";
+        case ValueTypeKind::U64:
+            return "U64";
+        case ValueTypeKind::S8:
+            return "S8";
+        case ValueTypeKind::S32:
+            return "S32";
+        case ValueTypeKind::S64:
+            return "S64";
+        case ValueTypeKind::F32:
+            return "F32";
+        case ValueTypeKind::F64:
+            return "F64";
+        case ValueTypeKind::DATA:
+            return format("DATA<{}>", toString(valueType->getSubType()));
+        case ValueTypeKind::BLOB:
+            return format("BLOB<`{}`>", valueType->getTypeName());
+        case ValueTypeKind::PTR:
+            return format("PTR<{}>", toString(valueType->getSubType()));
+        case ValueTypeKind::LITERAL:
+            return "LITERAL";
+    }
+}
+
 string Logger::formattedLine(string line, vector<IndentKind> indents) {
     // Just return the input, if no indents (useful for inline expressions)
     if (indents.empty())
@@ -1022,6 +869,159 @@ vector<IndentKind> Logger::adjustedLastIndent(vector<IndentKind> indents) {
     indents.at(indents.size()-1) = newKind;
 
     return indents;
+}
+
+string Logger::toString(Parsee parsee) {
+    switch (parsee.getKind()) {
+        case ParseeKind::GROUP:
+            return "PARSEE_GROUP";
+        case ParseeKind::REPEATED_GROUP:
+            return "PARSEE_REPEATED_GROUP";
+        case ParseeKind::TOKEN:
+            return toString(parsee.getTokenKind());
+        case ParseeKind::VALUE_TYPE:
+            return "Value Type";
+        case ParseeKind::STATEMENT:
+            return "Statement";
+        case ParseeKind::STATEMENT_IN_BLOCK:
+            return "Statement in Block";
+        case ParseeKind::EXPRESSION:
+            return "Expression";
+        case ParseeKind::OR:
+            return "PARSEE_OR";
+        case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
+        case ParseeKind::STATEMENT_BLOCK_MULTI_LINE:
+            return "Statement Block";
+        case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
+        case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
+            return "Expression Block";
+        case ParseeKind::IF_ELSE:
+            return "Expression If-Else";
+    }
+}
+
+string Logger::toString(TokenKind tokenKind) {
+    switch (tokenKind) {
+        case TokenKind::PLUS:
+            return "+";
+        case TokenKind::MINUS:
+            return "-";
+        case TokenKind::STAR:
+            return "*";
+        case TokenKind::SLASH:
+            return "/";
+        case TokenKind::PERCENT:
+            return "%";
+
+        case TokenKind::OR:
+            return "OR";
+        case TokenKind::XOR:
+            return "XOR";
+        case TokenKind::AND:
+            return "AND";
+        case TokenKind::NOT:
+            return "NOT";
+
+        case TokenKind::B_OR:
+            return "|";
+        case TokenKind::B_XOR:
+            return "^";
+        case TokenKind::B_AND:
+            return "&";
+        case TokenKind::B_NOT:
+            return "~";
+        case TokenKind::SHL:
+            return "<<";
+        case TokenKind::SHR:
+            return ">>";
+        
+        case TokenKind::EQUAL:
+            return "=";
+        case TokenKind::NOT_EQUAL:
+            return "≠";
+        case TokenKind::LESS:
+            return "<";
+        case TokenKind::LESS_EQUAL:
+            return "≤";
+        case TokenKind::GREATER:
+            return ">";
+        case TokenKind::GREATER_EQUAL:
+            return "≥";
+
+        case TokenKind::LEFT_ROUND_BRACKET:
+            return "(";
+        case TokenKind::RIGHT_ROUND_BRACKET:
+            return ")";
+        case TokenKind::LEFT_SQUARE_BRACKET:
+            return "[";
+        case TokenKind::RIGHT_SQUARE_BRACKET:
+            return "]";
+        case TokenKind::LEFT_CURLY_BRACKET:
+            return "{";
+        case TokenKind::RIGHT_CURLY_BRACKET:
+            return "}";
+        case TokenKind::COMMA:
+            return ",";
+        case TokenKind::COLON:
+            return ":";
+        case TokenKind::SEMICOLON:
+            return ";";
+        case TokenKind::LEFT_ARROW:
+            return "←";
+        case TokenKind::RIGHT_ARROW:
+            return "→";
+        case TokenKind::DOT:
+            return ".";
+
+        case TokenKind::BOOL:
+            return "LITERAL(BOOLEAN)";
+        case TokenKind::INTEGER_DEC:
+        case TokenKind::INTEGER_HEX:
+        case TokenKind::INTEGER_BIN:
+        case TokenKind::INTEGER_CHAR:
+            return "LITERAL(INTEGER)";
+        case TokenKind::FLOAT:
+            return "LITERAL(FLOAT)";
+        case TokenKind::STRING:
+            return "LITERAL(STRING)";
+        case TokenKind::IDENTIFIER:
+            return "LITERAL(ID)";
+        case TokenKind::TYPE:
+            return "TYPE";
+        case TokenKind::BLOB:
+            return "BLOB";
+        case TokenKind::RAW_SOURCE_LINE:
+            return "RAW_SOURCE_LINE";
+
+        case TokenKind::FUNCTION:
+            return "FUN";
+        case TokenKind::RAW_FUNCTION:
+            return "RAW";
+        case TokenKind::RETURN:
+            return "RET";
+        case TokenKind::REPEAT:
+            return "REP";
+        case TokenKind::IF:
+            return "IF";
+        case TokenKind::ELSE:
+            return "ELSE";
+
+        case TokenKind::M_MODULE:
+            return "@MODULE";
+        case TokenKind::M_IMPORT:
+            return "@IMPORT";
+        case TokenKind::M_EXPORT:
+            return "@EXPORT";
+        case TokenKind::M_EXTERN:
+            return "@EXTERN";
+        case TokenKind::META:
+            return "@";
+
+        case TokenKind::NEW_LINE:
+            return "↲";
+        case TokenKind::END:
+            return "END";
+    }
 }
 
 void Logger::print(vector<shared_ptr<Token>> tokens) {

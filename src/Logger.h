@@ -53,11 +53,10 @@ enum class IndentKind {
 
 class Logger {
 private:
-    static string toString(shared_ptr<Token> token);
-    static string toString(TokenKind tokenKind);
-    static string toString(Parsee parsee);
-    static string toString(shared_ptr<ValueType> valueType);
+    // lexer
+    static string toString(shared_ptr<Token> token); // kind and contents
 
+    // parser statements
     static string toString(shared_ptr<Statement> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementModule> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementImport> statement, vector<IndentKind> indents);
@@ -76,6 +75,7 @@ private:
     static string toString(shared_ptr<StatementRepeat> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents);
 
+    // parser expressions
     static string toString(shared_ptr<Expression> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionBinary> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents);
@@ -89,8 +89,14 @@ private:
     static string toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents);
 
+    // general support
+    static string toString(shared_ptr<ValueType> valueType);
     static string formattedLine(string line, vector<IndentKind> indents);
     static vector<IndentKind> adjustedLastIndent(vector<IndentKind> indents);
+
+    // errors support
+    static string toString(Parsee parsee);
+    static string toString(TokenKind tokenKind); // onlty kind
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);
