@@ -60,6 +60,19 @@ string Logger::toString(shared_ptr<Token> token) {
             return "AND";
         case TokenKind::NOT:
             return "NOT";
+
+        case TokenKind::B_OR:
+            return "|";
+        case TokenKind::B_XOR:
+            return "^";
+        case TokenKind::B_AND:
+            return "&";
+        case TokenKind::B_NOT:
+            return "~";
+        case TokenKind::SHL:
+            return "<<";
+        case TokenKind::SHR:
+            return ">>";
         
         case TokenKind::EQUAL:
             return "=";
@@ -174,6 +187,19 @@ string Logger::toString(TokenKind tokenKind) {
             return "AND";
         case TokenKind::NOT:
             return "NOT";
+
+        case TokenKind::B_OR:
+            return "|";
+        case TokenKind::B_XOR:
+            return "^";
+        case TokenKind::B_AND:
+            return "&";
+        case TokenKind::B_NOT:
+            return "~";
+        case TokenKind::SHL:
+            return "<<";
+        case TokenKind::SHR:
+            return ">>";
         
         case TokenKind::EQUAL:
             return "=";

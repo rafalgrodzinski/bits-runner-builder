@@ -194,6 +194,48 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
+    // logical
+    token = match(TokenKind::OR, "or", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::XOR, "xor", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::AND, "and", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::NOT, "not", false);
+    if (token != nullptr)
+        return token;
+
+    // bitwise
+    token = match(TokenKind::B_OR, "|", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::B_XOR, "^", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::B_AND, "&", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::B_NOT, "~", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::SHL, "<<", false);
+    if (token != nullptr)
+        return token;
+
+    token = match(TokenKind::SHR, ">>", false);
+    if (token != nullptr)
+        return token;
+
     // comparison
     token = match(TokenKind::NOT_EQUAL, "!=", false);
     if (token != nullptr)
@@ -216,23 +258,6 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     token = match(TokenKind::GREATER, ">", false);
-    if (token != nullptr)
-        return token;
-
-    // logical
-    token = match(TokenKind::OR, "or", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::XOR, "xor", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::AND, "and", false);
-    if (token != nullptr)
-        return token;
-
-    token = match(TokenKind::NOT, "not", false);
     if (token != nullptr)
         return token;
 

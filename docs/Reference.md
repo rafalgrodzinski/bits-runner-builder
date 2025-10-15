@@ -216,7 +216,7 @@ addNums: num1 s32, num2 s32 ->
 ```
 
 ## Raw Functions
-A unique feature of BRC is a seamless use of inline assembly. Raw functions can be used just like normal functions, altoght there is a couple of limitations and they require so called constraints to be specified. It's the same as in gcc or clang, but they are specified as a single string instead of splitting them into input, output, and clobbers. Some more information can be found here [A Practical Guide to GCC Inline Assembly](https://blog.alex.balgavy.eu/a-practical-guide-to-gcc-inline-assembly/). Intel syntax is used for the assembly.
+A unique feature of BRC is a seamless use of inline assembly. Raw functions can be used just like normal functions, altoght there is a couple of limitations and they require so called constraints to be specified. It's the same as in gcc or clang, but they are specified as a single string instead of splitting them into input, output, and clobbers. Some more information can be found here . Intel syntax is used for the assembly.
 ```
 rawAdd raw<"=r,r,r">: num1 u32, num2 u32 -> u32
     add $1, $2

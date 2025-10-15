@@ -17,6 +17,13 @@ enum class TokenKind {
     AND,
     NOT,
 
+    B_OR,
+    B_XOR,
+    B_AND,
+    B_NOT,
+    SHL,
+    SHR,
+
     EQUAL,
     NOT_EQUAL,
     LESS,
