@@ -6,12 +6,6 @@
 using namespace std;
 
 enum class TokenKind {        
-    PLUS,
-    MINUS,
-    STAR,
-    SLASH,
-    PERCENT,
-
     OR,
     XOR,
     AND,
@@ -21,8 +15,8 @@ enum class TokenKind {
     BIT_XOR,
     BIT_AND,
     BIT_NOT,
-    SHL,
-    SHR,
+    BIT_SHL,
+    BIT_SHR,
 
     EQUAL,
     NOT_EQUAL,
@@ -30,6 +24,12 @@ enum class TokenKind {
     LESS_EQUAL,
     GREATER,
     GREATER_EQUAL,
+
+    PLUS,
+    MINUS,
+    STAR,
+    SLASH,
+    PERCENT,
     
     LEFT_ROUND_BRACKET,
     RIGHT_ROUND_BRACKET,
@@ -81,18 +81,22 @@ private:
     int column;
 
 public:
-    static vector<TokenKind> tokensLogicalSecond;
-    static vector<TokenKind> tokensLogicalFirst;
-    static vector<TokenKind> tokensLogicalUnary;
+    static vector<TokenKind> tokensLogicalOrXor;
+    static vector<TokenKind> tokensLogicalAnd;
+    static vector<TokenKind> tokensLogicalNot;
+
     static vector<TokenKind> tokensEquality;
     static vector<TokenKind> tokensComparison;
+
     static vector<TokenKind> tokensBitwiseAnd;
     static vector<TokenKind> tokensBitwiseOrXor;
+    static vector<TokenKind> tokensBitwiseShift;
     static vector<TokenKind> tokensBitwiseNot;
+
     static vector<TokenKind> tokensTerm;
     static vector<TokenKind> tokensFactor;
     static vector<TokenKind> tokensUnary;
-    static vector<TokenKind> tokensBinary;
+
     static vector<TokenKind> tokensLiteral;
 
     Token(TokenKind kind, string lexme, int line, int column);

@@ -69,9 +69,9 @@ string Logger::toString(shared_ptr<Token> token) {
             return "&";
         case TokenKind::BIT_NOT:
             return "~";
-        case TokenKind::SHL:
+        case TokenKind::BIT_SHL:
             return "<<";
-        case TokenKind::SHR:
+        case TokenKind::BIT_SHR:
             return ">>";
         
         case TokenKind::EQUAL:
@@ -560,14 +560,20 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
         case ExpressionBinaryOperation::AND:
             op = "AND";
             break;
-        case ExpressionBinaryOperation::BIT_AND:
-            op = "&";
-            break;
         case ExpressionBinaryOperation::BIT_OR:
             op = "|";
             break;
         case ExpressionBinaryOperation::BIT_XOR:
             op = "^";
+            break;
+        case ExpressionBinaryOperation::BIT_AND:
+            op = "&";
+            break;
+        case ExpressionBinaryOperation::BIT_SHL:
+            op = "<<";
+            break;
+        case ExpressionBinaryOperation::BIT_SHR:
+            op = ">>";
             break;
         case ExpressionBinaryOperation::EQUAL:
             op = "=";
@@ -606,7 +612,7 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
             return "{INVALID}";
     }
 
-    string line = format("{} {} {}", toString(expression->getLeft(), {}), op, toString(expression->getRight(), {}));
+    string line = format("({} {} {})", toString(expression->getLeft(), {}), op, toString(expression->getRight(), {}));
 
     return formattedLine(line, indents);
 }
@@ -942,9 +948,9 @@ string Logger::toString(TokenKind tokenKind) {
             return "&";
         case TokenKind::BIT_NOT:
             return "~";
-        case TokenKind::SHL:
+        case TokenKind::BIT_SHL:
             return "<<";
-        case TokenKind::SHR:
+        case TokenKind::BIT_SHR:
             return ">>";
         
         case TokenKind::EQUAL:

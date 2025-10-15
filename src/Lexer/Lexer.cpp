@@ -228,11 +228,11 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::SHL, "<<", false);
+    token = match(TokenKind::BIT_SHL, "<<", false);
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::SHR, ">>", false);
+    token = match(TokenKind::BIT_SHR, ">>", false);
     if (token != nullptr)
         return token;
 

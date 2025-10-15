@@ -30,6 +30,14 @@ Expression(ExpressionKind::BINARY, nullptr), operation(ExpressionBinaryOperation
             operation = ExpressionBinaryOperation::BIT_AND;
             valueType = left->getValueType();
             break;
+        case TokenKind::BIT_SHL:
+            operation = ExpressionBinaryOperation::BIT_SHL;
+            valueType = left->getValueType();
+            break;
+        case TokenKind::BIT_SHR:
+            operation = ExpressionBinaryOperation::BIT_SHR;
+            valueType = left->getValueType();
+            break;
         case TokenKind::EQUAL:
             operation = ExpressionBinaryOperation::EQUAL;
             valueType = ValueType::BOOL;

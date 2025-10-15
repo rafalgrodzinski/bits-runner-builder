@@ -11,6 +11,8 @@ enum class ExpressionBinaryOperation {
     BIT_OR,
     BIT_XOR,
     BIT_AND,
+    BIT_SHL,
+    BIT_SHR,
 
     EQUAL,
     NOT_EQUAL,

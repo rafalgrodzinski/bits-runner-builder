@@ -14,5 +14,5 @@ printNum fun: number u64
 
 @export main fun
     num1 u32 <- 0xabcd
-    num2 u32 <- num1 & 0xff | ~num1 
+    num2 u32 <- num1 & 0xff | ~num1 >> 4
 ;

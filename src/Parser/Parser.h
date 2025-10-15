@@ -47,14 +47,17 @@ private:
     shared_ptr<Statement> matchStatementExpression();
 
     shared_ptr<Expression> nextExpression();
-    shared_ptr<Expression> matchLogicalSecond(); // or
-    shared_ptr<Expression> matchLogicalFirst(); // and
-    shared_ptr<Expression> matchLogicalUnary(); // not
+    shared_ptr<Expression> matchLogicalOrXor(); // or, xor
+    shared_ptr<Expression> matchLogicalAnd(); // and
+    shared_ptr<Expression> matchLogicalNot(); // not
     shared_ptr<Expression> matchEquality(); // =, !=
     shared_ptr<Expression> matchComparison(); // <, <=, >, >=
-    shared_ptr<Expression> matchBitwiseOrXor();
-    shared_ptr<Expression> matchBitwiseAnd();
-    shared_ptr<Expression> matchBitwiseNot();
+
+    shared_ptr<Expression> matchBitwiseOrXor(); // |, ^
+    shared_ptr<Expression> matchBitwiseAnd(); // &
+    shared_ptr<Expression> matchBitwiseShift(); // <<, >>
+    shared_ptr<Expression> matchBitwiseNot(); // ~
+
     shared_ptr<Expression> matchTerm(); // +, -
     shared_ptr<Expression> matchFactor(); // *, /, %
     shared_ptr<Expression> matchUnary(); // +, -
