@@ -1235,15 +1235,6 @@ shared_ptr<Expression> Parser::matchExpressionGrouping() {
     return nullptr;
 }
 
-shared_ptr<Expression> Parser::matchExpressionLiteral() {
-    shared_ptr<Token> token = tokens.at(currentIndex);
-
-    if (tryMatchingTokenKinds(Token::tokensLiteral, false, true))
-        return ExpressionLiteral::expressionLiteralForToken(token);
-
-    return nullptr;
-}
-
 shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
     enum {
         TAG_EXPRESSION,
@@ -1314,55 +1305,11 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
         return ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(expressions);
 }
 
-shared_ptr<Expression> Parser::matchExpressionVariable() {
-    ParseeResultsGroup resultsGroup;
+shared_ptr<Expression> Parser::matchExpressionLiteral() {
+    shared_ptr<Token> token = tokens.at(currentIndex);
 
-    // data
-    resultsGroup = parseeResultsGroupForParseeGroup(
-        ParseeGroup(
-            {
-                // identifier
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
-                // index expression
-                Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false, false),
-                Parsee::expressionParsee(true, true, true),
-                Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true)
-            }
-        )
-    );
-
-    switch (resultsGroup.getKind()) {
-        case ParseeResultsGroupKind::SUCCESS: {
-            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
-            shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(1).getExpression();
-            return ExpressionVariable::data(identifier, indexExpression);
-        }
-        case ParseeResultsGroupKind::NO_MATCH:
-            break;
-        case ParseeResultsGroupKind::FAILURE:
-            return nullptr;
-    }
-
-    // simple
-    resultsGroup = parseeResultsGroupForParseeGroup(
-        ParseeGroup(
-            {
-                // identifier
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false)
-            }
-        )
-    );
-
-    switch (resultsGroup.getKind()) {
-        case ParseeResultsGroupKind::SUCCESS: {
-            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
-            return ExpressionVariable::simple(identifier);
-        }
-        case ParseeResultsGroupKind::NO_MATCH:
-            break;
-        case ParseeResultsGroupKind::FAILURE:
-            return nullptr;
-    }
+    if (tryMatchingTokenKinds(Token::tokensLiteral, false, true))
+        return ExpressionLiteral::expressionLiteralForToken(token);
 
     return nullptr;
 }
@@ -1432,6 +1379,76 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
     }
 
     return make_shared<ExpressionCall>(identifier, argumentExpressions);
+}
+
+shared_ptr<Expression> Parser::matchExpressionVariable() {
+    ParseeResultsGroup resultsGroup;
+
+    // data
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                // identifier
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
+                // index expression
+                Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false, false),
+                Parsee::expressionParsee(true, true, true),
+                Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true)
+            }
+        )
+    );
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS: {
+            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
+            shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(1).getExpression();
+            return ExpressionVariable::data(identifier, indexExpression);
+        }
+        case ParseeResultsGroupKind::NO_MATCH:
+            break;
+        case ParseeResultsGroupKind::FAILURE:
+            return nullptr;
+    }
+
+    // simple
+    resultsGroup = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                // identifier
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false)
+            }
+        )
+    );
+
+    switch (resultsGroup.getKind()) {
+        case ParseeResultsGroupKind::SUCCESS: {
+            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
+            return ExpressionVariable::simple(identifier);
+        }
+        case ParseeResultsGroupKind::NO_MATCH:
+            break;
+        case ParseeResultsGroupKind::FAILURE:
+            return nullptr;
+    }
+
+    return nullptr;
+}
+
+shared_ptr<Expression> Parser::matchExpressionCast() {
+    ParseeResultsGroup parseeResults = parseeResultsGroupForParseeGroup(
+        ParseeGroup(
+            {
+                Parsee::valueTypeParsee(true, true, false)
+            }
+        )
+    );
+
+    if (parseeResults.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    shared_ptr<ValueType> valueType = parseeResults.getResults().at(0).getValueType();
+
+    return make_shared<ExpressionCast>(valueType);
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
@@ -1584,23 +1601,6 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
     }
 
     return make_shared<ExpressionBlock>(statements);
-}
-
-shared_ptr<Expression> Parser::matchExpressionCast() {
-    ParseeResultsGroup parseeResults = parseeResultsGroupForParseeGroup(
-        ParseeGroup(
-            {
-                Parsee::valueTypeParsee(true, true, false)
-            }
-        )
-    );
-
-    if (parseeResults.getKind() != ParseeResultsGroupKind::SUCCESS)
-        return nullptr;
-
-    shared_ptr<ValueType> valueType = parseeResults.getResults().at(0).getValueType();
-
-    return make_shared<ExpressionCast>(valueType);
 }
 
 ParseeResultsGroup Parser::parseeResultsGroupForParseeGroup(ParseeGroup group) {
