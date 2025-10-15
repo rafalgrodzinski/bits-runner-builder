@@ -232,9 +232,16 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token != nullptr)
         return token;
 
-    token = match(TokenKind::BIT_SHR, ">>", false);
-    if (token != nullptr)
-        return token;
+    // avoid matching <type>> as right shift
+    // and triple >>> pattern
+    if (
+        (tokens.size() < 2 || !tokens.at(tokens.size() - 2)->isOfKind({TokenKind::LESS})) &&
+        (tokens.size() < 1 || !tokens.back()->isOfKind({TokenKind::GREATER}))
+    ) {
+        token = match(TokenKind::BIT_SHR, ">>", false);
+        if (token != nullptr)
+            return token;
+    }
 
     // comparison
     token = match(TokenKind::NOT_EQUAL, "!=", false);
