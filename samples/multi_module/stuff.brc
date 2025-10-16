@@ -1,0 +1,7 @@
+@module stuff
+
+@export value u32
+
+@export multiply fun: by u32
+    value <- value * by
+;
