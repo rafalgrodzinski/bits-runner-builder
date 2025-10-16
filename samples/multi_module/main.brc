@@ -1,5 +1,5 @@
 @import io
-@import suff
+@import stuff
 
 @export main fun -> u64
     @io.print("Modyfying stuff from main\nWas: ")
