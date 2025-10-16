@@ -1,10 +1,10 @@
 @module io
 
-@import sutff
+@import stuff
 
 @extern putchar fun: character u64 -> u32
 
-@export print fun: text data<u64, 16>
+@export print fun: text data<u64, 64>
     rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
         putchar(text[i])
     ;
@@ -24,6 +24,6 @@
 
 @export printFromStuff fun
     print("Printing stuff from io\nIs: ")
-    printNum(@stuff.value)
+    printNum(@stuff.value.u64)
     print("\n")
 ;

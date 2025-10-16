@@ -205,8 +205,14 @@ void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string
 }
 
 void ModuleBuilder::buildImport(shared_ptr<StatementImport> statement) {
-    for (shared_ptr<Statement> &importStatement : exportedHeaderStatementsMap[statement->getName()])
+    auto it = exportedHeaderStatementsMap.find(statement->getName());
+    if (it == exportedHeaderStatementsMap.end()) {
+        markError(0, 0, format("Module {} doesn't exist", statement->getName()));
+        return;
+    }
+    for (shared_ptr<Statement> &importStatement  : it->second) {
         buildImportStatement(importStatement, statement->getName());
+    }
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    

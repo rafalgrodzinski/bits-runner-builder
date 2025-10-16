@@ -1,6 +1,6 @@
 @module stuff
 
-@export value u32
+@export value u32 <- 42
 
 @export multiply fun: by u32
     value <- value * by

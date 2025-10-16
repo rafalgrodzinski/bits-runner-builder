@@ -1,13 +1,15 @@
 @import io
-@import stuff
+@import suff
 
 @export main fun -> u64
     @io.print("Modyfying stuff from main\nWas: ")
-    @io.printNum(@stuff.value)
+    @io.printNum(@stuff.value.u64)
     @io.print("\n")
 
-    @stuff.value <- 42
-    @stuff.multiply(3)
+    @stuff.value <- 42.u32
+    @stuff.multiply(3.u32)
 
-    @io.prtintFromStuff()
+    @io.printFromStuff()
+
+    ret 0
 ;
