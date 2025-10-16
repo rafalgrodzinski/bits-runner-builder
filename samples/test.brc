@@ -1,5 +1,8 @@
 @extern putchar fun: character u64 -> u32
 
+numInternal u32 <- 7
+@export numExternal u32 <- 9
+
 printNum fun: number u64
     biggest u64 <- 10
     rep biggest <= number: biggest <- biggest * 10
