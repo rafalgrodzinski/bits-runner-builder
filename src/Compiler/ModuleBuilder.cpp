@@ -300,6 +300,8 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
 
     // build function body
     buildStatement(statement->getStatementBlock());
+    // Remove extranouse block after the last return statement
+    builder->GetInsertBlock()->eraseFromParent();
 
     scopes.pop();
 
@@ -516,14 +518,21 @@ void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
 }
 
 void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
+    llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
+
     if (statement->getExpression() != nullptr) {
-        llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
         llvm::Type *returnType = basicBlock->getParent()->getReturnType();
         llvm::Value *returnValue = valueForExpression(statement->getExpression(), returnType);
         builder->CreateRet(returnValue);
     } else {
         builder->CreateRetVoid();
     }
+
+    // Create a new block in case the return is not the last statement
+    llvm::BasicBlock *afterReturnBlock = llvm::BasicBlock::Create(*context, "afterReturnBlock");
+    llvm::Function *fun = basicBlock->getParent();
+    fun->insert(fun->end(), afterReturnBlock);
+    builder->SetInsertPoint(afterReturnBlock);
 }
 
 void ModuleBuilder::buildRepeat(shared_ptr<StatementRepeat> statement) {
@@ -569,13 +578,6 @@ void ModuleBuilder::buildRepeat(shared_ptr<StatementRepeat> statement) {
     builder->CreateCall(stackRestoreIntrinscic, llvm::ArrayRef({stackValue}));
 
     buildBlock(bodyStatement);
-
-    // split blocks if we get a terminator instruction
-    if (bodyBlock->getTerminator() != nullptr) {
-        bodyBlock = llvm::BasicBlock::Create(*context, "loopBodyAfterTerminator");
-        fun->insert(fun->end(), bodyBlock);
-        builder->SetInsertPoint(bodyBlock);
-    }
 
     // post statement
     if (postStatement != nullptr)
@@ -901,14 +903,6 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     scopes.push(Scope());
     builder->SetInsertPoint(thenBlock);
     buildStatement(expression->getThenBlock()->getStatementBlock());
-
-    // if we got a return instruction, a separate block has to be created fo the remainder of the then
-    if (thenBlock->getTerminator() != nullptr) {
-        thenBlock = llvm::BasicBlock::Create(*context, "thenBlockAfterTerminator");
-        fun->insert(fun->end(), thenBlock);
-        builder->SetInsertPoint(thenBlock);
-    }
-
     llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getResultStatementExpression()->getExpression());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
@@ -921,14 +915,6 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
         fun->insert(fun->end(), elseBlock);
         builder->SetInsertPoint(elseBlock);
         elseValue = valueForExpression(expression->getElseExpression());
-
-        // same in else, split into two if we have a terminator instruction
-        if (elseBlock->getTerminator() != nullptr) {
-            elseBlock = llvm::BasicBlock::Create(*context, "elseBlockAfterTerminator");
-            fun->insert(fun->end(), elseBlock);
-            builder->SetInsertPoint(elseBlock);
-        }
-
         builder->CreateBr(mergeBlock);
         elseBlock = builder->GetInsertBlock();
         scopes.pop();
