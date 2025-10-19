@@ -1047,8 +1047,10 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         }
         string structName = string(structType->getName());
         optional<int> memberIndex = getMemberIndex(structName, expressionVariable->getIdentifier());
-        if (!memberIndex)
+        if (!memberIndex) {
+            markError(0, 0, format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
             return nullptr;
+        }
         llvm::Value *index[] = {
             builder->getInt32(0),
             builder->getInt32(*memberIndex)
