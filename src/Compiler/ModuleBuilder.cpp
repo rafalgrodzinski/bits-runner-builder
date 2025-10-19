@@ -1152,9 +1152,10 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     bool isVal = expression->getIdentifier().compare("val") == 0;
     bool isVadr = expression->getIdentifier().compare("vAdr") == 0;
     bool isAdr = expression->getIdentifier().compare("adr") == 0;
+    bool isSize = expression->getIdentifier().compare("size") == 0;
 
     // Return quickly if not built-in
-    if (!isCount && !isVal && !isVadr && !isAdr)
+    if (!isCount && !isVal && !isVadr && !isAdr && !isSize)
         return nullptr;
 
     // Figure out opearand for the load operation
@@ -1189,6 +1190,12 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
         return builder->CreatePtrToInt(pointeeLoad, typeIntPtr);
     } else if (isAdr) {
         return builder->CreatePtrToInt(parentOperand, typeIntPtr);
+    } else if (isSize) {
+        int size = sizeInBitsForType(parentValue->getType());
+        if (size > 0)
+            return llvm::ConstantInt::get(typeUInt, size);
+        else 
+            return nullptr;
     }
 
     markError(0, 0, "Invalid built-in operation");
@@ -1708,6 +1715,33 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return typePtr;
         default:
             return nullptr;
+    }
+}
+
+int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
+    if (type->isIntegerTy()) {
+        llvm::IntegerType *integerType = llvm::dyn_cast<llvm::IntegerType>(type);
+        return max((int)integerType->getIntegerBitWidth(), 8);
+    } else if (type->isFloatTy()) {
+        return 32;
+    } else if (type->isDoubleTy()) {
+        return 64;
+    } else if (type->isArrayTy()) {
+        llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(type);
+        int elementsCount = arrayType->getNumElements();
+        llvm::Type *elementType = arrayType->getElementType();
+        int elementSize = sizeInBitsForType(elementType);
+        return elementSize * elementsCount;
+    } else if (type->isStructTy()) {
+        int size = 0;
+        llvm::StructType *structType = llvm::dyn_cast<llvm::StructType>(type);
+        int elementsCount = structType->getNumElements();
+        for (int i=0; i<elementsCount; i++) {
+            llvm::Type *elementType = structType->getElementType(i);
+            int elementSize = sizeInBitsForType(elementType);
+            size += elementSize;
+        }
+        return size;
     }
 }
 

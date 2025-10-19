@@ -1,4 +1,4 @@
-/*@extern putchar fun: character u64 -> u32
+@extern putchar fun: character u64 -> u32
 
 @export printNum fun: number u64
     biggest u64 <- 10
@@ -10,18 +10,18 @@
         putchar(digit + '0')
         number <- number % biggest
     ;
-;*/
-
-Layout blob
-    memSize u32
-    pageSize u32
-    pagesCount u32
-    memPages data<u8>
 ;
-pMemLayout ptr<blob<Layout>>
+
+things blob
+    f1 f32
+    nums data<u64>
+    flag bool
+;
 
 @export main fun -> u64
-    pMemLayout.val.numPages
+    num blob<things>
+
+    num.size
 
     ret 0
 ;

@@ -157,7 +157,9 @@ private:
     llvm::StructType *getStructType(string structName);
     optional<int> getMemberIndex(string structName, string memberName);
 
+    // support
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
+    int sizeInBitsForType(llvm::Type *type);
 
     void markError(int line, int column, string message);
 
