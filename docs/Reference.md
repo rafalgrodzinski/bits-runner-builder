@@ -26,6 +26,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Chaining](Reference.md#chaining) (`thing.sutff[5].something`)
 - [Modules](Reference.md#modules) (`@module`, `@import`, `@export`, `@extern`)
 - [Casts](Reference.md#casts) (`.u32`, `.data<u8>`)
+- [Built-Ins](Reference.md#built-ins) (`.size`, `.count`, `.val`, `.vAdr`, `.adr`)
 
 ## Comments
 Like in C, comments can specified using either `\\` which will run until the end of the line or through `/* */` block. However, unlike C, the `/* bla bla /* bla */ */` comments can be also embeded inside each other.
@@ -336,3 +337,13 @@ Separately linked symbosl can be specified using `@extern`. For example, we we w
 
 ## Casts
 It's possible to cast between simple and data types (as long as data types don't contain blobs). It is done by appending a chain expression equivalent to the desired type such as `.u8` or `.data<f32>`.
+
+## Built-Ins
+There is a couple of built-in members that can be accessible on all or some variables and/or types.
+```
+.size // Returns size in bytes of a simple, data, blob. Works on both instances and types
+.count // Data types only: Number of elements in sized data types
+.adr // Address of a given variable
+.val // Pointers only: returns the value that the pointer references
+.vAdr // Pointers only: address of the referenced value (not the poitner itself)
+```

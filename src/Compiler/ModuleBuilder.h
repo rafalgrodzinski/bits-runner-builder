@@ -134,6 +134,7 @@ private:
     llvm::Value *valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions);
     llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<ExpressionVariable> expression);
+    llvm::Value *valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
 
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
@@ -157,7 +158,9 @@ private:
     llvm::StructType *getStructType(string structName);
     optional<int> getMemberIndex(string structName, string memberName);
 
+    // support
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
+    int sizeInBitsForType(llvm::Type *type);
 
     void markError(int line, int column, string message);
 
