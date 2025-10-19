@@ -1005,7 +1005,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         shared_ptr<Expression> chainExpression = chainExpressions.at(i);
 
         // If the first expression is a cast, try doing a built-in on a type
-        if (chainExpression->getKind() == ExpressionKind::CAST &&  chainExpressions.size() >= 2) {
+        if (currentValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
             shared_ptr<ExpressionVariable> childExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(++i));
             currentValue = valueForTypeBuiltIn(type, childExpressionVariable);
