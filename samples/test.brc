@@ -1,13 +1,27 @@
-//@import io
-//@import stuff
+@extern putchar fun: character u64 -> u32
+
+@export printNum fun: number u64
+    biggest u64 <- 10
+    rep biggest <= number: biggest <- biggest * 10
+    biggest <- biggest / 10
+
+    rep biggest > 0, biggest <- biggest / 10
+        digit u64 <- number / biggest
+        putchar(digit + '0')
+        number <- number % biggest
+    ;
+;
+
+calc fun: input u64 -> u64
+    rep
+        ret 3
+    ;
+    
+    ret input * 2
+;
 
 @export main fun -> u64
-    @io.print("Modyfying stuff from main\nWas: ")
-    @io.printNum(@stuff.value)
-    @io.print("\n")
+    printNum(calc(3))
 
-    //@stuff.value <- 42
-    //@stuff.multiply(3)
-
-    //@io.prtintFromStuff()
+    ret 0
 ;
