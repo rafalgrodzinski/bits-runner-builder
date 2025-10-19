@@ -98,11 +98,12 @@ private:
     void buildImportStatement(shared_ptr<Statement> statement, string moduleName);
 
     void buildImport(shared_ptr<StatementImport> statement);
+    void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
     void buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement);
     void buildBlob(shared_ptr<StatementBlob> statement);
-    void buildVariableDeclaration(shared_ptr<StatementVariableDeclaration> statement);
+    void buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType);
     void buildVariable(shared_ptr<StatementVariable> statement);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
@@ -135,7 +136,6 @@ private:
     llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
 
-    void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
 
     bool setAlloca(string name, llvm::AllocaInst *alloca);

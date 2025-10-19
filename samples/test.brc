@@ -1,6 +1,6 @@
-@extern putchar fun: character u64 -> u32
+/*@extern putchar fun: character u64 -> u32
 
-printNum fun: number u64
+@export printNum fun: number u64
     biggest u64 <- 10
     rep biggest <= number: biggest <- biggest * 10
     biggest <- biggest / 10
@@ -10,32 +10,18 @@ printNum fun: number u64
         putchar(digit + '0')
         number <- number % biggest
     ;
+;*/
+
+Layout blob
+    memSize u32
+    pageSize u32
+    pagesCount u32
+    memPages data<u8>
 ;
+pMemLayout ptr<blob<Layout>>
 
-printHex fun: number u64
-    biggest u64 <- 16
-    digitsCount u64 <- 1
-    rep biggest <= number
-        biggest <- biggest * 16
-        digitsCount <- digitsCount + 1
-    ;
-    biggest <- biggest / 16
+@export main fun -> u64
+    pMemLayout.val.numPages
 
-    // prefix
-    putchar('0')
-    putchar('x')
-    if digitsCount % 2 = 1: putchar('0')
-
-    rep biggest > 0, biggest <- biggest / 16
-        digit u64 <- number / biggest
-        if digit > 9: putchar(digit + 'a' - 10) else: putchar(digit + '0')
-        number <- number % biggest
-    ;
-;
-
-@export main fun
-    num1 u64 <- 0xabcd
-    num2 u64 <- ~(num1 >> 4 & 0xf)
-    printHex(num2 & 0xff)
-    putchar('\n')
+    ret 0
 ;

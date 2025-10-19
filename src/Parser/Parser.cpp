@@ -752,37 +752,37 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 
 shared_ptr<Statement> Parser::matchStatementAssignment() {
     enum {
-        TAG_IDENTIFIER_SIMPLE,
-        TAG_IDENTIFIER_DATA,
+        TAG_IDENTIFIER_PREFIX,
+        TAG_IDENTIFIER,
         TAG_INDEX_EXPRESSION,
         TAG_VALUE_EXPRESSION
     };
-
-    vector<shared_ptr<Expression>> chainExpressions;
-    shared_ptr<Expression> valueExpression;
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
                 // root chain
-                Parsee::orParsee(
-                    // data
+                // identifier - module prefix
+                Parsee::groupParsee(
                     ParseeGroup(
                         {
-                            // identifier
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER_DATA),
-                            // index expression
+                            Parsee::tokenParsee(TokenKind::META, true, false, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true, TAG_IDENTIFIER_PREFIX),
+                            Parsee::tokenParsee(TokenKind::DOT, true, true, true, TAG_IDENTIFIER_PREFIX)
+                        }
+                    ), false, true, false
+                ),
+                // identifier - name
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER),
+                // index expression
+                Parsee::groupParsee(
+                    ParseeGroup(
+                        {
                             Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false, false),
                             Parsee::expressionParsee(true, true, true, TAG_INDEX_EXPRESSION),
-                            Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true),
+                            Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true)
                         }
-                    ),
-                    // simple
-                    ParseeGroup(
-                        {
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER_SIMPLE)
-                        }
-                    ), true, true, false
+                    ), false, true, false
                 ),
                 // additional chains
                 Parsee::repeatedGroupParsee(
@@ -790,25 +790,18 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                         {
                             // dot separator in between
                             Parsee::tokenParsee(TokenKind::DOT, true, false, false),
-                            Parsee::orParsee(
-                                // .data[]
+                            // identifier - name
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER),
+                            // index expression
+                            Parsee::groupParsee(
                                 ParseeGroup(
                                     {
-                                        // identifier
-                                        Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER_DATA),
-                                        // index expression
                                         Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false, false),
                                         Parsee::expressionParsee(true, true, true, TAG_INDEX_EXPRESSION),
-                                        Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true),
+                                        Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true)
                                     }
-                                ),
-                                // .simple
-                                ParseeGroup(
-                                    {
-                                        Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER_SIMPLE)
-                                    }
-                                ), true, true, false
-                            )
+                                ), false, true, false
+                            ),
                         }
                     ), false, true, false
                 ),
@@ -822,25 +815,34 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    vector<shared_ptr<Expression>> chainExpressions;
+    shared_ptr<Expression> valueExpression;
+
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
+        string identifier = "";
         switch (parseeResult.getTag()) {
-            case TAG_IDENTIFIER_SIMPLE: {
-                shared_ptr<ExpressionVariable> expression = ExpressionVariable::simple(parseeResult.getToken()->getLexme());
-                chainExpressions.push_back(expression);
+            case TAG_IDENTIFIER_PREFIX: {
+                identifier += resultsGroup.getResults().at(i++).getToken()->getLexme(); // module
+                identifier += resultsGroup.getResults().at(i++).getToken()->getLexme(); // dot
+            }
+            case TAG_IDENTIFIER: {
+                identifier += resultsGroup.getResults().at(i).getToken()->getLexme(); // name
+                // data
+                if (i < resultsGroup.getResults().size() - 1 && resultsGroup.getResults().at(i+1).getTag() == TAG_INDEX_EXPRESSION) {
+                    shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(++i).getExpression();
+                    shared_ptr<ExpressionVariable> expression = ExpressionVariable::data(identifier, indexExpression);
+                    chainExpressions.push_back(expression);
+                // simple
+                } else {
+                    shared_ptr<ExpressionVariable> expression = ExpressionVariable::simple(identifier);
+                    chainExpressions.push_back(expression);
+                }
                 break;
             }
-            case TAG_IDENTIFIER_DATA: {
-                string identifier = parseeResult.getToken()->getLexme();
-                shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(++i).getExpression();
-                shared_ptr<ExpressionVariable> expression = ExpressionVariable::data(identifier, indexExpression);
-                chainExpressions.push_back(expression);
-                break;
-            }
-            case TAG_VALUE_EXPRESSION: {
+            case TAG_VALUE_EXPRESSION:
                 valueExpression = parseeResult.getExpression();
                 break;
-            }
         }
     }
 
@@ -1032,7 +1034,7 @@ shared_ptr<Expression> Parser::matchLogicalOrXor() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, false))
+    while (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, false))
         expression = matchExpressionBinary(expression);
 
     // Expression cannot be on left hand side of an assignment
@@ -1047,7 +1049,7 @@ shared_ptr<Expression> Parser::matchLogicalAnd() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, false))
+    while (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1093,7 +1095,7 @@ shared_ptr<Expression> Parser::matchBitwiseOrXor() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, false))
+    while (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1104,7 +1106,7 @@ shared_ptr<Expression> Parser::matchBitwiseAnd() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, false))
+    while (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1115,7 +1117,7 @@ shared_ptr<Expression> Parser::matchBitwiseShift() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, false))
+    while (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression; 
@@ -1139,7 +1141,7 @@ shared_ptr<Expression> Parser::matchTerm() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensTerm, false, false))
+    while (tryMatchingTokenKinds(Token::tokensTerm, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1150,7 +1152,7 @@ shared_ptr<Expression> Parser::matchFactor() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tokens.at(currentIndex)->isOfKind(Token::tokensFactor))
+    while (tryMatchingTokenKinds(Token::tokensFactor, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1382,56 +1384,61 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {
-    ParseeResultsGroup resultsGroup;
+    enum {
+        TAG_IDENTIFIER,
+        TAG_INDEX_EXPRESSION
+    };
 
-    // data
-    resultsGroup = parseeResultsGroupForParseeGroup(
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParseeGroup(
         ParseeGroup(
             {
-                // identifier
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false),
+                // identifier - module prefix
+                Parsee::groupParsee(
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::META, true, false, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, true, TAG_IDENTIFIER),
+                            Parsee::tokenParsee(TokenKind::DOT, true, true, true, TAG_IDENTIFIER)
+                        }
+                    ), false, true, false
+                ),
+                // identifier - name
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false, TAG_IDENTIFIER),
                 // index expression
-                Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false, false),
-                Parsee::expressionParsee(true, true, true),
-                Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true)
+                Parsee::groupParsee(
+                    ParseeGroup(
+                        {
+                            Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, true, false, false),
+                            Parsee::expressionParsee(true, true, true, TAG_INDEX_EXPRESSION),
+                            Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, true, false, true)
+                        }
+                    ), false, true, false
+                )
             }
         )
     );
 
-    switch (resultsGroup.getKind()) {
-        case ParseeResultsGroupKind::SUCCESS: {
-            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
-            shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(1).getExpression();
-            return ExpressionVariable::data(identifier, indexExpression);
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    string identifier = "";
+    shared_ptr<Expression> indexExpression = nullptr;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_IDENTIFIER:
+                identifier += parseeResult.getToken()->getLexme();
+                break;
+            case TAG_INDEX_EXPRESSION:
+                indexExpression = parseeResult.getExpression();
+                break;
         }
-        case ParseeResultsGroupKind::NO_MATCH:
-            break;
-        case ParseeResultsGroupKind::FAILURE:
-            return nullptr;
     }
 
-    // simple
-    resultsGroup = parseeResultsGroupForParseeGroup(
-        ParseeGroup(
-            {
-                // identifier
-                Parsee::tokenParsee(TokenKind::IDENTIFIER, true, true, false)
-            }
-        )
-    );
-
-    switch (resultsGroup.getKind()) {
-        case ParseeResultsGroupKind::SUCCESS: {
-            string identifier = resultsGroup.getResults().at(0).getToken()->getLexme();
-            return ExpressionVariable::simple(identifier);
-        }
-        case ParseeResultsGroupKind::NO_MATCH:
-            break;
-        case ParseeResultsGroupKind::FAILURE:
-            return nullptr;
-    }
-
-    return nullptr;
+    if (indexExpression != nullptr)
+        return ExpressionVariable::data(identifier, indexExpression);
+    else
+        return ExpressionVariable::simple(identifier);
 }
 
 shared_ptr<Expression> Parser::matchExpressionCast() {
@@ -1552,23 +1559,23 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     shared_ptr<Expression> right;
     // What level of binary expression are we having?
     if (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true)) {
-        right = matchLogicalOrXor();
-    } else if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true)) {
         right = matchLogicalAnd();
+    } else if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true)) {
+        right = matchLogicalNot();
     } else if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
     } else if (tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
-        right = matchBitwiseAnd();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
         right = matchBitwiseOrXor();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
         right = matchBitwiseAnd();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, true)) {
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
         right = matchBitwiseShift();
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, true)) {
+        right = matchBitwiseNot();
     } else if (tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
-        right = matchTerm();
-    } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
         right = matchFactor();
+    } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
+        right = matchUnary();
     }
 
     if (right == nullptr) {

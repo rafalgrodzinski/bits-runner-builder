@@ -93,6 +93,10 @@ Execute from the main directory
 // Fizz Buzz
 ./samples/fizz_buzz/build.sh
 ./fizz_buzz
+
+// Multi Module
+./samples/multi_module/build.sh
+./multi_module
 ```
 
 ## Additional Stuff
