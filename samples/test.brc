@@ -14,14 +14,12 @@
 
 things blob
     f1 f32
-    nums data<u64>
+    nums data<u8, 64>
     flag bool
 ;
 
 @export main fun -> u64
-    num ptr<u64>
-
-    num.size
+    printNum(blob<things>.size)
 
     ret 0
 ;

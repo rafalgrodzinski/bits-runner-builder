@@ -1004,6 +1004,14 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
     for (int i=0; i<chainExpressions.size(); i++) {
         shared_ptr<Expression> chainExpression = chainExpressions.at(i);
 
+        // If the first expression is a cast, try doing a built-in on a type
+        if (chainExpression->getKind() == ExpressionKind::CAST &&  chainExpressions.size() >= 2) {
+            llvm::Type *type = typeForValueType(chainExpression->getValueType());
+            shared_ptr<ExpressionVariable> childExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(++i));
+            currentValue = valueForTypeBuiltIn(type, childExpressionVariable);
+            continue;
+        }
+
         // First in chain is treated as a single variable
         if (currentValue == nullptr) {
             currentValue = valueForExpression(chainExpression);
@@ -1191,14 +1199,29 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     } else if (isAdr) {
         return builder->CreatePtrToInt(parentOperand, typeIntPtr);
     } else if (isSize) {
-        int size = sizeInBitsForType(parentValue->getType());
-        if (size > 0)
-            return llvm::ConstantInt::get(typeUInt, size);
+        int sizeInBytes = sizeInBitsForType(parentValue->getType()) / 8;
+        if (sizeInBytes > 0)
+            return llvm::ConstantInt::get(typeUInt, sizeInBytes);
         else 
             return nullptr;
     }
 
     markError(0, 0, "Invalid built-in operation");
+    return nullptr;
+}
+
+llvm::Value *ModuleBuilder::valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionVariable> expression) {
+    bool isSize = expression->getIdentifier().compare("size") == 0;
+
+    if (isSize) {
+        int sizeInBytes = sizeInBitsForType(type) / 8;
+        if (sizeInBytes > 0)
+            return llvm::ConstantInt::get(typeUInt, sizeInBytes);
+        else 
+            return nullptr;    
+    }
+    
+    markError(0, 0, "Invalid type built-in operation");
     return nullptr;
 }
 
