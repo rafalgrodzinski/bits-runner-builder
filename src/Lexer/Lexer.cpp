@@ -498,8 +498,9 @@ shared_ptr<Token> Lexer::matchIntegerChar() {
     bool isClosing = false;
     do {
         nextIndex++;
-        isClosing = source.at(nextIndex) == '\'' && source.at(nextIndex - 1) != '\\';
-    } while (nextIndex < source.length() && !isClosing);
+        isClosing = (source.at(nextIndex) == '\'' && (source.at(nextIndex - 1) != '\\')) ||
+            (nextIndex >= 2 && source.at(nextIndex - 2) == '\\');
+    } while (nextIndex < source.length()-1 && !isClosing);
 
     if (!isClosing)
         return nullptr;
