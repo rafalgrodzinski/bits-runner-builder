@@ -1726,6 +1726,8 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
         return 32;
     } else if (type->isDoubleTy()) {
         return 64;
+    } else if (type->isPointerTy()) {
+        return typeIntPtr->getBitWidth();
     } else if (type->isArrayTy()) {
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(type);
         int elementsCount = arrayType->getNumElements();
@@ -1743,6 +1745,8 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
         }
         return size;
     }
+
+    return 0;
 }
 
 void ModuleBuilder::markError(int line, int column, string message) {

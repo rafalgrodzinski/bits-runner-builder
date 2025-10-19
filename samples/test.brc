@@ -19,7 +19,7 @@ things blob
 ;
 
 @export main fun -> u64
-    num blob<things>
+    num ptr<u64>
 
     num.size
 
