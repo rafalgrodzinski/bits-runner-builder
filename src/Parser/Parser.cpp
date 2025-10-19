@@ -1034,7 +1034,7 @@ shared_ptr<Expression> Parser::matchLogicalOrXor() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, false))
+    while (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, false))
         expression = matchExpressionBinary(expression);
 
     // Expression cannot be on left hand side of an assignment
@@ -1049,7 +1049,7 @@ shared_ptr<Expression> Parser::matchLogicalAnd() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, false))
+    while (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1095,7 +1095,7 @@ shared_ptr<Expression> Parser::matchBitwiseOrXor() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, false))
+    while (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1106,7 +1106,7 @@ shared_ptr<Expression> Parser::matchBitwiseAnd() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, false))
+    while (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1117,7 +1117,7 @@ shared_ptr<Expression> Parser::matchBitwiseShift() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, false))
+    while (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression; 
@@ -1141,7 +1141,7 @@ shared_ptr<Expression> Parser::matchTerm() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensTerm, false, false))
+    while (tryMatchingTokenKinds(Token::tokensTerm, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1152,7 +1152,7 @@ shared_ptr<Expression> Parser::matchFactor() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tokens.at(currentIndex)->isOfKind(Token::tokensFactor))
+    while (tryMatchingTokenKinds(Token::tokensFactor, false, false))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1559,23 +1559,23 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     shared_ptr<Expression> right;
     // What level of binary expression are we having?
     if (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true)) {
-        right = matchLogicalOrXor();
-    } else if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true)) {
         right = matchLogicalAnd();
+    } else if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true)) {
+        right = matchLogicalNot();
     } else if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
     } else if (tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
-        right = matchBitwiseAnd();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
         right = matchBitwiseOrXor();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
         right = matchBitwiseAnd();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, true)) {
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
         right = matchBitwiseShift();
+    } else if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, true)) {
+        right = matchBitwiseNot();
     } else if (tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
-        right = matchTerm();
-    } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
         right = matchFactor();
+    } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
+        right = matchUnary();
     }
 
     if (right == nullptr) {
