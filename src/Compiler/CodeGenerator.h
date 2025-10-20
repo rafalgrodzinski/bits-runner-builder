@@ -10,6 +10,7 @@
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/TargetParser/Host.h>
+#include <llvm/IR/CallingConv.h>
 
 using namespace std;
 
@@ -35,6 +36,13 @@ public:
         O3
     };
 
+    enum class CallingConvention {
+        CDECL,
+        STDCALL,
+        FASTCALL,
+        TAIL
+    };
+
     enum class Options {
         FUNCTION_SECTIONS,
         NO_BSS
@@ -51,6 +59,7 @@ private:
     string architecture;
     llvm::TargetMachine *targetMachine;
     llvm::DataLayout dataLayout;
+    llvm::CallingConv::ID callingConvention;
 
 public:
     CodeGenerator(
@@ -59,11 +68,13 @@ public:
         RelocationModel relocationModelOption,
         CodeModel codeModelOption,
         OptimizationLevel optimizationLevelOption,
+        CallingConvention callingConventionOption,
         unsigned int optionBits
     );
     void generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose);
     int getIntSize();
     int getPointerSize();
+    llvm::CallingConv::ID getCallingConvetion();
 };
 
 #endif

@@ -89,6 +89,8 @@ private:
     llvm::Type *typePtr;
     llvm::IntegerType *typeIntPtr;
 
+    llvm::CallingConv::ID callingConvention;
+
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
@@ -170,6 +172,7 @@ public:
         string defaultModuleName,
         int intSize,
         int pointerSize,
+        llvm::CallingConv::ID callingConvention,
         vector<shared_ptr<Statement>> statements,
         vector<shared_ptr<Statement>> headerStatements,
         map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap

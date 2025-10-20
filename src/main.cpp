@@ -131,6 +131,20 @@ int main(int argc, char **argv) {
         llvm::cl::cat(targetOptions)
     );
 
+    // calling convention
+    llvm::cl::opt<CodeGenerator::CallingConvention> callingConvention(
+        "call",
+        llvm::cl::desc("Calling convention:"),
+        llvm::cl::init(CodeGenerator::CallingConvention::CDECL),
+        llvm::cl::values(
+            clEnumValN(CodeGenerator::CallingConvention::CDECL, "cdecl", "C Declaration - Standard C calling convention (Default)"),
+            clEnumValN(CodeGenerator::CallingConvention::STDCALL, "stdcall", "Used by the Win32 API, calee clears the stack"),
+            clEnumValN(CodeGenerator::CallingConvention::FASTCALL, "fastcall", "Fast Call - first 2,3 arguments passed in registers"),
+            clEnumValN(CodeGenerator::CallingConvention::TAIL, "tail", "Allows for tail call optimizations")
+        ),
+        llvm::cl::cat(targetOptions)
+    );
+
     // options
     llvm::cl::bits<CodeGenerator::Options> options(
         llvm::cl::desc("Additional options"),
@@ -193,7 +207,7 @@ int main(int argc, char **argv) {
     }
 
     // Specify code generator for deired target
-    CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel,  options.getBits());
+    CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
     for (const auto &statementsEntry : statementsMap) {
         if (isVerbose)
@@ -209,6 +223,7 @@ int main(int argc, char **argv) {
             DEFAULT_MODULE_NAME,
             codeGenerator.getIntSize(),
             codeGenerator.getPointerSize(),
+            codeGenerator.getCallingConvetion(),
             statements,
             headerStatements,
             exportedHeaderStatementsMap

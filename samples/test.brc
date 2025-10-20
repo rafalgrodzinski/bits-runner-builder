@@ -1,7 +1,7 @@
 @extern putchar fun: character u64 -> u32
 
 @export main fun -> u64
-    putchar('\\')
+    num u32 <- 0b00001100
 
     ret 0
 ;
