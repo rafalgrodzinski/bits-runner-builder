@@ -1,25 +1,7 @@
 @extern putchar fun: character u64 -> u32
 
-@export printNum fun: number u64
-    biggest u64 <- 10
-    rep biggest <= number: biggest <- biggest * 10
-    biggest <- biggest / 10
-
-    rep biggest > 0, biggest <- biggest / 10
-        digit u64 <- number / biggest
-        putchar(digit + '0')
-        number <- number % biggest
-    ;
-;
-
-things blob
-    f1 f32
-    nums data<u8, 64>
-    flag bool
-;
-
 @export main fun -> u64
-    printNum(blob<things>.size)
+    num u32 <- 0b00001100
 
     ret 0
 ;

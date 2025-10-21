@@ -37,11 +37,12 @@ ModuleBuilder::ModuleBuilder(
     string defaultModuleName,
     int intSize,
     int pointerSize,
+    llvm::CallingConv::ID callingConvention,
     vector<shared_ptr<Statement>> statements,
     vector<shared_ptr<Statement>> headerStatements,
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
 ):
-moduleName(moduleName), defaultModuleName(defaultModuleName), statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
+moduleName(moduleName), defaultModuleName(defaultModuleName), statements(statements), callingConvention(callingConvention), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -248,6 +249,7 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     // build function declaration
     llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgTypes, false);
     llvm::Function *fun = llvm::Function::Create(funType, funLinkage, symbolName, *module);
+    fun->setCallingConv(callingConvention);
 
     setFun(internalName, fun);
 }

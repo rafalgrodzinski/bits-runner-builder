@@ -8,6 +8,7 @@ CodeGenerator::CodeGenerator(
     RelocationModel relocationModelOption,
     CodeModel codeModelOption,
     OptimizationLevel optimizationLevelOption,
+    CallingConvention callingConventionOption,
     unsigned int optionBits
 ) {
     llvm::InitializeAllTargetInfos();
@@ -81,6 +82,22 @@ CodeGenerator::CodeGenerator(
             break;
     }
 
+    // calling convention
+    switch (callingConventionOption) {
+        case CallingConvention::CDECL:
+            callingConvention = llvm::CallingConv::C;
+            break;
+        case CallingConvention::STDCALL:
+            callingConvention = llvm::CallingConv::X86_StdCall;
+            break;
+        case CallingConvention::FASTCALL:
+            callingConvention = llvm::CallingConv::Fast;
+            break;
+        case CallingConvention::TAIL:
+            callingConvention = llvm::CallingConv::Tail;
+            break;
+    }
+
     // options
     llvm::TargetOptions targetOptions;
     targetOptions.FunctionSections = (optionBits >> int(Options::FUNCTION_SECTIONS)) & 0x01;
@@ -143,4 +160,8 @@ int CodeGenerator::getIntSize() {
 
 int CodeGenerator::getPointerSize() {
     return dataLayout.getPointerSizeInBits();
+}
+
+llvm::CallingConv::ID CodeGenerator::getCallingConvetion() {
+    return callingConvention;
 }

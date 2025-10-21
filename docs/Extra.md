@@ -42,6 +42,11 @@ This option affects how addresses are calculated. It forms a part of ABI and is 
 `--opt=[g|O0|O1|O2|O3]`
 Details on what each option do are burries somewhere inside of LLVM's source code, but in short `O2` is the sane default, whereas `O3` might be a bit more performant but also unstable. In general everything should work correctly at `O2`.
 
+## Calling Convention
+[LLVM Calling Conventions](https://llvm.org/doxygen/namespacellvm_1_1CallingConv.html#ac6aa1387c4375260e2468eb5a77fdb4cafd841a49aec1539bc88abc8ff9e170fb)
+x86 Disassembly/Calling Conventions;
+[https://en.wikibooks.org/wiki/X86_Disassembly/Calling_Conventions](https://en.wikibooks.org/wiki/X86_Disassembly/Calling_Conventions)
+
 ## Additional Options
 `--function-sections` Places each function in a separate section, which can be useful if we want to manually arrange functions in a linker script. For example to place startup code at the beginning.
 
