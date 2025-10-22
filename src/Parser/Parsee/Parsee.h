@@ -3,8 +3,7 @@
 
 #include <memory>
 #include <optional>
-
-#include "ParseeGroup.h"
+#include <vector>
 
 enum class TokenKind;
 
@@ -27,46 +26,50 @@ enum class ParseeKind {
 };
 
 class Parsee {
+public:
+    enum class Level {
+        OPTIONAL,
+        REQUIRED,
+        CRITICAL
+    };
 private:
     ParseeKind kind;
     int tag;
-    optional<ParseeGroup> group;
-    optional<ParseeGroup> repeatedGroup;
-    optional<ParseeGroup> firstGroup;
-    optional<ParseeGroup> secondGroup;
+    optional<vector<Parsee>> groupParsees;
+    optional<vector<Parsee>> repeatedParsees;
+    optional<vector<Parsee>> firstParsees;
+    optional<vector<Parsee>> secondParsees;
     TokenKind tokenKind;
     bool shouldIncludeExpressionStatement;
-    bool isRequired;
+    Level level;
     bool shouldReturn;
-    bool shouldFailOnNoMatch;
     Parsee();
 
 public:
-    static Parsee groupParsee(ParseeGroup group, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
-    static Parsee repeatedGroupParsee(ParseeGroup repeatedGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
-    static Parsee tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
-    static Parsee valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1); 
-    static Parsee statementParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1); 
-    static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
-    static Parsee expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
-    static Parsee orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch);
-    static Parsee statementBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
-    static Parsee statementBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
-    static Parsee expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
-    static Parsee expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
-    static Parsee ifElseParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag = -1);
+    static Parsee groupParsee(vector<Parsee> groupParsees, Level level, bool shouldReturn);
+    static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, bool shouldReturn);
+    static Parsee orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn);
+    static Parsee tokenParsee(TokenKind tokenKind, Level level, bool shouldReturn, int tag = -1);
+    static Parsee valueTypeParsee(Level level, bool shouldReturn, int tag = -1); 
+    static Parsee statementParsee(Level level, bool shouldReturn, int tag = -1); 
+    static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, Level level, bool shouldReturn, int tag = -1);
+    static Parsee expressionParsee(Level level, bool shouldReturn, int tag = -1);
+    static Parsee statementBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
+    static Parsee statementBlockMultiLineParsee(Level level, bool shouldReturn, int tag = -1);
+    static Parsee expressionBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
+    static Parsee expressionBlockMultiLineParsee(Level level, bool shouldReturn, int tag = -1);
+    static Parsee ifElseParsee(Level level, bool shouldReturn, int tag = -1);
 
     ParseeKind getKind();
     int getTag();
-    optional<ParseeGroup> getGroup();
-    optional<ParseeGroup> getRepeatedGroup();
-    optional<ParseeGroup> getFirstGroup();
-    optional<ParseeGroup> getSecondGroup();
+    optional<vector<Parsee>> getGroupParsees();
+    optional<vector<Parsee>> getRepeatedParsees();
+    optional<vector<Parsee>> getFirstParsees();
+    optional<vector<Parsee>> getSecondParsees();
     TokenKind getTokenKind();
     bool getShouldIncludeExpressionStatement();
-    bool getIsRequired();
+    Level getLevel();
     bool getShouldReturn();
-    bool getShouldFailOnNoMatch();
 };
 
 #endif

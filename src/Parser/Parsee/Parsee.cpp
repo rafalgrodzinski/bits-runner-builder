@@ -1,140 +1,126 @@
 #include "Parsee.h"
 
-#include "ParseeGroup.h"
+Parsee::Parsee() { }
 
-Parsee Parsee::groupParsee(ParseeGroup group, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+Parsee Parsee::groupParsee(vector<Parsee> groupParsees, Level level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::GROUP;
-    parsee.group = group;
-    parsee.isRequired = isRequired;
+    parsee.groupParsees = groupParsees;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::repeatedGroupParsee(ParseeGroup repeatedGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
+Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::REPEATED_GROUP;
-    parsee.repeatedGroup = repeatedGroup;
-    parsee.isRequired = isRequired;
+    parsee.repeatedParsees = repeatedParsees;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::tokenParsee(TokenKind tokenKind, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::OR;
+    parsee.firstParsees = firstParsees;
+    parsee.secondParsees = secondParsees;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::tokenParsee(TokenKind tokenKind, Level level, bool shouldReturn, int tag) {
     Parsee  parsee;
     parsee.kind = ParseeKind::TOKEN;
     parsee.tag = tag;
     parsee.tokenKind = tokenKind;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::valueTypeParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::valueTypeParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::VALUE_TYPE;
     parsee.tag = tag;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::statementParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::statementParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT;
     parsee.tag = tag;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::statementInBlockParsee(bool shouldIncludeExpressionStatement, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::statementInBlockParsee(bool shouldIncludeExpressionStatement, Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_IN_BLOCK;
     parsee.tag = tag;
     parsee.shouldIncludeExpressionStatement = shouldIncludeExpressionStatement;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::expressionParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::expressionParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::EXPRESSION;
     parsee.tag = tag;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::OR;
-    parsee.firstGroup = firstGroup;
-    parsee.secondGroup = secondGroup;
-    parsee.isRequired = isRequired;
-    parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
-    return parsee;
-}
-
-Parsee Parsee::statementBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::statementBlockSingleLineParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_BLOCK_SINGLE_LINE;
     parsee.tag = tag;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::statementBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::statementBlockMultiLineParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_BLOCK_MULTI_LINE;
     parsee.tag = tag;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::expressionBlockSingleLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::expressionBlockSingleLineParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE;
     parsee.tag = tag;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee Parsee::expressionBlockMultiLineParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
+Parsee Parsee::expressionBlockMultiLineParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::EXPRESSION_BLOCK_MULTI_LINE;
     parsee.tag = tag;
-    parsee.isRequired = isRequired;
+    parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
-    return parsee;
-}
-Parsee Parsee::ifElseParsee(bool isRequired, bool shouldReturn, bool shouldFailOnNoMatch, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::IF_ELSE;
-    parsee.tag = tag;
-    parsee.isRequired = isRequired;
-    parsee.shouldReturn = shouldReturn;
-    parsee.shouldFailOnNoMatch = shouldFailOnNoMatch;
     return parsee;
 }
 
-Parsee::Parsee() { }
+Parsee Parsee::ifElseParsee(Level level, bool shouldReturn, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::IF_ELSE;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
 
 ParseeKind Parsee::getKind() {
     return kind;
@@ -144,20 +130,20 @@ int Parsee::getTag() {
     return tag;
 }
 
-optional<ParseeGroup> Parsee::getGroup() {
-    return group;
+optional<vector<Parsee>> Parsee::getGroupParsees() {
+    return groupParsees;
 }
 
-optional<ParseeGroup> Parsee::getRepeatedGroup() {
-    return repeatedGroup;
+optional<vector<Parsee>> Parsee::getRepeatedParsees() {
+    return repeatedParsees;
 }
 
-optional<ParseeGroup> Parsee::getFirstGroup() {
-    return firstGroup;
+optional<vector<Parsee>> Parsee::getFirstParsees() {
+    return firstParsees;
 }
 
-optional<ParseeGroup> Parsee::getSecondGroup() {
-    return secondGroup;
+optional<vector<Parsee>> Parsee::getSecondParsees() {
+    return secondParsees;
 }
 
 TokenKind Parsee::getTokenKind() {
@@ -168,14 +154,10 @@ bool Parsee::getShouldIncludeExpressionStatement() {
     return shouldIncludeExpressionStatement;
 }
 
-bool Parsee::getIsRequired() {
-    return isRequired;
+Parsee::Level Parsee::getLevel() {
+    return level;
 }
 
 bool Parsee::getShouldReturn() {
     return shouldReturn;
-}
-
-bool Parsee::getShouldFailOnNoMatch() {
-    return shouldFailOnNoMatch;
 }
