@@ -1,20 +1,18 @@
 #include "Parsee.h"
 
-#include "ParseeGroup.h"
-
-Parsee Parsee::groupParsee(ParseeGroup group, Level level, bool shouldReturn) {
+Parsee Parsee::groupParsee(vector<Parsee> groupParsees, Level level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::GROUP;
-    parsee.group = group;
+    parsee.groupParsees = groupParsees;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
 }
 
-Parsee Parsee::repeatedGroupParsee(ParseeGroup repeatedGroup, Level level, bool shouldReturn) {
+Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::REPEATED_GROUP;
-    parsee.repeatedGroup = repeatedGroup;
+    parsee.repeatedParsees = repeatedParsees;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
@@ -67,11 +65,11 @@ Parsee Parsee::expressionParsee(Level level, bool shouldReturn, int tag) {
     return parsee;
 }
 
-Parsee Parsee::orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, Level level, bool shouldReturn) {
+Parsee Parsee::orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::OR;
-    parsee.firstGroup = firstGroup;
-    parsee.secondGroup = secondGroup;
+    parsee.firstParsees = firstParsees;
+    parsee.secondParsees = secondParsees;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
@@ -131,20 +129,20 @@ int Parsee::getTag() {
     return tag;
 }
 
-optional<ParseeGroup> Parsee::getGroup() {
-    return group;
+optional<vector<Parsee>> Parsee::getGroupParsees() {
+    return groupParsees;
 }
 
-optional<ParseeGroup> Parsee::getRepeatedGroup() {
-    return repeatedGroup;
+optional<vector<Parsee>> Parsee::getRepeatedParsees() {
+    return repeatedParsees;
 }
 
-optional<ParseeGroup> Parsee::getFirstGroup() {
-    return firstGroup;
+optional<vector<Parsee>> Parsee::getFirstParsees() {
+    return firstParsees;
 }
 
-optional<ParseeGroup> Parsee::getSecondGroup() {
-    return secondGroup;
+optional<vector<Parsee>> Parsee::getSecondParsees() {
+    return secondParsees;
 }
 
 TokenKind Parsee::getTokenKind() {

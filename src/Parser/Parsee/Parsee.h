@@ -3,8 +3,7 @@
 
 #include <memory>
 #include <optional>
-
-#include "ParseeGroup.h"
+#include <vector>
 
 enum class TokenKind;
 
@@ -36,10 +35,10 @@ public:
 private:
     ParseeKind kind;
     int tag;
-    optional<ParseeGroup> group;
-    optional<ParseeGroup> repeatedGroup;
-    optional<ParseeGroup> firstGroup;
-    optional<ParseeGroup> secondGroup;
+    optional<vector<Parsee>> groupParsees;
+    optional<vector<Parsee>> repeatedParsees;
+    optional<vector<Parsee>> firstParsees;
+    optional<vector<Parsee>> secondParsees;
     TokenKind tokenKind;
     bool shouldIncludeExpressionStatement;
     Level level;
@@ -47,14 +46,14 @@ private:
     Parsee();
 
 public:
-    static Parsee groupParsee(ParseeGroup group, Level level, bool shouldReturn);
-    static Parsee repeatedGroupParsee(ParseeGroup repeatedGroup, Level level, bool shouldReturn);
+    static Parsee groupParsee(vector<Parsee> groupParsees, Level level, bool shouldReturn);
+    static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, bool shouldReturn);
     static Parsee tokenParsee(TokenKind tokenKind, Level level, bool shouldReturn, int tag = -1);
     static Parsee valueTypeParsee(Level level, bool shouldReturn, int tag = -1); 
     static Parsee statementParsee(Level level, bool shouldReturn, int tag = -1); 
     static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, Level level, bool shouldReturn, int tag = -1);
     static Parsee expressionParsee(Level level, bool shouldReturn, int tag = -1);
-    static Parsee orParsee(ParseeGroup firstGroup, ParseeGroup secondGroup, Level level, bool shouldReturn);
+    static Parsee orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn);
     static Parsee statementBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
     static Parsee statementBlockMultiLineParsee(Level level, bool shouldReturn, int tag = -1);
     static Parsee expressionBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
@@ -63,10 +62,10 @@ public:
 
     ParseeKind getKind();
     int getTag();
-    optional<ParseeGroup> getGroup();
-    optional<ParseeGroup> getRepeatedGroup();
-    optional<ParseeGroup> getFirstGroup();
-    optional<ParseeGroup> getSecondGroup();
+    optional<vector<Parsee>> getGroupParsees();
+    optional<vector<Parsee>> getRepeatedParsees();
+    optional<vector<Parsee>> getFirstParsees();
+    optional<vector<Parsee>> getSecondParsees();
     TokenKind getTokenKind();
     bool getShouldIncludeExpressionStatement();
     bool getIsRequired();

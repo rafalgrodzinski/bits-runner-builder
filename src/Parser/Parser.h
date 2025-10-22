@@ -15,7 +15,6 @@ class Statement;
 class StatementModule;
 
 class Parsee;
-class ParseeGroup;
 class ParseeResult;
 class ParseeResultsGroup;
 
@@ -81,14 +80,14 @@ private:
 
     // Parsee
     ParseeResultsGroup parseeResultsGroupForParsees(vector<Parsee> parsees);
-    optional<pair<vector<ParseeResult>, int>> groupParseeResults(ParseeGroup group);
-    optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(ParseeGroup group);
+    optional<pair<vector<ParseeResult>, int>> groupParseesParseeResults(vector<Parsee> groupParsees);
+    optional<pair<vector<ParseeResult>, int>> repeatedParseesParseeResults(vector<Parsee> repeatedParsees);
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
     optional<pair<vector<ParseeResult>, int>> statementParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> statementInBlockParseeResults(bool getShouldIncludeExpressionStatement, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionParseeResults(int tag);
-    optional<pair<vector<ParseeResult>, int>> orParseeResults(ParseeGroup first, ParseeGroup second);
+    optional<pair<vector<ParseeResult>, int>> orParseeResults(vector<Parsee> firstParsees, vector<Parsee> secondParsees);
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
