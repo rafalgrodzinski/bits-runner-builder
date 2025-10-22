@@ -80,7 +80,7 @@ private:
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
     // Parsee
-    ParseeResultsGroup parseeResultsGroupForParseeGroup(ParseeGroup group);
+    ParseeResultsGroup parseeResultsGroupForParsees(vector<Parsee> parsees);
     optional<pair<vector<ParseeResult>, int>> groupParseeResults(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(ParseeGroup group);
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
