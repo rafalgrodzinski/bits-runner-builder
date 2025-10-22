@@ -498,6 +498,8 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
 
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
     llvm::Value *targetValue = valueForChainExpressions(statement->getChainExpressions());
+    if (targetValue == nullptr)
+        return;
 
     // Figure out opearand for the store operation
     llvm::Value *targetOperand;
@@ -1019,6 +1021,8 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         // First in chain is treated as a single variable
         if (currentValue == nullptr) {
             currentValue = valueForExpression(chainExpression);
+            if (currentValue == nullptr)
+                return nullptr;
             continue;
         }
 
