@@ -57,7 +57,6 @@ shared_ptr<Token> Lexer::nextToken() {
     // ignore // comment
     token = match(TokenKind::END, "//", false); // dummy token kind
     if (token) {
-        currentIndex += 2;
         do {
             // new line
             token = match(TokenKind::NEW_LINE, "\n", false);

@@ -1,4 +1,7 @@
 #include "Expression.h"
+#include "Parser/ValueType.h"
+
+shared_ptr<Expression> Expression::NONE = make_shared<Expression>(ExpressionKind::NONE, ValueType::NONE);
 
 Expression::Expression(ExpressionKind kind, shared_ptr<ValueType> valueType):
 kind(kind), valueType(valueType) { }
