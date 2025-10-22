@@ -48,12 +48,12 @@ private:
 public:
     static Parsee groupParsee(vector<Parsee> groupParsees, Level level, bool shouldReturn);
     static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, bool shouldReturn);
+    static Parsee orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn);
     static Parsee tokenParsee(TokenKind tokenKind, Level level, bool shouldReturn, int tag = -1);
     static Parsee valueTypeParsee(Level level, bool shouldReturn, int tag = -1); 
     static Parsee statementParsee(Level level, bool shouldReturn, int tag = -1); 
     static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, Level level, bool shouldReturn, int tag = -1);
     static Parsee expressionParsee(Level level, bool shouldReturn, int tag = -1);
-    static Parsee orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn);
     static Parsee statementBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
     static Parsee statementBlockMultiLineParsee(Level level, bool shouldReturn, int tag = -1);
     static Parsee expressionBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);

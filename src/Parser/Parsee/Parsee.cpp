@@ -1,5 +1,7 @@
 #include "Parsee.h"
 
+Parsee::Parsee() { }
+
 Parsee Parsee::groupParsee(vector<Parsee> groupParsees, Level level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::GROUP;
@@ -13,6 +15,16 @@ Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, 
     Parsee parsee;
     parsee.kind = ParseeKind::REPEATED_GROUP;
     parsee.repeatedParsees = repeatedParsees;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::OR;
+    parsee.firstParsees = firstParsees;
+    parsee.secondParsees = secondParsees;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
@@ -65,16 +77,6 @@ Parsee Parsee::expressionParsee(Level level, bool shouldReturn, int tag) {
     return parsee;
 }
 
-Parsee Parsee::orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::OR;
-    parsee.firstParsees = firstParsees;
-    parsee.secondParsees = secondParsees;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
 Parsee Parsee::statementBlockSingleLineParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_BLOCK_SINGLE_LINE;
@@ -110,6 +112,7 @@ Parsee Parsee::expressionBlockMultiLineParsee(Level level, bool shouldReturn, in
     parsee.shouldReturn = shouldReturn;
     return parsee;
 }
+
 Parsee Parsee::ifElseParsee(Level level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::IF_ELSE;
@@ -118,8 +121,6 @@ Parsee Parsee::ifElseParsee(Level level, bool shouldReturn, int tag) {
     parsee.shouldReturn = shouldReturn;
     return parsee;
 }
-
-Parsee::Parsee() { }
 
 ParseeKind Parsee::getKind() {
     return kind;
