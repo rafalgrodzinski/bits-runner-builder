@@ -1502,10 +1502,10 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
         optional<pair<vector<ParseeResult>, int>> subResults;
         switch (parsee.getKind()) {
             case ParseeKind::GROUP:
-                subResults = groupParseesParseeResults(*parsee.getGroupParsees());
+                subResults = groupParseeResults(*parsee.getGroupParsees());
                 break;
             case ParseeKind::REPEATED_GROUP:
-                subResults = repeatedParseesParseeResults(*parsee.getRepeatedParsees());
+                subResults = repeatedGroupParseeResults(*parsee.getRepeatedParsees());
                 break;
             case ParseeKind::TOKEN:
                 subResults = tokenParseeResults(parsee.getTokenKind(), parsee.getTag());
@@ -1572,7 +1572,7 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
     return ParseeResultsGroup::success(parseeResults);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::groupParseesParseeResults(vector<Parsee> groupParsees) {
+optional<pair<vector<ParseeResult>, int>> Parser::groupParseeResults(vector<Parsee> groupParsees) {
     int startIndex = currentIndex;
     vector<ParseeResult> results;
     
@@ -1588,7 +1588,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::groupParseesParseeResults(vect
     return pair(results, tokensCount);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::repeatedParseesParseeResults(vector<Parsee> repeatedParsees) {
+optional<pair<vector<ParseeResult>, int>> Parser::repeatedGroupParseeResults(vector<Parsee> repeatedParsees) {
     int startIndex = currentIndex;
     vector<ParseeResult> results;
     
@@ -1602,6 +1602,31 @@ optional<pair<vector<ParseeResult>, int>> Parser::repeatedParseesParseeResults(v
             results.push_back(result);
     } while (resultsGroup.getKind() == ParseeResultsGroupKind::SUCCESS);
     
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(results, tokensCount);
+}
+
+optional<pair<vector<ParseeResult>, int>> Parser::orParseeResults(vector<Parsee> first, vector<Parsee> second) {
+    int startIndex = currentIndex;
+    vector<ParseeResult> results;
+    ParseeResultsGroup resultsGroup;
+
+    // try matching first or second group
+    resultsGroup = parseeResultsGroupForParsees(first);
+    if (resultsGroup.getKind() == ParseeResultsGroupKind::FAILURE) {
+        return {};
+    } else if (resultsGroup.getKind() == ParseeResultsGroupKind::NO_MATCH) {
+        currentIndex = startIndex;
+        resultsGroup = parseeResultsGroupForParsees(second);
+    }
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return {};
+
+    for (ParseeResult &result : resultsGroup.getResults())
+        results.push_back(result);
+
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
     return pair(results, tokensCount);
@@ -1704,31 +1729,6 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(int ta
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
     return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount, tag)}), tokensCount);
-}
-
-optional<pair<vector<ParseeResult>, int>> Parser::orParseeResults(vector<Parsee> first, vector<Parsee> second) {
-    int startIndex = currentIndex;
-    vector<ParseeResult> results;
-    ParseeResultsGroup resultsGroup;
-
-    // try matching first or second group
-    resultsGroup = parseeResultsGroupForParsees(first);
-    if (resultsGroup.getKind() == ParseeResultsGroupKind::FAILURE) {
-        return {};
-    } else if (resultsGroup.getKind() == ParseeResultsGroupKind::NO_MATCH) {
-        currentIndex = startIndex;
-        resultsGroup = parseeResultsGroupForParsees(second);
-    }
-
-    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
-        return {};
-
-    for (ParseeResult &result : resultsGroup.getResults())
-        results.push_back(result);
-
-    int tokensCount = currentIndex - startIndex;
-    currentIndex = startIndex;
-    return pair(results, tokensCount);
 }
 
 optional<pair<vector<ParseeResult>, int>> Parser::statementBlockParseeResults(bool isMultiline, int tag) {
