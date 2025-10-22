@@ -32,7 +32,7 @@ printMemStats fun
     call u32 <- (eax & 0xff00.u32) >> 8.u32
 
     if call = CALL_REBOOT
-        reboot()
+        //reboot()
     else if call = CALL_PRINT_CHARACTER
         character u8 <- (eax & 0xff.u32).u8
         attribute u8 <- (ebx & 0xff.u32).u8

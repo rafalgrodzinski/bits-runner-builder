@@ -606,6 +606,8 @@ void ModuleBuilder::buildExpression(shared_ptr<StatementExpression> statement) {
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType) {
     switch (expression->getKind()) {
+        case ExpressionKind::NONE:
+            return llvm::UndefValue::get(typeVoid);
         case ExpressionKind::LITERAL:
             return valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression), castToType);
         case ExpressionKind::COMPOSITE_LITERAL:

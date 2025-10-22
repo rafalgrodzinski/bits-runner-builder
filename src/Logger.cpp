@@ -522,8 +522,10 @@ string Logger::toString(shared_ptr<StatementExpression> statement, vector<Indent
 
 string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> indents) {
     switch (expression->getKind()) {
+        case ExpressionKind::NONE:
+            return formattedLine("NONE", indents);
         case ExpressionKind::BINARY:
-        return toString(dynamic_pointer_cast<ExpressionBinary>(expression), indents);
+            return toString(dynamic_pointer_cast<ExpressionBinary>(expression), indents);
         case ExpressionKind::UNARY:
             return toString(dynamic_pointer_cast<ExpressionUnary>(expression), indents);
         case ExpressionKind::IF_ELSE:
