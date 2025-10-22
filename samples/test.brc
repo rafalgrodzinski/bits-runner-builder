@@ -1,49 +1,6 @@
-@module syscall
-
-/*@import bios_service
-@import term
-@import drv_keyboard
-@import mem
-@import fs_fat12*/
-
-CALL_REBOOT u32 <- 0x00
-CALL_PRINT_CHARACTER u32 <- 0x01
-CALL_READ_ASCII u32 <- 0x07
-CALL_PRINT_MEM_STATS u32 <- 0x08
-CALL_LIST_DIR u32 <- 0x09
-
-reboot fun
-;
-
-printCharacter fun: character u8, attribute u8
-;
-
-readPressedAscii fun -> u32
-    ret 0
-;
-
-listDir fun
-;
-
-printMemStats fun
-;
-
-@export handleInterrupt fun: eax u32, ebx u32 -> u32
-    call u32 <- (eax & 0xff00.u32) >> 8.u32
-
-    if call = CALL_REBOOT
-        //reboot()
-    else if call = CALL_PRINT_CHARACTER
-        character u8 <- (eax & 0xff.u32).u8
-        attribute u8 <- (ebx & 0xff.u32).u8
-        printCharacter(character, attribute)
-    else if call = CALL_READ_ASCII
-        ret readPressedAscii()
-    else if call = CALL_LIST_DIR
-        listDir()
-    else if call = CALL_PRINT_MEM_STATS
-        printMemStats()
+main fun
+    rep x u32 <- 0, x < termWidth * 2, x <- x + 1
+        adr u32 <- (termHeight - 1) * termWidth * 2 + x
+        pBuffer.val[thisLineAdr] <- 0
     ;
-
-    ret 0.u32
 ;
