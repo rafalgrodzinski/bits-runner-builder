@@ -153,14 +153,10 @@ bool Parsee::getShouldIncludeExpressionStatement() {
     return shouldIncludeExpressionStatement;
 }
 
-bool Parsee::getIsRequired() {
-    return level == Level::REQUIRED;
+Parsee::Level Parsee::getLevel() {
+    return level;
 }
 
 bool Parsee::getShouldReturn() {
     return shouldReturn;
-}
-
-bool Parsee::getShouldFailOnNoMatch() {
-    return level == Level::CRITICAL;
 }

@@ -1547,7 +1547,7 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
             return ParseeResultsGroup::failure();
 
         // if doesn't match a required but non-failing parsee
-        if (!subResults && parsee.getIsRequired() && !parsee.getShouldFailOnNoMatch()) {
+        if (!subResults && parsee.getLevel() == Parsee::Level::REQUIRED) {
             currentIndex = startIndex;
             return ParseeResultsGroup::noMatch();
         }
@@ -1559,7 +1559,7 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
         }
 
         // invalid sequence detected?
-        if (!subResults && parsee.getShouldFailOnNoMatch()) {
+        if (!subResults && parsee.getLevel() == Parsee::Level::CRITICAL) {
             markError({}, parsee, {});
             return ParseeResultsGroup::failure();
         }

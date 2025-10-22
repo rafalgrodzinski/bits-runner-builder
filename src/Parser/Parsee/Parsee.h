@@ -68,10 +68,8 @@ public:
     optional<vector<Parsee>> getSecondParsees();
     TokenKind getTokenKind();
     bool getShouldIncludeExpressionStatement();
-    bool getIsRequired();
-    bool getShouldReturn();
-    bool getShouldFailOnNoMatch();
     Level getLevel();
+    bool getShouldReturn();
 };
 
 #endif
