@@ -855,6 +855,8 @@ llvm::Value *ModuleBuilder::valueForBinaryFloat(ExpressionBinaryOperation operat
 
 llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression) {
     llvm::Value *value = valueForExpression(expression->getExpression());
+    if (value == nullptr)
+        return nullptr;
     llvm::Type *type = value->getType();
 
     if (type == typeBool) {
