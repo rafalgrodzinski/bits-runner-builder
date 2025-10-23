@@ -1,5 +1,6 @@
 @extern putchar fun: character u64 -> u32
 @extern malloc fun: size u64 -> ptr<u8>
+@extern clock fun -> u64
 
 @export printNum fun: number u64
     biggest u64 <- 10
@@ -13,11 +14,18 @@
     ;
 ;
 
-primesCount u64 <- 0
+@export print fun: text data<u64, 64>
+    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
+        putchar(text[i])
+    ;
+;
+
+pPrimeFlags ptr<data<bool>>
 pPrimes ptr<data<u64>>
+primesCount u64
 
 findPrimes fun: n u64
-    pPrimeFlags ptr<data<bool>> <- malloc(bool.size * n)
+    primesCount <- 0
 
     rep i u64 <- 0, i < n, i <- i + 1
         pPrimeFlags.val[i] <- if i < 2: false else: true
@@ -39,16 +47,29 @@ findPrimes fun: n u64
     ;
 ;
 
-@export main fun -> u64
-    n u64 <- 100_000_000
-    pPrimes <- malloc(u64.size * n)
-    findPrimes(n)
+passes u64 <- 0
 
-    /*rep i u64 <- 0, i < primesCount, i <- i + 1
-        printNum(pPrimes.val[i])
-        putchar('\n')
-    ;*/
-    printNum(primesCount)
+@export main fun -> u64
+    n u64 <- 1_000_000
+
+    pPrimeFlags <- malloc(bool.size * n)
+    pPrimes <- malloc(u64.size * n)
+
+    duration u64 <- 0
+    startTime u64 <- clock()
+
+    rep duration < 5_000_000
+        findPrimes(n)
+        passes <- passes + 1
+        duration <- clock() - startTime
+    ;
+    duration <- duration / 1_000
+    
+    print("Passes: ")
+    printNum(passes)
+    putchar('\n')
+    print("Taken ms: ")
+    printNum(duration)
     putchar('\n')
 
     ret 0
