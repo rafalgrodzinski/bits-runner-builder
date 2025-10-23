@@ -6,7 +6,8 @@
             "type": "lldb-dap",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["-v", "${workspaceFolder}/samples/test.brc"],
+            //"args": ["-v", "${workspaceFolder}/samples/test.brc"],
+            "args": ["-v", "${workspaceFolder}/samples/primes/main.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }

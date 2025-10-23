@@ -1,3 +1,40 @@
+@extern putchar fun: character u64 -> u32
+
+@export printNum fun: number u64
+    biggest u64 <- 10
+    rep biggest <= number: biggest <- biggest * 10
+    biggest <- biggest / 10
+
+    rep biggest > 0, biggest <- biggest / 10
+        digit u64 <- number / biggest
+        putchar(digit + '0')
+        number <- number % biggest
+    ;
+;
+
+primesCount u64 <- 0
+primes data<u64, 1000>
+
+findPrimes fun: n u64
+    rep i u64 <- 2, i < n, i <- i + 1
+        isPrime bool <- true
+        rep j u64 <- 2, j < i and isPrime, j <- j + 1
+            if i % j = 0: isPrime <- false
+        ;
+        if isPrime
+            primes[primesCount] <- i
+            primesCount <- primesCount + 1
+        ;
+    ;
+;
+
 @export main fun -> u64
+    findPrimes(35)
+
+    rep i u64 <- 0, i < primesCount, i <- i + 1
+        printNum(primes[i])
+        putchar('\n')
+    ;
+
     ret 0
 ;
