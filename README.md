@@ -70,6 +70,11 @@ Fizz Buzz
 Casts
 [samples/casts/](samples/casts/)
 
+Primes
+[samples/primes/](samples/primes/)
+
+Based on ["Software Drag Racing!" by Dave Plummer](https://github.com/PlummersSoftwareLLC/Primes/tree/drag-race). Runs as many iterrations as possible of calculating primes up to 1,000,000 in 5 seconds and reports the number or iterrations. I got a bit under 1200 on my Intel Core i7 14700.
+
 #### How to build & run the samples
 
 Execute from the main directory
@@ -97,6 +102,10 @@ Execute from the main directory
 // Multi Module
 ./samples/multi_module/build.sh
 ./multi_module
+
+// Primes
+./samples/primes/build.sh
+./primes
 ```
 
 ## Additional Stuff
