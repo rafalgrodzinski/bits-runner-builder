@@ -1,4 +1,5 @@
 @extern putchar fun: character u64 -> u32
+@extern malloc fun: size u64 -> ptr<u8>
 
 @export printNum fun: number u64
     biggest u64 <- 10
@@ -13,28 +14,42 @@
 ;
 
 primesCount u64 <- 0
-primes data<u64, 1000>
+pPrimes ptr<data<u64>>
 
 findPrimes fun: n u64
-    rep i u64 <- 2, i < n, i <- i + 1
-        isPrime bool <- true
-        rep j u64 <- 2, j < i and isPrime, j <- j + 1
-            if i % j = 0: isPrime <- false
+    pPrimeFlags ptr<data<bool>> <- malloc(bool.size * n)
+
+    rep i u64 <- 0, i < n, i <- i + 1
+        pPrimeFlags.val[i] <- if i < 2: false else: true
+    ;
+
+    rep p u64 <- 2, p * p < n, p <- p + 1
+        if pPrimeFlags.val[p] = true
+            rep i u64 <- p * p, i < n, i <- i + p
+                pPrimeFlags.val[i] <- false
+            ;
         ;
-        if isPrime
-            primes[primesCount] <- i
+    ;
+
+    rep i u64 <- 0, i < n, i <- i + 1
+        if pPrimeFlags.val[i] = true
+            pPrimes.val[primesCount] <- i
             primesCount <- primesCount + 1
         ;
     ;
 ;
 
 @export main fun -> u64
-    findPrimes(35)
+    n u64 <- 100_000_000
+    pPrimes <- malloc(u64.size * n)
+    findPrimes(n)
 
-    rep i u64 <- 0, i < primesCount, i <- i + 1
-        printNum(primes[i])
+    /*rep i u64 <- 0, i < primesCount, i <- i + 1
+        printNum(pPrimes.val[i])
         putchar('\n')
-    ;
+    ;*/
+    printNum(primesCount)
+    putchar('\n')
 
     ret 0
 ;
