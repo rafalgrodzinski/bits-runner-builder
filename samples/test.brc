@@ -1,6 +1,7 @@
-main fun
-    rep x u32 <- 0, x < termWidth * 2, x <- x + 1
-        adr u32 <- (termHeight - 1) * termWidth * 2 + x
-        pBuffer.val[thisLineAdr] <- 0
-    ;
+add fun: a u64, b u64 -> u64
+    ret a + b
+;
+
+@export main fun
+    pAdd ptr<fun u64, u64 -> u64>
 ;

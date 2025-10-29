@@ -823,6 +823,19 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return format("DATA<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::BLOB:
             return format("BLOB<`{}`>", valueType->getTypeName());
+        case ValueTypeKind::FUN: {
+            string text = "FUN";
+            // args
+            for (int i=0; i<valueType->getArgTypes().size(); i++) {
+                if (i > 0)
+                    text += ",";
+                text += format(" {}", toString(valueType->getArgTypes().at(i)));
+            }
+            // return
+            if (valueType->getRetType() != nullptr)
+                text += format(" -> {}", toString(valueType->getRetType()));
+            return text;
+        }
         case ValueTypeKind::PTR:
             return format("PTR<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::LITERAL:
