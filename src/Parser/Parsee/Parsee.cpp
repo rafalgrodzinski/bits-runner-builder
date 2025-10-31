@@ -68,12 +68,13 @@ Parsee Parsee::statementInBlockParsee(bool shouldIncludeExpressionStatement, Lev
     return parsee;
 }
 
-Parsee Parsee::expressionParsee(Level level, bool shouldReturn, int tag) {
+Parsee Parsee::expressionParsee(Level level, bool shouldReturn, bool isNumericExpression, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::EXPRESSION;
     parsee.tag = tag;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
+    parsee.isNumericExpression = isNumericExpression;
     return parsee;
 }
 
@@ -152,6 +153,10 @@ TokenKind Parsee::getTokenKind() {
 
 bool Parsee::getShouldIncludeExpressionStatement() {
     return shouldIncludeExpressionStatement;
+}
+
+bool Parsee::getIsNumericExpression() {
+    return isNumericExpression;
 }
 
 Parsee::Level Parsee::getLevel() {

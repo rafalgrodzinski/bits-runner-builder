@@ -41,6 +41,7 @@ private:
     optional<vector<Parsee>> secondParsees;
     TokenKind tokenKind;
     bool shouldIncludeExpressionStatement;
+    bool isNumericExpression;
     Level level;
     bool shouldReturn;
     Parsee();
@@ -53,7 +54,7 @@ public:
     static Parsee valueTypeParsee(Level level, bool shouldReturn, int tag = -1); 
     static Parsee statementParsee(Level level, bool shouldReturn, int tag = -1); 
     static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, Level level, bool shouldReturn, int tag = -1);
-    static Parsee expressionParsee(Level level, bool shouldReturn, int tag = -1);
+    static Parsee expressionParsee(Level level, bool shouldReturn, bool isNumeric, int tag = -1);
     static Parsee statementBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
     static Parsee statementBlockMultiLineParsee(Level level, bool shouldReturn, int tag = -1);
     static Parsee expressionBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
@@ -68,6 +69,7 @@ public:
     optional<vector<Parsee>> getSecondParsees();
     TokenKind getTokenKind();
     bool getShouldIncludeExpressionStatement();
+    bool getIsNumericExpression();
     Level getLevel();
     bool getShouldReturn();
 };

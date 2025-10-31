@@ -89,7 +89,7 @@ private:
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
     optional<pair<vector<ParseeResult>, int>> statementParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> statementInBlockParseeResults(bool getShouldIncludeExpressionStatement, int tag);
-    optional<pair<vector<ParseeResult>, int>> expressionParseeResults(int tag);
+    optional<pair<vector<ParseeResult>, int>> expressionParseeResults(bool isNumeric, int tag);
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);

@@ -2,6 +2,10 @@ add fun: a u64, b u64 -> u64
     ret a + b
 ;
 
+
+
+
+
 @export main fun
     pAdd ptr<fun u64, u64 -> u64>
 ;
