@@ -1743,7 +1743,7 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
         }
         case ValueTypeKind::BLOB:
-            return getStructType(valueType->getTypeName());
+            return getStructType(valueType->getBlobName());
         case ValueTypeKind::PTR:
             return typePtr;
         default:

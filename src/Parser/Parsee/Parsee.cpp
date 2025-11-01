@@ -30,6 +30,15 @@ Parsee Parsee::orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsee
     return parsee;
 }
 
+Parsee Parsee::oneOfParsee(vector<vector<Parsee>> parsees, Level level, bool shouldReturn) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::ONE_OF;
+    parsee.parsees = parsees;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
 Parsee Parsee::tokenParsee(TokenKind tokenKind, Level level, bool shouldReturn, int tag) {
     Parsee  parsee;
     parsee.kind = ParseeKind::TOKEN;
@@ -145,6 +154,10 @@ optional<vector<Parsee>> Parsee::getFirstParsees() {
 
 optional<vector<Parsee>> Parsee::getSecondParsees() {
     return secondParsees;
+}
+
+optional<vector<vector<Parsee>>> Parsee::getParsees() {
+    return parsees;
 }
 
 TokenKind Parsee::getTokenKind() {

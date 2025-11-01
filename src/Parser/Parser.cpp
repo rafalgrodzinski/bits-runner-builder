@@ -418,12 +418,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (valueType->getKind() == ValueTypeKind::DATA && valueType->getValueArg() == 0 && expression != nullptr) {
         shared_ptr<ExpressionCompositeLiteral> compositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
         if (compositeLiteral != nullptr) {
-            valueType = make_shared<ValueType>(
-                valueType->getKind(),
-                valueType->getSubType(),
-                compositeLiteral->getExpressions().size(),
-                valueType->getTypeName()
-            );
+            valueType = ValueType::data(valueType, ExpressionLiteral::expressionLiteralForUInt(compositeLiteral->getExpressions().size()));
         }
     }
 
@@ -1495,7 +1490,10 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
 
 shared_ptr<ValueType> Parser::matchValueType() {
     enum TAG {
+        TAG_DATA,
+        TAG_BLOB,
         TAG_FUN,
+        TAG_PTR,
         TAG_ARG_TYPE,
         TAG_RET_TYPE,
         TAG_TYPE,
@@ -1506,59 +1504,69 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
-            Parsee::orParsee(
-                // fun type
+            Parsee::oneOfParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::FUNCTION, Parsee::Level::REQUIRED, true, TAG_FUN),
-                    // arguments
-                    Parsee::groupParsee(
-                        {
-                            // first argument
-                            Parsee::valueTypeParsee(Parsee::Level::REQUIRED, true, TAG_ARG_TYPE),
-                            // addditional arguments
-                            Parsee::repeatedGroupParsee(
-                                {
-                                    Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
-                                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE)
-                                }, Parsee::Level::OPTIONAL, true
-                            )
-                        }, Parsee::Level::OPTIONAL, true
-                    ),
-                    // return type
-                    Parsee::groupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::RIGHT_ARROW, Parsee::Level::REQUIRED, false),
-                            Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RET_TYPE)
-                        }, Parsee::Level::OPTIONAL, true
-                    )
-                },
-                // value type
-                {
-                    Parsee::tokenParsee(TokenKind::TYPE, Parsee::Level::REQUIRED, true, TAG_TYPE),
-                    // type specifier
-                    Parsee::groupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::LESS, Parsee::Level::REQUIRED, false),
-                            Parsee::orParsee(
-                                // blob name
-                                {
-                                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_BLOB_NAME)
-                                },
-                                // ptr or data subtype
-                                {
-                                    Parsee::valueTypeParsee(Parsee::Level::REQUIRED, true, TAG_SUBTYPE),
-                                    // optional size
-                                    Parsee::groupParsee(
-                                        {
-                                            Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
-                                            Parsee::expressionParsee(Parsee::Level::CRITICAL, true, true, TAG_SIZE_EXPRESSION)
-                                        }, Parsee::Level::OPTIONAL, true
-                                    )
-                                }, Parsee::Level::CRITICAL, true
-                            ),
-                            Parsee::tokenParsee(TokenKind::GREATER, Parsee::Level::CRITICAL, false)
-                        }, Parsee::Level::OPTIONAL, true
-                    )
+                    // PTR
+                    {
+                        Parsee::tokenParsee(TokenKind::PTR, Parsee::Level::REQUIRED, true, TAG_PTR),
+                        Parsee::tokenParsee(TokenKind::LESS, Parsee::Level::CRITICAL, false),
+                        Parsee::orParsee(
+                            // function pointer
+                            {
+                                Parsee::tokenParsee(TokenKind::FUNCTION, Parsee::Level::REQUIRED, true, TAG_FUN),
+                                // arguments
+                                Parsee::groupParsee(
+                                    {
+                                        // first argument
+                                        Parsee::valueTypeParsee(Parsee::Level::REQUIRED, true, TAG_ARG_TYPE),
+                                        // addditional arguments
+                                        Parsee::repeatedGroupParsee(
+                                            {
+                                                Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
+                                                Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE)
+                                            }, Parsee::Level::OPTIONAL, true
+                                        )
+                                    }, Parsee::Level::OPTIONAL, true
+                                ),
+                                // return type
+                                Parsee::groupParsee(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::RIGHT_ARROW, Parsee::Level::REQUIRED, false),
+                                        Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RET_TYPE)
+                                    }, Parsee::Level::OPTIONAL, true
+                                )
+                            },
+                            // other pointer
+                            {
+                                Parsee::valueTypeParsee(Parsee::Level::REQUIRED, true, TAG_SUBTYPE)
+                            }, Parsee::Level::CRITICAL, true
+                        ),
+                        Parsee::tokenParsee(TokenKind::GREATER, Parsee::Level::CRITICAL, false)
+                    },
+                    // DATA
+                    {
+                        Parsee::tokenParsee(TokenKind::DATA, Parsee::Level::REQUIRED, true, TAG_DATA),
+                        Parsee::tokenParsee(TokenKind::LESS, Parsee::Level::CRITICAL, false),
+                        Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_SUBTYPE),
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
+                                Parsee::expressionParsee(Parsee::Level::CRITICAL, true, true, TAG_SIZE_EXPRESSION)
+                            }, Parsee::Level::OPTIONAL, true
+                        ),
+                        Parsee::tokenParsee(TokenKind::GREATER, Parsee::Level::CRITICAL, false)
+                    },
+                    // BLOB
+                    {
+                        Parsee::tokenParsee(TokenKind::BLOB, Parsee::Level::REQUIRED, true, TAG_BLOB),
+                        Parsee::tokenParsee(TokenKind::LESS, Parsee::Level::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_BLOB_NAME),
+                        Parsee::tokenParsee(TokenKind::GREATER, Parsee::Level::CRITICAL, false)
+                    },
+                    // SIMPLE
+                    {
+                        Parsee::tokenParsee(TokenKind::TYPE, Parsee::Level::REQUIRED, true, TAG_TYPE)
+                    }
                 }, Parsee::Level::REQUIRED, true
             )
         }
@@ -1567,7 +1575,11 @@ shared_ptr<ValueType> Parser::matchValueType() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    bool isData = false;
+    bool isBlob = false;
     bool isFun = false;
+    bool isPtr = false;
+
     vector<shared_ptr<ValueType>> argTypes;
     shared_ptr<ValueType> retType;
 
@@ -1578,8 +1590,17 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
+            case TAG_DATA:
+                isData = true;
+                break;
+            case TAG_BLOB:
+                isBlob = true;
+                break;
             case TAG_FUN:
                 isFun = true;
+                break;
+            case TAG_PTR:
+                isPtr = true;
                 break;
             case TAG_ARG_TYPE:
                 argTypes.push_back(parseeResult.getValueType());
@@ -1602,10 +1623,16 @@ shared_ptr<ValueType> Parser::matchValueType() {
         }
     }
 
-    if (isFun)
-        return ValueType::valueTypeForFun(argTypes, retType);
+    if (isData)
+        return ValueType::data(subType, sizeExpression);
+    else if (isBlob)
+        return ValueType::blob(blobName);
+    else if (isFun)
+        return ValueType::fun(argTypes, retType);
+    else if (isPtr)
+        return ValueType::ptr(subType);
     else
-        return ValueType::valueTypeForToken(typeToken, subType, sizeExpression, blobName);
+        return ValueType::simpleForToken(typeToken);
 }
 
 ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) {
@@ -1639,6 +1666,9 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
                 break;
             case ParseeKind::OR:
                 subResults = orParseeResults(*parsee.getFirstParsees(), *parsee.getSecondParsees());
+                break;
+            case ParseeKind::ONE_OF:
+                subResults = oneOfParseeResults(*parsee.getParsees());
                 break;
             case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
                 subResults = statementBlockParseeResults(false, parsee.getTag());
@@ -1734,6 +1764,34 @@ optional<pair<vector<ParseeResult>, int>> Parser::orParseeResults(vector<Parsee>
     } else if (resultsGroup.getKind() == ParseeResultsGroupKind::NO_MATCH) {
         currentIndex = startIndex;
         resultsGroup = parseeResultsGroupForParsees(second);
+    }
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return {};
+
+    for (ParseeResult &result : resultsGroup.getResults())
+        results.push_back(result);
+
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(results, tokensCount);
+}
+
+optional<pair<vector<ParseeResult>, int>> Parser::oneOfParseeResults(vector<vector<Parsee>> parseeGroups) {
+    int startIndex = currentIndex;
+    vector<ParseeResult> results;
+    ParseeResultsGroup resultsGroup;
+
+    int groupIndex = 0;
+    while (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS && groupIndex < parseeGroups.size()) {
+        vector<Parsee> parseeGroup = parseeGroups.at(groupIndex);
+        resultsGroup = parseeResultsGroupForParsees(parseeGroup);
+        if (resultsGroup.getKind() == ParseeResultsGroupKind::FAILURE) {
+            return {};
+        } else if (resultsGroup.getKind() == ParseeResultsGroupKind::NO_MATCH) {
+            currentIndex = startIndex;
+        }
+        groupIndex++;
     }
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)

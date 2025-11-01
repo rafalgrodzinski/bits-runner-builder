@@ -278,10 +278,18 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
     }
 
+    token = match(TokenKind::DATA, "data", true);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::BLOB, "blob", true);
     if (token != nullptr)
         return token;
-    
+
+    token = match(TokenKind::PTR, "ptr", true);
+    if (token != nullptr)
+        return token;
+
     token = match(TokenKind::RETURN, "ret", true);
     if (token != nullptr)
         return token;

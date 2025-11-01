@@ -18,6 +18,7 @@ enum class ParseeKind {
     STATEMENT_IN_BLOCK,
     EXPRESSION,
     OR,
+    ONE_OF,
     STATEMENT_BLOCK_SINGLE_LINE,
     STATEMENT_BLOCK_MULTI_LINE,
     EXPRESSION_BLOCK_SINGLE_LINE,
@@ -39,6 +40,7 @@ private:
     optional<vector<Parsee>> repeatedParsees;
     optional<vector<Parsee>> firstParsees;
     optional<vector<Parsee>> secondParsees;
+    optional<vector<vector<Parsee>>> parsees;
     TokenKind tokenKind;
     bool shouldIncludeExpressionStatement;
     bool isNumericExpression;
@@ -50,6 +52,7 @@ public:
     static Parsee groupParsee(vector<Parsee> groupParsees, Level level, bool shouldReturn);
     static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, bool shouldReturn);
     static Parsee orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn);
+    static Parsee oneOfParsee(vector<vector<Parsee>> parsees, Level level, bool shouldReturn);
     static Parsee tokenParsee(TokenKind tokenKind, Level level, bool shouldReturn, int tag = -1);
     static Parsee valueTypeParsee(Level level, bool shouldReturn, int tag = -1); 
     static Parsee statementParsee(Level level, bool shouldReturn, int tag = -1); 
@@ -67,6 +70,7 @@ public:
     optional<vector<Parsee>> getRepeatedParsees();
     optional<vector<Parsee>> getFirstParsees();
     optional<vector<Parsee>> getSecondParsees();
+    optional<vector<vector<Parsee>>> getParsees();
     TokenKind getTokenKind();
     bool getShouldIncludeExpressionStatement();
     bool getIsNumericExpression();
