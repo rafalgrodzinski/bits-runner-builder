@@ -78,16 +78,19 @@ private:
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
+    shared_ptr<ValueType> matchValueType();
+
     // Parsee
     ParseeResultsGroup parseeResultsGroupForParsees(vector<Parsee> parsees);
     optional<pair<vector<ParseeResult>, int>> groupParseeResults(vector<Parsee> groupParsees);
     optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(vector<Parsee> repeatedParsees);
     optional<pair<vector<ParseeResult>, int>> orParseeResults(vector<Parsee> firstParsees, vector<Parsee> secondParsees);
+    optional<pair<vector<ParseeResult>, int>> oneOfParseeResults(vector<vector<Parsee>> parsees);
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
     optional<pair<vector<ParseeResult>, int>> statementParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> statementInBlockParseeResults(bool getShouldIncludeExpressionStatement, int tag);
-    optional<pair<vector<ParseeResult>, int>> expressionParseeResults(int tag);
+    optional<pair<vector<ParseeResult>, int>> expressionParseeResults(bool isNumeric, int tag);
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);

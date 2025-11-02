@@ -3,8 +3,10 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 class Token;
+class Expression;
 
 using namespace std;
 
@@ -21,6 +23,7 @@ enum class ValueTypeKind {
     F64,
     DATA,
     BLOB,
+    FUN,
     PTR,
     LITERAL
 };
@@ -29,8 +32,10 @@ class ValueType {
 private:
     ValueTypeKind kind;
     shared_ptr<ValueType> subType;
-    int valueArg;
-    string typeName;
+    string blobName;
+    vector<shared_ptr<ValueType>> argTypes;
+    shared_ptr<ValueType> retType;
+    shared_ptr<Expression> sizeExpression;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -44,14 +49,22 @@ public:
     static shared_ptr<ValueType> F32;
     static shared_ptr<ValueType> F64;
     static shared_ptr<ValueType> LITERAL;
-    static shared_ptr<ValueType> valueTypeForToken(shared_ptr<Token> token, shared_ptr<ValueType> subType, int valueArg, string typeName);
+    static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> sizeExpression);
+    static shared_ptr<ValueType> blob(string blobName);
+    static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argTypes, shared_ptr<ValueType> retType);
+    static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
+    static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
 
     ValueType();
-    ValueType(ValueTypeKind kind, shared_ptr<ValueType> subType, int valueArg, string typeName);
+    ValueType(ValueTypeKind kind);
+
     ValueTypeKind getKind();
     shared_ptr<ValueType> getSubType();
     int getValueArg();
-    string getTypeName();
+    shared_ptr<Expression> getSizeExpression();
+    string getBlobName();
+    vector<shared_ptr<ValueType>> getArgTypes();
+    shared_ptr<ValueType> getRetType();
 };
 
 #endif

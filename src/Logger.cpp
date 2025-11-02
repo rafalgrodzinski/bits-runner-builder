@@ -130,8 +130,12 @@ string Logger::toString(shared_ptr<Token> token) {
             return "ID(" + token->getLexme() + ")";
         case TokenKind::TYPE:
             return "TYPE(" + token->getLexme() + ")";
+        case TokenKind::DATA:
+            return "DATA";
         case TokenKind::BLOB:
             return "BLOB";
+        case TokenKind::PTR:
+            return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
             return format("RAW_SOURCE_LINE({})", token->getLexme());
 
@@ -829,7 +833,20 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::DATA:
             return format("DATA<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::BLOB:
-            return format("BLOB<`{}`>", valueType->getTypeName());
+            return format("BLOB<`{}`>", valueType->getBlobName());
+        case ValueTypeKind::FUN: {
+            string text = "FUN";
+            // args
+            for (int i=0; i<valueType->getArgTypes().size(); i++) {
+                if (i > 0)
+                    text += ",";
+                text += format(" {}", toString(valueType->getArgTypes().at(i)));
+            }
+            // return
+            if (valueType->getRetType() != nullptr)
+                text += format(" -> {}", toString(valueType->getRetType()));
+            return text;
+        }
         case ValueTypeKind::PTR:
             return format("PTR<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::LITERAL:
@@ -1015,8 +1032,12 @@ string Logger::toString(TokenKind tokenKind) {
             return "LITERAL(ID)";
         case TokenKind::TYPE:
             return "TYPE";
+        case TokenKind::DATA:
+            return "DATA";
         case TokenKind::BLOB:
             return "BLOB";
+        case TokenKind::PTR:
+            return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
             return "RAW_SOURCE_LINE";
 
