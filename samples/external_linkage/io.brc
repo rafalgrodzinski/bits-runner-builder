@@ -1,0 +1,24 @@
+@module io
+
+@extern putchar fun: character u64 -> u32
+
+@export printChar fun: character u64
+    putchar(character)
+;
+
+@export printNum fun: number s64
+    if number < 0
+        number <- -number
+        putchar('-')
+    ;
+
+    biggest s64 <- 10
+    rep biggest <= number: biggest <- biggest * 10
+    biggest <- biggest / 10
+
+    rep biggest > 0, biggest <- biggest / 10
+        digit s64 <- number / biggest
+        putchar(digit + '0')
+        number <- number % biggest
+    ;
+;

@@ -1,0 +1,8 @@
+@module stuff
+
+@import io
+
+@export doStuff fun: value u64
+    @io.printNum(value)
+    @io.printChar('\n')
+;

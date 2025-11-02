@@ -1,0 +1,6 @@
+@extern @stuff.doStuff fun: value u64
+
+@export main fun -> u64
+    @stuff.doStuff(7)
+    ret 0
+;
