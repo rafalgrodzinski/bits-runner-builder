@@ -75,9 +75,9 @@ shared_ptr<Statement> Parser::nextStatement() {
     if (statement != nullptr || errors.size() > errorsCount)
         return statement;
 
-        statement = matchStatementMetaExternFunction();
-        if (statement != nullptr || errors.size() > errorsCount)
-            return statement;
+    statement = matchStatementMetaExternFunction();
+    if (statement != nullptr || errors.size() > errorsCount)
+        return statement;
 
     statement = matchStatementMetaExternVariable();
     if (statement != nullptr || errors.size() > errorsCount)
@@ -258,6 +258,14 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
         {
             // @extern
             Parsee::tokenParsee(TokenKind::M_EXTERN, Parsee::Level::REQUIRED, false),
+            // identifier - module prefix
+            Parsee::groupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::META, Parsee::Level::REQUIRED, false),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_IDENTIFIER),
+                    Parsee::tokenParsee(TokenKind::DOT, Parsee::Level::CRITICAL, true, TAG_IDENTIFIER)
+                }, Parsee::Level::OPTIONAL, true
+            ),
             // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_IDENTIFIER),
             Parsee::valueTypeParsee(Parsee::Level::REQUIRED, true, TAG_VALUE_TYPE)
@@ -267,13 +275,13 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string identifier;
+    string identifier = "";
     shared_ptr<ValueType> valueType;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_IDENTIFIER: {
-                identifier = parseeResult.getToken()->getLexme();
+                identifier += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_VALUE_TYPE: {
@@ -294,14 +302,18 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
         TAG_RET_TYPE
     };
 
-    string identifier;
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnType = ValueType::NONE;
-
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             // @extern
             Parsee::tokenParsee(TokenKind::M_EXTERN, Parsee::Level::REQUIRED, false),
+            // identifier - module prefix
+            Parsee::groupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::META, Parsee::Level::REQUIRED, false),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ID),
+                    Parsee::tokenParsee(TokenKind::DOT, Parsee::Level::CRITICAL, true, TAG_ID)
+                }, Parsee::Level::OPTIONAL, true
+            ),
             // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_ID),
             Parsee::tokenParsee(TokenKind::FUNCTION, Parsee::Level::REQUIRED, false),
@@ -338,11 +350,15 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    string identifier = "";
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnType = ValueType::NONE;
+
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
             case TAG_ID:
-                identifier = parseeResult.getToken()->getLexme();
+                identifier += parseeResult.getToken()->getLexme();
                 break;
             case TAG_ARG_ID: {
                 pair<string, shared_ptr<ValueType>> argument;

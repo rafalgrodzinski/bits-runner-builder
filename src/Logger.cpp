@@ -176,6 +176,8 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
             return toString(dynamic_pointer_cast<StatementModule>(statement), indents);
         case StatementKind::META_IMPORT:
             return toString(dynamic_pointer_cast<StatementImport>(statement), indents);
+        case StatementKind::META_EXTERN_VARIABLE:
+            return toString(dynamic_pointer_cast<StatementMetaExternVariable>(statement), indents);
         case StatementKind::META_EXTERN_FUNCTION:
             return toString(dynamic_pointer_cast<StatementMetaExternFunction>(statement), indents);
         case StatementKind::VARIABLE_DECLARATION:

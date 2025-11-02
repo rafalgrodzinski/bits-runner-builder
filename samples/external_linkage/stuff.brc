@@ -1,0 +1,8 @@
+@module stuff
+
+@export value u64 <- 3
+@export callback ptr<fun u64>
+
+@export doStuff fun: arg u64
+    if callback.vAdr != 0: callback.val(arg * value)
+;
