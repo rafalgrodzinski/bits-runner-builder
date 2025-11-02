@@ -418,7 +418,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (valueType->getKind() == ValueTypeKind::DATA && valueType->getValueArg() == 0 && expression != nullptr) {
         shared_ptr<ExpressionCompositeLiteral> compositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
         if (compositeLiteral != nullptr) {
-            valueType = ValueType::data(valueType, ExpressionLiteral::expressionLiteralForUInt(compositeLiteral->getExpressions().size()));
+            valueType = ValueType::data(valueType->getSubType(), ExpressionLiteral::expressionLiteralForUInt(compositeLiteral->getExpressions().size()));
         }
     }
 
