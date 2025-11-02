@@ -38,7 +38,10 @@ shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argTypes, sha
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
     valueType->argTypes = argTypes;
-    valueType->retType = retType;
+    if (retType != nullptr)
+        valueType->retType = retType;
+    else
+        valueType->retType = ValueType::NONE;
     return valueType;
 }
 
