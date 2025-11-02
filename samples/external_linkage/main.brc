@@ -1,6 +1,17 @@
-@extern @stuff.doStuff fun: value u64
+@import io
+
+@extern @stuff.doStuff fun: arg u64
+@extern @stuff.value u64
+@extern @stuff.callback ptr<fun u64>
+
+stuffCallback fun: result u64
+    @io.printNum(result)
+    @io.printChar('\n')
+;
 
 @export main fun -> u64
+    @stuff.value <- 4
+    @stuff.callback <- { stuffCallback.adr }
     @stuff.doStuff(7)
     ret 0
 ;

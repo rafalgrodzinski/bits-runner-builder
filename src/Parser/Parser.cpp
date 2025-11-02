@@ -258,6 +258,14 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
         {
             // @extern
             Parsee::tokenParsee(TokenKind::M_EXTERN, Parsee::Level::REQUIRED, false),
+            // identifier - module prefix
+            Parsee::groupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::META, Parsee::Level::REQUIRED, false),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_IDENTIFIER),
+                    Parsee::tokenParsee(TokenKind::DOT, Parsee::Level::CRITICAL, true, TAG_IDENTIFIER)
+                }, Parsee::Level::OPTIONAL, true
+            ),
             // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_IDENTIFIER),
             Parsee::valueTypeParsee(Parsee::Level::REQUIRED, true, TAG_VALUE_TYPE)
@@ -267,13 +275,13 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string identifier;
+    string identifier = "";
     shared_ptr<ValueType> valueType;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_IDENTIFIER: {
-                identifier = parseeResult.getToken()->getLexme();
+                identifier += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_VALUE_TYPE: {
