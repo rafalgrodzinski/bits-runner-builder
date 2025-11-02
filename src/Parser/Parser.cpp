@@ -1492,7 +1492,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     enum TAG {
         TAG_DATA,
         TAG_BLOB,
-        TAG_FUN,
+        TAG_PTR_FUN,
         TAG_PTR,
         TAG_ARG_TYPE,
         TAG_RET_TYPE,
@@ -1513,7 +1513,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         Parsee::orParsee(
                             // function pointer
                             {
-                                Parsee::tokenParsee(TokenKind::FUNCTION, Parsee::Level::REQUIRED, true, TAG_FUN),
+                                Parsee::tokenParsee(TokenKind::FUNCTION, Parsee::Level::REQUIRED, true, TAG_PTR_FUN),
                                 // arguments
                                 Parsee::groupParsee(
                                     {
@@ -1577,7 +1577,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     bool isData = false;
     bool isBlob = false;
-    bool isFun = false;
+    bool isPtrFun = false;
     bool isPtr = false;
 
     vector<shared_ptr<ValueType>> argTypes;
@@ -1596,8 +1596,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
             case TAG_BLOB:
                 isBlob = true;
                 break;
-            case TAG_FUN:
-                isFun = true;
+            case TAG_PTR_FUN:
+                isPtrFun = true;
                 break;
             case TAG_PTR:
                 isPtr = true;
@@ -1627,8 +1627,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::data(subType, sizeExpression);
     else if (isBlob)
         return ValueType::blob(blobName);
-    else if (isFun)
-        return ValueType::fun(argTypes, retType);
+    else if (isPtrFun)
+        return ValueType::ptr(ValueType::fun(argTypes, retType));
     else if (isPtr)
         return ValueType::ptr(subType);
     else

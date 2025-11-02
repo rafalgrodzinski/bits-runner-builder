@@ -130,12 +130,13 @@ private:
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
     llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
+    llvm::Value *valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression);
     llvm::Value *valueForChained(shared_ptr<ExpressionChained> expression);
     llvm::Value *valueForBlock(shared_ptr<ExpressionBlock> expression);
     
     llvm::Value *valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions);
-    llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<ExpressionVariable> expression);
-    llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<ExpressionVariable> expression);
+    llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);
+    llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<Expression> expression);
     llvm::Value *valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
 

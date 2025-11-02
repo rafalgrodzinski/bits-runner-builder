@@ -950,6 +950,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
 
     llvm::AllocaInst *localAlloca = getAlloca(expression->getIdentifier());
     llvm::Value *globalValuePtr = getGlobal(expression->getIdentifier());
+    llvm::Value *fun = getFun(expression->getIdentifier());
     if (localAlloca != nullptr) {
         value = localAlloca;
         type = localAlloca->getAllocatedType();
@@ -957,6 +958,9 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
         shared_ptr<ValueType> valueType = getPtrType(expression->getIdentifier());
         type = typeForValueType(valueType);
         value = globalValuePtr;
+    } else if (fun != nullptr) {
+        type = fun->getType();
+        value = fun;
     }
 
     if (value == nullptr) {
@@ -970,17 +974,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
     llvm::Function *fun = getFun(expression->getName());
     if (fun != nullptr) {
-        llvm::FunctionType *funType = fun->getFunctionType();        
-        vector<llvm::Value*> argValues;
-        vector<shared_ptr<Expression>> argumentExpressions = expression->getArgumentExpressions();
-        for (int i=0; i<argumentExpressions.size(); i++) {
-            // pass along type for the specified argument
-            llvm::Type *argumentType = funType->getParamType(i);
-            shared_ptr<Expression> argumentExpression = argumentExpressions.at(i);
-            llvm::Value *argValue = valueForExpression(argumentExpression, argumentType);
-            argValues.push_back(argValue);
-        }
-        return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
+        return valueForCall(fun, fun->getFunctionType(), expression);
     }
 
     llvm::InlineAsm *rawFun = getRawFun(expression->getName());
@@ -995,6 +989,19 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
 
     markError(0, 0, format("Function \"{}\" not defined in scope", expression->getName()));
     return nullptr;
+}
+
+llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression) {
+    vector<llvm::Value*> argValues;
+    vector<shared_ptr<Expression>> argumentExpressions = expression->getArgumentExpressions();
+    for (int i=0; i<argumentExpressions.size(); i++) {
+        // pass along type for the specified argument
+        llvm::Type *argumentType = funType->getParamType(i);
+        shared_ptr<Expression> argumentExpression = argumentExpressions.at(i);
+        llvm::Value *argValue = valueForExpression(argumentExpression, argumentType);
+        argValues.push_back(argValue);
+    }
+    return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
 }
 
 llvm::Value *ModuleBuilder::valueForChained(shared_ptr<ExpressionChained> expression) {
@@ -1042,19 +1049,25 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
             return valueForCast(currentValue, expressionCast->getValueType());
         }
 
-        // Check required types
-        shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
+        // Check parent expression
         shared_ptr<ExpressionVariable> parentExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(i-1));
-        if (expressionVariable == nullptr || parentExpressionVariable == nullptr) {
+        if (parentExpressionVariable == nullptr) {
             markError(0, 0, "Invalid expression type");
             return nullptr;
         }
 
         // Built-in expression?
-        llvm::Value *builtInValue = valueForBuiltIn(currentValue, parentExpressionVariable, expressionVariable);
+        llvm::Value *builtInValue = valueForBuiltIn(currentValue, parentExpressionVariable, chainExpression);
         if (builtInValue != nullptr) {
             currentValue = builtInValue;
             continue;
+        }
+
+        // Check chained expression type 
+        shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
+        if (expressionVariable == nullptr) {
+            markError(0, 0, "Invalid expression type");
+            return nullptr;
         }
 
         // Variable expression?
@@ -1083,24 +1096,32 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
     return currentValue;
 }
 
-llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType, shared_ptr<ExpressionVariable> expression) {
+llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType, shared_ptr<Expression> expression) {
     if (builder->GetInsertBlock() == nullptr)
         return nullptr;
 
-    switch (expression->getVariableKind()) {
-        case ExpressionVariableKind::SIMPLE: {
-            return builder->CreateLoad(sourceType, sourceValue, expression->getIdentifier());
+    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(expression);
+    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
+
+    if (expressionVariable != nullptr) {
+        switch (expressionVariable->getVariableKind()) {
+            case ExpressionVariableKind::SIMPLE: {
+                return builder->CreateLoad(sourceType, sourceValue, expressionVariable->getIdentifier());
+            }
+            case ExpressionVariableKind::DATA: {
+                llvm::Value *indexValue = valueForExpression(expressionVariable->getIndexExpression());
+                llvm::Value *index[] = {
+                    builder->getInt32(0),
+                    indexValue
+                };
+                llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(sourceType);
+                llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expressionVariable->getIdentifier()));
+                return builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr);
+            }
         }
-        case ExpressionVariableKind::DATA: {
-            llvm::Value *indexValue = valueForExpression(expression->getIndexExpression());
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                indexValue
-            };
-            llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(sourceType);
-            llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expression->getIdentifier()));
-            return builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr);
-        }
+    } else if (expressionCall != nullptr) {
+        llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
+        return valueForCall(sourceValue, funType, expressionCall);
     }
 }
 
@@ -1162,15 +1183,28 @@ llvm::Constant *ModuleBuilder::constantValueForCompositeLiteral(shared_ptr<Expre
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<ExpressionVariable> expression) {
+llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<Expression> expression) {
     bool isArray = parentValue->getType()->isArrayTy();
     bool isPointer = parentValue->getType()->isPointerTy();
 
-    bool isCount = expression->getIdentifier().compare("count") == 0;
-    bool isVal = expression->getIdentifier().compare("val") == 0;
-    bool isVadr = expression->getIdentifier().compare("vAdr") == 0;
-    bool isAdr = expression->getIdentifier().compare("adr") == 0;
-    bool isSize = expression->getIdentifier().compare("size") == 0;
+    bool isCount = false;
+    bool isVal = false;
+    bool isVadr = false;
+    bool isAdr = false;
+    bool isSize = false;
+
+    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(expression);
+    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
+
+    if (expressionVariable != nullptr) {
+        isCount = expressionVariable->getIdentifier().compare("count") == 0;
+        isVal = expressionVariable->getIdentifier().compare("val") == 0;
+        isVadr = expressionVariable->getIdentifier().compare("vAdr") == 0;
+        isAdr = expressionVariable->getIdentifier().compare("adr") == 0;
+        isSize = expressionVariable->getIdentifier().compare("size") == 0;
+    } else if (expressionCall != nullptr) {
+        isVal = expressionCall->getName().compare("val") == 0;
+    }
 
     // Return quickly if not built-in
     if (!isCount && !isVal && !isVadr && !isAdr && !isSize)
@@ -1744,6 +1778,21 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
         }
         case ValueTypeKind::BLOB:
             return getStructType(valueType->getBlobName());
+        case ValueTypeKind::FUN: {
+            // returnType
+            llvm::Type *functionReturnType = typeForValueType(valueType->getRetType());
+
+            // argument types
+            vector<llvm::Type *> functionArgumentTypes;
+                for (shared_ptr<ValueType> &argumentType : valueType->getArgTypes()) {
+                    llvm::Type *functionArgumentType = typeForValueType(argumentType);
+                        if (functionArgumentType == nullptr)
+                            return nullptr;
+                        functionArgumentTypes.push_back(functionArgumentType);
+                }
+
+            return llvm::FunctionType::get(functionReturnType, functionArgumentTypes, false);
+        }
         case ValueTypeKind::PTR:
             return typePtr;
         default:
