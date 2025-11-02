@@ -23,10 +23,9 @@ samples=(
 )
 
 for sample in "${samples[@]}"; do
-    echo "🐷 Building ${sample}"
-    "${SCRIPT_DIR}/${sample}/build.sh"
-    check
-    echo "🐷🐷 Running ${sample}"
+    echo "🐷 Building ${sample}" &&
+    "${SCRIPT_DIR}/${sample}/build.sh" &&
+    echo "🐷🐷 Running ${sample}" &&
     "./${sample}"
     check
     echo
