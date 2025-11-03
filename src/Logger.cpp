@@ -408,14 +408,14 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     string line;
 
     // name
-    line = format("BLOB `{}`", statement->getIdentifier());
-    if (!statement->getVariables().empty())
+    line = format("BLOB `{}`", statement->getName());
+    if (!statement->getMembers().empty())
         line += ":";
     text += formattedLine(line, indents);
 
     // members
     indents = adjustedLastIndent(indents);
-    for (pair<string, shared_ptr<ValueType>> &member : statement->getVariables()) {
+    for (pair<string, shared_ptr<ValueType>> &member : statement->getMembers()) {
         line = format("`{}` {}", member.first, toString(member.second));
         text += formattedLine(line, indents);
     }

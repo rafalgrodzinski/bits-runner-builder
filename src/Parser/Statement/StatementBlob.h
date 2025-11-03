@@ -7,13 +7,13 @@ class ValueType;
 
 class StatementBlob: public Statement {
 private:
-    string identifier;
-    vector<pair<string, shared_ptr<ValueType>>> variables;
+    string name;
+    vector<pair<string, shared_ptr<ValueType>>> members;
 
 public:
-    StatementBlob(string identifier, vector<pair<string, shared_ptr<ValueType>>> variables);
-    string getIdentifier();
-    vector<pair<string, shared_ptr<ValueType>>> getVariables();
+    StatementBlob(string name, vector<pair<string, shared_ptr<ValueType>>> members);
+    string getName();
+    vector<pair<string, shared_ptr<ValueType>>> getMembers();
 };
 
 #endif

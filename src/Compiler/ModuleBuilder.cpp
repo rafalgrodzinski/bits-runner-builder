@@ -340,7 +340,7 @@ void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> st
 }
 
 void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
-    llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getIdentifier());
+    llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getName());
     if (structType == nullptr) {
         markError(0, 0, "Blob not declared");
         return;
@@ -349,7 +349,7 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
     // Generate types for body
     vector<string> memberNames;
     vector<llvm::Type *> types;
-    for (pair<string, shared_ptr<ValueType>> &variable: statement->getVariables()) {
+    for (pair<string, shared_ptr<ValueType>> &variable: statement->getMembers()) {
         memberNames.push_back(variable.first);
         llvm::Type *type = typeForValueType(variable.second);
         if (type == nullptr)
@@ -357,7 +357,7 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
         types.push_back(type);
     }
     structType->setBody(types, false);
-    if (!registerStruct(statement->getIdentifier(), structType, memberNames))
+    if (!registerStruct(statement->getName(), structType, memberNames))
         return;
 }
 

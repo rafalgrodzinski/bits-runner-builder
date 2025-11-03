@@ -187,7 +187,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                     }
                     case StatementKind::BLOB: { //generate blob declaration
                         shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
-                        shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = make_shared<StatementBlobDeclaration>(statementBlob->getIdentifier());
+                        shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = make_shared<StatementBlobDeclaration>(statementBlob->getName());
                         blobStatements.push_back(statementBlob);
                         blobDeclarationStatements.push_back(statementBlobDeclaration);
                         break;
@@ -650,17 +650,14 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
 shared_ptr<Statement> Parser::matchStatementBlob() {
     enum Tag {
-        TAG_IDENTIFIER,
+        TAG_NAME,
         TAG_MEMBER_IDENTIFIER,
         TAG_MEMBER_TYPE
     };
 
-    string identifier;
-    vector<pair<string, shared_ptr<ValueType>>> members;
-
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_IDENTIFIER),
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::BLOB, Parsee::Level::REQUIRED, false),
             Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::REQUIRED, false),
             Parsee::repeatedGroupParsee(
@@ -677,11 +674,14 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    string name;
+    vector<pair<string, shared_ptr<ValueType>>> members;
+
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
-            case TAG_IDENTIFIER:
-                identifier = parseeResult.getToken()->getLexme();
+            case TAG_NAME:
+                name = parseeResult.getToken()->getLexme();
                 break;
             case TAG_MEMBER_IDENTIFIER: {
                 pair<string, shared_ptr<ValueType>> member;
@@ -694,7 +694,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         }
     }
 
-    return make_shared<StatementBlob>(identifier, members);
+    return make_shared<StatementBlob>(name, members);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
