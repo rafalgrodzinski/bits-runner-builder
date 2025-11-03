@@ -260,7 +260,7 @@ string Logger::toString(shared_ptr<StatementMetaExternVariable> statement, vecto
     string line;
 
     // name
-    line = format("@EXTERN VAR `{}` {}", statement->getName(), toString(statement->getValueType()));
+    line = format("@EXTERN VAR `{}` {}", statement->getIdentifier(), toString(statement->getValueType()));
     text += formattedLine(line, indents);
 
     return text;
@@ -292,7 +292,7 @@ string Logger::toString(shared_ptr<StatementVariableDeclaration> statement, vect
     string line;
 
     // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getValueType()));
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
     text += formattedLine(line, indents);
 
     return text;
@@ -303,7 +303,7 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getValueType()));
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
     if (statement->getExpression() != nullptr)
         line += ":";
     text += formattedLine(line, indents);
@@ -424,7 +424,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 }
 
 string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("BLOB `{}`", statement->getIdentifier());
+    string line = format ("BLOB `{}`", statement->getName());
     return formattedLine(line, indents);
 }
 
@@ -660,7 +660,7 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
     
     //condition
     indents = adjustedLastIndent(indents);
-    text += toString(expression->getCondition(), indents, false);
+    text += toString(expression->getConditionExpression(), indents, false);
 
     // then
     if (expression->getElseExpression() != nullptr)
@@ -670,7 +670,7 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
 
     text += formattedLine("THEN", indents);
     indents = adjustedLastIndent(indents);
-    text += toString(expression->getThenBlock(), indents);
+    text += toString(expression->getThenBlockExpression(), indents);
 
     // else
     if (expression->getElseExpression() != nullptr) {

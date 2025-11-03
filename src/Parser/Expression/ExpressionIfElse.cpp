@@ -2,19 +2,19 @@
 
 #include "Parser/Expression/ExpressionBlock.h"
 
-ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<ExpressionBlock> thenBlock, shared_ptr<Expression> elseExpression):
-Expression(ExpressionKind::IF_ELSE, nullptr), condition(condition), thenBlock(thenBlock), elseExpression(elseExpression) {
+ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<ExpressionBlock> thenBlockExpression, shared_ptr<Expression> elseExpression):
+Expression(ExpressionKind::IF_ELSE, nullptr), conditionExpression(conditionExpression), thenBlockExpression(thenBlockExpression), elseExpression(elseExpression) {
     // Figure out resulting type
-    if (elseExpression == nullptr || thenBlock->getValueType() == elseExpression->getValueType())
-        valueType = thenBlock->getValueType();
+    if (elseExpression == nullptr || thenBlockExpression->getValueType() == elseExpression->getValueType())
+        valueType = thenBlockExpression->getValueType();
 }
 
-shared_ptr<Expression> ExpressionIfElse::getCondition() {
-    return condition;
+shared_ptr<Expression> ExpressionIfElse::getConditionExpression() {
+    return conditionExpression;
 }
 
-shared_ptr<ExpressionBlock> ExpressionIfElse::getThenBlock() {
-    return thenBlock;
+shared_ptr<ExpressionBlock> ExpressionIfElse::getThenBlockExpression() {
+    return thenBlockExpression;
 }
 
 shared_ptr<Expression> ExpressionIfElse::getElseExpression() {

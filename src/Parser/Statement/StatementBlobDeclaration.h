@@ -5,11 +5,11 @@
 
 class StatementBlobDeclaration: public Statement {
 private:
-    string identifier;
+    string name;
 
 public:
-    StatementBlobDeclaration(string identifier);
-    string getIdentifier();
+    StatementBlobDeclaration(string name);
+    string getName();
 };
 
 #endif

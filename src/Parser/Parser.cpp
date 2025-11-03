@@ -196,7 +196,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
                         shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = make_shared<StatementVariableDeclaration>(
                             statementVariable->getShouldExport(),
-                            statementVariable->getName(),
+                            statementVariable->getIdentifier(),
                             statementVariable->getValueType()
                         );
                         variableDeclarationStatements.push_back(statementVariableDeclaration);

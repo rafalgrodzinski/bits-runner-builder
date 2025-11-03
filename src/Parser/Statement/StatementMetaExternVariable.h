@@ -7,12 +7,12 @@ class ValueType;
 
 class StatementMetaExternVariable: public Statement {
 private:
-    string name;
+    string identifier;
     shared_ptr<ValueType> valueType;
 
 public:
-    StatementMetaExternVariable(string name, shared_ptr<ValueType> valueType);
-    string getName();
+    StatementMetaExternVariable(string identifier, shared_ptr<ValueType> valueType);
+    string getIdentifier();
     shared_ptr<ValueType> getValueType();
 };
 

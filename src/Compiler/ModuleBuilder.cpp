@@ -127,7 +127,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
             buildVariableDeclaration(
                 moduleName,
-                statementDeclaration->getName(),
+                statementDeclaration->getIdentifier(),
                 statementDeclaration->getShouldExport(),
                 statementDeclaration->getValueType()
             );
@@ -163,7 +163,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             shared_ptr<StatementMetaExternVariable> statementExtern = dynamic_pointer_cast<StatementMetaExternVariable>(statement);
             buildVariableDeclaration(
                 "",
-                statementExtern->getName(),
+                statementExtern->getIdentifier(),
                 true,
                 statementExtern->getValueType()
             );
@@ -194,7 +194,7 @@ void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string
         shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
             buildVariableDeclaration(
                 moduleName,
-                statementDeclaration->getName(),
+                statementDeclaration->getIdentifier(),
                 true,
                 statementDeclaration->getValueType()
             );
@@ -336,7 +336,7 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
 }
 
 void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement) {
-    llvm::StructType::create(*context, statement->getIdentifier());
+    llvm::StructType::create(*context, statement->getName());
 }
 
 void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
@@ -435,35 +435,35 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
             valueType = (llvm::ArrayType *)typeForValueType(statement->getValueType(), count);
             if (valueType == nullptr)
                 return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
         }
         case ValueTypeKind::BLOB: {
             valueType = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
         }
         case ValueTypeKind::PTR: {
             valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            if (!setPtrType(statement->getName(), statement->getValueType()))
+            if (!setPtrType(statement->getIdentifier(), statement->getValueType()))
                 return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
         }
         default: {
             valueType = typeForValueType(statement->getValueType());
             if (valueType == nullptr)
                 return;
-            alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getIdentifier());
         }
     }
 
     // try registering new variable in scope
-    if (!setAlloca(statement->getName(), alloca))
+    if (!setAlloca(statement->getIdentifier(), alloca))
         return;
 
     if (statement->getExpression() != nullptr)
@@ -472,15 +472,15 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
     // variable
-    llvm::GlobalVariable *global = (llvm::GlobalVariable*)getGlobal(statement->getName());
+    llvm::GlobalVariable *global = (llvm::GlobalVariable*)getGlobal(statement->getIdentifier());
 
     if (global->hasInitializer()) {
-        markError(0, 0, format("Global variable \"{}\" already defined in scope", statement->getName()));
+        markError(0, 0, format("Global variable \"{}\" already defined in scope", statement->getIdentifier()));
         return;
     }
 
     // type
-    shared_ptr<ValueType> valueType = getPtrType(statement->getName());
+    shared_ptr<ValueType> valueType = getPtrType(statement->getIdentifier());
     llvm::Type *type = typeForValueType(valueType);
 
     // initialization
@@ -892,7 +892,7 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
 }
 
 llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expression) {
-    shared_ptr<Expression> conditionExpression = expression->getCondition();
+    shared_ptr<Expression> conditionExpression = expression->getConditionExpression();
 
     llvm::Function *fun = builder->GetInsertBlock()->getParent();
     llvm::Value *conditionValue = valueForExpression(conditionExpression);
@@ -910,8 +910,8 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     // Then
     scopes.push(Scope());
     builder->SetInsertPoint(thenBlock);
-    buildStatement(expression->getThenBlock()->getStatementBlock());
-    llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getResultStatementExpression()->getExpression());
+    buildStatement(expression->getThenBlockExpression()->getStatementBlock());
+    llvm::Value *thenValue = valueForExpression(expression->getThenBlockExpression()->getResultStatementExpression()->getExpression());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
     scopes.pop();

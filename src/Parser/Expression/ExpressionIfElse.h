@@ -7,14 +7,14 @@ class ExpressionBlock;
 
 class ExpressionIfElse: public Expression {
 private:
-    shared_ptr<Expression> condition;
-    shared_ptr<ExpressionBlock> thenBlock;
+    shared_ptr<Expression> conditionExpression;
+    shared_ptr<ExpressionBlock> thenBlockExpression;
     shared_ptr<Expression> elseExpression;
 
 public:
-    ExpressionIfElse(shared_ptr<Expression> condition, shared_ptr<ExpressionBlock> thenBlock, shared_ptr<Expression> elseExpression);
-    shared_ptr<Expression> getCondition();
-    shared_ptr<ExpressionBlock> getThenBlock();
+    ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<ExpressionBlock> thenBlockExpression, shared_ptr<Expression> elseExpression);
+    shared_ptr<Expression> getConditionExpression();
+    shared_ptr<ExpressionBlock> getThenBlockExpression();
     shared_ptr<Expression> getElseExpression();
 };
 
