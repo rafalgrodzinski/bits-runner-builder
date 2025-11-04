@@ -1243,31 +1243,36 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionCall() {
+    enum {
+        TAG_NAME,
+        TAG_ARGUMENT_EXPRESSION
+    };
+
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             // identifier - module prefix
             Parsee::groupParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::META, Parsee::Level::REQUIRED, true),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true),
-                    Parsee::tokenParsee(TokenKind::DOT, Parsee::Level::CRITICAL, false)
+                    Parsee::tokenParsee(TokenKind::META, Parsee::Level::REQUIRED, false),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_NAME),
+                    Parsee::tokenParsee(TokenKind::DOT, Parsee::Level::CRITICAL, true, TAG_NAME)
                 }, Parsee::Level::OPTIONAL, true
             ),
             // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true),
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_NAME),
             // arguments
             Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, Parsee::Level::REQUIRED, false),
             Parsee::groupParsee(
                 {
                     // first argument
                     Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                    Parsee::expressionParsee(Parsee::Level::REQUIRED, true, false),
+                    Parsee::expressionParsee(Parsee::Level::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
                     // additional arguments
                     Parsee::repeatedGroupParsee(
                         {
                             Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                            Parsee::expressionParsee(Parsee::Level::CRITICAL, true, false)
+                            Parsee::expressionParsee(Parsee::Level::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
                         }, Parsee::Level::OPTIONAL, true
                     ),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false)
@@ -1283,19 +1288,15 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
     string name;
     vector<shared_ptr<Expression>> argumentExpressions;
 
-    int i = 0;
-    // name
-    name = "";
-    if (resultsGroup.getResults().at(i).getToken()->isOfKind({TokenKind::META})) {
-        i++;
-        name += resultsGroup.getResults().at(i++).getToken()->getLexme();
-        name += ".";
-    }
-    name += resultsGroup.getResults().at(i++).getToken()->getLexme();
-    // arguments
-    while (i < resultsGroup.getResults().size()) {
-        argumentExpressions.push_back(resultsGroup.getResults().at(i).getExpression());
-        i++;
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_NAME:
+                name += parseeResult.getToken()->getLexme();
+                break;
+            case TAG_ARGUMENT_EXPRESSION:
+            argumentExpressions.push_back(parseeResult.getExpression());
+                break;
+        }
     }
 
     return make_shared<ExpressionCall>(name, argumentExpressions);
