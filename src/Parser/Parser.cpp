@@ -1484,14 +1484,12 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
         right = matchUnary();
     }
 
-    if (right == nullptr) {
-        markError({}, {}, "Expected expression");
-        return nullptr;
-    } else {
-        return make_shared<ExpressionBinary>(token, left, right);
-    }
+    shared_ptr<ExpressionBinary> expression = ExpressionBinary::expression(token, left, right);
 
-    return nullptr;
+    if (expression == nullptr)
+        markError({}, {}, "Expected expression");
+
+    return expression;
 }
 
 shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTokenKinds) {

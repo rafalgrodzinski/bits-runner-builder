@@ -3,98 +3,100 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType.h"
 
-ExpressionBinary::ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right):
-Expression(ExpressionKind::BINARY, nullptr), operation(ExpressionBinaryOperation::INVALID), left(left), right(right) {
+ExpressionBinary::ExpressionBinary() :
+Expression(ExpressionKind::BINARY, nullptr) { }
+
+shared_ptr<ExpressionBinary> ExpressionBinary::expression(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right) {
+    shared_ptr<ExpressionBinary> expression = make_shared<ExpressionBinary>();
+
+    if (left == nullptr || right == nullptr)
+        return nullptr;
+
+    expression->left = left;
+    expression->right = right;
+
     switch (token->getKind()) {
         case TokenKind::OR:
-            operation = ExpressionBinaryOperation::OR;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::OR;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::XOR:
-            operation = ExpressionBinaryOperation::XOR;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::XOR;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::AND:
-            operation = ExpressionBinaryOperation::AND;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::AND;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::BIT_OR:
-            operation = ExpressionBinaryOperation::BIT_OR;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::BIT_OR;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::BIT_XOR:
-            operation = ExpressionBinaryOperation::BIT_XOR;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::BIT_XOR;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::BIT_AND:
-            operation = ExpressionBinaryOperation::BIT_AND;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::BIT_AND;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::BIT_SHL:
-            operation = ExpressionBinaryOperation::BIT_SHL;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::BIT_SHL;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::BIT_SHR:
-            operation = ExpressionBinaryOperation::BIT_SHR;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::BIT_SHR;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::EQUAL:
-            operation = ExpressionBinaryOperation::EQUAL;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::EQUAL;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::NOT_EQUAL:
-            operation = ExpressionBinaryOperation::NOT_EQUAL;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::NOT_EQUAL;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::LESS:
-            operation = ExpressionBinaryOperation::LESS;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::LESS;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::LESS_EQUAL:
-            operation = ExpressionBinaryOperation::LESS_EQUAL;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::LESS_EQUAL;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::GREATER:
-            operation = ExpressionBinaryOperation::GREATER;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::GREATER;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::GREATER_EQUAL:
-            operation = ExpressionBinaryOperation::GREATER_EQUAL;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionBinaryOperation::GREATER_EQUAL;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::PLUS:
-            operation = ExpressionBinaryOperation::ADD;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::ADD;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::MINUS:
-            operation = ExpressionBinaryOperation::SUB;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::SUB;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::STAR:
-            operation = ExpressionBinaryOperation::MUL;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::MUL;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::SLASH:
-            operation = ExpressionBinaryOperation::DIV;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::DIV;
+            expression->valueType = left->getValueType();
             break;
         case TokenKind::PERCENT:
-            operation = ExpressionBinaryOperation::MOD;
-            valueType = left->getValueType();
+            expression->operation = ExpressionBinaryOperation::MOD;
+            expression->valueType = left->getValueType();
             break;
         default:
-            break;
+            return nullptr;;
     }
 
-    if (left->getValueType() != nullptr && right->getValueType() != nullptr) {
-        // Types must match
-        if (left->getValueType() != right->getValueType())
-            valueType = ValueType::NONE;
-
-        // Booleans can only do = or !=
-        if (valueType->getKind() == ValueTypeKind::BOOL && (token->getKind() != TokenKind::EQUAL || token->getKind() != TokenKind::NOT_EQUAL))
-            valueType = ValueType::NONE;
-    }
+    return expression;
 }
 
 ExpressionBinaryOperation ExpressionBinary::getOperation() {

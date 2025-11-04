@@ -616,8 +616,6 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
         case ExpressionBinaryOperation::MOD:
             op = "%";
             break;
-        case ExpressionBinaryOperation::INVALID:
-            return "{INVALID}";
     }
 
     string line = format("({} {} {})", toString(expression->getLeft(), indents, true), op, toString(expression->getRight(), indents, true));
