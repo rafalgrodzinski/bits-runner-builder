@@ -86,8 +86,10 @@ private:
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
+
     shared_ptr<Scope> scope;
 
+    // Statements
     void buildStatement(shared_ptr<Statement> statement);
     void buildImportStatement(shared_ptr<Statement> statement, string moduleName);
     void buildImport(shared_ptr<StatementImport> statement);
@@ -106,6 +108,9 @@ private:
     void buildRepeat(shared_ptr<StatementRepeat> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 
+    void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
+
+    // Expressions
     llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
     llvm::Constant *constantValueForExpression(shared_ptr<Expression> expression, llvm::Type *targetType);
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType = nullptr);
@@ -131,9 +136,7 @@ private:
     llvm::Value *valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
 
-    void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
-
-    // support
+    // Support
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
     int sizeInBitsForType(llvm::Type *type);
 
