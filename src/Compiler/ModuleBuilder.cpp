@@ -42,7 +42,12 @@ ModuleBuilder::ModuleBuilder(
     vector<shared_ptr<Statement>> headerStatements,
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
 ):
-moduleName(moduleName), defaultModuleName(defaultModuleName), statements(statements), callingConvention(callingConvention), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
+moduleName(moduleName),
+defaultModuleName(defaultModuleName),
+statements(statements),
+callingConvention(callingConvention),
+headerStatements(headerStatements),
+exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -66,11 +71,10 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
 
     typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
     typeIntPtr = llvm::Type::getIntNTy(*context, pointerSize);
-
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
-    scopes.push(Scope());
+    scope = make_shared<Scope>();
 
     // build header
     for (shared_ptr<Statement> &headerStatement : headerStatements)
@@ -251,11 +255,11 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     llvm::Function *fun = llvm::Function::Create(funType, funLinkage, symbolName, *module);
     fun->setCallingConv(callingConvention);
 
-    setFun(internalName, fun);
+    scope->setFunction(internalName, fun);
 }
 
 void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
-    llvm::Function *fun = getFun(statement->getName());
+    llvm::Function *fun = scope->getFunction(statement->getName());
 
     // Check if function not yet defined
     llvm::BasicBlock &entryBlock = fun->getEntryBlock();
@@ -277,7 +281,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
     builder->SetInsertPoint(block);
 
-    scopes.push(Scope());
+    scope->pushLevel();
 
     // build arguments
     int i=0;
@@ -288,12 +292,12 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
 
         if (type->isPointerTy()) {
             shared_ptr<ValueType> valueType = statement->getArguments().at(i).second;
-            if(!setPtrType(name, valueType))
+            if(!scope->setPtrType(name, valueType))
                 return;
         }
 
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, name);
-        if (!setAlloca(name, alloca))
+        if (!scope->setAlloca(name, alloca))
             return;
         builder->CreateStore(&arg, alloca);
 
@@ -305,7 +309,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     // Remove extranouse block after the last return statement
     builder->GetInsertBlock()->eraseFromParent();
 
-    scopes.pop();
+    scope->popLevel();
 
     builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
 
@@ -331,8 +335,7 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
     }
     llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
 
-    if (!setRawFun(statement->getName(), rawFun))
-        return;
+    scope->setInlineAsm(statement->getName(), rawFun);
 }
 
 void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement) {
@@ -357,8 +360,7 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
         types.push_back(type);
     }
     structType->setBody(types, false);
-    if (!registerStruct(statement->getName(), structType, memberNames))
-        return;
+    scope->setStruct(statement->getName(), structType, memberNames);
 }
 
 void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType) {
@@ -385,11 +387,8 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
     llvm::GlobalVariable *global = new llvm::GlobalVariable(*module, type, false, linkage, nullptr, symbolName);
 
     // register
-    if (!setGlobal(internalName, global))
-        return;
-
-    if (!setPtrType(internalName, valueType))
-        return;
+    scope->setGlobal(internalName, global);
+    scope->setPtrType(internalName, valueType);
 }
 
 void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
@@ -414,7 +413,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
                     }
                     case ExpressionKind::VARIABLE: {
                         string identifier = dynamic_pointer_cast<ExpressionVariable>(statement->getExpression())->getIdentifier();
-                        llvm::AllocaInst *alloca = getAlloca(identifier);
+                        llvm::AllocaInst *alloca = scope->getAlloca(identifier);
                         if (alloca != nullptr && alloca->getAllocatedType()->isArrayTy()) {
                             count = ((llvm::ArrayType*)alloca->getAllocatedType())->getNumElements();
                         }
@@ -422,7 +421,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
                     }
                     case ExpressionKind::CALL: {
                         string funName = dynamic_pointer_cast<ExpressionCall>(statement->getExpression())->getName();
-                        llvm::Function *fun = getFun(funName);
+                        llvm::Function *fun = scope->getFunction(funName);
                         if (fun != nullptr && fun->getReturnType()->isArrayTy()) {
                             count = ((llvm::ArrayType*)fun->getReturnType())->getNumElements();
                         }
@@ -449,7 +448,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
             valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            if (!setPtrType(statement->getIdentifier(), statement->getValueType()))
+            if (!scope->setPtrType(statement->getIdentifier(), statement->getValueType()))
                 return;
             alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
@@ -463,7 +462,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
     }
 
     // try registering new variable in scope
-    if (!setAlloca(statement->getIdentifier(), alloca))
+    if (!scope->setAlloca(statement->getIdentifier(), alloca))
         return;
 
     if (statement->getExpression() != nullptr)
@@ -472,7 +471,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
     // variable
-    llvm::GlobalVariable *global = (llvm::GlobalVariable*)getGlobal(statement->getIdentifier());
+    llvm::GlobalVariable *global = (llvm::GlobalVariable*)scope->getGlobal(statement->getIdentifier());
 
     if (global->hasInitializer()) {
         markError(0, 0, format("Global variable \"{}\" already defined in scope", statement->getIdentifier()));
@@ -480,7 +479,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     }
 
     // type
-    shared_ptr<ValueType> valueType = getPtrType(statement->getIdentifier());
+    shared_ptr<ValueType> valueType = scope->getPtrType(statement->getIdentifier());
     llvm::Type *type = typeForValueType(valueType);
 
     // initialization
@@ -551,7 +550,7 @@ void ModuleBuilder::buildRepeat(shared_ptr<StatementRepeat> statement) {
     llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, "loopBody");
     llvm::BasicBlock *afterBlock = llvm::BasicBlock::Create(*context, "loopPost");
 
-    scopes.push(Scope());
+    scope->pushLevel();
 
     // loop init
     if (initStatement != nullptr)
@@ -599,7 +598,7 @@ void ModuleBuilder::buildRepeat(shared_ptr<StatementRepeat> statement) {
     fun->insert(fun->end(), afterBlock);
     builder->SetInsertPoint(afterBlock);
 
-    scopes.pop();
+    scope->popLevel();
 }
 
 void ModuleBuilder::buildExpression(shared_ptr<StatementExpression> statement) {
@@ -908,24 +907,24 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     }
 
     // Then
-    scopes.push(Scope());
+    scope->pushLevel();
     builder->SetInsertPoint(thenBlock);
     buildStatement(expression->getThenBlockExpression()->getStatementBlock());
     llvm::Value *thenValue = valueForExpression(expression->getThenBlockExpression()->getResultStatementExpression()->getExpression());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
-    scopes.pop();
+    scope->popLevel();
 
     // Else
     llvm::Value *elseValue = nullptr;
     if (expression->getElseExpression() != nullptr) {
-        scopes.push(Scope());
+        scope->pushLevel();
         fun->insert(fun->end(), elseBlock);
         builder->SetInsertPoint(elseBlock);
         elseValue = valueForExpression(expression->getElseExpression());
         builder->CreateBr(mergeBlock);
         elseBlock = builder->GetInsertBlock();
-        scopes.pop();
+        scope->popLevel();
     }
 
     // Merge
@@ -948,14 +947,14 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
     llvm::Value *value = nullptr;
     llvm::Type *type = nullptr;
 
-    llvm::AllocaInst *localAlloca = getAlloca(expression->getIdentifier());
-    llvm::Value *globalValuePtr = getGlobal(expression->getIdentifier());
-    llvm::Value *fun = getFun(expression->getIdentifier());
+    llvm::AllocaInst *localAlloca = scope->getAlloca(expression->getIdentifier());
+    llvm::Value *globalValuePtr = scope->getGlobal(expression->getIdentifier());
+    llvm::Value *fun = scope->getFunction(expression->getIdentifier());
     if (localAlloca != nullptr) {
         value = localAlloca;
         type = localAlloca->getAllocatedType();
     } else if (globalValuePtr != nullptr) {
-        shared_ptr<ValueType> valueType = getPtrType(expression->getIdentifier());
+        shared_ptr<ValueType> valueType = scope->getPtrType(expression->getIdentifier());
         type = typeForValueType(valueType);
         value = globalValuePtr;
     } else if (fun != nullptr) {
@@ -972,12 +971,12 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
 }
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
-    llvm::Function *fun = getFun(expression->getName());
+    llvm::Function *fun = scope->getFunction(expression->getName());
     if (fun != nullptr) {
         return valueForCall(fun, fun->getFunctionType(), expression);
     }
 
-    llvm::InlineAsm *rawFun = getRawFun(expression->getName());
+    llvm::InlineAsm *rawFun = scope->getInlineAsm(expression->getName());
     if (rawFun != nullptr) {
         vector<llvm::Value *>argValues;
         for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
@@ -1077,7 +1076,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
             return nullptr;
         }
         string structName = string(structType->getName());
-        optional<int> memberIndex = getMemberIndex(structName, expressionVariable->getIdentifier());
+        optional<int> memberIndex = scope->getStructMemberIndex(structName, expressionVariable->getIdentifier());
         if (!memberIndex) {
             markError(0, 0, format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
             return nullptr;
@@ -1225,7 +1224,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
-        shared_ptr<ValueType> pointeeValueType = getPtrType(parentExpression->getIdentifier())->getSubType();
+        shared_ptr<ValueType> pointeeValueType = scope->getPtrType(parentExpression->getIdentifier())->getSubType();
         if (pointeeValueType == nullptr) {
             markError(0, 0, "No type for ptr");
             return nullptr;
@@ -1439,7 +1438,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
 
                 if (valueExpression->getKind() == ExpressionKind::VARIABLE) {
                     shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
-                    sourceValue = getAlloca(expressionVariable->getIdentifier());
+                    sourceValue = scope->getAlloca(expressionVariable->getIdentifier());
                     if (sourceValue == nullptr)
                         return;
                     sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
@@ -1585,163 +1584,6 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
     }
 }
 
-bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
-    if (scopes.top().allocaMap[name] != nullptr) {
-        markError(0, 0, format("Variable \"{}\" already defined", name));
-        return false;
-    }
-
-    scopes.top().allocaMap[name] = alloca;
-    return true;
-}
-
-llvm::AllocaInst* ModuleBuilder::getAlloca(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::AllocaInst *alloca = scopes.top().allocaMap[name];
-        if (alloca != nullptr)
-            return alloca;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::setFun(string name, llvm::Function *fun) {
-    if (scopes.top().funMap[name] != nullptr) {
-        markError(0, 0, format("Function \"{}\" already declared in scope", name));
-        return false;
-    }
-
-    scopes.top().funMap[name] = fun;
-    return true;
-}
-
-llvm::Function* ModuleBuilder::getFun(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::Function *fun = scopes.top().funMap[name];
-        if (fun != nullptr)
-            return fun;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::setRawFun(string name, llvm::InlineAsm *rawFun) {
-    if (scopes.top().rawFunMap[name] != nullptr) {
-        markError(0, 0, format("Raw function \"{}\" already declared in scope", name));
-        return false;
-    }
-    
-    scopes.top().rawFunMap[name] = rawFun;
-    return true;
-}
-
-llvm::InlineAsm *ModuleBuilder::getRawFun(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::InlineAsm *rawFun = scopes.top().rawFunMap[name];
-        if (rawFun != nullptr)
-            return rawFun;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::setPtrType(string name, shared_ptr<ValueType> ptrType) {
-    if (scopes.top().ptrTypeMap[name] != nullptr) {
-        markError(0, 0, format("Ptr type \"{}\" already declared in scope", name));
-        return false;
-    }
-
-    scopes.top().ptrTypeMap[name] = ptrType;
-    return true;
-}
-
-shared_ptr<ValueType> ModuleBuilder::getPtrType(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        shared_ptr<ValueType> ptrType = scopes.top().ptrTypeMap[name];
-        if (ptrType != nullptr)
-            return ptrType;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::setGlobal(string name, llvm::Value *global) {
-    if (scopes.top().globalMap[name] != nullptr) {
-        markError(0, 0, format("Global \"{}\" already declared in scope", name));
-        return false;
-    }
-
-    scopes.top().globalMap[name] = global;
-    return true;
-}
-
-llvm::Value *ModuleBuilder::getGlobal(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::Value *global = scopes.top().globalMap[name];
-        if (global != nullptr)
-            return global;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::registerStruct(string structName, llvm::StructType *structType, vector<string> memberNames) {
-    if (scopes.top().structTypeMap[structName] != nullptr) {
-        markError(0, 0, format("Blob \"{}\" already defined in scope",structName));
-        return false;
-    }
-
-    scopes.top().structTypeMap[structName] = structType;
-    scopes.top().structMembersMap[structName] = memberNames;
-
-    return true;
-}
-
-llvm::StructType *ModuleBuilder::getStructType(string structName) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::StructType *structType = scopes.top().structTypeMap[structName];
-        if (structType != nullptr)
-            return structType;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-optional<int> ModuleBuilder::getMemberIndex(string structName, string memberName) {
-        stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        if (scopes.top().structMembersMap.contains(structName)) {
-            vector<string> memberNames = scopes.top().structMembersMap[structName];
-            for (int i=0; i<memberNames.size(); i++) {
-                if (memberNames[i].compare(memberName) == 0)
-                    return i;
-            }
-        }
-        scopes.pop();
-    }
-
-    return {};
-}
-
 llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int count) {
     if (valueType == nullptr) {
         markError(0, 0, "Missing type");
@@ -1777,7 +1619,7 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
         }
         case ValueTypeKind::BLOB:
-            return getStructType(valueType->getBlobName());
+            return scope->getStructType(valueType->getBlobName());
         case ValueTypeKind::FUN: {
             // returnType
             llvm::Type *functionReturnType = typeForValueType(valueType->getReturnType());
