@@ -5,11 +5,11 @@
 
 class ExpressionGrouping: public Expression {
 private:
-    shared_ptr<Expression> expression;
+    shared_ptr<Expression> subExpression;
 
 public:
-    ExpressionGrouping(shared_ptr<Expression> expression);
-    shared_ptr<Expression> getExpression();
+    ExpressionGrouping(shared_ptr<Expression> subExpression);
+    shared_ptr<Expression> getSubExpression();
 };
 
 #endif

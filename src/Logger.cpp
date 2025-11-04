@@ -702,7 +702,7 @@ string Logger::toString(shared_ptr<ExpressionVariable> expression, vector<Indent
 }
 
 string Logger::toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents) {
-    string line = format("({})", toString(expression->getExpression(), indents, true));
+    string line = format("({})", toString(expression->getSubExpression(), indents, true));
     return formattedLine(line, indents);
 }
 

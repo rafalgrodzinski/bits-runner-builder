@@ -1,8 +1,8 @@
 #include "ExpressionGrouping.h"
 
-ExpressionGrouping::ExpressionGrouping(shared_ptr<Expression> expression):
-Expression(ExpressionKind::GROUPING, expression->getValueType()), expression(expression) { }
+ExpressionGrouping::ExpressionGrouping(shared_ptr<Expression> subExpression):
+Expression(ExpressionKind::GROUPING, subExpression->getValueType()), subExpression(subExpression) { }
 
-shared_ptr<Expression> ExpressionGrouping::getExpression() {
-    return expression;
+shared_ptr<Expression> ExpressionGrouping::getSubExpression() {
+    return subExpression;
 }

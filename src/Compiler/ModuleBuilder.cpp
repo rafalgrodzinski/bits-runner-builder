@@ -615,7 +615,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::COMPOSITE_LITERAL:
             return valueForCompositeLiteral(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), castToType);
         case ExpressionKind::GROUPING:
-            return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
+            return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getSubExpression());
         case ExpressionKind::BINARY:
             return valueForBinary(dynamic_pointer_cast<ExpressionBinary>(expression));
         case ExpressionKind::UNARY:
@@ -646,7 +646,7 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
             value = constantValueForCompositeLiteral(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), castToType);
             break;
         case ExpressionKind::GROUPING:
-            value = valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
+            value = valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getSubExpression());
             break;
         case ExpressionKind::BINARY:
             value = valueForBinary(dynamic_pointer_cast<ExpressionBinary>(expression));
@@ -704,7 +704,7 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
 }
 
 llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expression) {
-    return valueForExpression(expression->getExpression());
+    return valueForExpression(expression->getSubExpression());
 }
 
 llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expression) {
