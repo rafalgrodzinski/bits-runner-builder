@@ -998,10 +998,13 @@ shared_ptr<Expression> Parser::matchLogicalNot() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
     if (tryMatchingTokenKinds(Token::tokensLogicalNot, false, true)) {
-        shared_ptr<Expression> expression = matchLogicalNot();
+        shared_ptr<Expression> subExpression = matchLogicalNot();
+        shared_ptr<ExpressionUnary> expression = ExpressionUnary::expression(token, subExpression);
+
         if (expression == nullptr)
-            return nullptr;
-        return make_shared<ExpressionUnary>(token, expression);
+            markError({}, {}, "Expected expression");
+        
+        return expression;
     }
 
     return matchEquality();
@@ -1066,10 +1069,13 @@ shared_ptr<Expression> Parser::matchBitwiseNot() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
     if (tryMatchingTokenKinds(Token::tokensBitwiseNot, false, true)) {
-        shared_ptr<Expression> expression = matchBitwiseNot();
+        shared_ptr<Expression> subExpression = matchBitwiseNot();
+        shared_ptr<ExpressionUnary> expression = ExpressionUnary::expression(token, subExpression);
+
         if (expression == nullptr)
-            return nullptr;
-        return make_shared<ExpressionUnary>(token, expression);
+            markError({}, {}, "Expected expression");
+        
+        return expression;
     }
 
     return matchTerm();
@@ -1101,10 +1107,13 @@ shared_ptr<Expression> Parser::matchUnary() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
     if (tryMatchingTokenKinds(Token::tokensUnary, false, true)) {
-        shared_ptr<Expression> expression = matchExpressionChained(nullptr);
+        shared_ptr<Expression> subExpression = matchExpressionChained(nullptr);
+        shared_ptr<ExpressionUnary> expression = ExpressionUnary::expression(token, subExpression);
+
         if (expression == nullptr)
-            return nullptr;
-        return make_shared<ExpressionUnary>(token, expression);
+            markError({}, {}, "Expected expression");
+        
+        return expression;
     }
 
     return matchExpressionChained(nullptr);

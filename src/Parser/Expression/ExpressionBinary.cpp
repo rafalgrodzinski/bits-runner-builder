@@ -7,11 +7,10 @@ ExpressionBinary::ExpressionBinary() :
 Expression(ExpressionKind::BINARY, nullptr) { }
 
 shared_ptr<ExpressionBinary> ExpressionBinary::expression(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right) {
-    shared_ptr<ExpressionBinary> expression = make_shared<ExpressionBinary>();
-
     if (left == nullptr || right == nullptr)
         return nullptr;
 
+    shared_ptr<ExpressionBinary> expression = make_shared<ExpressionBinary>();
     expression->left = left;
     expression->right = right;
 

@@ -628,19 +628,17 @@ string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKin
 
     switch (expression->getOperation()) {
         case ExpressionUnaryOperation::NOT:
-            line = format("NOT {}", toString(expression->getExpression(), indents, true));
+            line = format("NOT {}", toString(expression->getSubExpression(), indents, true));
             break;
         case ExpressionUnaryOperation::BIT_NOT:
-            line = format("~{}", toString(expression->getExpression(), indents, true));
+            line = format("~{}", toString(expression->getSubExpression(), indents, true));
             break;
         case ExpressionUnaryOperation::PLUS:
-            line = format("+({})", toString(expression->getExpression(), indents, true));
+            line = format("+({})", toString(expression->getSubExpression(), indents, true));
             break;
         case ExpressionUnaryOperation::MINUS:
-            line = format("-({})", toString(expression->getExpression(), indents, true));
+            line = format("-({})", toString(expression->getSubExpression(), indents, true));
             break;
-        case ExpressionUnaryOperation::INVALID:
-            return "{INVALID}";
     }
 
     return formattedLine(line, indents);

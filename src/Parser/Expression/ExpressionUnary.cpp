@@ -3,36 +3,42 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType.h"
 
-ExpressionUnary::ExpressionUnary(shared_ptr<Token> token, shared_ptr<Expression> expression):
-Expression(ExpressionKind::UNARY, nullptr), expression(expression) {
+ExpressionUnary::ExpressionUnary() :
+Expression(ExpressionKind::UNARY, nullptr) { }
+
+shared_ptr<ExpressionUnary> ExpressionUnary::expression(shared_ptr<Token> token, shared_ptr<Expression> subExpression) {
+    if (subExpression == nullptr)
+        return nullptr;
+        
+    shared_ptr<ExpressionUnary> expression = make_shared<ExpressionUnary>();
+    expression->subExpression = subExpression;
+
     switch (token->getKind()) {
         case TokenKind::NOT:
-            operation = ExpressionUnaryOperation::NOT;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionUnaryOperation::NOT;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::BIT_NOT:
-            operation = ExpressionUnaryOperation::BIT_NOT;
-            valueType = ValueType::BOOL;
+            expression->operation = ExpressionUnaryOperation::BIT_NOT;
+            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::PLUS:
-            operation = ExpressionUnaryOperation::PLUS;
-            valueType = expression->getValueType();
+            expression->operation = ExpressionUnaryOperation::PLUS;
+            expression->valueType = expression->getValueType();
             break;
         case TokenKind::MINUS:
-            operation = ExpressionUnaryOperation::MINUS;
-            valueType = expression->getValueType();
-            break;
-        default:
-            operation = ExpressionUnaryOperation::INVALID;
-            valueType = nullptr;
+            expression->operation = ExpressionUnaryOperation::MINUS;
+            expression->valueType = expression->getValueType();
             break;
     }
+
+    return expression;
 }
 
 ExpressionUnaryOperation ExpressionUnary::getOperation() {
     return operation;
 }
 
-shared_ptr<Expression> ExpressionUnary::getExpression() {
-    return expression;
+shared_ptr<Expression> ExpressionUnary::getSubExpression() {
+    return subExpression;
 }
