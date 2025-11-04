@@ -296,10 +296,10 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     enum {
-        TAG_ID,
-        TAG_ARG_ID,
-        TAG_ARG_TYPE,
-        TAG_RET_TYPE
+        TAG_NAME,
+        TAG_ARGUMENT_IDENTIFIER,
+        TAG_ARGUMENT_TYPE,
+        TAG_RETURN_TYPE
     };
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
@@ -310,12 +310,12 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
             Parsee::groupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::META, Parsee::Level::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ID),
-                    Parsee::tokenParsee(TokenKind::DOT, Parsee::Level::CRITICAL, true, TAG_ID)
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_NAME),
+                    Parsee::tokenParsee(TokenKind::DOT, Parsee::Level::CRITICAL, true, TAG_NAME)
                 }, Parsee::Level::OPTIONAL, true
             ),
             // identifier
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_ID),
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::FUNCTION, Parsee::Level::REQUIRED, false),
             // arguments
             Parsee::groupParsee(
@@ -323,15 +323,15 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
                     // first argument
                     Parsee::tokenParsee(TokenKind::COLON, Parsee::Level::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARG_ID),
-                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARGUMENT_TYPE),
                     // additional arguments
                     Parsee::repeatedGroupParsee(
                         {
                             Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ID),
-                            Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE)
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_NAME),
+                            Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARGUMENT_TYPE)
                         }, Parsee::Level::OPTIONAL, true
                     )
                 }, Parsee::Level::OPTIONAL, true
@@ -341,7 +341,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
                 {
                     Parsee::tokenParsee(TokenKind::RIGHT_ARROW, Parsee::Level::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RET_TYPE)
+                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RETURN_TYPE)
                 }, Parsee::Level::OPTIONAL, true
             )
         }
@@ -357,17 +357,17 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
-            case TAG_ID:
+            case TAG_NAME:
                 identifier += parseeResult.getToken()->getLexme();
                 break;
-            case TAG_ARG_ID: {
+            case TAG_ARGUMENT_IDENTIFIER: {
                 pair<string, shared_ptr<ValueType>> argument;
                 argument.first = parseeResult.getToken()->getLexme();
                 argument.second = resultsGroup.getResults().at(++i).getValueType();
                 arguments.push_back(argument);
                 break;
             }
-            case TAG_RET_TYPE:
+            case TAG_RETURN_TYPE:
                 returnType = parseeResult.getValueType();
                 break;
         }
@@ -444,10 +444,10 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
 shared_ptr<Statement> Parser::matchStatementFunction() {
     enum {
         TAG_SHOULD_EXPORT,
-        TAG_ID,
-        TAG_ARG_ID,
-        TAG_ARG_TYPE,
-        TAG_RET_TYPE
+        TAG_NAME,
+        TAG_ARGUMENT_IDENTIFIER,
+        TAG_ARGUMENT_TYPE,
+        TAG_RETURN_TYPE
     };
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
@@ -455,7 +455,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
             // export
             Parsee::tokenParsee(TokenKind::M_EXPORT, Parsee::Level::OPTIONAL, true, TAG_SHOULD_EXPORT),
             // identifier
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_ID),
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::FUNCTION, Parsee::Level::REQUIRED, false),
             // arguments
             Parsee::groupParsee(
@@ -463,15 +463,15 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
                     // first argument
                     Parsee::tokenParsee(TokenKind::COLON, Parsee::Level::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARG_ID),
-                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARGUMENT_TYPE),
                     // additional arguments
                     Parsee::repeatedGroupParsee(
                         {
                             Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARG_ID),
-                            Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE)
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                            Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARGUMENT_TYPE)
                         }, Parsee::Level::OPTIONAL, true
                     )
                 }, Parsee::Level::OPTIONAL, true
@@ -481,7 +481,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
                 {
                     Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
                     Parsee::tokenParsee(TokenKind::RIGHT_ARROW, Parsee::Level::REQUIRED, false),
-                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RET_TYPE)
+                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RETURN_TYPE)
                 }, Parsee::Level::OPTIONAL, true
             ),
             // new line
@@ -493,7 +493,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
 
     bool shouldExport = false;
-    string identifier;
+    string name;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueType::NONE;
     shared_ptr<Statement> statementBlock;
@@ -505,18 +505,18 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
                 shouldExport = true;
                 break;
             }
-            case TAG_ID: {
-                identifier = parseeResult.getToken()->getLexme();
+            case TAG_NAME: {
+                name = parseeResult.getToken()->getLexme();
                 break;
             }
-            case TAG_ARG_ID: {
+            case TAG_ARGUMENT_IDENTIFIER: {
                 pair<string, shared_ptr<ValueType>> argument;
                 argument.first = parseeResult.getToken()->getLexme();
                 argument.second = resultsGroup.getResults().at(++i).getValueType();
                 arguments.push_back(argument);
                 break;
             }
-            case TAG_RET_TYPE: {
+            case TAG_RETURN_TYPE: {
                 returnType = parseeResult.getValueType();
                 break;
             }
@@ -534,28 +534,22 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementFunction>(shouldExport, identifier, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
+    return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
     enum {
-        TAG_ID,
+        TAG_NAME,
         TAG_CONSTRAINTS,
-        TAG_ARG_ID,
-        TAG_ARG_TYPE,
-        TAG_RET_TYPE
+        TAG_ARGUMENT_IDENTIFIER,
+        TAG_ARGUMENT_TYPE,
+        TAG_RETURN_TYPE
     };
-
-    string identifier;
-    string constraints;
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnType = ValueType::NONE;
-    string rawSource;
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             // identifier
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_ID),
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::RAW_FUNCTION, Parsee::Level::REQUIRED, false),
             // constraints
             Parsee::groupParsee(
@@ -571,15 +565,15 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                     // first argument
                     Parsee::tokenParsee(TokenKind::COLON, Parsee::Level::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARG_ID),
-                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARGUMENT_TYPE),
                     // additional arguments
                     Parsee::repeatedGroupParsee(
                         {
                             Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARG_ID),
-                            Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE)
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                            Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARGUMENT_TYPE)
                         }, Parsee::Level::OPTIONAL, true
                     )
                 }, Parsee::Level::OPTIONAL, true
@@ -589,7 +583,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                 {
                     Parsee::tokenParsee(TokenKind::RIGHT_ARROW, Parsee::Level::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, Parsee::Level::OPTIONAL, false),
-                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RET_TYPE)
+                    Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RETURN_TYPE)
                 }, Parsee::Level::OPTIONAL, true
             ),
             // new line
@@ -597,26 +591,32 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         }
     );
 
+    string name;
+    string constraints;
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnType = ValueType::NONE;
+    string rawSource;
+
     switch (resultsGroup.getKind()) {
         case ParseeResultsGroupKind::SUCCESS: {
             for (int i=0; i<resultsGroup.getResults().size(); i++) {
                 ParseeResult parseeResult = resultsGroup.getResults().at(i);
                 switch (parseeResult.getTag()) {
-                    case TAG_ID:
-                        identifier = parseeResult.getToken()->getLexme();
+                    case TAG_NAME:
+                        name = parseeResult.getToken()->getLexme();
                         break;
                     case TAG_CONSTRAINTS:
                         constraints = parseeResult.getToken()->getLexme();
                         constraints = constraints.substr(1, constraints.length()-2);
                         break;
-                    case TAG_ARG_ID: {
+                    case TAG_ARGUMENT_IDENTIFIER: {
                         pair<string, shared_ptr<ValueType>> argument;
                         argument.first = parseeResult.getToken()->getLexme();
                         argument.second = resultsGroup.getResults().at(++i).getValueType();
                         arguments.push_back(argument);
                         break;
                     }
-                    case TAG_RET_TYPE:
+                    case TAG_RETURN_TYPE:
                         returnType = parseeResult.getValueType();
                         break;
                 }
@@ -645,7 +645,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(identifier, constraints, arguments, returnType, rawSource);
+    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlob() {
@@ -830,12 +830,6 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
         TAG_STATEMENT_BLOCK
     };
 
-    shared_ptr<Statement> initStatement;
-    shared_ptr<Statement> postStatement;
-    shared_ptr<Expression> preConditionExpression;
-    shared_ptr<Expression> postConditionExpression;
-    shared_ptr<Statement> bodyBlockStatement;
-
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             Parsee::tokenParsee(TokenKind::REPEAT, Parsee::Level::REQUIRED, false),
@@ -904,6 +898,12 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
+
+    shared_ptr<Statement> initStatement;
+    shared_ptr<Statement> postStatement;
+    shared_ptr<Expression> preConditionExpression;
+    shared_ptr<Expression> postConditionExpression;
+    shared_ptr<Statement> bodyBlockStatement;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -1179,9 +1179,6 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
         TAG_STRING
     };
 
-    vector<shared_ptr<Expression>> expressions;
-    shared_ptr<Token> stringToken;
-
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             Parsee::orParsee(
@@ -1216,6 +1213,9 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    vector<shared_ptr<Expression>> expressions;
+    shared_ptr<Token> stringToken;
+
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_EXPRESSION:
@@ -1243,9 +1243,6 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionCall() {
-    string identifier;
-    vector<shared_ptr<Expression>> argumentExpressions;
-
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             // identifier - module prefix
@@ -1283,22 +1280,25 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    string name;
+    vector<shared_ptr<Expression>> argumentExpressions;
+
     int i = 0;
-    // identifier
-    identifier = "";
+    // name
+    name = "";
     if (resultsGroup.getResults().at(i).getToken()->isOfKind({TokenKind::META})) {
         i++;
-        identifier += resultsGroup.getResults().at(i++).getToken()->getLexme();
-        identifier += ".";
+        name += resultsGroup.getResults().at(i++).getToken()->getLexme();
+        name += ".";
     }
-    identifier += resultsGroup.getResults().at(i++).getToken()->getLexme();
+    name += resultsGroup.getResults().at(i++).getToken()->getLexme();
     // arguments
     while (i < resultsGroup.getResults().size()) {
         argumentExpressions.push_back(resultsGroup.getResults().at(i).getExpression());
         i++;
     }
 
-    return make_shared<ExpressionCall>(identifier, argumentExpressions);
+    return make_shared<ExpressionCall>(name, argumentExpressions);
 }
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {
@@ -1510,8 +1510,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_BLOB,
         TAG_PTR_FUN,
         TAG_PTR,
-        TAG_ARG_TYPE,
-        TAG_RET_TYPE,
+        TAG_ARGUMENT_TYPE,
+        TAG_RETURN_TYPE,
         TAG_TYPE,
         TAG_SUBTYPE,
         TAG_SIZE_EXPRESSION,
@@ -1534,12 +1534,12 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                 Parsee::groupParsee(
                                     {
                                         // first argument
-                                        Parsee::valueTypeParsee(Parsee::Level::REQUIRED, true, TAG_ARG_TYPE),
+                                        Parsee::valueTypeParsee(Parsee::Level::REQUIRED, true, TAG_ARGUMENT_TYPE),
                                         // addditional arguments
                                         Parsee::repeatedGroupParsee(
                                             {
                                                 Parsee::tokenParsee(TokenKind::COMMA, Parsee::Level::REQUIRED, false),
-                                                Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARG_TYPE)
+                                                Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_ARGUMENT_TYPE)
                                             }, Parsee::Level::OPTIONAL, true
                                         )
                                     }, Parsee::Level::OPTIONAL, true
@@ -1548,7 +1548,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                 Parsee::groupParsee(
                                     {
                                         Parsee::tokenParsee(TokenKind::RIGHT_ARROW, Parsee::Level::REQUIRED, false),
-                                        Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RET_TYPE)
+                                        Parsee::valueTypeParsee(Parsee::Level::CRITICAL, true, TAG_RETURN_TYPE)
                                     }, Parsee::Level::OPTIONAL, true
                                 )
                             },
@@ -1618,10 +1618,10 @@ shared_ptr<ValueType> Parser::matchValueType() {
             case TAG_PTR:
                 isPtr = true;
                 break;
-            case TAG_ARG_TYPE:
+            case TAG_ARGUMENT_TYPE:
                 argTypes.push_back(parseeResult.getValueType());
                 break;
-            case TAG_RET_TYPE:
+            case TAG_RETURN_TYPE:
                 retType = parseeResult.getValueType();
                 break;
             case TAG_TYPE:
