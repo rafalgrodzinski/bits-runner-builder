@@ -33,8 +33,8 @@ private:
     ValueTypeKind kind;
     shared_ptr<ValueType> subType;
     string blobName;
-    vector<shared_ptr<ValueType>> argTypes;
-    shared_ptr<ValueType> retType;
+    vector<shared_ptr<ValueType>> argumentTypes;
+    shared_ptr<ValueType> returnType;
     shared_ptr<Expression> sizeExpression;
 
 public:
@@ -51,7 +51,7 @@ public:
     static shared_ptr<ValueType> LITERAL;
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> sizeExpression);
     static shared_ptr<ValueType> blob(string blobName);
-    static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argTypes, shared_ptr<ValueType> retType);
+    static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
 
@@ -63,8 +63,8 @@ public:
     int getValueArg();
     shared_ptr<Expression> getSizeExpression();
     string getBlobName();
-    vector<shared_ptr<ValueType>> getArgTypes();
-    shared_ptr<ValueType> getRetType();
+    vector<shared_ptr<ValueType>> getArgumentTypes();
+    shared_ptr<ValueType> getReturnType();
 };
 
 #endif

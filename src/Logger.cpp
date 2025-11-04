@@ -839,14 +839,14 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::FUN: {
             string text = "FUN";
             // args
-            for (int i=0; i<valueType->getArgTypes().size(); i++) {
+            for (int i=0; i<valueType->getArgumentTypes().size(); i++) {
                 if (i > 0)
                     text += ",";
-                text += format(" {}", toString(valueType->getArgTypes().at(i)));
+                text += format(" {}", toString(valueType->getArgumentTypes().at(i)));
             }
             // return
-            if (valueType->getRetType() != nullptr)
-                text += format(" -> {}", toString(valueType->getRetType()));
+            if (valueType->getReturnType() != nullptr)
+                text += format(" -> {}", toString(valueType->getReturnType()));
             return text;
         }
         case ValueTypeKind::PTR:

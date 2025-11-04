@@ -1780,11 +1780,11 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return getStructType(valueType->getBlobName());
         case ValueTypeKind::FUN: {
             // returnType
-            llvm::Type *functionReturnType = typeForValueType(valueType->getRetType());
+            llvm::Type *functionReturnType = typeForValueType(valueType->getReturnType());
 
             // argument types
             vector<llvm::Type *> functionArgumentTypes;
-                for (shared_ptr<ValueType> &argumentType : valueType->getArgTypes()) {
+                for (shared_ptr<ValueType> &argumentType : valueType->getArgumentTypes()) {
                     llvm::Type *functionArgumentType = typeForValueType(argumentType);
                         if (functionArgumentType == nullptr)
                             return nullptr;

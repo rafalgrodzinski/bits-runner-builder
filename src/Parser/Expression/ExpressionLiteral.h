@@ -10,7 +10,6 @@ enum class LiteralKind {
     FLOAT
 };
 
-
 class ExpressionLiteral: public Expression {
 private:
     LiteralKind literalKind;
