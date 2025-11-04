@@ -923,6 +923,8 @@ string Logger::toString(Parsee parsee) {
             return "PARSEE_GROUP";
         case ParseeKind::REPEATED_GROUP:
             return "PARSEE_REPEATED_GROUP";
+        case ParseeKind::ONE_OF:
+            return "PARSEE_ONE_OF";
         case ParseeKind::TOKEN:
             return toString(parsee.getTokenKind());
         case ParseeKind::VALUE_TYPE:
