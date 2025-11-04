@@ -933,8 +933,6 @@ string Logger::toString(Parsee parsee) {
             return "Statement in Block";
         case ParseeKind::EXPRESSION:
             return "Expression";
-        case ParseeKind::OR:
-            return "PARSEE_OR";
         case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
         case ParseeKind::STATEMENT_BLOCK_MULTI_LINE:
             return "Statement Block";

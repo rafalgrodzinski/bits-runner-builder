@@ -20,16 +20,6 @@ Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, 
     return parsee;
 }
 
-Parsee Parsee::orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::OR;
-    parsee.firstParsees = firstParsees;
-    parsee.secondParsees = secondParsees;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
 Parsee Parsee::oneOfParsee(vector<vector<Parsee>> parsees, Level level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::ONE_OF;
@@ -146,14 +136,6 @@ optional<vector<Parsee>> Parsee::getGroupParsees() {
 
 optional<vector<Parsee>> Parsee::getRepeatedParsees() {
     return repeatedParsees;
-}
-
-optional<vector<Parsee>> Parsee::getFirstParsees() {
-    return firstParsees;
-}
-
-optional<vector<Parsee>> Parsee::getSecondParsees() {
-    return secondParsees;
 }
 
 optional<vector<vector<Parsee>>> Parsee::getParsees() {

@@ -84,7 +84,6 @@ private:
     ParseeResultsGroup parseeResultsGroupForParsees(vector<Parsee> parsees);
     optional<pair<vector<ParseeResult>, int>> groupParseeResults(vector<Parsee> groupParsees);
     optional<pair<vector<ParseeResult>, int>> repeatedGroupParseeResults(vector<Parsee> repeatedParsees);
-    optional<pair<vector<ParseeResult>, int>> orParseeResults(vector<Parsee> firstParsees, vector<Parsee> secondParsees);
     optional<pair<vector<ParseeResult>, int>> oneOfParseeResults(vector<vector<Parsee>> parsees);
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
