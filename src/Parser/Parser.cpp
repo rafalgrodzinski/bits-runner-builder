@@ -275,7 +275,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string identifier = "";
+    string identifier;
     shared_ptr<ValueType> valueType;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
@@ -350,7 +350,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string identifier = "";
+    string identifier;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueType::NONE;
 
@@ -404,10 +404,10 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport = false;
+    bool shouldExport;
     string identifier;
     shared_ptr<ValueType> valueType;
-    shared_ptr<Expression> expression = nullptr;
+    shared_ptr<Expression> expression;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -1321,7 +1321,7 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
             // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, Parsee::Level::REQUIRED, true, TAG_IDENTIFIER),
             // index expression
-        Parsee::groupParsee(
+            Parsee::groupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, Parsee::Level::REQUIRED, false),
                     Parsee::expressionParsee(Parsee::Level::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
@@ -1334,8 +1334,8 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string identifier = "";
-    shared_ptr<Expression> indexExpression = nullptr;
+    string identifier;
+    shared_ptr<Expression> indexExpression;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
