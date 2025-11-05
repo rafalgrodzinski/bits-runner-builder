@@ -143,6 +143,10 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
         exit(1);
     }
 
+    if (isVerbose) {
+        cout << format("🐉 Generating code for module \"{}\" targeting {}, {}...\n", string(module->getName()), targetTriple, architecture);
+    }
+
     if (outputKind == OutputKind::IR) {
         module->print(outputFile, nullptr);
         return;
@@ -152,10 +156,6 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     if (targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, codeGenFileType)) {
         cerr << "Failed to generate file " << fileName << endl;
         exit(1);
-    }
-
-    if (isVerbose) {
-        cout << format("🐉 Generating code for module \"{}\" targeting {}, {}...\n", string(module->getName()), targetTriple, architecture);
     }
 
     passManager.run(*module);
