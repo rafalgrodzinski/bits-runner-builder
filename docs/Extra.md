@@ -39,8 +39,12 @@ Addresses can be resolved either through linker (static) or loader (pic). PIC (p
 This option affects how addresses are calculated. It forms a part of ABI and is platform specific. [System V ABI](https://raw.githubusercontent.com/wiki/hjl-tools/x86-psABI/x86-64-psABI-1.0.pdf) and [this slack overflow question](https://stackoverflow.com/questions/40493448/what-does-the-codemodel-in-clang-llvm-refer-to) should have some more information on it.
 
 ## Optimization Level
-`--opt=[g|O0|O1|O2|O3]`
+`--opt=[g|o0|o1|o2|o3]`
 Details on what each option do are burries somewhere inside of LLVM's source code, but in short `O2` is the sane default, whereas `O3` might be a bit more performant but also unstable. In general everything should work correctly at `O2`.
+
+## Verbosity Level
+`--ver=[v0|v1|v2|v3]`
+v0 is silent (except for errors), v1 just show what action is happening, v2 displays build statistics, v3 shows parsed tokens and AST.
 
 ## Calling Convention
 [LLVM Calling Conventions](https://llvm.org/doxygen/namespacellvm_1_1CallingConv.html#ac6aa1387c4375260e2468eb5a77fdb4cafd841a49aec1539bc88abc8ff9e170fb)
