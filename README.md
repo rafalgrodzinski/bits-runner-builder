@@ -52,61 +52,37 @@ You'll then be able to finde the executable under `build/brb`.
 There are also "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 will will then build and start debugging using command `brb -v samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode.
 
 ## Samples
-Hello World
-[samples/hello/](samples/hello/)
+Inside of `samples` there is a bunch of different samples using different features of the code. Inside each of them there is a `build.sh`, which will generate an executable. You can also Run `samples/run_all.sh` to build and run each of the samples, which is useful for testing if everything works as expected.
 
-Fibonaci Numbers
-[samples/fib/](samples/fib/)
+`callback`:
+Uses function pointers to implement basic callback functionality.
 
-Merge Sort
-[samples/merge_sort/](samples/merge_sort/)
+`casts`:
+Demonstrates how to use casting for for simple and data types.
 
-Linked List
-[samples/linked_list/](samples/linked_list/)
+`external_linkage`:
+Builds two separate object files and then links them together.
 
-Fizz Buzz
-[samples/fizz_buzz/](samples/fizz_buzz/)
+`fib`:
+Fibonaci numbers, demonstrates recursion.
 
-Casts
-[samples/casts/](samples/casts/)
+`fizz_buzz`:
+Fizz buzz is useful for easily figuring out if someone know anythign about programming, but here is uses multi-level if-else expressions with more complex conditions.
 
-Primes
-[samples/primes/](samples/primes/)
+`hello`:
+No programming language is complete without a hello world introduction.
 
+`linked_list`:
+Uses pointers and memory allocation for implementing a single linked list.
+
+`merge_sort`:
+Implementation of merge sort to show usage of data types.
+
+`multi_module`:
+Shows how code can be split into separat files and modules.
+
+`primes`:
 Based on ["Software Drag Racing!" by Dave Plummer](https://github.com/PlummersSoftwareLLC/Primes/tree/drag-race). Runs as many iterrations as possible of calculating primes up to 1,000,000 in 5 seconds and reports the number or iterrations. I got a bit under 1200 on my Intel Core i7 14700.
-
-#### How to build & run the samples
-
-Execute from the main directory
-```
-// Hello World
-./samples/hello/build.sh
-./hello
-
-// Fibonaci Numbers
-./samples/fib/build.sh
-./fib
-
-// Merge Sort
-./samples/merge_sort/build.sh
-./merge_sort
-
-// Linked List
-./samples/linked_list/build.sh
-./linked_list
-
-// Fizz Buzz
-./samples/fizz_buzz/build.sh
-./fizz_buzz
-
-// Multi Module
-./samples/multi_module/build.sh
-./multi_module
-
-// Primes
-./samples/primes/build.sh
-./primes
-```
 
 ## Additional Stuff
 Language support for Visual Studio Code: [https://github.com/rafalgrodzinski/brc-vscode](https://github.com/rafalgrodzinski/brc-vscode).
