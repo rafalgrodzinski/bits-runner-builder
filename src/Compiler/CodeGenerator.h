@@ -51,7 +51,8 @@ public:
 
     enum class OutputKind {
         ASSEMBLY,
-        OBJECT
+        OBJECT,
+        IR
     };
 
 private:
