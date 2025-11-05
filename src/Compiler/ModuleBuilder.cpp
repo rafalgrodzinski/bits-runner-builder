@@ -42,7 +42,12 @@ ModuleBuilder::ModuleBuilder(
     vector<shared_ptr<Statement>> headerStatements,
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
 ):
-moduleName(moduleName), defaultModuleName(defaultModuleName), statements(statements), callingConvention(callingConvention), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
+moduleName(moduleName),
+defaultModuleName(defaultModuleName),
+statements(statements),
+callingConvention(callingConvention),
+headerStatements(headerStatements),
+exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -66,11 +71,10 @@ moduleName(moduleName), defaultModuleName(defaultModuleName), statements(stateme
 
     typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
     typeIntPtr = llvm::Type::getIntNTy(*context, pointerSize);
-
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
-    scopes.push(Scope());
+    scope = make_shared<Scope>();
 
     // build header
     for (shared_ptr<Statement> &headerStatement : headerStatements)
@@ -95,6 +99,9 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     return module;
 }
 
+//
+// Statements
+//
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::META_IMPORT:
@@ -127,7 +134,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
             buildVariableDeclaration(
                 moduleName,
-                statementDeclaration->getName(),
+                statementDeclaration->getIdentifier(),
                 statementDeclaration->getShouldExport(),
                 statementDeclaration->getValueType()
             );
@@ -163,7 +170,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             shared_ptr<StatementMetaExternVariable> statementExtern = dynamic_pointer_cast<StatementMetaExternVariable>(statement);
             buildVariableDeclaration(
                 "",
-                statementExtern->getName(),
+                statementExtern->getIdentifier(),
                 true,
                 statementExtern->getValueType()
             );
@@ -194,7 +201,7 @@ void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string
         shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
             buildVariableDeclaration(
                 moduleName,
-                statementDeclaration->getName(),
+                statementDeclaration->getIdentifier(),
                 true,
                 statementDeclaration->getValueType()
             );
@@ -251,11 +258,11 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     llvm::Function *fun = llvm::Function::Create(funType, funLinkage, symbolName, *module);
     fun->setCallingConv(callingConvention);
 
-    setFun(internalName, fun);
+    scope->setFunction(internalName, fun);
 }
 
 void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
-    llvm::Function *fun = getFun(statement->getName());
+    llvm::Function *fun = scope->getFunction(statement->getName());
 
     // Check if function not yet defined
     llvm::BasicBlock &entryBlock = fun->getEntryBlock();
@@ -277,7 +284,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
     builder->SetInsertPoint(block);
 
-    scopes.push(Scope());
+    scope->pushLevel();
 
     // build arguments
     int i=0;
@@ -288,12 +295,12 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
 
         if (type->isPointerTy()) {
             shared_ptr<ValueType> valueType = statement->getArguments().at(i).second;
-            if(!setPtrType(name, valueType))
+            if(!scope->setPtrType(name, valueType))
                 return;
         }
 
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, name);
-        if (!setAlloca(name, alloca))
+        if (!scope->setAlloca(name, alloca))
             return;
         builder->CreateStore(&arg, alloca);
 
@@ -305,7 +312,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     // Remove extranouse block after the last return statement
     builder->GetInsertBlock()->eraseFromParent();
 
-    scopes.pop();
+    scope->popLevel();
 
     builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
 
@@ -331,16 +338,15 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
     }
     llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
 
-    if (!setRawFun(statement->getName(), rawFun))
-        return;
+    scope->setInlineAsm(statement->getName(), rawFun);
 }
 
 void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement) {
-    llvm::StructType::create(*context, statement->getIdentifier());
+    llvm::StructType::create(*context, statement->getName());
 }
 
 void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
-    llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getIdentifier());
+    llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getName());
     if (structType == nullptr) {
         markError(0, 0, "Blob not declared");
         return;
@@ -349,7 +355,7 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
     // Generate types for body
     vector<string> memberNames;
     vector<llvm::Type *> types;
-    for (pair<string, shared_ptr<ValueType>> &variable: statement->getVariables()) {
+    for (pair<string, shared_ptr<ValueType>> &variable: statement->getMembers()) {
         memberNames.push_back(variable.first);
         llvm::Type *type = typeForValueType(variable.second);
         if (type == nullptr)
@@ -357,8 +363,7 @@ void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
         types.push_back(type);
     }
     structType->setBody(types, false);
-    if (!registerStruct(statement->getIdentifier(), structType, memberNames))
-        return;
+    scope->setStruct(statement->getName(), structType, memberNames);
 }
 
 void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType) {
@@ -385,11 +390,8 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
     llvm::GlobalVariable *global = new llvm::GlobalVariable(*module, type, false, linkage, nullptr, symbolName);
 
     // register
-    if (!setGlobal(internalName, global))
-        return;
-
-    if (!setPtrType(internalName, valueType))
-        return;
+    scope->setGlobal(internalName, global);
+    scope->setPtrType(internalName, valueType);
 }
 
 void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
@@ -414,7 +416,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
                     }
                     case ExpressionKind::VARIABLE: {
                         string identifier = dynamic_pointer_cast<ExpressionVariable>(statement->getExpression())->getIdentifier();
-                        llvm::AllocaInst *alloca = getAlloca(identifier);
+                        llvm::AllocaInst *alloca = scope->getAlloca(identifier);
                         if (alloca != nullptr && alloca->getAllocatedType()->isArrayTy()) {
                             count = ((llvm::ArrayType*)alloca->getAllocatedType())->getNumElements();
                         }
@@ -422,7 +424,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
                     }
                     case ExpressionKind::CALL: {
                         string funName = dynamic_pointer_cast<ExpressionCall>(statement->getExpression())->getName();
-                        llvm::Function *fun = getFun(funName);
+                        llvm::Function *fun = scope->getFunction(funName);
                         if (fun != nullptr && fun->getReturnType()->isArrayTy()) {
                             count = ((llvm::ArrayType*)fun->getReturnType())->getNumElements();
                         }
@@ -435,35 +437,35 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
             valueType = (llvm::ArrayType *)typeForValueType(statement->getValueType(), count);
             if (valueType == nullptr)
                 return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
         }
         case ValueTypeKind::BLOB: {
             valueType = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
         }
         case ValueTypeKind::PTR: {
             valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            if (!setPtrType(statement->getName(), statement->getValueType()))
+            if (!scope->setPtrType(statement->getIdentifier(), statement->getValueType()))
                 return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
         }
         default: {
             valueType = typeForValueType(statement->getValueType());
             if (valueType == nullptr)
                 return;
-            alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getName());
+            alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getIdentifier());
         }
     }
 
     // try registering new variable in scope
-    if (!setAlloca(statement->getName(), alloca))
+    if (!scope->setAlloca(statement->getIdentifier(), alloca))
         return;
 
     if (statement->getExpression() != nullptr)
@@ -472,15 +474,15 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
     // variable
-    llvm::GlobalVariable *global = (llvm::GlobalVariable*)getGlobal(statement->getName());
+    llvm::GlobalVariable *global = (llvm::GlobalVariable*)scope->getGlobal(statement->getIdentifier());
 
     if (global->hasInitializer()) {
-        markError(0, 0, format("Global variable \"{}\" already defined in scope", statement->getName()));
+        markError(0, 0, format("Global variable \"{}\" already defined in scope", statement->getIdentifier()));
         return;
     }
 
     // type
-    shared_ptr<ValueType> valueType = getPtrType(statement->getName());
+    shared_ptr<ValueType> valueType = scope->getPtrType(statement->getIdentifier());
     llvm::Type *type = typeForValueType(valueType);
 
     // initialization
@@ -551,7 +553,7 @@ void ModuleBuilder::buildRepeat(shared_ptr<StatementRepeat> statement) {
     llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, "loopBody");
     llvm::BasicBlock *afterBlock = llvm::BasicBlock::Create(*context, "loopPost");
 
-    scopes.push(Scope());
+    scope->pushLevel();
 
     // loop init
     if (initStatement != nullptr)
@@ -599,13 +601,197 @@ void ModuleBuilder::buildRepeat(shared_ptr<StatementRepeat> statement) {
     fun->insert(fun->end(), afterBlock);
     builder->SetInsertPoint(afterBlock);
 
-    scopes.pop();
+    scope->popLevel();
 }
 
 void ModuleBuilder::buildExpression(shared_ptr<StatementExpression> statement) {
     valueForExpression(statement->getExpression());
 }
 
+void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression) {
+    // data
+    if (targetType->isArrayTy()) {
+        switch (valueExpression->getKind()) {
+            // data <- { }
+            // copy values from literal expression into an allocated array
+            case ExpressionKind::COMPOSITE_LITERAL: {
+                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
+                int sourceCount = valueExpressions.size();
+                int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
+                int count = min(sourceCount, targetCount);
+                llvm::Type *elementType = ((llvm::ArrayType *)targetType)->getArrayElementType();
+                for (int i=0; i<count; i++) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+                    llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index);
+                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), elementType);
+                    builder->CreateStore(sourceValue, targetPtr);
+                }
+                break;
+            }
+            // data <- data
+            // copy each value from one allocated array to another allocated array
+            case ExpressionKind::VARIABLE:
+            // data <- function()
+            case ExpressionKind::CALL: 
+            // data <- .var
+            case ExpressionKind::CHAINED: {
+                llvm::Value *sourceValue;
+                llvm::Type *sourceType;
+
+                if (valueExpression->getKind() == ExpressionKind::VARIABLE) {
+                    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
+                    sourceValue = scope->getAlloca(expressionVariable->getIdentifier());
+                    if (sourceValue == nullptr)
+                        return;
+                    sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
+                } else if (valueExpression->getKind() == ExpressionKind::CALL) {
+                    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
+                    llvm::Value *sourceExpressionValue = valueForCall(expressionCall);
+                    if (sourceExpressionValue == nullptr)
+                        return;
+                    // store call result in a temporary alloca
+                    sourceType = sourceExpressionValue->getType();
+                    sourceValue = builder->CreateAlloca(sourceType);
+                    builder->CreateStore(sourceExpressionValue, sourceValue);
+                } else {
+                    shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(valueExpression);
+                    sourceValue = valueForChained(expressionChained);
+                    sourceType = llvm::dyn_cast<llvm::AllocaInst>(sourceValue)->getAllocatedType();
+                }
+
+                if (!sourceType->isArrayTy()) {
+                    markError(0, 0, "Not an array type");
+                    return;
+                }
+
+                // make sure we don't go over the bounds
+                int sourceCount = ((llvm::ArrayType *)sourceType)->getNumElements();
+                int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
+                int count = min(sourceCount, targetCount);
+
+                for (int i=0; i<count; i++) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+
+                    // get pointers for both source and target
+                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceType, sourceValue, index);
+                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
+                    // load value from source pointer
+                    llvm::Value *sourceMemberValue = builder->CreateLoad(sourceType->getArrayElementType(), sourceMemberPtr);
+                    // and then store it at the target pointer
+                    builder->CreateStore(sourceMemberValue, targetMemberPtr);
+                }
+                break;
+            }
+            default:
+                markError(0, 0, "Invalid assignment to data type");
+                return;
+        }
+    // blob
+    } else if (targetType->isStructTy()) {
+        switch (valueExpression->getKind()) {
+            // blob <- { }
+            case ExpressionKind::COMPOSITE_LITERAL: {
+                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
+                int membersCount = ((llvm::StructType*)targetType)->getStructNumElements();
+                for (int i=0; i<membersCount; i++) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+                    llvm::Type *memberType = ((llvm::StructType*)targetType)->getElementType(i);
+                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), memberType);
+                    llvm::Value *targetMember = builder->CreateGEP(targetType, targetValue, index);
+                    builder->CreateStore(sourceValue, targetMember);
+                }
+                break;
+            }
+            // blob <- blob
+            case ExpressionKind::VARIABLE:
+            case ExpressionKind::CHAINED:
+            // blob <- function()
+            case ExpressionKind::CALL: {
+                llvm::Value *sourceValue = valueForExpression(valueExpression);
+                builder->CreateStore(sourceValue, targetValue);
+                break;
+            }
+            default:
+                markError(0, 0, "Invalid assignment");
+                break;
+        }
+    // pointer
+    } else if (targetType->isPointerTy()) {
+        switch (valueExpression->getKind()) {
+            // ptr <- { }
+            case ExpressionKind::COMPOSITE_LITERAL: {
+                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
+                if (valueExpressions.size() != 1) {
+                    markError(0, 0, "Invalid composite assignment");
+                    break;
+                }
+                llvm::Value *adrValue = valueForExpression(valueExpressions.at(0));
+                if (adrValue == nullptr) {
+                    markError(0, 0, "Invalid composite assignment");
+                    break;
+                }
+                llvm::Value *sourceValue = builder->CreateIntToPtr(adrValue, typePtr);
+                builder->CreateStore(sourceValue, targetValue);
+                break;
+            }
+            // ptr <- ptr
+            case ExpressionKind::VARIABLE:
+            case ExpressionKind::CHAINED:
+            // ptr <- function()
+            case ExpressionKind::CALL: {
+                llvm::Value *sourceValue = valueForExpression(valueExpression);
+                builder->CreateStore(sourceValue, targetValue);
+                break;
+            }
+            default:
+                markError(0, 0, "Invalid assignment to pointer type");
+                break;
+        }
+    // simple
+    } else {
+        llvm::Type *castToType = nullptr;
+        switch (valueExpression->getKind()) {
+            // simple <- literal
+            case ExpressionKind::LITERAL:
+                castToType = targetType;
+            // simple <- binary expression
+            case ExpressionKind::BINARY:
+            // simple <- ( expression )
+            case ExpressionKind::GROUPING:
+            case ExpressionKind::UNARY:
+            // simple <- if else
+            case ExpressionKind::IF_ELSE:
+            // simple <- function call
+            case ExpressionKind::CALL:
+            // simple <- var
+            case ExpressionKind::VARIABLE:
+            case ExpressionKind::CHAINED: {
+                llvm::Value *sourceValue = valueForExpression(valueExpression, castToType);
+                if (sourceValue == nullptr)
+                    return;
+                builder->CreateStore(sourceValue, targetValue);
+                break;
+            }
+            // other
+            default:
+                markError(0, 0, "Invalid assignment");
+                return;
+        }
+    }
+}
+
+//
+// Expressions
+//
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType) {
     switch (expression->getKind()) {
         case ExpressionKind::NONE:
@@ -615,7 +801,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::COMPOSITE_LITERAL:
             return valueForCompositeLiteral(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), castToType);
         case ExpressionKind::GROUPING:
-            return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
+            return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getSubExpression());
         case ExpressionKind::BINARY:
             return valueForBinary(dynamic_pointer_cast<ExpressionBinary>(expression));
         case ExpressionKind::UNARY:
@@ -646,7 +832,7 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
             value = constantValueForCompositeLiteral(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), castToType);
             break;
         case ExpressionKind::GROUPING:
-            value = valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getExpression());
+            value = valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getSubExpression());
             break;
         case ExpressionKind::BINARY:
             value = valueForBinary(dynamic_pointer_cast<ExpressionBinary>(expression));
@@ -704,7 +890,7 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
 }
 
 llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expression) {
-    return valueForExpression(expression->getExpression());
+    return valueForExpression(expression->getSubExpression());
 }
 
 llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expression) {
@@ -854,7 +1040,7 @@ llvm::Value *ModuleBuilder::valueForBinaryFloat(ExpressionBinaryOperation operat
 }
 
 llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression) {
-    llvm::Value *value = valueForExpression(expression->getExpression());
+    llvm::Value *value = valueForExpression(expression->getSubExpression());
     if (value == nullptr)
         return nullptr;
     llvm::Type *type = value->getType();
@@ -892,7 +1078,7 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
 }
 
 llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expression) {
-    shared_ptr<Expression> conditionExpression = expression->getCondition();
+    shared_ptr<Expression> conditionExpression = expression->getConditionExpression();
 
     llvm::Function *fun = builder->GetInsertBlock()->getParent();
     llvm::Value *conditionValue = valueForExpression(conditionExpression);
@@ -908,24 +1094,24 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     }
 
     // Then
-    scopes.push(Scope());
+    scope->pushLevel();
     builder->SetInsertPoint(thenBlock);
-    buildStatement(expression->getThenBlock()->getStatementBlock());
-    llvm::Value *thenValue = valueForExpression(expression->getThenBlock()->getResultStatementExpression()->getExpression());
+    buildStatement(expression->getThenBlockExpression()->getStatementBlock());
+    llvm::Value *thenValue = valueForExpression(expression->getThenBlockExpression()->getResultStatementExpression()->getExpression());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
-    scopes.pop();
+    scope->popLevel();
 
     // Else
     llvm::Value *elseValue = nullptr;
     if (expression->getElseExpression() != nullptr) {
-        scopes.push(Scope());
+        scope->pushLevel();
         fun->insert(fun->end(), elseBlock);
         builder->SetInsertPoint(elseBlock);
         elseValue = valueForExpression(expression->getElseExpression());
         builder->CreateBr(mergeBlock);
         elseBlock = builder->GetInsertBlock();
-        scopes.pop();
+        scope->popLevel();
     }
 
     // Merge
@@ -948,14 +1134,14 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
     llvm::Value *value = nullptr;
     llvm::Type *type = nullptr;
 
-    llvm::AllocaInst *localAlloca = getAlloca(expression->getIdentifier());
-    llvm::Value *globalValuePtr = getGlobal(expression->getIdentifier());
-    llvm::Value *fun = getFun(expression->getIdentifier());
+    llvm::AllocaInst *localAlloca = scope->getAlloca(expression->getIdentifier());
+    llvm::Value *globalValuePtr = scope->getGlobal(expression->getIdentifier());
+    llvm::Value *fun = scope->getFunction(expression->getIdentifier());
     if (localAlloca != nullptr) {
         value = localAlloca;
         type = localAlloca->getAllocatedType();
     } else if (globalValuePtr != nullptr) {
-        shared_ptr<ValueType> valueType = getPtrType(expression->getIdentifier());
+        shared_ptr<ValueType> valueType = scope->getPtrType(expression->getIdentifier());
         type = typeForValueType(valueType);
         value = globalValuePtr;
     } else if (fun != nullptr) {
@@ -972,12 +1158,12 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
 }
 
 llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) {
-    llvm::Function *fun = getFun(expression->getName());
+    llvm::Function *fun = scope->getFunction(expression->getName());
     if (fun != nullptr) {
         return valueForCall(fun, fun->getFunctionType(), expression);
     }
 
-    llvm::InlineAsm *rawFun = getRawFun(expression->getName());
+    llvm::InlineAsm *rawFun = scope->getInlineAsm(expression->getName());
     if (rawFun != nullptr) {
         vector<llvm::Value *>argValues;
         for (shared_ptr<Expression> &argumentExpression : expression->getArgumentExpressions()) {
@@ -1077,7 +1263,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
             return nullptr;
         }
         string structName = string(structType->getName());
-        optional<int> memberIndex = getMemberIndex(structName, expressionVariable->getIdentifier());
+        optional<int> memberIndex = scope->getStructMemberIndex(structName, expressionVariable->getIdentifier());
         if (!memberIndex) {
             markError(0, 0, format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
             return nullptr;
@@ -1225,7 +1411,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
-        shared_ptr<ValueType> pointeeValueType = getPtrType(parentExpression->getIdentifier())->getSubType();
+        shared_ptr<ValueType> pointeeValueType = scope->getPtrType(parentExpression->getIdentifier())->getSubType();
         if (pointeeValueType == nullptr) {
             markError(0, 0, "No type for ptr");
             return nullptr;
@@ -1404,344 +1590,9 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *sourceValue, shared_ptr<Va
     }
 }
 
-void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression) {
-    // data
-    if (targetType->isArrayTy()) {
-        switch (valueExpression->getKind()) {
-            // data <- { }
-            // copy values from literal expression into an allocated array
-            case ExpressionKind::COMPOSITE_LITERAL: {
-                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
-                int sourceCount = valueExpressions.size();
-                int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
-                int count = min(sourceCount, targetCount);
-                llvm::Type *elementType = ((llvm::ArrayType *)targetType)->getArrayElementType();
-                for (int i=0; i<count; i++) {
-                    llvm::Value *index[] = {
-                        builder->getInt32(0),
-                        builder->getInt32(i)
-                    };
-                    llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index);
-                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), elementType);
-                    builder->CreateStore(sourceValue, targetPtr);
-                }
-                break;
-            }
-            // data <- data
-            // copy each value from one allocated array to another allocated array
-            case ExpressionKind::VARIABLE:
-            // data <- function()
-            case ExpressionKind::CALL: 
-            // data <- .var
-            case ExpressionKind::CHAINED: {
-                llvm::Value *sourceValue;
-                llvm::Type *sourceType;
-
-                if (valueExpression->getKind() == ExpressionKind::VARIABLE) {
-                    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
-                    sourceValue = getAlloca(expressionVariable->getIdentifier());
-                    if (sourceValue == nullptr)
-                        return;
-                    sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
-                } else if (valueExpression->getKind() == ExpressionKind::CALL) {
-                    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
-                    llvm::Value *sourceExpressionValue = valueForCall(expressionCall);
-                    if (sourceExpressionValue == nullptr)
-                        return;
-                    // store call result in a temporary alloca
-                    sourceType = sourceExpressionValue->getType();
-                    sourceValue = builder->CreateAlloca(sourceType);
-                    builder->CreateStore(sourceExpressionValue, sourceValue);
-                } else {
-                    shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(valueExpression);
-                    sourceValue = valueForChained(expressionChained);
-                    sourceType = llvm::dyn_cast<llvm::AllocaInst>(sourceValue)->getAllocatedType();
-                }
-
-                if (!sourceType->isArrayTy()) {
-                    markError(0, 0, "Not an array type");
-                    return;
-                }
-
-                // make sure we don't go over the bounds
-                int sourceCount = ((llvm::ArrayType *)sourceType)->getNumElements();
-                int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
-                int count = min(sourceCount, targetCount);
-
-                for (int i=0; i<count; i++) {
-                    llvm::Value *index[] = {
-                        builder->getInt32(0),
-                        builder->getInt32(i)
-                    };
-
-                    // get pointers for both source and target
-                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceType, sourceValue, index);
-                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
-                    // load value from source pointer
-                    llvm::Value *sourceMemberValue = builder->CreateLoad(sourceType->getArrayElementType(), sourceMemberPtr);
-                    // and then store it at the target pointer
-                    builder->CreateStore(sourceMemberValue, targetMemberPtr);
-                }
-                break;
-            }
-            default:
-                markError(0, 0, "Invalid assignment to data type");
-                return;
-        }
-    // blob
-    } else if (targetType->isStructTy()) {
-        switch (valueExpression->getKind()) {
-            // blob <- { }
-            case ExpressionKind::COMPOSITE_LITERAL: {
-                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
-                int membersCount = ((llvm::StructType*)targetType)->getStructNumElements();
-                for (int i=0; i<membersCount; i++) {
-                    llvm::Value *index[] = {
-                        builder->getInt32(0),
-                        builder->getInt32(i)
-                    };
-                    llvm::Type *memberType = ((llvm::StructType*)targetType)->getElementType(i);
-                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), memberType);
-                    llvm::Value *targetMember = builder->CreateGEP(targetType, targetValue, index);
-                    builder->CreateStore(sourceValue, targetMember);
-                }
-                break;
-            }
-            // blob <- blob
-            case ExpressionKind::VARIABLE:
-            case ExpressionKind::CHAINED:
-            // blob <- function()
-            case ExpressionKind::CALL: {
-                llvm::Value *sourceValue = valueForExpression(valueExpression);
-                builder->CreateStore(sourceValue, targetValue);
-                break;
-            }
-            default:
-                markError(0, 0, "Invalid assignment");
-                break;
-        }
-    // pointer
-    } else if (targetType->isPointerTy()) {
-        switch (valueExpression->getKind()) {
-            // ptr <- { }
-            case ExpressionKind::COMPOSITE_LITERAL: {
-                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
-                if (valueExpressions.size() != 1) {
-                    markError(0, 0, "Invalid composite assignment");
-                    break;
-                }
-                llvm::Value *adrValue = valueForExpression(valueExpressions.at(0));
-                if (adrValue == nullptr) {
-                    markError(0, 0, "Invalid composite assignment");
-                    break;
-                }
-                llvm::Value *sourceValue = builder->CreateIntToPtr(adrValue, typePtr);
-                builder->CreateStore(sourceValue, targetValue);
-                break;
-            }
-            // ptr <- ptr
-            case ExpressionKind::VARIABLE:
-            case ExpressionKind::CHAINED:
-            // ptr <- function()
-            case ExpressionKind::CALL: {
-                llvm::Value *sourceValue = valueForExpression(valueExpression);
-                builder->CreateStore(sourceValue, targetValue);
-                break;
-            }
-            default:
-                markError(0, 0, "Invalid assignment to pointer type");
-                break;
-        }
-    // simple
-    } else {
-        llvm::Type *castToType = nullptr;
-        switch (valueExpression->getKind()) {
-            // simple <- literal
-            case ExpressionKind::LITERAL:
-                castToType = targetType;
-            // simple <- binary expression
-            case ExpressionKind::BINARY:
-            // simple <- ( expression )
-            case ExpressionKind::GROUPING:
-            case ExpressionKind::UNARY:
-            // simple <- if else
-            case ExpressionKind::IF_ELSE:
-            // simple <- function call
-            case ExpressionKind::CALL:
-            // simple <- var
-            case ExpressionKind::VARIABLE:
-            case ExpressionKind::CHAINED: {
-                llvm::Value *sourceValue = valueForExpression(valueExpression, castToType);
-                if (sourceValue == nullptr)
-                    return;
-                builder->CreateStore(sourceValue, targetValue);
-                break;
-            }
-            // other
-            default:
-                markError(0, 0, "Invalid assignment");
-                return;
-        }
-    }
-}
-
-bool ModuleBuilder::setAlloca(string name, llvm::AllocaInst *alloca) {
-    if (scopes.top().allocaMap[name] != nullptr) {
-        markError(0, 0, format("Variable \"{}\" already defined", name));
-        return false;
-    }
-
-    scopes.top().allocaMap[name] = alloca;
-    return true;
-}
-
-llvm::AllocaInst* ModuleBuilder::getAlloca(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::AllocaInst *alloca = scopes.top().allocaMap[name];
-        if (alloca != nullptr)
-            return alloca;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::setFun(string name, llvm::Function *fun) {
-    if (scopes.top().funMap[name] != nullptr) {
-        markError(0, 0, format("Function \"{}\" already declared in scope", name));
-        return false;
-    }
-
-    scopes.top().funMap[name] = fun;
-    return true;
-}
-
-llvm::Function* ModuleBuilder::getFun(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::Function *fun = scopes.top().funMap[name];
-        if (fun != nullptr)
-            return fun;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::setRawFun(string name, llvm::InlineAsm *rawFun) {
-    if (scopes.top().rawFunMap[name] != nullptr) {
-        markError(0, 0, format("Raw function \"{}\" already declared in scope", name));
-        return false;
-    }
-    
-    scopes.top().rawFunMap[name] = rawFun;
-    return true;
-}
-
-llvm::InlineAsm *ModuleBuilder::getRawFun(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::InlineAsm *rawFun = scopes.top().rawFunMap[name];
-        if (rawFun != nullptr)
-            return rawFun;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::setPtrType(string name, shared_ptr<ValueType> ptrType) {
-    if (scopes.top().ptrTypeMap[name] != nullptr) {
-        markError(0, 0, format("Ptr type \"{}\" already declared in scope", name));
-        return false;
-    }
-
-    scopes.top().ptrTypeMap[name] = ptrType;
-    return true;
-}
-
-shared_ptr<ValueType> ModuleBuilder::getPtrType(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        shared_ptr<ValueType> ptrType = scopes.top().ptrTypeMap[name];
-        if (ptrType != nullptr)
-            return ptrType;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::setGlobal(string name, llvm::Value *global) {
-    if (scopes.top().globalMap[name] != nullptr) {
-        markError(0, 0, format("Global \"{}\" already declared in scope", name));
-        return false;
-    }
-
-    scopes.top().globalMap[name] = global;
-    return true;
-}
-
-llvm::Value *ModuleBuilder::getGlobal(string name) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::Value *global = scopes.top().globalMap[name];
-        if (global != nullptr)
-            return global;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-bool ModuleBuilder::registerStruct(string structName, llvm::StructType *structType, vector<string> memberNames) {
-    if (scopes.top().structTypeMap[structName] != nullptr) {
-        markError(0, 0, format("Blob \"{}\" already defined in scope",structName));
-        return false;
-    }
-
-    scopes.top().structTypeMap[structName] = structType;
-    scopes.top().structMembersMap[structName] = memberNames;
-
-    return true;
-}
-
-llvm::StructType *ModuleBuilder::getStructType(string structName) {
-    stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        llvm::StructType *structType = scopes.top().structTypeMap[structName];
-        if (structType != nullptr)
-            return structType;
-        scopes.pop();
-    }
-
-    return nullptr;
-}
-
-optional<int> ModuleBuilder::getMemberIndex(string structName, string memberName) {
-        stack<Scope> scopes = this->scopes;
-
-    while (!scopes.empty()) {
-        if (scopes.top().structMembersMap.contains(structName)) {
-            vector<string> memberNames = scopes.top().structMembersMap[structName];
-            for (int i=0; i<memberNames.size(); i++) {
-                if (memberNames[i].compare(memberName) == 0)
-                    return i;
-            }
-        }
-        scopes.pop();
-    }
-
-    return {};
-}
-
+//
+// Support
+//
 llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int count) {
     if (valueType == nullptr) {
         markError(0, 0, "Missing type");
@@ -1777,14 +1628,14 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
         }
         case ValueTypeKind::BLOB:
-            return getStructType(valueType->getBlobName());
+            return scope->getStructType(valueType->getBlobName());
         case ValueTypeKind::FUN: {
             // returnType
-            llvm::Type *functionReturnType = typeForValueType(valueType->getRetType());
+            llvm::Type *functionReturnType = typeForValueType(valueType->getReturnType());
 
             // argument types
             vector<llvm::Type *> functionArgumentTypes;
-                for (shared_ptr<ValueType> &argumentType : valueType->getArgTypes()) {
+                for (shared_ptr<ValueType> &argumentType : valueType->getArgumentTypes()) {
                     llvm::Type *functionArgumentType = typeForValueType(argumentType);
                         if (functionArgumentType == nullptr)
                             return nullptr;

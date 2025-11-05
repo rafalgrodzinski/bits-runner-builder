@@ -14,6 +14,8 @@
 #include <llvm/Support/NVPTXAddrSpace.h>
 #include <llvm/Support/Error.h>
 
+#include "Scope.h"
+
 class Error;
 class ValueType;
 
@@ -48,16 +50,6 @@ class StatementMetaExternFunction;
 class StatementBlock;
 
 using namespace std;
-
-typedef struct {
-    map<string, llvm::AllocaInst*> allocaMap;
-    map<string, llvm::Function*> funMap;
-    map<string, llvm::InlineAsm*> rawFunMap;
-    map<string, llvm::StructType*> structTypeMap;
-    map<string, vector<string>> structMembersMap;
-    map<string, shared_ptr<ValueType>> ptrTypeMap;
-    map<string, llvm::Value*> globalMap;
-} Scope;
 
 class ModuleBuilder {
 private:
@@ -94,11 +86,12 @@ private:
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
-    stack<Scope> scopes;
 
+    shared_ptr<Scope> scope;
+
+    // Statements
     void buildStatement(shared_ptr<Statement> statement);
     void buildImportStatement(shared_ptr<Statement> statement, string moduleName);
-
     void buildImport(shared_ptr<StatementImport> statement);
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildFunction(shared_ptr<StatementFunction> statement);
@@ -115,6 +108,9 @@ private:
     void buildRepeat(shared_ptr<StatementRepeat> statement);
     void buildExpression(shared_ptr<StatementExpression> statement);
 
+    void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
+
+    // Expressions
     llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
     llvm::Constant *constantValueForExpression(shared_ptr<Expression> expression, llvm::Type *targetType);
     llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType = nullptr);
@@ -140,28 +136,7 @@ private:
     llvm::Value *valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionVariable> expression);
     llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
 
-    void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
-
-    bool setAlloca(string name, llvm::AllocaInst *alloca);
-    llvm::AllocaInst *getAlloca(string name);
-
-    bool setFun(string name, llvm::Function *fun);
-    llvm::Function *getFun(string name);
-
-    bool setRawFun(string name, llvm::InlineAsm *rawFun);
-    llvm::InlineAsm *getRawFun(string name);
-
-    bool setPtrType(string name, shared_ptr<ValueType> ptrType);
-    shared_ptr<ValueType> getPtrType(string name);
-
-    bool setGlobal(string name, llvm::Value *global);
-    llvm::Value *getGlobal(string name);
-
-    bool registerStruct(string structName, llvm::StructType *structType, vector<string> memberNames);
-    llvm::StructType *getStructType(string structName);
-    optional<int> getMemberIndex(string structName, string memberName);
-
-    // support
+    // Support
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
     int sizeInBitsForType(llvm::Type *type);
 

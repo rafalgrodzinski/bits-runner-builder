@@ -7,19 +7,21 @@ enum class ExpressionUnaryOperation {
     NOT,
     BIT_NOT,
     PLUS,
-    MINUS,
-    INVALID
+    MINUS
 };
 
 class ExpressionUnary: public Expression {
 private:
     ExpressionUnaryOperation operation;
-    shared_ptr<Expression> expression;
+    shared_ptr<Expression> subExpression;
 
 public:
-    ExpressionUnary(shared_ptr<Token> token, shared_ptr<Expression> expression);
+    static shared_ptr<ExpressionUnary> expression(shared_ptr<Token> token, shared_ptr<Expression> subExpression);
+
+    ExpressionUnary();
+
     ExpressionUnaryOperation getOperation();
-    shared_ptr<Expression> getExpression();
+    shared_ptr<Expression> getSubExpression();
 };
 
 #endif

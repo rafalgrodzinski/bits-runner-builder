@@ -8,13 +8,13 @@ class ValueType;
 class StatementVariableDeclaration: public Statement {
 private:
     bool shouldExport;
-    string name;
+    string identifier;
     shared_ptr<ValueType> valueType;
 
 public:
-    StatementVariableDeclaration(bool shouldExport, string name, shared_ptr<ValueType> valueType);
+    StatementVariableDeclaration(bool shouldExport, string identifier, shared_ptr<ValueType> valueType);
     bool getShouldExport();
-    string getName();
+    string getIdentifier();
     shared_ptr<ValueType> getValueType();
 };
 

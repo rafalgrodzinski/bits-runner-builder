@@ -25,9 +25,7 @@ enum class ExpressionBinaryOperation {
     SUB,
     MUL,
     DIV,
-    MOD,
-
-    INVALID
+    MOD
 };
 
 class ExpressionBinary: public Expression {
@@ -37,7 +35,10 @@ private:
     shared_ptr<Expression> right;
 
 public:
-    ExpressionBinary(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right);
+    static shared_ptr<ExpressionBinary> expression(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right);
+
+    ExpressionBinary();
+
     ExpressionBinaryOperation getOperation();
     shared_ptr<Expression> getLeft();
     shared_ptr<Expression> getRight();

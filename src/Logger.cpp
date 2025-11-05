@@ -260,7 +260,7 @@ string Logger::toString(shared_ptr<StatementMetaExternVariable> statement, vecto
     string line;
 
     // name
-    line = format("@EXTERN VAR `{}` {}", statement->getName(), toString(statement->getValueType()));
+    line = format("@EXTERN VAR `{}` {}", statement->getIdentifier(), toString(statement->getValueType()));
     text += formattedLine(line, indents);
 
     return text;
@@ -292,7 +292,7 @@ string Logger::toString(shared_ptr<StatementVariableDeclaration> statement, vect
     string line;
 
     // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getValueType()));
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
     text += formattedLine(line, indents);
 
     return text;
@@ -303,7 +303,7 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getValueType()));
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
     if (statement->getExpression() != nullptr)
         line += ":";
     text += formattedLine(line, indents);
@@ -408,14 +408,14 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     string line;
 
     // name
-    line = format("BLOB `{}`", statement->getIdentifier());
-    if (!statement->getVariables().empty())
+    line = format("BLOB `{}`", statement->getName());
+    if (!statement->getMembers().empty())
         line += ":";
     text += formattedLine(line, indents);
 
     // members
     indents = adjustedLastIndent(indents);
-    for (pair<string, shared_ptr<ValueType>> &member : statement->getVariables()) {
+    for (pair<string, shared_ptr<ValueType>> &member : statement->getMembers()) {
         line = format("`{}` {}", member.first, toString(member.second));
         text += formattedLine(line, indents);
     }
@@ -424,7 +424,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 }
 
 string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("BLOB `{}`", statement->getIdentifier());
+    string line = format ("BLOB `{}`", statement->getName());
     return formattedLine(line, indents);
 }
 
@@ -616,8 +616,6 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
         case ExpressionBinaryOperation::MOD:
             op = "%";
             break;
-        case ExpressionBinaryOperation::INVALID:
-            return "{INVALID}";
     }
 
     string line = format("({} {} {})", toString(expression->getLeft(), indents, true), op, toString(expression->getRight(), indents, true));
@@ -630,19 +628,17 @@ string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKin
 
     switch (expression->getOperation()) {
         case ExpressionUnaryOperation::NOT:
-            line = format("NOT {}", toString(expression->getExpression(), indents, true));
+            line = format("NOT {}", toString(expression->getSubExpression(), indents, true));
             break;
         case ExpressionUnaryOperation::BIT_NOT:
-            line = format("~{}", toString(expression->getExpression(), indents, true));
+            line = format("~{}", toString(expression->getSubExpression(), indents, true));
             break;
         case ExpressionUnaryOperation::PLUS:
-            line = format("+({})", toString(expression->getExpression(), indents, true));
+            line = format("+({})", toString(expression->getSubExpression(), indents, true));
             break;
         case ExpressionUnaryOperation::MINUS:
-            line = format("-({})", toString(expression->getExpression(), indents, true));
+            line = format("-({})", toString(expression->getSubExpression(), indents, true));
             break;
-        case ExpressionUnaryOperation::INVALID:
-            return "{INVALID}";
     }
 
     return formattedLine(line, indents);
@@ -660,7 +656,7 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
     
     //condition
     indents = adjustedLastIndent(indents);
-    text += toString(expression->getCondition(), indents, false);
+    text += toString(expression->getConditionExpression(), indents, false);
 
     // then
     if (expression->getElseExpression() != nullptr)
@@ -670,7 +666,7 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
 
     text += formattedLine("THEN", indents);
     indents = adjustedLastIndent(indents);
-    text += toString(expression->getThenBlock(), indents);
+    text += toString(expression->getThenBlockExpression(), indents);
 
     // else
     if (expression->getElseExpression() != nullptr) {
@@ -706,7 +702,7 @@ string Logger::toString(shared_ptr<ExpressionVariable> expression, vector<Indent
 }
 
 string Logger::toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents) {
-    string line = format("({})", toString(expression->getExpression(), indents, true));
+    string line = format("({})", toString(expression->getSubExpression(), indents, true));
     return formattedLine(line, indents);
 }
 
@@ -839,14 +835,14 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::FUN: {
             string text = "FUN";
             // args
-            for (int i=0; i<valueType->getArgTypes().size(); i++) {
+            for (int i=0; i<valueType->getArgumentTypes().size(); i++) {
                 if (i > 0)
                     text += ",";
-                text += format(" {}", toString(valueType->getArgTypes().at(i)));
+                text += format(" {}", toString(valueType->getArgumentTypes().at(i)));
             }
             // return
-            if (valueType->getRetType() != nullptr)
-                text += format(" -> {}", toString(valueType->getRetType()));
+            if (valueType->getReturnType() != nullptr)
+                text += format(" -> {}", toString(valueType->getReturnType()));
             return text;
         }
         case ValueTypeKind::PTR:
@@ -923,6 +919,8 @@ string Logger::toString(Parsee parsee) {
             return "PARSEE_GROUP";
         case ParseeKind::REPEATED_GROUP:
             return "PARSEE_REPEATED_GROUP";
+        case ParseeKind::ONE_OF:
+            return "PARSEE_ONE_OF";
         case ParseeKind::TOKEN:
             return toString(parsee.getTokenKind());
         case ParseeKind::VALUE_TYPE:
@@ -933,8 +931,6 @@ string Logger::toString(Parsee parsee) {
             return "Statement in Block";
         case ParseeKind::EXPRESSION:
             return "Expression";
-        case ParseeKind::OR:
-            return "PARSEE_OR";
         case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
         case ParseeKind::STATEMENT_BLOCK_MULTI_LINE:
             return "Statement Block";

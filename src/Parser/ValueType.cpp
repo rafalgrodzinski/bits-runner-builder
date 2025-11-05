@@ -34,14 +34,14 @@ shared_ptr<ValueType> ValueType::blob(string blobName) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argTypes, shared_ptr<ValueType> retType) {
+shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
-    valueType->argTypes = argTypes;
-    if (retType != nullptr)
-        valueType->retType = retType;
+    valueType->argumentTypes = argumentTypes;
+    if (returnType != nullptr)
+        valueType->returnType = returnType;
     else
-        valueType->retType = ValueType::NONE;
+        valueType->returnType = ValueType::NONE;
     return valueType;
 }
 
@@ -127,10 +127,10 @@ string ValueType::getBlobName() {
     return blobName;
 }
 
-vector<shared_ptr<ValueType>> ValueType::getArgTypes() {
-    return argTypes;
+vector<shared_ptr<ValueType>> ValueType::getArgumentTypes() {
+    return argumentTypes;
 }
 
-shared_ptr<ValueType> ValueType::getRetType() {
-    return retType;
+shared_ptr<ValueType> ValueType::getReturnType() {
+    return returnType;
 }

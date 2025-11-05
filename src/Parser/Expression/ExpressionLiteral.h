@@ -10,7 +10,6 @@ enum class LiteralKind {
     FLOAT
 };
 
-
 class ExpressionLiteral: public Expression {
 private:
     LiteralKind literalKind;
@@ -18,6 +17,8 @@ private:
     uint64_t uIntValue;
     int64_t sIntValue;
     double floatValue;
+
+    static optional<int> charStringToInt(string charString);
 
 public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);

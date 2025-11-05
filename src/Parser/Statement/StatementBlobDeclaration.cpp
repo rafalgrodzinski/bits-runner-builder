@@ -1,8 +1,8 @@
 #include "StatementBlobDeclaration.h"
 
-StatementBlobDeclaration::StatementBlobDeclaration(string identifier):
-Statement(StatementKind::BLOB_DECLARATION), identifier(identifier) { }
+StatementBlobDeclaration::StatementBlobDeclaration(string name):
+Statement(StatementKind::BLOB_DECLARATION), name(name) { }
 
-string StatementBlobDeclaration::getIdentifier() {
-    return identifier;
+string StatementBlobDeclaration::getName() {
+    return name;
 }

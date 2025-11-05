@@ -12,13 +12,12 @@ using namespace std;
 enum class ParseeKind {
     GROUP,
     REPEATED_GROUP,
+    ONE_OF,
     TOKEN,
     VALUE_TYPE,
     STATEMENT,
     STATEMENT_IN_BLOCK,
     EXPRESSION,
-    OR,
-    ONE_OF,
     STATEMENT_BLOCK_SINGLE_LINE,
     STATEMENT_BLOCK_MULTI_LINE,
     EXPRESSION_BLOCK_SINGLE_LINE,
@@ -26,55 +25,50 @@ enum class ParseeKind {
     IF_ELSE
 };
 
+enum class ParseeLevel {
+    OPTIONAL,
+    REQUIRED,
+    CRITICAL
+};
+
 class Parsee {
-public:
-    enum class Level {
-        OPTIONAL,
-        REQUIRED,
-        CRITICAL
-    };
 private:
     ParseeKind kind;
     int tag;
     optional<vector<Parsee>> groupParsees;
     optional<vector<Parsee>> repeatedParsees;
-    optional<vector<Parsee>> firstParsees;
-    optional<vector<Parsee>> secondParsees;
     optional<vector<vector<Parsee>>> parsees;
     TokenKind tokenKind;
     bool shouldIncludeExpressionStatement;
     bool isNumericExpression;
-    Level level;
+    ParseeLevel level;
     bool shouldReturn;
     Parsee();
 
 public:
-    static Parsee groupParsee(vector<Parsee> groupParsees, Level level, bool shouldReturn);
-    static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, Level level, bool shouldReturn);
-    static Parsee orParsee(vector<Parsee> firstParsees, vector<Parsee> secondParsees, Level level, bool shouldReturn);
-    static Parsee oneOfParsee(vector<vector<Parsee>> parsees, Level level, bool shouldReturn);
-    static Parsee tokenParsee(TokenKind tokenKind, Level level, bool shouldReturn, int tag = -1);
-    static Parsee valueTypeParsee(Level level, bool shouldReturn, int tag = -1); 
-    static Parsee statementParsee(Level level, bool shouldReturn, int tag = -1); 
-    static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, Level level, bool shouldReturn, int tag = -1);
-    static Parsee expressionParsee(Level level, bool shouldReturn, bool isNumeric, int tag = -1);
-    static Parsee statementBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
-    static Parsee statementBlockMultiLineParsee(Level level, bool shouldReturn, int tag = -1);
-    static Parsee expressionBlockSingleLineParsee(Level level, bool shouldReturn, int tag = -1);
-    static Parsee expressionBlockMultiLineParsee(Level level, bool shouldReturn, int tag = -1);
-    static Parsee ifElseParsee(Level level, bool shouldReturn, int tag = -1);
+    static Parsee groupParsee(vector<Parsee> groupParsees, ParseeLevel level, bool shouldReturn);
+    static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel level, bool shouldReturn);
+    static Parsee oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn);
+    static Parsee tokenParsee(TokenKind tokenKind, ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee valueTypeParsee(ParseeLevel level, bool shouldReturn, int tag = -1); 
+    static Parsee statementParsee(ParseeLevel level, bool shouldReturn, int tag = -1); 
+    static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee expressionParsee(ParseeLevel level, bool shouldReturn, bool isNumeric, int tag = -1);
+    static Parsee statementBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee statementBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee expressionBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee expressionBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee ifElseParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
 
     ParseeKind getKind();
     int getTag();
     optional<vector<Parsee>> getGroupParsees();
     optional<vector<Parsee>> getRepeatedParsees();
-    optional<vector<Parsee>> getFirstParsees();
-    optional<vector<Parsee>> getSecondParsees();
     optional<vector<vector<Parsee>>> getParsees();
     TokenKind getTokenKind();
     bool getShouldIncludeExpressionStatement();
     bool getIsNumericExpression();
-    Level getLevel();
+    ParseeLevel getLevel();
     bool getShouldReturn();
 };
 

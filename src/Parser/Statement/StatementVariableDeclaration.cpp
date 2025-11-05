@@ -1,14 +1,14 @@
 #include "StatementVariableDeclaration.h"
 
-StatementVariableDeclaration::StatementVariableDeclaration(bool shouldExport, string name, shared_ptr<ValueType> valueType):
-Statement(StatementKind::VARIABLE_DECLARATION), shouldExport(shouldExport), name(name), valueType(valueType) { }
+StatementVariableDeclaration::StatementVariableDeclaration(bool shouldExport, string identifier, shared_ptr<ValueType> valueType):
+Statement(StatementKind::VARIABLE_DECLARATION), shouldExport(shouldExport), identifier(identifier), valueType(valueType) { }
 
 bool StatementVariableDeclaration::getShouldExport() {
     return shouldExport;
 }
 
-string StatementVariableDeclaration::getName() {
-    return name;
+string StatementVariableDeclaration::getIdentifier() {
+    return identifier;
 }
 
 shared_ptr<ValueType> StatementVariableDeclaration::getValueType() {
