@@ -131,6 +131,9 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
             fileName = string(module->getName()) + ".o";
             codeGenFileType = llvm::CodeGenFileType::ObjectFile;
             break;
+        case OutputKind::IR:
+            fileName = string(module->getName()) + ".ir";
+            break;
     }
 
     error_code errorCode;
@@ -140,6 +143,11 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
         exit(1);
     }
 
+    if (outputKind == OutputKind::IR) {
+        module->print(outputFile, nullptr);
+        return;
+    }
+
     llvm::legacy::PassManager passManager;
     if (targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, codeGenFileType)) {
         cerr << "Failed to generate file " << fileName << endl;
@@ -147,7 +155,7 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     }
 
     if (isVerbose) {
-        cout << format("🐉 Generating code for module \"{}\" targeting {}, {}...\n\n", string(module->getName()), targetTriple, architecture);
+        cout << format("🐉 Generating code for module \"{}\" targeting {}, {}...\n", string(module->getName()), targetTriple, architecture);
     }
 
     passManager.run(*module);

@@ -21,6 +21,13 @@ using namespace std;
 
 #define DEFAULT_MODULE_NAME "main"
 
+enum class Verbosity {
+    V0,
+    V1,
+    V2,
+    V3
+};
+
 string readFile(filesystem::path filePath) {
     ifstream file(filePath, ios::in | ios::binary | ios::ate);
     if (!file.is_open()) {
@@ -46,10 +53,16 @@ int main(int argc, char **argv) {
     llvm::cl::OptionCategory mainOptions(" Main Options");
 
     // verbosity
-    llvm::cl::opt<bool> isVerbose(
-        "v",
-        llvm::cl::desc("Verbose output"),
-        llvm::cl::init(false),
+    llvm::cl::opt<Verbosity> verbosity(
+        "ver",
+        llvm::cl::desc("Output verbosity:"),
+        llvm::cl::init(Verbosity::V1),
+        llvm::cl::values(
+            clEnumValN(Verbosity::V0, "v0", "Errors only"),
+            clEnumValN(Verbosity::V1, "v1", "v0 + Current action (default)"),
+            clEnumValN(Verbosity::V2, "v2", "v1 + time statistics"),
+            clEnumValN(Verbosity::V3, "v3", "v2 + detailed scan & parse logs")
+        ),
         llvm::cl::cat(mainOptions)
     );
 
@@ -60,7 +73,8 @@ int main(int argc, char **argv) {
         llvm::cl::init(CodeGenerator::OutputKind::OBJECT),
         llvm::cl::values(
             clEnumValN(CodeGenerator::OutputKind::OBJECT, "obj", "Generate object file (Default)"),
-            clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "asm", "Generate assembly file")
+            clEnumValN(CodeGenerator::OutputKind::ASSEMBLY, "asm", "Generate assembly file"),
+            clEnumValN(CodeGenerator::OutputKind::IR, "ir", "Generate LLVM IR")
         ),
         llvm::cl::cat(mainOptions)
     );
@@ -124,10 +138,10 @@ int main(int argc, char **argv) {
         llvm::cl::init(CodeGenerator::OptimizationLevel::O2),
         llvm::cl::values(
             clEnumValN(CodeGenerator::OptimizationLevel::O0, "g", "No optimizations with debug symbols"),
-            clEnumValN(CodeGenerator::OptimizationLevel::O0, "O0", "No optimizations"),
-            clEnumValN(CodeGenerator::OptimizationLevel::O1, "O1", "Basic optimizations"),
-            clEnumValN(CodeGenerator::OptimizationLevel::O2, "O2", "Some optimizations (Default)"),
-            clEnumValN(CodeGenerator::OptimizationLevel::O3, "O3", "Aggressive optimizations")
+            clEnumValN(CodeGenerator::OptimizationLevel::O0, "o0", "No optimizations"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O1, "o1", "Basic optimizations"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O2, "o2", "Some optimizations (Default)"),
+            clEnumValN(CodeGenerator::OptimizationLevel::O3, "o3", "Aggressive optimizations")
         ),
         llvm::cl::cat(targetOptions)
     );
@@ -182,7 +196,7 @@ int main(int argc, char **argv) {
         time_t timeStamp;
     
         // Scanning
-        if (isVerbose)
+        if (verbosity >= Verbosity::V1)
             cout << format("🔍 Scanning \"{}\"", inputFileNames[i]) << endl;
 
         timeStamp = clock();
@@ -191,17 +205,16 @@ int main(int argc, char **argv) {
         timeStamp = clock() - timeStamp;
         totalScanTime += timeStamp;
 
-        cout << format("⏱️ Scanned \"{}\" in {} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl;
-
-        cout << endl;
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Scanned \"{}\" in {} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
     
-        if (isVerbose) {
+        if (verbosity >= Verbosity::V3) {
             Logger::print(tokens);
             cout << endl;
         }
 
         // Parsing
-        if (isVerbose)
+        if (verbosity >= Verbosity::V1)
             cout << format("🧸 Parsing \"{}\"", inputFileNames[i]) << endl;
 
         timeStamp = clock();
@@ -210,11 +223,10 @@ int main(int argc, char **argv) {
         timeStamp = clock() - timeStamp;
         totalParseTime += timeStamp;
 
-        cout << format("⏱️ Parsed \"{}\" in {} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl;
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Parsed \"{}\" in {} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
-        cout << endl;
-
-        if (isVerbose) {
+        if (verbosity >= Verbosity::V3) {
             Logger::print(statementModule);
             cout << endl;
         }
@@ -240,8 +252,8 @@ int main(int argc, char **argv) {
     for (const auto &statementsEntry : statementsMap) {
         time_t timeStamp;
 
-        if (isVerbose)
-            cout << format("🦖 Building module \"{}\"", statementsEntry.first) << endl << endl;
+        if (verbosity >= Verbosity::V1)
+            cout << format("🐄 Building module \"{}\"", statementsEntry.first) << endl;
 
         // we don't want any prefix for the default module
         string moduleName = statementsEntry.first;
@@ -263,35 +275,30 @@ int main(int argc, char **argv) {
         timeStamp = clock() - timeStamp;
         totalModuleBuildTime += timeStamp;
 
-        cout << format("⏱️ Built module \"{}\" in {} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl;
-
-        cout << endl;
-
-        if (isVerbose) {
-            module->print(llvm::outs(), nullptr);
-            cout << endl;
-        }
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Built module \"{}\" in {} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
         // Generate native machine code
         timeStamp = clock();
-        codeGenerator.generateObjectFile(module, outputKind, isVerbose);
+        codeGenerator.generateObjectFile(module, outputKind, verbosity >= Verbosity::V1);
         timeStamp = clock() - timeStamp;
         totalCodeGnerationTime += timeStamp;
 
-        cout << format("⏱️ Generated code for \"{}\" in {} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl;
-
-        cout << endl;
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Generated code for \"{}\" in {} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
     }
     totalTimeStamp = clock() - totalTimeStamp;
 
-    cout << format(
-        "⏱️ Time taken:\nTotal: {} seconds\nScanning: {} seconds\nParsing: {} seconds\nModule building: {} seconds\nCode generation: {} seconds",
-        (float)totalTimeStamp / CLOCKS_PER_SEC,
-        (float)totalScanTime / CLOCKS_PER_SEC,
-        (float)totalParseTime / CLOCKS_PER_SEC,
-        (float)totalModuleBuildTime / CLOCKS_PER_SEC,
-        (float)totalCodeGnerationTime / CLOCKS_PER_SEC
-    ) << endl << endl;
+    if (verbosity >= Verbosity::V2) {
+        cout << format(
+            "⏱️ Time taken:\nTotal: {} seconds\nScanning: {} seconds\nParsing: {} seconds\nModule building: {} seconds\nCode generation: {} seconds",
+            (float)totalTimeStamp / CLOCKS_PER_SEC,
+            (float)totalScanTime / CLOCKS_PER_SEC,
+            (float)totalParseTime / CLOCKS_PER_SEC,
+            (float)totalModuleBuildTime / CLOCKS_PER_SEC,
+            (float)totalCodeGnerationTime / CLOCKS_PER_SEC
+        ) << endl;
+    }
 
     return 0;
 }

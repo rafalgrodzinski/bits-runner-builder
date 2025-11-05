@@ -10,6 +10,7 @@ build/
 # brb build artifiacts
 *.o
 *.asm
+*.ir
 
 # Merge artifacts
 *.swp
