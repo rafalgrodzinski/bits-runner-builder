@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <ctime>
 
 #include <llvm/Support/CommandLine.h>
 
@@ -169,22 +170,49 @@ int main(int argc, char **argv) {
     map<string, vector<shared_ptr<Statement>>> statementsMap;
     map<string, vector<shared_ptr<Statement>>> headerStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
+
+    time_t totalScanTime = 0;
+    time_t totalParseTime = 0;
+    time_t totalModuleBuildTime = 0;
+    time_t totalCodeGnerationTime = 0;
+
+    time_t totalTimeStamp = clock();
     // For each source, scan it, parse it, and then fill appropriate maps (corresponding to the defined modules)
     for (int i=0; i<sources.size(); i++) {
+        time_t timeStamp;
+    
+        // Scanning
         if (isVerbose)
-            cout << format("🔍 Scanning \"{}\"", inputFileNames[i]) << endl << endl;
+            cout << format("🔍 Scanning \"{}\"", inputFileNames[i]) << endl;
 
+        timeStamp = clock();
         Lexer lexer(sources[i]);
         vector<shared_ptr<Token>> tokens = lexer.getTokens();
+        timeStamp = clock() - timeStamp;
+        totalScanTime += timeStamp;
+
+        cout << format("⏱️ Scanned \"{}\" in {} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl;
+
+        cout << endl;
+    
         if (isVerbose) {
             Logger::print(tokens);
             cout << endl;
         }
 
+        // Parsing
         if (isVerbose)
-            cout << format("🧸 Parsing \"{}\"", inputFileNames[i]) << endl << endl;
+            cout << format("🧸 Parsing \"{}\"", inputFileNames[i]) << endl;
+
+        timeStamp = clock();
         Parser parser(DEFAULT_MODULE_NAME, tokens);
         shared_ptr<StatementModule> statementModule = parser.getStatementModule();
+        timeStamp = clock() - timeStamp;
+        totalParseTime += timeStamp;
+
+        cout << format("⏱️ Parsed \"{}\" in {} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl;
+
+        cout << endl;
 
         if (isVerbose) {
             Logger::print(statementModule);
@@ -210,6 +238,8 @@ int main(int argc, char **argv) {
     CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
     for (const auto &statementsEntry : statementsMap) {
+        time_t timeStamp;
+
         if (isVerbose)
             cout << format("🦖 Building module \"{}\"", statementsEntry.first) << endl << endl;
 
@@ -218,6 +248,7 @@ int main(int argc, char **argv) {
         vector<shared_ptr<Statement>> statements = statementsEntry.second;
         vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
 
+        timeStamp = clock();
         ModuleBuilder moduleBuilder(
             moduleName,
             DEFAULT_MODULE_NAME,
@@ -229,6 +260,12 @@ int main(int argc, char **argv) {
             exportedHeaderStatementsMap
         );
         shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+        timeStamp = clock() - timeStamp;
+        totalModuleBuildTime += timeStamp;
+
+        cout << format("⏱️ Built module \"{}\" in {} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl;
+
+        cout << endl;
 
         if (isVerbose) {
             module->print(llvm::outs(), nullptr);
@@ -236,8 +273,25 @@ int main(int argc, char **argv) {
         }
 
         // Generate native machine code
+        timeStamp = clock();
         codeGenerator.generateObjectFile(module, outputKind, isVerbose);
+        timeStamp = clock() - timeStamp;
+        totalCodeGnerationTime += timeStamp;
+
+        cout << format("⏱️ Generated code for \"{}\" in {} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl;
+
+        cout << endl;
     }
+    totalTimeStamp = clock() - totalTimeStamp;
+
+    cout << format(
+        "⏱️ Time taken:\nTotal: {} seconds\nScanning: {} seconds\nParsing: {} seconds\nModule building: {} seconds\nCode generation: {} seconds",
+        (float)totalTimeStamp / CLOCKS_PER_SEC,
+        (float)totalScanTime / CLOCKS_PER_SEC,
+        (float)totalParseTime / CLOCKS_PER_SEC,
+        (float)totalModuleBuildTime / CLOCKS_PER_SEC,
+        (float)totalCodeGnerationTime / CLOCKS_PER_SEC
+    ) << endl << endl;
 
     return 0;
 }
