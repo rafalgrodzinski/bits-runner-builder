@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
         totalScanTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Scanned \"{}\" in {} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Scanned \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
     
         if (verbosity >= Verbosity::V3) {
             Logger::print(tokens);
@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
         totalParseTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Parsed \"{}\" in {} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Parsed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
         if (verbosity >= Verbosity::V3) {
             Logger::print(statementModule);
@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
         totalModuleBuildTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Built module \"{}\" in {} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Built module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
         // Generate native machine code
         timeStamp = clock();
@@ -285,19 +285,17 @@ int main(int argc, char **argv) {
         totalCodeGnerationTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Generated code for \"{}\" in {} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
     }
     totalTimeStamp = clock() - totalTimeStamp;
 
     if (verbosity >= Verbosity::V2) {
-        cout << format(
-            "⏱️ Time taken:\nTotal: {} seconds\nScanning: {} seconds\nParsing: {} seconds\nModule building: {} seconds\nCode generation: {} seconds",
-            (float)totalTimeStamp / CLOCKS_PER_SEC,
-            (float)totalScanTime / CLOCKS_PER_SEC,
-            (float)totalParseTime / CLOCKS_PER_SEC,
-            (float)totalModuleBuildTime / CLOCKS_PER_SEC,
-            (float)totalCodeGnerationTime / CLOCKS_PER_SEC
-        ) << endl;
+        cout << "⏱️ Time taken" << endl;
+        cout << format("Total: {:.6f} seconds", (float)totalTimeStamp / CLOCKS_PER_SEC) << endl;
+        cout << format("Scanning: {:.6f} seconds ({:.2f}%)", (float)totalScanTime / CLOCKS_PER_SEC, (float)totalScanTime / totalTimeStamp * 100) << endl;
+        cout << format("Parsing: {:.6f} seconds ({:.2f}%)", (float)totalParseTime / CLOCKS_PER_SEC, (float)totalParseTime / totalTimeStamp * 100) << endl;
+        cout << format("Module building: {:.6f} seconds ({:.2f}%)", (float)totalModuleBuildTime / CLOCKS_PER_SEC, (float)totalModuleBuildTime / totalTimeStamp * 100) << endl;
+        cout << format("Code generation: {:.6f} seconds ({:.2f}%)", (float)totalCodeGnerationTime / CLOCKS_PER_SEC, (float)totalCodeGnerationTime / totalTimeStamp * 100) << endl;
     }
 
     return 0;
