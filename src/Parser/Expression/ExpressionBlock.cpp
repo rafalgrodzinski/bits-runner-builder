@@ -6,14 +6,15 @@
 
 ExpressionBlock::ExpressionBlock(vector<shared_ptr<Statement>> statements):
 Expression(ExpressionKind::BLOCK, nullptr) {
+    // TODO: Pass line & column from this expression
     if (!statements.empty() && statements.back()->getKind() == StatementKind::EXPRESSION) {
         resultStatementExpression = dynamic_pointer_cast<StatementExpression>(statements.back());
         valueType = resultStatementExpression->getExpression()->getValueType();
         statements.pop_back();
     } else {
-        resultStatementExpression = make_shared<StatementExpression>(Expression::NONE);
+        resultStatementExpression = make_shared<StatementExpression>(Expression::NONE, 0, 0);
     }
-    statementBlock = make_shared<StatementBlock>(statements);
+    statementBlock = make_shared<StatementBlock>(statements, 0, 0);
 }
 
 shared_ptr<StatementBlock> ExpressionBlock::getStatementBlock() {

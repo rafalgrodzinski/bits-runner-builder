@@ -18,10 +18,10 @@ Statement(StatementKind::FUNCTION, line, column), shouldExport(shouldExport), na
     if (!statements.empty() && statements.back()->getKind() == StatementKind::RETURN)
         return;
 
-    // add an emty return statement if none is present
-    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(nullptr);
+    // add an empty return statement if none is present
+    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(nullptr, line, column);
     statements.push_back(statementReturn);
-    this->statementBlock = make_shared<StatementBlock>(statements);
+    this->statementBlock = make_shared<StatementBlock>(statements, statementBlock->getLine(), statementBlock->getColumn());
 }
 
 bool StatementFunction::getShouldExport() {

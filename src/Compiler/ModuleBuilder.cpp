@@ -106,9 +106,9 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 //
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
-        /*case StatementKind::META_IMPORT:
+        case StatementKind::META_IMPORT:
             buildImport(dynamic_pointer_cast<StatementImport>(statement));
-            break;*/
+            break;
         case StatementKind::FUNCTION_DECLARATION: {
             shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
             buildFunctionDeclaration(
@@ -350,7 +350,7 @@ void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> st
 void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
     llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getName());
     if (structType == nullptr) {
-        markError(statement->getLine(), statement->getColumn(), "Blob not declared");
+        markError(statement->getLine(), statement->getColumn(), format("Blob \"{}\" not declared", statement->getName()));
         return;
     }
 
@@ -479,7 +479,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     llvm::GlobalVariable *global = (llvm::GlobalVariable*)scope->getGlobal(statement->getIdentifier());
 
     if (global->hasInitializer()) {
-        markError(statement->getLine(), statement->getColumn(), format("Global variable \"{}\" already defined in scope", statement->getIdentifier()));
+        markError(statement->getLine(), statement->getColumn(), format("Global \"{}\" already defined in scope", statement->getIdentifier()));
         return;
     }
 

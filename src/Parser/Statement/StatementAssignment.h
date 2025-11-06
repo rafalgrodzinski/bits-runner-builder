@@ -11,7 +11,7 @@ private:
     shared_ptr<Expression> valueExpression;
 
 public:
-    StatementAssignment(vector<shared_ptr<Expression>> chainExpressions, shared_ptr<Expression> valueExpression);
+    StatementAssignment(vector<shared_ptr<Expression>> chainExpressions, shared_ptr<Expression> valueExpression, int line, int column);
     vector<shared_ptr<Expression>> getChainExpressions();
     shared_ptr<Expression> getValueExpression();
 };

@@ -31,7 +31,7 @@ private:
     int column;
 
 public:
-    Statement(StatementKind kind, int line = 0, int column = 0);
+    Statement(StatementKind kind, int line, int column);
     virtual ~Statement() { }
     StatementKind getKind();
     int getLine();

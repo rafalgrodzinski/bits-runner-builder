@@ -1,7 +1,15 @@
 #include "StatementRawFunction.h"
 
-StatementRawFunction::StatementRawFunction(string name, string constraints, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, string rawSource):
-Statement(StatementKind::RAW_FUNCTION), name(name), constraints(constraints), arguments(arguments), returnValueType(returnValueType), rawSource(rawSource) { }
+StatementRawFunction::StatementRawFunction(
+    string name,
+    string constraints,
+    vector<pair<string, shared_ptr<ValueType>>> arguments,
+    shared_ptr<ValueType> returnValueType,
+    string rawSource,
+    int line,
+    int column
+):
+Statement(StatementKind::RAW_FUNCTION, line, column), name(name), constraints(constraints), arguments(arguments), returnValueType(returnValueType), rawSource(rawSource) { }
 
 string StatementRawFunction::getName() {
     return name;

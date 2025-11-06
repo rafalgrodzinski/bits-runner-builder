@@ -12,7 +12,7 @@ private:
     shared_ptr<ValueType> returnValueType;
 
 public:
-    StatementMetaExternFunction(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType);
+    StatementMetaExternFunction(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, int line, int column);
     string getName();
     vector<pair<string, shared_ptr<ValueType>>> getArguments();
     shared_ptr<ValueType> getReturnValueType();

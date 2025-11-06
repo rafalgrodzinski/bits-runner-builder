@@ -7,6 +7,12 @@
     ;
 ;
 
+stuff blob
+    num u64
+;
+
+//num u64 <- putchar(4)
+
 @export printNum fun: number u64
     biggest u64 <- 10
     rep biggest <= number: biggest <- biggest * 10

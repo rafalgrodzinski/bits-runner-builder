@@ -2,8 +2,8 @@
 
 #include "Parser/Statement/StatementExpression.h"
 
-StatementBlock::StatementBlock(vector<shared_ptr<Statement>> statements):
-Statement(StatementKind::BLOCK), statements(statements) { }
+StatementBlock::StatementBlock(vector<shared_ptr<Statement>> statements, int line, int column):
+Statement(StatementKind::BLOCK, line, column), statements(statements) { }
 
 vector<shared_ptr<Statement>> StatementBlock::getStatements() {
     return statements;
