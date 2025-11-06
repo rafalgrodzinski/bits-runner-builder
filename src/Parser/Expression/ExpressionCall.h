@@ -9,7 +9,7 @@ private:
     vector<shared_ptr<Expression>> argumentExpressions;
 
 public:
-    ExpressionCall(string name, vector<shared_ptr<Expression>> argumentExpressions);
+    ExpressionCall(string name, vector<shared_ptr<Expression>> argumentExpressions, int line, int column);
     string getName();
     vector<shared_ptr<Expression>> getArgumentExpressions();
 };

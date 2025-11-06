@@ -28,6 +28,14 @@ shared_ptr<Error> Error::builderError(int line, int column, string message) {
     return error;
 }
 
+shared_ptr<Error> Error::builderFunctionError(string functionName, string message) {
+    shared_ptr<Error> error = make_shared<Error>();
+    error->kind = ErrorKind::BUILDER_FUNCTION_ERROR;
+    error->functionName = functionName;
+    error->message = message;
+    return error;
+}
+
 shared_ptr<Error> Error::builderModuleError(string moduleName, string message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::BUILDER_MODULE_ERROR;
@@ -49,6 +57,11 @@ optional<int> Error::getLine() {
 optional<int> Error::getColumn() {
     return column;
 }
+
+optional<string> Error::getFunctionName() {
+    return functionName;
+}
+
 
 optional<string> Error::getModuleName() {
     return moduleName;

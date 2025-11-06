@@ -84,13 +84,11 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     for (shared_ptr<Statement> &statement : statements)
         buildStatement(statement);
 
-    // verify module, but only if there are no other errors reported yet (otherwise they will get duplicated)
-    if (errors.empty()) {
-        string errorMessage;
-        llvm::raw_string_ostream llvmErrorMessage(errorMessage);
-        if (llvm::verifyModule(*module, &llvmErrorMessage))
-            markModuleError(errorMessage);
-    }
+    // verify module
+    string errorMessage;
+    llvm::raw_string_ostream llvmErrorMessage(errorMessage);
+    if (llvm::verifyModule(*module, &llvmErrorMessage))
+        markModuleError(errorMessage);
 
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
@@ -318,11 +316,11 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
 
     builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
 
-    // verify
+    // verify function
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
     if (llvm::verifyFunction(*fun, &llvmErrorMessage))
-        markError(statement->getLine(), statement->getColumn(), errorMessage);
+        markFunctionError(statement->getName(), errorMessage);
 }
 
 void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
@@ -843,7 +841,7 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
             value = valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
             break;
         default:
-            markError(0, 0, "Invalid constant expression");
+            markError(expression->getLine(), expression->getColumn(), "Invalid constant expression");
             return nullptr;
     }
     return llvm::dyn_cast<llvm::Constant>(value);
@@ -916,7 +914,7 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
     }
 
-    markError(0, 0, "Unexpected operation");
+    markError(expression->getLine(), expression->getColumn(), "Unexpected binary operation");
     return nullptr;
 }
 
@@ -1075,7 +1073,7 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
         }
     }
 
-    markError(0, 0, "Unexpected operation");
+    markError(expression->getLine(), expression->getColumn(), "Unexpected unary operation");
     return nullptr;
 }
 
@@ -1152,7 +1150,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
     }
 
     if (value == nullptr) {
-        markError(0, 0, format("Variable \"{}\" not defined in scope", expression->getIdentifier()));
+        markError(expression->getLine(), expression->getColumn(), format("Variable \"{}\" not defined in scope", expression->getIdentifier()));
         return nullptr;
     }
 
@@ -1175,7 +1173,7 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
         return builder->CreateCall(rawFun, llvm::ArrayRef(argValues));
     }
 
-    markError(0, 0, format("Function \"{}\" not defined in scope", expression->getName()));
+    markError(expression->getLine(), expression->getColumn(), format("Function \"{}\" not defined in scope", expression->getName()));
     return nullptr;
 }
 
@@ -1240,7 +1238,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         // Check parent expression
         shared_ptr<ExpressionVariable> parentExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(i-1));
         if (parentExpressionVariable == nullptr) {
-            markError(0, 0, "Invalid expression type");
+            markError(parentExpressionVariable->getLine(), parentExpressionVariable->getColumn(), "Invalid expression type");
             return nullptr;
         }
 
@@ -1254,7 +1252,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         // Check chained expression type 
         shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
         if (expressionVariable == nullptr) {
-            markError(0, 0, "Invalid expression type");
+            markError(expressionVariable->getLine(), expressionVariable->getColumn(), "Invalid expression type");
             return nullptr;
         }
 
@@ -1315,7 +1313,7 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
 
 llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
     if (castToType == nullptr) {
-        markError(0, 0, "Don't know what to do with the composite");
+        markError(expression->getLine(), expression->getColumn(), "Don't know what to do with the composite");
         return nullptr;
     }
 
@@ -1453,7 +1451,7 @@ llvm::Value *ModuleBuilder::valueForTypeBuiltIn(llvm::Type *type, shared_ptr<Exp
             return nullptr;    
     }
     
-    markError(0, 0, "Invalid type built-in operation");
+    markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
     return nullptr;
 }
 
@@ -1686,6 +1684,10 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
 
 void ModuleBuilder::markError(int line, int column, string message) {
     errors.push_back(Error::builderError(line, column, message));
+}
+
+void ModuleBuilder::markFunctionError(string functionName, string message) {
+    errors.push_back(Error::builderFunctionError(functionName, message));
 }
 
 void ModuleBuilder::markModuleError(string message) {

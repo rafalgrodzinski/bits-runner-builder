@@ -15,10 +15,10 @@ private:
     shared_ptr<Expression> indexExpression;
 
 public:
-    static shared_ptr<ExpressionVariable> simple(string identifer);
-    static shared_ptr<ExpressionVariable> data(string identifier, shared_ptr<Expression> indexExpression);
+    static shared_ptr<ExpressionVariable> simple(string identifer, int line, int column);
+    static shared_ptr<ExpressionVariable> data(string identifier, shared_ptr<Expression> indexExpression, int line, int column);
 
-    ExpressionVariable();
+    ExpressionVariable(int line, int column);
     ExpressionVariableKind getVariableKind();
     string getIdentifier();
     shared_ptr<Expression> getIndexExpression();

@@ -13,6 +13,7 @@ enum class ErrorKind {
     LEXER_ERROR,
     PARSER_ERROR,
     BUILDER_ERROR,
+    BUILDER_FUNCTION_ERROR,
     BUILDER_MODULE_ERROR
 };
 
@@ -21,6 +22,7 @@ private:
     ErrorKind kind;
     optional<int> line;
     optional<int> column;
+    optional<string> functionName;
     optional<string> moduleName;
     optional<string>  lexme;
     shared_ptr<Token> actualToken;
@@ -32,6 +34,7 @@ public:
     static shared_ptr<Error> lexerError(int line, int column, string lexme);
     static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
     static shared_ptr<Error> builderError(int line, int column, string message);
+    static shared_ptr<Error> builderFunctionError(string funtionName, string message);
     static shared_ptr<Error> builderModuleError(string moduleName, string message);
 
     Error();
@@ -39,6 +42,7 @@ public:
     ErrorKind getKind();
     optional<int> getLine();
     optional<int> getColumn();
+    optional<string> getFunctionName();
     optional<string> getModuleName();
     optional<string> getLexme();
     shared_ptr<Token> getActualToken();

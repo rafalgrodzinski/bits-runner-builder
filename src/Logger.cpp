@@ -1126,10 +1126,16 @@ void Logger::print(shared_ptr<Error> error) {
             message = format("💥 At line {}, column {}: {}", line, column, errorMessage);
             break;
         }
+        case ErrorKind::BUILDER_FUNCTION_ERROR: {
+            string functionName = *(error->getFunctionName());
+            string errorMessage = *(error->getMessage());
+            message = format("💥 Building function \"{}\" failed: {}", functionName, errorMessage);
+            break;
+        }
         case ErrorKind::BUILDER_MODULE_ERROR: {
             string moduleName = *(error->getModuleName());
-            string errorMessge = *(error->getMessage());
-            message = format("💥 In module \"{}\": {}", moduleName, errorMessge);
+            string errorMessage = *(error->getMessage());
+            message = format("💥 Building module \"{}\" failed: {}", moduleName, errorMessage);
             break;
         }
     }
