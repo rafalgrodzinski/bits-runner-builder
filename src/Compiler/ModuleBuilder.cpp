@@ -663,7 +663,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 }
 
                 if (!sourceType->isArrayTy()) {
-                    markError(0, 0, "Not an array type");
+                    markError(valueExpression->getLine(), valueExpression->getColumn(), "Not an array type");
                     return;
                 }
 
@@ -689,7 +689,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             default:
-                markError(0, 0, "Invalid assignment to data type");
+                markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid assignment to data type");
                 return;
         }
     // blob
@@ -721,7 +721,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             default:
-                markError(0, 0, "Invalid assignment");
+                markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid assignment");
                 break;
         }
     // pointer
@@ -731,12 +731,12 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             case ExpressionKind::COMPOSITE_LITERAL: {
                 vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
                 if (valueExpressions.size() != 1) {
-                    markError(0, 0, "Invalid composite assignment");
+                    markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid composite assignment");
                     break;
                 }
                 llvm::Value *adrValue = valueForExpression(valueExpressions.at(0));
                 if (adrValue == nullptr) {
-                    markError(0, 0, "Invalid composite assignment");
+                    markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid composite assignment");
                     break;
                 }
                 llvm::Value *sourceValue = builder->CreateIntToPtr(adrValue, typePtr);
@@ -753,7 +753,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             default:
-                markError(0, 0, "Invalid assignment to pointer type");
+                markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid assignment to pointer type");
                 break;
         }
     // simple
@@ -783,7 +783,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             }
             // other
             default:
-                markError(0, 0, "Invalid assignment");
+                markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid assignment");
                 return;
         }
     }
@@ -1259,13 +1259,13 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         // Variable expression?
         llvm::StructType *structType = (llvm::StructType*)currentValue->getType();
         if (!structType->isStructTy()) {
-            markError(0, 0, "Something's fucky");
+            markError(expressionVariable->getLine(), expressionVariable->getColumn(), "Something's fucky");
             return nullptr;
         }
         string structName = string(structType->getName());
         optional<int> memberIndex = scope->getStructMemberIndex(structName, expressionVariable->getIdentifier());
         if (!memberIndex) {
-            markError(0, 0, format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
+            markError(expressionVariable->getLine(), expressionVariable->getColumn(), format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
             return nullptr;
         }
         llvm::Value *index[] = {
@@ -1358,14 +1358,14 @@ llvm::Constant *ModuleBuilder::constantValueForCompositeLiteral(shared_ptr<Expre
         return llvm::ConstantStruct::get(structType, constantValues);
     } else if (isPointer) {
         if (expression->getExpressions().size() != 1) {
-            markError(0, 0, "Invalid pointer literal");
+            markError(expression->getLine(), expression->getColumn(), "Invalid pointer literal");
             return nullptr;
         }
         llvm::Constant *adrValue = constantValueForExpression(expression->getExpressions().at(0), typeIntPtr);
         return llvm::ConstantExpr::getIntToPtr(adrValue, typePtr);
     }
     
-    markError(0, 0, "Invalid type");
+    markError(expression->getLine(), expression->getColumn(), "Invalid type");
     return nullptr;
 }
 
@@ -1413,12 +1413,12 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
 
         shared_ptr<ValueType> pointeeValueType = scope->getPtrType(parentExpression->getIdentifier())->getSubType();
         if (pointeeValueType == nullptr) {
-            markError(0, 0, "No type for ptr");
+            markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
             return nullptr;
         }
         llvm::Type *pointeeType = typeForValueType(pointeeValueType);
         if (pointeeType == nullptr) {
-            markError(0, 0, "No type for ptr");
+            markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
             return nullptr; 
         }
 
@@ -1436,7 +1436,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
             return nullptr;
     }
 
-    markError(0, 0, "Invalid built-in operation");
+    markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
     return nullptr;
 }
 
