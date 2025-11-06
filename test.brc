@@ -1,7 +1,7 @@
 
 @extern putchar fun: character u64 -> u32
 
-@export print fun: text data<u64, 64> -> u64
+@export print fun: text data<u64, 64>
     rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
         putchar(text[i])
     ;

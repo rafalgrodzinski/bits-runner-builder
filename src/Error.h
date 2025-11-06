@@ -19,12 +19,10 @@ enum class ErrorKind {
 class Error {
 private:
     ErrorKind kind;
-
-    int line;
-    int column;
+    optional<int> line;
+    optional<int> column;
     optional<string> moduleName;
     optional<string>  lexme;
-
     shared_ptr<Token> actualToken;
     optional<TokenKind> expectedTokenKind;
     optional<Parsee> expectedParsee;
@@ -37,15 +35,12 @@ public:
     static shared_ptr<Error> builderModuleError(string moduleName, string message);
 
     Error();
-    Error(ErrorKind kind, int line, int column, optional<string> lexme, shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
 
     ErrorKind getKind();
-
-    int getLine();
-    int getColumn();
+    optional<int> getLine();
+    optional<int> getColumn();
     optional<string> getModuleName();
     optional<string> getLexme();
-
     shared_ptr<Token> getActualToken();
     optional<TokenKind> getExpectedTokenKind();
     optional<Parsee> getExpectedParsee();
