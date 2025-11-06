@@ -4,7 +4,7 @@
 #include "Parser/ValueType.h"
 
 shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(shared_ptr<Token> token) {
-    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>();
+    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(token->getLine(), token->getColumn());
 
     switch (token->getKind()) {
         case TokenKind::BOOL: {
@@ -92,8 +92,8 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
     return expression;
 }
 
-shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForUInt(uint64_t value) {
-    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>();
+shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForUInt(uint64_t value, int line, int column) {
+    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(line, column);
     expression->literalKind = LiteralKind::UINT;
     expression->valueType = ValueType::LITERAL;
     expression->boolValue = false;
@@ -103,8 +103,8 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForUInt(uint64
     return expression;
 }
 
-ExpressionLiteral::ExpressionLiteral():
-Expression(ExpressionKind::LITERAL, nullptr) { }
+ExpressionLiteral::ExpressionLiteral(int line, int column):
+Expression(ExpressionKind::LITERAL, nullptr, line, column) { }
 
 LiteralKind ExpressionLiteral::getLiteralKind() {
     return literalKind;

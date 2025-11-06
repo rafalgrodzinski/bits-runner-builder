@@ -5,7 +5,7 @@
 
 class ExpressionCast: public Expression {
 public:
-    ExpressionCast(shared_ptr<ValueType> valueType);
+    ExpressionCast(shared_ptr<ValueType> valueType, int line, int column);
 };
 
 #endif

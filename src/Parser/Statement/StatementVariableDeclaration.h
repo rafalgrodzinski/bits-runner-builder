@@ -12,7 +12,7 @@ private:
     shared_ptr<ValueType> valueType;
 
 public:
-    StatementVariableDeclaration(bool shouldExport, string identifier, shared_ptr<ValueType> valueType);
+    StatementVariableDeclaration(bool shouldExport, string identifier, shared_ptr<ValueType> valueType, int line, int column);
     bool getShouldExport();
     string getIdentifier();
     shared_ptr<ValueType> getValueType();

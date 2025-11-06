@@ -2,8 +2,8 @@
 
 #include "Parser/Expression/Expression.h"
 
-StatementReturn::StatementReturn(shared_ptr<Expression> expression):
-Statement(StatementKind::RETURN), expression(expression) { }
+StatementReturn::StatementReturn(shared_ptr<Expression> expression, int line, int column):
+Statement(StatementKind::RETURN, line, column), expression(expression) { }
 
 shared_ptr<Expression> StatementReturn::getExpression() {
     return expression;

@@ -1,3 +1,4 @@
+
 @extern putchar fun: character u64 -> u32
 
 @export print fun: text data<u64, 64>
@@ -5,6 +6,12 @@
         putchar(text[i])
     ;
 ;
+
+stuff blob
+    num u64
+;
+
+//num u64 <- putchar(4)
 
 @export printNum fun: number u64
     biggest u64 <- 10
@@ -24,6 +31,6 @@ add fun: a u64, b u64 -> u64
 
 @export main fun
     pAdd ptr<fun u64, u64 -> u64> <- { add.adr }
-    printNum(pAdd.val(4, 5))
+    printNum(pAdd.val((4 * 2), 5))
     //r u64 <- pAdd.val(4, 5)
 ;

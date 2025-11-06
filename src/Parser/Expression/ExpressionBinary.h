@@ -37,7 +37,7 @@ private:
 public:
     static shared_ptr<ExpressionBinary> expression(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right);
 
-    ExpressionBinary();
+    ExpressionBinary(int line, int column);
 
     ExpressionBinaryOperation getOperation();
     shared_ptr<Expression> getLeft();

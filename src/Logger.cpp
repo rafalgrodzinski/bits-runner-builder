@@ -1087,8 +1087,10 @@ void Logger::print(shared_ptr<Error> error) {
     string message;
     switch (error->getKind()) {
         case ErrorKind::LEXER_ERROR: {
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
             string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("At line {}, column {}: Unexpected token \"{}\"", error->getLine() + 1, error->getColumn() + 1, lexme);
+            message = format("💥 At line {}, column {}: Unexpected token \"{}\"", line, column, lexme);
             break;
         }
         case ErrorKind::PARSER_ERROR: {
@@ -1099,17 +1101,17 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedParsee) {
                 message = format(
-                    "At line {}, column {}, Expected {} but found {} instead",
+                    "💥 At line {}, column {}, Expected {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee)), toString(token)
                 );
             } else if (expectedTokenKind) {
                 message = format(
-                    "At line {}, column {}: Expected token {} but found {} instead",
+                    "💥 At line {}, column {}: Expected token {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
                 );
             } else {
                 message = format(
-                    "At line {}, column {}: Unexpected token {} found",
+                    "💥 At line {}, column {}: Unexpected token {} found",
                     token->getLine() + 1, token->getColumn() + 1, toString(token)
                 );
             }
@@ -1118,8 +1120,22 @@ void Logger::print(shared_ptr<Error> error) {
             break;
         }
         case ErrorKind::BUILDER_ERROR: {
-            string errorMessage = error->getMessage() ? *(error->getMessage()) : "";
-            message = format("At line {}, column {}: {}", error->getLine(), error->getColumn(), errorMessage);
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
+            string errorMessage = *(error->getMessage());
+            message = format("💥 At line {}, column {}: {}", line, column, errorMessage);
+            break;
+        }
+        case ErrorKind::BUILDER_FUNCTION_ERROR: {
+            string functionName = *(error->getFunctionName());
+            string errorMessage = *(error->getMessage());
+            message = format("💥 Building function \"{}\" failed: {}", functionName, errorMessage);
+            break;
+        }
+        case ErrorKind::BUILDER_MODULE_ERROR: {
+            string moduleName = *(error->getModuleName());
+            string errorMessage = *(error->getMessage());
+            message = format("💥 Building module \"{}\" failed: {}", moduleName, errorMessage);
             break;
         }
     }

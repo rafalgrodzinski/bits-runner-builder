@@ -8,9 +8,16 @@ StatementRepeat::StatementRepeat(
     shared_ptr<Statement> postStatement,
     shared_ptr<Expression> preConditionExpression,
     shared_ptr<Expression> postConditionExpression,
-    shared_ptr<StatementBlock> bodyBlockStatement
+    shared_ptr<StatementBlock> bodyBlockStatement,
+    int line,
+    int column
 ):
-Statement(StatementKind::REPEAT), initStatement(initStatement), postStatement(postStatement), preConditionExpression(preConditionExpression), postConditionExpression(postConditionExpression), bodyBlockStatement(bodyBlockStatement) { }
+Statement(StatementKind::REPEAT, line, column),
+initStatement(initStatement),
+postStatement(postStatement),
+preConditionExpression(preConditionExpression),
+postConditionExpression(postConditionExpression),
+bodyBlockStatement(bodyBlockStatement) { }
 
 shared_ptr<Statement> StatementRepeat::getInitStatement() {
     return initStatement;

@@ -7,6 +7,6 @@ private:
     shared_ptr<Expression> expression;
 
 public:
-    StatementReturn(shared_ptr<Expression> expression);
+    StatementReturn(shared_ptr<Expression> expression, int line, int column);
     shared_ptr<Expression> getExpression();
 };

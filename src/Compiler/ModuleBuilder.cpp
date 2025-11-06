@@ -88,7 +88,7 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
     if (llvm::verifyModule(*module, &llvmErrorMessage))
-        markError(0, 0, errorMessage);
+        markModuleError(errorMessage);
 
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
@@ -180,7 +180,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildExpression(dynamic_pointer_cast<StatementExpression>(statement));
             return;
         default:
-            markError(0, 0, "Unexpected statement");
+            markError(statement->getLine(), statement->getColumn(), "Unexpected statement");
     }
 }
 
@@ -208,14 +208,14 @@ void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string
             break;
         }
         default:
-            markError(0, 0, "Unexpected imported statement");
+            markError(statement->getLine(), statement->getColumn(), "Unexpected imported statement");
     }
 }
 
 void ModuleBuilder::buildImport(shared_ptr<StatementImport> statement) {
     auto it = exportedHeaderStatementsMap.find(statement->getName());
     if (it == exportedHeaderStatementsMap.end()) {
-        markError(0, 0, format("Module {} doesn't exist", statement->getName()));
+        markError(statement->getLine(), statement->getColumn(), format("Module \"{}\" doesn't exist", statement->getName()));
         return;
     }
     for (shared_ptr<Statement> &importStatement  : it->second) {
@@ -267,7 +267,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     // Check if function not yet defined
     llvm::BasicBlock &entryBlock = fun->getEntryBlock();
     if (entryBlock.getParent() != nullptr) {
-        markError(0, 0, format("Function \"{}\" already defined in scope", statement->getName()));
+        markError(statement->getLine(), statement->getColumn(), format("Function \"{}\" already defined in scope", statement->getName()));
         return;
     }
     llvm::Function *par = entryBlock.getParent();
@@ -316,11 +316,11 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
 
     builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
 
-    // verify
+    // verify function
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
     if (llvm::verifyFunction(*fun, &llvmErrorMessage))
-        markError(0, 0, errorMessage);
+        markFunctionError(statement->getName(), errorMessage);
 }
 
 void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
@@ -333,7 +333,7 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
     // build function declaration & body
     llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
     if(llvm::InlineAsm::verify(funType, statement->getConstraints())) {
-        markError(0, 0, format("Constraints \"{}\", are invalid", statement->getConstraints()));
+        markError(statement->getLine(), statement->getColumn(), format("Constraints \"{}\", are invalid", statement->getConstraints()));
         return;
     }
     llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
@@ -348,7 +348,7 @@ void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> st
 void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
     llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getName());
     if (structType == nullptr) {
-        markError(0, 0, "Blob not declared");
+        markError(statement->getLine(), statement->getColumn(), format("Blob \"{}\" not declared", statement->getName()));
         return;
     }
 
@@ -477,7 +477,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     llvm::GlobalVariable *global = (llvm::GlobalVariable*)scope->getGlobal(statement->getIdentifier());
 
     if (global->hasInitializer()) {
-        markError(0, 0, format("Global variable \"{}\" already defined in scope", statement->getIdentifier()));
+        markError(statement->getLine(), statement->getColumn(), format("Global \"{}\" already defined in scope", statement->getIdentifier()));
         return;
     }
 
@@ -490,7 +490,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     if (statement->getExpression() != nullptr) {
         initConstant = constantValueForExpression(statement->getExpression(), type);
         if (initConstant == nullptr) {
-            markError(0, 0, "Not a constant expression");
+            markError(statement->getLine(), statement->getColumn(), "Not a constant expression");
             return;
         }
     }
@@ -663,7 +663,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 }
 
                 if (!sourceType->isArrayTy()) {
-                    markError(0, 0, "Not an array type");
+                    markError(valueExpression->getLine(), valueExpression->getColumn(), "Not an array type");
                     return;
                 }
 
@@ -689,7 +689,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             default:
-                markError(0, 0, "Invalid assignment to data type");
+                markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid assignment to data type");
                 return;
         }
     // blob
@@ -721,7 +721,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             default:
-                markError(0, 0, "Invalid assignment");
+                markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid assignment");
                 break;
         }
     // pointer
@@ -731,12 +731,12 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             case ExpressionKind::COMPOSITE_LITERAL: {
                 vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
                 if (valueExpressions.size() != 1) {
-                    markError(0, 0, "Invalid composite assignment");
+                    markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid composite assignment");
                     break;
                 }
                 llvm::Value *adrValue = valueForExpression(valueExpressions.at(0));
                 if (adrValue == nullptr) {
-                    markError(0, 0, "Invalid composite assignment");
+                    markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid composite assignment");
                     break;
                 }
                 llvm::Value *sourceValue = builder->CreateIntToPtr(adrValue, typePtr);
@@ -753,7 +753,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             default:
-                markError(0, 0, "Invalid assignment to pointer type");
+                markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid assignment to pointer type");
                 break;
         }
     // simple
@@ -783,7 +783,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             }
             // other
             default:
-                markError(0, 0, "Invalid assignment");
+                markError(valueExpression->getLine(), valueExpression->getColumn(), "Invalid assignment");
                 return;
         }
     }
@@ -817,7 +817,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::BLOCK:
             return valueForBlock(dynamic_pointer_cast<ExpressionBlock>(expression));
         default:
-            markError(0, 0, "Unexpected expression");
+            markError(expression->getLine(), expression->getColumn(), "Unexpected expression");
             return nullptr;
     }
 }
@@ -841,7 +841,7 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
             value = valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
             break;
         default:
-            markError(0, 0, "Invalid constant expression");
+            markError(expression->getLine(), expression->getColumn(), "Invalid constant expression");
             return nullptr;
     }
     return llvm::dyn_cast<llvm::Constant>(value);
@@ -914,7 +914,7 @@ llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expressi
         return valueForBinarySignedInteger(expression->getOperation(), leftValue, rightValue);
     }
 
-    markError(0, 0, "Unexpected operation");
+    markError(expression->getLine(), expression->getColumn(), "Unexpected binary operation");
     return nullptr;
 }
 
@@ -1073,7 +1073,7 @@ llvm::Value *ModuleBuilder::valueForUnary(shared_ptr<ExpressionUnary> expression
         }
     }
 
-    markError(0, 0, "Unexpected operation");
+    markError(expression->getLine(), expression->getColumn(), "Unexpected unary operation");
     return nullptr;
 }
 
@@ -1150,7 +1150,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expr
     }
 
     if (value == nullptr) {
-        markError(0, 0, format("Variable \"{}\" not defined in scope", expression->getIdentifier()));
+        markError(expression->getLine(), expression->getColumn(), format("Variable \"{}\" not defined in scope", expression->getIdentifier()));
         return nullptr;
     }
 
@@ -1173,7 +1173,7 @@ llvm::Value *ModuleBuilder::valueForCall(shared_ptr<ExpressionCall> expression) 
         return builder->CreateCall(rawFun, llvm::ArrayRef(argValues));
     }
 
-    markError(0, 0, format("Function \"{}\" not defined in scope", expression->getName()));
+    markError(expression->getLine(), expression->getColumn(), format("Function \"{}\" not defined in scope", expression->getName()));
     return nullptr;
 }
 
@@ -1238,7 +1238,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         // Check parent expression
         shared_ptr<ExpressionVariable> parentExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(i-1));
         if (parentExpressionVariable == nullptr) {
-            markError(0, 0, "Invalid expression type");
+            markError(parentExpressionVariable->getLine(), parentExpressionVariable->getColumn(), "Invalid expression type");
             return nullptr;
         }
 
@@ -1252,20 +1252,20 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         // Check chained expression type 
         shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
         if (expressionVariable == nullptr) {
-            markError(0, 0, "Invalid expression type");
+            markError(expressionVariable->getLine(), expressionVariable->getColumn(), "Invalid expression type");
             return nullptr;
         }
 
         // Variable expression?
         llvm::StructType *structType = (llvm::StructType*)currentValue->getType();
         if (!structType->isStructTy()) {
-            markError(0, 0, "Something's fucky");
+            markError(expressionVariable->getLine(), expressionVariable->getColumn(), "Something's fucky");
             return nullptr;
         }
         string structName = string(structType->getName());
         optional<int> memberIndex = scope->getStructMemberIndex(structName, expressionVariable->getIdentifier());
         if (!memberIndex) {
-            markError(0, 0, format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
+            markError(expressionVariable->getLine(), expressionVariable->getColumn(), format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
             return nullptr;
         }
         llvm::Value *index[] = {
@@ -1313,7 +1313,7 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
 
 llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
     if (castToType == nullptr) {
-        markError(0, 0, "Don't know what to do with the composite");
+        markError(expression->getLine(), expression->getColumn(), "Don't know what to do with the composite");
         return nullptr;
     }
 
@@ -1358,14 +1358,14 @@ llvm::Constant *ModuleBuilder::constantValueForCompositeLiteral(shared_ptr<Expre
         return llvm::ConstantStruct::get(structType, constantValues);
     } else if (isPointer) {
         if (expression->getExpressions().size() != 1) {
-            markError(0, 0, "Invalid pointer literal");
+            markError(expression->getLine(), expression->getColumn(), "Invalid pointer literal");
             return nullptr;
         }
         llvm::Constant *adrValue = constantValueForExpression(expression->getExpressions().at(0), typeIntPtr);
         return llvm::ConstantExpr::getIntToPtr(adrValue, typePtr);
     }
     
-    markError(0, 0, "Invalid type");
+    markError(expression->getLine(), expression->getColumn(), "Invalid type");
     return nullptr;
 }
 
@@ -1407,18 +1407,18 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     // Then do the appropriate built-in operation
     if (isArray && isCount) {
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(parentValue->getType());
-        return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements()));
+        return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements(), 0, 0));
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
         shared_ptr<ValueType> pointeeValueType = scope->getPtrType(parentExpression->getIdentifier())->getSubType();
         if (pointeeValueType == nullptr) {
-            markError(0, 0, "No type for ptr");
+            markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
             return nullptr;
         }
         llvm::Type *pointeeType = typeForValueType(pointeeValueType);
         if (pointeeType == nullptr) {
-            markError(0, 0, "No type for ptr");
+            markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
             return nullptr; 
         }
 
@@ -1436,7 +1436,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
             return nullptr;
     }
 
-    markError(0, 0, "Invalid built-in operation");
+    markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
     return nullptr;
 }
 
@@ -1451,7 +1451,7 @@ llvm::Value *ModuleBuilder::valueForTypeBuiltIn(llvm::Type *type, shared_ptr<Exp
             return nullptr;    
     }
     
-    markError(0, 0, "Invalid type built-in operation");
+    markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
     return nullptr;
 }
 
@@ -1684,4 +1684,12 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
 
 void ModuleBuilder::markError(int line, int column, string message) {
     errors.push_back(Error::builderError(line, column, message));
+}
+
+void ModuleBuilder::markFunctionError(string functionName, string message) {
+    errors.push_back(Error::builderFunctionError(functionName, message));
+}
+
+void ModuleBuilder::markModuleError(string message) {
+    errors.push_back(Error::builderModuleError(moduleName, message));
 }

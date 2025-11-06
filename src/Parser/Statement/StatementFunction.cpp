@@ -3,16 +3,25 @@
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementReturn.h"
 
-StatementFunction::StatementFunction(bool shouldExport, string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<StatementBlock> statementBlock):
-Statement(StatementKind::FUNCTION), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
+StatementFunction::StatementFunction(
+    bool shouldExport,
+    string name,
+    vector<pair<string,
+    shared_ptr<ValueType>>> arguments,
+    shared_ptr<ValueType> returnValueType,
+    shared_ptr<StatementBlock> statementBlock,
+    int line,
+    int column
+):
+Statement(StatementKind::FUNCTION, line, column), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
     vector<shared_ptr<Statement>> statements = statementBlock->getStatements();
     if (!statements.empty() && statements.back()->getKind() == StatementKind::RETURN)
         return;
 
-    // add an emty return statement if none is present
-    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(nullptr);
+    // add an empty return statement if none is present
+    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(nullptr, line, column);
     statements.push_back(statementReturn);
-    this->statementBlock = make_shared<StatementBlock>(statements);
+    this->statementBlock = make_shared<StatementBlock>(statements, statementBlock->getLine(), statementBlock->getColumn());
 }
 
 bool StatementFunction::getShouldExport() {

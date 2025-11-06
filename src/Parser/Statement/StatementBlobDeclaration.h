@@ -8,7 +8,7 @@ private:
     string name;
 
 public:
-    StatementBlobDeclaration(string name);
+    StatementBlobDeclaration(string name, int line, int column);
     string getName();
 };
 

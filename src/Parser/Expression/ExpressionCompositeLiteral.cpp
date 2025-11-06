@@ -3,8 +3,8 @@
 #include "Lexer/Token.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 
-shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(vector<shared_ptr<Expression>> expressions) {
-    shared_ptr<ExpressionCompositeLiteral> expression = make_shared<ExpressionCompositeLiteral>();
+shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(vector<shared_ptr<Expression>> expressions, int line, int column) {
+    shared_ptr<ExpressionCompositeLiteral> expression = make_shared<ExpressionCompositeLiteral>(line, column);
     expression->expressions = expressions;
     return expression;
 }
@@ -13,7 +13,7 @@ shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCom
     if (tokenString->getKind() != TokenKind::STRING)
         return nullptr;
 
-    shared_ptr<ExpressionCompositeLiteral> expression = make_shared<ExpressionCompositeLiteral>();
+    shared_ptr<ExpressionCompositeLiteral> expression = make_shared<ExpressionCompositeLiteral>(tokenString->getLine(), tokenString->getColumn());
 
     vector<shared_ptr<Expression>> expressions;
     string stringValue = tokenString->getLexme();
@@ -39,8 +39,8 @@ shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCom
     return expression;
 }
 
-ExpressionCompositeLiteral::ExpressionCompositeLiteral():
-Expression(ExpressionKind::COMPOSITE_LITERAL, nullptr) { }
+ExpressionCompositeLiteral::ExpressionCompositeLiteral(int line, int column):
+Expression(ExpressionKind::COMPOSITE_LITERAL, nullptr, line, column) { }
 
 vector<shared_ptr<Expression>> ExpressionCompositeLiteral::getExpressions() {
     return expressions;

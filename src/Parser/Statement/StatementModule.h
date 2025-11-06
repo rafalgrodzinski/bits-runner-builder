@@ -11,7 +11,14 @@ private:
     vector<shared_ptr<Statement>> exportedHeaderStatements;
 
 public:
-    StatementModule(string name, vector<shared_ptr<Statement>> statements, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> exportedHeaderStatements);
+    StatementModule(
+        string name,
+        vector<shared_ptr<Statement>> statements,
+        vector<shared_ptr<Statement>> headerStatements,
+        vector<shared_ptr<Statement>> exportedHeaderStatements,
+        int line,
+        int column
+    );
     string getName();
     vector<shared_ptr<Statement>> getStatements();
     vector<shared_ptr<Statement>> getHeaderStatements();

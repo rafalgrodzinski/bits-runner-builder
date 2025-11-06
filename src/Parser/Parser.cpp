@@ -129,10 +129,8 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         TAG_STATEMENT
     };
 
-    string name = defaultModuleName;
-    vector<shared_ptr<Statement>> statements;
-    vector<shared_ptr<Statement>> headerStatements;
-    vector<shared_ptr<Statement>> exportedHeaderStatements;
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -156,6 +154,11 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    string name = defaultModuleName;
+    vector<shared_ptr<Statement>> statements;
+    vector<shared_ptr<Statement>> headerStatements;
+    vector<shared_ptr<Statement>> exportedHeaderStatements;
+
     vector<shared_ptr<Statement>> blobDeclarationStatements;
     vector<shared_ptr<Statement>> blobStatements;
     vector<shared_ptr<Statement>> variableDeclarationStatements;
@@ -176,7 +179,9 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statementFunction->getShouldExport(),
                             statementFunction->getName(),
                             statementFunction->getArguments(),
-                            statementFunction->getReturnValueType()
+                            statementFunction->getReturnValueType(),
+                            statement->getLine(),
+                            statement->getColumn()
                         );
                         functionDeclarationStatements.push_back(statementFunctionDeclaration);
                         statements.push_back(statement);
@@ -187,7 +192,11 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                     }
                     case StatementKind::BLOB: { //generate blob declaration
                         shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
-                        shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = make_shared<StatementBlobDeclaration>(statementBlob->getName());
+                        shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = make_shared<StatementBlobDeclaration>(
+                            statementBlob->getName(),
+                            statement->getLine(),
+                            statement->getColumn()
+                        );
                         blobStatements.push_back(statementBlob);
                         blobDeclarationStatements.push_back(statementBlobDeclaration);
                         break;
@@ -197,7 +206,9 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = make_shared<StatementVariableDeclaration>(
                             statementVariable->getShouldExport(),
                             statementVariable->getIdentifier(),
-                            statementVariable->getValueType()
+                            statementVariable->getValueType(),
+                            statement->getLine(),
+                            statement->getColumn()
                         );
                         variableDeclarationStatements.push_back(statementVariableDeclaration);
                         statements.push_back(statementVariable);
@@ -227,11 +238,12 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     for (shared_ptr<Statement> &statement : functionDeclarationStatements)
         headerStatements.push_back(statement);
 
-    return make_shared<StatementModule>(name, statements, headerStatements, exportedHeaderStatements);
+    return make_shared<StatementModule>(name, statements, headerStatements, exportedHeaderStatements, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementImport() {
-    string name;
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -243,9 +255,9 @@ shared_ptr<Statement> Parser::matchStatementImport() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    name = resultsGroup.getResults().at(0).getToken()->getLexme();
+    string name = resultsGroup.getResults().at(0).getToken()->getLexme();
 
-    return make_shared<StatementImport>(name);
+    return make_shared<StatementImport>(name, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
@@ -253,6 +265,9 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
         TAG_IDENTIFIER,
         TAG_VALUE_TYPE
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -291,7 +306,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
         }
     }
 
-    return make_shared<StatementMetaExternVariable>(identifier, valueType);
+    return make_shared<StatementMetaExternVariable>(identifier, valueType, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
@@ -301,6 +316,9 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
         TAG_ARGUMENT_TYPE,
         TAG_RETURN_TYPE
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -373,7 +391,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
         }
     }
 
-    return make_shared<StatementMetaExternFunction>(identifier, arguments, returnType);
+    return make_shared<StatementMetaExternFunction>(identifier, arguments, returnType, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementVariable() {
@@ -383,6 +401,9 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         TAG_VALUE_TYPE,
         TAG_EXPRESSION
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -434,11 +455,14 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (valueType->getKind() == ValueTypeKind::DATA && valueType->getValueArg() == 0 && expression != nullptr) {
         shared_ptr<ExpressionCompositeLiteral> compositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
         if (compositeLiteral != nullptr) {
-            valueType = ValueType::data(valueType->getSubType(), ExpressionLiteral::expressionLiteralForUInt(compositeLiteral->getExpressions().size()));
+            valueType = ValueType::data(
+                valueType->getSubType(),
+                ExpressionLiteral::expressionLiteralForUInt(compositeLiteral->getExpressions().size(), line, column)
+            );
         }
     }
 
-    return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression);
+    return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementFunction() {
@@ -449,6 +473,9 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         TAG_ARGUMENT_TYPE,
         TAG_RETURN_TYPE
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -534,7 +561,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
+    return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
@@ -545,6 +572,9 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         TAG_ARGUMENT_TYPE,
         TAG_RETURN_TYPE
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -645,7 +675,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource);
+    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlob() {
@@ -654,6 +684,9 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         TAG_MEMBER_IDENTIFIER,
         TAG_MEMBER_TYPE
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -694,10 +727,13 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         }
     }
 
-    return make_shared<StatementBlob>(name, members);
+    return make_shared<StatementBlob>(name, members, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
+
     vector<shared_ptr<Statement>> statements;
 
     while (!tryMatchingTokenKinds(terminalTokenKinds, false, false)) {
@@ -713,7 +749,7 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
             markError(TokenKind::NEW_LINE, {}, {});
     }
 
-    return make_shared<StatementBlock>(statements);
+    return make_shared<StatementBlock>(statements, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementAssignment() {
@@ -723,6 +759,9 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         TAG_INDEX_EXPRESSION,
         TAG_VALUE_EXPRESSION
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -787,11 +826,11 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                 // data
                 if (i < resultsGroup.getResults().size() - 1 && resultsGroup.getResults().at(i+1).getTag() == TAG_INDEX_EXPRESSION) {
                     shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(++i).getExpression();
-                    shared_ptr<ExpressionVariable> expression = ExpressionVariable::data(identifier, indexExpression);
+                    shared_ptr<ExpressionVariable> expression = ExpressionVariable::data(identifier, indexExpression, line, column);
                     chainExpressions.push_back(expression);
                 // simple
                 } else {
-                    shared_ptr<ExpressionVariable> expression = ExpressionVariable::simple(identifier);
+                    shared_ptr<ExpressionVariable> expression = ExpressionVariable::simple(identifier, line, column);
                     chainExpressions.push_back(expression);
                 }
                 break;
@@ -802,10 +841,13 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         }
     }
 
-    return make_shared<StatementAssignment>(chainExpressions, valueExpression);
+    return make_shared<StatementAssignment>(chainExpressions, valueExpression, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
+
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             Parsee::tokenParsee(TokenKind::RETURN, ParseeLevel::REQUIRED, false),
@@ -818,7 +860,7 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
 
     shared_ptr<Expression> expression = !resultsGroup.getResults().empty() ? resultsGroup.getResults().at(0).getExpression() : nullptr;
 
-    return make_shared<StatementReturn>(expression);
+    return make_shared<StatementReturn>(expression, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementRepeat() {
@@ -829,6 +871,9 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
         TAG_POST_CONDITION,
         TAG_STATEMENT_BLOCK
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -933,17 +978,22 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
         postStatement,
         preConditionExpression,
         postConditionExpression,
-        dynamic_pointer_cast<StatementBlock>(bodyBlockStatement)
+        dynamic_pointer_cast<StatementBlock>(bodyBlockStatement),
+        line,
+        column
     );
 }
 
 shared_ptr<Statement> Parser::matchStatementExpression() {
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
+
     shared_ptr<Expression> expression = nextExpression();
 
     if (expression == nullptr)
         return nullptr;
 
-    return make_shared<StatementExpression>(expression);
+    return make_shared<StatementExpression>(expression, line, column);
 }
 
 //
@@ -1120,6 +1170,9 @@ shared_ptr<Expression> Parser::matchUnary() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChained> parentExpression) {
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
+
     vector<shared_ptr<Expression>> chainExpressions;
 
     do {
@@ -1134,7 +1187,7 @@ shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChain
         case 1:
             return chainExpressions.at(0);
         default:
-            return make_shared<ExpressionChained>(chainExpressions);
+            return make_shared<ExpressionChained>(chainExpressions, line, column);
     }
 }
 
@@ -1170,13 +1223,16 @@ shared_ptr<Expression> Parser::matchPrimary() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
+
     if (tryMatchingTokenKinds({TokenKind::LEFT_ROUND_BRACKET}, true, true)) {
         shared_ptr<Expression> expression = matchLogicalOrXor();
         // has grouped expression failed?
         if (expression == nullptr) {
             return nullptr;
         } else if (tryMatchingTokenKinds({TokenKind::RIGHT_ROUND_BRACKET}, true, true)) {
-            return make_shared<ExpressionGrouping>(expression);
+            return make_shared<ExpressionGrouping>(expression, line, column);
         } else {
             markError(TokenKind::RIGHT_ROUND_BRACKET, {}, {});
         }
@@ -1190,6 +1246,9 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
         TAG_EXPRESSION,
         TAG_STRING
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1244,7 +1303,7 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
     if (stringToken != nullptr)
         return ExpressionCompositeLiteral::expressionCompositeLiteralForTokenString(stringToken);
     else
-        return ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(expressions);
+        return ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(expressions, line, column);
 }
 
 shared_ptr<Expression> Parser::matchExpressionLiteral() {
@@ -1261,6 +1320,9 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
         TAG_NAME,
         TAG_ARGUMENT_EXPRESSION
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1313,7 +1375,7 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
         }
     }
 
-    return make_shared<ExpressionCall>(name, argumentExpressions);
+    return make_shared<ExpressionCall>(name, argumentExpressions, line, column);
 }
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {
@@ -1321,6 +1383,9 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
         TAG_IDENTIFIER,
         TAG_INDEX_EXPRESSION
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1363,12 +1428,15 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
     }
 
     if (indexExpression != nullptr)
-        return ExpressionVariable::data(identifier, indexExpression);
+        return ExpressionVariable::data(identifier, indexExpression, line, column);
     else
-        return ExpressionVariable::simple(identifier);
+        return ExpressionVariable::simple(identifier, line, column);
 }
 
 shared_ptr<Expression> Parser::matchExpressionCast() {
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
+
     ParseeResultsGroup parseeResults = parseeResultsGroupForParsees(
         {
             Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true)
@@ -1380,7 +1448,7 @@ shared_ptr<Expression> Parser::matchExpressionCast() {
 
     shared_ptr<ValueType> valueType = parseeResults.getResults().at(0).getValueType();
 
-    return make_shared<ExpressionCast>(valueType);
+    return make_shared<ExpressionCast>(valueType, line, column);
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
@@ -1389,6 +1457,9 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         TAG_THEN,
         TAG_ELSE
     };
+
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1466,7 +1537,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         }
     }
 
-    return make_shared<ExpressionIfElse>(condition, thenBlock, elseBlock);
+    return make_shared<ExpressionIfElse>(condition, thenBlock, elseBlock, line, column);
 }
 
 shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left) {
@@ -1502,6 +1573,9 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
 }
 
 shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTokenKinds) {
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
+
     vector<shared_ptr<Statement>> statements;
 
     while (!tryMatchingTokenKinds(terminalTokenKinds, false, false)) {
@@ -1520,7 +1594,7 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
         }
     }
 
-    return make_shared<ExpressionBlock>(statements);
+    return make_shared<ExpressionBlock>(statements, line, column);
 }
 
 shared_ptr<ValueType> Parser::matchValueType() {

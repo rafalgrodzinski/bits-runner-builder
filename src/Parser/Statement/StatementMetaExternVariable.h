@@ -11,7 +11,7 @@ private:
     shared_ptr<ValueType> valueType;
 
 public:
-    StatementMetaExternVariable(string identifier, shared_ptr<ValueType> valueType);
+    StatementMetaExternVariable(string identifier, shared_ptr<ValueType> valueType, int line, int column);
     string getIdentifier();
     shared_ptr<ValueType> getValueType();
 };

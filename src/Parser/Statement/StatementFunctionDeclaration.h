@@ -13,7 +13,14 @@ private:
     shared_ptr<ValueType> returnValueType;
 
 public:
-    StatementFunctionDeclaration(bool shouldExport, string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType);
+    StatementFunctionDeclaration(
+        bool shouldExport,
+        string name,
+        vector<pair<string, shared_ptr<ValueType>>> arguments,
+        shared_ptr<ValueType> returnValueType,
+        int line,
+        int column
+    );
     bool getShouldExport();
     string getName();
     vector<pair<string, shared_ptr<ValueType>>> getArguments();

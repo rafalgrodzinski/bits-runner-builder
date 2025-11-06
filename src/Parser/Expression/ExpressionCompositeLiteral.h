@@ -8,10 +8,10 @@ private:
     vector<shared_ptr<Expression>> expressions;
     
 public:
-    static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForExpressions(vector<shared_ptr<Expression>> expressions);
+    static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForExpressions(vector<shared_ptr<Expression>> expressions, int line, int column);
     static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForTokenString(shared_ptr<Token> tokenString);
 
-    ExpressionCompositeLiteral();
+    ExpressionCompositeLiteral(int line, int column);
     vector<shared_ptr<Expression>> getExpressions();
 };
 
