@@ -4,10 +4,20 @@
 #include <sstream>
 
 #include "Error.h"
+#include "Parser/Expression/Expression.h"
+#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionUnary.h"
+#include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionVariable.h"
+#include "Parser/Expression/ExpressionGrouping.h"
+#include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
+#include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCast.h"
 
-#include "Lexer/Token.h"
-#include "Parser/ValueType.h"
-
+#include "Parser/Parsee/Parsee.h"
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementImport.h"
@@ -26,18 +36,8 @@
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementExpression.h"
 
-#include "Parser/Expression/Expression.h"
-#include "Parser/Expression/ExpressionBinary.h"
-#include "Parser/Expression/ExpressionUnary.h"
-#include "Parser/Expression/ExpressionIfElse.h"
-#include "Parser/Expression/ExpressionVariable.h"
-#include "Parser/Expression/ExpressionGrouping.h"
-#include "Parser/Expression/ExpressionLiteral.h"
-#include "Parser/Expression/ExpressionCompositeLiteral.h"
-#include "Parser/Expression/ExpressionCall.h"
-#include "Parser/Expression/ExpressionBlock.h"
-#include "Parser/Expression/ExpressionChained.h"
-#include "Parser/Expression/ExpressionCast.h"
+#include "Lexer/Token.h"
+#include "Parser/ValueType.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -1117,6 +1117,18 @@ void Logger::print(shared_ptr<Error> error) {
             }
             if (errorMessage)
                 message += format(". {}", *errorMessage);
+            break;
+        }
+        case ErrorKind::ANALYZER_TYPE: {
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
+            message = format(
+                "🔥 At line {}, column {}: Invalid type {}, expected {}",
+                line,
+                column,
+                toString(error->getActualType()),
+                toString(error->getExpectedType())
+            );
             break;
         }
         case ErrorKind::BUILDER_ERROR: {

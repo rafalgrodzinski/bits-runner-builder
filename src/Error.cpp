@@ -1,5 +1,7 @@
 #include "Error.h"
 
+#include "Parser/ValueType.h"
+
 shared_ptr<Error> Error::lexerError(int line, int column, string lexme) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::LEXER_ERROR;
@@ -16,6 +18,16 @@ shared_ptr<Error> Error::parserError(shared_ptr<Token> actualToken, optional<Tok
     error->expectedTokenKind = expectedTokenKind;
     error->expectedParsee = expectedParsee;
     error->message = message;
+    return error;
+}
+
+shared_ptr<Error> Error::analyzerTypeError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType) {
+    shared_ptr<Error> error = make_shared<Error>();
+    error->kind = ErrorKind::ANALYZER_TYPE;
+    error->line = line;
+    error->column = column;
+    error->actualType = actualType;
+    error->expectedType = expectedType;
     return error;
 }
 
@@ -58,15 +70,6 @@ optional<int> Error::getColumn() {
     return column;
 }
 
-optional<string> Error::getFunctionName() {
-    return functionName;
-}
-
-
-optional<string> Error::getModuleName() {
-    return moduleName;
-}
-
 optional<string> Error::getLexme() {
     return lexme;
 }
@@ -81,6 +84,22 @@ optional<TokenKind> Error::getExpectedTokenKind() {
 
 optional<Parsee> Error::getExpectedParsee() {
     return expectedParsee;
+}
+
+shared_ptr<ValueType> Error::getActualType() {
+    return actualType;
+}
+
+shared_ptr<ValueType> Error::getExpectedType() {
+    return expectedType;
+}
+
+optional<string> Error::getFunctionName() {
+    return functionName;
+}
+
+optional<string> Error::getModuleName() {
+    return moduleName;
 }
 
 optional<string> Error::getMessage() {
