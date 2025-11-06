@@ -12,6 +12,8 @@
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
 
+#include "Analyzer/TypesAnalyzer.h"
+
 #include "Compiler/ModuleBuilder.h"
 #include "Compiler/CodeGenerator.h"
 
@@ -187,6 +189,7 @@ int main(int argc, char **argv) {
 
     time_t totalScanTime = 0;
     time_t totalParseTime = 0;
+    time_t totalAnalysisTime = 0;
     time_t totalModuleBuildTime = 0;
     time_t totalCodeGnerationTime = 0;
 
@@ -244,6 +247,19 @@ int main(int argc, char **argv) {
             headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
             exportedHeaderStatementsMap[statementModule->getName()] = statementModule->getExportedHeaderStatements();
         }
+
+        // Analysis
+        if (verbosity >= Verbosity::V1)
+            cout << format("🔮 Analyzing \"{}\"", inputFileNames[i]) << endl;
+
+        timeStamp = clock();
+        TypesAnalyzer typesAnalyzer;
+        typesAnalyzer.checkModule(statementModule);
+        timeStamp = clock() - timeStamp;
+        totalAnalysisTime += timeStamp;
+
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Analyzed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
     }
 
     // Specify code generator for deired target
@@ -294,6 +310,7 @@ int main(int argc, char **argv) {
         cout << format("Total: {:.6f} seconds", (float)totalTimeStamp / CLOCKS_PER_SEC) << endl;
         cout << format("Scanning: {:.6f} seconds ({:.2f}%)", (float)totalScanTime / CLOCKS_PER_SEC, (float)totalScanTime / totalTimeStamp * 100) << endl;
         cout << format("Parsing: {:.6f} seconds ({:.2f}%)", (float)totalParseTime / CLOCKS_PER_SEC, (float)totalParseTime / totalTimeStamp * 100) << endl;
+        cout << format("Analysis: {:.6f} seconds ({:.2f}%)", (float)totalAnalysisTime / CLOCKS_PER_SEC, (float)totalAnalysisTime / totalTimeStamp * 100) << endl;
         cout << format("Module building: {:.6f} seconds ({:.2f}%)", (float)totalModuleBuildTime / CLOCKS_PER_SEC, (float)totalModuleBuildTime / totalTimeStamp * 100) << endl;
         cout << format("Code generation: {:.6f} seconds ({:.2f}%)", (float)totalCodeGnerationTime / CLOCKS_PER_SEC, (float)totalCodeGnerationTime / totalTimeStamp * 100) << endl;
     }
