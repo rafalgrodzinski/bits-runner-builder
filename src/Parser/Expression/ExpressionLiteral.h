@@ -22,8 +22,8 @@ private:
 
 public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
-    static shared_ptr<ExpressionLiteral> expressionLiteralForUInt(uint64_t value);
-    ExpressionLiteral();
+    static shared_ptr<ExpressionLiteral> expressionLiteralForUInt(uint64_t value, int line, int column);
+    ExpressionLiteral(int line, int column);
     
     LiteralKind getLiteralKind();
     bool getBoolValue();

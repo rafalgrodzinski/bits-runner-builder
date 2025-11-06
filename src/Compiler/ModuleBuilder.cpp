@@ -819,7 +819,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::BLOCK:
             return valueForBlock(dynamic_pointer_cast<ExpressionBlock>(expression));
         default:
-            markError(0, 0, "Unexpected expression");
+            markError(expression->getLine(), expression->getColumn(), "Unexpected expression");
             return nullptr;
     }
 }
@@ -1409,7 +1409,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     // Then do the appropriate built-in operation
     if (isArray && isCount) {
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(parentValue->getType());
-        return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements()));
+        return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements(), 0, 0));
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
