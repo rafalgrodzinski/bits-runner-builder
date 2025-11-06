@@ -4,8 +4,8 @@
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementBlock.h"
 
-ExpressionBlock::ExpressionBlock(vector<shared_ptr<Statement>> statements):
-Expression(ExpressionKind::BLOCK, nullptr) {
+ExpressionBlock::ExpressionBlock(vector<shared_ptr<Statement>> statements, int line, int column):
+Expression(ExpressionKind::BLOCK, nullptr, line, column) {
     // TODO: Pass line & column from this expression
     if (!statements.empty() && statements.back()->getKind() == StatementKind::EXPRESSION) {
         resultStatementExpression = dynamic_pointer_cast<StatementExpression>(statements.back());

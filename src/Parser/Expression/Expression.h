@@ -35,7 +35,7 @@ protected:
 public:
     static shared_ptr<Expression> NONE;
 
-    Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, int line = 0, int column = 0);
+    Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, int line, int column);
     virtual ~Expression() { }
     ExpressionKind getKind();
     shared_ptr<ValueType> getValueType();

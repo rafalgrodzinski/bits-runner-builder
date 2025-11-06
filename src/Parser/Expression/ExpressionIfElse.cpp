@@ -2,8 +2,8 @@
 
 #include "Parser/Expression/ExpressionBlock.h"
 
-ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<ExpressionBlock> thenBlockExpression, shared_ptr<Expression> elseExpression):
-Expression(ExpressionKind::IF_ELSE, nullptr), conditionExpression(conditionExpression), thenBlockExpression(thenBlockExpression), elseExpression(elseExpression) {
+ExpressionIfElse::ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<ExpressionBlock> thenBlockExpression, shared_ptr<Expression> elseExpression, int line, int column):
+Expression(ExpressionKind::IF_ELSE, nullptr, line, column), conditionExpression(conditionExpression), thenBlockExpression(thenBlockExpression), elseExpression(elseExpression) {
     // Figure out resulting type
     if (elseExpression == nullptr || thenBlockExpression->getValueType() == elseExpression->getValueType())
         valueType = thenBlockExpression->getValueType();

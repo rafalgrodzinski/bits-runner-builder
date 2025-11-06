@@ -31,6 +31,6 @@ add fun: a u64, b u64 -> u64
 
 @export main fun
     pAdd ptr<fun u64, u64 -> u64> <- { add.adr }
-    printNum(pAdd.val(abc, 5))
+    printNum(pAdd.val((4 * 2), 5))
     //r u64 <- pAdd.val(4, 5)
 ;

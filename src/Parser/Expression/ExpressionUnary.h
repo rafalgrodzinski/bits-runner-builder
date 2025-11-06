@@ -18,7 +18,7 @@ private:
 public:
     static shared_ptr<ExpressionUnary> expression(shared_ptr<Token> token, shared_ptr<Expression> subExpression);
 
-    ExpressionUnary();
+    ExpressionUnary(int line, int column);
 
     ExpressionUnaryOperation getOperation();
     shared_ptr<Expression> getSubExpression();
