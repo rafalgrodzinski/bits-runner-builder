@@ -1088,7 +1088,7 @@ void Logger::print(shared_ptr<Error> error) {
     switch (error->getKind()) {
         case ErrorKind::LEXER_ERROR: {
             string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("At line {}, column {}: Unexpected token \"{}\"", error->getLine() + 1, error->getColumn() + 1, lexme);
+            message = format("💥 At line {}, column {}: Unexpected token \"{}\"", error->getLine() + 1, error->getColumn() + 1, lexme);
             break;
         }
         case ErrorKind::PARSER_ERROR: {
@@ -1099,17 +1099,17 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedParsee) {
                 message = format(
-                    "At line {}, column {}, Expected {} but found {} instead",
+                    "💥 At line {}, column {}, Expected {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee)), toString(token)
                 );
             } else if (expectedTokenKind) {
                 message = format(
-                    "At line {}, column {}: Expected token {} but found {} instead",
+                    "💥 At line {}, column {}: Expected token {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
                 );
             } else {
                 message = format(
-                    "At line {}, column {}: Unexpected token {} found",
+                    "💥 At line {}, column {}: Unexpected token {} found",
                     token->getLine() + 1, token->getColumn() + 1, toString(token)
                 );
             }
@@ -1118,8 +1118,14 @@ void Logger::print(shared_ptr<Error> error) {
             break;
         }
         case ErrorKind::BUILDER_ERROR: {
-            string errorMessage = error->getMessage() ? *(error->getMessage()) : "";
-            message = format("At line {}, column {}: {}", error->getLine(), error->getColumn(), errorMessage);
+            string errorMessage = *(error->getMessage());
+            message = format("💥 At line {}, column {}: {}", error->getLine() + 1, error->getColumn() + 1, errorMessage);
+            break;
+        }
+        case ErrorKind::BUILDER_MODULE_ERROR: {
+            string moduleName = *(error->getModuleName());
+            string errorMessge = *(error->getMessage());
+            message = format("💥 In module \"{}\": {}", moduleName, errorMessge);
             break;
         }
     }

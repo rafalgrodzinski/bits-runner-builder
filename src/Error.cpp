@@ -39,6 +39,17 @@ shared_ptr<Error> Error::builderError(int line, int column, string message) {
     );
 }
 
+shared_ptr<Error> Error::builderModuleError(string moduleName, string message) {
+    shared_ptr<Error> error = make_shared<Error>();
+    error->kind = ErrorKind::BUILDER_MODULE_ERROR;
+    error->moduleName = moduleName;
+    error->message = message;
+
+    return error;
+}
+
+Error::Error() { }
+
 Error::Error(ErrorKind kind, int line, int column, optional<string> lexme, shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message):
 kind(kind), line(line), column(column), lexme(lexme), actualToken(actualToken), expectedTokenKind(expectedTokenKind), expectedParsee(expectedParsee), message(message) { }
 
@@ -52,6 +63,10 @@ int Error::getLine() {
 
 int Error::getColumn() {
     return column;
+}
+
+optional<string> Error::getModuleName() {
+    return moduleName;
 }
 
 optional<string> Error::getLexme() {

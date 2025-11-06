@@ -231,7 +231,8 @@ shared_ptr<Statement> Parser::matchStatementModule() {
 }
 
 shared_ptr<Statement> Parser::matchStatementImport() {
-    string name;
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -243,9 +244,9 @@ shared_ptr<Statement> Parser::matchStatementImport() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    name = resultsGroup.getResults().at(0).getToken()->getLexme();
+    string name = resultsGroup.getResults().at(0).getToken()->getLexme();
 
-    return make_shared<StatementImport>(name);
+    return make_shared<StatementImport>(name, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
@@ -450,6 +451,9 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         TAG_RETURN_TYPE
     };
 
+    int line = tokens.at(currentIndex)->getLine();
+    int column = tokens.at(currentIndex)->getColumn();
+
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             // export
@@ -534,7 +538,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock));
+    return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {

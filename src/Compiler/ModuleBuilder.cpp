@@ -84,11 +84,13 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     for (shared_ptr<Statement> &statement : statements)
         buildStatement(statement);
 
-    // verify module
-    string errorMessage;
-    llvm::raw_string_ostream llvmErrorMessage(errorMessage);
-    if (llvm::verifyModule(*module, &llvmErrorMessage))
-        markError(0, 0, errorMessage);
+    // verify module, but only if there are no other errors reported yet (otherwise they will get duplicated)
+    if (errors.empty()) {
+        string errorMessage;
+        llvm::raw_string_ostream llvmErrorMessage(errorMessage);
+        if (llvm::verifyModule(*module, &llvmErrorMessage))
+            markModuleError(errorMessage);
+    }
 
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
@@ -104,9 +106,9 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 //
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
-        case StatementKind::META_IMPORT:
+        /*case StatementKind::META_IMPORT:
             buildImport(dynamic_pointer_cast<StatementImport>(statement));
-            break;
+            break;*/
         case StatementKind::FUNCTION_DECLARATION: {
             shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
             buildFunctionDeclaration(
@@ -180,7 +182,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildExpression(dynamic_pointer_cast<StatementExpression>(statement));
             return;
         default:
-            markError(0, 0, "Unexpected statement");
+            markError(statement->getLine(), statement->getColumn(), "Unexpected statement");
     }
 }
 
@@ -208,14 +210,14 @@ void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string
             break;
         }
         default:
-            markError(0, 0, "Unexpected imported statement");
+            markError(statement->getLine(), statement->getColumn(), "Unexpected imported statement");
     }
 }
 
 void ModuleBuilder::buildImport(shared_ptr<StatementImport> statement) {
     auto it = exportedHeaderStatementsMap.find(statement->getName());
     if (it == exportedHeaderStatementsMap.end()) {
-        markError(0, 0, format("Module {} doesn't exist", statement->getName()));
+        markError(statement->getLine(), statement->getColumn(), format("Module \"{}\" doesn't exist", statement->getName()));
         return;
     }
     for (shared_ptr<Statement> &importStatement  : it->second) {
@@ -267,7 +269,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     // Check if function not yet defined
     llvm::BasicBlock &entryBlock = fun->getEntryBlock();
     if (entryBlock.getParent() != nullptr) {
-        markError(0, 0, format("Function \"{}\" already defined in scope", statement->getName()));
+        markError(statement->getLine(), statement->getColumn(), format("Function \"{}\" already defined in scope", statement->getName()));
         return;
     }
     llvm::Function *par = entryBlock.getParent();
@@ -320,7 +322,7 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
     if (llvm::verifyFunction(*fun, &llvmErrorMessage))
-        markError(0, 0, errorMessage);
+        markError(statement->getLine(), statement->getColumn(), errorMessage);
 }
 
 void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
@@ -333,7 +335,7 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
     // build function declaration & body
     llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
     if(llvm::InlineAsm::verify(funType, statement->getConstraints())) {
-        markError(0, 0, format("Constraints \"{}\", are invalid", statement->getConstraints()));
+        markError(statement->getLine(), statement->getColumn(), format("Constraints \"{}\", are invalid", statement->getConstraints()));
         return;
     }
     llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
@@ -348,7 +350,7 @@ void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> st
 void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
     llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getName());
     if (structType == nullptr) {
-        markError(0, 0, "Blob not declared");
+        markError(statement->getLine(), statement->getColumn(), "Blob not declared");
         return;
     }
 
@@ -477,7 +479,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     llvm::GlobalVariable *global = (llvm::GlobalVariable*)scope->getGlobal(statement->getIdentifier());
 
     if (global->hasInitializer()) {
-        markError(0, 0, format("Global variable \"{}\" already defined in scope", statement->getIdentifier()));
+        markError(statement->getLine(), statement->getColumn(), format("Global variable \"{}\" already defined in scope", statement->getIdentifier()));
         return;
     }
 
@@ -490,7 +492,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     if (statement->getExpression() != nullptr) {
         initConstant = constantValueForExpression(statement->getExpression(), type);
         if (initConstant == nullptr) {
-            markError(0, 0, "Not a constant expression");
+            markError(statement->getLine(), statement->getColumn(), "Not a constant expression");
             return;
         }
     }
@@ -1684,4 +1686,8 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
 
 void ModuleBuilder::markError(int line, int column, string message) {
     errors.push_back(Error::builderError(line, column, message));
+}
+
+void ModuleBuilder::markModuleError(string message) {
+    errors.push_back(Error::builderModuleError(moduleName, message));
 }

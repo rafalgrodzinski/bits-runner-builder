@@ -8,7 +8,7 @@ private:
     string name;
 
 public:
-    StatementImport(string name);
+    StatementImport(string name, int line, int column);
     string getName();
 };
 

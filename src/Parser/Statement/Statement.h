@@ -27,11 +27,15 @@ enum class StatementKind {
 class Statement {
 private:
     StatementKind kind;
+    int line;
+    int column;
 
 public:
-    Statement(StatementKind kind);
+    Statement(StatementKind kind, int line = 0, int column = 0);
     virtual ~Statement() { }
     StatementKind getKind();
+    int getLine();
+    int getColumn();
 };
 
 #endif

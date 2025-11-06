@@ -15,7 +15,15 @@ private:
     shared_ptr<StatementBlock> statementBlock;
 
 public:
-    StatementFunction(bool shouldExport, string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<StatementBlock> statementBlock);
+    StatementFunction(
+        bool shouldExport,
+        string name,
+        vector<pair<string, shared_ptr<ValueType>>> arguments,
+        shared_ptr<ValueType> returnValueType,
+        shared_ptr<StatementBlock> statementBlock,
+        int line,
+        int column
+    );
     bool getShouldExport();
     string getName();
     vector<pair<string, shared_ptr<ValueType>>> getArguments();

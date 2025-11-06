@@ -141,6 +141,7 @@ private:
     int sizeInBitsForType(llvm::Type *type);
 
     void markError(int line, int column, string message);
+    void markModuleError(string message);
 
 public:
     ModuleBuilder(
