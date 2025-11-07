@@ -7,6 +7,9 @@
 class Error;
 
 class Expression;
+class ExpressionBinary;
+class ExpressionLiteral;
+class ExpressionUnary;
 
 class Statement;
 class StatementBlock;
@@ -15,6 +18,8 @@ class StatementFunction;
 class StatementModule;
 class StatementReturn;
 class ValueType;
+
+enum class ExpressionUnaryOperation;
 
 using namespace std;
 
@@ -29,9 +34,18 @@ private:
     void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementExpression> statementExpression);
 
-    shared_ptr<ValueType> typeForExpression(shared_ptr<Expression>);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionUnary> expressionUnary);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
 
+    //
+    // Support
+    //
+    bool isUnaryOperationValidForType(ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
+    shared_ptr<ValueType> typeForUnaryOperation(ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markError(int line, int column, shared_ptr<ValueType> expectedType, shared_ptr<ValueType> actualType);
+    void markErrorInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation operation);
 
 public:
     void checkModule(shared_ptr<StatementModule> module);

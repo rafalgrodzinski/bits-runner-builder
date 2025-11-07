@@ -9,7 +9,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
     switch (token->getKind()) {
         case TokenKind::BOOL: {
             expression->literalKind = LiteralKind::BOOL;
-            expression->valueType = ValueType::LITERAL;
+            expression->valueType = ValueType::BOOL;
 
             bool value = token->getLexme().compare("true") == 0;
             expression->boolValue = value;
@@ -20,7 +20,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::INTEGER_DEC: {
             expression->literalKind = LiteralKind::SINT;
-            expression->valueType = ValueType::LITERAL;
+            expression->valueType = ValueType::SINT;
 
             string numString = token->getLexme();
             erase(numString, '_');
@@ -33,7 +33,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::INTEGER_HEX: {
             expression->literalKind = LiteralKind::UINT;
-            expression->valueType = ValueType::LITERAL;
+            expression->valueType = ValueType::UINT;
 
             string numString = token->getLexme();
             erase(numString, '_');
@@ -46,7 +46,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::INTEGER_BIN: {
             expression->literalKind = LiteralKind::UINT;
-            expression->valueType = ValueType::LITERAL;
+            expression->valueType = ValueType::UINT;
 
             string numString = token->getLexme();
             erase(numString, '_');
@@ -60,7 +60,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::INTEGER_CHAR: {
             expression->literalKind = LiteralKind::UINT;
-            expression->valueType = ValueType::LITERAL;
+            expression->valueType = ValueType::UINT;
 
             string charString = token->getLexme();
             optional<uint64_t> value = ExpressionLiteral::charStringToInt(charString);
@@ -74,7 +74,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::FLOAT: {
             expression->literalKind = LiteralKind::FLOAT;
-            expression->valueType = ValueType::LITERAL;
+            expression->valueType = ValueType::FLOAT;
 
             string numString = token->getLexme();
             erase(numString, '_');

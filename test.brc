@@ -1,4 +1,4 @@
 
 @export main fun -> u64
-    ret 7
+    ret ~false
 ;

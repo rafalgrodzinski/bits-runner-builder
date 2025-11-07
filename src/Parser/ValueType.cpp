@@ -5,12 +5,15 @@
 
 shared_ptr<ValueType> ValueType::NONE = make_shared<ValueType>(ValueTypeKind::NONE);
 shared_ptr<ValueType> ValueType::BOOL = make_shared<ValueType>(ValueTypeKind::BOOL);
+shared_ptr<ValueType> ValueType::UINT = make_shared<ValueType>(ValueTypeKind::UINT);
 shared_ptr<ValueType> ValueType::U8 = make_shared<ValueType>(ValueTypeKind::U8);
 shared_ptr<ValueType> ValueType::U32 = make_shared<ValueType>(ValueTypeKind::U32);
 shared_ptr<ValueType> ValueType::U64 = make_shared<ValueType>(ValueTypeKind::U64);
+shared_ptr<ValueType> ValueType::SINT = make_shared<ValueType>(ValueTypeKind::SINT);
 shared_ptr<ValueType> ValueType::S8 = make_shared<ValueType>(ValueTypeKind::S8);
 shared_ptr<ValueType> ValueType::S32 = make_shared<ValueType>(ValueTypeKind::S32);
 shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64);
+shared_ptr<ValueType> ValueType::FLOAT = make_shared<ValueType>(ValueTypeKind::FLOAT);
 shared_ptr<ValueType> ValueType::F32 = make_shared<ValueType>(ValueTypeKind::F32);
 shared_ptr<ValueType> ValueType::F64 = make_shared<ValueType>(ValueTypeKind::F64);
 shared_ptr<ValueType> ValueType::LITERAL = make_shared<ValueType>(ValueTypeKind::LITERAL);

@@ -1079,6 +1079,27 @@ void Logger::print(vector<shared_ptr<Token>> tokens) {
         cout << endl;
 }
 
+string Logger::toString(ExpressionUnaryOperation operationUnary) {
+    switch (operationUnary) {
+        case ExpressionUnaryOperation::NOT:
+            return "NOT";
+        case ExpressionUnaryOperation::BIT_NOT:
+            return "BIT_NOT";
+        case ExpressionUnaryOperation::PLUS:
+            return "PLUS";
+        case ExpressionUnaryOperation::MINUS:
+            return "MINUS";
+    }
+}
+
+string Logger::toString(ExpressionBinaryOperation operationBinary) {
+
+}
+
+
+//
+// Public
+//
 void Logger::print(shared_ptr<StatementModule> statement) {
     cout << toString(statement, {IndentKind::ROOT});
 }
@@ -1128,6 +1149,33 @@ void Logger::print(shared_ptr<Error> error) {
                 column,
                 toString(error->getActualType()),
                 toString(error->getExpectedType())
+            );
+            break;
+        }
+        case ErrorKind::ANALYZER_TYPE_OPERATION_UNARY: {
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
+            ExpressionUnaryOperation operation = *(error->getUnaryOperation());
+            message = format(
+                "🔥 At line {}, column {}: Invalid unary operation {} for type {}",
+                line,
+                column,
+                toString(operation),
+                toString(error->getFirstType())
+            );
+            break;
+        }
+        case ErrorKind::ANALYZER_TYPE_OPERATION_BINARY: {
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
+            ExpressionBinaryOperation operation = *(error->getBinaryOperation());
+            message = format(
+                "🔥 At line {}, column {}: Invalid binary operation {} for types {} and {}",
+                line,
+                column,
+                toString(operation),
+                toString(error->getFirstType()),
+                toString(error->getSecondType())
             );
             break;
         }

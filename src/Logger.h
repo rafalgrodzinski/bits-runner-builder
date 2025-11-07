@@ -41,6 +41,9 @@ class ExpressionCast;
 
 class Error;
 
+enum class ExpressionUnaryOperation;
+enum class ExpressionBinaryOperation;
+
 using namespace std;
 
 enum class IndentKind {
@@ -96,7 +99,9 @@ private:
 
     // errors support
     static string toString(Parsee parsee);
-    static string toString(TokenKind tokenKind); // onlty kind
+    static string toString(TokenKind tokenKind); // only kind
+    static string toString(ExpressionUnaryOperation operationUnary);
+    static string toString(ExpressionBinaryOperation operationBinary);
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);

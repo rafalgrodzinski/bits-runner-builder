@@ -7,6 +7,9 @@
 
 class Token;
 class ValueType;
+
+enum class ExpressionUnaryOperation;
+enum class ExpressionBinaryOperation;
 enum class TokenKind;
 
 using namespace std;
@@ -15,6 +18,8 @@ enum class ErrorKind {
     LEXER_ERROR,
     PARSER_ERROR,
     ANALYZER_TYPE,
+    ANALYZER_TYPE_OPERATION_UNARY,
+    ANALYZER_TYPE_OPERATION_BINARY,
     BUILDER_ERROR,
     BUILDER_FUNCTION_ERROR,
     BUILDER_MODULE_ERROR
@@ -25,7 +30,7 @@ private:
     ErrorKind kind;
     optional<int> line;
     optional<int> column;
-    optional<string>  lexme;
+    optional<string> lexme;
 
     shared_ptr<Token> actualToken;
     optional<TokenKind> expectedTokenKind;
@@ -33,6 +38,11 @@ private:
 
     shared_ptr<ValueType> actualType;
     shared_ptr<ValueType> expectedType;
+
+    shared_ptr<ValueType> firstType;
+    shared_ptr<ValueType> secondType;
+    optional<ExpressionUnaryOperation> unaryOperation;
+    optional<ExpressionBinaryOperation> binaryOperation;
 
     optional<string> functionName;
     optional<string> moduleName;
@@ -43,6 +53,8 @@ public:
     static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
     static shared_ptr<Error> builderError(int line, int column, string message);
     static shared_ptr<Error> analyzerTypeError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
+    static shared_ptr<Error> analyzerTypeInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation unaryOperation);
+    static shared_ptr<Error> analyzerTypeInvalidOperationBinary(int line, int column, shared_ptr<ValueType> leftType, shared_ptr<ValueType> rightType, ExpressionBinaryOperation binaryOperation);
     static shared_ptr<Error> builderFunctionError(string funtionName, string message);
     static shared_ptr<Error> builderModuleError(string moduleName, string message);
 
@@ -59,6 +71,11 @@ public:
 
     shared_ptr<ValueType> getActualType();
     shared_ptr<ValueType> getExpectedType();
+
+    shared_ptr<ValueType> getFirstType();
+    shared_ptr<ValueType> getSecondType();
+    optional<ExpressionUnaryOperation> getUnaryOperation();
+    optional<ExpressionBinaryOperation> getBinaryOperation();
 
     optional<string> getFunctionName();
     optional<string> getModuleName();

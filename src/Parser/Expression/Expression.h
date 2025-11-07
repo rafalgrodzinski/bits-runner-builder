@@ -41,6 +41,8 @@ public:
     shared_ptr<ValueType> getValueType();
     int getLine();
     int getColumn();
+
+    friend class TypesAnalyzer;
 };
 
 #endif

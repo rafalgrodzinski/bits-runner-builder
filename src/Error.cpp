@@ -31,6 +31,27 @@ shared_ptr<Error> Error::analyzerTypeError(int line, int column, shared_ptr<Valu
     return error;
 }
 
+shared_ptr<Error> Error::analyzerTypeInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation unaryOperation) {
+    shared_ptr<Error> error = make_shared<Error>();
+    error->kind = ErrorKind::ANALYZER_TYPE_OPERATION_UNARY;
+    error->line = line;
+    error->column = column;
+    error->firstType = type;
+    error->unaryOperation = unaryOperation;
+    return error;
+}
+
+shared_ptr<Error> Error::analyzerTypeInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation binaryOperation) {
+    shared_ptr<Error> error = make_shared<Error>();
+    error->kind = ErrorKind::ANALYZER_TYPE_OPERATION_BINARY;
+    error->line = line;
+    error->column = column;
+    error->firstType = firstType;
+    error->secondType = secondType;
+    error->binaryOperation = binaryOperation;
+    return error;
+}
+
 shared_ptr<Error> Error::builderError(int line, int column, string message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::BUILDER_ERROR;
@@ -93,6 +114,23 @@ shared_ptr<ValueType> Error::getActualType() {
 shared_ptr<ValueType> Error::getExpectedType() {
     return expectedType;
 }
+
+shared_ptr<ValueType> Error::getFirstType() {
+    return firstType;
+}
+
+shared_ptr<ValueType> Error::getSecondType() {
+    return secondType;
+}
+
+optional<ExpressionUnaryOperation> Error::getUnaryOperation() {
+    return unaryOperation;
+}
+
+optional<ExpressionBinaryOperation> Error::getBinaryOperation() {
+    return binaryOperation;
+}
+
 
 optional<string> Error::getFunctionName() {
     return functionName;
