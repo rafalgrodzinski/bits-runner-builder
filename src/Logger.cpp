@@ -812,18 +812,24 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "NONE";
         case ValueTypeKind::BOOL:
             return "BOOL";
+        case ValueTypeKind::UINT:
+            return "UINT";
         case ValueTypeKind::U8:
             return "U8";
         case ValueTypeKind::U32:
             return "U32";
         case ValueTypeKind::U64:
             return "U64";
+        case ValueTypeKind::SINT:
+            return "SINT";
         case ValueTypeKind::S8:
             return "S8";
         case ValueTypeKind::S32:
             return "S32";
         case ValueTypeKind::S64:
             return "S64";
+        case ValueTypeKind::FLOAT:
+            return "FLOAT";
         case ValueTypeKind::F32:
             return "F32";
         case ValueTypeKind::F64:
@@ -1093,7 +1099,49 @@ string Logger::toString(ExpressionUnaryOperation operationUnary) {
 }
 
 string Logger::toString(ExpressionBinaryOperation operationBinary) {
+    switch (operationBinary) {
+        case ExpressionBinaryOperation::OR:
+            return "OR";
+        case ExpressionBinaryOperation::XOR:
+            return "XOR";
+        case ExpressionBinaryOperation::AND:
+            return "AND";
 
+        case ExpressionBinaryOperation::BIT_OR:
+            return "BIT_OR";
+        case ExpressionBinaryOperation::BIT_XOR:
+            return "BIT_XOR";
+        case ExpressionBinaryOperation::BIT_AND:
+            return "BIT_AND";
+        case ExpressionBinaryOperation::BIT_SHL:
+            return "BIT_SHL";
+        case ExpressionBinaryOperation::BIT_SHR:
+            return "BIT_SHR";
+
+        case ExpressionBinaryOperation::EQUAL:
+            return "=";
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return "!=";
+        case ExpressionBinaryOperation::LESS:
+            return "<";
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return "<=";
+        case ExpressionBinaryOperation::GREATER:
+            return ">";
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return ">=";
+
+        case ExpressionBinaryOperation::ADD:
+            return "+";
+        case ExpressionBinaryOperation::SUB:
+            return "-";
+        case ExpressionBinaryOperation::MUL:
+            return "*";
+        case ExpressionBinaryOperation::DIV:
+            return "/";
+        case ExpressionBinaryOperation::MOD:
+            return "%";
+    }
 }
 
 
@@ -1111,7 +1159,7 @@ void Logger::print(shared_ptr<Error> error) {
             int line = *(error->getLine()) + 1;
             int column = *(error->getColumn()) + 1;
             string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("💥 At line {}, column {}: Unexpected token \"{}\"", line, column, lexme);
+            message = format("🔥 At line {}, column {}: Unexpected token \"{}\"", line, column, lexme);
             break;
         }
         case ErrorKind::PARSER_ERROR: {
@@ -1122,17 +1170,17 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedParsee) {
                 message = format(
-                    "💥 At line {}, column {}, Expected {} but found {} instead",
+                    "🔥 At line {}, column {}, Expected {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee)), toString(token)
                 );
             } else if (expectedTokenKind) {
                 message = format(
-                    "💥 At line {}, column {}: Expected token {} but found {} instead",
+                    "🔥 At line {}, column {}: Expected token {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
                 );
             } else {
                 message = format(
-                    "💥 At line {}, column {}: Unexpected token {} found",
+                    "🔥 At line {}, column {}: Unexpected token {} found",
                     token->getLine() + 1, token->getColumn() + 1, toString(token)
                 );
             }
@@ -1183,19 +1231,19 @@ void Logger::print(shared_ptr<Error> error) {
             int line = *(error->getLine()) + 1;
             int column = *(error->getColumn()) + 1;
             string errorMessage = *(error->getMessage());
-            message = format("💥 At line {}, column {}: {}", line, column, errorMessage);
+            message = format("🔥 At line {}, column {}: {}", line, column, errorMessage);
             break;
         }
         case ErrorKind::BUILDER_FUNCTION_ERROR: {
             string functionName = *(error->getFunctionName());
             string errorMessage = *(error->getMessage());
-            message = format("💥 Building function \"{}\" failed: {}", functionName, errorMessage);
+            message = format("🔥 Building function \"{}\" failed: {}", functionName, errorMessage);
             break;
         }
         case ErrorKind::BUILDER_MODULE_ERROR: {
             string moduleName = *(error->getModuleName());
             string errorMessage = *(error->getMessage());
-            message = format("💥 Building module \"{}\" failed: {}", moduleName, errorMessage);
+            message = format("🔥 Building module \"{}\" failed: {}", moduleName, errorMessage);
             break;
         }
     }

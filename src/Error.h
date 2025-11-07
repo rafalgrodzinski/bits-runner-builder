@@ -54,7 +54,7 @@ public:
     static shared_ptr<Error> builderError(int line, int column, string message);
     static shared_ptr<Error> analyzerTypeError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
     static shared_ptr<Error> analyzerTypeInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation unaryOperation);
-    static shared_ptr<Error> analyzerTypeInvalidOperationBinary(int line, int column, shared_ptr<ValueType> leftType, shared_ptr<ValueType> rightType, ExpressionBinaryOperation binaryOperation);
+    static shared_ptr<Error> analyzerTypeInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation binaryOperation);
     static shared_ptr<Error> builderFunctionError(string funtionName, string message);
     static shared_ptr<Error> builderModuleError(string moduleName, string message);
 
