@@ -8,6 +8,7 @@ class Error;
 
 class Expression;
 class ExpressionBinary;
+class ExpressionGrouping;
 class ExpressionLiteral;
 class ExpressionUnary;
 
@@ -36,9 +37,10 @@ private:
     void checkStatement(shared_ptr<StatementExpression> statementExpression);
 
     shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionUnary> expressionUnary);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
 
     //
     // Support

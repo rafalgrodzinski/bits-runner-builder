@@ -5,6 +5,7 @@
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionUnary.h"
 
@@ -81,31 +82,15 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpr
 //
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
+        case ExpressionKind::BINARY:
+            return typeForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case ExpressionKind::GROUPING:
+            return typeForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::LITERAL:
             return typeForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
         case ExpressionKind::UNARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
-        case ExpressionKind::BINARY:
-            return typeForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
     }
-}
-
-shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
-    return expressionLiteral->getValueType();
-}
-
-shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
-    ExpressionUnaryOperation operation = expressionUnary->getOperation();
-    shared_ptr<ValueType> subType = typeForExpression(expressionUnary->getSubExpression());
-
-    if (!isUnaryOperationValidForType(expressionUnary->getOperation(), subType)) {
-        markErrorInvalidOperationUnary(expressionUnary->getLine(), expressionUnary->getColumn(), subType, operation);
-        return nullptr;
-    }
-    
-    expressionUnary->valueType = typeForUnaryOperation(operation, subType);
-
-    return expressionUnary->getValueType();
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
@@ -122,6 +107,29 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
     expressionBinary->valueType = typeForBinaryOperation(operation, firstType, secondType);
 
     return expressionBinary->getValueType();
+}
+
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
+    expressionGrouping->valueType = typeForExpression(expressionGrouping->getSubExpression());
+    return expressionGrouping->getValueType();
+}
+
+shared_ptr<ValueType> TypesAnalyzer::TypesAnalyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
+    return expressionLiteral->getValueType();
+}
+
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
+    ExpressionUnaryOperation operation = expressionUnary->getOperation();
+    shared_ptr<ValueType> subType = typeForExpression(expressionUnary->getSubExpression());
+
+    if (!isUnaryOperationValidForType(expressionUnary->getOperation(), subType)) {
+        markErrorInvalidOperationUnary(expressionUnary->getLine(), expressionUnary->getColumn(), subType, operation);
+        return nullptr;
+    }
+    
+    expressionUnary->valueType = typeForUnaryOperation(operation, subType);
+
+    return expressionUnary->getValueType();
 }
 
 //

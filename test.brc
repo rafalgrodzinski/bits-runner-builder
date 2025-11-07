@@ -1,4 +1,4 @@
 
 @export main fun -> u64
-    ret 7 % 4.44
+    ret (2 + 3) * 4
 ;
