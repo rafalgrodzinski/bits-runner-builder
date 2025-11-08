@@ -5,9 +5,16 @@
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionCast.h"
+#include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
 #include "Parser/Expression/ExpressionGrouping.h"
+#include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionUnary.h"
+#include "Parser/Expression/ExpressionVariable.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementBlock.h"
@@ -67,29 +74,48 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, sh
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType) {
-    shared_ptr<ValueType> expressionType = typeForExpression(statementReturn->getExpression());
+    shared_ptr<ValueType> expressionType = ValueType::NONE;
+    if (statementReturn->getExpression() != nullptr)
+        expressionType = typeForExpression(statementReturn->getExpression());
 
     if (expressionType != returnType)
-        markError(statementReturn->getExpression()->getLine(), statementReturn->getExpression()->getColumn(), expressionType, returnType);
+        markError(statementReturn->getLine(), statementReturn->getColumn(), expressionType, returnType);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpression) {
-
+    // returned value type is ignored
+    typeForExpression(statementExpression->getExpression());
 }
 
 //
 // Expressions
 //
-shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> expression) {
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> expression, shared_ptr<ValueType> returnType) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
+        case ExpressionKind::BLOCK:
+            return typeForExpression(dynamic_pointer_cast<ExpressionBlock>(expression), returnType);
+        case ExpressionKind::CALL:
+            break; // !
+        case ExpressionKind::CAST:
+            return typeForExpression(dynamic_pointer_cast<ExpressionCast>(expression)); // !
+        case ExpressionKind::CHAINED:
+            return typeForExpression(dynamic_pointer_cast<ExpressionChained>(expression)); // !
+        case ExpressionKind::COMPOSITE_LITERAL:
+            break; // !
         case ExpressionKind::GROUPING:
             return typeForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression));
+        case ExpressionKind::IF_ELSE:
+            return typeForExpression(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::LITERAL:
             return typeForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::NONE:
+            break; // ?
         case ExpressionKind::UNARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
+        case ExpressionKind::VARIABLE:
+            break; // !
     }
 }
 
@@ -109,9 +135,47 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
     return expressionBinary->getValueType();
 }
 
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBlock> expressionBlock, shared_ptr<ValueType> returnType) {
+    checkStatement(expressionBlock->getStatementBlock(), returnType);
+    checkStatement(expressionBlock->getResultStatementExpression());
+    expressionBlock->valueType = expressionBlock->getResultStatementExpression()->getExpression()->getValueType();
+    return expressionBlock->getValueType();
+}
+
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast) {
+    return nullptr;
+}
+
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionChained> expressionChained) {
+    return nullptr;
+}
+
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
     expressionGrouping->valueType = typeForExpression(expressionGrouping->getSubExpression());
     return expressionGrouping->getValueType();
+}
+
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse) {
+    shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
+    conditionExpression->valueType = typeForExpression(conditionExpression);
+    if (conditionExpression->getValueType() != ValueType::BOOL) {
+        markError(conditionExpression->getLine(), conditionExpression->getColumn(), conditionExpression->getValueType(), ValueType::BOOL);
+    }
+
+    shared_ptr<Expression> thenExpression = expressionIfElse->getThenBlockExpression();
+    thenExpression->valueType = typeForExpression(thenExpression);
+
+    shared_ptr<Expression> elseExpression = expressionIfElse->getElseExpression();
+    if (elseExpression != nullptr)
+        elseExpression->valueType = typeForExpression(elseExpression);
+
+    if (elseExpression != nullptr && thenExpression->getValueType() == elseExpression->getValueType()) {
+        expressionIfElse->valueType = thenExpression->getValueType();
+    } else {
+        expressionIfElse->valueType = ValueType::NONE;
+    }
+
+    return expressionIfElse->getValueType();
 }
 
 shared_ptr<ValueType> TypesAnalyzer::TypesAnalyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {

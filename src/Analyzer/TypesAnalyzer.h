@@ -8,9 +8,17 @@ class Error;
 
 class Expression;
 class ExpressionBinary;
+class ExpressionBlock;
+class ExpressionCall;
+class ExpressionCast;
+class ExpressionChained;
+class ExpressionCompositeLiteral;
 class ExpressionGrouping;
+class ExpressionIfElse;
 class ExpressionLiteral;
+class ExpressionNone;
 class ExpressionUnary;
+class ExpressionVariable;
 
 class Statement;
 class StatementBlock;
@@ -36,9 +44,13 @@ private:
     void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementExpression> statementExpression);
 
-    shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression, shared_ptr<ValueType> returnType = nullptr);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBlock> expressionBlock, shared_ptr<ValueType> returnType);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCast> expressionCast);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionChained> expressionChained);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionUnary> expressionUnary);
 
