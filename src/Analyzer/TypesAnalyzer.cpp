@@ -2,6 +2,8 @@
 
 #include "Error.h"
 #include "Logger.h"
+#include "AnalyzerScope.h"
+#include "Parser/ValueType.h"
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
@@ -23,10 +25,11 @@
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
-
-#include "Parser/ValueType.h"
+#include "Parser/Statement/StatementVariable.h"
 
 void TypesAnalyzer::checkModule(shared_ptr<StatementModule> module) {
+    scope = make_shared<AnalyzerScope>();
+
     for (shared_ptr<Statement> statement : module->getStatements())
         checkStatement(statement, nullptr);
 
@@ -59,6 +62,9 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
             break;
         case StatementKind::RETURN:
             checkStatement(dynamic_pointer_cast<StatementReturn>(statement), returnType);
+            break;
+        case StatementKind::VARIABLE:
+            checkStatement(dynamic_pointer_cast<StatementVariable>(statement));
             break;
     }
 }
@@ -115,6 +121,18 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, 
         markError(statementReturn->getLine(), statementReturn->getColumn(), expressionType, returnType);
 }
 
+void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
+    shared_ptr<Expression> expression = statementVariable->getExpression();
+    if (expression != nullptr) {
+        expression->valueType = typeForExpression(expression);
+        if (expression->getValueType() != statementVariable->getValueType())
+            markError(expression->getLine(), expression->getColumn(), expression->getValueType(), statementVariable->getValueType());
+    }
+
+    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType()))
+        markErrorAlreadyDefined(statementVariable->getLine(), statementVariable->getColumn(), statementVariable->getIdentifier());
+}
+
 //
 // Expressions
 //
@@ -144,7 +162,10 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
             return typeForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::VARIABLE:
             break; // !
+        default:
+            break;
     }
+    return nullptr;
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
@@ -396,13 +417,23 @@ shared_ptr<ValueType> TypesAnalyzer::typeForUnaryOperation(ExpressionUnaryOperat
  }
 
 void TypesAnalyzer::markError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType) {
-    errors.push_back(Error::analyzerTypeError(line, column, actualType, expectedType));
+    errors.push_back(Error::analyzerTypesInvalidTypeError(line, column, actualType, expectedType));
 }
 
 void TypesAnalyzer::markErrorInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation operation) {
-    errors.push_back(Error::analyzerTypeInvalidOperationUnary(line, column, type, operation));
+    errors.push_back(Error::analyzerTypesInvalidOperationUnary(line, column, type, operation));
 }
 
 void TypesAnalyzer::markErrorInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation operation) {
-    errors.push_back(Error::analyzerTypeInvalidOperationBinary(line, column, firstType, secondType, operation));
+    errors.push_back(Error::analyzerTypesInvalidOperationBinary(line, column, firstType, secondType, operation));
 }
+
+void TypesAnalyzer::markErrorAlreadyDefined(int line, int column, string identifier) {
+    errors.push_back(Error::analyzerTypesAlreadyDefined(line, column, identifier));
+}
+
+void TypesAnalyzer::markErrorNotDefined(int line, int column, string identifier) {
+    errors.push_back(Error::analyzerTypesAlreadyDefined(line, column, identifier));
+}
+
+

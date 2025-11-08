@@ -4,7 +4,9 @@
 #include <memory>
 #include <vector>
 
+class AnalyzerScope;
 class Error;
+class ValueType;
 
 class Expression;
 class ExpressionBinary;
@@ -38,9 +40,6 @@ class StatementReturn;
 class StatementVariableDeclaration;
 class StatementVariable;
 
-class ValueType;
-
-
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
 
@@ -49,6 +48,7 @@ using namespace std;
 class TypesAnalyzer {
 private:
     vector<shared_ptr<Error>> errors;
+    shared_ptr<AnalyzerScope> scope;
 
     void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType);
@@ -57,6 +57,7 @@ private:
     void checkStatement(shared_ptr<StatementModule> statementModule);
     void checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
+    void checkStatement(shared_ptr<StatementVariable> statementVariable);
 
     shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression, shared_ptr<ValueType> returnType = nullptr);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
@@ -80,6 +81,8 @@ private:
     void markError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
     void markErrorInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation operation);
     void markErrorInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation operation);
+    void markErrorAlreadyDefined(int line, int column, string identifier);
+    void markErrorNotDefined(int line, int column, string identifier);
 
 public:
     void checkModule(shared_ptr<StatementModule> module);

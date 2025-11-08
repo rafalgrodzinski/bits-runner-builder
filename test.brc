@@ -1,5 +1,5 @@
 
 @export main fun
-    rep 44 != 4, 22 > 4, 22
-    ;
+    num u32 <- 4
+    num s64 <- 7
 ;

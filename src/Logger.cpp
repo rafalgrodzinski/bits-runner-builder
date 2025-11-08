@@ -1227,6 +1227,30 @@ void Logger::print(shared_ptr<Error> error) {
             );
             break;
         }
+        case ErrorKind::ANALYZER_TYPES_ALREADY_DEFINED: {
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
+            string identifier = *(error->getIdentifier());
+            message = format(
+                "🔥 At line {}, column {}: \"{}\" is already defined",
+                line,
+                column,
+                identifier
+            );
+            break;
+        }
+        case ErrorKind::ANALYZER_TYPES_NOT_DEFINED: {
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
+            string identifier = *(error->getIdentifier());
+            message = format(
+                "🔥 At line {}, column {}: \"{}\" not defined",
+                line,
+                column,
+                identifier
+            );
+            break;
+        }
         case ErrorKind::BUILDER_ERROR: {
             int line = *(error->getLine()) + 1;
             int column = *(error->getColumn()) + 1;
