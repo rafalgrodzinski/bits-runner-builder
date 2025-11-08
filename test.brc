@@ -1,10 +1,5 @@
 
-@export main fun -> u32
-    ret if 4 = 5
-        false
-    else if 7 < 5
-        42 > 0
-    else
-        40 != 40
+@export main fun
+    rep 44 != 4, 22 > 4, 22
     ;
 ;

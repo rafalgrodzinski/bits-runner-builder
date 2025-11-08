@@ -21,12 +21,25 @@ class ExpressionUnary;
 class ExpressionVariable;
 
 class Statement;
+class StatementAssignment;
+class StatementBlob;
+class StatementBlobDeclaration;
 class StatementBlock;
 class StatementExpression;
 class StatementFunction;
+class StatementFunctionDeclaration;
+class StatementMetaExternVariable;
+class StatementMetaExternFunction;
+class StatementMetaImport;
 class StatementModule;
+class StatementRawFunction;
+class StatementRepeat;
 class StatementReturn;
+class StatementVariableDeclaration;
+class StatementVariable;
+
 class ValueType;
+
 
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
@@ -38,11 +51,12 @@ private:
     vector<shared_ptr<Error>> errors;
 
     void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType);
-    void checkStatement(shared_ptr<StatementModule> statementModule);
-    void checkStatement(shared_ptr<StatementFunction> statementFunction);
     void checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType);
-    void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementExpression> statementExpression);
+    void checkStatement(shared_ptr<StatementFunction> statementFunction);
+    void checkStatement(shared_ptr<StatementModule> statementModule);
+    void checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType);
+    void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
 
     shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression, shared_ptr<ValueType> returnType = nullptr);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
@@ -63,7 +77,7 @@ private:
     shared_ptr<ValueType> typeForUnaryOperation(ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     shared_ptr<ValueType> typeForBinaryOperation(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
 
-    void markError(int line, int column, shared_ptr<ValueType> expectedType, shared_ptr<ValueType> actualType);
+    void markError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
     void markErrorInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation operation);
     void markErrorInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation operation);
 

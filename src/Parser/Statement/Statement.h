@@ -6,22 +6,22 @@
 using namespace std;
 
 enum class StatementKind {
-    MODULE,
-    EXPRESSION,
+    ASSIGNMENT, // !
+    BLOB, // !
+    BLOB_DECLARATION, // !
     BLOCK,
-    RETURN,
-    FUNCTION_DECLARATION,
+    EXPRESSION,
     FUNCTION,
-    RAW_FUNCTION,
-    VARIABLE_DECLARATION,
-    VARIABLE,
-    ASSIGNMENT,
+    FUNCTION_DECLARATION, // !
+    META_EXTERN_VARIABLE, // !
+    META_EXTERN_FUNCTION, // !
+    META_IMPORT, // !
+    MODULE,
+    RAW_FUNCTION, // !
     REPEAT,
-    META_EXTERN_VARIABLE,
-    META_EXTERN_FUNCTION,
-    META_IMPORT,
-    BLOB_DECLARATION,
-    BLOB
+    RETURN,
+    VARIABLE_DECLARATION, // !
+    VARIABLE, // !
 };
 
 class Statement {

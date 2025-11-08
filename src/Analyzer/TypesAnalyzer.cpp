@@ -21,6 +21,7 @@
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
 
 #include "Parser/ValueType.h"
@@ -41,36 +42,68 @@ void TypesAnalyzer::checkModule(shared_ptr<StatementModule> module) {
 //
 void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType) {
     switch (statement->getKind()) {
-        case StatementKind::MODULE:
-            checkStatement(dynamic_pointer_cast<StatementModule>(statement));
-            break;
-        case StatementKind::FUNCTION:
-            checkStatement(dynamic_pointer_cast<StatementFunction>(statement));
-            break;
         case StatementKind::BLOCK:
             checkStatement(dynamic_pointer_cast<StatementBlock>(statement), returnType);
-            break;
-        case StatementKind::RETURN:
-            checkStatement(dynamic_pointer_cast<StatementReturn>(statement), returnType);
             break;
         case StatementKind::EXPRESSION:
             checkStatement(dynamic_pointer_cast<StatementExpression>(statement));
             break;
+        case StatementKind::FUNCTION:
+            checkStatement(dynamic_pointer_cast<StatementFunction>(statement));
+            break;
+        case StatementKind::MODULE:
+            checkStatement(dynamic_pointer_cast<StatementModule>(statement));
+            break;
+        case StatementKind::REPEAT:
+            checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
+            break;
+        case StatementKind::RETURN:
+            checkStatement(dynamic_pointer_cast<StatementReturn>(statement), returnType);
+            break;
     }
-}
-
-void TypesAnalyzer::checkStatement(shared_ptr<StatementModule> statementModule) {
-    checkStatement(statementModule, nullptr);
-}
-
-
-void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
-    checkStatement(statementFunction->getStatementBlock(), statementFunction->getReturnValueType());
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {
     for (shared_ptr<Statement> statement : statementBlock->getStatements())
         checkStatement(statement, returnType);
+}
+
+void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpression) {
+    // returned value type is ignored
+    typeForExpression(statementExpression->getExpression());
+}
+
+void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
+    checkStatement(statementFunction->getStatementBlock(), statementFunction->getReturnValueType());
+}
+
+
+void TypesAnalyzer::checkStatement(shared_ptr<StatementModule> statementModule) {
+    checkStatement(statementModule, nullptr);
+}
+
+void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType) {
+    if (statementRepeat->getInitStatement() != nullptr)
+        checkStatement(statementRepeat->getInitStatement(), returnType);
+
+    if (statementRepeat->getPostStatement() != nullptr)
+        checkStatement(statementRepeat->getPostStatement(), returnType);
+
+    shared_ptr<Expression> preConditionExpression = statementRepeat->getPreConditionExpression();
+    if (preConditionExpression != nullptr) {
+        preConditionExpression->valueType = typeForExpression(preConditionExpression);
+        if (preConditionExpression->getValueType() != ValueType::BOOL)
+            markError(preConditionExpression->getLine(), preConditionExpression->getColumn(), preConditionExpression->getValueType(), ValueType::BOOL);
+    }
+
+    shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression();
+    if (postConditionExpression != nullptr) {
+        postConditionExpression->valueType = typeForExpression(postConditionExpression);
+        if (postConditionExpression->getValueType() != ValueType::BOOL)
+            markError(postConditionExpression->getLine(), postConditionExpression->getColumn(), postConditionExpression->getValueType(), ValueType::BOOL);
+    }
+
+    checkStatement(statementRepeat->getBodyBlockStatement(), returnType);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType) {
@@ -80,11 +113,6 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, 
 
     if (expressionType != returnType)
         markError(statementReturn->getLine(), statementReturn->getColumn(), expressionType, returnType);
-}
-
-void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpression) {
-    // returned value type is ignored
-    typeForExpression(statementExpression->getExpression());
 }
 
 //
@@ -367,8 +395,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForUnaryOperation(ExpressionUnaryOperat
     return firstType;
  }
 
-void TypesAnalyzer::markError(int line, int column, shared_ptr<ValueType> expectedType, shared_ptr<ValueType> actualType) {
-    errors.push_back(Error::analyzerTypeError(line, column, expectedType, actualType));
+void TypesAnalyzer::markError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType) {
+    errors.push_back(Error::analyzerTypeError(line, column, actualType, expectedType));
 }
 
 void TypesAnalyzer::markErrorInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation operation) {
