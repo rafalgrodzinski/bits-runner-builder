@@ -223,16 +223,6 @@ int main(int argc, char **argv) {
         timeStamp = clock();
         Parser parser(DEFAULT_MODULE_NAME, tokens);
         shared_ptr<StatementModule> statementModule = parser.getStatementModule();
-        timeStamp = clock() - timeStamp;
-        totalParseTime += timeStamp;
-
-        if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Parsed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
-
-        if (verbosity >= Verbosity::V3) {
-            Logger::print(statementModule);
-            cout << endl;
-        }
 
         // Append statements to existing module or create a new one
         if (statementsMap.contains(statementModule->getName())) {
@@ -246,6 +236,16 @@ int main(int argc, char **argv) {
             statementsMap[statementModule->getName()] = statementModule->getStatements();
             headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
             exportedHeaderStatementsMap[statementModule->getName()] = statementModule->getExportedHeaderStatements();
+        }
+
+        timeStamp = clock() - timeStamp;
+        totalParseTime += timeStamp;
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Parsed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+
+        if (verbosity >= Verbosity::V3) {
+            Logger::print(statementModule);
+            cout << endl;
         }
 
         // Analysis

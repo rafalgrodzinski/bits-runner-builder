@@ -71,6 +71,8 @@ public:
     string getBlobName();
     vector<shared_ptr<ValueType>> getArgumentTypes();
     shared_ptr<ValueType> getReturnType();
+
+    bool isEqual(shared_ptr<ValueType> other);
 };
 
 #endif

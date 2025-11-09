@@ -1,5 +1,13 @@
+abc fun -> s32
+    num s32
+
+    rep
+        num s32
+        ret num
+    ;
+
+    ret num
+;
 
 @export main fun
-    num u32 <- 4
-    num s64 <- 7
 ;

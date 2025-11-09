@@ -137,3 +137,7 @@ vector<shared_ptr<ValueType>> ValueType::getArgumentTypes() {
 shared_ptr<ValueType> ValueType::getReturnType() {
     return returnType;
 }
+
+bool ValueType::isEqual(shared_ptr<ValueType> other) {
+    return kind == other->getKind();
+}

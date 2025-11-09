@@ -51,8 +51,9 @@ private:
     shared_ptr<AnalyzerScope> scope;
 
     void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType);
+    void checkStatement(shared_ptr<StatementAssignment> statementAssignment);
     void checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType);
-    void checkStatement(shared_ptr<StatementExpression> statementExpression);
+    void checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementFunction> statementFunction);
     void checkStatement(shared_ptr<StatementModule> statementModule);
     void checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType);
@@ -62,12 +63,14 @@ private:
     shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression, shared_ptr<ValueType> returnType = nullptr);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBlock> expressionBlock, shared_ptr<ValueType> returnType);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCall> expressionCall);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCast> expressionCast);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionChained> expressionChained);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionUnary> expressionUnary);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionVariable> expressionVariable);
 
     //
     // Support
@@ -83,6 +86,7 @@ private:
     void markErrorInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation operation);
     void markErrorAlreadyDefined(int line, int column, string identifier);
     void markErrorNotDefined(int line, int column, string identifier);
+    void markErrorInvalidArgumentsCount(int line, int column, int actulCount, int expectedCount);
 
 public:
     void checkModule(shared_ptr<StatementModule> module);
