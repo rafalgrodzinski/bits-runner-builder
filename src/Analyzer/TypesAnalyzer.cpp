@@ -84,7 +84,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, sh
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {
     // returned value type is ignored
-    typeForExpression(statementExpression->getExpression(), returnType);
+    typeForExpression(statementExpression->getExpression(), nullptr, returnType);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
@@ -123,14 +123,14 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, 
 
     shared_ptr<Expression> preConditionExpression = statementRepeat->getPreConditionExpression();
     if (preConditionExpression != nullptr) {
-        preConditionExpression->valueType = typeForExpression(preConditionExpression);
+        preConditionExpression->valueType = typeForExpression(preConditionExpression, nullptr, nullptr);
         if (preConditionExpression->getValueType() != ValueType::BOOL)
             markError(preConditionExpression->getLine(), preConditionExpression->getColumn(), preConditionExpression->getValueType(), ValueType::BOOL);
     }
 
     shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression();
     if (postConditionExpression != nullptr) {
-        postConditionExpression->valueType = typeForExpression(postConditionExpression);
+        postConditionExpression->valueType = typeForExpression(postConditionExpression, nullptr, nullptr);
         if (postConditionExpression->getValueType() != ValueType::BOOL)
             markError(postConditionExpression->getLine(), postConditionExpression->getColumn(), postConditionExpression->getValueType(), ValueType::BOOL);
     }
@@ -144,7 +144,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> expressionType = ValueType::NONE;
     if (statementReturn->getExpression() != nullptr)
-        expressionType = typeForExpression(statementReturn->getExpression());
+        expressionType = typeForExpression(statementReturn->getExpression(), nullptr, nullptr);
 
     if (expressionType == nullptr || !expressionType->isEqual(returnType))
         markError(statementReturn->getLine(), statementReturn->getColumn(), expressionType, returnType);
@@ -153,7 +153,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     shared_ptr<Expression> expression = statementVariable->getExpression();
     if (expression != nullptr) {
-        expression->valueType = typeForExpression(expression);
+        expression->valueType = typeForExpression(expression, nullptr, nullptr);
         if (expression->getValueType() != statementVariable->getValueType())
             markError(expression->getLine(), expression->getColumn(), expression->getValueType(), statementVariable->getValueType());
     }
@@ -165,7 +165,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
 //
 // Expressions
 //
-shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> expression, shared_ptr<ValueType> returnType) {
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> expression, shared_ptr<Expression> parentExpression, shared_ptr<ValueType> returnType) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
@@ -174,9 +174,9 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
         case ExpressionKind::CALL:
             return typeForExpression(dynamic_pointer_cast<ExpressionCall>(expression));
         case ExpressionKind::CAST:
-            return typeForExpression(dynamic_pointer_cast<ExpressionCast>(expression)); // !
+            return typeForExpression(dynamic_pointer_cast<ExpressionCast>(expression), parentExpression);
         case ExpressionKind::CHAINED:
-            return typeForExpression(dynamic_pointer_cast<ExpressionChained>(expression)); // !
+            return typeForExpression(dynamic_pointer_cast<ExpressionChained>(expression));
         case ExpressionKind::COMPOSITE_LITERAL:
             break; // !
         case ExpressionKind::GROUPING:
@@ -199,8 +199,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
     ExpressionBinaryOperation operation = expressionBinary->getOperation();
-    shared_ptr<ValueType> firstType = typeForExpression(expressionBinary->getLeft());
-    shared_ptr<ValueType> secondType = typeForExpression(expressionBinary->getRight());
+    shared_ptr<ValueType> firstType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
+    shared_ptr<ValueType> secondType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
 
     if (!isBinaryOperationValidForTypes(operation, firstType, secondType)) {
         markErrorInvalidOperationBinary(expressionBinary->getLine(), expressionBinary->getColumn(), firstType, secondType, operation);
@@ -240,7 +240,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
     } else {
         for (int i=0; i<(*argumentValueTypes).size(); i++) {
             shared_ptr<Expression> argumentExpression = expressionCall->getArgumentExpressions().at(i);
-            argumentExpression->valueType = typeForExpression(argumentExpression);
+            argumentExpression->valueType = typeForExpression(argumentExpression, nullptr, nullptr);
             if (argumentExpression->getValueType() != (*argumentValueTypes).at(i)) {
                 markError(
                     argumentExpression->getLine(),
@@ -256,22 +256,49 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
     return expressionCall->getValueType();
 }
 
-shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast) {
-    return nullptr;
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression) {
+    bool areNumeric = parentExpression->getValueType()->isNumeric() && expressionCast->getValueType()->isNumeric();
+    bool areBool = parentExpression->getValueType()->isBool() && expressionCast->getValueType()->isBool();
+    bool areDataNumeric = parentExpression->getValueType()->isData() &&
+        parentExpression->getValueType()->getSubType()->isNumeric() &&
+        expressionCast->getValueType()->isData() &&
+        expressionCast->getValueType()->getSubType()->isNumeric();
+    bool areDataBool = parentExpression->getValueType()->isData() &&
+        parentExpression->getValueType()->getSubType()->isBool() &&
+        expressionCast->getValueType()->isData() &&
+        expressionCast->getValueType()->getSubType()->isBool();
+
+    if (areNumeric || areBool || areDataNumeric || areDataBool) {
+        return expressionCast->getValueType();
+    } else {
+        markErrorInvalidCast(expressionCast->getLine(), expressionCast->getColumn(), parentExpression->getValueType(), expressionCast->getValueType());
+        return nullptr;
+    }
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionChained> expressionChained) {
-    return nullptr;
+    shared_ptr<Expression> parentExpression = nullptr;
+
+    for (shared_ptr<Expression> chainExpression : expressionChained->getChainExpressions()) {
+        shared_ptr<ValueType> chainType = typeForExpression(chainExpression, parentExpression, nullptr);
+        chainExpression->valueType = chainType;
+        parentExpression = chainExpression;
+        if (chainType == nullptr)
+            return nullptr;
+    }
+
+    expressionChained->valueType = parentExpression->getValueType();
+    return expressionChained->getValueType();
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
-    expressionGrouping->valueType = typeForExpression(expressionGrouping->getSubExpression());
+    expressionGrouping->valueType = typeForExpression(expressionGrouping->getSubExpression(), nullptr, nullptr);
     return expressionGrouping->getValueType();
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
     shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
-    conditionExpression->valueType = typeForExpression(conditionExpression);
+    conditionExpression->valueType = typeForExpression(conditionExpression, nullptr, nullptr);
     if (conditionExpression->getValueType() != ValueType::BOOL) {
         markError(conditionExpression->getLine(), conditionExpression->getColumn(), conditionExpression->getValueType(), ValueType::BOOL);
     }
@@ -279,14 +306,14 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
     // then block
     shared_ptr<Expression> thenExpression = expressionIfElse->getThenBlockExpression();
     scope->pushLevel();
-    thenExpression->valueType = typeForExpression(thenExpression, returnType);
+    thenExpression->valueType = typeForExpression(thenExpression, nullptr, returnType);
     scope->popLevel();
 
     // else block
     shared_ptr<Expression> elseExpression = expressionIfElse->getElseExpression();
     if (elseExpression != nullptr) {
         scope->pushLevel();
-        elseExpression->valueType = typeForExpression(elseExpression, returnType);
+        elseExpression->valueType = typeForExpression(elseExpression, nullptr, returnType);
         scope->popLevel();
     }
 
@@ -305,7 +332,7 @@ shared_ptr<ValueType> TypesAnalyzer::TypesAnalyzer::typeForExpression(shared_ptr
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
     ExpressionUnaryOperation operation = expressionUnary->getOperation();
-    shared_ptr<ValueType> subType = typeForExpression(expressionUnary->getSubExpression());
+    shared_ptr<ValueType> subType = typeForExpression(expressionUnary->getSubExpression(), nullptr, nullptr);
 
     if (!isUnaryOperationValidForType(expressionUnary->getOperation(), subType)) {
         markErrorInvalidOperationUnary(expressionUnary->getLine(), expressionUnary->getColumn(), subType, operation);
@@ -517,6 +544,12 @@ void TypesAnalyzer::markErrorNotDefined(int line, int column, string identifier)
     errors.push_back(Error::analyzerTypesAlreadyDefined(line, column, identifier));
 }
 
-void TypesAnalyzer::markErrorInvalidArgumentsCount(int line, int column, int actulCount, int expectedCount) {
-    
+void TypesAnalyzer::markErrorInvalidArgumentsCount(int line, int column, int actualCount, int expectedCount) {
+    string message = format("Invalid arguments count {}, expected {}", actualCount, expectedCount);
+    errors.push_back(Error::error(line, column, message));
 }
+
+ void TypesAnalyzer::markErrorInvalidCast(int line, int column, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
+    string message = format("Invalid cast from {} to {}", Logger::toString(sourceType), Logger::toString(targetType));
+    errors.push_back(Error::error(line, column, message));
+ }

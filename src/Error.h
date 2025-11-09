@@ -15,6 +15,7 @@ enum class TokenKind;
 using namespace std;
 
 enum class ErrorKind {
+    MESSAGE,
     LEXER_ERROR,
     PARSER_ERROR,
     ANALYZER_TYPE,
@@ -61,6 +62,7 @@ public:
     static shared_ptr<Error> analyzerTypesInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation binaryOperation);
     static shared_ptr<Error> analyzerTypesAlreadyDefined(int line, int column, string identifier);
     static shared_ptr<Error> analyzerTypesNotDefined(int line, int column, string identifier);
+    static shared_ptr<Error> error(int line, int column, string message); 
 
     static shared_ptr<Error> builderFunctionError(string funtionName, string message);
     static shared_ptr<Error> builderModuleError(string moduleName, string message);

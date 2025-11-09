@@ -70,6 +70,14 @@ shared_ptr<Error> Error::analyzerTypesNotDefined(int line, int column, string id
     return error;
 }
 
+shared_ptr<Error> Error::error(int line, int column, string message) {
+    shared_ptr<Error> error = make_shared<Error>();
+    error->kind = ErrorKind::MESSAGE;
+    error->line = line;
+    error->message = message;
+    return error;
+}
+
 shared_ptr<Error> Error::builderError(int line, int column, string message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::BUILDER_ERROR;

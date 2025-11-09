@@ -141,3 +141,35 @@ shared_ptr<ValueType> ValueType::getReturnType() {
 bool ValueType::isEqual(shared_ptr<ValueType> other) {
     return kind == other->getKind();
 }
+
+bool ValueType::isNumeric() {
+    switch (kind) {
+        case ValueTypeKind::UINT:
+        case ValueTypeKind::U8:
+        case ValueTypeKind::U32:
+        case ValueTypeKind::U64:
+
+        case ValueTypeKind::SINT:
+        case ValueTypeKind::S8:
+        case ValueTypeKind::S32:
+        case ValueTypeKind::S64:
+
+        case ValueTypeKind::FLOAT:
+        case ValueTypeKind::F32:
+        case ValueTypeKind::F64:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool ValueType::isBool() {
+    return kind == ValueTypeKind::BOOL;
+}
+
+bool ValueType::isData() {
+    return kind == ValueTypeKind::DATA;
+}

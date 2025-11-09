@@ -1,12 +1,7 @@
-abc fun -> s32
-    num s32
+abc fun: num1 u32, num2 u32 -> s32
+    //num s32
 
-    rep
-        num s32
-        ret num
-    ;
-
-    ret num
+    ret (num1 + num2).bool
 ;
 
 @export main fun

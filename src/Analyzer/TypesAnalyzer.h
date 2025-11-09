@@ -60,11 +60,11 @@ private:
     void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementVariable> statementVariable);
 
-    shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression, shared_ptr<ValueType> returnType = nullptr);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression, shared_ptr<Expression> parentExpression, shared_ptr<ValueType> returnType);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBlock> expressionBlock, shared_ptr<ValueType> returnType);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCall> expressionCall);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCast> expressionCast);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionChained> expressionChained);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType);
@@ -87,6 +87,7 @@ private:
     void markErrorAlreadyDefined(int line, int column, string identifier);
     void markErrorNotDefined(int line, int column, string identifier);
     void markErrorInvalidArgumentsCount(int line, int column, int actulCount, int expectedCount);
+    void markErrorInvalidCast(int line, int column, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
 public:
     void checkModule(shared_ptr<StatementModule> module);

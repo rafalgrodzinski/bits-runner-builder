@@ -93,7 +93,6 @@ private:
     static string toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents);
 
     // general support
-    static string toString(shared_ptr<ValueType> valueType);
     static string formattedLine(string line, vector<IndentKind> indents);
     static vector<IndentKind> adjustedLastIndent(vector<IndentKind> indents);
 
@@ -107,6 +106,8 @@ public:
     static void print(vector<shared_ptr<Token>> tokens);
     static void print(shared_ptr<StatementModule> statement);
     static void print(shared_ptr<Error> error);
+
+    static string toString(shared_ptr<ValueType> valueType);
 };
 
 #endif

@@ -73,6 +73,9 @@ public:
     shared_ptr<ValueType> getReturnType();
 
     bool isEqual(shared_ptr<ValueType> other);
+    bool isNumeric();
+    bool isBool();
+    bool isData();
 };
 
 #endif

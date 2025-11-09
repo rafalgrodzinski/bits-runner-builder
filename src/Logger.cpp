@@ -1155,6 +1155,13 @@ void Logger::print(shared_ptr<StatementModule> statement) {
 void Logger::print(shared_ptr<Error> error) {
     string message;
     switch (error->getKind()) {
+        case ErrorKind::MESSAGE: {
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
+            string errorMessage = *(error->getMessage());
+            message = format("🔥 At line {}, column {}: {}", line, column, errorMessage);
+            break;
+        }
         case ErrorKind::LEXER_ERROR: {
             int line = *(error->getLine()) + 1;
             int column = *(error->getColumn()) + 1;
