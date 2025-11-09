@@ -18,11 +18,6 @@ enum class ErrorKind {
     MESSAGE,
     LEXER_ERROR,
     PARSER_ERROR,
-    ANALYZER_TYPE,
-    ANALYZER_TYPE_OPERATION_UNARY,
-    ANALYZER_TYPE_OPERATION_BINARY,
-    ANALYZER_TYPES_ALREADY_DEFINED,
-    ANALYZER_TYPES_NOT_DEFINED,
     BUILDER_ERROR,
     BUILDER_FUNCTION_ERROR,
     BUILDER_MODULE_ERROR
@@ -53,16 +48,11 @@ private:
     optional<string> message;
 
 public:
+    static shared_ptr<Error> error(int line, int column, string message); 
+
     static shared_ptr<Error> lexerError(int line, int column, string lexme);
     static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
     static shared_ptr<Error> builderError(int line, int column, string message);
-
-    static shared_ptr<Error> analyzerTypesInvalidTypeError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
-    static shared_ptr<Error> analyzerTypesInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation unaryOperation);
-    static shared_ptr<Error> analyzerTypesInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation binaryOperation);
-    static shared_ptr<Error> analyzerTypesAlreadyDefined(int line, int column, string identifier);
-    static shared_ptr<Error> analyzerTypesNotDefined(int line, int column, string identifier);
-    static shared_ptr<Error> error(int line, int column, string message); 
 
     static shared_ptr<Error> builderFunctionError(string funtionName, string message);
     static shared_ptr<Error> builderModuleError(string moduleName, string message);

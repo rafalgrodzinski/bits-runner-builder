@@ -99,8 +99,6 @@ private:
     // errors support
     static string toString(Parsee parsee);
     static string toString(TokenKind tokenKind); // only kind
-    static string toString(ExpressionUnaryOperation operationUnary);
-    static string toString(ExpressionBinaryOperation operationBinary);
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);
@@ -108,6 +106,8 @@ public:
     static void print(shared_ptr<Error> error);
 
     static string toString(shared_ptr<ValueType> valueType);
+    static string toString(ExpressionUnaryOperation operationUnary);
+    static string toString(ExpressionBinaryOperation operationBinary);
 };
 
 #endif

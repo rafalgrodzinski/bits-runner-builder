@@ -803,61 +803,6 @@ string Logger::toString(shared_ptr<ExpressionCast> expression, vector<IndentKind
     return formattedLine(line, indents);
 }
 
-string Logger::toString(shared_ptr<ValueType> valueType) {
-    if (valueType == nullptr)
-        return "{INVALID}";
-
-    switch (valueType->getKind()) {
-        case ValueTypeKind::NONE:
-            return "NONE";
-        case ValueTypeKind::BOOL:
-            return "BOOL";
-        case ValueTypeKind::UINT:
-            return "UINT";
-        case ValueTypeKind::U8:
-            return "U8";
-        case ValueTypeKind::U32:
-            return "U32";
-        case ValueTypeKind::U64:
-            return "U64";
-        case ValueTypeKind::SINT:
-            return "SINT";
-        case ValueTypeKind::S8:
-            return "S8";
-        case ValueTypeKind::S32:
-            return "S32";
-        case ValueTypeKind::S64:
-            return "S64";
-        case ValueTypeKind::FLOAT:
-            return "FLOAT";
-        case ValueTypeKind::F32:
-            return "F32";
-        case ValueTypeKind::F64:
-            return "F64";
-        case ValueTypeKind::DATA:
-            return format("DATA<{}>", toString(valueType->getSubType()));
-        case ValueTypeKind::BLOB:
-            return format("BLOB<`{}`>", valueType->getBlobName());
-        case ValueTypeKind::FUN: {
-            string text = "FUN";
-            // args
-            for (int i=0; i<valueType->getArgumentTypes().size(); i++) {
-                if (i > 0)
-                    text += ",";
-                text += format(" {}", toString(valueType->getArgumentTypes().at(i)));
-            }
-            // return
-            if (valueType->getReturnType() != nullptr)
-                text += format(" -> {}", toString(valueType->getReturnType()));
-            return text;
-        }
-        case ValueTypeKind::PTR:
-            return format("PTR<{}>", toString(valueType->getSubType()));
-        case ValueTypeKind::LITERAL:
-            return "LITERAL";
-    }
-}
-
 string Logger::formattedLine(string line, vector<IndentKind> indents) {
     // Just return the input, if no indents (useful for inline expressions)
     if (indents.empty())
@@ -1098,53 +1043,6 @@ string Logger::toString(ExpressionUnaryOperation operationUnary) {
     }
 }
 
-string Logger::toString(ExpressionBinaryOperation operationBinary) {
-    switch (operationBinary) {
-        case ExpressionBinaryOperation::OR:
-            return "OR";
-        case ExpressionBinaryOperation::XOR:
-            return "XOR";
-        case ExpressionBinaryOperation::AND:
-            return "AND";
-
-        case ExpressionBinaryOperation::BIT_OR:
-            return "BIT_OR";
-        case ExpressionBinaryOperation::BIT_XOR:
-            return "BIT_XOR";
-        case ExpressionBinaryOperation::BIT_AND:
-            return "BIT_AND";
-        case ExpressionBinaryOperation::BIT_SHL:
-            return "BIT_SHL";
-        case ExpressionBinaryOperation::BIT_SHR:
-            return "BIT_SHR";
-
-        case ExpressionBinaryOperation::EQUAL:
-            return "=";
-        case ExpressionBinaryOperation::NOT_EQUAL:
-            return "!=";
-        case ExpressionBinaryOperation::LESS:
-            return "<";
-        case ExpressionBinaryOperation::LESS_EQUAL:
-            return "<=";
-        case ExpressionBinaryOperation::GREATER:
-            return ">";
-        case ExpressionBinaryOperation::GREATER_EQUAL:
-            return ">=";
-
-        case ExpressionBinaryOperation::ADD:
-            return "+";
-        case ExpressionBinaryOperation::SUB:
-            return "-";
-        case ExpressionBinaryOperation::MUL:
-            return "*";
-        case ExpressionBinaryOperation::DIV:
-            return "/";
-        case ExpressionBinaryOperation::MOD:
-            return "%";
-    }
-}
-
-
 //
 // Public
 //
@@ -1195,69 +1093,6 @@ void Logger::print(shared_ptr<Error> error) {
                 message += format(". {}", *errorMessage);
             break;
         }
-        case ErrorKind::ANALYZER_TYPE: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
-            message = format(
-                "🔥 At line {}, column {}: Invalid type {}, expected {}",
-                line,
-                column,
-                toString(error->getActualType()),
-                toString(error->getExpectedType())
-            );
-            break;
-        }
-        case ErrorKind::ANALYZER_TYPE_OPERATION_UNARY: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
-            ExpressionUnaryOperation operation = *(error->getUnaryOperation());
-            message = format(
-                "🔥 At line {}, column {}: Invalid unary operation {} for type {}",
-                line,
-                column,
-                toString(operation),
-                toString(error->getFirstType())
-            );
-            break;
-        }
-        case ErrorKind::ANALYZER_TYPE_OPERATION_BINARY: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
-            ExpressionBinaryOperation operation = *(error->getBinaryOperation());
-            message = format(
-                "🔥 At line {}, column {}: Invalid binary operation {} for types {} and {}",
-                line,
-                column,
-                toString(operation),
-                toString(error->getFirstType()),
-                toString(error->getSecondType())
-            );
-            break;
-        }
-        case ErrorKind::ANALYZER_TYPES_ALREADY_DEFINED: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
-            string identifier = *(error->getIdentifier());
-            message = format(
-                "🔥 At line {}, column {}: \"{}\" is already defined",
-                line,
-                column,
-                identifier
-            );
-            break;
-        }
-        case ErrorKind::ANALYZER_TYPES_NOT_DEFINED: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
-            string identifier = *(error->getIdentifier());
-            message = format(
-                "🔥 At line {}, column {}: \"{}\" not defined",
-                line,
-                column,
-                identifier
-            );
-            break;
-        }
         case ErrorKind::BUILDER_ERROR: {
             int line = *(error->getLine()) + 1;
             int column = *(error->getColumn()) + 1;
@@ -1279,4 +1114,105 @@ void Logger::print(shared_ptr<Error> error) {
         }
     }
     cout << message << endl;
+}
+
+string Logger::toString(shared_ptr<ValueType> valueType) {
+    if (valueType == nullptr)
+        return "{INVALID}";
+
+    switch (valueType->getKind()) {
+        case ValueTypeKind::NONE:
+            return "NONE";
+        case ValueTypeKind::BOOL:
+            return "BOOL";
+        case ValueTypeKind::UINT:
+            return "UINT";
+        case ValueTypeKind::U8:
+            return "U8";
+        case ValueTypeKind::U32:
+            return "U32";
+        case ValueTypeKind::U64:
+            return "U64";
+        case ValueTypeKind::SINT:
+            return "SINT";
+        case ValueTypeKind::S8:
+            return "S8";
+        case ValueTypeKind::S32:
+            return "S32";
+        case ValueTypeKind::S64:
+            return "S64";
+        case ValueTypeKind::FLOAT:
+            return "FLOAT";
+        case ValueTypeKind::F32:
+            return "F32";
+        case ValueTypeKind::F64:
+            return "F64";
+        case ValueTypeKind::DATA:
+            return format("DATA<{}>", toString(valueType->getSubType()));
+        case ValueTypeKind::BLOB:
+            return format("BLOB<`{}`>", valueType->getBlobName());
+        case ValueTypeKind::FUN: {
+            string text = "FUN";
+            // args
+            for (int i=0; i<valueType->getArgumentTypes().size(); i++) {
+                if (i > 0)
+                    text += ",";
+                text += format(" {}", toString(valueType->getArgumentTypes().at(i)));
+            }
+            // return
+            if (valueType->getReturnType() != nullptr)
+                text += format(" -> {}", toString(valueType->getReturnType()));
+            return text;
+        }
+        case ValueTypeKind::PTR:
+            return format("PTR<{}>", toString(valueType->getSubType()));
+        case ValueTypeKind::LITERAL:
+            return "LITERAL";
+    }
+}
+
+string Logger::toString(ExpressionBinaryOperation operationBinary) {
+    switch (operationBinary) {
+        case ExpressionBinaryOperation::OR:
+            return "OR";
+        case ExpressionBinaryOperation::XOR:
+            return "XOR";
+        case ExpressionBinaryOperation::AND:
+            return "AND";
+
+        case ExpressionBinaryOperation::BIT_OR:
+            return "BIT_OR";
+        case ExpressionBinaryOperation::BIT_XOR:
+            return "BIT_XOR";
+        case ExpressionBinaryOperation::BIT_AND:
+            return "BIT_AND";
+        case ExpressionBinaryOperation::BIT_SHL:
+            return "BIT_SHL";
+        case ExpressionBinaryOperation::BIT_SHR:
+            return "BIT_SHR";
+
+        case ExpressionBinaryOperation::EQUAL:
+            return "=";
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return "!=";
+        case ExpressionBinaryOperation::LESS:
+            return "<";
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return "<=";
+        case ExpressionBinaryOperation::GREATER:
+            return ">";
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return ">=";
+
+        case ExpressionBinaryOperation::ADD:
+            return "+";
+        case ExpressionBinaryOperation::SUB:
+            return "-";
+        case ExpressionBinaryOperation::MUL:
+            return "*";
+        case ExpressionBinaryOperation::DIV:
+            return "/";
+        case ExpressionBinaryOperation::MOD:
+            return "%";
+    }
 }

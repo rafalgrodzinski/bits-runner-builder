@@ -2,6 +2,14 @@
 
 #include "Parser/ValueType.h"
 
+shared_ptr<Error> Error::error(int line, int column, string message) {
+    shared_ptr<Error> error = make_shared<Error>();
+    error->kind = ErrorKind::MESSAGE;
+    error->line = line;
+    error->message = message;
+    return error;
+}
+
 shared_ptr<Error> Error::lexerError(int line, int column, string lexme) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::LEXER_ERROR;
@@ -17,63 +25,6 @@ shared_ptr<Error> Error::parserError(shared_ptr<Token> actualToken, optional<Tok
     error->actualToken = actualToken;
     error->expectedTokenKind = expectedTokenKind;
     error->expectedParsee = expectedParsee;
-    error->message = message;
-    return error;
-}
-
-shared_ptr<Error> Error::analyzerTypesInvalidTypeError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType) {
-    shared_ptr<Error> error = make_shared<Error>();
-    error->kind = ErrorKind::ANALYZER_TYPE;
-    error->line = line;
-    error->column = column;
-    error->actualType = actualType;
-    error->expectedType = expectedType;
-    return error;
-}
-
-shared_ptr<Error> Error::analyzerTypesInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation unaryOperation) {
-    shared_ptr<Error> error = make_shared<Error>();
-    error->kind = ErrorKind::ANALYZER_TYPE_OPERATION_UNARY;
-    error->line = line;
-    error->column = column;
-    error->firstType = type;
-    error->unaryOperation = unaryOperation;
-    return error;
-}
-
-shared_ptr<Error> Error::analyzerTypesInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation binaryOperation) {
-    shared_ptr<Error> error = make_shared<Error>();
-    error->kind = ErrorKind::ANALYZER_TYPE_OPERATION_BINARY;
-    error->line = line;
-    error->column = column;
-    error->firstType = firstType;
-    error->secondType = secondType;
-    error->binaryOperation = binaryOperation;
-    return error;
-}
-
-shared_ptr<Error> Error::analyzerTypesAlreadyDefined(int line, int column, string identifier) {
-    shared_ptr<Error> error = make_shared<Error>();
-    error->kind = ErrorKind::ANALYZER_TYPES_ALREADY_DEFINED;
-    error->line = line;
-    error->column = column;
-    error->identifier = identifier;
-    return error;
-}
-
-shared_ptr<Error> Error::analyzerTypesNotDefined(int line, int column, string identifier) {
-    shared_ptr<Error> error = make_shared<Error>();
-    error->kind = ErrorKind::ANALYZER_TYPES_NOT_DEFINED;
-    error->line = line;
-    error->column = column;
-    error->identifier = identifier;
-    return error;
-}
-
-shared_ptr<Error> Error::error(int line, int column, string message) {
-    shared_ptr<Error> error = make_shared<Error>();
-    error->kind = ErrorKind::MESSAGE;
-    error->line = line;
     error->message = message;
     return error;
 }

@@ -125,14 +125,14 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, 
     if (preConditionExpression != nullptr) {
         preConditionExpression->valueType = typeForExpression(preConditionExpression, nullptr, nullptr);
         if (preConditionExpression->getValueType() != ValueType::BOOL)
-            markError(preConditionExpression->getLine(), preConditionExpression->getColumn(), preConditionExpression->getValueType(), ValueType::BOOL);
+            markErrorInvalidType(preConditionExpression->getLine(), preConditionExpression->getColumn(), preConditionExpression->getValueType(), ValueType::BOOL);
     }
 
     shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression();
     if (postConditionExpression != nullptr) {
         postConditionExpression->valueType = typeForExpression(postConditionExpression, nullptr, nullptr);
         if (postConditionExpression->getValueType() != ValueType::BOOL)
-            markError(postConditionExpression->getLine(), postConditionExpression->getColumn(), postConditionExpression->getValueType(), ValueType::BOOL);
+            markErrorInvalidType(postConditionExpression->getLine(), postConditionExpression->getColumn(), postConditionExpression->getValueType(), ValueType::BOOL);
     }
 
     // body
@@ -147,7 +147,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, 
         expressionType = typeForExpression(statementReturn->getExpression(), nullptr, nullptr);
 
     if (expressionType == nullptr || !expressionType->isEqual(returnType))
-        markError(statementReturn->getLine(), statementReturn->getColumn(), expressionType, returnType);
+        markErrorInvalidType(statementReturn->getLine(), statementReturn->getColumn(), expressionType, returnType);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
@@ -155,7 +155,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
     if (expression != nullptr) {
         expression->valueType = typeForExpression(expression, nullptr, nullptr);
         if (expression->getValueType() != statementVariable->getValueType())
-            markError(expression->getLine(), expression->getColumn(), expression->getValueType(), statementVariable->getValueType());
+            markErrorInvalidType(expression->getLine(), expression->getColumn(), expression->getValueType(), statementVariable->getValueType());
     }
 
     if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType()))
@@ -203,7 +203,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
     shared_ptr<ValueType> secondType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
 
     if (!isBinaryOperationValidForTypes(operation, firstType, secondType)) {
-        markErrorInvalidOperationBinary(expressionBinary->getLine(), expressionBinary->getColumn(), firstType, secondType, operation);
+        markErrorInvalidOperationBinary(expressionBinary->getLine(), expressionBinary->getColumn(), operation, firstType, secondType);
         return nullptr;
     }
 
@@ -242,7 +242,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
             shared_ptr<Expression> argumentExpression = expressionCall->getArgumentExpressions().at(i);
             argumentExpression->valueType = typeForExpression(argumentExpression, nullptr, nullptr);
             if (argumentExpression->getValueType() != (*argumentValueTypes).at(i)) {
-                markError(
+                markErrorInvalidType(
                     argumentExpression->getLine(),
                     argumentExpression->getColumn(),
                     argumentExpression->getValueType(),
@@ -300,7 +300,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
     shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
     conditionExpression->valueType = typeForExpression(conditionExpression, nullptr, nullptr);
     if (conditionExpression->getValueType() != ValueType::BOOL) {
-        markError(conditionExpression->getLine(), conditionExpression->getColumn(), conditionExpression->getValueType(), ValueType::BOOL);
+        markErrorInvalidType(conditionExpression->getLine(), conditionExpression->getColumn(), conditionExpression->getValueType(), ValueType::BOOL);
     }
 
     // then block
@@ -335,7 +335,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionUnar
     shared_ptr<ValueType> subType = typeForExpression(expressionUnary->getSubExpression(), nullptr, nullptr);
 
     if (!isUnaryOperationValidForType(expressionUnary->getOperation(), subType)) {
-        markErrorInvalidOperationUnary(expressionUnary->getLine(), expressionUnary->getColumn(), subType, operation);
+        markErrorInvalidOperationUnary(expressionUnary->getLine(), expressionUnary->getColumn(), operation, subType);
         return nullptr;
     }
     
@@ -524,24 +524,29 @@ shared_ptr<ValueType> TypesAnalyzer::typeForUnaryOperation(ExpressionUnaryOperat
     return firstType;
  }
 
-void TypesAnalyzer::markError(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType) {
-    errors.push_back(Error::analyzerTypesInvalidTypeError(line, column, actualType, expectedType));
+void TypesAnalyzer::markErrorInvalidType(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType) {
+    string message = format("Invalid type {}, expected {}", Logger::toString(actualType), Logger::toString(expectedType));
+    errors.push_back(Error::error(line, column, message));
 }
 
-void TypesAnalyzer::markErrorInvalidOperationUnary(int line, int column, shared_ptr<ValueType> type, ExpressionUnaryOperation operation) {
-    errors.push_back(Error::analyzerTypesInvalidOperationUnary(line, column, type, operation));
+void TypesAnalyzer::markErrorInvalidOperationUnary(int line, int column, ExpressionUnaryOperation operation, shared_ptr<ValueType> type) {
+    string message = format("Invalid unary operation {} for type {}", Logger::toString(operation), Logger::toString(type));
+    errors.push_back(Error::error(line, column, message));
 }
 
-void TypesAnalyzer::markErrorInvalidOperationBinary(int line, int column, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType, ExpressionBinaryOperation operation) {
-    errors.push_back(Error::analyzerTypesInvalidOperationBinary(line, column, firstType, secondType, operation));
+void TypesAnalyzer::markErrorInvalidOperationBinary(int line, int column, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) {
+    string message = format("Invalid binary operation {} for types {} and {}", Logger::toString(operation), Logger::toString(firstType), Logger::toString(secondType));
+    errors.push_back(Error::error(line, column, message));
 }
 
 void TypesAnalyzer::markErrorAlreadyDefined(int line, int column, string identifier) {
-    errors.push_back(Error::analyzerTypesAlreadyDefined(line, column, identifier));
+    string message = format("\"{}\" is already defined", identifier);
+    errors.push_back(Error::error(line, column, message));
 }
 
 void TypesAnalyzer::markErrorNotDefined(int line, int column, string identifier) {
-    errors.push_back(Error::analyzerTypesAlreadyDefined(line, column, identifier));
+    string message = format("\"{}\" not defined", identifier);
+    errors.push_back(Error::error(line, column, message));
 }
 
 void TypesAnalyzer::markErrorInvalidArgumentsCount(int line, int column, int actualCount, int expectedCount) {
