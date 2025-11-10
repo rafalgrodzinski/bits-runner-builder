@@ -16,7 +16,7 @@ enum class ExpressionKind {
     UNARY,
     BINARY,
     IF_ELSE,
-    VARIABLE,
+    VALUE,
     CALL,
     BLOCK,
     CHAINED,

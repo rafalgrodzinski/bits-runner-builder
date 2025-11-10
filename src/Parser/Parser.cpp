@@ -9,7 +9,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionCompositeLiteral.h"
-#include "Parser/Expression/ExpressionVariable.h"
+#include "Parser/Expression/ExpressionValue.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionUnary.h"
@@ -826,11 +826,11 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                 // data
                 if (i < resultsGroup.getResults().size() - 1 && resultsGroup.getResults().at(i+1).getTag() == TAG_INDEX_EXPRESSION) {
                     shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(++i).getExpression();
-                    shared_ptr<ExpressionVariable> expression = ExpressionVariable::data(identifier, indexExpression, line, column);
+                    shared_ptr<ExpressionValue> expression = ExpressionValue::data(identifier, indexExpression, line, column);
                     chainExpressions.push_back(expression);
                 // simple
                 } else {
-                    shared_ptr<ExpressionVariable> expression = ExpressionVariable::simple(identifier, line, column);
+                    shared_ptr<ExpressionValue> expression = ExpressionValue::simple(identifier, line, column);
                     chainExpressions.push_back(expression);
                 }
                 break;
@@ -1428,9 +1428,9 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
     }
 
     if (indexExpression != nullptr)
-        return ExpressionVariable::data(identifier, indexExpression, line, column);
+        return ExpressionValue::data(identifier, indexExpression, line, column);
     else
-        return ExpressionVariable::simple(identifier, line, column);
+        return ExpressionValue::simple(identifier, line, column);
 }
 
 shared_ptr<Expression> Parser::matchExpressionCast() {

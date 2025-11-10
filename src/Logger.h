@@ -30,7 +30,7 @@ class Expression;
 class ExpressionBinary;
 class ExpressionUnary;
 class ExpressionIfElse;
-class ExpressionVariable;
+class ExpressionValue;
 class ExpressionGrouping;
 class ExpressionLiteral;
 class ExpressionCompositeLiteral;
@@ -83,7 +83,7 @@ private:
     static string toString(shared_ptr<ExpressionBinary> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKind> indents, bool isInline);
-    static string toString(shared_ptr<ExpressionVariable> expression, vector<IndentKind> indents);
+    static string toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionCompositeLiteral> expression, vector<IndentKind> indents);

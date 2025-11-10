@@ -16,7 +16,7 @@
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionUnary.h"
-#include "Parser/Expression/ExpressionVariable.h"
+#include "Parser/Expression/ExpressionValue.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -206,8 +206,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
             break; // ?
         case ExpressionKind::UNARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
-        case ExpressionKind::VARIABLE:
-            return typeForExpression(dynamic_pointer_cast<ExpressionVariable>(expression), parentExpression);
+        case ExpressionKind::VALUE:
+            return typeForExpression(dynamic_pointer_cast<ExpressionValue>(expression), parentExpression);
         default:
             break;
     }
@@ -364,7 +364,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionUnar
     return expressionUnary->getValueType();
 }
 
-shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionVariable> expressionValue, shared_ptr<Expression> parentExpression) {
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValue> expressionValue, shared_ptr<Expression> parentExpression) {
     if (parentExpression != nullptr) {
         // check built-in
         bool isData = parentExpression->getValueType()->isData();

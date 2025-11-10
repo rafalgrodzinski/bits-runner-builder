@@ -20,7 +20,7 @@ class ExpressionIfElse;
 class ExpressionLiteral;
 class ExpressionNone;
 class ExpressionUnary;
-class ExpressionVariable;
+class ExpressionValue;
 
 class Statement;
 class StatementAssignment;
@@ -71,7 +71,7 @@ private:
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionUnary> expressionUnary);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionVariable> expressionVariable, shared_ptr<Expression> parentExpression);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionValue> expressionValue, shared_ptr<Expression> parentExpression);
 
     //
     // Support

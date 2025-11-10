@@ -8,7 +8,7 @@
 #include "Parser/Expression/ExpressionBinary.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionIfElse.h"
-#include "Parser/Expression/ExpressionVariable.h"
+#include "Parser/Expression/ExpressionValue.h"
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionCompositeLiteral.h"
@@ -536,8 +536,8 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
             return toString(dynamic_pointer_cast<ExpressionUnary>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::IF_ELSE:
             return toString(dynamic_pointer_cast<ExpressionIfElse>(expression), indents, isInline);
-        case ExpressionKind::VARIABLE:
-            return toString(dynamic_pointer_cast<ExpressionVariable>(expression), isInline ? vector<IndentKind>() : indents);
+        case ExpressionKind::VALUE:
+            return toString(dynamic_pointer_cast<ExpressionValue>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::GROUPING:
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::LITERAL:
@@ -686,14 +686,14 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
     return text;
 }
 
-string Logger::toString(shared_ptr<ExpressionVariable> expression, vector<IndentKind> indents) {
+string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents) {
     string line;
 
     switch (expression->getVariableKind()) {
-        case ExpressionVariableKind::SIMPLE:
+        case ExpressionValueKind::SIMPLE:
             line = format("`{}`", expression->getIdentifier());
             break;
-        case ExpressionVariableKind::DATA:
+        case ExpressionValueKind::DATA:
             line = format("`{}`[{}]", expression->getIdentifier(), toString(expression->getIndexExpression(), indents, true));
             break;
     }
