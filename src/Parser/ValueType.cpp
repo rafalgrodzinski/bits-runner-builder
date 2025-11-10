@@ -139,6 +139,12 @@ shared_ptr<ValueType> ValueType::getReturnType() {
 }
 
 bool ValueType::isEqual(shared_ptr<ValueType> other) {
+    switch (kind) {
+        case ValueTypeKind::DATA:
+            return other->isData() && subType->isEqual(other->getSubType());
+        default:
+            break;
+    }
     return kind == other->getKind();
 }
 

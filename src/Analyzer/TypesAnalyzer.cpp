@@ -312,7 +312,33 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionChai
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
-    return ValueType::NONE;
+    bool isData;
+    shared_ptr<ValueType> elementType = nullptr;
+
+    for (shared_ptr<Expression> compositeExpression : expressionCompositeLiteral->getExpressions()) {
+        shared_ptr<ValueType> type = typeForExpression(compositeExpression, nullptr, nullptr);
+        compositeExpression->valueType = type;
+
+        if (elementType == nullptr) {
+            elementType = type;
+            isData = true;
+        } else if (!elementType->isEqual(type)) {
+            isData = false;
+        }
+    }
+
+    if (isData) {
+        int elementsCount = expressionCompositeLiteral->getExpressions().size();
+        shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForUInt(
+            elementsCount,
+            expressionCompositeLiteral->getLine(),
+            expressionCompositeLiteral->getColumn()
+        );
+        expressionCompositeLiteral->valueType = ValueType::data(elementType, countExpression);
+    } else {
+        expressionCompositeLiteral->valueType = ValueType::blob("");
+    }
+    return expressionCompositeLiteral->getValueType();
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
