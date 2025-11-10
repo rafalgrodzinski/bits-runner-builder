@@ -6,6 +6,7 @@ shared_ptr<Error> Error::error(int line, int column, string message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::MESSAGE;
     error->line = line;
+    error->column = column;
     error->message = message;
     return error;
 }

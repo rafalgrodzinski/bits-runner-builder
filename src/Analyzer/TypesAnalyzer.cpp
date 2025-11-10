@@ -190,7 +190,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
         case ExpressionKind::UNARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::VARIABLE:
-            return typeForExpression(dynamic_pointer_cast<ExpressionVariable>(expression));
+            return typeForExpression(dynamic_pointer_cast<ExpressionVariable>(expression), parentExpression);
         default:
             break;
     }
@@ -201,6 +201,9 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
     ExpressionBinaryOperation operation = expressionBinary->getOperation();
     shared_ptr<ValueType> firstType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
     shared_ptr<ValueType> secondType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
+
+    if (firstType == nullptr || secondType == nullptr)
+        return nullptr;
 
     if (!isBinaryOperationValidForTypes(operation, firstType, secondType)) {
         markErrorInvalidOperationBinary(expressionBinary->getLine(), expressionBinary->getColumn(), operation, firstType, secondType);
@@ -344,13 +347,48 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionUnar
     return expressionUnary->getValueType();
 }
 
-shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionVariable> expressionVariable) {
-    shared_ptr<ValueType> type = scope->getVariableType(expressionVariable->getIdentifier());
-    if (type == nullptr)
-        markErrorNotDefined(expressionVariable->getLine(), expressionVariable->getColumn(), expressionVariable->getIdentifier());
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionVariable> expressionValue, shared_ptr<Expression> parentExpression) {
+    if (parentExpression != nullptr) {
+        // check built-in
+        bool isData = parentExpression->getValueType()->isData();
+        bool isPointer = parentExpression->getValueType()->isPointer();
 
-    expressionVariable->valueType = type;
-    return expressionVariable->getValueType();
+        bool isCount = expressionValue->getIdentifier().compare("count") == 0;
+        bool isVal = expressionValue->getIdentifier().compare("val") == 0;
+        bool isVadr = expressionValue->getIdentifier().compare("vAdr") == 0;
+        bool isAdr = expressionValue->getIdentifier().compare("adr") == 0;
+        bool isSize = expressionValue->getIdentifier().compare("size") == 0;
+
+        if (isData && isCount) {
+            expressionValue->valueType = ValueType::UINT;
+            return expressionValue->getValueType();
+        } else if (isPointer && isVal) {
+            expressionValue->valueType = parentExpression->getValueType()->getSubType();
+            return expressionValue->getValueType();
+        } else if (isPointer && isVadr) {
+            expressionValue->valueType = ValueType::UINT;
+            return expressionValue->getValueType();
+        } else if (isAdr) {
+            expressionValue->valueType = ValueType::UINT;
+            return expressionValue->getValueType();
+        } else if (isSize) {
+            expressionValue->valueType = ValueType::UINT;
+            return expressionValue->getValueType();
+        // Invalid built-in call
+        } else if (isCount || isVal || isVadr) {
+            markErrorInvalidBuiltIn(expressionValue->getLine(), expressionValue->getColumn(), expressionValue->getIdentifier(), parentExpression->getValueType());
+            expressionValue->valueType = nullptr;
+            return expressionValue->getValueType();
+        }
+    }
+
+    // check variable
+    shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
+    if (type == nullptr)
+        markErrorNotDefined(expressionValue->getLine(), expressionValue->getColumn(), expressionValue->getIdentifier());
+
+    expressionValue->valueType = type;
+    return expressionValue->getValueType();
 }
 
 //
@@ -556,5 +594,10 @@ void TypesAnalyzer::markErrorInvalidArgumentsCount(int line, int column, int act
 
  void TypesAnalyzer::markErrorInvalidCast(int line, int column, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     string message = format("Invalid cast from {} to {}", Logger::toString(sourceType), Logger::toString(targetType));
+    errors.push_back(Error::error(line, column, message));
+ }
+
+ void TypesAnalyzer::markErrorInvalidBuiltIn(int line, int column, string builtInName, shared_ptr<ValueType> type) {
+    string message = format("Invalid built-in \"{}\" on type {}", builtInName, Logger::toString(type));
     errors.push_back(Error::error(line, column, message));
  }

@@ -76,6 +76,7 @@ public:
     bool isNumeric();
     bool isBool();
     bool isData();
+    bool isPointer();
 };
 
 #endif

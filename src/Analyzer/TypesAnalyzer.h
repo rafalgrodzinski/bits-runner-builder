@@ -70,7 +70,7 @@ private:
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionUnary> expressionUnary);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionVariable> expressionVariable);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionVariable> expressionVariable, shared_ptr<Expression> parentExpression);
 
     //
     // Support
@@ -88,6 +88,7 @@ private:
     void markErrorNotDefined(int line, int column, string identifier);
     void markErrorInvalidArgumentsCount(int line, int column, int actulCount, int expectedCount);
     void markErrorInvalidCast(int line, int column, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
+    void markErrorInvalidBuiltIn(int line, int column, string builtInName, shared_ptr<ValueType> type);
 
 public:
     void checkModule(shared_ptr<StatementModule> module);

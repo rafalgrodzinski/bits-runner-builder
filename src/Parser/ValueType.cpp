@@ -173,3 +173,7 @@ bool ValueType::isBool() {
 bool ValueType::isData() {
     return kind == ValueTypeKind::DATA;
 }
+
+bool ValueType::isPointer() {
+    return kind == ValueTypeKind::PTR;
+}
