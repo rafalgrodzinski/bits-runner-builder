@@ -5,12 +5,19 @@
 
 enum class ExpressionValueKind {
     SIMPLE,
-    DATA
+    DATA,
+    BUILT_IN_COUNT,
+    BUILT_IN_VAL,
+    BUILT_IN_VADR,
+    BUILT_IN_ADR,
+    BUILT_IN_SIZE
 };
 
 class ExpressionValue: public Expression {
+    friend class TypesAnalyzer;
+
 private:
-    ExpressionValueKind variableKind;
+    ExpressionValueKind valueKind;
     string identifier;
     shared_ptr<Expression> indexExpression;
 
@@ -19,7 +26,7 @@ public:
     static shared_ptr<ExpressionValue> data(string identifier, shared_ptr<Expression> indexExpression, int line, int column);
 
     ExpressionValue(int line, int column);
-    ExpressionValueKind getVariableKind();
+    ExpressionValueKind getValueKind();
     string getIdentifier();
     shared_ptr<Expression> getIndexExpression();
 };

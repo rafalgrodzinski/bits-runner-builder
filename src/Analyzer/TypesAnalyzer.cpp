@@ -378,18 +378,23 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
 
         if (isData && isCount) {
             expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueKind = ExpressionValueKind::BUILT_IN_COUNT;
             return expressionValue->getValueType();
         } else if (isPointer && isVal) {
             expressionValue->valueType = parentExpression->getValueType()->getSubType();
+            expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL;
             return expressionValue->getValueType();
         } else if (isPointer && isVadr) {
             expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
         } else if (isAdr) {
             expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueKind = ExpressionValueKind::BUILT_IN_ADR;
             return expressionValue->getValueType();
         } else if (isSize) {
             expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueKind = ExpressionValueKind::BUILT_IN_SIZE;
             return expressionValue->getValueType();
         // Invalid built-in call
         } else if (isCount || isVal || isVadr) {

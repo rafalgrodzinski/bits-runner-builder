@@ -689,7 +689,7 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
 string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents) {
     string line;
 
-    switch (expression->getVariableKind()) {
+    switch (expression->getValueKind()) {
         case ExpressionValueKind::SIMPLE:
             line = format("`{}`", expression->getIdentifier());
             break;

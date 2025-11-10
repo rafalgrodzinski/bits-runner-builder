@@ -24,6 +24,8 @@ enum class ExpressionKind {
 };
 
 class Expression {
+    friend class TypesAnalyzer;
+
 private:
     ExpressionKind kind;
     int line;
@@ -41,8 +43,6 @@ public:
     shared_ptr<ValueType> getValueType();
     int getLine();
     int getColumn();
-
-    friend class TypesAnalyzer;
 };
 
 #endif

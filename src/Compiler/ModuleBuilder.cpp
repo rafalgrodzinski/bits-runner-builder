@@ -1290,7 +1290,7 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
 
     if (expressionVariable != nullptr) {
-        switch (expressionVariable->getVariableKind()) {
+        switch (expressionVariable->getValueKind()) {
             case ExpressionValueKind::SIMPLE: {
                 return builder->CreateLoad(sourceType, sourceValue, expressionVariable->getIdentifier());
             }
