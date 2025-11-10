@@ -141,14 +141,14 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, 
     shared_ptr<Expression> preConditionExpression = statementRepeat->getPreConditionExpression();
     if (preConditionExpression != nullptr) {
         preConditionExpression->valueType = typeForExpression(preConditionExpression, nullptr, nullptr);
-        if (preConditionExpression->getValueType() != ValueType::BOOL)
+        if (preConditionExpression->getValueType() != nullptr && !preConditionExpression->getValueType()->isEqual(ValueType::BOOL))
             markErrorInvalidType(preConditionExpression->getLine(), preConditionExpression->getColumn(), preConditionExpression->getValueType(), ValueType::BOOL);
     }
 
     shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression();
     if (postConditionExpression != nullptr) {
         postConditionExpression->valueType = typeForExpression(postConditionExpression, nullptr, nullptr);
-        if (postConditionExpression->getValueType() != ValueType::BOOL)
+        if (postConditionExpression->getValueType() != nullptr && !postConditionExpression->getValueType()->isEqual(ValueType::BOOL))
             markErrorInvalidType(postConditionExpression->getLine(), postConditionExpression->getColumn(), postConditionExpression->getValueType(), ValueType::BOOL);
     }
 
@@ -171,7 +171,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
     shared_ptr<Expression> expression = statementVariable->getExpression();
     if (expression != nullptr) {
         expression->valueType = typeForExpression(expression, nullptr, nullptr);
-        if (expression->getValueType() != statementVariable->getValueType())
+        if (!expression->getValueType()->isEqual(statementVariable->getValueType()))
             markErrorInvalidType(expression->getLine(), expression->getColumn(), expression->getValueType(), statementVariable->getValueType());
     }
 
@@ -195,7 +195,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
         case ExpressionKind::CHAINED:
             return typeForExpression(dynamic_pointer_cast<ExpressionChained>(expression));
         case ExpressionKind::COMPOSITE_LITERAL:
-            break; // !
+            return typeForExpression(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression));
         case ExpressionKind::GROUPING:
             return typeForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::IF_ELSE:
@@ -261,7 +261,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
         for (int i=0; i<(*argumentValueTypes).size(); i++) {
             shared_ptr<Expression> argumentExpression = expressionCall->getArgumentExpressions().at(i);
             argumentExpression->valueType = typeForExpression(argumentExpression, nullptr, nullptr);
-            if (argumentExpression->getValueType() != (*argumentValueTypes).at(i)) {
+            if (argumentExpression->getValueType() != nullptr && !argumentExpression->getValueType()->isEqual((*argumentValueTypes).at(i))) {
                 markErrorInvalidType(
                     argumentExpression->getLine(),
                     argumentExpression->getColumn(),
@@ -311,6 +311,10 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionChai
     return expressionChained->getValueType();
 }
 
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
+    return ValueType::NONE;
+}
+
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
     expressionGrouping->valueType = typeForExpression(expressionGrouping->getSubExpression(), nullptr, nullptr);
     return expressionGrouping->getValueType();
@@ -319,7 +323,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrou
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
     shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
     conditionExpression->valueType = typeForExpression(conditionExpression, nullptr, nullptr);
-    if (conditionExpression->getValueType() != ValueType::BOOL) {
+    if (!conditionExpression->getValueType()->isEqual(ValueType::BOOL)) {
         markErrorInvalidType(conditionExpression->getLine(), conditionExpression->getColumn(), conditionExpression->getValueType(), ValueType::BOOL);
     }
 
@@ -337,7 +341,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
         scope->popLevel();
     }
 
-    if (elseExpression != nullptr && thenExpression->getValueType() == elseExpression->getValueType()) {
+    if (elseExpression != nullptr && thenExpression->getValueType()->isEqual(elseExpression->getValueType())) {
         expressionIfElse->valueType = thenExpression->getValueType();
     } else {
         expressionIfElse->valueType = ValueType::NONE;
@@ -404,8 +408,19 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
         }
     }
 
-    // check variable
+    // first assume just simple
     shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
+    expressionValue->valueKind = ExpressionValueKind::SIMPLE;
+
+    // then check if data
+    if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
+        shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
+        indexExpression->valueType = typeForExpression(indexExpression, nullptr, nullptr);
+        if (!indexExpression->getValueType()->isInteger())
+            markErrorInvalidType(indexExpression->getLine(), indexExpression->getColumn(), indexExpression->getValueType(), ValueType::UINT);
+        type = type->getSubType();
+        expressionValue->valueKind = ExpressionValueKind::DATA;
+    }
     if (type == nullptr)
         markErrorNotDefined(expressionValue->getLine(), expressionValue->getColumn(), expressionValue->getIdentifier());
 

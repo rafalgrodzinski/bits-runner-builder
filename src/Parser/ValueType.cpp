@@ -166,6 +166,26 @@ bool ValueType::isNumeric() {
     return false;
 }
 
+bool ValueType::isInteger() {
+    switch (kind) {
+        case ValueTypeKind::UINT:
+        case ValueTypeKind::U8:
+        case ValueTypeKind::U32:
+        case ValueTypeKind::U64:
+
+        case ValueTypeKind::SINT:
+        case ValueTypeKind::S8:
+        case ValueTypeKind::S32:
+        case ValueTypeKind::S64:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
 bool ValueType::isBool() {
     return kind == ValueTypeKind::BOOL;
 }

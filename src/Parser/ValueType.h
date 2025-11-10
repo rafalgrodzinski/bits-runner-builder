@@ -74,6 +74,7 @@ public:
 
     bool isEqual(shared_ptr<ValueType> other);
     bool isNumeric();
+    bool isInteger();
     bool isBool();
     bool isData();
     bool isPointer();

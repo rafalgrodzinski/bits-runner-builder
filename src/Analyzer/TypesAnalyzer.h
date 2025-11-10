@@ -67,6 +67,7 @@ private:
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCall> expressionCall);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionChained> expressionChained);
+    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
