@@ -23,6 +23,7 @@
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -57,6 +58,9 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
             break;
         case StatementKind::FUNCTION:
             checkStatement(dynamic_pointer_cast<StatementFunction>(statement));
+            break;
+        case StatementKind::META_EXTERN_FUNCTION:
+            checkStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
             break;
         case StatementKind::MODULE:
             checkStatement(dynamic_pointer_cast<StatementModule>(statement));
@@ -109,6 +113,19 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
     scope->popLevel();
 }
 
+void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
+    // store arguments and return type
+    vector<shared_ptr<ValueType>> argumentTypes;
+    for (auto &argument : statementMetaExternFunction->getArguments())
+        argumentTypes.push_back(argument.second);
+
+    if (
+        !scope->setFunctionArgumentTypes(statementMetaExternFunction->getName(), argumentTypes) ||
+        !scope->setFunctionReturnType(statementMetaExternFunction->getName(), statementMetaExternFunction->getReturnValueType())
+    ) {
+        markErrorAlreadyDefined(statementMetaExternFunction->getLine(), statementMetaExternFunction->getColumn(), statementMetaExternFunction->getName());
+    }
+}
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementModule> statementModule) {
     checkStatement(statementModule, nullptr);

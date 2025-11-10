@@ -14,7 +14,7 @@ enum class StatementKind {
     FUNCTION,
     FUNCTION_DECLARATION, // !
     META_EXTERN_VARIABLE, // !
-    META_EXTERN_FUNCTION, // !
+    META_EXTERN_FUNCTION,
     META_IMPORT, // !
     MODULE,
     RAW_FUNCTION, // !
