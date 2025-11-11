@@ -13,12 +13,11 @@ using namespace std;
 enum class ValueTypeKind {
     NONE,
     BOOL,
-    UINT,
+    INT,
     U8,
     U32,
     U64,
     S8,
-    SINT,
     S32,
     S64,
     FLOAT,
@@ -43,11 +42,10 @@ private:
 public:
     static shared_ptr<ValueType> NONE;
     static shared_ptr<ValueType> BOOL;
-    static shared_ptr<ValueType> UINT;
+    static shared_ptr<ValueType> INT;
     static shared_ptr<ValueType> U8;
     static shared_ptr<ValueType> U32;
     static shared_ptr<ValueType> U64;
-    static shared_ptr<ValueType> SINT;
     static shared_ptr<ValueType> S8;
     static shared_ptr<ValueType> S32;
     static shared_ptr<ValueType> S64;

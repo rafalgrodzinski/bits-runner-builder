@@ -20,7 +20,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::INTEGER_DEC: {
             expression->literalKind = LiteralKind::SINT;
-            expression->valueType = ValueType::SINT;
+            expression->valueType = ValueType::INT;
 
             string numString = token->getLexme();
             erase(numString, '_');
@@ -33,7 +33,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::INTEGER_HEX: {
             expression->literalKind = LiteralKind::UINT;
-            expression->valueType = ValueType::UINT;
+            expression->valueType = ValueType::INT;
 
             string numString = token->getLexme();
             erase(numString, '_');
@@ -46,7 +46,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::INTEGER_BIN: {
             expression->literalKind = LiteralKind::UINT;
-            expression->valueType = ValueType::UINT;
+            expression->valueType = ValueType::INT;
 
             string numString = token->getLexme();
             erase(numString, '_');
@@ -60,7 +60,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
         }
         case TokenKind::INTEGER_CHAR: {
             expression->literalKind = LiteralKind::UINT;
-            expression->valueType = ValueType::UINT;
+            expression->valueType = ValueType::INT;
 
             string charString = token->getLexme();
             optional<uint64_t> value = ExpressionLiteral::charStringToInt(charString);

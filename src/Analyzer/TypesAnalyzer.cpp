@@ -429,7 +429,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
         bool isSize = expressionValue->getIdentifier().compare("size") == 0;
 
         if (isData && isCount) {
-            expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueType = ValueType::INT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_COUNT;
             return expressionValue->getValueType();
         } else if (isPointer && isVal) {
@@ -437,15 +437,15 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL;
             return expressionValue->getValueType();
         } else if (isPointer && isVadr) {
-            expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueType = ValueType::INT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
         } else if (isAdr) {
-            expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueType = ValueType::INT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_ADR;
             return expressionValue->getValueType();
         } else if (isSize) {
-            expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueType = ValueType::INT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_SIZE;
             return expressionValue->getValueType();
         // Invalid built-in call
@@ -465,7 +465,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
         indexExpression->valueType = typeForExpression(indexExpression, nullptr, nullptr);
         if (!indexExpression->getValueType()->isInteger())
-            markErrorInvalidType(indexExpression->getLine(), indexExpression->getColumn(), indexExpression->getValueType(), ValueType::UINT);
+            markErrorInvalidType(indexExpression->getLine(), indexExpression->getColumn(), indexExpression->getValueType(), ValueType::INT);
         type = type->getSubType();
         expressionValue->valueKind = ExpressionValueKind::DATA;
     }
@@ -490,12 +490,10 @@ bool TypesAnalyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operat
                     break;
             break;
         }
-        case ValueTypeKind::UINT:
+        case ValueTypeKind::INT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
-
-        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -539,12 +537,10 @@ bool TypesAnalyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation ope
             break;
         }
         // Valid operations for numeric types
-        case ValueTypeKind::UINT:
+        case ValueTypeKind::INT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
-
-        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -557,12 +553,10 @@ bool TypesAnalyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation ope
                 case ExpressionBinaryOperation::BIT_SHL:
                 case ExpressionBinaryOperation::BIT_SHR: {
                     switch (secondType->getKind()) {
-                        case ValueTypeKind::UINT:
+                        case ValueTypeKind::INT:
                         case ValueTypeKind::U8:
                         case ValueTypeKind::U32:
                         case ValueTypeKind::U64:
-
-                        case ValueTypeKind::SINT:
                         case ValueTypeKind::S8:
                         case ValueTypeKind::S32:
                         case ValueTypeKind::S64: {
@@ -610,8 +604,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForUnaryOperation(ExpressionUnaryOperat
     switch (operation) {
         case ExpressionUnaryOperation::MINUS:
             switch (type->getKind()) {
-                case ValueTypeKind::UINT:
-                    return ValueType::SINT;
+                case ValueTypeKind::INT:
+                    return ValueType::INT;
                 case ValueTypeKind::U8:
                     return ValueType::S8;
                 case ValueTypeKind::U32:
@@ -654,8 +648,7 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
         return sourceExpression;
 
     switch (sourceType->getKind()) {
-        case ValueTypeKind::UINT:
-        case ValueTypeKind::SINT:
+        case ValueTypeKind::INT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64: {

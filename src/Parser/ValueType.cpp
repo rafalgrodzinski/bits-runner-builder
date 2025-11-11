@@ -5,11 +5,10 @@
 
 shared_ptr<ValueType> ValueType::NONE = make_shared<ValueType>(ValueTypeKind::NONE);
 shared_ptr<ValueType> ValueType::BOOL = make_shared<ValueType>(ValueTypeKind::BOOL);
-shared_ptr<ValueType> ValueType::UINT = make_shared<ValueType>(ValueTypeKind::UINT);
+shared_ptr<ValueType> ValueType::INT = make_shared<ValueType>(ValueTypeKind::INT);
 shared_ptr<ValueType> ValueType::U8 = make_shared<ValueType>(ValueTypeKind::U8);
 shared_ptr<ValueType> ValueType::U32 = make_shared<ValueType>(ValueTypeKind::U32);
 shared_ptr<ValueType> ValueType::U64 = make_shared<ValueType>(ValueTypeKind::U64);
-shared_ptr<ValueType> ValueType::SINT = make_shared<ValueType>(ValueTypeKind::SINT);
 shared_ptr<ValueType> ValueType::S8 = make_shared<ValueType>(ValueTypeKind::S8);
 shared_ptr<ValueType> ValueType::S32 = make_shared<ValueType>(ValueTypeKind::S32);
 shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64);
@@ -150,12 +149,10 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
 
 bool ValueType::isNumeric() {
     switch (kind) {
-        case ValueTypeKind::UINT:
+        case ValueTypeKind::INT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
-
-        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -174,12 +171,10 @@ bool ValueType::isNumeric() {
 
 bool ValueType::isInteger() {
     switch (kind) {
-        case ValueTypeKind::UINT:
+        case ValueTypeKind::INT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
-
-        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
