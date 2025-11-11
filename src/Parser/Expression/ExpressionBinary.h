@@ -29,6 +29,8 @@ enum class ExpressionBinaryOperation {
 };
 
 class ExpressionBinary: public Expression {
+friend class TypesAnalyzer;
+
 private:
     ExpressionBinaryOperation operation;
     shared_ptr<Expression> left;

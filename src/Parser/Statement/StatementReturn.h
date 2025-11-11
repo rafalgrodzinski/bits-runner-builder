@@ -3,6 +3,8 @@
 class Expression;
 
 class StatementReturn: public Statement {
+friend class TypesAnalyzer;
+
 private:
     shared_ptr<Expression> expression;
 

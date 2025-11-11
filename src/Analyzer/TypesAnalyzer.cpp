@@ -159,20 +159,31 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, 
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType) {
-    shared_ptr<ValueType> expressionType = ValueType::NONE;
-    if (statementReturn->getExpression() != nullptr)
-        expressionType = typeForExpression(statementReturn->getExpression(), nullptr, nullptr);
+    statementReturn->expression = checkAndTryCasting(
+        statementReturn->getExpression(),
+        returnType
+    );
+
+    shared_ptr<ValueType> expressionType = statementReturn->getExpression()->getValueType();
 
     if (expressionType == nullptr || !expressionType->isEqual(returnType))
-        markErrorInvalidType(statementReturn->getLine(), statementReturn->getColumn(), expressionType, returnType);
+        markErrorInvalidType(
+            statementReturn->getLine(),
+            statementReturn->getColumn(),
+            expressionType,
+            returnType
+        );
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
-    shared_ptr<Expression> expression = statementVariable->getExpression();
-    if (expression != nullptr) {
-        expression->valueType = typeForExpression(expression, nullptr, nullptr);
-        if (!expression->getValueType()->isEqual(statementVariable->getValueType()))
-            markErrorInvalidType(expression->getLine(), expression->getColumn(), expression->getValueType(), statementVariable->getValueType());
+    if (statementVariable->getExpression() != nullptr) {
+        statementVariable->expression = checkAndTryCasting(
+            statementVariable->getExpression(),
+            statementVariable->getValueType()
+        );
+
+        if (!statementVariable->getExpression()->getValueType()->isEqual(statementVariable->getValueType()))
+            markErrorInvalidType(statementVariable->getExpression()->getLine(), statementVariable->getExpression()->getColumn(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
     }
 
     if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType()))
@@ -203,7 +214,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
         case ExpressionKind::LITERAL:
             return typeForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
         case ExpressionKind::NONE:
-            break; // ?
+            return ValueType::NONE;
         case ExpressionKind::UNARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::VALUE:
@@ -215,9 +226,20 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
+    // try auto cross-casting
+    expressionBinary->left = checkAndTryCasting(
+        expressionBinary->getLeft(),
+        typeForExpression(expressionBinary->getRight(), nullptr, nullptr)
+    );
+    expressionBinary->right = checkAndTryCasting(
+        expressionBinary->getRight(),
+        typeForExpression(expressionBinary->getLeft(), nullptr, nullptr)
+    );
+
+    // validate types
     ExpressionBinaryOperation operation = expressionBinary->getOperation();
-    shared_ptr<ValueType> firstType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
-    shared_ptr<ValueType> secondType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
+    shared_ptr<ValueType> firstType = expressionBinary->getLeft()->getValueType();
+    shared_ptr<ValueType> secondType = expressionBinary->getRight()->getValueType();
 
     if (firstType == nullptr || secondType == nullptr)
         return nullptr;
@@ -349,7 +371,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrou
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
     shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
     conditionExpression->valueType = typeForExpression(conditionExpression, nullptr, nullptr);
-    if (!conditionExpression->getValueType()->isEqual(ValueType::BOOL)) {
+    if (conditionExpression->getValueType() == nullptr || !conditionExpression->getValueType()->isEqual(ValueType::BOOL)) {
         markErrorInvalidType(conditionExpression->getLine(), conditionExpression->getColumn(), conditionExpression->getValueType(), ValueType::BOOL);
     }
 
@@ -367,7 +389,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
         scope->popLevel();
     }
 
-    if (elseExpression != nullptr && thenExpression->getValueType()->isEqual(elseExpression->getValueType())) {
+    if (elseExpression != nullptr && elseExpression->getValueType() != nullptr && thenExpression->getValueType()->isEqual(elseExpression->getValueType())) {
         expressionIfElse->valueType = thenExpression->getValueType();
     } else {
         expressionIfElse->valueType = ValueType::NONE;
@@ -623,7 +645,87 @@ shared_ptr<ValueType> TypesAnalyzer::typeForUnaryOperation(ExpressionUnaryOperat
 
     // not change
     return firstType;
- }
+}
+
+shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType) {
+    shared_ptr<ValueType> sourceType = typeForExpression(sourceExpression, nullptr, nullptr);
+    sourceExpression->valueType = sourceType;
+    if (sourceType->isEqual(targetType))
+        return sourceExpression;
+
+    switch (sourceType->getKind()) {
+        case ValueTypeKind::UINT:
+        case ValueTypeKind::SINT:
+        case ValueTypeKind::U8:
+        case ValueTypeKind::U32:
+        case ValueTypeKind::U64: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::U8:
+                case ValueTypeKind::U32:
+                case ValueTypeKind::U64:
+
+                case ValueTypeKind::S8:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    break;
+
+                default:
+                    return sourceExpression;
+            }
+            break;
+        }
+        case ValueTypeKind::S8:
+        case ValueTypeKind::S32:
+        case ValueTypeKind::S64: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::S8:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    break;
+
+                default:
+                    return sourceExpression;
+            }
+            break;
+        }
+
+        case ValueTypeKind::FLOAT:
+        case ValueTypeKind::F32:
+        case ValueTypeKind::F64: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    break;
+
+                default:
+                    return sourceExpression;
+            }
+            break;
+        }
+
+        default:
+            return sourceExpression;
+    }
+
+    shared_ptr<ExpressionChained> targetExpression = make_shared<ExpressionChained>(
+        vector<shared_ptr<Expression>>(
+            {
+                sourceExpression,
+                make_shared<ExpressionCast>(targetType, sourceExpression->getLine(), sourceExpression->getColumn())
+            }
+        ),
+        sourceExpression->getLine(),
+        sourceExpression->getColumn()
+    );
+    targetExpression->valueType = targetType;
+    return targetExpression;
+}
 
 void TypesAnalyzer::markErrorInvalidType(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType) {
     string message = format("Invalid type {}, expected {}", Logger::toString(actualType), Logger::toString(expectedType));
