@@ -6,7 +6,7 @@ print fun: text data<u64, 16>
     ;
 ;
 
-@export main fun -> u32
+@export main fun -> f64
     print("Hello, world!\n")
 
     ret 0
