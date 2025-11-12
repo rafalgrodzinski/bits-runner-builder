@@ -77,8 +77,19 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
     }
 }
 
-void TypesAnalyzer::checkStatement(shared_ptr<StatementAssignment> StatementAssignment) {
+void TypesAnalyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignment) {
+    shared_ptr<ValueType> targetType = typeForExpression(statementAssignment->getExpressionChained());
+    statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType);
 
+    shared_ptr<ValueType> sourceType = statementAssignment->getValueExpression()->getValueType();
+    if (sourceType != nullptr && !sourceType->isEqual(targetType)) {
+        markErrorInvalidType(
+            statementAssignment->getExpressionChained()->getLine(),
+            statementAssignment->getExpressionChained()->getColumn(),
+            sourceType,
+            targetType
+        );
+    }
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {

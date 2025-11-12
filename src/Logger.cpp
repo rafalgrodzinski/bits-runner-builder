@@ -449,12 +449,7 @@ string Logger::toString(shared_ptr<StatementAssignment> statement, vector<Indent
     string line;
 
     // left hand
-    int expressionsCount = statement->getChainExpressions().size();
-    for (int i=0; i<expressionsCount; i++) {
-        line += toString(statement->getChainExpressions().at(i), indents, true);
-        if (i < expressionsCount-1)
-            line += ".";
-    }
+    line += toString(statement->getExpressionChained(), indents, true);
 
     line += " ← ";
 

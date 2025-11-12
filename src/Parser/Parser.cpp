@@ -841,7 +841,12 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         }
     }
 
-    return make_shared<StatementAssignment>(chainExpressions, valueExpression, line, column);
+    return make_shared<StatementAssignment>(
+        make_shared<ExpressionChained>(chainExpressions, chainExpressions.front()->getLine(), chainExpressions.front()->getColumn()),
+        valueExpression,
+        line,
+        column
+    );
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {

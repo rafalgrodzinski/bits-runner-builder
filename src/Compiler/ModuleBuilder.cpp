@@ -499,7 +499,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
 }
 
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
-    llvm::Value *targetValue = valueForChainExpressions(statement->getChainExpressions());
+    llvm::Value *targetValue = valueForChainExpressions(statement->getExpressionChained()->getChainExpressions());
     if (targetValue == nullptr)
         return;
 
