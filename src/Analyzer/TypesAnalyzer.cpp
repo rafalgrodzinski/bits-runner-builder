@@ -281,14 +281,23 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
     // check argument types
     } else {
         for (int i=0; i<(*argumentValueTypes).size(); i++) {
-            shared_ptr<Expression> argumentExpression = expressionCall->getArgumentExpressions().at(i);
-            argumentExpression->valueType = typeForExpression(argumentExpression, nullptr, nullptr);
-            if (argumentExpression->getValueType() != nullptr && !argumentExpression->getValueType()->isEqual((*argumentValueTypes).at(i))) {
+            shared_ptr<ValueType> targetType = (*argumentValueTypes).at(i);
+
+            expressionCall->argumentExpressions[i] = checkAndTryCasting(
+                expressionCall->getArgumentExpressions().at(i),
+                targetType
+            );
+
+            shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(i)->getValueType();
+            if (sourceType == nullptr)
+                return nullptr;
+
+            if (!sourceType->isEqual(targetType)) {
                 markErrorInvalidType(
-                    argumentExpression->getLine(),
-                    argumentExpression->getColumn(),
-                    argumentExpression->getValueType(),
-                    (*argumentValueTypes).at(i)
+                    expressionCall->getArgumentExpressions().at(i)->getLine(),
+                    expressionCall->getArgumentExpressions().at(i)->getColumn(),
+                    sourceType,
+                    targetType
                 );
             }
         }
@@ -647,7 +656,27 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
     if (sourceType->isEqual(targetType))
         return sourceExpression;
 
+    if (!canCast(sourceType, targetType))
+        return sourceExpression;
+
+    shared_ptr<ExpressionChained> targetExpression = make_shared<ExpressionChained>(
+        vector<shared_ptr<Expression>>(
+            {
+                sourceExpression,
+                make_shared<ExpressionCast>(targetType, sourceExpression->getLine(), sourceExpression->getColumn())
+            }
+        ),
+        sourceExpression->getLine(),
+        sourceExpression->getColumn()
+    );
+
+    targetExpression->valueType = targetType;
+    return targetExpression;
+}
+
+bool TypesAnalyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     switch (sourceType->getKind()) {
+        // unsigned
         case ValueTypeKind::INT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
@@ -663,13 +692,14 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
 
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
-                    break;
+                    return true;
 
                 default:
-                    return sourceExpression;
+                    return false;
             }
             break;
         }
+        // signed
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64: {
@@ -680,44 +710,42 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
 
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
-                    break;
+                    return true;
 
                 default:
-                    return sourceExpression;
+                    return false;
             }
             break;
         }
-
+        // float
         case ValueTypeKind::FLOAT:
         case ValueTypeKind::F32:
         case ValueTypeKind::F64: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
-                    break;
+                    return true;
 
                 default:
-                    return sourceExpression;
+                    return false;
+            }
+            break;
+        }
+        // data
+        case ValueTypeKind::DATA: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::DATA:
+                    return canCast(sourceType->getSubType(), targetType->getSubType());
+
+                default:
+                    return false;
             }
             break;
         }
 
         default:
-            return sourceExpression;
+            return false;
     }
-
-    shared_ptr<ExpressionChained> targetExpression = make_shared<ExpressionChained>(
-        vector<shared_ptr<Expression>>(
-            {
-                sourceExpression,
-                make_shared<ExpressionCast>(targetType, sourceExpression->getLine(), sourceExpression->getColumn())
-            }
-        ),
-        sourceExpression->getLine(),
-        sourceExpression->getColumn()
-    );
-    targetExpression->valueType = targetType;
-    return targetExpression;
 }
 
 void TypesAnalyzer::markErrorInvalidType(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType) {

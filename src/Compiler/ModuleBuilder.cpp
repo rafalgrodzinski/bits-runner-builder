@@ -526,7 +526,7 @@ void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
 void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
     llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
 
-    if (statement->getExpression() != nullptr) {
+    if (!statement->getExpression()->getValueType()->isEqual(ValueType::NONE)) {
         llvm::Type *returnType = basicBlock->getParent()->getReturnType();
         llvm::Value *returnValue = valueForExpression(statement->getExpression(), returnType);
         builder->CreateRet(returnValue);

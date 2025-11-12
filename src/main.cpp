@@ -243,11 +243,6 @@ int main(int argc, char **argv) {
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Parsed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
-        if (verbosity >= Verbosity::V3) {
-            Logger::print(statementModule);
-            cout << endl;
-        }
-
         // Analysis
         if (verbosity >= Verbosity::V1)
             cout << format("🔮 Analyzing \"{}\"", inputFileNames[i]) << endl;
@@ -260,6 +255,11 @@ int main(int argc, char **argv) {
 
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Analyzed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+
+        if (verbosity >= Verbosity::V3) {
+            Logger::print(statementModule);
+            cout << endl;
+        }
     }
 
     // Specify code generator for deired target
