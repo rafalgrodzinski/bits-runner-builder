@@ -6,6 +6,8 @@
 class ExpressionBlock;
 
 class ExpressionIfElse: public Expression {
+friend class TypesAnalyzer;
+
 private:
     shared_ptr<Expression> conditionExpression;
     shared_ptr<ExpressionBlock> thenBlockExpression;

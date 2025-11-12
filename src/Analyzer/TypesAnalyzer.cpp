@@ -389,11 +389,23 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrou
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
-    shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
+    /*shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
     conditionExpression->valueType = typeForExpression(conditionExpression, nullptr, nullptr);
     if (conditionExpression->getValueType() == nullptr || !conditionExpression->getValueType()->isEqual(ValueType::BOOL)) {
         markErrorInvalidType(conditionExpression->getLine(), conditionExpression->getColumn(), conditionExpression->getValueType(), ValueType::BOOL);
+    }*/
+    expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueType::BOOL);
+    shared_ptr<ValueType> conditionType = expressionIfElse->getConditionExpression()->getValueType();
+    if (conditionType == nullptr) {
+        return nullptr;
+    } else if (!conditionType->isEqual(ValueType::BOOL)) {
+        markErrorInvalidType(
+            expressionIfElse->getConditionExpression()->getLine(),
+            expressionIfElse->getConditionExpression()->getColumn(),
+            conditionType, ValueType::BOOL
+        );
     }
+
 
     // then block
     shared_ptr<Expression> thenExpression = expressionIfElse->getThenBlockExpression();
