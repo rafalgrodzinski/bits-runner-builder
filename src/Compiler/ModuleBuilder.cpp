@@ -1290,6 +1290,7 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
 
     if (expressionVariable != nullptr) {
         switch (expressionVariable->getValueKind()) {
+            case ExpressionValueKind::FUN:
             case ExpressionValueKind::SIMPLE: {
                 return builder->CreateLoad(sourceType, sourceValue, expressionVariable->getIdentifier());
             }
