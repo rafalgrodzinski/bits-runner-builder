@@ -30,6 +30,7 @@
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementVariableDeclaration.h"
 
 TypesAnalyzer::TypesAnalyzer(
     vector<shared_ptr<Statement>> statements,
@@ -87,6 +88,9 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
         case StatementKind::VARIABLE:
             checkStatement(dynamic_pointer_cast<StatementVariable>(statement));
             break;
+        case StatementKind::VARIABLE_DECLARATION:
+            checkStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+            break;
     }
 }
 
@@ -121,12 +125,8 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
     for (auto &argument : statementFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    if (
-        !scope->setFunctionArgumentTypes(statementFunction->getName(), argumentTypes) ||
-        !scope->setFunctionReturnType(statementFunction->getName(), statementFunction->getReturnValueType())
-    ) {
+    if (!scope->setFunctionType(statementFunction->getName(), statementFunction->getValueType()))
         markErrorAlreadyDefined(statementFunction->getLine(), statementFunction->getColumn(), statementFunction->getName());
-    }
 
     scope->pushLevel();
     // register arguments as variables
@@ -145,12 +145,8 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> stat
 
     string name = importModulePrefix + statementFunctionDeclaration->getName();
 
-    if (
-        !scope->setFunctionArgumentTypes(name, argumentTypes) ||
-        !scope->setFunctionReturnType(name, statementFunctionDeclaration->getReturnValueType())
-    ) {
+    if (!scope->setFunctionType(name, statementFunctionDeclaration->getValueType()))
         markErrorAlreadyDefined(statementFunctionDeclaration->getLine(), statementFunctionDeclaration->getColumn(), name);
-    }
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
@@ -159,12 +155,8 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> state
     for (auto &argument : statementMetaExternFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    if (
-        !scope->setFunctionArgumentTypes(statementMetaExternFunction->getName(), argumentTypes) ||
-        !scope->setFunctionReturnType(statementMetaExternFunction->getName(), statementMetaExternFunction->getReturnValueType())
-    ) {
+    if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType()))
         markErrorAlreadyDefined(statementMetaExternFunction->getLine(), statementMetaExternFunction->getColumn(), statementMetaExternFunction->getName());
-    }
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
@@ -241,6 +233,13 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
         markErrorAlreadyDefined(statementVariable->getLine(), statementVariable->getColumn(), statementVariable->getIdentifier());
 }
 
+void TypesAnalyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
+    string identifier = importModulePrefix + statementVariableDeclaration->getIdentifier();
+
+    if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType()))
+        markErrorAlreadyDefined(statementVariableDeclaration->getLine(), statementVariableDeclaration->getColumn(), identifier);
+}
+
 //
 // Expressions
 //
@@ -314,32 +313,31 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBloc
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall> expressionCall) {
-    optional<vector<shared_ptr<ValueType>>> argumentValueTypes = scope->getFunctionArgumentTypes(expressionCall->getName());
-    shared_ptr<ValueType> returnType = scope->getFunctionReturnType(expressionCall->getName());
+    shared_ptr<ValueType> valueType = scope->getFunctionType(expressionCall->getName());
 
     // check if defined
-    if (!argumentValueTypes || returnType == nullptr) {
+    if (valueType == nullptr) {
         markErrorNotDefined(expressionCall->getLine(), expressionCall->getColumn(), expressionCall->getName());
         return nullptr;
     }
 
     // check arguments count
-    if ((*argumentValueTypes).size() != expressionCall->getArgumentExpressions().size()) {
+    if (valueType->getArgumentTypes().size() != expressionCall->getArgumentExpressions().size()) {
         markErrorInvalidArgumentsCount(
             expressionCall->getLine(),
             expressionCall->getColumn(),
             expressionCall->getArgumentExpressions().size(),
-            (*argumentValueTypes).size()
+            valueType->getArgumentTypes().size()
         );
     // check argument types
     } else {
-        for (int i=0; i<(*argumentValueTypes).size(); i++) {
-            shared_ptr<ValueType> targetType = (*argumentValueTypes).at(i);
+        for (int i=0; i<valueType->getArgumentTypes().size(); i++) {
+            shared_ptr<ValueType> targetType = valueType->getArgumentTypes().at(i);
 
             expressionCall->argumentExpressions[i] = checkAndTryCasting(
                 expressionCall->getArgumentExpressions().at(i),
                 targetType,
-                returnType
+                valueType->getReturnType()
             );
 
             shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(i)->getValueType();
@@ -357,7 +355,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
         }
     }
 
-    expressionCall->valueType = returnType;
+    expressionCall->valueType = valueType->getReturnType();
     return expressionCall->getValueType();
 }
 
@@ -549,7 +547,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
 
     // first assume just simple
     shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
-    expressionValue->valueKind = ExpressionValueKind::SIMPLE;
+    if (type != nullptr)
+        expressionValue->valueKind = ExpressionValueKind::SIMPLE;
 
     // then check if data
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
@@ -560,6 +559,12 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
         type = type->getSubType();
         expressionValue->valueKind = ExpressionValueKind::DATA;
     }
+
+    // finally check if it's a function
+    type = scope->getFunctionType(expressionValue->getIdentifier());
+    if (type != nullptr)
+        expressionValue->valueKind = ExpressionValueKind::FUN;
+
     if (type == nullptr)
         markErrorNotDefined(expressionValue->getLine(), expressionValue->getColumn(), expressionValue->getIdentifier());
 

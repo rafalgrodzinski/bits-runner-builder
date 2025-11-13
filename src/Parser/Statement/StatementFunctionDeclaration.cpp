@@ -1,6 +1,7 @@
 #include "StatementFunctionDeclaration.h"
 
 #include "Parser/Statement/StatementReturn.h"
+#include "Parser/ValueType.h"
 
 StatementFunctionDeclaration::StatementFunctionDeclaration(
     bool shouldExport,
@@ -26,4 +27,12 @@ vector<pair<string, shared_ptr<ValueType>>> StatementFunctionDeclaration::getArg
 
 shared_ptr<ValueType> StatementFunctionDeclaration::getReturnValueType() {
     return returnValueType;
+}
+
+shared_ptr<ValueType> StatementFunctionDeclaration::getValueType() {
+    vector<shared_ptr<ValueType>> argumentTypes;
+    for (auto &argument : arguments)
+        argumentTypes.push_back(argument.second);
+
+    return ValueType::fun(argumentTypes, returnValueType);
 }

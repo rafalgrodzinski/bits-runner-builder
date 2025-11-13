@@ -20,8 +20,8 @@ enum class StatementKind {
     RAW_FUNCTION, // !
     REPEAT,
     RETURN,
-    VARIABLE_DECLARATION, // !
-    VARIABLE
+    VARIABLE,
+    VARIABLE_DECLARATION
 };
 
 class Statement {

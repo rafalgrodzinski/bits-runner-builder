@@ -4,13 +4,14 @@
 #include "Expression.h"
 
 enum class ExpressionValueKind {
-    SIMPLE,
-    DATA,
     BUILT_IN_COUNT,
     BUILT_IN_VAL,
     BUILT_IN_VADR,
     BUILT_IN_ADR,
-    BUILT_IN_SIZE
+    BUILT_IN_SIZE,
+    DATA,
+    FUN,
+    SIMPLE
 };
 
 class ExpressionValue: public Expression {

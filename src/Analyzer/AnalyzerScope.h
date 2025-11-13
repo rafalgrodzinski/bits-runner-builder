@@ -13,8 +13,7 @@ class AnalyzerScope {
 private:
     typedef struct {
         map<string, shared_ptr<ValueType>> variableTypes;
-        map<string, vector<shared_ptr<ValueType>>> functionArgumentTypesMap;
-        map<string, shared_ptr<ValueType>> functionReturnTypeMap;
+        map<string, shared_ptr<ValueType>> functionTypeMap;
     } ScopeLevel;
 
     stack<ScopeLevel> scopeLevels;
@@ -28,11 +27,8 @@ public:
     shared_ptr<ValueType> getVariableType(string identifier);
     bool setVariableType(string identifier, shared_ptr<ValueType> type);
 
-    optional<vector<shared_ptr<ValueType>>> getFunctionArgumentTypes(string name);
-    bool setFunctionArgumentTypes(string name, vector<shared_ptr<ValueType>> argumentTypes);
-
-    shared_ptr<ValueType> getFunctionReturnType(string name);
-    bool setFunctionReturnType(string name, shared_ptr<ValueType> returnType);
+    shared_ptr<ValueType> getFunctionType(string name);
+    bool setFunctionType(string name, shared_ptr<ValueType> type);
 };
 
 #endif

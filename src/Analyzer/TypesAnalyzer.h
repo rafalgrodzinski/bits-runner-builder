@@ -65,6 +65,7 @@ private:
     void checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementVariable> statementVariable);
+    void checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
     shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression, shared_ptr<Expression> parentExpression, shared_ptr<ValueType> returnType);
     shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);

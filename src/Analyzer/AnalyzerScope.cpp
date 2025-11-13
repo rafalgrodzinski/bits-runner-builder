@@ -33,33 +33,11 @@ bool AnalyzerScope::setVariableType(string identifier, shared_ptr<ValueType> typ
     return true;
 }
 
-optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getFunctionArgumentTypes(string name) {
+shared_ptr<ValueType> AnalyzerScope::getFunctionType(string name) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().functionArgumentTypesMap.find(name);
-        if (it != scopeLevels.top().functionArgumentTypesMap.end())
-            return it->second;
-        scopeLevels.pop();
-    }
-
-    return { };
-}
-
-bool AnalyzerScope::setFunctionArgumentTypes(string name, vector<shared_ptr<ValueType>> argumentTypes) {
-    auto it = scopeLevels.top().functionArgumentTypesMap.find(name);
-    if (it != scopeLevels.top().functionArgumentTypesMap.end())
-        return false;
-
-    scopeLevels.top().functionArgumentTypesMap[name] = argumentTypes;
-    return true;
-}
-
-shared_ptr<ValueType> AnalyzerScope::getFunctionReturnType(string name) {
-    stack<ScopeLevel> scopeLevels = this->scopeLevels;
-
-    while (!scopeLevels.empty()) {
-        shared_ptr<ValueType> type = scopeLevels.top().functionReturnTypeMap[name];
+        shared_ptr<ValueType> type = scopeLevels.top().functionTypeMap[name];
         if (type != nullptr)
             return type;
         scopeLevels.pop();
@@ -68,10 +46,10 @@ shared_ptr<ValueType> AnalyzerScope::getFunctionReturnType(string name) {
     return nullptr;
 }
 
-bool AnalyzerScope::setFunctionReturnType(string name, shared_ptr<ValueType> returnType) {
-    if (scopeLevels.top().functionReturnTypeMap[name] != nullptr)
+bool AnalyzerScope::setFunctionType(string name, shared_ptr<ValueType> type) {
+    if (scopeLevels.top().functionTypeMap[name] != nullptr)
         return false;
 
-    scopeLevels.top().functionReturnTypeMap[name] = returnType;
+    scopeLevels.top().functionTypeMap[name] = type;
     return true;
 }
