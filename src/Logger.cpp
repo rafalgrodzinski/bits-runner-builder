@@ -685,11 +685,21 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
     string line;
 
     switch (expression->getValueKind()) {
-        case ExpressionValueKind::SIMPLE:
-            line = format("`{}`", expression->getIdentifier());
+        case ExpressionValueKind::BUILT_IN_ADR:
+        case ExpressionValueKind::BUILT_IN_COUNT:
+        case ExpressionValueKind::BUILT_IN_SIZE:
+        case ExpressionValueKind::BUILT_IN_VADR:
+        case ExpressionValueKind::BUILT_IN_VAL:
+            line = expression->getIdentifier();
             break;
         case ExpressionValueKind::DATA:
             line = format("`{}`[{}]", expression->getIdentifier(), toString(expression->getIndexExpression(), indents, true));
+            break;
+        case ExpressionValueKind::FUN:
+            line = format("`{}`", expression->getIdentifier());
+            break;
+        case ExpressionValueKind::SIMPLE:
+            line = format("`{}`", expression->getIdentifier());
             break;
     }
 
