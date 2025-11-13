@@ -558,12 +558,12 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
             markErrorInvalidType(indexExpression->getLine(), indexExpression->getColumn(), indexExpression->getValueType(), ValueType::INT);
         type = type->getSubType();
         expressionValue->valueKind = ExpressionValueKind::DATA;
-    }
-
     // finally check if it's a function
-    type = scope->getFunctionType(expressionValue->getIdentifier());
-    if (type != nullptr)
-        expressionValue->valueKind = ExpressionValueKind::FUN;
+    } else if (type == nullptr) {
+        type = scope->getFunctionType(expressionValue->getIdentifier());
+        if (type != nullptr)
+            expressionValue->valueKind = ExpressionValueKind::FUN;
+    }
 
     if (type == nullptr)
         markErrorNotDefined(expressionValue->getLine(), expressionValue->getColumn(), expressionValue->getIdentifier());
