@@ -1096,8 +1096,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     // Then
     scope->pushLevel();
     builder->SetInsertPoint(thenBlock);
-    buildStatement(expression->getThenBlockExpression()->getStatementBlock());
-    llvm::Value *thenValue = valueForExpression(expression->getThenBlockExpression()->getResultStatementExpression()->getExpression());
+    llvm::Value *thenValue = valueForExpression(expression->getThenExpression());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
     scope->popLevel();

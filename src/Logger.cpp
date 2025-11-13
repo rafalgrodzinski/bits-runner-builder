@@ -661,7 +661,7 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
 
     text += formattedLine("THEN", indents);
     indents = adjustedLastIndent(indents);
-    text += toString(expression->getThenBlockExpression(), indents);
+    text += toString(expression->getThenExpression(), indents, false);
 
     // else
     if (expression->getElseExpression() != nullptr) {
@@ -786,6 +786,11 @@ string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentK
     int expressionsCount = expression->getChainExpressions().size();
     for (int i=0; i<expressionsCount; i++) {
         line += toString(expression->getChainExpressions().at(i), indents, true);
+
+        // Need to remove the last new line if present (for example block adds it) 
+        if (line.at(line.length() - 1) == '\n')
+            line = line.substr(0, line.length() - 1);
+
         if (i < expressionsCount-1)
             line += ".";
     }

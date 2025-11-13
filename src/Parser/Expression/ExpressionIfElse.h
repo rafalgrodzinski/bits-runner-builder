@@ -3,20 +3,18 @@
 
 #include "Expression.h"
 
-class ExpressionBlock;
-
 class ExpressionIfElse: public Expression {
 friend class TypesAnalyzer;
 
 private:
     shared_ptr<Expression> conditionExpression;
-    shared_ptr<ExpressionBlock> thenBlockExpression;
+    shared_ptr<Expression> thenExpression;
     shared_ptr<Expression> elseExpression;
 
 public:
-    ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<ExpressionBlock> thenBlockExpression, shared_ptr<Expression> elseExpression, int line, int column);
+    ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<Expression> thenExpression, shared_ptr<Expression> elseExpression, int line, int column);
     shared_ptr<Expression> getConditionExpression();
-    shared_ptr<ExpressionBlock> getThenBlockExpression();
+    shared_ptr<Expression> getThenExpression();
     shared_ptr<Expression> getElseExpression();
 };
 

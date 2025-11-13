@@ -79,7 +79,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignment) {
     shared_ptr<ValueType> targetType = typeForExpression(statementAssignment->getExpressionChained());
-    statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType);
+    statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType, nullptr);
 
     shared_ptr<ValueType> sourceType = statementAssignment->getValueExpression()->getValueType();
     if (sourceType != nullptr && !sourceType->isEqual(targetType)) {
@@ -99,7 +99,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, sh
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {
     // returned value type is ignored
-    typeForExpression(statementExpression->getExpression(), nullptr, returnType);
+    statementExpression->getExpression()->valueType = typeForExpression(statementExpression->getExpression(), nullptr, returnType);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
@@ -172,6 +172,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType) {
     statementReturn->expression = checkAndTryCasting(
         statementReturn->getExpression(),
+        returnType,
         returnType
     );
 
@@ -190,7 +191,8 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
     if (statementVariable->getExpression() != nullptr) {
         statementVariable->expression = checkAndTryCasting(
             statementVariable->getExpression(),
-            statementVariable->getValueType()
+            statementVariable->getValueType(),
+            nullptr
         );
 
         if (!statementVariable->getExpression()->getValueType()->isEqual(statementVariable->getValueType()))
@@ -240,11 +242,13 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
     // try auto cross-casting
     expressionBinary->left = checkAndTryCasting(
         expressionBinary->getLeft(),
-        typeForExpression(expressionBinary->getRight(), nullptr, nullptr)
+        typeForExpression(expressionBinary->getRight(), nullptr, nullptr),
+        nullptr
     );
     expressionBinary->right = checkAndTryCasting(
         expressionBinary->getRight(),
-        typeForExpression(expressionBinary->getLeft(), nullptr, nullptr)
+        typeForExpression(expressionBinary->getLeft(), nullptr, nullptr),
+        nullptr
     );
 
     // validate types
@@ -296,7 +300,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
 
             expressionCall->argumentExpressions[i] = checkAndTryCasting(
                 expressionCall->getArgumentExpressions().at(i),
-                targetType
+                targetType,
+                returnType
             );
 
             shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(i)->getValueType();
@@ -389,12 +394,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrou
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
-    /*shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
-    conditionExpression->valueType = typeForExpression(conditionExpression, nullptr, nullptr);
-    if (conditionExpression->getValueType() == nullptr || !conditionExpression->getValueType()->isEqual(ValueType::BOOL)) {
-        markErrorInvalidType(conditionExpression->getLine(), conditionExpression->getColumn(), conditionExpression->getValueType(), ValueType::BOOL);
-    }*/
-    expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueType::BOOL);
+    // first check that condition is as BOOL
+    expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueType::BOOL, returnType);
     shared_ptr<ValueType> conditionType = expressionIfElse->getConditionExpression()->getValueType();
     if (conditionType == nullptr) {
         return nullptr;
@@ -406,26 +407,46 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
         );
     }
 
-
-    // then block
-    shared_ptr<Expression> thenExpression = expressionIfElse->getThenBlockExpression();
-    scope->pushLevel();
-    thenExpression->valueType = typeForExpression(thenExpression, nullptr, returnType);
-    scope->popLevel();
-
-    // else block
-    shared_ptr<Expression> elseExpression = expressionIfElse->getElseExpression();
-    if (elseExpression != nullptr) {
+    // try corss-casting if else is present
+    if (expressionIfElse->getElseExpression() != nullptr) {
         scope->pushLevel();
-        elseExpression->valueType = typeForExpression(elseExpression, nullptr, returnType);
+        shared_ptr<ValueType> elseType = typeForExpression(expressionIfElse->getElseExpression(), nullptr, returnType);
+        scope->popLevel();
+        if (elseType == nullptr)
+            return nullptr;
+
+        scope->pushLevel();
+        expressionIfElse->thenExpression = checkAndTryCasting(
+            expressionIfElse->getThenExpression(),
+            elseType,
+            returnType
+        );
+        scope->popLevel();
+        if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
+            return nullptr;
+
+        scope->pushLevel();
+        expressionIfElse->elseExpression = checkAndTryCasting(
+            expressionIfElse->getElseExpression(),
+            expressionIfElse->getThenExpression()->getValueType(),
+            returnType
+        );
+        scope->popLevel();
+    // otherwise just register then block's type
+    } else {
+        scope->pushLevel();
+        expressionIfElse->getThenExpression()->valueType = typeForExpression(
+            expressionIfElse->getThenExpression(),
+            nullptr,
+            returnType
+        );
         scope->popLevel();
     }
 
-    if (elseExpression != nullptr && elseExpression->getValueType() != nullptr && thenExpression->getValueType()->isEqual(elseExpression->getValueType())) {
-        expressionIfElse->valueType = thenExpression->getValueType();
-    } else {
-        expressionIfElse->valueType = ValueType::NONE;
-    }
+    // finally, figure out resulting type
+    shared_ptr<ValueType> thenType = expressionIfElse->getThenExpression()->getValueType();
+    shared_ptr<ValueType> elseType = expressionIfElse->getElseExpression() != nullptr ? expressionIfElse->getElseExpression()->getValueType() : nullptr;
+    expressionIfElse->valueType = thenType->isEqual(elseType) ? thenType : ValueType::NONE;
 
     return expressionIfElse->getValueType();
 }
@@ -673,10 +694,10 @@ shared_ptr<ValueType> TypesAnalyzer::typeForUnaryOperation(ExpressionUnaryOperat
     return firstType;
 }
 
-shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType) {
-    shared_ptr<ValueType> sourceType = typeForExpression(sourceExpression, nullptr, nullptr);
+shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType) {
+    shared_ptr<ValueType> sourceType = typeForExpression(sourceExpression, nullptr, returnType);
     sourceExpression->valueType = sourceType;
-    if (sourceType->isEqual(targetType))
+    if (sourceType == nullptr || sourceType->isEqual(targetType))
         return sourceExpression;
 
     if (!canCast(sourceType, targetType))
