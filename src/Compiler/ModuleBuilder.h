@@ -34,7 +34,7 @@ class ExpressionCast;
 enum class ExpressionBinaryOperation;
 
 class Statement;
-class StatementImport;
+class StatementMetaImport;
 class StatementFunction;
 class StatementFunctionDeclaration;
 class StatementRawFunction;
@@ -92,7 +92,7 @@ private:
     // Statements
     void buildStatement(shared_ptr<Statement> statement);
     void buildImportStatement(shared_ptr<Statement> statement, string moduleName);
-    void buildImport(shared_ptr<StatementImport> statement);
+    void buildImport(shared_ptr<StatementMetaImport> statement);
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);

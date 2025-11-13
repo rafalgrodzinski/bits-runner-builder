@@ -12,10 +12,10 @@ enum class StatementKind {
     BLOCK,
     EXPRESSION,
     FUNCTION,
-    FUNCTION_DECLARATION, // !
+    FUNCTION_DECLARATION,
     META_EXTERN_VARIABLE, // !
     META_EXTERN_FUNCTION,
-    META_IMPORT, // !
+    META_IMPORT,
     MODULE,
     RAW_FUNCTION, // !
     REPEAT,

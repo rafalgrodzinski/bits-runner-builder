@@ -23,16 +23,23 @@
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
+#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementVariable.h"
 
-void TypesAnalyzer::checkModule(shared_ptr<StatementModule> module) {
+TypesAnalyzer::TypesAnalyzer(
+    vector<shared_ptr<Statement>> statements,
+    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+): statements(statements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) { }
+
+void TypesAnalyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
 
-    for (shared_ptr<Statement> statement : module->getStatements())
+    for (shared_ptr<Statement> statement : statements)
         checkStatement(statement, nullptr);
 
     if (!errors.empty()) {
@@ -59,11 +66,17 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
         case StatementKind::FUNCTION:
             checkStatement(dynamic_pointer_cast<StatementFunction>(statement));
             break;
+        case StatementKind::FUNCTION_DECLARATION:
+            checkStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+            break;
         case StatementKind::META_EXTERN_FUNCTION:
             checkStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
             break;
+        case StatementKind::META_IMPORT:
+            checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
+            break;
         case StatementKind::MODULE:
-            checkStatement(dynamic_pointer_cast<StatementModule>(statement));
+            //checkStatement(dynamic_pointer_cast<StatementModule>(statement));
             break;
         case StatementKind::REPEAT:
             checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
@@ -124,6 +137,22 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
     scope->popLevel();
 }
 
+void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
+    // store arguments and return type
+    vector<shared_ptr<ValueType>> argumentTypes;
+    for (auto &argument : statementFunctionDeclaration->getArguments())
+        argumentTypes.push_back(argument.second);
+
+    string name = importModulePrefix + statementFunctionDeclaration->getName();
+
+    if (
+        !scope->setFunctionArgumentTypes(name, argumentTypes) ||
+        !scope->setFunctionReturnType(name, statementFunctionDeclaration->getReturnValueType())
+    ) {
+        markErrorAlreadyDefined(statementFunctionDeclaration->getLine(), statementFunctionDeclaration->getColumn(), name);
+    }
+}
+
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
     // store arguments and return type
     vector<shared_ptr<ValueType>> argumentTypes;
@@ -138,8 +167,17 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> state
     }
 }
 
-void TypesAnalyzer::checkStatement(shared_ptr<StatementModule> statementModule) {
-    checkStatement(statementModule, nullptr);
+void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
+    auto it = exportedHeaderStatementsMap.find(statementMetaImport->getName());
+    if (it == exportedHeaderStatementsMap.end()) {
+        markErrorInvalidImport(statementMetaImport->getLine(), statementMetaImport->getColumn(), statementMetaImport->getName());
+        return;
+    }
+    importModulePrefix = statementMetaImport->getName() + ".";
+    for (shared_ptr<Statement> &importStatement : it->second) {
+        checkStatement(importStatement, nullptr);
+    }
+    importModulePrefix = "";
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType) {
@@ -829,5 +867,10 @@ void TypesAnalyzer::markErrorInvalidArgumentsCount(int line, int column, int act
 
  void TypesAnalyzer::markErrorInvalidBuiltIn(int line, int column, string builtInName, shared_ptr<ValueType> type) {
     string message = format("Invalid built-in \"{}\" on type {}", builtInName, Logger::toString(type));
+    errors.push_back(Error::error(line, column, message));
+ }
+
+ void TypesAnalyzer::markErrorInvalidImport(int line, int column, string moduleName) {
+    string message = format("Invalid import, module \"{}\" doesn't exist", moduleName);
     errors.push_back(Error::error(line, column, message));
  }

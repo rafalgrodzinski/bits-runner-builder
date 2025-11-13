@@ -7,6 +7,7 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/test.brc"],
+            //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/callback/main.brc", "${workspaceFolder}/samples/callback/io.brc", "${workspaceFolder}/samples/callback/utils.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }

@@ -19,7 +19,7 @@
 #include "Parser/Expression/ExpressionCast.h"
 
 #include "Parser/Statement/StatementModule.h"
-#include "Parser/Statement/StatementImport.h"
+#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
@@ -257,7 +257,7 @@ shared_ptr<Statement> Parser::matchStatementImport() {
 
     string name = resultsGroup.getResults().at(0).getToken()->getLexme();
 
-    return make_shared<StatementImport>(name, line, column);
+    return make_shared<StatementMetaImport>(name, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {

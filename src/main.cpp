@@ -241,25 +241,32 @@ int main(int argc, char **argv) {
         timeStamp = clock() - timeStamp;
         totalParseTime += timeStamp;
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Parsed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
-
-        // Analysis
-        if (verbosity >= Verbosity::V1)
-            cout << format("🔮 Analyzing \"{}\"", inputFileNames[i]) << endl;
-
-        timeStamp = clock();
-        TypesAnalyzer typesAnalyzer;
-        typesAnalyzer.checkModule(statementModule);
-        timeStamp = clock() - timeStamp;
-        totalAnalysisTime += timeStamp;
-
-        if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Analyzed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Parsed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;       
 
         if (verbosity >= Verbosity::V3) {
             Logger::print(statementModule);
             cout << endl;
         }
+    }
+
+    // Analysis
+    for (const auto &statementsEntry : statementsMap) {
+        time_t timeStamp;
+    
+        string moduleName = statementsEntry.first;
+        vector<shared_ptr<Statement>> statements = statementsEntry.second;
+
+        if (verbosity >= Verbosity::V1)
+            cout << format("🔮 Analyzing module \"{}\"", moduleName) << endl;
+
+        timeStamp = clock();
+        TypesAnalyzer typesAnalyzer(statements, exportedHeaderStatementsMap);
+        typesAnalyzer.checkModule();
+        timeStamp = clock() - timeStamp;
+        totalAnalysisTime += timeStamp;
+
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
     }
 
     // Specify code generator for deired target

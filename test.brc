@@ -1,32 +1,13 @@
 @extern putchar fun: character u64 -> u32
 
-fib fun: number u64
-    ret if number < 2
-        number
-    else
-        fib(number - 1) + fib(number - 2)
+print fun: text data<u64, 16>
+    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
+        putchar(text[i])
     ;
 ;
 
-printNum fun: number u64
-    biggest u64 <- 10
-    rep biggest <= number: biggest <- biggest * 10
-    biggest <- biggest / 10
-
-    rep biggest > 0, biggest <- biggest / 10
-        digit u64 <- number / biggest
-        putchar(digit + '0')
-        number <- number % biggest
-    ;
-;
-
-// Print first 20 fibonaci numbers
 @export main fun -> u32
-    rep i u32 <- 0, i < 20, i <- i + 1
-        res u32 <- fib(i)
-        printNum(res)
-        putchar('\n')
-    ;
-    
+    print("Hello, world!\n")
+
     ret 0
 ;

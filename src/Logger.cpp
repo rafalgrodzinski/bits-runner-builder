@@ -20,7 +20,7 @@
 #include "Parser/Parsee/Parsee.h"
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
-#include "Parser/Statement/StatementImport.h"
+#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
@@ -175,7 +175,7 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::MODULE:
             return toString(dynamic_pointer_cast<StatementModule>(statement), indents);
         case StatementKind::META_IMPORT:
-            return toString(dynamic_pointer_cast<StatementImport>(statement), indents);
+            return toString(dynamic_pointer_cast<StatementMetaImport>(statement), indents);
         case StatementKind::META_EXTERN_VARIABLE:
             return toString(dynamic_pointer_cast<StatementMetaExternVariable>(statement), indents);
         case StatementKind::META_EXTERN_FUNCTION:
@@ -250,7 +250,7 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementImport> statement, vector<IndentKind> indents) {
+string Logger::toString(shared_ptr<StatementMetaImport> statement, vector<IndentKind> indents) {
     string line = format("@IMPORT `{}`", statement->getName());
     return formattedLine(line, indents);
 }

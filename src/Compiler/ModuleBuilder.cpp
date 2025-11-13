@@ -16,7 +16,7 @@
 #include "Parser/Expression/ExpressionChained.h"
 #include "Parser/Expression/ExpressionCast.h"
 
-#include "Parser/Statement/StatementImport.h"
+#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
@@ -105,7 +105,7 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::META_IMPORT:
-            buildImport(dynamic_pointer_cast<StatementImport>(statement));
+            buildImport(dynamic_pointer_cast<StatementMetaImport>(statement));
             break;
         case StatementKind::FUNCTION_DECLARATION: {
             shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
@@ -212,13 +212,13 @@ void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string
     }
 }
 
-void ModuleBuilder::buildImport(shared_ptr<StatementImport> statement) {
+void ModuleBuilder::buildImport(shared_ptr<StatementMetaImport> statement) {
     auto it = exportedHeaderStatementsMap.find(statement->getName());
     if (it == exportedHeaderStatementsMap.end()) {
         markError(statement->getLine(), statement->getColumn(), format("Module \"{}\" doesn't exist", statement->getName()));
         return;
     }
-    for (shared_ptr<Statement> &importStatement  : it->second) {
+    for (shared_ptr<Statement> &importStatement : it->second) {
         buildImportStatement(importStatement, statement->getName());
     }
 }

@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <map>
 
 class AnalyzerScope;
 class Error;
@@ -49,14 +50,18 @@ class TypesAnalyzer {
 private:
     vector<shared_ptr<Error>> errors;
     shared_ptr<AnalyzerScope> scope;
+    vector<shared_ptr<Statement>> statements;
+    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
+    string importModulePrefix;
 
     void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementAssignment> statementAssignment);
     void checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementFunction> statementFunction);
+    void checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
-    void checkStatement(shared_ptr<StatementModule> statementModule);
+    void checkStatement(shared_ptr<StatementMetaImport> StatementMetaImport);
     void checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementVariable> statementVariable);
@@ -94,9 +99,14 @@ private:
     void markErrorInvalidArgumentsCount(int line, int column, int actulCount, int expectedCount);
     void markErrorInvalidCast(int line, int column, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
     void markErrorInvalidBuiltIn(int line, int column, string builtInName, shared_ptr<ValueType> type);
+    void markErrorInvalidImport(int line, int column, string moduleName);
 
 public:
-    void checkModule(shared_ptr<StatementModule> module);
+    TypesAnalyzer(
+        vector<shared_ptr<Statement>> statements,
+        map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+    );
+    void checkModule();
 };
 
 #endif
