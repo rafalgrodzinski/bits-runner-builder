@@ -16,6 +16,7 @@ shared_ptr<ValueType> ValueType::FLOAT = make_shared<ValueType>(ValueTypeKind::F
 shared_ptr<ValueType> ValueType::F32 = make_shared<ValueType>(ValueTypeKind::F32);
 shared_ptr<ValueType> ValueType::F64 = make_shared<ValueType>(ValueTypeKind::F64);
 shared_ptr<ValueType> ValueType::LITERAL = make_shared<ValueType>(ValueTypeKind::LITERAL);
+shared_ptr<ValueType> ValueType::COMPOSITE = make_shared<ValueType>(ValueTypeKind::COMPOSITE);
 
 ValueType::ValueType() { }
 ValueType::ValueType(ValueTypeKind kind):
@@ -200,4 +201,8 @@ bool ValueType::isData() {
 
 bool ValueType::isPointer() {
     return kind == ValueTypeKind::PTR;
+}
+
+bool ValueType::isFunction() {
+    return kind == ValueTypeKind::FUN;
 }

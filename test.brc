@@ -1,13 +1,6 @@
-/*@import io
-@import utils*/
+@module utils
 
-callback fun: result u64
-    //@io.printNum(result)
-    //@io.printChar('\n')
-;
-
-@export main fun -> u64
-    //@utils.calculateThings(4, 3, { callback.adr })
-    callback.adr
-    ret 0
+@export calculateThings fun: num1 u64, num2 u64, callback ptr<fun u64>
+    result u64 <- num1 + num1 * num2
+    callback.val(result)
 ;

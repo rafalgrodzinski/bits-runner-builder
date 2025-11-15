@@ -27,7 +27,8 @@ enum class ValueTypeKind {
     BLOB,
     FUN,
     PTR,
-    LITERAL
+    LITERAL,
+    COMPOSITE
 };
 
 class ValueType {
@@ -53,6 +54,7 @@ public:
     static shared_ptr<ValueType> F32;
     static shared_ptr<ValueType> F64;
     static shared_ptr<ValueType> LITERAL;
+    static shared_ptr<ValueType> COMPOSITE;
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> sizeExpression);
     static shared_ptr<ValueType> blob(string blobName);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
@@ -76,6 +78,7 @@ public:
     bool isBool();
     bool isData();
     bool isPointer();
+    bool isFunction();
 };
 
 #endif
