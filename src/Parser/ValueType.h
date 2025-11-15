@@ -39,6 +39,7 @@ private:
     vector<shared_ptr<ValueType>> argumentTypes;
     shared_ptr<ValueType> returnType;
     shared_ptr<Expression> sizeExpression;
+    optional<vector<shared_ptr<ValueType>>> compositeElementTypes;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -60,6 +61,7 @@ public:
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
+    static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes);
 
     ValueType();
     ValueType(ValueTypeKind kind);
@@ -71,12 +73,15 @@ public:
     vector<shared_ptr<ValueType>> getArgumentTypes();
     shared_ptr<ValueType> getReturnType();
     string getBlobName();
+    optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
 
     bool isEqual(shared_ptr<ValueType> other);
     bool isNumeric();
     bool isInteger();
     bool isBool();
     bool isData();
+    bool isDataBool();
+    bool isDataNumeric();
     bool isPointer();
     bool isFunction();
     bool isBlob();

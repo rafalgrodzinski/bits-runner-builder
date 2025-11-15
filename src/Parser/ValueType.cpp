@@ -105,6 +105,13 @@ shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
     return valueType;
 }
 
+shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> elementTypes) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::COMPOSITE;
+    valueType->compositeElementTypes = elementTypes;
+    return valueType;
+}
+
 
 ValueTypeKind ValueType::getKind() {
     return kind;
@@ -136,6 +143,10 @@ vector<shared_ptr<ValueType>> ValueType::getArgumentTypes() {
 
 shared_ptr<ValueType> ValueType::getReturnType() {
     return returnType;
+}
+
+optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() {
+    return compositeElementTypes;
 }
 
 bool ValueType::isEqual(shared_ptr<ValueType> other) {
@@ -197,6 +208,38 @@ bool ValueType::isBool() {
 
 bool ValueType::isData() {
     return kind == ValueTypeKind::DATA;
+}
+
+bool ValueType::isDataBool() {
+    if (isData() && getSubType()->isBool())
+        return true;
+
+    if (kind == ValueTypeKind::COMPOSITE) {
+        vector<shared_ptr<ValueType>> elementTypes = *(getCompositeElementTypes());
+        for (shared_ptr<ValueType> elementType : elementTypes) {
+            if (!elementType->isBool())
+                return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+bool ValueType::isDataNumeric() {
+    if (isData() && getSubType()->isNumeric())
+        return true;
+
+    if (kind == ValueTypeKind::COMPOSITE) {
+        vector<shared_ptr<ValueType>> elementTypes = *(getCompositeElementTypes());
+        for (shared_ptr<ValueType> elementType : elementTypes) {
+            if (!elementType->isNumeric())
+                return false;
+        }
+        return true;
+    }
+
+    return false;
 }
 
 bool ValueType::isPointer() {

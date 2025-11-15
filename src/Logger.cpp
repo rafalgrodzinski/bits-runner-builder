@@ -1176,6 +1176,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return format("PTR<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::LITERAL:
             return "LITERAL";
+        case ValueTypeKind::COMPOSITE:
+            return format("COMPOSITE");
     }
 }
 

@@ -282,7 +282,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
         case ExpressionKind::CHAINED:
             return typeForExpression(dynamic_pointer_cast<ExpressionChained>(expression));
         case ExpressionKind::COMPOSITE_LITERAL:
-            return ValueType::COMPOSITE;
+            return typeForExpression(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression));
         case ExpressionKind::GROUPING:
             return typeForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::IF_ELSE:
@@ -392,6 +392,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
                     sourceType,
                     targetType
                 );
+                expressionCall->valueType = nullptr;
+                return nullptr;
             }
         }
     }
@@ -401,16 +403,12 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression) {
+    bool isSourceNumeric = parentExpression->getValueType()->isNumeric();
+
     bool areNumeric = parentExpression->getValueType()->isNumeric() && expressionCast->getValueType()->isNumeric();
     bool areBool = parentExpression->getValueType()->isBool() && expressionCast->getValueType()->isBool();
-    bool areDataNumeric = parentExpression->getValueType()->isData() &&
-        parentExpression->getValueType()->getSubType()->isNumeric() &&
-        expressionCast->getValueType()->isData() &&
-        expressionCast->getValueType()->getSubType()->isNumeric();
-    bool areDataBool = parentExpression->getValueType()->isData() &&
-        parentExpression->getValueType()->getSubType()->isBool() &&
-        expressionCast->getValueType()->isData() &&
-        expressionCast->getValueType()->getSubType()->isBool();
+    bool areDataNumeric = parentExpression->getValueType()->isDataNumeric() && expressionCast->getValueType()->isDataNumeric();
+    bool areDataBool = parentExpression->getValueType()->isDataBool() && expressionCast->getValueType()->isDataBool();
 
     if (areNumeric || areBool || areDataNumeric || areDataBool) {
         return expressionCast->getValueType();
@@ -433,6 +431,17 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionChai
 
     expressionChained->valueType = parentExpression->getValueType();
     return expressionChained->getValueType();
+}
+
+shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
+    vector<shared_ptr<ValueType>> elementTypes;
+    for (shared_ptr<Expression> expression : expressionCompositeLiteral->getExpressions()) {
+        shared_ptr<ValueType> elementType = typeForExpression(expression, nullptr, nullptr);
+        if (elementType == nullptr)
+            return nullptr;
+        elementTypes.push_back(elementType);
+    }
+    return ValueType::composite(elementTypes);
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
@@ -863,9 +872,17 @@ bool TypesAnalyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueTy
         case ValueTypeKind::COMPOSITE: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::BLOB:
-                case ValueTypeKind::DATA:
-                case ValueTypeKind::PTR:
+                    return true; // TODO: implement check
+                case ValueTypeKind::DATA: {
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    for (shared_ptr<ValueType> sourceElementType : sourceElementTypes) {
+                        if (!canCast(sourceElementType, targetType->getSubType()))
+                            return false;
+                    }
                     return true;
+                }
+                case ValueTypeKind::PTR:
+                    return true; // TODO implement check
 
                 default:
                     return false;
