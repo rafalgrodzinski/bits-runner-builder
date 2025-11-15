@@ -13,7 +13,10 @@ class AnalyzerScope {
 private:
     typedef struct {
         map<string, shared_ptr<ValueType>> variableTypes;
+        map<string, vector<pair<string, shared_ptr<ValueType>>>> blobMembersMap;
+
         map<string, shared_ptr<ValueType>> functionTypeMap;
+        map<string, bool> isFunctionDefinedMap;
     } ScopeLevel;
 
     stack<ScopeLevel> scopeLevels;
@@ -27,8 +30,11 @@ public:
     shared_ptr<ValueType> getVariableType(string identifier);
     bool setVariableType(string identifier, shared_ptr<ValueType> type);
 
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(string name);
+    bool setBlobMembers(string name, vector<pair<string, shared_ptr<ValueType>>> members);
+
     shared_ptr<ValueType> getFunctionType(string name);
-    bool setFunctionType(string name, shared_ptr<ValueType> type);
+    bool setFunctionType(string name, shared_ptr<ValueType> type, bool isDefinition);
 };
 
 #endif

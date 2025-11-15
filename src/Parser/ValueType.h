@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-class Token;
 class Expression;
+class Token;
 
 using namespace std;
 
@@ -68,9 +68,9 @@ public:
     shared_ptr<ValueType> getSubType();
     int getValueArg();
     shared_ptr<Expression> getSizeExpression();
-    string getBlobName();
     vector<shared_ptr<ValueType>> getArgumentTypes();
     shared_ptr<ValueType> getReturnType();
+    string getBlobName();
 
     bool isEqual(shared_ptr<ValueType> other);
     bool isNumeric();
@@ -79,6 +79,7 @@ public:
     bool isData();
     bool isPointer();
     bool isFunction();
+    bool isBlob();
 };
 
 #endif

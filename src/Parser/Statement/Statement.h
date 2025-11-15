@@ -7,7 +7,7 @@ using namespace std;
 
 enum class StatementKind {
     ASSIGNMENT,
-    BLOB, // !
+    BLOB,
     BLOB_DECLARATION, // !
     BLOCK,
     EXPRESSION,

@@ -20,6 +20,7 @@
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
+#include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
@@ -34,12 +35,18 @@
 
 TypesAnalyzer::TypesAnalyzer(
     vector<shared_ptr<Statement>> statements,
+    vector<shared_ptr<Statement>> headerStatements,
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
-): statements(statements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) { }
+): statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) { }
 
 void TypesAnalyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
 
+    // check header
+    for (shared_ptr<Statement> statement : headerStatements)
+        checkStatement(statement, nullptr);
+
+    // check body
     for (shared_ptr<Statement> statement : statements)
         checkStatement(statement, nullptr);
 
@@ -57,6 +64,9 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT:
             checkStatement(dynamic_pointer_cast<StatementAssignment>(statement));
+            break;
+        case StatementKind::BLOB:
+            checkStatement(dynamic_pointer_cast<StatementBlob>(statement));
             break;
         case StatementKind::BLOCK:
             checkStatement(dynamic_pointer_cast<StatementBlock>(statement), returnType);
@@ -77,7 +87,6 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
             checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
             break;
         case StatementKind::MODULE:
-            //checkStatement(dynamic_pointer_cast<StatementModule>(statement));
             break;
         case StatementKind::REPEAT:
             checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
@@ -109,6 +118,17 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementAssignment> statementAssi
     }
 }
 
+void TypesAnalyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
+    vector<pair<string, shared_ptr<ValueType>>> members;
+    for (auto &member : statementBlob->getMembers())
+        members.push_back(pair(member.first, member.second));
+
+    shared_ptr<ValueType> valueType = ValueType::blob(statementBlob->getName());
+
+    if (!scope->setBlobMembers(statementBlob->getName(), members))
+        markErrorAlreadyDefined(statementBlob->getLine(), statementBlob->getColumn(), statementBlob->getName());
+}
+
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {
     for (shared_ptr<Statement> statement : statementBlock->getStatements())
         checkStatement(statement, returnType);
@@ -125,7 +145,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
     for (auto &argument : statementFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    if (!scope->setFunctionType(statementFunction->getName(), statementFunction->getValueType()))
+    if (!scope->setFunctionType(statementFunction->getName(), statementFunction->getValueType(), true))
         markErrorAlreadyDefined(statementFunction->getLine(), statementFunction->getColumn(), statementFunction->getName());
 
     scope->pushLevel();
@@ -145,8 +165,14 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> stat
 
     string name = importModulePrefix + statementFunctionDeclaration->getName();
 
-    if (!scope->setFunctionType(name, statementFunctionDeclaration->getValueType()))
-        markErrorAlreadyDefined(statementFunctionDeclaration->getLine(), statementFunctionDeclaration->getColumn(), name);
+    if (!scope->setFunctionType(name, statementFunctionDeclaration->getValueType(), false)) {
+        markErrorInvalidType(
+            statementFunctionDeclaration->getLine(),
+            statementFunctionDeclaration->getColumn(),
+            statementFunctionDeclaration->getValueType(),
+            nullptr
+        );
+    }
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
@@ -155,7 +181,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> state
     for (auto &argument : statementMetaExternFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType()))
+    if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType(), false))
         markErrorAlreadyDefined(statementMetaExternFunction->getLine(), statementMetaExternFunction->getColumn(), statementMetaExternFunction->getName());
 }
 
@@ -495,12 +521,14 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
         // check built-in
         bool isData = parentExpression->getValueType()->isData();
         bool isPointer = parentExpression->getValueType()->isPointer();
+        bool isBlob = parentExpression->getValueType()->isBlob();
 
         bool isCount = expressionValue->getIdentifier().compare("count") == 0;
         bool isVal = expressionValue->getIdentifier().compare("val") == 0;
         bool isVadr = expressionValue->getIdentifier().compare("vAdr") == 0;
         bool isAdr = expressionValue->getIdentifier().compare("adr") == 0;
         bool isSize = expressionValue->getIdentifier().compare("size") == 0;
+
 
         if (isData && isCount) {
             expressionValue->valueType = ValueType::INT;
@@ -527,6 +555,23 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
             markErrorInvalidBuiltIn(expressionValue->getLine(), expressionValue->getColumn(), expressionValue->getIdentifier(), parentExpression->getValueType());
             expressionValue->valueType = nullptr;
             return expressionValue->getValueType();
+        // check blob member
+        } else if (isBlob) {
+            optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(parentExpression->getValueType()->getBlobName());
+            if (blobMembers) {
+                for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
+                    if (expressionValue->getIdentifier().compare(blobMember.first) == 0) {
+                        expressionValue->valueType = blobMember.second;
+                        expressionValue->valueKind = ExpressionValueKind::SIMPLE;
+                        return expressionValue->getValueType();
+                    }
+                }
+            }
+            markErrorNotDefined(
+                expressionValue->getLine(),
+                expressionValue->getColumn(),
+                format("{}.{}", parentExpression->getValueType()->getBlobName(), expressionValue->getIdentifier())
+            );
         }
     }
 

@@ -206,3 +206,7 @@ bool ValueType::isPointer() {
 bool ValueType::isFunction() {
     return kind == ValueTypeKind::FUN;
 }
+
+bool ValueType::isBlob() {
+    return kind == ValueTypeKind::BLOB;
+}

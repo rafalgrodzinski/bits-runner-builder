@@ -51,11 +51,13 @@ private:
     vector<shared_ptr<Error>> errors;
     shared_ptr<AnalyzerScope> scope;
     vector<shared_ptr<Statement>> statements;
+    vector<shared_ptr<Statement>> headerStatements;
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
     string importModulePrefix;
 
     void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementAssignment> statementAssignment);
+    void checkStatement(shared_ptr<StatementBlob> statementBlob);
     void checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementFunction> statementFunction);
@@ -104,6 +106,7 @@ private:
 public:
     TypesAnalyzer(
         vector<shared_ptr<Statement>> statements,
+        vector<shared_ptr<Statement>> headerStatements,
         map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
     );
     void checkModule();
