@@ -199,6 +199,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaImport> statementMeta
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType) {
+    scope->pushLevel();
     if (statementRepeat->getInitStatement() != nullptr)
         checkStatement(statementRepeat->getInitStatement(), returnType);
 
@@ -220,7 +221,6 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, 
     }
 
     // body
-    scope->pushLevel();
     checkStatement(statementRepeat->getBodyBlockStatement(), returnType);
     scope->popLevel();
 }
