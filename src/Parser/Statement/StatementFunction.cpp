@@ -1,7 +1,9 @@
 #include "StatementFunction.h"
 
+#include "Parser/Expression/Expression.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementReturn.h"
+#include "Parser/ValueType.h"
 
 StatementFunction::StatementFunction(
     bool shouldExport,
@@ -19,7 +21,7 @@ Statement(StatementKind::FUNCTION, line, column), shouldExport(shouldExport), na
         return;
 
     // add an empty return statement if none is present
-    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(nullptr, line, column);
+    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(Expression::NONE, line, column);
     statements.push_back(statementReturn);
     this->statementBlock = make_shared<StatementBlock>(statements, statementBlock->getLine(), statementBlock->getColumn());
 }
@@ -38,6 +40,14 @@ vector<pair<string, shared_ptr<ValueType>>> StatementFunction::getArguments() {
 
 shared_ptr<ValueType> StatementFunction::getReturnValueType() {
     return returnValueType;
+}
+
+shared_ptr<ValueType> StatementFunction::getValueType() {
+    vector<shared_ptr<ValueType>> argumentTypes;
+    for (auto &argument : arguments)
+        argumentTypes.push_back(argument.second);
+
+    return ValueType::fun(argumentTypes, returnValueType);
 }
 
 shared_ptr<StatementBlock> StatementFunction::getStatementBlock() {

@@ -4,6 +4,8 @@
 #include "Expression.h"
 
 class ExpressionCall: public Expression {
+friend class TypesAnalyzer;
+
 private:
     string name;
     vector<shared_ptr<Expression>> argumentExpressions;

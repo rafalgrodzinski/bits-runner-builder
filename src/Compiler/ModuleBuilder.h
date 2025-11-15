@@ -23,7 +23,7 @@ class Expression;
 class ExpressionGrouping;
 class ExpressionLiteral;
 class ExpressionCompositeLiteral;
-class ExpressionVariable;
+class ExpressionValue;
 class ExpressionCall;
 class ExpressionIfElse;
 class ExpressionBinary;
@@ -34,7 +34,7 @@ class ExpressionCast;
 enum class ExpressionBinaryOperation;
 
 class Statement;
-class StatementImport;
+class StatementMetaImport;
 class StatementFunction;
 class StatementFunctionDeclaration;
 class StatementRawFunction;
@@ -92,7 +92,7 @@ private:
     // Statements
     void buildStatement(shared_ptr<Statement> statement);
     void buildImportStatement(shared_ptr<Statement> statement, string moduleName);
-    void buildImport(shared_ptr<StatementImport> statement);
+    void buildImport(shared_ptr<StatementMetaImport> statement);
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildFunction(shared_ptr<StatementFunction> statement);
     void buildRawFunction(shared_ptr<StatementRawFunction> statement);
@@ -124,7 +124,7 @@ private:
     llvm::Value *valueForBinaryFloat(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForUnary(shared_ptr<ExpressionUnary> expression);
     llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
-    llvm::Value *valueForVariable(shared_ptr<ExpressionVariable> expression);
+    llvm::Value *valueForVariable(shared_ptr<ExpressionValue> expression);
     llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
     llvm::Value *valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression);
     llvm::Value *valueForChained(shared_ptr<ExpressionChained> expression);
@@ -132,8 +132,8 @@ private:
     
     llvm::Value *valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions);
     llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);
-    llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<Expression> expression);
-    llvm::Value *valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionVariable> expression);
+    llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression);
+    llvm::Value *valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
     llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
 
     // Support

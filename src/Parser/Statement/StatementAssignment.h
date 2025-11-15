@@ -4,15 +4,18 @@
 #include "Statement.h"
 
 class Expression;
+class ExpressionChained;
 
 class StatementAssignment: public Statement {
+friend class TypesAnalyzer;
+
 private:
-    vector<shared_ptr<Expression>> chainExpressions;
+    shared_ptr<ExpressionChained> expressionChained;
     shared_ptr<Expression> valueExpression;
 
 public:
-    StatementAssignment(vector<shared_ptr<Expression>> chainExpressions, shared_ptr<Expression> valueExpression, int line, int column);
-    vector<shared_ptr<Expression>> getChainExpressions();
+    StatementAssignment(shared_ptr<ExpressionChained> expressionChained, shared_ptr<Expression> valueExpression, int line, int column);
+    shared_ptr<ExpressionChained> getExpressionChained();
     shared_ptr<Expression> getValueExpression();
 };
 

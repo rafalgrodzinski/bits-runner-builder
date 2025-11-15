@@ -13,19 +13,22 @@ using namespace std;
 enum class ValueTypeKind {
     NONE,
     BOOL,
+    INT,
     U8,
     U32,
     U64,
     S8,
     S32,
     S64,
+    FLOAT,
     F32,
     F64,
     DATA,
     BLOB,
     FUN,
     PTR,
-    LITERAL
+    LITERAL,
+    COMPOSITE
 };
 
 class ValueType {
@@ -40,15 +43,18 @@ private:
 public:
     static shared_ptr<ValueType> NONE;
     static shared_ptr<ValueType> BOOL;
+    static shared_ptr<ValueType> INT;
     static shared_ptr<ValueType> U8;
     static shared_ptr<ValueType> U32;
     static shared_ptr<ValueType> U64;
     static shared_ptr<ValueType> S8;
     static shared_ptr<ValueType> S32;
     static shared_ptr<ValueType> S64;
+    static shared_ptr<ValueType> FLOAT;
     static shared_ptr<ValueType> F32;
     static shared_ptr<ValueType> F64;
     static shared_ptr<ValueType> LITERAL;
+    static shared_ptr<ValueType> COMPOSITE;
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> sizeExpression);
     static shared_ptr<ValueType> blob(string blobName);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
@@ -65,6 +71,14 @@ public:
     string getBlobName();
     vector<shared_ptr<ValueType>> getArgumentTypes();
     shared_ptr<ValueType> getReturnType();
+
+    bool isEqual(shared_ptr<ValueType> other);
+    bool isNumeric();
+    bool isInteger();
+    bool isBool();
+    bool isData();
+    bool isPointer();
+    bool isFunction();
 };
 
 #endif

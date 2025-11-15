@@ -16,7 +16,7 @@ enum class ExpressionKind {
     UNARY,
     BINARY,
     IF_ELSE,
-    VARIABLE,
+    VALUE,
     CALL,
     BLOCK,
     CHAINED,
@@ -24,6 +24,8 @@ enum class ExpressionKind {
 };
 
 class Expression {
+    friend class TypesAnalyzer;
+
 private:
     ExpressionKind kind;
     int line;
