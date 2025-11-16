@@ -17,7 +17,7 @@ enum class StatementKind {
     META_EXTERN_VARIABLE,
     META_IMPORT,
     MODULE,
-    RAW_FUNCTION, // !
+    RAW_FUNCTION,
     REPEAT,
     RETURN,
     VARIABLE,

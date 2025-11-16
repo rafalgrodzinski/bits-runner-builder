@@ -1,5 +1,7 @@
 #include "StatementRawFunction.h"
 
+#include "Parser/ValueType.h"
+
 StatementRawFunction::StatementRawFunction(
     string name,
     string constraints,
@@ -25,6 +27,14 @@ vector<pair<string, shared_ptr<ValueType>>> StatementRawFunction::getArguments()
 
 shared_ptr<ValueType> StatementRawFunction::getReturnValueType() {
     return returnValueType;
+}
+
+shared_ptr<ValueType> StatementRawFunction::getValueType() {
+    vector<shared_ptr<ValueType>> argumentTypes;
+    for (auto &argument : arguments)
+        argumentTypes.push_back(argument.second);
+
+    return ValueType::fun(argumentTypes, returnValueType);
 }
 
 string StatementRawFunction::getRawSource() {

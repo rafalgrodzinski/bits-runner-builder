@@ -30,6 +30,7 @@
 #include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementVariable.h"
@@ -217,6 +218,16 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaImport> statementMeta
     importModulePrefix = "";
 }
 
+void TypesAnalyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
+    // store arguments and return type
+    vector<shared_ptr<ValueType>> argumentTypes;
+    for (auto &argument : statementRawFunction->getArguments())
+        argumentTypes.push_back(argument.second);
+
+    if (!scope->setFunctionType(statementRawFunction->getName(), statementRawFunction->getValueType(), true))
+        markErrorAlreadyDefined(statementRawFunction->getLine(), statementRawFunction->getColumn(), statementRawFunction->getName());
+}
+
 void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType) {
     scope->pushLevel();
     if (statementRepeat->getInitStatement() != nullptr)
@@ -270,7 +281,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
             nullptr
         );
 
-        if (!statementVariable->getExpression()->getValueType()->isEqual(statementVariable->getValueType()))
+        if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType()))
             markErrorInvalidType(statementVariable->getExpression()->getLine(), statementVariable->getExpression()->getColumn(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
     }
 
