@@ -27,6 +27,7 @@
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
+#include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementRepeat.h"
@@ -86,6 +87,9 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
             break;
         case StatementKind::META_EXTERN_FUNCTION:
             checkStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
+            break;
+        case StatementKind::META_EXTERN_VARIABLE:
+            checkStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
             break;
         case StatementKind::META_IMPORT:
             checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
@@ -191,6 +195,13 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> state
 
     if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType(), false))
         markErrorAlreadyDefined(statementMetaExternFunction->getLine(), statementMetaExternFunction->getColumn(), statementMetaExternFunction->getName());
+}
+
+void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
+    string identifier = importModulePrefix + statementMetaExternVariable->getIdentifier();
+
+    if (!scope->setVariableType(identifier, statementMetaExternVariable->getValueType(), false))
+        markErrorAlreadyDefined(statementMetaExternVariable->getLine(), statementMetaExternVariable->getColumn(), identifier);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport) {

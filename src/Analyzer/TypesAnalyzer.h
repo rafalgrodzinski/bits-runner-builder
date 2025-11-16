@@ -64,6 +64,7 @@ private:
     void checkStatement(shared_ptr<StatementFunction> statementFunction);
     void checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
+    void checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
     void checkStatement(shared_ptr<StatementMetaImport> StatementMetaImport);
     void checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
