@@ -556,8 +556,27 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_COUNT;
             return expressionValue->getValueType();
         } else if (isPointer && isVal) {
-            expressionValue->valueType = parentExpression->getValueType()->getSubType();
-            expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL;
+            switch (expressionValue->getValueKind()) {
+                case ExpressionValueKind::SIMPLE:
+                case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
+                    expressionValue->valueType = parentExpression->getValueType()->getSubType();
+                    expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_SIMPLE;
+                    break;
+                case ExpressionValueKind::DATA:
+                case ExpressionValueKind::BUILT_IN_VAL_DATA:
+                    expressionValue->valueType = parentExpression->getValueType()->getSubType()->getSubType();
+                    expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_DATA;
+                    break;
+                default:
+                    expressionValue->valueType = nullptr;
+                    markErrorInvalidBuiltIn(
+                        expressionValue->getLine(),
+                        expressionValue->getColumn(),
+                        expressionValue->getIdentifier(),
+                        parentExpression->getValueType()
+                    );
+                    break;
+            }
             return expressionValue->getValueType();
         } else if (isPointer && isVadr) {
             expressionValue->valueType = ValueType::INT;
@@ -674,6 +693,9 @@ bool TypesAnalyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation ope
         // Valid operations for boolean types
         case ValueTypeKind::BOOL: {
             switch (operation) {
+                case ExpressionBinaryOperation::EQUAL:
+                case ExpressionBinaryOperation::NOT_EQUAL:
+
                 case ExpressionBinaryOperation::OR:
                 case ExpressionBinaryOperation::XOR:
                 case ExpressionBinaryOperation::AND:

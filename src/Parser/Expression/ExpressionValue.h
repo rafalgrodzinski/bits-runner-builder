@@ -5,7 +5,8 @@
 
 enum class ExpressionValueKind {
     BUILT_IN_COUNT,
-    BUILT_IN_VAL,
+    BUILT_IN_VAL_SIMPLE,
+    BUILT_IN_VAL_DATA,
     BUILT_IN_VADR,
     BUILT_IN_ADR,
     BUILT_IN_SIZE,

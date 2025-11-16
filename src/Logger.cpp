@@ -689,7 +689,8 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
         case ExpressionValueKind::BUILT_IN_COUNT:
         case ExpressionValueKind::BUILT_IN_SIZE:
         case ExpressionValueKind::BUILT_IN_VADR:
-        case ExpressionValueKind::BUILT_IN_VAL:
+        case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
+        case ExpressionValueKind::BUILT_IN_VAL_DATA:
             line = expression->getIdentifier();
             break;
         case ExpressionValueKind::DATA:
