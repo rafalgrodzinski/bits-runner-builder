@@ -58,6 +58,7 @@ private:
     void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementAssignment> statementAssignment);
     void checkStatement(shared_ptr<StatementBlob> statementBlob);
+    void checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
     void checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementFunction> statementFunction);

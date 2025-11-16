@@ -21,6 +21,7 @@
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"
+#include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
@@ -67,6 +68,9 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
             break;
         case StatementKind::BLOB:
             checkStatement(dynamic_pointer_cast<StatementBlob>(statement));
+            break;
+        case StatementKind::BLOB_DECLARATION:
+            checkStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
             break;
         case StatementKind::BLOCK:
             checkStatement(dynamic_pointer_cast<StatementBlock>(statement), returnType);
@@ -125,8 +129,12 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 
     shared_ptr<ValueType> valueType = ValueType::blob(statementBlob->getName());
 
-    if (!scope->setBlobMembers(statementBlob->getName(), members))
+    if (!scope->setBlobMembers(statementBlob->getName(), members, true))
         markErrorAlreadyDefined(statementBlob->getLine(), statementBlob->getColumn(), statementBlob->getName());
+}
+
+void TypesAnalyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
+    scope->setBlobMembers(statementBlobDeclaration->getName(), {}, false);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {
@@ -151,7 +159,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
     scope->pushLevel();
     // register arguments as variables
     for (auto &argument : statementFunction->getArguments())
-        scope->setVariableType(argument.first, argument.second);
+        scope->setVariableType(argument.first, argument.second, true);
 
     checkStatement(statementFunction->getStatementBlock(), statementFunction->getReturnValueType());
     scope->popLevel();
@@ -255,14 +263,14 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
             markErrorInvalidType(statementVariable->getExpression()->getLine(), statementVariable->getExpression()->getColumn(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
     }
 
-    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType()))
+    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType(), true))
         markErrorAlreadyDefined(statementVariable->getLine(), statementVariable->getColumn(), statementVariable->getIdentifier());
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     string identifier = importModulePrefix + statementVariableDeclaration->getIdentifier();
 
-    if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType()))
+    if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
         markErrorAlreadyDefined(statementVariableDeclaration->getLine(), statementVariableDeclaration->getColumn(), identifier);
 }
 

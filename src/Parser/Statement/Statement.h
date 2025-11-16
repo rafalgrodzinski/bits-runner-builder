@@ -8,7 +8,7 @@ using namespace std;
 enum class StatementKind {
     ASSIGNMENT,
     BLOB,
-    BLOB_DECLARATION, // !
+    BLOB_DECLARATION,
     BLOCK,
     EXPRESSION,
     FUNCTION,
