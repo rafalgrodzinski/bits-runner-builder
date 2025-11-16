@@ -403,6 +403,10 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression) {
+    // if the first expression ina chain is a cast, we may want to do a built-in operation on it
+    if (parentExpression == nullptr)
+        return expressionCast->getValueType();
+
     bool isSourceNumeric = parentExpression->getValueType()->isNumeric();
 
     bool areNumeric = parentExpression->getValueType()->isNumeric() && expressionCast->getValueType()->isNumeric();

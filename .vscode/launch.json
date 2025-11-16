@@ -10,7 +10,8 @@
             //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/callback/main.brc", "${workspaceFolder}/samples/callback/io.brc", "${workspaceFolder}/samples/callback/utils.brc"],
             //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/fizz_buzz/main.brc"],
             //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/linked_list/main.brc", "${workspaceFolder}/samples/linked_list/io.brc"],
-            "args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/merge_sort/main.brc", "${workspaceFolder}/samples/merge_sort/io.brc"],
+            //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/merge_sort/main.brc", "${workspaceFolder}/samples/merge_sort/io.brc"],
+            "args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/primes/main.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }
