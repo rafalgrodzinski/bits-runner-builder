@@ -1,22 +1,13 @@
-@extern malloc fun: size u64 -> u64
+@extern putchar fun: character u64 -> u32
 
-user blob
-    name data<u64, 16>
-    id u64
-    next ptr<blob<user>>
+print fun: text data<u64, 16>
+    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
+        putchar(text[i])
+    ;
 ;
 
-newUser fun: userPtrPtr ptr<ptr<blob<user>>>, name data<u64, 16>, id u64
-    newUserPtr ptr<blob<user>> <- { malloc(130) }
-    newUserPtr.val <- { name, id, { 0x00 } }
+@export main fun -> u32
+    print("Hello, world!\n")
 
-    if userPtrPtr.val.vAdr = 0x00
-        userPtrPtr.val <- newUserPtr
-    else
-        userPtr ptr<blob<user>> <- userPtrPtr.val
-        rep userPtr.val.next.vAdr != 0x00
-            userPtr <- userPtr.val.next
-        ;
-        userPtr.val.next <- newUserPtr
-    ;
+    ret 0
 ;

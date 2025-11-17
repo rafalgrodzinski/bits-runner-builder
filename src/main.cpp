@@ -280,7 +280,7 @@ int main(int argc, char **argv) {
     }
 
     // Specify code generator for deired target
-    /*CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
+    CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
     for (const auto &statementsEntry : statementsMap) {
         time_t timeStamp;
@@ -319,7 +319,7 @@ int main(int argc, char **argv) {
 
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
-    }*/
+    }
     totalTimeStamp = clock() - totalTimeStamp;
 
     if (verbosity >= Verbosity::V2) {

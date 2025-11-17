@@ -87,8 +87,11 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     // verify module
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
-    if (llvm::verifyModule(*module, &llvmErrorMessage))
+    if (llvm::verifyModule(*module, &llvmErrorMessage)) {
+        if (errorMessage.at(errorMessage.length() - 1) == '\n')
+            errorMessage = errorMessage.substr(0, errorMessage.length() - 1);
         markModuleError(errorMessage);
+    }
 
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
@@ -319,8 +322,11 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     // verify function
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
-    if (llvm::verifyFunction(*fun, &llvmErrorMessage))
+    if (llvm::verifyFunction(*fun, &llvmErrorMessage)) {
+        if (errorMessage.at(errorMessage.length() - 1) == '\n')
+            errorMessage = errorMessage.substr(0, errorMessage.length() - 1);
         markFunctionError(statement->getName(), errorMessage);
+    }
 }
 
 void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
