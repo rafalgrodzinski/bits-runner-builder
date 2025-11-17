@@ -1294,10 +1294,12 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
     if (expressionVariable != nullptr) {
         switch (expressionVariable->getValueKind()) {
             case ExpressionValueKind::FUN:
-            case ExpressionValueKind::SIMPLE: {
+            case ExpressionValueKind::SIMPLE:
+            case ExpressionValueKind::BUILT_IN_VAL_SIMPLE: {
                 return builder->CreateLoad(sourceType, sourceValue, expressionVariable->getIdentifier());
             }
-            case ExpressionValueKind::DATA: {
+            case ExpressionValueKind::DATA: 
+            case ExpressionValueKind::BUILT_IN_VAL_DATA: {
                 llvm::Value *indexValue = valueForExpression(expressionVariable->getIndexExpression());
                 llvm::Value *index[] = {
                     builder->getInt32(0),
