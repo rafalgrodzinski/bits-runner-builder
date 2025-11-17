@@ -24,5 +24,6 @@ public:
     string getConstraints();
     vector<pair<string, shared_ptr<ValueType>>> getArguments();
     shared_ptr<ValueType> getReturnValueType();
+    shared_ptr<ValueType> getValueType();
     string getRawSource();
 };

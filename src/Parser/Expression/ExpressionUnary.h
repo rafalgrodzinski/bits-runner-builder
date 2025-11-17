@@ -4,10 +4,10 @@
 #include "Expression.h"
 
 enum class ExpressionUnaryOperation {
-    NOT,
     BIT_NOT,
-    PLUS,
-    MINUS
+    MINUS,
+    NOT,
+    PLUS
 };
 
 class ExpressionUnary: public Expression {

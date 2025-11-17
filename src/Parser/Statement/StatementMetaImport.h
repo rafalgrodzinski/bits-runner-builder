@@ -3,12 +3,12 @@
 
 #include "Statement.h"
 
-class StatementImport: public Statement {
+class StatementMetaImport: public Statement {
 private:
     string name;
 
 public:
-    StatementImport(string name, int line, int column);
+    StatementMetaImport(string name, int line, int column);
     string getName();
 };
 

@@ -4,13 +4,23 @@
 #include <sstream>
 
 #include "Error.h"
+#include "Parser/Expression/Expression.h"
+#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionUnary.h"
+#include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionValue.h"
+#include "Parser/Expression/ExpressionGrouping.h"
+#include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
+#include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCast.h"
 
-#include "Lexer/Token.h"
-#include "Parser/ValueType.h"
-
+#include "Parser/Parsee/Parsee.h"
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
-#include "Parser/Statement/StatementImport.h"
+#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
@@ -26,18 +36,8 @@
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementExpression.h"
 
-#include "Parser/Expression/Expression.h"
-#include "Parser/Expression/ExpressionBinary.h"
-#include "Parser/Expression/ExpressionUnary.h"
-#include "Parser/Expression/ExpressionIfElse.h"
-#include "Parser/Expression/ExpressionVariable.h"
-#include "Parser/Expression/ExpressionGrouping.h"
-#include "Parser/Expression/ExpressionLiteral.h"
-#include "Parser/Expression/ExpressionCompositeLiteral.h"
-#include "Parser/Expression/ExpressionCall.h"
-#include "Parser/Expression/ExpressionBlock.h"
-#include "Parser/Expression/ExpressionChained.h"
-#include "Parser/Expression/ExpressionCast.h"
+#include "Lexer/Token.h"
+#include "Parser/ValueType.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -175,7 +175,7 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::MODULE:
             return toString(dynamic_pointer_cast<StatementModule>(statement), indents);
         case StatementKind::META_IMPORT:
-            return toString(dynamic_pointer_cast<StatementImport>(statement), indents);
+            return toString(dynamic_pointer_cast<StatementMetaImport>(statement), indents);
         case StatementKind::META_EXTERN_VARIABLE:
             return toString(dynamic_pointer_cast<StatementMetaExternVariable>(statement), indents);
         case StatementKind::META_EXTERN_FUNCTION:
@@ -250,7 +250,7 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementImport> statement, vector<IndentKind> indents) {
+string Logger::toString(shared_ptr<StatementMetaImport> statement, vector<IndentKind> indents) {
     string line = format("@IMPORT `{}`", statement->getName());
     return formattedLine(line, indents);
 }
@@ -449,12 +449,7 @@ string Logger::toString(shared_ptr<StatementAssignment> statement, vector<Indent
     string line;
 
     // left hand
-    int expressionsCount = statement->getChainExpressions().size();
-    for (int i=0; i<expressionsCount; i++) {
-        line += toString(statement->getChainExpressions().at(i), indents, true);
-        if (i < expressionsCount-1)
-            line += ".";
-    }
+    line += toString(statement->getExpressionChained(), indents, true);
 
     line += " ← ";
 
@@ -536,8 +531,8 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
             return toString(dynamic_pointer_cast<ExpressionUnary>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::IF_ELSE:
             return toString(dynamic_pointer_cast<ExpressionIfElse>(expression), indents, isInline);
-        case ExpressionKind::VARIABLE:
-            return toString(dynamic_pointer_cast<ExpressionVariable>(expression), isInline ? vector<IndentKind>() : indents);
+        case ExpressionKind::VALUE:
+            return toString(dynamic_pointer_cast<ExpressionValue>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::GROUPING:
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::LITERAL:
@@ -666,7 +661,7 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
 
     text += formattedLine("THEN", indents);
     indents = adjustedLastIndent(indents);
-    text += toString(expression->getThenBlockExpression(), indents);
+    text += toString(expression->getThenExpression(), indents, false);
 
     // else
     if (expression->getElseExpression() != nullptr) {
@@ -686,15 +681,26 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
     return text;
 }
 
-string Logger::toString(shared_ptr<ExpressionVariable> expression, vector<IndentKind> indents) {
+string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents) {
     string line;
 
-    switch (expression->getVariableKind()) {
-        case ExpressionVariableKind::SIMPLE:
+    switch (expression->getValueKind()) {
+        case ExpressionValueKind::BUILT_IN_ADR:
+        case ExpressionValueKind::BUILT_IN_COUNT:
+        case ExpressionValueKind::BUILT_IN_SIZE:
+        case ExpressionValueKind::BUILT_IN_VADR:
+        case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
+        case ExpressionValueKind::BUILT_IN_VAL_DATA:
+            line = expression->getIdentifier();
+            break;
+        case ExpressionValueKind::DATA:
+            line = format("`{}`[{}]", expression->getIdentifier(), toString(expression->getIndexExpression(), indents, true));
+            break;
+        case ExpressionValueKind::FUN:
             line = format("`{}`", expression->getIdentifier());
             break;
-        case ExpressionVariableKind::DATA:
-            line = format("`{}`[{}]", expression->getIdentifier(), toString(expression->getIndexExpression(), indents, true));
+        case ExpressionValueKind::SIMPLE:
+            line = format("`{}`", expression->getIdentifier());
             break;
     }
 
@@ -713,14 +719,11 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
         case LiteralKind::BOOL:
             line = expression->getBoolValue() ? "true" : "false";
             break;
-        case LiteralKind::UINT:
-            line = to_string(expression->getUIntValue());
-            break;
-        case LiteralKind::SINT:
-            line = to_string(expression->getSIntValue());
-            break;
         case LiteralKind::FLOAT:
             line = to_string(expression->getFloatValue());
+            break;
+        case LiteralKind::INT:
+            line = to_string(expression->getSIntValue());
             break;
     }
 
@@ -791,6 +794,11 @@ string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentK
     int expressionsCount = expression->getChainExpressions().size();
     for (int i=0; i<expressionsCount; i++) {
         line += toString(expression->getChainExpressions().at(i), indents, true);
+
+        // Need to remove the last new line if present (for example block adds it) 
+        if (line.at(line.length() - 1) == '\n')
+            line = line.substr(0, line.length() - 1);
+
         if (i < expressionsCount-1)
             line += ".";
     }
@@ -801,55 +809,6 @@ string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentK
 string Logger::toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents) {
     string line = toString(expression->getValueType());
     return formattedLine(line, indents);
-}
-
-string Logger::toString(shared_ptr<ValueType> valueType) {
-    if (valueType == nullptr)
-        return "{INVALID}";
-
-    switch (valueType->getKind()) {
-        case ValueTypeKind::NONE:
-            return "NONE";
-        case ValueTypeKind::BOOL:
-            return "BOOL";
-        case ValueTypeKind::U8:
-            return "U8";
-        case ValueTypeKind::U32:
-            return "U32";
-        case ValueTypeKind::U64:
-            return "U64";
-        case ValueTypeKind::S8:
-            return "S8";
-        case ValueTypeKind::S32:
-            return "S32";
-        case ValueTypeKind::S64:
-            return "S64";
-        case ValueTypeKind::F32:
-            return "F32";
-        case ValueTypeKind::F64:
-            return "F64";
-        case ValueTypeKind::DATA:
-            return format("DATA<{}>", toString(valueType->getSubType()));
-        case ValueTypeKind::BLOB:
-            return format("BLOB<`{}`>", valueType->getBlobName());
-        case ValueTypeKind::FUN: {
-            string text = "FUN";
-            // args
-            for (int i=0; i<valueType->getArgumentTypes().size(); i++) {
-                if (i > 0)
-                    text += ",";
-                text += format(" {}", toString(valueType->getArgumentTypes().at(i)));
-            }
-            // return
-            if (valueType->getReturnType() != nullptr)
-                text += format(" -> {}", toString(valueType->getReturnType()));
-            return text;
-        }
-        case ValueTypeKind::PTR:
-            return format("PTR<{}>", toString(valueType->getSubType()));
-        case ValueTypeKind::LITERAL:
-            return "LITERAL";
-    }
 }
 
 string Logger::formattedLine(string line, vector<IndentKind> indents) {
@@ -1079,6 +1038,22 @@ void Logger::print(vector<shared_ptr<Token>> tokens) {
         cout << endl;
 }
 
+string Logger::toString(ExpressionUnaryOperation operationUnary) {
+    switch (operationUnary) {
+        case ExpressionUnaryOperation::NOT:
+            return "NOT";
+        case ExpressionUnaryOperation::BIT_NOT:
+            return "BIT_NOT";
+        case ExpressionUnaryOperation::PLUS:
+            return "PLUS";
+        case ExpressionUnaryOperation::MINUS:
+            return "MINUS";
+    }
+}
+
+//
+// Public
+//
 void Logger::print(shared_ptr<StatementModule> statement) {
     cout << toString(statement, {IndentKind::ROOT});
 }
@@ -1086,11 +1061,18 @@ void Logger::print(shared_ptr<StatementModule> statement) {
 void Logger::print(shared_ptr<Error> error) {
     string message;
     switch (error->getKind()) {
+        case ErrorKind::MESSAGE: {
+            int line = *(error->getLine()) + 1;
+            int column = *(error->getColumn()) + 1;
+            string errorMessage = *(error->getMessage());
+            message = format("🔥 At line {}, column {}: {}", line, column, errorMessage);
+            break;
+        }
         case ErrorKind::LEXER_ERROR: {
             int line = *(error->getLine()) + 1;
             int column = *(error->getColumn()) + 1;
             string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("💥 At line {}, column {}: Unexpected token \"{}\"", line, column, lexme);
+            message = format("🔥 At line {}, column {}: Unexpected token \"{}\"", line, column, lexme);
             break;
         }
         case ErrorKind::PARSER_ERROR: {
@@ -1101,17 +1083,17 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedParsee) {
                 message = format(
-                    "💥 At line {}, column {}, Expected {} but found {} instead",
+                    "🔥 At line {}, column {}, Expected {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee)), toString(token)
                 );
             } else if (expectedTokenKind) {
                 message = format(
-                    "💥 At line {}, column {}: Expected token {} but found {} instead",
+                    "🔥 At line {}, column {}: Expected token {} but found {} instead",
                     token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
                 );
             } else {
                 message = format(
-                    "💥 At line {}, column {}: Unexpected token {} found",
+                    "🔥 At line {}, column {}: Unexpected token {} found",
                     token->getLine() + 1, token->getColumn() + 1, toString(token)
                 );
             }
@@ -1123,21 +1105,121 @@ void Logger::print(shared_ptr<Error> error) {
             int line = *(error->getLine()) + 1;
             int column = *(error->getColumn()) + 1;
             string errorMessage = *(error->getMessage());
-            message = format("💥 At line {}, column {}: {}", line, column, errorMessage);
+            message = format("🔥 At line {}, column {}: {}", line, column, errorMessage);
             break;
         }
         case ErrorKind::BUILDER_FUNCTION_ERROR: {
             string functionName = *(error->getFunctionName());
             string errorMessage = *(error->getMessage());
-            message = format("💥 Building function \"{}\" failed: {}", functionName, errorMessage);
+            message = format("🔥 Building function \"{}\" failed: {}", functionName, errorMessage);
             break;
         }
         case ErrorKind::BUILDER_MODULE_ERROR: {
             string moduleName = *(error->getModuleName());
             string errorMessage = *(error->getMessage());
-            message = format("💥 Building module \"{}\" failed: {}", moduleName, errorMessage);
+            message = format("🔥 Building module \"{}\" failed: {}", moduleName, errorMessage);
             break;
         }
     }
     cout << message << endl;
+}
+
+string Logger::toString(shared_ptr<ValueType> valueType) {
+    if (valueType == nullptr)
+        return "{INVALID}";
+
+    switch (valueType->getKind()) {
+        case ValueTypeKind::NONE:
+            return "NONE";
+        case ValueTypeKind::BOOL:
+            return "BOOL";
+        case ValueTypeKind::INT:
+            return "INT";
+        case ValueTypeKind::U8:
+            return "U8";
+        case ValueTypeKind::U32:
+            return "U32";
+        case ValueTypeKind::U64:
+            return "U64";
+        case ValueTypeKind::S8:
+            return "S8";
+        case ValueTypeKind::S32:
+            return "S32";
+        case ValueTypeKind::S64:
+            return "S64";
+        case ValueTypeKind::FLOAT:
+            return "FLOAT";
+        case ValueTypeKind::F32:
+            return "F32";
+        case ValueTypeKind::F64:
+            return "F64";
+        case ValueTypeKind::DATA:
+            return format("DATA<{}>", toString(valueType->getSubType()));
+        case ValueTypeKind::BLOB:
+            return format("BLOB<`{}`>", *(valueType->getBlobName()));
+        case ValueTypeKind::FUN: {
+            string text = "FUN";
+            // args
+            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+            for (int i=0; i<argumentTypes.size(); i++) {
+                if (i > 0)
+                    text += ",";
+                text += format(" {}", toString(argumentTypes.at(i)));
+            }
+            // return
+            if (valueType->getReturnType() != nullptr)
+                text += format(" -> {}", toString(valueType->getReturnType()));
+            return text;
+        }
+        case ValueTypeKind::PTR:
+            return format("PTR<{}>", toString(valueType->getSubType()));
+        case ValueTypeKind::COMPOSITE:
+            return format("COMPOSITE");
+    }
+}
+
+string Logger::toString(ExpressionBinaryOperation operationBinary) {
+    switch (operationBinary) {
+        case ExpressionBinaryOperation::OR:
+            return "OR";
+        case ExpressionBinaryOperation::XOR:
+            return "XOR";
+        case ExpressionBinaryOperation::AND:
+            return "AND";
+
+        case ExpressionBinaryOperation::BIT_OR:
+            return "BIT_OR";
+        case ExpressionBinaryOperation::BIT_XOR:
+            return "BIT_XOR";
+        case ExpressionBinaryOperation::BIT_AND:
+            return "BIT_AND";
+        case ExpressionBinaryOperation::BIT_SHL:
+            return "BIT_SHL";
+        case ExpressionBinaryOperation::BIT_SHR:
+            return "BIT_SHR";
+
+        case ExpressionBinaryOperation::EQUAL:
+            return "=";
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return "!=";
+        case ExpressionBinaryOperation::LESS:
+            return "<";
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return "<=";
+        case ExpressionBinaryOperation::GREATER:
+            return ">";
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return ">=";
+
+        case ExpressionBinaryOperation::ADD:
+            return "+";
+        case ExpressionBinaryOperation::SUB:
+            return "-";
+        case ExpressionBinaryOperation::MUL:
+            return "*";
+        case ExpressionBinaryOperation::DIV:
+            return "/";
+        case ExpressionBinaryOperation::MOD:
+            return "%";
+    }
 }

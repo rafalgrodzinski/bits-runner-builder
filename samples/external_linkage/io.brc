@@ -18,7 +18,7 @@
 
     rep biggest > 0, biggest <- biggest / 10
         digit s64 <- number / biggest
-        putchar(digit + '0')
+        putchar((digit + '0').u64)
         number <- number % biggest
     ;
 ;

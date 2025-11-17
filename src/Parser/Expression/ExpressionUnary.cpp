@@ -16,19 +16,15 @@ shared_ptr<ExpressionUnary> ExpressionUnary::expression(shared_ptr<Token> token,
     switch (token->getKind()) {
         case TokenKind::NOT:
             expression->operation = ExpressionUnaryOperation::NOT;
-            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::BIT_NOT:
             expression->operation = ExpressionUnaryOperation::BIT_NOT;
-            expression->valueType = ValueType::BOOL;
             break;
         case TokenKind::PLUS:
             expression->operation = ExpressionUnaryOperation::PLUS;
-            expression->valueType = expression->getValueType();
             break;
         case TokenKind::MINUS:
             expression->operation = ExpressionUnaryOperation::MINUS;
-            expression->valueType = expression->getValueType();
             break;
         default:
             return nullptr;

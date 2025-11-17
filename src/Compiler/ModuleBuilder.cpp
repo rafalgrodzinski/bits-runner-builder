@@ -7,7 +7,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionCompositeLiteral.h"
-#include "Parser/Expression/ExpressionVariable.h"
+#include "Parser/Expression/ExpressionValue.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionBinary.h"
@@ -16,7 +16,7 @@
 #include "Parser/Expression/ExpressionChained.h"
 #include "Parser/Expression/ExpressionCast.h"
 
-#include "Parser/Statement/StatementImport.h"
+#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementRawFunction.h"
@@ -105,7 +105,7 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::META_IMPORT:
-            buildImport(dynamic_pointer_cast<StatementImport>(statement));
+            buildImport(dynamic_pointer_cast<StatementMetaImport>(statement));
             break;
         case StatementKind::FUNCTION_DECLARATION: {
             shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
@@ -212,13 +212,13 @@ void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string
     }
 }
 
-void ModuleBuilder::buildImport(shared_ptr<StatementImport> statement) {
+void ModuleBuilder::buildImport(shared_ptr<StatementMetaImport> statement) {
     auto it = exportedHeaderStatementsMap.find(statement->getName());
     if (it == exportedHeaderStatementsMap.end()) {
         markError(statement->getLine(), statement->getColumn(), format("Module \"{}\" doesn't exist", statement->getName()));
         return;
     }
-    for (shared_ptr<Statement> &importStatement  : it->second) {
+    for (shared_ptr<Statement> &importStatement : it->second) {
         buildImportStatement(importStatement, statement->getName());
     }
 }
@@ -414,8 +414,8 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
                         count = dynamic_pointer_cast<ExpressionCompositeLiteral>(statement->getExpression())->getExpressions().size();
                         break;
                     }
-                    case ExpressionKind::VARIABLE: {
-                        string identifier = dynamic_pointer_cast<ExpressionVariable>(statement->getExpression())->getIdentifier();
+                    case ExpressionKind::VALUE: {
+                        string identifier = dynamic_pointer_cast<ExpressionValue>(statement->getExpression())->getIdentifier();
                         llvm::AllocaInst *alloca = scope->getAlloca(identifier);
                         if (alloca != nullptr && alloca->getAllocatedType()->isArrayTy()) {
                             count = ((llvm::ArrayType*)alloca->getAllocatedType())->getNumElements();
@@ -499,7 +499,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
 }
 
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
-    llvm::Value *targetValue = valueForChainExpressions(statement->getChainExpressions());
+    llvm::Value *targetValue = valueForChainExpressions(statement->getExpressionChained()->getChainExpressions());
     if (targetValue == nullptr)
         return;
 
@@ -526,7 +526,7 @@ void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
 void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
     llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
 
-    if (statement->getExpression() != nullptr) {
+    if (!statement->getExpression()->getValueType()->isEqual(ValueType::NONE)) {
         llvm::Type *returnType = basicBlock->getParent()->getReturnType();
         llvm::Value *returnValue = valueForExpression(statement->getExpression(), returnType);
         builder->CreateRet(returnValue);
@@ -633,7 +633,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             }
             // data <- data
             // copy each value from one allocated array to another allocated array
-            case ExpressionKind::VARIABLE:
+            case ExpressionKind::VALUE:
             // data <- function()
             case ExpressionKind::CALL: 
             // data <- .var
@@ -641,8 +641,8 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 llvm::Value *sourceValue;
                 llvm::Type *sourceType;
 
-                if (valueExpression->getKind() == ExpressionKind::VARIABLE) {
-                    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(valueExpression);
+                if (valueExpression->getKind() == ExpressionKind::VALUE) {
+                    shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(valueExpression);
                     sourceValue = scope->getAlloca(expressionVariable->getIdentifier());
                     if (sourceValue == nullptr)
                         return;
@@ -712,7 +712,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             // blob <- blob
-            case ExpressionKind::VARIABLE:
+            case ExpressionKind::VALUE:
             case ExpressionKind::CHAINED:
             // blob <- function()
             case ExpressionKind::CALL: {
@@ -744,7 +744,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
             }
             // ptr <- ptr
-            case ExpressionKind::VARIABLE:
+            case ExpressionKind::VALUE:
             case ExpressionKind::CHAINED:
             // ptr <- function()
             case ExpressionKind::CALL: {
@@ -773,7 +773,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             // simple <- function call
             case ExpressionKind::CALL:
             // simple <- var
-            case ExpressionKind::VARIABLE:
+            case ExpressionKind::VALUE:
             case ExpressionKind::CHAINED: {
                 llvm::Value *sourceValue = valueForExpression(valueExpression, castToType);
                 if (sourceValue == nullptr)
@@ -808,8 +808,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
             return valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::IF_ELSE:
             return valueForIfElse(dynamic_pointer_cast<ExpressionIfElse>(expression));
-        case ExpressionKind::VARIABLE:
-            return valueForVariable(dynamic_pointer_cast<ExpressionVariable>(expression));
+        case ExpressionKind::VALUE:
+            return valueForVariable(dynamic_pointer_cast<ExpressionValue>(expression));
         case ExpressionKind::CALL:
             return valueForCall(dynamic_pointer_cast<ExpressionCall>(expression));
         case ExpressionKind::CHAINED:
@@ -855,14 +855,14 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
             return nullptr;
     }
 
-    if (expression->getLiteralKind() == LiteralKind::UINT) {
+    if (expression->getLiteralKind() == LiteralKind::INT) {
         if (castToType == nullptr)
             return llvm::ConstantInt::get(typeUInt, expression->getUIntValue(), true);
         else if (castToType == typeBool)
             return nullptr;
     }
 
-    if (expression->getLiteralKind() == LiteralKind::SINT) {
+    if (expression->getLiteralKind() == LiteralKind::INT) {
         if (castToType == nullptr)
             return llvm::ConstantInt::get(typeSInt, expression->getSIntValue(), true);
         else if (castToType == typeBool)
@@ -1096,8 +1096,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     // Then
     scope->pushLevel();
     builder->SetInsertPoint(thenBlock);
-    buildStatement(expression->getThenBlockExpression()->getStatementBlock());
-    llvm::Value *thenValue = valueForExpression(expression->getThenBlockExpression()->getResultStatementExpression()->getExpression());
+    llvm::Value *thenValue = valueForExpression(expression->getThenExpression());
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
     scope->popLevel();
@@ -1130,7 +1129,7 @@ llvm::Value *ModuleBuilder::valueForIfElse(shared_ptr<ExpressionIfElse> expressi
     }
 }
 
-llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionVariable> expression) {
+llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionValue> expression) {
     llvm::Value *value = nullptr;
     llvm::Type *type = nullptr;
 
@@ -1208,7 +1207,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         // If the first expression is a cast, try doing a built-in on a type
         if (currentValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
-            shared_ptr<ExpressionVariable> childExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(++i));
+            shared_ptr<ExpressionValue> childExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
             currentValue = valueForTypeBuiltIn(type, childExpressionVariable);
             continue;
         }
@@ -1236,7 +1235,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         }
 
         // Check parent expression
-        shared_ptr<ExpressionVariable> parentExpressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpressions.at(i-1));
+        shared_ptr<ExpressionValue> parentExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(i-1));
         if (parentExpressionVariable == nullptr) {
             markError(parentExpressionVariable->getLine(), parentExpressionVariable->getColumn(), "Invalid expression type");
             return nullptr;
@@ -1250,7 +1249,7 @@ llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expressio
         }
 
         // Check chained expression type 
-        shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(chainExpression);
+        shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpression);
         if (expressionVariable == nullptr) {
             markError(expressionVariable->getLine(), expressionVariable->getColumn(), "Invalid expression type");
             return nullptr;
@@ -1286,15 +1285,16 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
     if (builder->GetInsertBlock() == nullptr)
         return nullptr;
 
-    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(expression);
+    shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(expression);
     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
 
     if (expressionVariable != nullptr) {
-        switch (expressionVariable->getVariableKind()) {
-            case ExpressionVariableKind::SIMPLE: {
+        switch (expressionVariable->getValueKind()) {
+            case ExpressionValueKind::FUN:
+            case ExpressionValueKind::SIMPLE: {
                 return builder->CreateLoad(sourceType, sourceValue, expressionVariable->getIdentifier());
             }
-            case ExpressionVariableKind::DATA: {
+            case ExpressionValueKind::DATA: {
                 llvm::Value *indexValue = valueForExpression(expressionVariable->getIndexExpression());
                 llvm::Value *index[] = {
                     builder->getInt32(0),
@@ -1369,7 +1369,7 @@ llvm::Constant *ModuleBuilder::constantValueForCompositeLiteral(shared_ptr<Expre
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionVariable> parentExpression, shared_ptr<Expression> expression) {
+llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression) {
     bool isArray = parentValue->getType()->isArrayTy();
     bool isPointer = parentValue->getType()->isPointerTy();
 
@@ -1379,7 +1379,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     bool isAdr = false;
     bool isSize = false;
 
-    shared_ptr<ExpressionVariable> expressionVariable = dynamic_pointer_cast<ExpressionVariable>(expression);
+    shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(expression);
     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
 
     if (expressionVariable != nullptr) {
@@ -1407,7 +1407,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     // Then do the appropriate built-in operation
     if (isArray && isCount) {
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(parentValue->getType());
-        return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements(), 0, 0));
+        return valueForLiteral(ExpressionLiteral::expressionLiteralForInt(arrayType->getNumElements(), 0, 0));
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
@@ -1440,7 +1440,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionVariable> expression) {
+llvm::Value *ModuleBuilder::valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression) {
     bool isSize = expression->getIdentifier().compare("size") == 0;
 
     if (isSize) {
@@ -1628,19 +1628,20 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
         }
         case ValueTypeKind::BLOB:
-            return scope->getStructType(valueType->getBlobName());
+            return scope->getStructType(*(valueType->getBlobName()));
         case ValueTypeKind::FUN: {
             // returnType
             llvm::Type *functionReturnType = typeForValueType(valueType->getReturnType());
 
             // argument types
             vector<llvm::Type *> functionArgumentTypes;
-                for (shared_ptr<ValueType> &argumentType : valueType->getArgumentTypes()) {
-                    llvm::Type *functionArgumentType = typeForValueType(argumentType);
-                        if (functionArgumentType == nullptr)
-                            return nullptr;
-                        functionArgumentTypes.push_back(functionArgumentType);
-                }
+            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+            for (shared_ptr<ValueType> &argumentType : argumentTypes) {
+                llvm::Type *functionArgumentType = typeForValueType(argumentType);
+                    if (functionArgumentType == nullptr)
+                        return nullptr;
+                    functionArgumentTypes.push_back(functionArgumentType);
+            }
 
             return llvm::FunctionType::get(functionReturnType, functionArgumentTypes, false);
         }

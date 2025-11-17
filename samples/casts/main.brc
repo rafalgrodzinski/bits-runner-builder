@@ -19,7 +19,7 @@
 
     // sint
     @io.print("-7.1234 to s64: ")
-    num4 s64 <- -7.1234
+    num4 s64 <- (-7.1234).s64
     @io.printNum(num4)
     @io.printChar('\n')
 

@@ -16,6 +16,7 @@ public:
     string getName();
     vector<pair<string, shared_ptr<ValueType>>> getArguments();
     shared_ptr<ValueType> getReturnValueType();
+    shared_ptr<ValueType> getValueType();
 };
 
 #endif

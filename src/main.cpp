@@ -12,6 +12,8 @@
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
 
+#include "Analyzer/TypesAnalyzer.h"
+
 #include "Compiler/ModuleBuilder.h"
 #include "Compiler/CodeGenerator.h"
 
@@ -187,6 +189,7 @@ int main(int argc, char **argv) {
 
     time_t totalScanTime = 0;
     time_t totalParseTime = 0;
+    time_t totalAnalysisTime = 0;
     time_t totalModuleBuildTime = 0;
     time_t totalCodeGnerationTime = 0;
 
@@ -220,16 +223,6 @@ int main(int argc, char **argv) {
         timeStamp = clock();
         Parser parser(DEFAULT_MODULE_NAME, tokens);
         shared_ptr<StatementModule> statementModule = parser.getStatementModule();
-        timeStamp = clock() - timeStamp;
-        totalParseTime += timeStamp;
-
-        if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Parsed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
-
-        if (verbosity >= Verbosity::V3) {
-            Logger::print(statementModule);
-            cout << endl;
-        }
 
         // Append statements to existing module or create a new one
         if (statementsMap.contains(statementModule->getName())) {
@@ -244,10 +237,50 @@ int main(int argc, char **argv) {
             headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
             exportedHeaderStatementsMap[statementModule->getName()] = statementModule->getExportedHeaderStatements();
         }
+
+        timeStamp = clock() - timeStamp;
+        totalParseTime += timeStamp;
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Parsed \"{}\" in {:.6f} seconds", inputFileNames[i], (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+    }
+
+    // Analysis
+    for (const auto &statementsEntry : statementsMap) {
+        time_t timeStamp;
+    
+        string moduleName = statementsEntry.first;
+        vector<shared_ptr<Statement>> statements = statementsEntry.second;
+        vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
+
+        if (verbosity >= Verbosity::V1)
+            cout << format("🔮 Analyzing module \"{}\"", moduleName) << endl;
+
+        timeStamp = clock();
+        TypesAnalyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
+        typesAnalyzer.checkModule();
+        timeStamp = clock() - timeStamp;
+        totalAnalysisTime += timeStamp;
+
+        if (verbosity >= Verbosity::V2)
+            cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+
+        if (verbosity >= Verbosity::V3) {
+            // reconstruct concatenated module 
+            shared_ptr<StatementModule> statementModule = make_shared<StatementModule>(
+                moduleName,
+                statements,
+                headerStatementsMap[moduleName],
+                vector<shared_ptr<Statement>>(),
+                0,
+                0
+            );
+            Logger::print(statementModule);
+            cout << endl;
+        }
     }
 
     // Specify code generator for deired target
-    CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
+    /*CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
     for (const auto &statementsEntry : statementsMap) {
         time_t timeStamp;
@@ -286,7 +319,7 @@ int main(int argc, char **argv) {
 
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
-    }
+    }*/
     totalTimeStamp = clock() - totalTimeStamp;
 
     if (verbosity >= Verbosity::V2) {
@@ -294,6 +327,7 @@ int main(int argc, char **argv) {
         cout << format("Total: {:.6f} seconds", (float)totalTimeStamp / CLOCKS_PER_SEC) << endl;
         cout << format("Scanning: {:.6f} seconds ({:.2f}%)", (float)totalScanTime / CLOCKS_PER_SEC, (float)totalScanTime / totalTimeStamp * 100) << endl;
         cout << format("Parsing: {:.6f} seconds ({:.2f}%)", (float)totalParseTime / CLOCKS_PER_SEC, (float)totalParseTime / totalTimeStamp * 100) << endl;
+        cout << format("Analysis: {:.6f} seconds ({:.2f}%)", (float)totalAnalysisTime / CLOCKS_PER_SEC, (float)totalAnalysisTime / totalTimeStamp * 100) << endl;
         cout << format("Module building: {:.6f} seconds ({:.2f}%)", (float)totalModuleBuildTime / CLOCKS_PER_SEC, (float)totalModuleBuildTime / totalTimeStamp * 100) << endl;
         cout << format("Code generation: {:.6f} seconds ({:.2f}%)", (float)totalCodeGnerationTime / CLOCKS_PER_SEC, (float)totalCodeGnerationTime / totalTimeStamp * 100) << endl;
     }

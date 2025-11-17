@@ -1,5 +1,16 @@
 #include "Error.h"
 
+#include "Parser/ValueType.h"
+
+shared_ptr<Error> Error::error(int line, int column, string message) {
+    shared_ptr<Error> error = make_shared<Error>();
+    error->kind = ErrorKind::MESSAGE;
+    error->line = line;
+    error->column = column;
+    error->message = message;
+    return error;
+}
+
 shared_ptr<Error> Error::lexerError(int line, int column, string lexme) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::LEXER_ERROR;
@@ -58,15 +69,6 @@ optional<int> Error::getColumn() {
     return column;
 }
 
-optional<string> Error::getFunctionName() {
-    return functionName;
-}
-
-
-optional<string> Error::getModuleName() {
-    return moduleName;
-}
-
 optional<string> Error::getLexme() {
     return lexme;
 }
@@ -81,6 +83,42 @@ optional<TokenKind> Error::getExpectedTokenKind() {
 
 optional<Parsee> Error::getExpectedParsee() {
     return expectedParsee;
+}
+
+shared_ptr<ValueType> Error::getActualType() {
+    return actualType;
+}
+
+shared_ptr<ValueType> Error::getExpectedType() {
+    return expectedType;
+}
+
+shared_ptr<ValueType> Error::getFirstType() {
+    return firstType;
+}
+
+shared_ptr<ValueType> Error::getSecondType() {
+    return secondType;
+}
+
+optional<ExpressionUnaryOperation> Error::getUnaryOperation() {
+    return unaryOperation;
+}
+
+optional<ExpressionBinaryOperation> Error::getBinaryOperation() {
+    return binaryOperation;
+}
+
+optional<string> Error::getIdentifier() {
+    return identifier;
+}
+
+optional<string> Error::getFunctionName() {
+    return functionName;
+}
+
+optional<string> Error::getModuleName() {
+    return moduleName;
 }
 
 optional<string> Error::getMessage() {

@@ -9,21 +9,23 @@ class ValueType;
 using namespace std;
 
 enum class ExpressionKind {
-    NONE,
-    LITERAL,
+    BINARY,
+    BLOCK,
+    CALL,
+    CAST,
+    CHAINED,
     COMPOSITE_LITERAL,
     GROUPING,
-    UNARY,
-    BINARY,
     IF_ELSE,
-    VARIABLE,
-    CALL,
-    BLOCK,
-    CHAINED,
-    CAST
+    LITERAL,
+    NONE,
+    UNARY,
+    VALUE
 };
 
 class Expression {
+    friend class TypesAnalyzer;
+
 private:
     ExpressionKind kind;
     int line;
@@ -38,9 +40,9 @@ public:
     Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, int line, int column);
     virtual ~Expression() { }
     ExpressionKind getKind();
-    shared_ptr<ValueType> getValueType();
     int getLine();
     int getColumn();
+    shared_ptr<ValueType> getValueType();
 };
 
 #endif
