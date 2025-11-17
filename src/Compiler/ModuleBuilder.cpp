@@ -753,6 +753,8 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             // ptr <- function()
             case ExpressionKind::CALL: {
                 llvm::Value *sourceValue = valueForExpression(valueExpression);
+                if (sourceValue == nullptr)
+                    return;
                 builder->CreateStore(sourceValue, targetValue);
                 break;
             }
@@ -1310,6 +1312,7 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
         return valueForCall(sourceValue, funType, expressionCall);
     }
+    return nullptr;
 }
 
 llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
