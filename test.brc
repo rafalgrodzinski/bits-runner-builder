@@ -1,48 +1,50 @@
-@import io
+@module bios_service
 
-@extern malloc fun: size u64 -> u64
+//@import term
 
-user blob
-    name data<u64, 16>
-    id u64
-    next ptr<blob<user>>
+SERVICE_REBOOT u8 <- 0x00
+SERVICE_SET_VIDEO_MODE u8 <- 0x01
+SERVICE_READ_SECTORS u8 <- 0x02
+
+@export VIDEO_MODE_TEXT_80x25 u8 <- 0x00
+@export VIDEO_MODE_TEXT_80x50 u8 <- 0x01
+@export VIDEO_MODE_GPX_320x200x8 u8 <- 0x02
+@export VIDEO_MODE_GPX_640x480x4 u8 <- 0x03
+
+serviceAdr u32
+
+@export init fun: biosServiceAdr u32
+    serviceAdr <- biosServiceAdr
 ;
 
-newUser fun: userPtrPtr ptr<ptr<blob<user>>>, name data<u64, 16>, id u64
-    newUserPtr ptr<blob<user>> <- { malloc(130) }
-    newUserPtr.val <- { name, id, { 0x00 } }
-
-    if userPtrPtr.val.vAdr = 0x00
-        userPtrPtr.val <- newUserPtr
-    else
-        userPtr ptr<blob<user>> <- userPtrPtr.val
-        rep userPtr.val.next.vAdr != 0x00
-            userPtr <- userPtr.val.next
-        ;
-        userPtr.val.next <- newUserPtr
-    ;
+rebootRaw raw<"m,m,~{eax}">: biosServiceAdr u32, serviceNum u8
+    mov ah, $1
+    call $0
 ;
 
-printUsers fun: userPtr ptr<blob<user>>
-    rep userPtr.vAdr != 0x00, userPtr <- userPtr.val.next
-        @io.print("id: ")
-        @io.printNum(userPtr.val.id)
-        @io.print("\n")
-        @io.print("name: ")
-        @io.print(userPtr.val.name)
-        @io.print("\n")
-    ;
+@export reboot fun
+    rebootRaw(serviceAdr, SERVICE_REBOOT)
 ;
 
-@export main fun -> u32
-    userPtr ptr<blob<user>> <- { 0x00 }
-    newUser( { userPtr.adr }, "Bob", 14)
-    newUser( { userPtr.adr }, "John", 7)
-    newUser( { userPtr.adr }, "Alice", 9)
-    newUser( { userPtr.adr }, "Mike", 3)
-    newUser( { userPtr.adr }, "Kuma", 666)
+readSectorsRaw raw<"m, m, m, m, m, m,~{eax},~{ebx},~{ecx},~{edi}">: biosServiceAdr u32, serviceNum u8, driveNumber u8, firstSectorNum u32, sectorsCount u32, targetAddress u32
+    mov ah, $1
+    mov al, $2
+    mov ebx, $3
+    mov ecx, $4
+    mov edi, $5
+    call $0
+;
 
-    printUsers(userPtr)
+@export readSectors fun: driveNum u32, firstSectorNum u32, sectorsCount u32, targetAddress ptr<u8>
+    readSectorsRaw(serviceAdr, SERVICE_READ_SECTORS, driveNum.u8, firstSectorNum, sectorsCount, targetAddress.vAdr)
+;
 
-    ret 0
+setVideoModeRaw raw<"m, m, m">: biosServiceAdr u32, serviceNum u8, modeNum u8
+    mov ah, $1
+    mov al, $2
+    call $0
+;
+
+@export setVideoMode fun: videoMode u8
+    setVideoModeRaw(serviceAdr, SERVICE_SET_VIDEO_MODE, videoMode)
 ;

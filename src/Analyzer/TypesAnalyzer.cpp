@@ -100,6 +100,9 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
         case StatementKind::REPEAT:
             checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
             break;
+        case StatementKind::RAW_FUNCTION:
+            checkStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
+            break;
         case StatementKind::RETURN:
             checkStatement(dynamic_pointer_cast<StatementReturn>(statement), returnType);
             break;
