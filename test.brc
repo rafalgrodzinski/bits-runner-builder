@@ -1,13 +1,8 @@
-@extern putchar fun: character u64 -> u32
+@module stuff
 
-print fun: text data<u64, 16>
-    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
-        putchar(text[i])
-    ;
-;
+@export value u64 <- 3
+@export callback ptr<fun u64>
 
-@export main fun -> u32
-    print("Hello, world!\n")
-
-    ret 0
+@export doStuff fun: arg u64
+    if callback.vAdr != 0: callback.val(arg * value)
 ;

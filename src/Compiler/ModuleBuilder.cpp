@@ -495,10 +495,8 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     llvm::Constant *initConstant = llvm::Constant::getNullValue(type);
     if (statement->getExpression() != nullptr) {
         initConstant = constantValueForExpression(statement->getExpression(), type);
-        if (initConstant == nullptr) {
-            markError(statement->getLine(), statement->getColumn(), "Not a constant expression");
+        if (initConstant == nullptr)
             return;
-        }
     }
 
     global->setInitializer(initConstant);

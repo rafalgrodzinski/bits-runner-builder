@@ -850,7 +850,7 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
     if (!canCast(sourceType, targetType))
         return sourceExpression;
 
-    if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL) {
+    if (sourceExpression->getKind() == ExpressionKind::LITERAL || sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL) {
         sourceExpression->valueType = targetType;
         return sourceExpression;
     }
