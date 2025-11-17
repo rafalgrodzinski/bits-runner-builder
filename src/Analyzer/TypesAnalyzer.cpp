@@ -393,17 +393,18 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
     }
 
     // check arguments count
-    if (valueType->getArgumentTypes().size() != expressionCall->getArgumentExpressions().size()) {
+    vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+    if (argumentTypes.size() != expressionCall->getArgumentExpressions().size()) {
         markErrorInvalidArgumentsCount(
             expressionCall->getLine(),
             expressionCall->getColumn(),
             expressionCall->getArgumentExpressions().size(),
-            valueType->getArgumentTypes().size()
+            argumentTypes.size()
         );
     // check argument types
     } else {
-        for (int i=0; i<valueType->getArgumentTypes().size(); i++) {
-            shared_ptr<ValueType> targetType = valueType->getArgumentTypes().at(i);
+        for (int i=0; i<argumentTypes.size(); i++) {
+            shared_ptr<ValueType> targetType = argumentTypes.at(i);
 
             expressionCall->argumentExpressions[i] = checkAndTryCasting(
                 expressionCall->getArgumentExpressions().at(i),
@@ -545,10 +546,10 @@ shared_ptr<ValueType> TypesAnalyzer::TypesAnalyzer::typeForExpression(shared_ptr
     switch (expressionLiteral->getLiteralKind()) {
         case LiteralKind::BOOL:
             return ValueType::BOOL;
-        case LiteralKind::FLOAT:
-            return ValueType::FLOAT;
         case LiteralKind::INT:
             return ValueType::INT;
+        case LiteralKind::FLOAT:
+            return ValueType::FLOAT;
     }
 }
 
@@ -626,7 +627,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
             return expressionValue->getValueType();
         // check blob member
         } else if (isBlob) {
-            optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(parentExpression->getValueType()->getBlobName());
+            string blobName = *(parentExpression->getValueType()->getBlobName());
+            optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(blobName);
             if (blobMembers) {
                 for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
                     if (expressionValue->getIdentifier().compare(blobMember.first) == 0) {
@@ -639,7 +641,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
             markErrorNotDefined(
                 expressionValue->getLine(),
                 expressionValue->getColumn(),
-                format("{}.{}", parentExpression->getValueType()->getBlobName(), expressionValue->getIdentifier())
+                format("{}.{}", blobName, expressionValue->getIdentifier())
             );
         }
     }

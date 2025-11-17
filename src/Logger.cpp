@@ -1156,14 +1156,15 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::DATA:
             return format("DATA<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::BLOB:
-            return format("BLOB<`{}`>", valueType->getBlobName());
+            return format("BLOB<`{}`>", *(valueType->getBlobName()));
         case ValueTypeKind::FUN: {
             string text = "FUN";
             // args
-            for (int i=0; i<valueType->getArgumentTypes().size(); i++) {
+            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+            for (int i=0; i<argumentTypes.size(); i++) {
                 if (i > 0)
                     text += ",";
-                text += format(" {}", toString(valueType->getArgumentTypes().at(i)));
+                text += format(" {}", toString(argumentTypes.at(i)));
             }
             // return
             if (valueType->getReturnType() != nullptr)
@@ -1172,8 +1173,6 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         }
         case ValueTypeKind::PTR:
             return format("PTR<{}>", toString(valueType->getSubType()));
-        case ValueTypeKind::LITERAL:
-            return "LITERAL";
         case ValueTypeKind::COMPOSITE:
             return format("COMPOSITE");
     }

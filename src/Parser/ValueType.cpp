@@ -15,45 +15,6 @@ shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64
 shared_ptr<ValueType> ValueType::FLOAT = make_shared<ValueType>(ValueTypeKind::FLOAT);
 shared_ptr<ValueType> ValueType::F32 = make_shared<ValueType>(ValueTypeKind::F32);
 shared_ptr<ValueType> ValueType::F64 = make_shared<ValueType>(ValueTypeKind::F64);
-shared_ptr<ValueType> ValueType::LITERAL = make_shared<ValueType>(ValueTypeKind::LITERAL);
-shared_ptr<ValueType> ValueType::COMPOSITE = make_shared<ValueType>(ValueTypeKind::COMPOSITE);
-
-ValueType::ValueType() { }
-ValueType::ValueType(ValueTypeKind kind):
-kind(kind) { }
-
-shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<Expression> sizeExpression) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::DATA;
-    valueType->subType = subType;
-    valueType->sizeExpression = sizeExpression;
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::blob(string blobName) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::BLOB;
-    valueType->blobName = blobName;
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::FUN;
-    valueType->argumentTypes = argumentTypes;
-    if (returnType != nullptr)
-        valueType->returnType = returnType;
-    else
-        valueType->returnType = ValueType::NONE;
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::PTR;
-    valueType->subType = subType;
-    return valueType;
-}
 
 shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
@@ -105,6 +66,39 @@ shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
     return valueType;
 }
 
+shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<Expression> sizeExpression) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::DATA;
+    valueType->subType = subType;
+    valueType->sizeExpression = sizeExpression;
+    return valueType;
+}
+
+shared_ptr<ValueType> ValueType::blob(string blobName) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::BLOB;
+    valueType->blobName = blobName;
+    return valueType;
+}
+
+shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::FUN;
+    valueType->argumentTypes = argumentTypes;
+    if (returnType != nullptr)
+        valueType->returnType = returnType;
+    else
+        valueType->returnType = ValueType::NONE;
+    return valueType;
+}
+
+shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::PTR;
+    valueType->subType = subType;
+    return valueType;
+}
+
 shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> elementTypes) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::COMPOSITE;
@@ -112,6 +106,9 @@ shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> element
     return valueType;
 }
 
+ValueType::ValueType() { }
+ValueType::ValueType(ValueTypeKind kind):
+kind(kind) { }
 
 ValueTypeKind ValueType::getKind() {
     return kind;
@@ -119,10 +116,6 @@ ValueTypeKind ValueType::getKind() {
 
 shared_ptr<ValueType> ValueType::getSubType() {
     return subType;
-}
-
-shared_ptr<Expression> ValueType::getSizeExpression() {
-    return sizeExpression;
 }
 
 int ValueType::getValueArg() {
@@ -133,16 +126,20 @@ int ValueType::getValueArg() {
         return 0;
 }
 
-string ValueType::getBlobName() {
-    return blobName;
+shared_ptr<Expression> ValueType::getSizeExpression() {
+    return sizeExpression;
 }
 
-vector<shared_ptr<ValueType>> ValueType::getArgumentTypes() {
+optional<vector<shared_ptr<ValueType>>> ValueType::getArgumentTypes() {
     return argumentTypes;
 }
 
 shared_ptr<ValueType> ValueType::getReturnType() {
     return returnType;
+}
+
+optional<string> ValueType::getBlobName() {
+    return blobName;
 }
 
 optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() {

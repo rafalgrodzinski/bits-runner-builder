@@ -5,8 +5,8 @@
 
 enum class LiteralKind {
     BOOL,
-    FLOAT,
-    INT
+    INT,
+    FLOAT
 };
 
 class ExpressionLiteral: public Expression {

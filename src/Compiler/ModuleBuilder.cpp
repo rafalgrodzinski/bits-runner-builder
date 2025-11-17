@@ -1628,19 +1628,20 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
         }
         case ValueTypeKind::BLOB:
-            return scope->getStructType(valueType->getBlobName());
+            return scope->getStructType(*(valueType->getBlobName()));
         case ValueTypeKind::FUN: {
             // returnType
             llvm::Type *functionReturnType = typeForValueType(valueType->getReturnType());
 
             // argument types
             vector<llvm::Type *> functionArgumentTypes;
-                for (shared_ptr<ValueType> &argumentType : valueType->getArgumentTypes()) {
-                    llvm::Type *functionArgumentType = typeForValueType(argumentType);
-                        if (functionArgumentType == nullptr)
-                            return nullptr;
-                        functionArgumentTypes.push_back(functionArgumentType);
-                }
+            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+            for (shared_ptr<ValueType> &argumentType : argumentTypes) {
+                llvm::Type *functionArgumentType = typeForValueType(argumentType);
+                    if (functionArgumentType == nullptr)
+                        return nullptr;
+                    functionArgumentTypes.push_back(functionArgumentType);
+            }
 
             return llvm::FunctionType::get(functionReturnType, functionArgumentTypes, false);
         }

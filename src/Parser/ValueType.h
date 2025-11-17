@@ -27,7 +27,6 @@ enum class ValueTypeKind {
     BLOB,
     FUN,
     PTR,
-    LITERAL,
     COMPOSITE
 };
 
@@ -35,10 +34,10 @@ class ValueType {
 private:
     ValueTypeKind kind;
     shared_ptr<ValueType> subType;
-    string blobName;
-    vector<shared_ptr<ValueType>> argumentTypes;
-    shared_ptr<ValueType> returnType;
     shared_ptr<Expression> sizeExpression;
+    optional<vector<shared_ptr<ValueType>>> argumentTypes;
+    shared_ptr<ValueType> returnType;
+    optional<string> blobName;
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes;
 
 public:
@@ -54,25 +53,29 @@ public:
     static shared_ptr<ValueType> FLOAT;
     static shared_ptr<ValueType> F32;
     static shared_ptr<ValueType> F64;
-    static shared_ptr<ValueType> LITERAL;
-    static shared_ptr<ValueType> COMPOSITE;
+
+    static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> sizeExpression);
     static shared_ptr<ValueType> blob(string blobName);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
-    static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes);
 
     ValueType();
     ValueType(ValueTypeKind kind);
 
     ValueTypeKind getKind();
+    // data, pointer
     shared_ptr<ValueType> getSubType();
-    int getValueArg();
+    // data
+    int getValueArg(); // TODO: remove
     shared_ptr<Expression> getSizeExpression();
-    vector<shared_ptr<ValueType>> getArgumentTypes();
+    // function
+    optional<vector<shared_ptr<ValueType>>> getArgumentTypes();
     shared_ptr<ValueType> getReturnType();
-    string getBlobName();
+    // blob
+    optional<string> getBlobName();
+    // composite
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
 
     bool isEqual(shared_ptr<ValueType> other);
