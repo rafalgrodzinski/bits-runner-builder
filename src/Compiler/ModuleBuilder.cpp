@@ -1301,6 +1301,8 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
             case ExpressionValueKind::DATA: 
             case ExpressionValueKind::BUILT_IN_VAL_DATA: {
                 llvm::Value *indexValue = valueForExpression(expressionVariable->getIndexExpression());
+                if (indexValue == nullptr)
+                    return nullptr;
                 llvm::Value *index[] = {
                     builder->getInt32(0),
                     indexValue

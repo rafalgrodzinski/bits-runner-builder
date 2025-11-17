@@ -635,9 +635,17 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
             if (blobMembers) {
                 for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
                     if (expressionValue->getIdentifier().compare(blobMember.first) == 0) {
-                        expressionValue->valueType = blobMember.second;
-                        expressionValue->valueKind = ExpressionValueKind::SIMPLE;
-                        return expressionValue->getValueType();
+                        // found corresponding blob, decide if it's a simple or data access
+                        switch (expressionValue->getValueKind()) {
+                            case ExpressionValueKind::SIMPLE:
+                                expressionValue->valueType = blobMember.second;
+                                return expressionValue->getValueType();
+                            case ExpressionValueKind::DATA:
+                                expressionValue->valueType = blobMember.second->getSubType();
+                                return expressionValue->getValueType();
+                            default:
+                                break;
+                        }
                     }
                 }
             }
