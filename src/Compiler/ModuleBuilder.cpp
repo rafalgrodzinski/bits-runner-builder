@@ -505,7 +505,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
 }
 
 void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
-    llvm::Value *targetValue = valueForChainExpressions(statement->getExpressionChained()->getChainExpressions());
+    llvm::Value *targetValue = valueForChained(statement->getExpressionChained());
     if (targetValue == nullptr)
         return;
 
@@ -1195,18 +1195,15 @@ llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *f
     return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
 }
 
-llvm::Value *ModuleBuilder::valueForChained(shared_ptr<ExpressionChained> expression) {
-    return valueForChainExpressions(expression->getChainExpressions());
-}
-
 llvm::Value *ModuleBuilder::valueForBlock(shared_ptr<ExpressionBlock> expression) {
     buildStatement(expression->getStatementBlock());
     return valueForExpression(expression->getResultStatementExpression()->getExpression());
 }
 
-llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions) {
+llvm::Value *ModuleBuilder::valueForChained(shared_ptr<ExpressionChained> expression) {
     llvm::Value *currentValue = nullptr;
 
+    vector<shared_ptr<Expression>> chainExpressions = expression->getChainExpressions();
     for (int i=0; i<chainExpressions.size(); i++) {
         shared_ptr<Expression> chainExpression = chainExpressions.at(i);
 

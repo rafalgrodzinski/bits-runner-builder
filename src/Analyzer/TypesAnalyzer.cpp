@@ -850,6 +850,11 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
     if (!canCast(sourceType, targetType))
         return sourceExpression;
 
+    if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL) {
+        sourceExpression->valueType = targetType;
+        return sourceExpression;
+    }
+
     shared_ptr<ExpressionChained> targetExpression = make_shared<ExpressionChained>(
         vector<shared_ptr<Expression>>(
             {
