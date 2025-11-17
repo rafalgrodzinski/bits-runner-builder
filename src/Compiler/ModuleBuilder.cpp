@@ -829,7 +829,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
 }
 
 llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType) {
-    llvm::Value *value = nullptr;
+    llvm::Value *value;
     switch (expression->getKind()) {
         case ExpressionKind::LITERAL:
             value = valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression), castToType);
@@ -845,6 +845,9 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
             break;
         case ExpressionKind::UNARY:
             value = valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
+            break;
+        case ExpressionKind::CHAINED:
+            value = valueForChained(dynamic_pointer_cast<ExpressionChained>(expression));
             break;
         default:
             markError(expression->getLine(), expression->getColumn(), "Invalid constant expression");
@@ -900,8 +903,11 @@ llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expr
 }
 
 llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expression) {
-    llvm::Value *leftValue = valueForExpression(expression->getLeft());
-    llvm::Value *rightValue = valueForExpression(expression->getRight());
+    llvm::Type *leftType = typeForValueType(expression->getLeft()->getValueType());
+    llvm::Value *leftValue = valueForExpression(expression->getLeft(), leftType);
+
+    llvm::Type *rightType = typeForValueType(expression->getRight()->getValueType());
+    llvm::Value *rightValue = valueForExpression(expression->getRight(), rightType);
 
     if (leftValue == nullptr || rightValue == nullptr)
         return nullptr;

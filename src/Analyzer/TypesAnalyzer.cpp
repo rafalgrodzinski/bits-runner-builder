@@ -336,14 +336,27 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<Expression> ex
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
     // try auto cross-casting
+    shared_ptr<ValueType> targetType;
+
+    targetType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
+    if (targetType == nullptr) {
+        markErrorInvalidType(expressionBinary->getRight()->getLine(), expressionBinary->getRight()->getColumn(), targetType, nullptr);
+        return nullptr;
+    }
     expressionBinary->left = checkAndTryCasting(
         expressionBinary->getLeft(),
-        typeForExpression(expressionBinary->getRight(), nullptr, nullptr),
+        targetType,
         nullptr
     );
+
+    targetType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
+    if (targetType == nullptr) {
+        markErrorInvalidType(expressionBinary->getLeft()->getLine(), expressionBinary->getLeft()->getColumn(), targetType, nullptr);
+        return nullptr;
+    }
     expressionBinary->right = checkAndTryCasting(
         expressionBinary->getRight(),
-        typeForExpression(expressionBinary->getLeft(), nullptr, nullptr),
+        targetType,
         nullptr
     );
 
@@ -599,6 +612,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
                 case ExpressionValueKind::BUILT_IN_VAL_DATA:
                     expressionValue->valueType = parentExpression->getValueType()->getSubType()->getSubType();
                     expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_DATA;
+                    expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
                     break;
                 default:
                     expressionValue->valueType = nullptr;
@@ -642,6 +656,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
                                 return expressionValue->getValueType();
                             case ExpressionValueKind::DATA:
                                 expressionValue->valueType = blobMember.second->getSubType();
+                                expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
                                 return expressionValue->getValueType();
                             default:
                                 break;
