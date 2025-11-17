@@ -719,14 +719,11 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
         case LiteralKind::BOOL:
             line = expression->getBoolValue() ? "true" : "false";
             break;
-        case LiteralKind::UINT:
-            line = to_string(expression->getUIntValue());
-            break;
-        case LiteralKind::SINT:
-            line = to_string(expression->getSIntValue());
-            break;
         case LiteralKind::FLOAT:
             line = to_string(expression->getFloatValue());
+            break;
+        case LiteralKind::INT:
+            line = to_string(expression->getSIntValue());
             break;
     }
 

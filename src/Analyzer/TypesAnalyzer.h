@@ -31,15 +31,15 @@ class StatementBlock;
 class StatementExpression;
 class StatementFunction;
 class StatementFunctionDeclaration;
-class StatementMetaExternVariable;
 class StatementMetaExternFunction;
+class StatementMetaExternVariable;
 class StatementMetaImport;
 class StatementModule;
 class StatementRawFunction;
 class StatementRepeat;
 class StatementReturn;
-class StatementVariableDeclaration;
 class StatementVariable;
+class StatementVariableDeclaration;
 
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;

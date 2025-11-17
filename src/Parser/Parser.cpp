@@ -457,7 +457,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         if (compositeLiteral != nullptr) {
             valueType = ValueType::data(
                 valueType->getSubType(),
-                ExpressionLiteral::expressionLiteralForUInt(compositeLiteral->getExpressions().size(), line, column)
+                ExpressionLiteral::expressionLiteralForInt(compositeLiteral->getExpressions().size(), line, column)
             );
         }
     }

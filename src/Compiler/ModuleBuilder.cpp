@@ -855,14 +855,14 @@ llvm::Value *ModuleBuilder::valueForLiteral(shared_ptr<ExpressionLiteral> expres
             return nullptr;
     }
 
-    if (expression->getLiteralKind() == LiteralKind::UINT) {
+    if (expression->getLiteralKind() == LiteralKind::INT) {
         if (castToType == nullptr)
             return llvm::ConstantInt::get(typeUInt, expression->getUIntValue(), true);
         else if (castToType == typeBool)
             return nullptr;
     }
 
-    if (expression->getLiteralKind() == LiteralKind::SINT) {
+    if (expression->getLiteralKind() == LiteralKind::INT) {
         if (castToType == nullptr)
             return llvm::ConstantInt::get(typeSInt, expression->getSIntValue(), true);
         else if (castToType == typeBool)
@@ -1407,7 +1407,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     // Then do the appropriate built-in operation
     if (isArray && isCount) {
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(parentValue->getType());
-        return valueForLiteral(ExpressionLiteral::expressionLiteralForUInt(arrayType->getNumElements(), 0, 0));
+        return valueForLiteral(ExpressionLiteral::expressionLiteralForInt(arrayType->getNumElements(), 0, 0));
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
