@@ -118,9 +118,6 @@ llvm::Value *Scope::getGlobal(string identifier) {
 }
 
 bool Scope::setStruct(string structName, llvm::StructType *structType, vector<string> memberNames) {
-    if (scopeLevels.top().structTypeMap[structName] != nullptr)
-        return false;
-
     scopeLevels.top().structTypeMap[structName] = structType;
     scopeLevels.top().structMembersMap[structName] = memberNames;
 

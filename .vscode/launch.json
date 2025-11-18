@@ -7,6 +7,8 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/test.brc"],
+            //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/Storage.brc", "${workspaceFolder}/StorageArea.brc", "${workspaceFolder}/StorageDevice.brc"],
+            //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/StorageArea.brc", "${workspaceFolder}/StorageDevice.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }

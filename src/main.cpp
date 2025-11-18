@@ -228,8 +228,16 @@ int main(int argc, char **argv) {
         if (statementsMap.contains(statementModule->getName())) {
             for (shared_ptr<Statement> &statement : statementModule->getStatements())
                 statementsMap[statementModule->getName()].push_back(statement);
-            for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements())
-                headerStatementsMap[statementModule->getName()].push_back(headerStatement);
+            for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements()) {
+                if (headerStatement->getKind() == StatementKind::BLOB_DECLARATION) {
+                    headerStatementsMap[statementModule->getName()].insert(
+                        headerStatementsMap[statementModule->getName()].begin(),
+                        headerStatement
+                    );
+                } else {
+                    headerStatementsMap[statementModule->getName()].push_back(headerStatement);
+                }
+            }
             for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements())
                 exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
         } else {

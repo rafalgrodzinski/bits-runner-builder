@@ -266,6 +266,8 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
 
 void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
     llvm::Function *fun = scope->getFunction(statement->getName());
+    if (fun == nullptr)
+        return;
 
     // Check if function not yet defined
     llvm::BasicBlock &entryBlock = fun->getEntryBlock();
@@ -348,7 +350,8 @@ void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement)
 }
 
 void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement) {
-    llvm::StructType::create(*context, statement->getName());
+    llvm::StructType *structType  = llvm::StructType::create(*context, statement->getName());
+    scope->setStruct(statement->getName(), structType, {});
 }
 
 void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
@@ -1425,7 +1428,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
-        shared_ptr<ValueType> pointeeValueType = scope->getPtrType(parentExpression->getIdentifier())->getSubType();
+        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
         if (pointeeValueType == nullptr) {
             markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
             return nullptr;
