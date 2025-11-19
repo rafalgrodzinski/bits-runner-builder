@@ -40,9 +40,6 @@ public:
     bool setInlineAsm(string name, llvm::InlineAsm *inlineAsm);
     llvm::InlineAsm *getInlineAsm(string name);
 
-/*    bool setPtrType(string identifier, shared_ptr<ValueType> ptrType);
-    shared_ptr<ValueType> getPtrType(string identifier);*/
-
     bool setGlobal(string identifier, llvm::Value *global);
     llvm::Value *getGlobal(string identifier);
 
