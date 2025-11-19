@@ -298,12 +298,6 @@ void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
         llvm::Type *type = argTypes[i];
         arg.setName(name);
 
-        if (type->isPointerTy()) {
-            shared_ptr<ValueType> valueType = statement->getArguments().at(i).second;
-            if(!scope->setPtrType(name, valueType))
-                return;
-        }
-
         llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, name);
         if (!scope->setAlloca(name, alloca))
             return;
@@ -400,7 +394,6 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
 
     // register
     scope->setGlobal(internalName, global);
-    scope->setPtrType(internalName, valueType);
 }
 
 void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
@@ -460,8 +453,6 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
             valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            if (!scope->setPtrType(statement->getIdentifier(), statement->getValueType()))
-                return;
             alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
         }
@@ -491,7 +482,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     }
 
     // type
-    shared_ptr<ValueType> valueType = scope->getPtrType(statement->getIdentifier());
+    shared_ptr<ValueType> valueType = statement->getValueType();
     llvm::Type *type = typeForValueType(valueType);
 
     // initialization
@@ -1155,7 +1146,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionValue> express
         value = localAlloca;
         type = localAlloca->getAllocatedType();
     } else if (globalValuePtr != nullptr) {
-        shared_ptr<ValueType> valueType = scope->getPtrType(expression->getIdentifier());
+        shared_ptr<ValueType> valueType = expression->getValueType();
         type = typeForValueType(valueType);
         value = globalValuePtr;
     } else if (fun != nullptr) {

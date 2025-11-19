@@ -75,27 +75,6 @@ llvm::InlineAsm *Scope::getInlineAsm(string name) {
     return nullptr;
 }
 
-bool Scope::setPtrType(string identifier, shared_ptr<ValueType> ptrType) {
-    if (scopeLevels.top().ptrTypeMap[identifier] != nullptr)
-        return false;
-
-    scopeLevels.top().ptrTypeMap[identifier] = ptrType;
-    return true;
-}
-
-shared_ptr<ValueType> Scope::getPtrType(string name) {
-    stack<ScopeLevel> scopeLevels = this->scopeLevels;
-
-    while (!scopeLevels.empty()) {
-        shared_ptr<ValueType> ptrType = scopeLevels.top().ptrTypeMap[name];
-        if (ptrType != nullptr)
-            return ptrType;
-        scopeLevels.pop();
-    }
-
-    return nullptr;
-}
-
 bool Scope::setGlobal(string identifier, llvm::Value *global) {
     if (scopeLevels.top().globalMap[identifier] != nullptr)
         return false;
