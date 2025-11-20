@@ -20,7 +20,6 @@ private:
         map<string, llvm::InlineAsm*> rawFunMap;
         map<string, llvm::StructType*> structTypeMap;
         map<string, vector<string>> structMembersMap;
-        map<string, shared_ptr<ValueType>> ptrTypeMap;
         map<string, llvm::Value*> globalMap;
     } ScopeLevel;
 
@@ -40,9 +39,6 @@ public:
 
     bool setInlineAsm(string name, llvm::InlineAsm *inlineAsm);
     llvm::InlineAsm *getInlineAsm(string name);
-
-    bool setPtrType(string identifier, shared_ptr<ValueType> ptrType);
-    shared_ptr<ValueType> getPtrType(string identifier);
 
     bool setGlobal(string identifier, llvm::Value *global);
     llvm::Value *getGlobal(string identifier);

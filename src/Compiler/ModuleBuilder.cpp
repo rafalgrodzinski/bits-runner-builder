@@ -87,8 +87,11 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     // verify module
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);
-    if (llvm::verifyModule(*module, &llvmErrorMessage))
+    if (llvm::verifyModule(*module, &llvmErrorMessage)) {
+        if (errorMessage.at(errorMessage.length() - 1) == '\n')
+            errorMessage = errorMessage.substr(0, errorMessage.length() - 1);
         markModuleError(errorMessage);
+    }
 
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
@@ -104,123 +107,368 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
 //
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
-        case StatementKind::META_IMPORT:
-            buildImport(dynamic_pointer_cast<StatementMetaImport>(statement));
-            break;
-        case StatementKind::FUNCTION_DECLARATION: {
-            shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
-            buildFunctionDeclaration(
-                moduleName,
-                statementDeclaration->getName(),
-                statementDeclaration->getShouldExport(),
-                statementDeclaration->getArguments(),
-                statementDeclaration->getReturnValueType()
-            );
-            break;
-        }
-        case StatementKind::FUNCTION:
-            buildFunction(dynamic_pointer_cast<StatementFunction>(statement));
-            break;
-        case StatementKind::RAW_FUNCTION:
-            buildRawFunction(dynamic_pointer_cast<StatementRawFunction>(statement));
-            break;
-        case StatementKind::BLOB_DECLARATION:
-            buildBlobDeclaration(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
+        case StatementKind::ASSIGNMENT:
+            buildStatement(dynamic_pointer_cast<StatementAssignment>(statement));
             break;
         case StatementKind::BLOB:
-            buildBlob(dynamic_pointer_cast<StatementBlob>(statement));
+            buildStatement(dynamic_pointer_cast<StatementBlob>(statement));
             break;
-        case StatementKind::VARIABLE_DECLARATION: {
-            shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
-            buildVariableDeclaration(
-                moduleName,
-                statementDeclaration->getIdentifier(),
-                statementDeclaration->getShouldExport(),
-                statementDeclaration->getValueType()
-            );
-            break;
-        }
-        case StatementKind::VARIABLE:
-            buildVariable(dynamic_pointer_cast<StatementVariable>(statement));
-            break;
-        case StatementKind::ASSIGNMENT:
-            buildAssignmentChained(dynamic_pointer_cast<StatementAssignment>(statement));
+        case StatementKind::BLOB_DECLARATION:
+            buildStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
             break;
         case StatementKind::BLOCK:
-            buildBlock(dynamic_pointer_cast<StatementBlock>(statement));
+            buildStatement(dynamic_pointer_cast<StatementBlock>(statement));
             break;
-        case StatementKind::RETURN:
-            buildReturn(dynamic_pointer_cast<StatementReturn>(statement));
+        case StatementKind::EXPRESSION:
+            buildStatement(dynamic_pointer_cast<StatementExpression>(statement));
+            break;
+        case StatementKind::FUNCTION:
+            buildStatement(dynamic_pointer_cast<StatementFunction>(statement));
+            break;
+        case StatementKind::FUNCTION_DECLARATION:
+            buildStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+            break;
+        case StatementKind::META_EXTERN_FUNCTION:
+            buildStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
+            break;
+        case StatementKind::META_EXTERN_VARIABLE:
+            buildStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
+            break;
+        case StatementKind::META_IMPORT:
+            buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
+            break;
+        case StatementKind::RAW_FUNCTION:
+            buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
             break;
         case StatementKind::REPEAT:
-            buildRepeat(dynamic_pointer_cast<StatementRepeat>(statement));
+            buildStatement(dynamic_pointer_cast<StatementRepeat>(statement));
             break;
-        case StatementKind::META_EXTERN_FUNCTION: {
-            shared_ptr<StatementMetaExternFunction> statementExtern = dynamic_pointer_cast<StatementMetaExternFunction>(statement);
-            buildFunctionDeclaration(
-                "",
-                statementExtern->getName(),
-                true,
-                statementExtern->getArguments(),
-                statementExtern->getReturnValueType()
-            );
+        case StatementKind::RETURN:
+            buildStatement(dynamic_pointer_cast<StatementReturn>(statement));
             break;
-        }
-        case StatementKind::META_EXTERN_VARIABLE: {
-            shared_ptr<StatementMetaExternVariable> statementExtern = dynamic_pointer_cast<StatementMetaExternVariable>(statement);
-            buildVariableDeclaration(
-                "",
-                statementExtern->getIdentifier(),
-                true,
-                statementExtern->getValueType()
-            );
+        case StatementKind::VARIABLE:
+            buildStatement(dynamic_pointer_cast<StatementVariable>(statement));
             break;
-        }
-        case StatementKind::EXPRESSION:
-            buildExpression(dynamic_pointer_cast<StatementExpression>(statement));
-            return;
+        case StatementKind::VARIABLE_DECLARATION:
+            buildStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+            break;
         default:
             markError(statement->getLine(), statement->getColumn(), "Unexpected statement");
     }
 }
 
-void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string moduleName) {
-    switch (statement->getKind()) {
-        case StatementKind::FUNCTION_DECLARATION: {
-            shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
-            buildFunctionDeclaration(
-                moduleName,
-                statementDeclaration->getName(),
-                true,
-                statementDeclaration->getArguments(),
-                statementDeclaration->getReturnValueType()
-            );
-            break;
-        }
-        case StatementKind::VARIABLE_DECLARATION: {
-        shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
-            buildVariableDeclaration(
-                moduleName,
-                statementDeclaration->getIdentifier(),
-                true,
-                statementDeclaration->getValueType()
-            );
-            break;
-        }
-        default:
-            markError(statement->getLine(), statement->getColumn(), "Unexpected imported statement");
+void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssignment) {
+    llvm::Value *targetValue = valueForChained(statementAssignment->getExpressionChained());
+    if (targetValue == nullptr)
+        return;
+
+    // Figure out opearand for the store operation
+    llvm::Value *targetOperand;
+    llvm::LoadInst *targetLoad = llvm::dyn_cast<llvm::LoadInst>(targetValue);
+    if (targetLoad != nullptr)
+        targetOperand = targetLoad->getOperand(0);
+    else
+        targetOperand = targetValue;
+
+    buildAssignment(targetOperand, targetValue->getType(), statementAssignment->getValueExpression());
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
+    llvm::StructType *structType = scope->getStructType(statementBlob->getName());
+    if (structType == nullptr) {
+        markError(statementBlob->getLine(), statementBlob->getColumn(), format("Blob \"{}\" not declared", statementBlob->getName()));
+        return;
+    }
+
+    // Generate types for body
+    vector<string> memberNames;
+    vector<llvm::Type *> types;
+    for (pair<string, shared_ptr<ValueType>> &variable: statementBlob->getMembers()) {
+        memberNames.push_back(variable.first);
+        llvm::Type *type = typeForValueType(variable.second);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+    structType->setBody(types, false);
+    scope->setStruct(statementBlob->getName(), structType, memberNames);
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
+    llvm::StructType *structType = llvm::StructType::create(*context, statementBlobDeclaration->getName());
+    scope->setStruct(statementBlobDeclaration->getName(), structType, {});
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
+    for (shared_ptr<Statement> &innerStatement : statementBlock->getStatements()) {
+        buildStatement(innerStatement);
+        // skip any statements after a retrun (they wont' get exectuted anyway)
+        if (innerStatement->getKind() == StatementKind::RETURN)
+            return;
     }
 }
 
-void ModuleBuilder::buildImport(shared_ptr<StatementMetaImport> statement) {
-    auto it = exportedHeaderStatementsMap.find(statement->getName());
-    if (it == exportedHeaderStatementsMap.end()) {
-        markError(statement->getLine(), statement->getColumn(), format("Module \"{}\" doesn't exist", statement->getName()));
+void ModuleBuilder::buildStatement(shared_ptr<StatementExpression> statementExpression) {
+    // ignore result
+    valueForExpression(statementExpression->getExpression());
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFunction) {
+    // Check if declared
+    llvm::Function *fun = scope->getFunction(statementFunction->getName());
+    if (fun == nullptr) {
+        markErrorNotDeclared(statementFunction->getLine(), statementFunction->getColumn(), format("function \"{}\"", statementFunction->getName()));
         return;
     }
-    for (shared_ptr<Statement> &importStatement : it->second) {
-        buildImportStatement(importStatement, statement->getName());
+
+    // Check if function not yet defined
+    llvm::BasicBlock &entryBlock = fun->getEntryBlock();
+    if (entryBlock.getParent() != nullptr) {
+        markErrorAlreadyDefined(statementFunction->getLine(), statementFunction->getColumn(), format("function \"{}\"", statementFunction->getName()));
+        return;
     }
+    //llvm::Function *par = entryBlock.getParent();
+
+    // define function body
+    llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statementFunction->getName(), fun);
+    builder->SetInsertPoint(block);
+
+    scope->pushLevel();
+
+    // build arguments
+    for (int i=0; i<statementFunction->getArguments().size(); i++) {
+        pair<string, shared_ptr<ValueType>> argument = statementFunction->getArguments().at(i);
+
+        llvm::Argument *funArgument = fun->getArg(i);
+        funArgument->setName(argument.first);
+
+        llvm::Type *funArgumentType = typeForValueType(argument.second);
+        if (funArgumentType == nullptr)
+            return;
+        llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, argument.first);
+        if (!scope->setAlloca(argument.first, alloca)) {
+            // TODO: mark error
+            return;
+        }
+        builder->CreateStore(funArgument, alloca);
+    }
+
+    // build function body
+    buildStatement(statementFunction->getStatementBlock());
+    // Remove extranouse block after the last return statement
+    builder->GetInsertBlock()->eraseFromParent();
+
+    scope->popLevel();
+
+    builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
+
+    // verify function
+    string errorMessage;
+    llvm::raw_string_ostream llvmErrorMessage(errorMessage);
+    if (llvm::verifyFunction(*fun, &llvmErrorMessage)) {
+        if (errorMessage.at(errorMessage.length() - 1) == '\n')
+            errorMessage = errorMessage.substr(0, errorMessage.length() - 1);
+        markFunctionError(statementFunction->getName(), errorMessage);
+    }
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
+    buildFunctionDeclaration(
+        moduleName,
+        statementFunctionDeclaration->getName(),
+        statementFunctionDeclaration->getShouldExport(),
+        statementFunctionDeclaration->getArguments(),
+        statementFunctionDeclaration->getReturnValueType()
+    );
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
+    buildFunctionDeclaration(
+        "",
+        statementMetaExternFunction->getName(),
+        true,
+        statementMetaExternFunction->getArguments(),
+        statementMetaExternFunction->getReturnValueType()
+    );
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
+    buildVariableDeclaration(
+        "",
+        statementMetaExternVariable->getIdentifier(),
+        true,
+        statementMetaExternVariable->getValueType()
+    );
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
+    auto it = exportedHeaderStatementsMap.find(statementMetaImport->getName());
+    if (it == exportedHeaderStatementsMap.end()) {
+        markErrorNotDefined(statementMetaImport->getLine(), statementMetaImport->getColumn(), format("module \"{}\"", statementMetaImport->getName()));
+        return;
+    }
+
+    for (shared_ptr<Statement> &importedStatement : it->second) {
+        switch (importedStatement->getKind()) {
+            case StatementKind::FUNCTION_DECLARATION: {
+                shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(importedStatement);
+                buildFunctionDeclaration(
+                    statementMetaImport->getName(),
+                    statementDeclaration->getName(),
+                    true,
+                    statementDeclaration->getArguments(),
+                    statementDeclaration->getReturnValueType()
+                );
+                break;
+            }
+            case StatementKind::VARIABLE_DECLARATION: {
+                shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(importedStatement);
+                buildVariableDeclaration(
+                    statementMetaImport->getName(),
+                    statementDeclaration->getIdentifier(),
+                    true,
+                    statementDeclaration->getValueType()
+                );
+                break;
+            }
+            default:
+                markError(importedStatement->getLine(), importedStatement->getColumn(), "Unexpected imported statement");
+        }
+    }
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
+    // function types
+    llvm::Type *funReturnType = typeForValueType(statementRawFunction->getReturnValueType());
+    if (funReturnType == nullptr)
+        return;
+
+    vector<llvm::Type *> funArgumentTypes;
+    for (pair<string, shared_ptr<ValueType>> &argument : statementRawFunction->getArguments()) {
+        llvm::Type *funArgumentType = typeForValueType(argument.second);
+        if (funArgumentType == nullptr)
+            return;
+        funArgumentTypes.push_back(funArgumentType);
+    }
+
+    // build function declaration & body
+    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgumentTypes, false);
+    if(llvm::InlineAsm::verify(funType, statementRawFunction->getConstraints())) {
+        markInvalidConstraints(
+            statementRawFunction->getLine(),
+            statementRawFunction->getColumn(),
+            statementRawFunction->getName(),
+            statementRawFunction->getConstraints()
+        );
+        return;
+    }
+    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(
+        funType,
+        statementRawFunction->getRawSource(),
+        statementRawFunction->getConstraints(),
+        true,
+        false,
+        llvm::InlineAsm::AsmDialect::AD_Intel
+    );
+
+    scope->setInlineAsm(statementRawFunction->getName(), rawFun);
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementRepeat> statementRepeat) {
+    shared_ptr<Statement> initStatement = statementRepeat->getInitStatement();
+    shared_ptr<Statement> postStatement = statementRepeat->getPostStatement();
+    shared_ptr<StatementBlock> bodyStatement = statementRepeat->getBodyBlockStatement();
+    shared_ptr<Expression> preExpression = statementRepeat->getPreConditionExpression();
+    shared_ptr<Expression> postExpression = statementRepeat->getPostConditionExpression();
+
+    llvm::Function *fun = builder->GetInsertBlock()->getParent();
+    llvm::BasicBlock *preBlock = llvm::BasicBlock::Create(*context, "loopPre", fun);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, "loopBody");
+    llvm::BasicBlock *afterBlock = llvm::BasicBlock::Create(*context, "loopPost");
+
+    scope->pushLevel();
+
+    // loop init
+    if (initStatement != nullptr)
+        buildStatement(statementRepeat->getInitStatement());
+    
+    // Store the current stack location, stack shouldn't change accross the runs, for example because of allocas
+    llvm::Type *ptrType = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
+    llvm::Function *stackSaveIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(module.get(), llvm::Intrinsic::stacksave, {ptrType});
+    llvm::Value *stackValue = builder->CreateCall(stackSaveIntrinscic);
+
+    builder->CreateBr(preBlock);
+
+    // pre condition
+    builder->SetInsertPoint(preBlock);
+    if (preExpression != nullptr) {
+        llvm::Value *preConditionValue = valueForExpression(preExpression);
+        builder->CreateCondBr(preConditionValue, bodyBlock, afterBlock);
+    } else {
+        builder->CreateBr(bodyBlock);
+    }
+
+    // body
+    fun->insert(fun->end(), bodyBlock);
+    builder->SetInsertPoint(bodyBlock);
+
+    // Restore stack to expected location
+    llvm::Function *stackRestoreIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(module.get(), llvm::Intrinsic::stackrestore, {ptrType});
+    builder->CreateCall(stackRestoreIntrinscic, llvm::ArrayRef({stackValue}));
+
+    buildStatement(bodyStatement);
+
+    // post statement
+    if (postStatement != nullptr)
+        buildStatement(postStatement);
+
+    // post condition
+    if (postExpression != nullptr) {
+        llvm::Value *postConditionValue = valueForExpression(postExpression);
+        builder->CreateCondBr(postConditionValue, preBlock, afterBlock);
+    } else {
+        builder->CreateBr(preBlock);
+    }
+
+    // loop post
+    fun->insert(fun->end(), afterBlock);
+    builder->SetInsertPoint(afterBlock);
+
+    scope->popLevel();
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) {
+    llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
+
+    if (!statementReturn->getExpression()->getValueType()->isEqual(ValueType::NONE)) {
+        llvm::Type *returnType = basicBlock->getParent()->getReturnType();
+        llvm::Value *returnValue = valueForExpression(statementReturn->getExpression(), returnType);
+        builder->CreateRet(returnValue);
+    } else {
+        builder->CreateRetVoid();
+    }
+
+    // Create a new block in case the return is not the last statement
+    llvm::BasicBlock *afterReturnBlock = llvm::BasicBlock::Create(*context, "afterReturnBlock");
+    llvm::Function *fun = basicBlock->getParent();
+    fun->insert(fun->end(), afterReturnBlock);
+    builder->SetInsertPoint(afterReturnBlock);
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementVariable> statementVariable) {
+    if (builder->GetInsertBlock() != nullptr)
+        buildLocalVariable(statementVariable);
+    else
+        buildGlobalVariable(statementVariable);
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
+    buildVariableDeclaration(
+        moduleName,
+        statementVariableDeclaration->getIdentifier(),
+        statementVariableDeclaration->getShouldExport(),
+        statementVariableDeclaration->getValueType()
+    );
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
@@ -261,111 +509,6 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     scope->setFunction(internalName, fun);
 }
 
-void ModuleBuilder::buildFunction(shared_ptr<StatementFunction> statement) {
-    llvm::Function *fun = scope->getFunction(statement->getName());
-
-    // Check if function not yet defined
-    llvm::BasicBlock &entryBlock = fun->getEntryBlock();
-    if (entryBlock.getParent() != nullptr) {
-        markError(statement->getLine(), statement->getColumn(), format("Function \"{}\" already defined in scope", statement->getName()));
-        return;
-    }
-    llvm::Function *par = entryBlock.getParent();
-
-    vector<llvm::Type *> argTypes;
-    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments()) {
-        llvm::Type *argType = typeForValueType(arg.second);
-        if (argType == nullptr)
-            return;
-        argTypes.push_back(argType);
-    }
-
-    // define function body
-    llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statement->getName(), fun);
-    builder->SetInsertPoint(block);
-
-    scope->pushLevel();
-
-    // build arguments
-    int i=0;
-    for (auto &arg : fun->args()) {
-        string name = statement->getArguments()[i].first;
-        llvm::Type *type = argTypes[i];
-        arg.setName(name);
-
-        if (type->isPointerTy()) {
-            shared_ptr<ValueType> valueType = statement->getArguments().at(i).second;
-            if(!scope->setPtrType(name, valueType))
-                return;
-        }
-
-        llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, name);
-        if (!scope->setAlloca(name, alloca))
-            return;
-        builder->CreateStore(&arg, alloca);
-
-        i++;
-    }
-
-    // build function body
-    buildStatement(statement->getStatementBlock());
-    // Remove extranouse block after the last return statement
-    builder->GetInsertBlock()->eraseFromParent();
-
-    scope->popLevel();
-
-    builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
-
-    // verify function
-    string errorMessage;
-    llvm::raw_string_ostream llvmErrorMessage(errorMessage);
-    if (llvm::verifyFunction(*fun, &llvmErrorMessage))
-        markFunctionError(statement->getName(), errorMessage);
-}
-
-void ModuleBuilder::buildRawFunction(shared_ptr<StatementRawFunction> statement) {
-    // function types
-    llvm::Type *returnType = typeForValueType(statement->getReturnValueType());
-    vector<llvm::Type *> argTypes;
-    for (pair<string, shared_ptr<ValueType>> &arg : statement->getArguments())
-        argTypes.push_back(typeForValueType(arg.second));
-
-    // build function declaration & body
-    llvm::FunctionType *funType = llvm::FunctionType::get(returnType, argTypes, false);
-    if(llvm::InlineAsm::verify(funType, statement->getConstraints())) {
-        markError(statement->getLine(), statement->getColumn(), format("Constraints \"{}\", are invalid", statement->getConstraints()));
-        return;
-    }
-    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(funType, statement->getRawSource(), statement->getConstraints(), true, false, llvm::InlineAsm::AsmDialect::AD_Intel);
-
-    scope->setInlineAsm(statement->getName(), rawFun);
-}
-
-void ModuleBuilder::buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement) {
-    llvm::StructType::create(*context, statement->getName());
-}
-
-void ModuleBuilder::buildBlob(shared_ptr<StatementBlob> statement) {
-    llvm::StructType *structType = llvm::StructType::getTypeByName(*context, statement->getName());
-    if (structType == nullptr) {
-        markError(statement->getLine(), statement->getColumn(), format("Blob \"{}\" not declared", statement->getName()));
-        return;
-    }
-
-    // Generate types for body
-    vector<string> memberNames;
-    vector<llvm::Type *> types;
-    for (pair<string, shared_ptr<ValueType>> &variable: statement->getMembers()) {
-        memberNames.push_back(variable.first);
-        llvm::Type *type = typeForValueType(variable.second);
-        if (type == nullptr)
-            return;
-        types.push_back(type);
-    }
-    structType->setBody(types, false);
-    scope->setStruct(statement->getName(), structType, memberNames);
-}
-
 void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType) {
     // symbol name
     string symbolName = name;
@@ -391,14 +534,6 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
 
     // register
     scope->setGlobal(internalName, global);
-    scope->setPtrType(internalName, valueType);
-}
-
-void ModuleBuilder::buildVariable(shared_ptr<StatementVariable> statement) {
-    if (builder->GetInsertBlock() != nullptr)
-        buildLocalVariable(statement);
-    else
-        buildGlobalVariable(statement);
 }
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
@@ -451,8 +586,6 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
             valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
             if (valueType == nullptr)
                 return;
-            if (!scope->setPtrType(statement->getIdentifier(), statement->getValueType()))
-                return;
             alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
             break;
         }
@@ -482,130 +615,18 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     }
 
     // type
-    shared_ptr<ValueType> valueType = scope->getPtrType(statement->getIdentifier());
+    shared_ptr<ValueType> valueType = statement->getValueType();
     llvm::Type *type = typeForValueType(valueType);
 
     // initialization
     llvm::Constant *initConstant = llvm::Constant::getNullValue(type);
     if (statement->getExpression() != nullptr) {
         initConstant = constantValueForExpression(statement->getExpression(), type);
-        if (initConstant == nullptr) {
-            markError(statement->getLine(), statement->getColumn(), "Not a constant expression");
+        if (initConstant == nullptr)
             return;
-        }
     }
 
     global->setInitializer(initConstant);
-}
-
-void ModuleBuilder::buildAssignmentChained(shared_ptr<StatementAssignment> statement) {
-    llvm::Value *targetValue = valueForChainExpressions(statement->getExpressionChained()->getChainExpressions());
-    if (targetValue == nullptr)
-        return;
-
-    // Figure out opearand for the store operation
-    llvm::Value *targetOperand;
-    llvm::LoadInst *targetLoad = llvm::dyn_cast<llvm::LoadInst>(targetValue);
-    if (targetLoad != nullptr)
-        targetOperand = targetLoad->getOperand(0);
-    else
-        targetOperand = targetValue;
-
-    buildAssignment(targetOperand, targetValue->getType(), statement->getValueExpression());
-}
-
-void ModuleBuilder::buildBlock(shared_ptr<StatementBlock> statement) {
-    for (shared_ptr<Statement> &innerStatement : statement->getStatements()) {
-        buildStatement(innerStatement);
-        // skip any statements after a retrun (they wont' get exectuted anyway)
-        if (innerStatement->getKind() == StatementKind::RETURN)
-            return;
-    }
-}
-
-void ModuleBuilder::buildReturn(shared_ptr<StatementReturn> statement) {
-    llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
-
-    if (!statement->getExpression()->getValueType()->isEqual(ValueType::NONE)) {
-        llvm::Type *returnType = basicBlock->getParent()->getReturnType();
-        llvm::Value *returnValue = valueForExpression(statement->getExpression(), returnType);
-        builder->CreateRet(returnValue);
-    } else {
-        builder->CreateRetVoid();
-    }
-
-    // Create a new block in case the return is not the last statement
-    llvm::BasicBlock *afterReturnBlock = llvm::BasicBlock::Create(*context, "afterReturnBlock");
-    llvm::Function *fun = basicBlock->getParent();
-    fun->insert(fun->end(), afterReturnBlock);
-    builder->SetInsertPoint(afterReturnBlock);
-}
-
-void ModuleBuilder::buildRepeat(shared_ptr<StatementRepeat> statement) {
-    shared_ptr<Statement> initStatement = statement->getInitStatement();
-    shared_ptr<Statement> postStatement = statement->getPostStatement();
-    shared_ptr<StatementBlock> bodyStatement= statement->getBodyBlockStatement();
-    shared_ptr<Expression> preExpression = statement->getPreConditionExpression();
-    shared_ptr<Expression> postExpression = statement->getPostConditionExpression();
-
-    llvm::Function *fun = builder->GetInsertBlock()->getParent();
-    llvm::BasicBlock *preBlock = llvm::BasicBlock::Create(*context, "loopPre", fun);
-    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, "loopBody");
-    llvm::BasicBlock *afterBlock = llvm::BasicBlock::Create(*context, "loopPost");
-
-    scope->pushLevel();
-
-    // loop init
-    if (initStatement != nullptr)
-        buildStatement(statement->getInitStatement());
-    
-    // Store the current stack location, stack shouldn't change accross the runs, for example because of allocas
-    llvm::Type *ptrType = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
-    llvm::Function *stackSaveIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(module.get(), llvm::Intrinsic::stacksave, {ptrType});
-    llvm::Value *stackValue = builder->CreateCall(stackSaveIntrinscic);
-
-    builder->CreateBr(preBlock);
-
-    // pre condition
-    builder->SetInsertPoint(preBlock);
-    if (preExpression != nullptr) {
-        llvm::Value *preConditionValue = valueForExpression(preExpression);
-        builder->CreateCondBr(preConditionValue, bodyBlock, afterBlock);
-    } else {
-        builder->CreateBr(bodyBlock);
-    }
-
-    // body
-    fun->insert(fun->end(), bodyBlock);
-    builder->SetInsertPoint(bodyBlock);
-
-    // Restore stack to expected location
-    llvm::Function *stackRestoreIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(module.get(), llvm::Intrinsic::stackrestore, {ptrType});
-    builder->CreateCall(stackRestoreIntrinscic, llvm::ArrayRef({stackValue}));
-
-    buildBlock(bodyStatement);
-
-    // post statement
-    if (postStatement != nullptr)
-        buildStatement(postStatement);
-
-    // post condition
-    if (postExpression != nullptr) {
-        llvm::Value *postConditionValue = valueForExpression(postExpression);
-        builder->CreateCondBr(postConditionValue, preBlock, afterBlock);
-    } else {
-        builder->CreateBr(preBlock);
-    }
-
-    // loop post
-    fun->insert(fun->end(), afterBlock);
-    builder->SetInsertPoint(afterBlock);
-
-    scope->popLevel();
-}
-
-void ModuleBuilder::buildExpression(shared_ptr<StatementExpression> statement) {
-    valueForExpression(statement->getExpression());
 }
 
 void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression) {
@@ -749,6 +770,8 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             // ptr <- function()
             case ExpressionKind::CALL: {
                 llvm::Value *sourceValue = valueForExpression(valueExpression);
+                if (sourceValue == nullptr)
+                    return;
                 builder->CreateStore(sourceValue, targetValue);
                 break;
             }
@@ -823,7 +846,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
 }
 
 llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType) {
-    llvm::Value *value = nullptr;
+    llvm::Value *value;
     switch (expression->getKind()) {
         case ExpressionKind::LITERAL:
             value = valueForLiteral(dynamic_pointer_cast<ExpressionLiteral>(expression), castToType);
@@ -839,6 +862,9 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
             break;
         case ExpressionKind::UNARY:
             value = valueForUnary(dynamic_pointer_cast<ExpressionUnary>(expression));
+            break;
+        case ExpressionKind::CHAINED:
+            value = valueForChained(dynamic_pointer_cast<ExpressionChained>(expression));
             break;
         default:
             markError(expression->getLine(), expression->getColumn(), "Invalid constant expression");
@@ -894,8 +920,11 @@ llvm::Value *ModuleBuilder::valueForGrouping(shared_ptr<ExpressionGrouping> expr
 }
 
 llvm::Value *ModuleBuilder::valueForBinary(shared_ptr<ExpressionBinary> expression) {
-    llvm::Value *leftValue = valueForExpression(expression->getLeft());
-    llvm::Value *rightValue = valueForExpression(expression->getRight());
+    llvm::Type *leftType = typeForValueType(expression->getLeft()->getValueType());
+    llvm::Value *leftValue = valueForExpression(expression->getLeft(), leftType);
+
+    llvm::Type *rightType = typeForValueType(expression->getRight()->getValueType());
+    llvm::Value *rightValue = valueForExpression(expression->getRight(), rightType);
 
     if (leftValue == nullptr || rightValue == nullptr)
         return nullptr;
@@ -1140,7 +1169,7 @@ llvm::Value *ModuleBuilder::valueForVariable(shared_ptr<ExpressionValue> express
         value = localAlloca;
         type = localAlloca->getAllocatedType();
     } else if (globalValuePtr != nullptr) {
-        shared_ptr<ValueType> valueType = scope->getPtrType(expression->getIdentifier());
+        shared_ptr<ValueType> valueType = expression->getValueType();
         type = typeForValueType(valueType);
         value = globalValuePtr;
     } else if (fun != nullptr) {
@@ -1189,18 +1218,15 @@ llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *f
     return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
 }
 
-llvm::Value *ModuleBuilder::valueForChained(shared_ptr<ExpressionChained> expression) {
-    return valueForChainExpressions(expression->getChainExpressions());
-}
-
 llvm::Value *ModuleBuilder::valueForBlock(shared_ptr<ExpressionBlock> expression) {
     buildStatement(expression->getStatementBlock());
     return valueForExpression(expression->getResultStatementExpression()->getExpression());
 }
 
-llvm::Value *ModuleBuilder::valueForChainExpressions(vector<shared_ptr<Expression>> chainExpressions) {
+llvm::Value *ModuleBuilder::valueForChained(shared_ptr<ExpressionChained> expression) {
     llvm::Value *currentValue = nullptr;
 
+    vector<shared_ptr<Expression>> chainExpressions = expression->getChainExpressions();
     for (int i=0; i<chainExpressions.size(); i++) {
         shared_ptr<Expression> chainExpression = chainExpressions.at(i);
 
@@ -1291,11 +1317,15 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
     if (expressionVariable != nullptr) {
         switch (expressionVariable->getValueKind()) {
             case ExpressionValueKind::FUN:
-            case ExpressionValueKind::SIMPLE: {
+            case ExpressionValueKind::SIMPLE:
+            case ExpressionValueKind::BUILT_IN_VAL_SIMPLE: {
                 return builder->CreateLoad(sourceType, sourceValue, expressionVariable->getIdentifier());
             }
-            case ExpressionValueKind::DATA: {
+            case ExpressionValueKind::DATA: 
+            case ExpressionValueKind::BUILT_IN_VAL_DATA: {
                 llvm::Value *indexValue = valueForExpression(expressionVariable->getIndexExpression());
+                if (indexValue == nullptr)
+                    return nullptr;
                 llvm::Value *index[] = {
                     builder->getInt32(0),
                     indexValue
@@ -1309,6 +1339,7 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
         return valueForCall(sourceValue, funType, expressionCall);
     }
+    return nullptr;
 }
 
 llvm::Value *ModuleBuilder::valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
@@ -1411,7 +1442,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
-        shared_ptr<ValueType> pointeeValueType = scope->getPtrType(parentExpression->getIdentifier())->getSubType();
+        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
         if (pointeeValueType == nullptr) {
             markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
             return nullptr;
@@ -1693,4 +1724,20 @@ void ModuleBuilder::markFunctionError(string functionName, string message) {
 
 void ModuleBuilder::markModuleError(string message) {
     errors.push_back(Error::builderModuleError(moduleName, message));
+}
+
+void ModuleBuilder::markErrorAlreadyDefined(int line, int column, string identifier) {
+
+}
+
+void ModuleBuilder::markErrorNotDeclared(int line, int column, string identifier) {
+
+}
+
+void ModuleBuilder::markErrorNotDefined(int line, int column, string identifier) {
+
+}
+
+void ModuleBuilder::markInvalidConstraints(int line, int column, string functionName, string constraints) {
+
 }

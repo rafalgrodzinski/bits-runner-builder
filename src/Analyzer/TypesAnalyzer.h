@@ -9,20 +9,6 @@ class AnalyzerScope;
 class Error;
 class ValueType;
 
-class Expression;
-class ExpressionBinary;
-class ExpressionBlock;
-class ExpressionCall;
-class ExpressionCast;
-class ExpressionChained;
-class ExpressionCompositeLiteral;
-class ExpressionGrouping;
-class ExpressionIfElse;
-class ExpressionLiteral;
-class ExpressionNone;
-class ExpressionUnary;
-class ExpressionValue;
-
 class Statement;
 class StatementAssignment;
 class StatementBlob;
@@ -40,6 +26,20 @@ class StatementRepeat;
 class StatementReturn;
 class StatementVariable;
 class StatementVariableDeclaration;
+
+class Expression;
+class ExpressionBinary;
+class ExpressionBlock;
+class ExpressionCall;
+class ExpressionCast;
+class ExpressionChained;
+class ExpressionCompositeLiteral;
+class ExpressionGrouping;
+class ExpressionIfElse;
+class ExpressionLiteral;
+class ExpressionNone;
+class ExpressionUnary;
+class ExpressionValue;
 
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
