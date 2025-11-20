@@ -308,8 +308,33 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
         return;
     }
 
-    for (shared_ptr<Statement> &importStatement : it->second)
-        buildImportStatement(importStatement, statementMetaImport->getName());
+    for (shared_ptr<Statement> &importedStatement : it->second) {
+        switch (importedStatement->getKind()) {
+            case StatementKind::FUNCTION_DECLARATION: {
+                shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(importedStatement);
+                buildFunctionDeclaration(
+                    statementMetaImport->getName(),
+                    statementDeclaration->getName(),
+                    true,
+                    statementDeclaration->getArguments(),
+                    statementDeclaration->getReturnValueType()
+                );
+                break;
+            }
+            case StatementKind::VARIABLE_DECLARATION: {
+                shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(importedStatement);
+                buildVariableDeclaration(
+                    statementMetaImport->getName(),
+                    statementDeclaration->getIdentifier(),
+                    true,
+                    statementDeclaration->getValueType()
+                );
+                break;
+            }
+            default:
+                markError(importedStatement->getLine(), importedStatement->getColumn(), "Unexpected imported statement");
+        }
+    }
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
@@ -444,34 +469,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> stat
         statementVariableDeclaration->getShouldExport(),
         statementVariableDeclaration->getValueType()
     );
-}
-
-void ModuleBuilder::buildImportStatement(shared_ptr<Statement> statement, string moduleName) {
-    switch (statement->getKind()) {
-        case StatementKind::FUNCTION_DECLARATION: {
-            shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
-            buildFunctionDeclaration(
-                moduleName,
-                statementDeclaration->getName(),
-                true,
-                statementDeclaration->getArguments(),
-                statementDeclaration->getReturnValueType()
-            );
-            break;
-        }
-        case StatementKind::VARIABLE_DECLARATION: {
-        shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
-            buildVariableDeclaration(
-                moduleName,
-                statementDeclaration->getIdentifier(),
-                true,
-                statementDeclaration->getValueType()
-            );
-            break;
-        }
-        default:
-            markError(statement->getLine(), statement->getColumn(), "Unexpected imported statement");
-    }
 }
 
 void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    

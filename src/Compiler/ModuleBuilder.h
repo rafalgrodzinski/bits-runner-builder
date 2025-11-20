@@ -108,7 +108,6 @@ private:
     void buildStatement(shared_ptr<StatementVariable> statementVariable);
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    void buildImportStatement(shared_ptr<Statement> statement, string moduleName);
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
