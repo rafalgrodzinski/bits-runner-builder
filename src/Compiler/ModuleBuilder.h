@@ -19,6 +19,23 @@
 class Error;
 class ValueType;
 
+class Statement;
+class StatementAssignment;
+class StatementBlob;
+class StatementBlobDeclaration;
+class StatementBlock;
+class StatementExpression;
+class StatementFunction;
+class StatementFunctionDeclaration;
+class StatementMetaExternFunction;
+class StatementMetaExternVariable;
+class StatementMetaImport;
+class StatementRawFunction;
+class StatementRepeat;
+class StatementReturn;
+class StatementVariable;
+class StatementVariableDeclaration;
+
 class Expression;
 class ExpressionGrouping;
 class ExpressionLiteral;
@@ -32,22 +49,6 @@ class ExpressionChained;
 class ExpressionBlock;
 class ExpressionCast;
 enum class ExpressionBinaryOperation;
-
-class Statement;
-class StatementMetaImport;
-class StatementFunction;
-class StatementFunctionDeclaration;
-class StatementRawFunction;
-class StatementBlobDeclaration;
-class StatementBlob;
-class StatementVariableDeclaration;
-class StatementVariable;
-class StatementAssignment;
-class StatementReturn;
-class StatementExpression;
-class StatementRepeat;
-class StatementMetaExternFunction;
-class StatementBlock;
 
 using namespace std;
 
@@ -91,23 +92,27 @@ private:
 
     // Statements
     void buildStatement(shared_ptr<Statement> statement);
+    void buildStatement(shared_ptr<StatementAssignment> statementAssignment);
+    void buildStatement(shared_ptr<StatementBlob> statementBlob);
+    void buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
+    void buildStatement(shared_ptr<StatementBlock> statementBlock);
+    void buildStatement(shared_ptr<StatementExpression> statementExpression);
+    void buildStatement(shared_ptr<StatementFunction> statementFunction);
+    void buildStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
+    void buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
+    void buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
+    void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport);
+    void buildStatement(shared_ptr<StatementRawFunction> statementRawFunction);
+    void buildStatement(shared_ptr<StatementRepeat> statementRepeat);
+    void buildStatement(shared_ptr<StatementReturn> statementReturn);
+    void buildStatement(shared_ptr<StatementVariable> statementVariable);
+    void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
+
     void buildImportStatement(shared_ptr<Statement> statement, string moduleName);
-    void buildImport(shared_ptr<StatementMetaImport> statement);
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
-    void buildFunction(shared_ptr<StatementFunction> statement);
-    void buildRawFunction(shared_ptr<StatementRawFunction> statement);
-    void buildBlobDeclaration(shared_ptr<StatementBlobDeclaration> statement);
-    void buildBlob(shared_ptr<StatementBlob> statement);
     void buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType);
-    void buildVariable(shared_ptr<StatementVariable> statement);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
-    void buildAssignmentChained(shared_ptr<StatementAssignment> statement);
-    void buildBlock(shared_ptr<StatementBlock> statement);
-    void buildReturn(shared_ptr<StatementReturn> statement);
-    void buildRepeat(shared_ptr<StatementRepeat> statement);
-    void buildExpression(shared_ptr<StatementExpression> statement);
-
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
 
     // Expressions
@@ -142,6 +147,10 @@ private:
     void markError(int line, int column, string message);
     void markFunctionError(string name, string message);
     void markModuleError(string message);
+    void markErrorAlreadyDefined(int line, int column, string identifier);
+    void markErrorNotDeclared(int line, int column, string identifier);
+    void markErrorNotDefined(int line, int column, string identifier);
+    void markInvalidConstraints(int line, int column, string functionName, string constraints);
 
 public:
     ModuleBuilder(
