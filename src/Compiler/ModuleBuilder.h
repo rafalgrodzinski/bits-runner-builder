@@ -60,9 +60,17 @@ private:
     string moduleName;
     string defaultModuleName;
 
+    vector<shared_ptr<Statement>> statements;
+    vector<shared_ptr<Statement>> headerStatements;
+    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
+
+    shared_ptr<Scope> scope;
+
     shared_ptr<llvm::LLVMContext> context;
     shared_ptr<llvm::Module> module;
     shared_ptr<llvm::IRBuilder<>> builder;
+
+    llvm::CallingConv::ID callingConvention;
 
     llvm::Type *typeVoid;
     llvm::Type *typeBool;
@@ -83,14 +91,6 @@ private:
 
     llvm::Type *typePtr;
     llvm::IntegerType *typeIntPtr;
-
-    llvm::CallingConv::ID callingConvention;
-
-    vector<shared_ptr<Statement>> statements;
-    vector<shared_ptr<Statement>> headerStatements;
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
-
-    shared_ptr<Scope> scope;
 
     // Statements
     void buildStatement(shared_ptr<Statement> statement);

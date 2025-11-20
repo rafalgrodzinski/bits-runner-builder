@@ -44,8 +44,8 @@ ModuleBuilder::ModuleBuilder(
 ):
 moduleName(moduleName),
 defaultModuleName(defaultModuleName),
-statements(statements),
 callingConvention(callingConvention),
+statements(statements),
 headerStatements(headerStatements),
 exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
