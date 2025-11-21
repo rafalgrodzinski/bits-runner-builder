@@ -37,17 +37,19 @@ class StatementVariable;
 class StatementVariableDeclaration;
 
 class Expression;
-class ExpressionGrouping;
-class ExpressionLiteral;
-class ExpressionCompositeLiteral;
-class ExpressionValue;
-class ExpressionCall;
-class ExpressionIfElse;
 class ExpressionBinary;
-class ExpressionUnary;
-class ExpressionChained;
 class ExpressionBlock;
+class ExpressionCall;
 class ExpressionCast;
+class ExpressionChained;
+class ExpressionCompositeLiteral;
+class ExpressionGrouping;
+class ExpressionIfElse;
+class ExpressionLiteral;
+class ExpressionNone;
+class ExpressionUnary;
+class ExpressionValue;
+
 enum class ExpressionBinaryOperation;
 
 using namespace std;
@@ -116,23 +118,24 @@ private:
 
     // Expressions
     llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionBinary> expressionBinary);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionBlock> expressionBlock);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionCall> expressionCall);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionChained> expressionChained);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionValue> expressionValue);
+
     llvm::Constant *constantValueForExpression(shared_ptr<Expression> expression, llvm::Type *targetType);
-    llvm::Value *valueForLiteral(shared_ptr<ExpressionLiteral> expression, llvm::Type *castToType = nullptr);
-    llvm::Value *valueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType = nullptr);
     llvm::Constant *constantValueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType);
-    llvm::Value *valueForGrouping(shared_ptr<ExpressionGrouping> expression);
-    llvm::Value *valueForBinary(shared_ptr<ExpressionBinary> expression);
     llvm::Value *valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
     llvm::Value *valueForBinaryFloat(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue);
-    llvm::Value *valueForUnary(shared_ptr<ExpressionUnary> expression);
-    llvm::Value *valueForIfElse(shared_ptr<ExpressionIfElse> expression);
-    llvm::Value *valueForVariable(shared_ptr<ExpressionValue> expression);
-    llvm::Value *valueForCall(shared_ptr<ExpressionCall> expression);
     llvm::Value *valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression);
-    llvm::Value *valueForChained(shared_ptr<ExpressionChained> expression);
-    llvm::Value *valueForBlock(shared_ptr<ExpressionBlock> expression);
     
     llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);
     llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression);
