@@ -1150,7 +1150,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionValue> expre
     }
 
     if (value == nullptr) {
-        markError(expressionValue->getLine(), expressionValue->getColumn(), format("Variable \"{}\" not defined in scope", expressionValue->getIdentifier()));
+        markErrorNotDefined(expressionValue->getLine(), expressionValue->getColumn(), format("variable \"{}\"", expressionValue->getIdentifier()));
         return nullptr;
     }
 
@@ -1729,17 +1729,21 @@ void ModuleBuilder::markModuleError(string message) {
 }
 
 void ModuleBuilder::markErrorAlreadyDefined(int line, int column, string identifier) {
-
+    string message = format("{} has already been defined in scope", identifier);
+    errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorNotDeclared(int line, int column, string identifier) {
-
+    string message = format("{} is not declared in scope", identifier);
+    errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorNotDefined(int line, int column, string identifier) {
-
+    string message = format("{} is not defined in scope", identifier);
+    errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markInvalidConstraints(int line, int column, string functionName, string constraints) {
-
+    string message = format("Constraints \"{}\" for function \"{}\" is invalid", constraints, functionName);
+    errors.push_back(Error::error(line, column, message));
 }
