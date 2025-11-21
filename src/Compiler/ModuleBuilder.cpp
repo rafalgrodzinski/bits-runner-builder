@@ -1330,7 +1330,8 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
                     builder->getInt32(0),
                     indexValue
                 };
-                llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(sourceType);
+                llvm::Type *expType = typeForValueType(ValueType::data(expression->getValueType(), 0));
+                llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(expType);
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expressionVariable->getIdentifier()));
                 return builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr);
             }
