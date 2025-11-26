@@ -162,9 +162,11 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
 bool ValueType::isNumeric() {
     switch (kind) {
         case ValueTypeKind::INT:
+
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
+    
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -184,12 +186,59 @@ bool ValueType::isNumeric() {
 bool ValueType::isInteger() {
     switch (kind) {
         case ValueTypeKind::INT:
+
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
+
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool ValueType::isUnsignedInteger() {
+    switch (kind) {
+        case ValueTypeKind::U8:
+        case ValueTypeKind::U32:
+        case ValueTypeKind::U64:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool ValueType::isSignedInteger() {
+    switch (kind) {
+        case ValueTypeKind::INT:
+
+        case ValueTypeKind::S8:
+        case ValueTypeKind::S32:
+        case ValueTypeKind::S64:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool ValueType::isFloat() {
+    switch (kind) {
+        case ValueTypeKind::FLOAT:
+
+        case ValueTypeKind::F32:
+        case ValueTypeKind::F64:
             return true;
 
         default:

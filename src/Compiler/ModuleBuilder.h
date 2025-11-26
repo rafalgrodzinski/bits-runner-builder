@@ -51,6 +51,7 @@ class ExpressionUnary;
 class ExpressionValue;
 
 enum class ExpressionBinaryOperation;
+enum class ExpressionUnaryOperation;
 
 using namespace std;
 
@@ -149,6 +150,8 @@ private:
     void markError(int line, int column, string message);
     void markFunctionError(string name, string message);
     void markModuleError(string message);
+    void markErrorInvalidOperationBinary(int line, int column, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
+    void markErrorInvalidOperationUnary(int line, int column, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markErrorAlreadyDefined(int line, int column, string identifier);
     void markErrorNotDeclared(int line, int column, string identifier);
     void markErrorNotDefined(int line, int column, string identifier);

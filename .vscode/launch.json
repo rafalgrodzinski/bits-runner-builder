@@ -7,9 +7,7 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/test.brc"],
-            //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/callback/main.brc", "${workspaceFolder}/samples/callback/io.brc", "${workspaceFolder}/samples/callback/utils.brc"],
-            //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/Storage.brc", "${workspaceFolder}/StorageArea.brc", "${workspaceFolder}/StorageDevice.brc"],
-            //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/StorageArea.brc", "${workspaceFolder}/StorageDevice.brc"],
+            //"args": ["--ver=v3", "--gen=ir", "${workspaceFolder}/samples/casts/main.brc", "${workspaceFolder}/samples/casts/io.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }

@@ -81,6 +81,9 @@ public:
     bool isEqual(shared_ptr<ValueType> other);
     bool isNumeric();
     bool isInteger();
+    bool isUnsignedInteger();
+    bool isSignedInteger();
+    bool isFloat();
     bool isBool();
     bool isData();
     bool isDataBool();

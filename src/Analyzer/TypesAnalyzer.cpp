@@ -561,12 +561,17 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
 shared_ptr<ValueType> TypesAnalyzer::TypesAnalyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
     switch (expressionLiteral->getLiteralKind()) {
         case LiteralKind::BOOL:
-            return ValueType::BOOL;
+            expressionLiteral->valueType = ValueType::BOOL;
+            break;
         case LiteralKind::INT:
-            return ValueType::INT;
+            expressionLiteral->valueType =  ValueType::INT;
+            break;
         case LiteralKind::FLOAT:
-            return ValueType::FLOAT;
+            expressionLiteral->valueType =  ValueType::FLOAT;
+            break;
     }
+
+    return expressionLiteral->getValueType();
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionUnary> expressionUnary) {

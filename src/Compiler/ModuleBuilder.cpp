@@ -1093,40 +1093,43 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionLiteral> exp
 }
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
+    shared_ptr<ValueType> valueType = expressionUnary->getSubExpression()->getValueType();
     llvm::Value *value = valueForExpression(expressionUnary->getSubExpression());
     if (value == nullptr)
         return nullptr;
-    llvm::Type *type = value->getType();
 
-    if (type == typeBool) {
-        if (expressionUnary->getOperation() == ExpressionUnaryOperation::NOT) {
-            return builder->CreateNot(value);
+    switch (expressionUnary->getOperation()) {
+        case ExpressionUnaryOperation::BIT_NOT:
+        case ExpressionUnaryOperation::NOT: {
+            if (valueType->isBool() || valueType->isInteger()) {
+                return builder->CreateNot(value);
+            }
+            break;
         }
-    } else if (type == typeU8 || type == typeU32 || type == typeU64 || type == typeUInt) {
-        if (expressionUnary->getOperation() == ExpressionUnaryOperation::BIT_NOT) {
-            return builder->CreateNot(value);
-        } else if (expressionUnary->getOperation() == ExpressionUnaryOperation::MINUS) {
-            return builder->CreateNeg(value);
-        } else if (expressionUnary->getOperation() == ExpressionUnaryOperation::PLUS) {
-            return value;
+        case ExpressionUnaryOperation::MINUS: {
+            if (valueType->isUnsignedInteger()) {
+                return builder->CreateNeg(value);
+            } else if (valueType->isSignedInteger()) {
+                return builder->CreateNSWNeg(value);
+            } else if (valueType->isFloat()) {
+                return builder->CreateFNeg(value);
+            }
+            break;
         }
-    } else if (type == typeS8 || type == typeS32 || type == typeS64 || type == typeSInt) {
-        if (expressionUnary->getOperation() == ExpressionUnaryOperation::BIT_NOT) {
-            return builder->CreateNot(value);
-        } else if (expressionUnary->getOperation() == ExpressionUnaryOperation::MINUS) {
-            return builder->CreateNSWNeg(value);
-        } else if (expressionUnary->getOperation() == ExpressionUnaryOperation::PLUS) {
-            return value;
-        }
-    } else if (type == typeF32 || type == typeF64 || type == typeFloat) {
-        if (expressionUnary->getOperation() == ExpressionUnaryOperation::MINUS) {
-            return builder->CreateFNeg(value);
-        } else if (expressionUnary->getOperation() == ExpressionUnaryOperation::PLUS) {
-            return value;
+        case ExpressionUnaryOperation::PLUS: {
+            if (valueType->isNumeric()) {
+                return value;
+            }
+            break;
         }
     }
 
-    markError(expressionUnary->getLine(), expressionUnary->getColumn(), "Unexpected unary operation");
+    markErrorInvalidOperationUnary(
+        expressionUnary->getLine(),
+        expressionUnary->getColumn(),
+        expressionUnary->getOperation(),
+        valueType
+    );
     return nullptr;
 }
 
@@ -1726,6 +1729,16 @@ void ModuleBuilder::markFunctionError(string functionName, string message) {
 
 void ModuleBuilder::markModuleError(string message) {
     errors.push_back(Error::builderModuleError(moduleName, message));
+}
+
+void ModuleBuilder::markErrorInvalidOperationUnary(int line, int column, ExpressionUnaryOperation operation, shared_ptr<ValueType> type) {
+    string message = format("Invalid unary operation {} for type {}", Logger::toString(operation), Logger::toString(type));
+    errors.push_back(Error::error(line, column, message));
+}
+
+void ModuleBuilder::markErrorInvalidOperationBinary(int line, int column, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) {
+    string message = format("Invalid binary operation {} for types {} and {}", Logger::toString(operation), Logger::toString(firstType), Logger::toString(secondType));
+    errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorAlreadyDefined(int line, int column, string identifier) {
