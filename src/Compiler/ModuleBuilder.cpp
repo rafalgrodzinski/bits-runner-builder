@@ -864,7 +864,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionBinary> expr
             builder->CreateLogicalOr(leftValue, rightValue);
         }
         case ExpressionBinaryOperation::XOR: {
-            return builder->CreateLogicalOp(llvm::Instruction::BinaryOps::Xor, leftValue, rightValue);
+            return builder->CreateXor(leftValue, rightValue);
         }
         case ExpressionBinaryOperation::AND: {
             return builder->CreateLogicalAnd(leftValue, rightValue);
