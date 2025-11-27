@@ -847,30 +847,159 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
 }
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
-    llvm::Type *leftType = typeForValueType(expressionBinary->getLeft()->getValueType());
-    llvm::Value *leftValue = valueForExpression(expressionBinary->getLeft(), leftType);
-
-    llvm::Type *rightType = typeForValueType(expressionBinary->getRight()->getValueType());
-    llvm::Value *rightValue = valueForExpression(expressionBinary->getRight(), rightType);
+    llvm::Value *leftValue = valueForExpression(expressionBinary->getLeft());
+    llvm::Value *rightValue = valueForExpression(expressionBinary->getRight());
 
     if (leftValue == nullptr || rightValue == nullptr)
         return nullptr;
 
-    llvm::Type *type = leftValue->getType();
+    // types will match in cases when it's important
+    shared_ptr<ValueType> valueType = expressionBinary->getLeft()->getValueType();
 
-    if (type == typeBool) {
-        return valueForBinaryBool(expressionBinary->getOperation(), leftValue, rightValue);
-    } else if (type == typeU8 || type == typeU32 || type == typeU64) {
-        return valueForBinaryUnsignedInteger(expressionBinary->getOperation(), leftValue, rightValue);
-    } else if (type == typeS8 || type == typeS32 || type == typeS64) {
-        return valueForBinarySignedInteger(expressionBinary->getOperation(), leftValue, rightValue);
-    } else if (type == typeF32 || type == typeF64 || type == typeFloat) {
-        return valueForBinaryFloat(expressionBinary->getOperation(), leftValue, rightValue);
-    } else { // FIXME (we have missing value types)
-        return valueForBinarySignedInteger(expressionBinary->getOperation(), leftValue, rightValue);
+    switch (expressionBinary->getOperation()) {
+        // logical
+        case ExpressionBinaryOperation::OR: {
+            builder->CreateLogicalOr(leftValue, rightValue);
+        }
+        case ExpressionBinaryOperation::XOR: {
+            return builder->CreateLogicalOp(llvm::Instruction::BinaryOps::Xor, leftValue, rightValue);
+        }
+        case ExpressionBinaryOperation::AND: {
+            return builder->CreateLogicalAnd(leftValue, rightValue);
+        }
+
+        // bitwise
+        case ExpressionBinaryOperation::BIT_OR: {
+            return builder->CreateOr(leftValue, rightValue);
+        }
+        case ExpressionBinaryOperation::BIT_XOR: {
+            return builder->CreateXor(leftValue, rightValue);
+        }
+        case ExpressionBinaryOperation::BIT_AND: {
+            return builder->CreateAnd(leftValue, rightValue);
+        }
+        case ExpressionBinaryOperation::BIT_SHL: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateShl(leftValue, rightValue, "", true, false);
+            else if (valueType->isSignedInteger())
+                return builder->CreateShl(leftValue, rightValue, "", false, true);
+            break;
+        }
+        case ExpressionBinaryOperation::BIT_SHR: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateLShr(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateAShr(leftValue, rightValue);
+            break;
+        }
+
+        // comparison
+        case ExpressionBinaryOperation::EQUAL: {
+            if (valueType->isInteger() || valueType->isBool())
+                return builder->CreateICmpEQ(leftValue, rightValue);
+            else if (valueType->isFloat())
+                return builder->CreateFCmpOEQ(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::NOT_EQUAL: {
+            if (valueType->isInteger() || valueType->isBool())
+                return builder->CreateICmpNE(leftValue, rightValue);
+            else if (valueType->isFloat())
+                return builder->CreateFCmpONE(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::LESS: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateICmpULT(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateICmpSLT(leftValue, rightValue);
+            else if(valueType->isFloat())
+                return builder->CreateFCmpOLT(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::LESS_EQUAL: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateICmpULE(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateICmpSLE(leftValue, rightValue);
+            else if(valueType->isFloat())
+                return builder->CreateFCmpOLE(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::GREATER: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateICmpUGT(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateICmpSGT(leftValue, rightValue);
+            else if(valueType->isFloat())
+                return builder->CreateFCmpOGT(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::GREATER_EQUAL: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateICmpUGE(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateICmpSGE(leftValue, rightValue);
+            else if(valueType->isFloat())
+                return builder->CreateFCmpOGE(leftValue, rightValue);
+            break;
+        }
+
+        // mathematical
+        case ExpressionBinaryOperation::ADD: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateNUWAdd(leftValue, rightValue); // No Unsigned Wrap
+            else if (valueType->isSignedInteger())
+                return builder->CreateNSWAdd(leftValue, rightValue); // No Signed Wrap
+            else if (valueType->isFloat())
+                return builder->CreateFAdd(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::SUB: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateNUWSub(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateNSWSub(leftValue, rightValue);
+            else if (valueType->isFloat())
+                return builder->CreateFSub(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::MUL: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateNUWMul(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateNSWMul(leftValue, rightValue);
+            else if (valueType->isFloat())
+                return builder->CreateFMul(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::DIV: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateUDiv(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateSDiv(leftValue, rightValue);
+            else if (valueType->isFloat())
+                return builder->CreateFDiv(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::MOD: {
+            if (valueType->isUnsignedInteger())
+                return builder->CreateURem(leftValue, rightValue);
+            else if (valueType->isSignedInteger())
+                return builder->CreateSRem(leftValue, rightValue);
+            else if (valueType->isFloat())
+                return builder->CreateFRem(leftValue, rightValue);
+            break;
+        }
     }
 
-    markError(expressionBinary->getLine(), expressionBinary->getColumn(), "Unexpected binary operation");
+    markErrorInvalidOperationBinary(
+        expressionBinary->getLine(),
+        expressionBinary->getColumn(),
+        expressionBinary->getOperation(),
+        expressionBinary->getLeft()->getValueType(),
+        expressionBinary->getRight()->getValueType()
+    );
     return nullptr;
 }
 
@@ -1186,127 +1315,6 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
             return nullptr;
     }
     return llvm::dyn_cast<llvm::Constant>(value);
-}
-
-llvm::Value *ModuleBuilder::valueForBinaryBool(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
-    switch (operation) {
-    case ExpressionBinaryOperation::OR:
-        return builder->CreateOr(leftValue, rightValue);
-    case ExpressionBinaryOperation::XOR:
-        return builder->CreateXor(leftValue, rightValue);
-    case ExpressionBinaryOperation::AND:
-        return builder->CreateLogicalAnd(leftValue, rightValue);
-    case ExpressionBinaryOperation::EQUAL:
-        return builder->CreateICmpEQ(leftValue, rightValue);
-    case ExpressionBinaryOperation::NOT_EQUAL:
-        return builder->CreateICmpNE(leftValue, rightValue);
-    default:
-        markError(0, 0, "Unexpected operation for boolean operands");
-        return nullptr;
-    }
-}
-
-llvm::Value *ModuleBuilder::valueForBinaryUnsignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
-    switch (operation) {
-        case ExpressionBinaryOperation::BIT_OR:
-            return builder->CreateOr(leftValue, rightValue);
-        case ExpressionBinaryOperation::BIT_XOR:
-            return builder->CreateXor(leftValue, rightValue);
-        case ExpressionBinaryOperation::BIT_AND:
-            return builder->CreateAnd(leftValue, rightValue);
-        case ExpressionBinaryOperation::BIT_SHL:
-            return builder->CreateShl(leftValue, rightValue);
-        case ExpressionBinaryOperation::BIT_SHR:
-            return builder->CreateLShr(leftValue, rightValue);
-
-        case ExpressionBinaryOperation::EQUAL:
-            return builder->CreateICmpEQ(leftValue, rightValue);
-        case ExpressionBinaryOperation::NOT_EQUAL:
-            return builder->CreateICmpNE(leftValue, rightValue);
-        case ExpressionBinaryOperation::LESS:
-            return builder->CreateICmpSLT(leftValue, rightValue);
-        case ExpressionBinaryOperation::LESS_EQUAL:
-            return builder->CreateICmpSLE(leftValue, rightValue);
-        case ExpressionBinaryOperation::GREATER:
-            return builder->CreateICmpSGT(leftValue, rightValue);
-        case ExpressionBinaryOperation::GREATER_EQUAL:
-            return builder->CreateICmpSGE(leftValue, rightValue);
-        case ExpressionBinaryOperation::ADD:
-            return builder->CreateNUWAdd(leftValue, rightValue);
-        case ExpressionBinaryOperation::SUB:
-            return builder->CreateNUWSub(leftValue, rightValue);
-        case ExpressionBinaryOperation::MUL:
-            return builder->CreateNUWMul(leftValue, rightValue);
-        case ExpressionBinaryOperation::DIV:
-            return builder->CreateUDiv(leftValue, rightValue);
-        case ExpressionBinaryOperation::MOD:
-            return builder->CreateURem(leftValue, rightValue);
-    }
-}
-
-llvm::Value *ModuleBuilder::valueForBinarySignedInteger(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
-    switch (operation) {
-        case ExpressionBinaryOperation::BIT_OR:
-            return builder->CreateOr(leftValue, rightValue);
-        case ExpressionBinaryOperation::BIT_XOR:
-            return builder->CreateXor(leftValue, rightValue);
-        case ExpressionBinaryOperation::BIT_AND:
-            return builder->CreateAnd(leftValue, rightValue);
-        case ExpressionBinaryOperation::BIT_SHL:
-            return builder->CreateShl(leftValue, rightValue);
-        case ExpressionBinaryOperation::BIT_SHR:
-            return builder->CreateAShr(leftValue, rightValue);
-
-        case ExpressionBinaryOperation::EQUAL:
-            return builder->CreateICmpEQ(leftValue, rightValue);
-        case ExpressionBinaryOperation::NOT_EQUAL:
-            return builder->CreateICmpNE(leftValue, rightValue);
-        case ExpressionBinaryOperation::LESS:
-            return builder->CreateICmpSLT(leftValue, rightValue);
-        case ExpressionBinaryOperation::LESS_EQUAL:
-            return builder->CreateICmpSLE(leftValue, rightValue);
-        case ExpressionBinaryOperation::GREATER:
-            return builder->CreateICmpSGT(leftValue, rightValue);
-        case ExpressionBinaryOperation::GREATER_EQUAL:
-            return builder->CreateICmpSGE(leftValue, rightValue);
-        case ExpressionBinaryOperation::ADD:
-            return builder->CreateNSWAdd(leftValue, rightValue);
-        case ExpressionBinaryOperation::SUB:
-            return builder->CreateNSWSub(leftValue, rightValue);
-        case ExpressionBinaryOperation::MUL:
-            return builder->CreateNSWMul(leftValue, rightValue);
-        case ExpressionBinaryOperation::DIV:
-            return builder->CreateSDiv(leftValue, rightValue);
-        case ExpressionBinaryOperation::MOD:
-            return builder->CreateSRem(leftValue, rightValue);
-    }
-}
-
-llvm::Value *ModuleBuilder::valueForBinaryFloat(ExpressionBinaryOperation operation, llvm::Value *leftValue, llvm::Value *rightValue) {
-    switch (operation) {
-    case ExpressionBinaryOperation::EQUAL:
-        return builder->CreateFCmpOEQ(leftValue, rightValue);
-    case ExpressionBinaryOperation::NOT_EQUAL:
-        return builder->CreateFCmpONE(leftValue, rightValue);
-    case ExpressionBinaryOperation::LESS:
-        return builder->CreateFCmpOLT(leftValue, rightValue);
-    case ExpressionBinaryOperation::LESS_EQUAL:
-        return builder->CreateFCmpOLE(leftValue, rightValue);
-    case ExpressionBinaryOperation::GREATER:
-        return builder->CreateFCmpOGT(leftValue, rightValue);
-    case ExpressionBinaryOperation::GREATER_EQUAL:
-        return builder->CreateFCmpOGE(leftValue, rightValue);
-    case ExpressionBinaryOperation::ADD:
-        return builder->CreateNSWAdd(leftValue, rightValue);
-    case ExpressionBinaryOperation::SUB:
-        return builder->CreateNSWSub(leftValue, rightValue);
-    case ExpressionBinaryOperation::MUL:
-        return builder->CreateNSWMul(leftValue, rightValue);
-    case ExpressionBinaryOperation::DIV:
-        return builder->CreateSDiv(leftValue, rightValue);
-    case ExpressionBinaryOperation::MOD:
-        return builder->CreateSRem(leftValue, rightValue);
-    }
 }
 
 llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression) {
@@ -1732,12 +1740,21 @@ void ModuleBuilder::markModuleError(string message) {
 }
 
 void ModuleBuilder::markErrorInvalidOperationUnary(int line, int column, ExpressionUnaryOperation operation, shared_ptr<ValueType> type) {
-    string message = format("Invalid unary operation {} for type {}", Logger::toString(operation), Logger::toString(type));
+    string message = format(
+        "Invalid unary operation {} for type {}",
+        Logger::toString(operation),
+        Logger::toString(type)
+    );
     errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorInvalidOperationBinary(int line, int column, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) {
-    string message = format("Invalid binary operation {} for types {} and {}", Logger::toString(operation), Logger::toString(firstType), Logger::toString(secondType));
+    string message = format(
+        "Invalid binary operation {} for types {} and {}",
+        Logger::toString(operation),
+        Logger::toString(firstType),
+        Logger::toString(secondType)
+    );
     errors.push_back(Error::error(line, column, message));
 }
 
