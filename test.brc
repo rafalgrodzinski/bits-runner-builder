@@ -1,10 +1,5 @@
-sectorsCountRaw raw<"=r,m,m,m,~{eax,edx}">: biosServiceAdr u32, serviceNum u8, driveNum u8 -> u32
-    mov ah, $2
-    mov dl, $3
-    call $1
-    mov $0, eax
-;
+main fun
+    offset u32
 
-@export sectorsCount fun: driveNum u32 -> u32
-    ret sectorsCountRaw(1, 2, driveNum)
+    0xffff_fc00 + offset
 ;

@@ -559,6 +559,11 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
 }
 
 shared_ptr<ValueType> TypesAnalyzer::TypesAnalyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
+    // if it's already set, return it
+    if (expressionLiteral->getValueType() != nullptr)
+        return expressionLiteral->getValueType();
+
+    // otherwise get a default one
     switch (expressionLiteral->getLiteralKind()) {
         case LiteralKind::BOOL:
             expressionLiteral->valueType = ValueType::BOOL;

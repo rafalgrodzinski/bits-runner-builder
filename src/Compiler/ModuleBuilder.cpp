@@ -648,6 +648,8 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                     };
                     llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index);
                     llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), elementType);
+                    if (sourceValue == nullptr)
+                        return;
                     builder->CreateStore(sourceValue, targetPtr);
                 }
                 break;
@@ -1200,6 +1202,9 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionLiteral> exp
             return llvm::ConstantInt::get(typeS32, expressionLiteral->getSIntValue());
         case ValueTypeKind::S64:
             return llvm::ConstantInt::get(typeS64, expressionLiteral->getSIntValue());
+
+        case ValueTypeKind::FLOAT:
+            return llvm::ConstantFP::get(typeFloat, expressionLiteral->getFloatValue());
 
         case ValueTypeKind::F32:
             return llvm::ConstantFP::get(typeF32, expressionLiteral->getFloatValue());
