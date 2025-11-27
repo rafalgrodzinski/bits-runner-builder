@@ -1180,44 +1180,41 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionIfElse> expr
 }
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral, llvm::Type *castToType) {
-    if (expressionLiteral->getLiteralKind() == LiteralKind::BOOL) {
-        if (castToType == nullptr)
-            return llvm::ConstantInt::get(typeBool, expressionLiteral->getBoolValue(), true);
-        else if (castToType != typeBool)
-            return nullptr;
+    switch (expressionLiteral->getValueType()->getKind()) {
+        case ValueTypeKind::BOOL:
+            return llvm::ConstantInt::getBool(typeBool, expressionLiteral->getBoolValue());
+
+        case ValueTypeKind::INT:
+            return llvm::ConstantInt::get(typeSInt, expressionLiteral->getSIntValue());
+
+        case ValueTypeKind::U8:
+            return llvm::ConstantInt::get(typeU8, expressionLiteral->getUIntValue());
+        case ValueTypeKind::U32:
+            return llvm::ConstantInt::get(typeU32, expressionLiteral->getUIntValue());
+        case ValueTypeKind::U64:
+            return llvm::ConstantInt::get(typeU64, expressionLiteral->getUIntValue());
+
+        case ValueTypeKind::S8:
+            return llvm::ConstantInt::get(typeS8, expressionLiteral->getSIntValue());
+        case ValueTypeKind::S32:
+            return llvm::ConstantInt::get(typeS32, expressionLiteral->getSIntValue());
+        case ValueTypeKind::S64:
+            return llvm::ConstantInt::get(typeS64, expressionLiteral->getSIntValue());
+
+        case ValueTypeKind::F32:
+            return llvm::ConstantFP::get(typeF32, expressionLiteral->getFloatValue());
+        case ValueTypeKind::F64:
+            return llvm::ConstantFP::get(typeF64, expressionLiteral->getFloatValue());
+
+        default:
+            break;
     }
 
-    if (expressionLiteral->getLiteralKind() == LiteralKind::INT) {
-        if (castToType == nullptr)
-            return llvm::ConstantInt::get(typeUInt, expressionLiteral->getUIntValue(), true);
-        else if (castToType == typeBool)
-            return nullptr;
-    }
-
-    if (expressionLiteral->getLiteralKind() == LiteralKind::INT) {
-        if (castToType == nullptr)
-            return llvm::ConstantInt::get(typeSInt, expressionLiteral->getSIntValue(), true);
-        else if (castToType == typeBool)
-            return nullptr;
-    }
-
-    if (expressionLiteral->getLiteralKind() == LiteralKind::FLOAT) {
-        if (castToType == nullptr)
-            return llvm::ConstantFP::get(typeFloat, expressionLiteral->getFloatValue());
-        else if (castToType == typeBool)
-            return nullptr;
-    }
-
-    if (castToType == typeBool) {
-        return llvm::ConstantInt::get(typeBool, expressionLiteral->getBoolValue(), true);
-    } else if (castToType == typeU8 || castToType == typeU32 || castToType == typeU64 || castToType == typeUInt) {
-        return llvm::ConstantInt::get(castToType, expressionLiteral->getUIntValue(), true);
-    } else if (castToType == typeS8 || castToType == typeS32 || castToType == typeS64 || castToType == typeSInt) {
-        return llvm::ConstantInt::get(castToType, expressionLiteral->getSIntValue(), true);
-    } else if (castToType == typeF32 || castToType == typeF64 || castToType == typeFloat) {
-        return llvm::ConstantFP::get(castToType, expressionLiteral->getFloatValue());
-    }
-
+    markErrorInvalidLiteral(
+        expressionLiteral->getLine(),
+        expressionLiteral->getColumn(),
+        expressionLiteral->getValueType()
+    );
     return nullptr;
 }
 
@@ -1451,7 +1448,7 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     // Then do the appropriate built-in operation
     if (isArray && isCount) {
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(parentValue->getType());
-        return valueForExpression(ExpressionLiteral::expressionLiteralForInt(arrayType->getNumElements(), 0, 0));
+        return llvm::ConstantInt::get(typeSInt, arrayType->getNumElements());
     } else if (isPointer && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentOperand);
 
@@ -1775,5 +1772,10 @@ void ModuleBuilder::markErrorNotDefined(int line, int column, string identifier)
 
 void ModuleBuilder::markInvalidConstraints(int line, int column, string functionName, string constraints) {
     string message = format("Constraints \"{}\" for function \"{}\" is invalid", constraints, functionName);
+    errors.push_back(Error::error(line, column, message));
+}
+
+void ModuleBuilder::markErrorInvalidLiteral(int line, int column, shared_ptr<ValueType> type) {
+    string message = format("Invalid literal for type {}", Logger::toString(type));
     errors.push_back(Error::error(line, column, message));
 }

@@ -152,6 +152,7 @@ private:
     void markErrorNotDeclared(int line, int column, string identifier);
     void markErrorNotDefined(int line, int column, string identifier);
     void markInvalidConstraints(int line, int column, string functionName, string constraints);
+    void markErrorInvalidLiteral(int line, int column, shared_ptr<ValueType> type);
 
 public:
     ModuleBuilder(

@@ -569,6 +569,8 @@ shared_ptr<ValueType> TypesAnalyzer::TypesAnalyzer::typeForExpression(shared_ptr
         case LiteralKind::FLOAT:
             expressionLiteral->valueType =  ValueType::FLOAT;
             break;
+        default:
+            markErrorInvalidType(expressionLiteral->getLine(), expressionLiteral->getColumn(), nullptr, nullptr);
     }
 
     return expressionLiteral->getValueType();

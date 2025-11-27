@@ -691,16 +691,16 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
         case ExpressionValueKind::BUILT_IN_VADR:
         case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
         case ExpressionValueKind::BUILT_IN_VAL_DATA:
-            line = expression->getIdentifier();
+            line = format("{}｢{}｣", expression->getIdentifier(), toString(expression->getValueType()));
             break;
         case ExpressionValueKind::DATA:
-            line = format("`{}`[{}]", expression->getIdentifier(), toString(expression->getIndexExpression(), indents, true));
+            line = format("`{}`[{}]｢{}｣", expression->getIdentifier(), toString(expression->getIndexExpression(), indents, true), toString(expression->getValueType()));
             break;
         case ExpressionValueKind::FUN:
             line = format("`{}`", expression->getIdentifier());
             break;
         case ExpressionValueKind::SIMPLE:
-            line = format("`{}`", expression->getIdentifier());
+            line = format("`{}`｢{}｣", expression->getIdentifier(), toString(expression->getValueType()));
             break;
     }
 
@@ -720,10 +720,10 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
             line = expression->getBoolValue() ? "true" : "false";
             break;
         case LiteralKind::FLOAT:
-            line = to_string(expression->getFloatValue());
+            line = format("{}｢{}｣", expression->getFloatValue(), toString(expression->getValueType()));
             break;
         case LiteralKind::INT:
-            line = to_string(expression->getSIntValue());
+            line = format("{}｢{}｣", expression->getSIntValue(), toString(expression->getValueType()));
             break;
     }
 
