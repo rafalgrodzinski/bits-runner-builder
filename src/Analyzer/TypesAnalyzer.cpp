@@ -888,8 +888,21 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
     if (!canCast(sourceType, targetType))
         return sourceExpression;
 
-    if (sourceExpression->getKind() == ExpressionKind::LITERAL || sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL) {
+    // single literal just needs to set the type
+    if (sourceExpression->getKind() == ExpressionKind::LITERAL) {
         sourceExpression->valueType = targetType;
+        return sourceExpression;
+    // targetting data needs to run this over each element
+    } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isData()) {
+        sourceExpression->valueType = targetType;
+        shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
+        for (int i=0; i<expressionCompositeLiteral->getExpressions().size(); i++) {
+            shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(i);
+            sourceElementExpression = checkAndTryCasting(sourceElementExpression, targetType->getSubType(), returnType);
+        }
+        return sourceExpression;
+    // other are not yet implemented
+    } else {
         return sourceExpression;
     }
 
