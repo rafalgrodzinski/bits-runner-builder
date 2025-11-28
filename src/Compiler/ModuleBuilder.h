@@ -118,12 +118,12 @@ private:
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
 
     // Expressions
-    llvm::Value *valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForExpression(shared_ptr<Expression> expression);
     llvm::Value *valueForExpression(shared_ptr<ExpressionBinary> expressionBinary);
     llvm::Value *valueForExpression(shared_ptr<ExpressionBlock> expressionBlock);
     llvm::Value *valueForExpression(shared_ptr<ExpressionCall> expressionCall);
     llvm::Value *valueForExpression(shared_ptr<ExpressionChained> expressionChained);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
     llvm::Value *valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
     llvm::Value *valueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
     llvm::Value *valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);

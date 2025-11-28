@@ -441,8 +441,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) 
     llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
 
     if (!statementReturn->getExpression()->getValueType()->isEqual(ValueType::NONE)) {
-        llvm::Type *returnType = basicBlock->getParent()->getReturnType();
-        llvm::Value *returnValue = valueForExpression(statementReturn->getExpression(), returnType);
+        llvm::Value *returnValue = valueForExpression(statementReturn->getExpression());
         builder->CreateRet(returnValue);
     } else {
         builder->CreateRetVoid();
@@ -640,14 +639,13 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 int sourceCount = valueExpressions.size();
                 int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
                 int count = min(sourceCount, targetCount);
-                llvm::Type *elementType = ((llvm::ArrayType *)targetType)->getArrayElementType();
                 for (int i=0; i<count; i++) {
                     llvm::Value *index[] = {
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
                     llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index);
-                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), elementType);
+                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i));
                     if (sourceValue == nullptr)
                         return;
                     builder->CreateStore(sourceValue, targetPtr);
@@ -727,8 +725,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Type *memberType = ((llvm::StructType*)targetType)->getElementType(i);
-                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i), memberType);
+                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i));
                     llvm::Value *targetMember = builder->CreateGEP(targetType, targetValue, index);
                     builder->CreateStore(sourceValue, targetMember);
                 }
@@ -783,11 +780,9 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
         }
     // simple
     } else {
-        llvm::Type *castToType = nullptr;
         switch (valueExpression->getKind()) {
             // simple <- literal
             case ExpressionKind::LITERAL:
-                castToType = targetType;
             // simple <- binary expression
             case ExpressionKind::BINARY:
             // simple <- ( expression )
@@ -800,7 +795,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             // simple <- var
             case ExpressionKind::VALUE:
             case ExpressionKind::CHAINED: {
-                llvm::Value *sourceValue = valueForExpression(valueExpression, castToType);
+                llvm::Value *sourceValue = valueForExpression(valueExpression);
                 if (sourceValue == nullptr)
                     return;
                 builder->CreateStore(sourceValue, targetValue);
@@ -817,7 +812,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
 //
 // Expressions
 //
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType) {
+llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
             return valueForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
@@ -829,7 +824,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::CHAINED:
             return valueForExpression(dynamic_pointer_cast<ExpressionChained>(expression));
         case ExpressionKind::COMPOSITE_LITERAL:
-            return valueForExpression(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), castToType);
+            return valueForExpression(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression));
         case ExpressionKind::GROUPING:
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::IF_ELSE:
@@ -1114,15 +1109,11 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
     return currentValue;
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral, llvm::Type *castToType) {
-    if (castToType == nullptr) {
-        markError(expressionCompositeLiteral->getLine(), expressionCompositeLiteral->getColumn(), "Don't know what to do with the composite");
-        return nullptr;
-    }
-
-    llvm::AllocaInst *targetAlloca = builder->CreateAlloca(castToType, nullptr);
-    buildAssignment(targetAlloca, castToType, expressionCompositeLiteral);
-    return builder->CreateLoad(castToType, targetAlloca);
+llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
+    llvm::Type *type = typeForValueType(expressionCompositeLiteral->getValueType());
+    llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
+    buildAssignment(alloca, type, expressionCompositeLiteral);
+    return builder->CreateLoad(type, alloca);
 }
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
@@ -1295,7 +1286,7 @@ llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression>
     llvm::Value *value;
     switch (expression->getKind()) {
         case ExpressionKind::LITERAL:
-            value = valueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression), castToType);
+            value = valueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
             break;
         case ExpressionKind::COMPOSITE_LITERAL:
             value = constantValueForCompositeLiteral(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), castToType);
@@ -1324,9 +1315,8 @@ llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *f
     vector<shared_ptr<Expression>> argumentExpressions = expression->getArgumentExpressions();
     for (int i=0; i<argumentExpressions.size(); i++) {
         // pass along type for the specified argument
-        llvm::Type *argumentType = funType->getParamType(i);
         shared_ptr<Expression> argumentExpression = argumentExpressions.at(i);
-        llvm::Value *argValue = valueForExpression(argumentExpression, argumentType);
+        llvm::Value *argValue = valueForExpression(argumentExpression);
         argValues.push_back(argValue);
     }
     return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
