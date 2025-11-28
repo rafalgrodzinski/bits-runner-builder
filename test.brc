@@ -1,5 +1,17 @@
-ASCII_MAP data<u8> <- {
-    '\0', // 0x00 unused
-    '\0', // 0x01 esc
-    '1'  // 0x02
-}
+
+MBR_FIRST_PARTITION_OFFSET u32 <- 0x01be
+//MBR_PARTITION_SIZE u32 <- 0x10
+MBR_PARTITION_START_SECTOR_OFFSET u32 <- 0x08
+
+/*StorageDevice blob
+    biosDriveNum u32
+    sectorsCount u32
+    readSectors ptr<fun u32, u32, ptr<data<u8>>>
+;*/
+
+main fun
+    //bootDevice blob<StorageDevice>
+    mbr data<u8, 0x200>
+    //bootDevice.readSectors.val(0, 1, { mbr.adr })
+    pStartSector ptr<u32> <- { mbr.adr + MBR_FIRST_PARTITION_OFFSET + MBR_PARTITION_START_SECTOR_OFFSET }
+;

@@ -892,7 +892,17 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
     if (sourceExpression->getKind() == ExpressionKind::LITERAL) {
         sourceExpression->valueType = targetType;
         return sourceExpression;
-    // targetting data needs to run this over each element
+    // composite to blob
+    } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isBlob()) {
+        sourceExpression->valueType = targetType;
+        vector<pair<string, shared_ptr<ValueType>>> blobMembers = *(scope->getBlobMembers(*(targetType->getBlobName())));
+        shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
+        for (int i=0; i<blobMembers.size(); i++) {
+            shared_ptr<Expression> sourceMemberExpression = expressionCompositeLiteral->getExpressions().at(i);
+            sourceMemberExpression = checkAndTryCasting(sourceMemberExpression, blobMembers.at(i).second, returnType);
+        }
+        return sourceExpression;
+    // composite to data
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isData()) {
         sourceExpression->valueType = targetType;
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
@@ -901,8 +911,9 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
             sourceElementExpression = checkAndTryCasting(sourceElementExpression, targetType->getSubType(), returnType);
         }
         return sourceExpression;
-    // other are not yet implemented
-    } else {
+    // composite to pointer
+    } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
+        sourceExpression->valueType = targetType;
         return sourceExpression;
     }
 
@@ -992,8 +1003,21 @@ bool TypesAnalyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueTy
         // composite
         case ValueTypeKind::COMPOSITE: {
             switch (targetType->getKind()) {
-                case ValueTypeKind::BLOB:
-                    return true; // TODO: implement check
+                case ValueTypeKind::BLOB: {
+                    optional<string> blobName = targetType->getBlobName();
+                    if (!targetType->getBlobName())
+                        return false;
+                    optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(*blobName);
+                    if (!blobMembers)
+                        return false;
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    
+                    for (int i=0; i<((*blobMembers).size()); i++) {
+                        if (!canCast(sourceElementTypes.at(i), (*blobMembers).at(i).second))
+                            return false;
+                    }
+                    return true;
+                }
                 case ValueTypeKind::DATA: {
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
                     for (shared_ptr<ValueType> sourceElementType : sourceElementTypes) {
@@ -1002,8 +1026,10 @@ bool TypesAnalyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueTy
                     }
                     return true;
                 }
-                case ValueTypeKind::PTR:
-                    return true; // TODO implement check
+                case ValueTypeKind::PTR: {
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    return sourceElementTypes.size() == 1 && (sourceElementTypes.at(0)->getKind() == ValueTypeKind::INT || sourceElementTypes.at(0)->isUnsignedInteger());
+                }
 
                 default:
                     return false;
