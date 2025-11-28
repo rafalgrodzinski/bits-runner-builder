@@ -835,7 +835,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::IF_ELSE:
             return valueForExpression(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::LITERAL:
-            return valueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression), castToType);
+            return valueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
         case ExpressionKind::NONE:
             return llvm::UndefValue::get(typeVoid);
         case ExpressionKind::UNARY:
@@ -1181,7 +1181,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionIfElse> expr
     }
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral, llvm::Type *castToType) {
+llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
     switch (expressionLiteral->getValueType()->getKind()) {
         case ValueTypeKind::BOOL:
             return llvm::ConstantInt::getBool(typeBool, expressionLiteral->getBoolValue());

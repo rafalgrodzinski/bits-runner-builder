@@ -126,7 +126,7 @@ private:
     llvm::Value *valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral, llvm::Type *castToType = nullptr);
     llvm::Value *valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
     llvm::Value *valueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral, llvm::Type *castToType = nullptr);
+    llvm::Value *valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
     llvm::Value *valueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
     llvm::Value *valueForExpression(shared_ptr<ExpressionValue> expressionValue);
 
