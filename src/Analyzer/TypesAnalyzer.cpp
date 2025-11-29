@@ -156,11 +156,14 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpr
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
-    // store arguments and return type
-    vector<shared_ptr<ValueType>> argumentTypes;
-    for (auto &argument : statementFunction->getArguments())
-        argumentTypes.push_back(argument.second);
+    // updated types for count expressions
+    for (auto &argument : statementFunction->getArguments()) {
+        shared_ptr<Expression> countExpression = argument.second->getSizeExpression();
+        if (countExpression != nullptr)
+            countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
+    }
 
+    // check if function is not yet defined and register it
     if (!scope->setFunctionType(statementFunction->getName(), statementFunction->getValueType(), true))
         markErrorAlreadyDefined(statementFunction->getLine(), statementFunction->getColumn(), statementFunction->getName());
 
@@ -174,10 +177,12 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
-    // store arguments and return type
-    vector<shared_ptr<ValueType>> argumentTypes;
-    for (auto &argument : statementFunctionDeclaration->getArguments())
-        argumentTypes.push_back(argument.second);
+    // updated types for count expressions
+    for (auto &argument : statementFunctionDeclaration->getArguments()) {
+        shared_ptr<Expression> countExpression = argument.second->getSizeExpression();
+        if (countExpression != nullptr)
+            countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
+    }
 
     string name = importModulePrefix + statementFunctionDeclaration->getName();
 
@@ -192,10 +197,12 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> stat
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
-    // store arguments and return type
-    vector<shared_ptr<ValueType>> argumentTypes;
-    for (auto &argument : statementMetaExternFunction->getArguments())
-        argumentTypes.push_back(argument.second);
+    // updated types for count expressions
+    for (auto &argument : statementMetaExternFunction->getArguments()) {
+        shared_ptr<Expression> countExpression = argument.second->getSizeExpression();
+        if (countExpression != nullptr)
+            countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
+    }
 
     if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType(), false))
         markErrorAlreadyDefined(statementMetaExternFunction->getLine(), statementMetaExternFunction->getColumn(), statementMetaExternFunction->getName());
@@ -904,35 +911,25 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
         return sourceExpression;
     // composite to data
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isData()) {
-        //sourceExpression->valueType = targetType;
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
-
-        // figure out source elements count
-        int sourceCount = expressionCompositeLiteral->getExpressions().size();
-        // if the target size is a constant, we can compare against it
-        shared_ptr<ExpressionLiteral> targetSizeLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(targetType->getSizeExpression());
-        if (targetSizeLiteralExpression != nullptr) {
-            targetSizeLiteralExpression->valueType = typeForExpression(targetSizeLiteralExpression);
-            // size must be an integer
-            if (targetSizeLiteralExpression->getValueType()->isUnsignedInteger()) {
-                markErrorInvalidType(targetSizeLiteralExpression->getLine(), targetSizeLiteralExpression->getColumn(), targetSizeLiteralExpression->getValueType(), ValueType::INT);
-                return nullptr;
-            }
-            int targetSize = targetSizeLiteralExpression->getUIntValue();
-            if (targetSize > 0 && targetSize < sourceCount)
-                sourceCount = targetSize;
-        }
+        // first update the type
         sourceExpression->valueType = ValueType::data(
             targetType->getSubType(),
-            ExpressionLiteral::expressionLiteralForInt(sourceCount, sourceExpression->getLine(), sourceExpression->getColumn())
+            ExpressionLiteral::expressionLiteralForInt(
+                expressionCompositeLiteral->getExpressions().size(),
+                sourceExpression->getLine(),
+                sourceExpression->getColumn()
+            )
         );
-        //if (targetType->getSizeExpression()->getKind() == ExpressionKind::LITERAL)
-        //int targetSize = 
+        sourceExpression->getValueType()->getSizeExpression()->valueType = typeForExpression(sourceExpression->getValueType()->getSizeExpression(), nullptr, returnType);
+        // and then cast (if necessary) each of the element expressions
         for (int i=0; i<expressionCompositeLiteral->getExpressions().size(); i++) {
             shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(i);
             sourceElementExpression = checkAndTryCasting(sourceElementExpression, targetType->getSubType(), returnType);
         }
-        return sourceExpression;
+        // check if types are already equal or we need additional cast
+        if (targetType->getSizeExpression() == nullptr || expressionCompositeLiteral->getValueType()->isEqual(targetType))
+            return sourceExpression;
     // composite to pointer
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
         sourceExpression->valueType = targetType;

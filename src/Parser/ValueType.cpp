@@ -151,8 +151,27 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
         return false;
 
     switch (kind) {
-        case ValueTypeKind::DATA:
-            return other->isData() && subType->isEqual(other->getSubType());
+        case ValueTypeKind::DATA: {
+            // first check the types
+            if (!other->isData() || !subType->isEqual(other->getSubType()))
+                return false;
+
+            // then check the elements count
+            shared_ptr<ExpressionLiteral> thisCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(sizeExpression);
+            shared_ptr<ExpressionLiteral> thatCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(other->getSizeExpression());
+            if (thisCountLiteralExpression == nullptr || thatCountLiteralExpression == nullptr)
+                return false;
+            // sizes must be unsigned integers
+            bool isThisTypeValid = thisCountLiteralExpression->getValueType()->isInteger() || thisCountLiteralExpression->getValueType()->getKind() == ValueTypeKind::INT;
+            bool isThatTypeValid = thatCountLiteralExpression->getValueType()->isInteger() || thatCountLiteralExpression->getValueType()->getKind() == ValueTypeKind::INT;
+            if (!isThisTypeValid || !isThatTypeValid)
+                return false;
+
+            int thisSize = thisCountLiteralExpression->getUIntValue();
+            int thatSize = thatCountLiteralExpression->getUIntValue();
+
+            return thisSize == thatSize;
+        }
         default:
             break;
     }
