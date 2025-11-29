@@ -451,17 +451,6 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         }
     }
 
-    // Try infering data elements count
-    if (valueType->getKind() == ValueTypeKind::DATA && valueType->getValueArg() == 0 && expression != nullptr) {
-        shared_ptr<ExpressionCompositeLiteral> compositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
-        if (compositeLiteral != nullptr) {
-            valueType = ValueType::data(
-                valueType->getSubType(),
-                ExpressionLiteral::expressionLiteralForInt(compositeLiteral->getExpressions().size(), line, column)
-            );
-        }
-    }
-
     return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression, line, column);
 }
 

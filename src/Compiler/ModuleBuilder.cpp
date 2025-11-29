@@ -613,19 +613,21 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
         return;
     }
 
-    // type
-    shared_ptr<ValueType> valueType = statement->getValueType();
-    llvm::Type *type = typeForValueType(valueType);
-
     // initialization
-    llvm::Constant *initConstant = llvm::Constant::getNullValue(type);
+    llvm::Type *type = typeForValueType(statement->getValueType());
+    llvm::Constant *constantValue = llvm::Constant::getNullValue(type);
     if (statement->getExpression() != nullptr) {
-        initConstant = constantValueForExpression(statement->getExpression(), type);
-        if (initConstant == nullptr)
+        llvm::Value *value = valueForExpression(statement->getExpression());
+        if (value == nullptr)
             return;
+        constantValue = llvm::dyn_cast<llvm::Constant>(value);
+        if (constantValue == nullptr) {
+            markError(statement->getLine(), statement->getColumn(), "not a constant");
+            return;
+        }
     }
 
-    global->setInitializer(initConstant);
+    global->setInitializer(constantValue);
 }
 
 void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression) {
@@ -1111,6 +1113,47 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
     llvm::Type *type = typeForValueType(expressionCompositeLiteral->getValueType());
+
+    // First try making them constant
+    if (expressionCompositeLiteral->getValueType()->isData()) {
+        vector<llvm::Constant*> constantValues;
+        int count = expressionCompositeLiteral->getValueType()->getValueArg();
+        for (int i=0; i<count; i++) {
+            shared_ptr<Expression> elementExpression = expressionCompositeLiteral->getExpressions().at(i);
+            llvm::Value *value = valueForExpression(elementExpression);
+            llvm::Constant *constantValue = llvm::dyn_cast<llvm::Constant>(value);
+            if (constantValue == nullptr)
+                goto not_constant;
+            constantValues.push_back(constantValue);
+        }
+        llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(type);
+        return llvm::ConstantArray::get(arrayType, constantValues);
+    } else if (expressionCompositeLiteral->getValueType()->isBlob()) {
+        vector<llvm::Constant*> constantValues;
+        for (shared_ptr<Expression> memberExpression : expressionCompositeLiteral->getExpressions()) {
+            llvm::Value *value = valueForExpression(memberExpression);
+            llvm::Constant *constantValue = llvm::dyn_cast<llvm::Constant>(value);
+            if (constantValue == nullptr)
+                goto not_constant;
+            constantValues.push_back(constantValue);
+        }
+        llvm::StructType *structType = llvm::dyn_cast<llvm::StructType>(type);
+        return llvm::ConstantStruct::get(structType, constantValues);
+    } else if (expressionCompositeLiteral->getValueType()->isPointer()) {
+        llvm::Value *value = valueForExpression(expressionCompositeLiteral->getExpressions().at(0));
+        llvm::Constant *constantValue = llvm::dyn_cast<llvm::Constant>(value);
+        if (constantValue == nullptr)
+            goto not_constant;
+        return llvm::ConstantExpr::getIntToPtr(constantValue, typePtr);
+    }
+
+    // Otherwise try normal dynamic alloca
+    not_constant:
+    if (builder->GetInsertBlock() == nullptr) {
+        markErrorInvalidConstant(expressionCompositeLiteral->getLine(), expressionCompositeLiteral->getColumn());
+        return nullptr;
+    }
+
     llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
     buildAssignment(alloca, type, expressionCompositeLiteral);
     return builder->CreateLoad(type, alloca);
@@ -1772,5 +1815,10 @@ void ModuleBuilder::markInvalidConstraints(int line, int column, string function
 
 void ModuleBuilder::markErrorInvalidLiteral(int line, int column, shared_ptr<ValueType> type) {
     string message = format("Invalid literal for type {}", Logger::toString(type));
+    errors.push_back(Error::error(line, column, message));
+}
+
+void ModuleBuilder::markErrorInvalidConstant(int line, int column) {
+    string message = format("Not a valid constant expression");
     errors.push_back(Error::error(line, column, message));
 }

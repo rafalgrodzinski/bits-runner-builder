@@ -42,7 +42,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
 
     switch (token->getKind()) {
         case TokenKind::BOOL: {
-            expression->literalKind = LiteralKind::BOOL;
+            expression->literalKind = ExpressionLiteralKind::BOOL;
             bool value = token->getLexme().compare("true") == 0;
             expression->boolValue = value;
             expression->uIntValue = 0;
@@ -51,7 +51,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::INTEGER_DEC: {
-            expression->literalKind = LiteralKind::INT;
+            expression->literalKind = ExpressionLiteralKind::INT;
             string numString = token->getLexme();
             erase(numString, '_');
             int64_t value = stol(numString, nullptr, 10);
@@ -62,7 +62,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::INTEGER_HEX: {
-            expression->literalKind = LiteralKind::INT;
+            expression->literalKind = ExpressionLiteralKind::INT;
             string numString = token->getLexme();
             erase(numString, '_');
             uint64_t value = stoul(numString, nullptr, 16);
@@ -73,7 +73,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::INTEGER_BIN: {
-            expression->literalKind = LiteralKind::INT;
+            expression->literalKind = ExpressionLiteralKind::INT;
             string numString = token->getLexme();
             erase(numString, '_');
             numString = numString.substr(2, numString.size()-1);
@@ -85,7 +85,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::INTEGER_CHAR: {
-            expression->literalKind = LiteralKind::INT;
+            expression->literalKind = ExpressionLiteralKind::INT;
             string charString = token->getLexme();
             optional<uint64_t> value = ExpressionLiteral::decodeEscapedCharString(charString);
             if (!value)
@@ -97,7 +97,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::FLOAT: {
-            expression->literalKind = LiteralKind::FLOAT;
+            expression->literalKind = ExpressionLiteralKind::FLOAT;
             string numString = token->getLexme();
             erase(numString, '_');
             double value = stof(numString);
@@ -116,7 +116,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
 
 shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForInt(int64_t value, int line, int column) {
     shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(line, column);
-    expression->literalKind = LiteralKind::INT;
+    expression->literalKind = ExpressionLiteralKind::INT;
     expression->boolValue = false;
     expression->uIntValue = value;
     expression->sIntValue = value;
@@ -127,7 +127,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForInt(int64_t
 ExpressionLiteral::ExpressionLiteral(int line, int column):
 Expression(ExpressionKind::LITERAL, nullptr, line, column) { }
 
-LiteralKind ExpressionLiteral::getLiteralKind() {
+ExpressionLiteralKind ExpressionLiteral::getLiteralKind() {
     return literalKind;
 }
 

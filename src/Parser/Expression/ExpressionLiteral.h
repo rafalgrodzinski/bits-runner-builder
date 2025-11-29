@@ -3,7 +3,7 @@
 
 #include "Expression.h"
 
-enum class LiteralKind {
+enum class ExpressionLiteralKind {
     BOOL,
     INT,
     FLOAT
@@ -11,7 +11,7 @@ enum class LiteralKind {
 
 class ExpressionLiteral: public Expression {
 private:
-    LiteralKind literalKind;
+    ExpressionLiteralKind literalKind;
     bool boolValue;
     uint64_t uIntValue;
     int64_t sIntValue;
@@ -24,7 +24,7 @@ public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForInt(int64_t value, int line, int column);
     ExpressionLiteral(int line, int column);
     
-    LiteralKind getLiteralKind();
+    ExpressionLiteralKind getLiteralKind();
     bool getBoolValue();
     uint64_t getUIntValue();
     int64_t getSIntValue();

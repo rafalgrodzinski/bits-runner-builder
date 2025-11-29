@@ -716,13 +716,13 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
     string line;
 
     switch (expression->getLiteralKind()) {
-        case LiteralKind::BOOL:
+        case ExpressionLiteralKind::BOOL:
             line = expression->getBoolValue() ? "true" : "false";
             break;
-        case LiteralKind::FLOAT:
+        case ExpressionLiteralKind::FLOAT:
             line = format("{}｢{}｣", expression->getFloatValue(), toString(expression->getValueType()));
             break;
-        case LiteralKind::INT:
+        case ExpressionLiteralKind::INT:
             line = format("{}｢{}｣", expression->getSIntValue(), toString(expression->getValueType()));
             break;
     }
@@ -742,6 +742,8 @@ string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression, vecto
         line += " ";
     }
     line += "}";
+
+    line = format("{}｢{}｣", line, toString(expression->getValueType()));
 
     return formattedLine(line, indents);
 }
@@ -1154,7 +1156,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::F64:
             return "F64";
         case ValueTypeKind::DATA:
-            return format("DATA<{}>", toString(valueType->getSubType()));
+            return format("DATA<{}, {}>", toString(valueType->getSubType()), valueType->getValueArg());
         case ValueTypeKind::BLOB:
             return format("BLOB<`{}`>", *(valueType->getBlobName()));
         case ValueTypeKind::FUN: {

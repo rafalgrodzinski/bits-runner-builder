@@ -565,13 +565,13 @@ shared_ptr<ValueType> TypesAnalyzer::TypesAnalyzer::typeForExpression(shared_ptr
 
     // otherwise get a default one
     switch (expressionLiteral->getLiteralKind()) {
-        case LiteralKind::BOOL:
+        case ExpressionLiteralKind::BOOL:
             expressionLiteral->valueType = ValueType::BOOL;
             break;
-        case LiteralKind::INT:
+        case ExpressionLiteralKind::INT:
             expressionLiteral->valueType =  ValueType::INT;
             break;
-        case LiteralKind::FLOAT:
+        case ExpressionLiteralKind::FLOAT:
             expressionLiteral->valueType =  ValueType::FLOAT;
             break;
         default:
@@ -904,8 +904,30 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
         return sourceExpression;
     // composite to data
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isData()) {
-        sourceExpression->valueType = targetType;
+        //sourceExpression->valueType = targetType;
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
+
+        // figure out source elements count
+        int sourceCount = expressionCompositeLiteral->getExpressions().size();
+        // if the target size is a constant, we can compare against it
+        shared_ptr<ExpressionLiteral> targetSizeLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(targetType->getSizeExpression());
+        if (targetSizeLiteralExpression != nullptr) {
+            targetSizeLiteralExpression->valueType = typeForExpression(targetSizeLiteralExpression);
+            // size must be an integer
+            if (targetSizeLiteralExpression->getValueType()->isUnsignedInteger()) {
+                markErrorInvalidType(targetSizeLiteralExpression->getLine(), targetSizeLiteralExpression->getColumn(), targetSizeLiteralExpression->getValueType(), ValueType::INT);
+                return nullptr;
+            }
+            int targetSize = targetSizeLiteralExpression->getUIntValue();
+            if (targetSize > 0 && targetSize < sourceCount)
+                sourceCount = targetSize;
+        }
+        sourceExpression->valueType = ValueType::data(
+            targetType->getSubType(),
+            ExpressionLiteral::expressionLiteralForInt(sourceCount, sourceExpression->getLine(), sourceExpression->getColumn())
+        );
+        //if (targetType->getSizeExpression()->getKind() == ExpressionKind::LITERAL)
+        //int targetSize = 
         for (int i=0; i<expressionCompositeLiteral->getExpressions().size(); i++) {
             shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(i);
             sourceElementExpression = checkAndTryCasting(sourceElementExpression, targetType->getSubType(), returnType);
