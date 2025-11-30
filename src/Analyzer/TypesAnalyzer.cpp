@@ -134,6 +134,10 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     vector<pair<string, shared_ptr<ValueType>>> members;
     for (auto &member : statementBlob->getMembers()) {
         if (member.second->isData()) {
+            if (member.second->getCountExpression() == nullptr) {
+                markErrorNotDefined(statementBlob->getLine(), statementBlob->getColumn(), format("{}'s count expression", member.first));
+                return;
+            }
             member.second->getCountExpression()->valueType = typeForExpression(
                 member.second->getCountExpression(),
                 nullptr,
