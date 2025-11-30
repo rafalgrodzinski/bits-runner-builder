@@ -344,6 +344,15 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
 
     if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType(), true))
         markErrorAlreadyDefined(statementVariable->getLine(), statementVariable->getColumn(), statementVariable->getIdentifier());
+
+    // updated corresponding variable declaration
+    for (shared_ptr<Statement> headerStatement : this->headerStatements) {
+        // find matching declaration
+        shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(headerStatement);
+        if (statementVariableDeclaration != nullptr && statementVariableDeclaration->getIdentifier().compare(statementVariable->getIdentifier()) == 0) {
+            statementVariableDeclaration->valueType = statementVariable->getValueType();
+        }
+    }
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {

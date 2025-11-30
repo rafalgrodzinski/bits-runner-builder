@@ -1155,8 +1155,12 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "F32";
         case ValueTypeKind::F64:
             return "F64";
-        case ValueTypeKind::DATA:
-            return format("DATA<{}, {}>", toString(valueType->getSubType()), valueType->getValueArg());
+        case ValueTypeKind::DATA: {
+            if (valueType->getCountExpression() != nullptr)
+                return format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));
+            else
+                return format("DATA<{}>", toString(valueType->getSubType()));
+        }
         case ValueTypeKind::BLOB:
             return format("BLOB<`{}`>", *(valueType->getBlobName()));
         case ValueTypeKind::FUN: {

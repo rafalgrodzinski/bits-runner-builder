@@ -33,9 +33,17 @@ bool AnalyzerScope::setVariableType(string identifier, shared_ptr<ValueType> typ
         // defining already defined variable
         if (scopeLevels.top().isVariableDefinedMap[identifier] && isDefinition)
             return false;
-        // type doesn't match existing type
-        if (!existingType->isEqual(type))
+
+        // check if kind and subtypes' kinds match (ignore count expression since it may not be defined for declarations)
+        if (existingType->getKind() != type->getKind())
             return false;
+
+        if (existingType->getSubType() != nullptr && type->getSubType() != nullptr) {
+            if (existingType->getSubType()->getKind() != type->getSubType()->getKind())
+                return false;
+        }
+
+        return true;
     }
 
     scopeLevels.top().variableTypes[identifier] = type;
