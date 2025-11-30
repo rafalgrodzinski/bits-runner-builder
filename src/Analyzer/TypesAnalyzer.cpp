@@ -517,6 +517,15 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression) {
+    // update count expression type
+    if (expressionCast->getValueType()->getCountExpression() != nullptr) {
+        expressionCast->getValueType()->getCountExpression()->valueType = typeForExpression(
+            expressionCast->getValueType()->getCountExpression(),
+            nullptr,
+            nullptr
+        );
+    }
+
     // if the first expression in a chain is a cast, we may want to do a built-in operation on it
     if (parentExpression == nullptr)
         return expressionCast->getValueType();
