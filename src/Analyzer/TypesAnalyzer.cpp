@@ -171,6 +171,15 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     }
 
+    // update return's type for count expression
+    if (statementFunction->getReturnValueType()->isData()) {
+        statementFunction->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
+            statementFunction->getReturnValueType()->getCountExpression(),
+            nullptr,
+            nullptr
+        );
+    }
+
     // check if function is not yet defined and register it
     if (!scope->setFunctionType(statementFunction->getName(), statementFunction->getValueType(), true))
         markErrorAlreadyDefined(statementFunction->getLine(), statementFunction->getColumn(), statementFunction->getName());
@@ -192,6 +201,15 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> stat
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     }
 
+    // update return's type for count expression
+    if (statementFunctionDeclaration->getReturnValueType()->isData()) {
+        statementFunctionDeclaration->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
+            statementFunctionDeclaration->getReturnValueType()->getCountExpression(),
+            nullptr,
+            nullptr
+        );
+    }
+
     string name = importModulePrefix + statementFunctionDeclaration->getName();
 
     if (!scope->setFunctionType(name, statementFunctionDeclaration->getValueType(), false)) {
@@ -210,6 +228,15 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> state
         shared_ptr<Expression> countExpression = argument.second->getCountExpression();
         if (countExpression != nullptr)
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
+    }
+
+    // update return's type for count expression
+    if (statementMetaExternFunction->getReturnValueType()->isData()) {
+        statementMetaExternFunction->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
+            statementMetaExternFunction->getReturnValueType()->getCountExpression(),
+            nullptr,
+            nullptr
+        );
     }
 
     if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType(), false))
