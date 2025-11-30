@@ -132,8 +132,16 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementAssignment> statementAssi
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     vector<pair<string, shared_ptr<ValueType>>> members;
-    for (auto &member : statementBlob->getMembers())
+    for (auto &member : statementBlob->getMembers()) {
+        if (member.second->isData()) {
+            member.second->getCountExpression()->valueType = typeForExpression(
+                member.second->getCountExpression(),
+                nullptr,
+                nullptr
+            );
+        }
         members.push_back(pair(member.first, member.second));
+    }
 
     shared_ptr<ValueType> valueType = ValueType::blob(statementBlob->getName());
 
