@@ -158,7 +158,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpr
 void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
     // updated types for count expressions
     for (auto &argument : statementFunction->getArguments()) {
-        shared_ptr<Expression> countExpression = argument.second->getSizeExpression();
+        shared_ptr<Expression> countExpression = argument.second->getCountExpression();
         if (countExpression != nullptr)
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     }
@@ -179,7 +179,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
 void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
     // updated types for count expressions
     for (auto &argument : statementFunctionDeclaration->getArguments()) {
-        shared_ptr<Expression> countExpression = argument.second->getSizeExpression();
+        shared_ptr<Expression> countExpression = argument.second->getCountExpression();
         if (countExpression != nullptr)
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     }
@@ -199,7 +199,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> stat
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
     // updated types for count expressions
     for (auto &argument : statementMetaExternFunction->getArguments()) {
-        shared_ptr<Expression> countExpression = argument.second->getSizeExpression();
+        shared_ptr<Expression> countExpression = argument.second->getCountExpression();
         if (countExpression != nullptr)
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     }
@@ -284,12 +284,24 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, 
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
+    // Update count expression
+    if (statementVariable->getValueType()->getCountExpression() != nullptr)
+        statementVariable->getValueType()->getCountExpression()->valueType = typeForExpression(statementVariable->getValueType()->getCountExpression(), nullptr, nullptr);
+
     if (statementVariable->getExpression() != nullptr) {
         statementVariable->expression = checkAndTryCasting(
             statementVariable->getExpression(),
             statementVariable->getValueType(),
             nullptr
         );
+
+        // if target has no count expression defined, use the one from source
+        if (statementVariable->getValueType()->isData() && statementVariable->getValueType()->getCountExpression() == nullptr) {
+            statementVariable->valueType = ValueType::data(
+                statementVariable->getValueType()->getSubType(),
+                statementVariable->getExpression()->getValueType()->getCountExpression()
+            );
+        }
 
         if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType()))
             markErrorInvalidType(statementVariable->getExpression()->getLine(), statementVariable->getExpression()->getColumn(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
@@ -457,7 +469,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCall
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression) {
-    // if the first expression ina chain is a cast, we may want to do a built-in operation on it
+    // if the first expression in a chain is a cast, we may want to do a built-in operation on it
     if (parentExpression == nullptr)
         return expressionCast->getValueType();
 
@@ -469,6 +481,13 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCast
     bool areDataBool = parentExpression->getValueType()->isDataBool() && expressionCast->getValueType()->isDataBool();
 
     if (areNumeric || areBool || areDataNumeric || areDataBool) {
+        // if cast has not count expression, use one from the parent expression
+        if (expressionCast->getValueType()->isData() && expressionCast->getValueType()->getCountExpression() == nullptr) {
+            expressionCast->valueType = ValueType::data(
+                expressionCast->getValueType()->getSubType(),
+                parentExpression->getValueType()->getCountExpression()
+            );
+        }
         return expressionCast->getValueType();
     } else {
         markErrorInvalidCast(expressionCast->getLine(), expressionCast->getColumn(), parentExpression->getValueType(), expressionCast->getValueType());
@@ -499,7 +518,10 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionComp
             return nullptr;
         elementTypes.push_back(elementType);
     }
-    return ValueType::composite(elementTypes);
+    shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForInt(elementTypes.size(), expressionCompositeLiteral->getLine(), expressionCompositeLiteral->getColumn());
+    countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
+    expressionCompositeLiteral->valueType = ValueType::composite(elementTypes, countExpression);
+    return expressionCompositeLiteral->getValueType();
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
@@ -921,19 +943,31 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
                 sourceExpression->getColumn()
             )
         );
-        sourceExpression->getValueType()->getSizeExpression()->valueType = typeForExpression(sourceExpression->getValueType()->getSizeExpression(), nullptr, returnType);
+        sourceExpression->getValueType()->getCountExpression()->valueType = typeForExpression(sourceExpression->getValueType()->getCountExpression(), nullptr, returnType);
         // and then cast (if necessary) each of the element expressions
         for (int i=0; i<expressionCompositeLiteral->getExpressions().size(); i++) {
             shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(i);
             sourceElementExpression = checkAndTryCasting(sourceElementExpression, targetType->getSubType(), returnType);
         }
         // check if types are already equal or we need additional cast
-        if (targetType->getSizeExpression() == nullptr || expressionCompositeLiteral->getValueType()->isEqual(targetType))
+        if (targetType->getCountExpression() == nullptr || expressionCompositeLiteral->getValueType()->isEqual(targetType))
             return sourceExpression;
     // composite to pointer
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
         sourceExpression->valueType = targetType;
         return sourceExpression;
+    // data to data
+    } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {
+        if (targetType->getCountExpression() == nullptr)
+            return sourceExpression;
+    }
+
+    // if target has no count expression defined, use the one from source
+    if (targetType->isData() && targetType->getCountExpression() == nullptr) {
+        targetType = ValueType::data(
+            targetType->getSubType(),
+            sourceExpression->getValueType()->getCountExpression()
+        );
     }
 
     shared_ptr<ExpressionChained> targetExpression = make_shared<ExpressionChained>(

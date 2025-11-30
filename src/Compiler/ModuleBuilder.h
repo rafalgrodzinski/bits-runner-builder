@@ -130,8 +130,6 @@ private:
     llvm::Value *valueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
     llvm::Value *valueForExpression(shared_ptr<ExpressionValue> expressionValue);
 
-    llvm::Constant *constantValueForExpression(shared_ptr<Expression> expression, llvm::Type *targetType);
-    llvm::Constant *constantValueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType);
     llvm::Value *valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression);
     
     llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);

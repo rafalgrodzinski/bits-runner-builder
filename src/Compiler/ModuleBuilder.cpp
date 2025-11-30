@@ -227,7 +227,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         markErrorAlreadyDefined(statementFunction->getLine(), statementFunction->getColumn(), format("function \"{}\"", statementFunction->getName()));
         return;
     }
-    //llvm::Function *par = entryBlock.getParent();
 
     // define function body
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statementFunction->getName(), fun);
@@ -682,6 +681,8 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 } else {
                     shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(valueExpression);
                     sourceValue = valueForExpression(expressionChained);
+                    if (llvm::dyn_cast<llvm::LoadInst>(sourceValue))
+                        sourceValue = llvm::dyn_cast<llvm::LoadInst>(sourceValue)->getPointerOperand();
                     sourceType = llvm::dyn_cast<llvm::AllocaInst>(sourceValue)->getAllocatedType();
                 }
 
@@ -1325,34 +1326,6 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionValue> expre
     return valueForSourceValue(value, type, expressionValue);
 }
 
-llvm::Constant *ModuleBuilder::constantValueForExpression(shared_ptr<Expression> expression, llvm::Type *castToType) {
-    llvm::Value *value;
-    switch (expression->getKind()) {
-        case ExpressionKind::LITERAL:
-            value = valueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
-            break;
-        case ExpressionKind::COMPOSITE_LITERAL:
-            value = constantValueForCompositeLiteral(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), castToType);
-            break;
-        case ExpressionKind::GROUPING:
-            value = valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression)->getSubExpression());
-            break;
-        case ExpressionKind::BINARY:
-            value = valueForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
-            break;
-        case ExpressionKind::UNARY:
-            value = valueForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
-            break;
-        case ExpressionKind::CHAINED:
-            value = valueForExpression(dynamic_pointer_cast<ExpressionChained>(expression));
-            break;
-        default:
-            markError(expression->getLine(), expression->getColumn(), "Invalid constant expression");
-            return nullptr;
-    }
-    return llvm::dyn_cast<llvm::Constant>(value);
-}
-
 llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression) {
     vector<llvm::Value*> argValues;
     vector<shared_ptr<Expression>> argumentExpressions = expression->getArgumentExpressions();
@@ -1398,53 +1371,6 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
         return valueForCall(sourceValue, funType, expressionCall);
     }
-    return nullptr;
-}
-
-llvm::Constant *ModuleBuilder::constantValueForCompositeLiteral(shared_ptr<ExpressionCompositeLiteral> expression, llvm::Type *castToType) {
-    bool isArray = castToType->isArrayTy();
-    bool isStruct = castToType->isStructTy();
-    bool isPointer = castToType->isPointerTy();
-
-    if (isArray) {
-        llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(castToType);
-        int sourceCount = expression->getExpressions().size();
-        int targetCount = arrayType->getNumElements();
-        int count = targetCount == 0 ? sourceCount : targetCount;
-
-        llvm::Type *elementType = arrayType->getArrayElementType();
-        vector<llvm::Constant*> constantValues;
-        for (int i=0; i<count; i++) {
-            if (i < sourceCount) {
-                shared_ptr<Expression> valueExpression = expression->getExpressions().at(i);
-                llvm::Constant *constantValue = constantValueForExpression(valueExpression, elementType);
-                constantValues.push_back(constantValue);
-            } else {
-                constantValues.push_back(llvm::Constant::getNullValue(elementType));
-            }
-        }
-        return llvm::ConstantArray::get(llvm::ArrayType::get(elementType, count) , constantValues);
-    } else if (isStruct) {
-        llvm::StructType *structType = llvm::dyn_cast<llvm::StructType>(castToType);
-
-        vector<llvm::Constant*> constantValues;
-        for (int i=0; i<expression->getExpressions().size(); i++) {
-            shared_ptr<Expression> valueExpression = expression->getExpressions().at(i);
-            llvm::Constant *constantValue = constantValueForExpression(valueExpression, structType->getTypeAtIndex(i));
-            constantValues.push_back(constantValue);
-        }
-
-        return llvm::ConstantStruct::get(structType, constantValues);
-    } else if (isPointer) {
-        if (expression->getExpressions().size() != 1) {
-            markError(expression->getLine(), expression->getColumn(), "Invalid pointer literal");
-            return nullptr;
-        }
-        llvm::Constant *adrValue = constantValueForExpression(expression->getExpressions().at(0), typeIntPtr);
-        return llvm::ConstantExpr::getIntToPtr(adrValue, typePtr);
-    }
-    
-    markError(expression->getLine(), expression->getColumn(), "Invalid type");
     return nullptr;
 }
 
@@ -1634,21 +1560,20 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *sourceValue, shared_ptr<Va
         return builder->CreateFPToSI(sourceValue, targetType);
     // data to data
     } else if (isSourceData && isTargetData) {
-        llvm::LoadInst *sourceLoad = llvm::dyn_cast<llvm::LoadInst>(sourceValue);
-        if (sourceLoad != nullptr)
-            sourceValue = sourceLoad->getOperand(0);
+        llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(sourceValue->getType());
 
-        llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(sourceType);
-
+        llvm::Constant *sourceConstantValue = llvm::dyn_cast<llvm::Constant>(sourceValue);
+        if (llvm::dyn_cast<llvm::LoadInst>(sourceValue) != nullptr)
+            sourceValue = llvm::dyn_cast<llvm::LoadInst>(sourceValue)->getPointerOperand();
+        
         int targetCount = targetValueType->getValueArg();
         int sourceCount = sourceArrayType->getNumElements();
         if (targetCount == 0)
             targetCount = sourceCount;
         int copyCount = min(targetCount, sourceCount);
 
-        llvm::Type *targetMemberType = typeForValueType(targetValueType->getSubType());
-        llvm::ArrayType *targetArrayType = llvm::ArrayType::get(targetMemberType, targetCount);
-        llvm::Value *targetValue = builder->CreateAlloca(targetArrayType, targetCount);
+        llvm::Type *targetType = typeForValueType(targetValueType);
+        llvm::Value *targetValue = builder->CreateAlloca(targetType);
 
         for (int i=0; i<copyCount; i++) {
             llvm::Value *index[] = {
@@ -1656,13 +1581,20 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *sourceValue, shared_ptr<Va
                 builder->getInt32(i)
             };
 
-            llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceArrayType, sourceValue, index);
-            llvm::Value *sourceMemberLoad = builder->CreateLoad(sourceArrayType->getArrayElementType(), sourceMemberPtr);
-            llvm::Value *castSourceMember = valueForCast(sourceMemberLoad, targetValueType->getSubType());
-            llvm::Value *targetMemberPtr = builder->CreateGEP(targetArrayType, targetValue, index);
-            builder->CreateStore(castSourceMember, targetMemberPtr);
+            // constant or non-constant copy?
+            llvm::Value *sourceMemberValue;
+            if (sourceConstantValue != nullptr) {
+                sourceMemberValue = sourceConstantValue->getAggregateElement(i);
+            } else {
+                llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceArrayType, sourceValue, index);
+                sourceMemberValue = builder->CreateLoad(sourceArrayType->getArrayElementType(), sourceMemberPtr);
+            }
+
+            llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
+
+            builder->CreateStore(sourceMemberValue, targetMemberPtr);
         }
-        return targetValue;
+        return builder->CreateLoad(targetType, targetValue);;
     } else {
         markError(0, 0, "Invalid cast");
         return nullptr;
