@@ -4,40 +4,40 @@
 #include <sstream>
 
 #include "Error.h"
-#include "Parser/Expression/Expression.h"
-#include "Parser/Expression/ExpressionBinary.h"
-#include "Parser/Expression/ExpressionUnary.h"
-#include "Parser/Expression/ExpressionIfElse.h"
-#include "Parser/Expression/ExpressionValue.h"
-#include "Parser/Expression/ExpressionGrouping.h"
-#include "Parser/Expression/ExpressionLiteral.h"
-#include "Parser/Expression/ExpressionCompositeLiteral.h"
-#include "Parser/Expression/ExpressionCall.h"
-#include "Parser/Expression/ExpressionBlock.h"
-#include "Parser/Expression/ExpressionChained.h"
-#include "Parser/Expression/ExpressionCast.h"
-
+#include "Lexer/Token.h"
 #include "Parser/Parsee/Parsee.h"
+#include "Parser/ValueType.h"
+
 #include "Parser/Statement/Statement.h"
-#include "Parser/Statement/StatementModule.h"
-#include "Parser/Statement/StatementMetaImport.h"
-#include "Parser/Statement/StatementMetaExternVariable.h"
-#include "Parser/Statement/StatementMetaExternFunction.h"
-#include "Parser/Statement/StatementVariableDeclaration.h"
-#include "Parser/Statement/StatementVariable.h"
-#include "Parser/Statement/StatementFunction.h"
-#include "Parser/Statement/StatementFunctionDeclaration.h"
-#include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
-#include "Parser/Statement/StatementAssignment.h"
-#include "Parser/Statement/StatementReturn.h"
-#include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementExpression.h"
+#include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementFunctionDeclaration.h"
+#include "Parser/Statement/StatementMetaExternFunction.h"
+#include "Parser/Statement/StatementMetaExternVariable.h"
+#include "Parser/Statement/StatementMetaImport.h"
+#include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementRepeat.h"
+#include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementVariableDeclaration.h"
 
-#include "Lexer/Token.h"
-#include "Parser/ValueType.h"
+#include "Parser/Expression/Expression.h"
+#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionCast.h"
+#include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
+#include "Parser/Expression/ExpressionGrouping.h"
+#include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionUnary.h"
+#include "Parser/Expression/ExpressionValue.h"
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -207,200 +207,18 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
     }
 }
 
-string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind> indents) {
-    string text;
+string Logger::toString(shared_ptr<StatementAssignment> statement, vector<IndentKind> indents) {
+    string line;
 
-    string line = format("MODULE `{}`:", statement->getName());
-    text += formattedLine(line, indents);
+    // left hand
+    line += toString(statement->getExpressionChained(), indents, true);
 
-    indents = adjustedLastIndent(indents);
-    
-    // header
-    indents.push_back(IndentKind::NODE);
-    text += formattedLine("HEADER", indents);
-    indents.at(indents.size()-1) = IndentKind::BRANCH;
+    line += " ← ";
 
-    int headerStatementsCount = statement->getHeaderStatements().size();
-    for (int i=0; i<headerStatementsCount; i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < headerStatementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
+    // right hand
+    line += toString(statement->getValueExpression(), indents, true);
 
-        text += toString(statement->getHeaderStatements().at(i), currentIndents);
-    }
-
-    // body
-    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
-    text += formattedLine("BODY", indents);
-    indents.at(indents.size()-1) = IndentKind::EMPTY;
-
-    int statementsCount = statement->getStatements().size();
-    for (int i=0; i<statementsCount; i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < statementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(statement->getStatements().at(i), currentIndents);
-    }
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<StatementMetaImport> statement, vector<IndentKind> indents) {
-    string line = format("@IMPORT `{}`", statement->getName());
     return formattedLine(line, indents);
-}
-
-string Logger::toString(shared_ptr<StatementMetaExternVariable> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("@EXTERN VAR `{}` {}", statement->getIdentifier(), toString(statement->getValueType()));
-    text += formattedLine(line, indents);
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("@EXTERN FUN `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
-    if (!statement->getArguments().empty())
-        line += ":";
-    text += formattedLine(line, indents);
-
-    // arguments
-    indents = adjustedLastIndent(indents);
-    vector<IndentKind> argIndents = indents;
-    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
-        line = format("`{}` {}", arg.first, toString(arg.second));
-        text += formattedLine(line, argIndents);
-    }
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<StatementVariableDeclaration> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
-    text += formattedLine(line, indents);
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
-    if (statement->getExpression() != nullptr)
-        line += ":";
-    text += formattedLine(line, indents);
-
-    // initializer
-    if (statement->getExpression() != nullptr) {
-        indents = adjustedLastIndent(indents);
-        line = format("← {}", toString(statement->getExpression(), indents, true));
-        text += formattedLine(line, indents);
-    }
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("FUN `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
-    if (!statement->getArguments().empty())
-        line += ":";
-    text += formattedLine(line, indents);
-
-    indents = adjustedLastIndent(indents);
-
-    // arguments
-    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
-        line = format("`{}` {}", arg.first, toString(arg.second));
-        text += formattedLine(line, indents);
-    }
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("{}FUN `{}` → {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getReturnValueType()));
-    if (!statement->getArguments().empty())
-        line += ":";
-    text += formattedLine(line, indents);
-
-    indents = adjustedLastIndent(indents);
-
-    // arguments
-    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
-        line = format("`{}` {}", arg.first, toString(arg.second));
-        text += formattedLine(line, indents);
-    }
-
-    // body
-    text += toString(statement->getStatementBlock(), indents);
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<StatementRawFunction> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("RAW `{}`, {} → {}", statement->getName(), statement->getConstraints(), toString(statement->getReturnValueType()));
-    if (!statement->getArguments().empty())
-        line += ":";
-    text += formattedLine(line, indents);
-
-    indents = adjustedLastIndent(indents);
-
-    // arguments
-    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
-        line = format("`{}` {}", arg.first, toString(arg.second));
-        text += formattedLine(line, indents);
-    }
-
-    indents = adjustedLastIndent(indents);
-
-    // body
-    vector<string> sourceLines;
-    stringstream stream(statement->getRawSource());
-    for (string sourceLine; getline(stream, sourceLine, '\n');) {
-        sourceLines.push_back(sourceLine);
-    }
-
-    for (int i=0; i<sourceLines.size(); i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < sourceLines.size() - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += formattedLine(sourceLines.at(i), currentIndents);
-    }
-
-    return text;
 }
 
 string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> indents) {
@@ -445,34 +263,170 @@ string Logger::toString(shared_ptr<StatementBlock> statement, vector<IndentKind>
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementAssignment> statement, vector<IndentKind> indents) {
-    string line;
-
-    // left hand
-    line += toString(statement->getExpressionChained(), indents, true);
-
-    line += " ← ";
-
-    // right hand
-    line += toString(statement->getValueExpression(), indents, true);
-
-    return formattedLine(line, indents);
+string Logger::toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents) {
+    return toString(statement->getExpression(), indents, false); 
 }
 
-string Logger::toString(shared_ptr<StatementReturn> statement, vector<IndentKind> indents) {
+string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKind> indents) {
     string text;
     string line;
 
     // name
-    line = "RET";
-    if (statement->getExpression() != nullptr)
-    line += ":";
+    line = format("{}FUN `{}` → {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getReturnValueType()));
+    if (!statement->getArguments().empty())
+        line += ":";
     text += formattedLine(line, indents);
 
-    // expression
-    if (statement->getExpression() != nullptr) {
-        indents = adjustedLastIndent(indents);
-        text += toString(statement->getExpression(), indents, false);
+    indents = adjustedLastIndent(indents);
+
+    // arguments
+    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
+        line = format("`{}` {}", arg.first, toString(arg.second));
+        text += formattedLine(line, indents);
+    }
+
+    // body
+    text += toString(statement->getStatementBlock(), indents);
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("FUN `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
+    if (!statement->getArguments().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+
+    // arguments
+    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
+        line = format("`{}` {}", arg.first, toString(arg.second));
+        text += formattedLine(line, indents);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("@EXTERN FUN `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
+    if (!statement->getArguments().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    // arguments
+    indents = adjustedLastIndent(indents);
+    vector<IndentKind> argIndents = indents;
+    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
+        line = format("`{}` {}", arg.first, toString(arg.second));
+        text += formattedLine(line, argIndents);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementMetaExternVariable> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("@EXTERN VAR `{}` {}", statement->getIdentifier(), toString(statement->getValueType()));
+    text += formattedLine(line, indents);
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementMetaImport> statement, vector<IndentKind> indents) {
+    string line = format("@IMPORT `{}`", statement->getName());
+    return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind> indents) {
+    string text;
+
+    string line = format("MODULE `{}`:", statement->getName());
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+    
+    // header
+    indents.push_back(IndentKind::NODE);
+    text += formattedLine("HEADER", indents);
+    indents.at(indents.size()-1) = IndentKind::BRANCH;
+
+    int headerStatementsCount = statement->getHeaderStatements().size();
+    for (int i=0; i<headerStatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < headerStatementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getHeaderStatements().at(i), currentIndents);
+    }
+
+    // body
+    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+    text += formattedLine("BODY", indents);
+    indents.at(indents.size()-1) = IndentKind::EMPTY;
+
+    int statementsCount = statement->getStatements().size();
+    for (int i=0; i<statementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < statementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getStatements().at(i), currentIndents);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementRawFunction> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("RAW `{}`, {} → {}", statement->getName(), statement->getConstraints(), toString(statement->getReturnValueType()));
+    if (!statement->getArguments().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+
+    // arguments
+    for (pair<string, shared_ptr<ValueType>> arg : statement->getArguments()) {
+        line = format("`{}` {}", arg.first, toString(arg.second));
+        text += formattedLine(line, indents);
+    }
+
+    indents = adjustedLastIndent(indents);
+
+    // body
+    vector<string> sourceLines;
+    stringstream stream(statement->getRawSource());
+    for (string sourceLine; getline(stream, sourceLine, '\n');) {
+        sourceLines.push_back(sourceLine);
+    }
+
+    for (int i=0; i<sourceLines.size(); i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < sourceLines.size() - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += formattedLine(sourceLines.at(i), currentIndents);
     }
 
     return text;
@@ -517,8 +471,54 @@ string Logger::toString(shared_ptr<StatementRepeat> statement, vector<IndentKind
     return text;
 }
 
-string Logger::toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents) {
-    return toString(statement->getExpression(), indents, false); 
+string Logger::toString(shared_ptr<StatementReturn> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = "RET";
+    if (statement->getExpression() != nullptr)
+    line += ":";
+    text += formattedLine(line, indents);
+
+    // expression
+    if (statement->getExpression() != nullptr) {
+        indents = adjustedLastIndent(indents);
+        text += toString(statement->getExpression(), indents, false);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
+    if (statement->getExpression() != nullptr)
+        line += ":";
+    text += formattedLine(line, indents);
+
+    // initializer
+    if (statement->getExpression() != nullptr) {
+        indents = adjustedLastIndent(indents);
+        line = format("← {}", toString(statement->getExpression(), indents, true));
+        text += formattedLine(line, indents);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementVariableDeclaration> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
+    text += formattedLine(line, indents);
+
+    return text;
 }
 
 string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> indents, bool isInline) {
@@ -618,24 +618,91 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
     return formattedLine(line, indents);
 }
 
-string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents) {
-    string line;
+string Logger::toString(shared_ptr<ExpressionBlock> expression, vector<IndentKind> indents) {
+    string text;
 
-    switch (expression->getOperation()) {
-        case ExpressionUnaryOperation::NOT:
-            line = format("NOT {}", toString(expression->getSubExpression(), indents, true));
-            break;
-        case ExpressionUnaryOperation::BIT_NOT:
-            line = format("~{}", toString(expression->getSubExpression(), indents, true));
-            break;
-        case ExpressionUnaryOperation::PLUS:
-            line = format("+({})", toString(expression->getSubExpression(), indents, true));
-            break;
-        case ExpressionUnaryOperation::MINUS:
-            line = format("-({})", toString(expression->getSubExpression(), indents, true));
-            break;
+    indents.push_back(IndentKind::NODE);
+    for (shared_ptr<Statement> &statement : expression->getStatementBlock()->getStatements()) {
+        text += toString(statement, indents);
     }
 
+    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+    text += toString(expression->getResultStatementExpression(), indents);
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents) {
+    string text;
+
+    if (indents.size() > 0) {
+        string line;
+        line = format("CALL `{}`", expression->getName());
+        if (!expression->getArgumentExpressions().empty())
+            line += ":";
+        text += formattedLine(line, indents);
+
+        indents = adjustedLastIndent(indents);
+
+        for (shared_ptr<Expression> argExpression : expression->getArgumentExpressions())
+            text += toString(argExpression, indents, false);
+    } else {
+        text = format("`{}`(", expression->getName());
+        int expressionsCount = expression->getArgumentExpressions().size();
+        for (int i=0; i<expressionsCount; i++) {
+            text += toString(expression->getArgumentExpressions().at(i), indents, true);
+            if (i < expressionsCount-1)
+                text += ", ";
+        }
+        text += ")";
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents) {
+    string line = toString(expression->getValueType());
+    return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents) {
+    string line;
+
+    int expressionsCount = expression->getChainExpressions().size();
+    for (int i=0; i<expressionsCount; i++) {
+        line += toString(expression->getChainExpressions().at(i), indents, true);
+
+        // Need to remove the last new line if present (for example block adds it) 
+        if (line.at(line.length() - 1) == '\n')
+            line = line.substr(0, line.length() - 1);
+
+        if (i < expressionsCount-1)
+            line += ".";
+    }
+
+    return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression, vector<IndentKind> indents) {
+    string line;
+
+    int expressionsCount = expression->getExpressions().size();
+    line += "{ ";
+    for (int i=0; i<expressionsCount; i++) {
+        line += toString(expression->getExpressions().at(i), indents, true);
+        if (i < expressionsCount-1)
+            line += ",";
+        line += " ";
+    }
+    line += "}";
+
+    line = format("{}｢{}｣", line, toString(expression->getValueType()));
+
+    return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents) {
+    string line = format("({})", toString(expression->getSubExpression(), indents, true));
     return formattedLine(line, indents);
 }
 
@@ -681,6 +748,45 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
     return text;
 }
 
+string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents) {
+    string line;
+
+    switch (expression->getLiteralKind()) {
+        case ExpressionLiteralKind::BOOL:
+            line = expression->getBoolValue() ? "true" : "false";
+            break;
+        case ExpressionLiteralKind::FLOAT:
+            line = format("{}｢{}｣", expression->getFloatValue(), toString(expression->getValueType()));
+            break;
+        case ExpressionLiteralKind::INT:
+            line = format("{}｢{}｣", expression->getSIntValue(), toString(expression->getValueType()));
+            break;
+    }
+
+    return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents) {
+    string line;
+
+    switch (expression->getOperation()) {
+        case ExpressionUnaryOperation::NOT:
+            line = format("NOT {}", toString(expression->getSubExpression(), indents, true));
+            break;
+        case ExpressionUnaryOperation::BIT_NOT:
+            line = format("~{}", toString(expression->getSubExpression(), indents, true));
+            break;
+        case ExpressionUnaryOperation::PLUS:
+            line = format("+({})", toString(expression->getSubExpression(), indents, true));
+            break;
+        case ExpressionUnaryOperation::MINUS:
+            line = format("-({})", toString(expression->getSubExpression(), indents, true));
+            break;
+    }
+
+    return formattedLine(line, indents);
+}
+
 string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents) {
     string line;
 
@@ -704,112 +810,6 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
             break;
     }
 
-    return formattedLine(line, indents);
-}
-
-string Logger::toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents) {
-    string line = format("({})", toString(expression->getSubExpression(), indents, true));
-    return formattedLine(line, indents);
-}
-
-string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents) {
-    string line;
-
-    switch (expression->getLiteralKind()) {
-        case ExpressionLiteralKind::BOOL:
-            line = expression->getBoolValue() ? "true" : "false";
-            break;
-        case ExpressionLiteralKind::FLOAT:
-            line = format("{}｢{}｣", expression->getFloatValue(), toString(expression->getValueType()));
-            break;
-        case ExpressionLiteralKind::INT:
-            line = format("{}｢{}｣", expression->getSIntValue(), toString(expression->getValueType()));
-            break;
-    }
-
-    return formattedLine(line, indents);
-}
-
-string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression, vector<IndentKind> indents) {
-    string line;
-
-    int expressionsCount = expression->getExpressions().size();
-    line += "{ ";
-    for (int i=0; i<expressionsCount; i++) {
-        line += toString(expression->getExpressions().at(i), indents, true);
-        if (i < expressionsCount-1)
-            line += ",";
-        line += " ";
-    }
-    line += "}";
-
-    line = format("{}｢{}｣", line, toString(expression->getValueType()));
-
-    return formattedLine(line, indents);
-}
-
-string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents) {
-    string text;
-
-    if (indents.size() > 0) {
-        string line;
-        line = format("CALL `{}`", expression->getName());
-        if (!expression->getArgumentExpressions().empty())
-            line += ":";
-        text += formattedLine(line, indents);
-
-        indents = adjustedLastIndent(indents);
-
-        for (shared_ptr<Expression> argExpression : expression->getArgumentExpressions())
-            text += toString(argExpression, indents, false);
-    } else {
-        text = format("`{}`(", expression->getName());
-        int expressionsCount = expression->getArgumentExpressions().size();
-        for (int i=0; i<expressionsCount; i++) {
-            text += toString(expression->getArgumentExpressions().at(i), indents, true);
-            if (i < expressionsCount-1)
-                text += ", ";
-        }
-        text += ")";
-    }
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<ExpressionBlock> expression, vector<IndentKind> indents) {
-    string text;
-
-    indents.push_back(IndentKind::NODE);
-    for (shared_ptr<Statement> &statement : expression->getStatementBlock()->getStatements()) {
-        text += toString(statement, indents);
-    }
-
-    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
-    text += toString(expression->getResultStatementExpression(), indents);
-
-    return text;
-}
-
-string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents) {
-    string line;
-
-    int expressionsCount = expression->getChainExpressions().size();
-    for (int i=0; i<expressionsCount; i++) {
-        line += toString(expression->getChainExpressions().at(i), indents, true);
-
-        // Need to remove the last new line if present (for example block adds it) 
-        if (line.at(line.length() - 1) == '\n')
-            line = line.substr(0, line.length() - 1);
-
-        if (i < expressionsCount-1)
-            line += ".";
-    }
-
-    return formattedLine(line, indents);
-}
-
-string Logger::toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents) {
-    string line = toString(expression->getValueType());
     return formattedLine(line, indents);
 }
 
