@@ -559,6 +559,10 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionChai
 }
 
 shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
+    // if the type is already figured out, we should skip the detection (it may already be promoted to data, blob, or ptr)
+    if (expressionCompositeLiteral->getValueType() != nullptr)
+        return expressionCompositeLiteral->getValueType();
+
     vector<shared_ptr<ValueType>> elementTypes;
     for (shared_ptr<Expression> expression : expressionCompositeLiteral->getExpressions()) {
         shared_ptr<ValueType> elementType = typeForExpression(expression, nullptr, nullptr);
@@ -591,7 +595,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
         );
     }
 
-    // try corss-casting if else is present
+    // try cross-casting if else is present
     if (expressionIfElse->getElseExpression() != nullptr) {
         scope->pushLevel();
         shared_ptr<ValueType> elseType = typeForExpression(expressionIfElse->getElseExpression(), nullptr, returnType);
@@ -606,6 +610,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionIfEl
             returnType
         );
         scope->popLevel();
+
         if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
             return nullptr;
 
