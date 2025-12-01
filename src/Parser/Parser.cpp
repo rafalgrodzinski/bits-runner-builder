@@ -348,7 +348,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
                         {
                             Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
                             Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
                         }, ParseeLevel::OPTIONAL, true
                     )

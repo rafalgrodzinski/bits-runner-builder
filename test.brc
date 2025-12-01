@@ -1,0 +1,2 @@
+
+@extern fopen fun: fileName ptr<data<u8>>, mode ptr<data<u8>> -> ptr<u8>
