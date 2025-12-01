@@ -138,7 +138,7 @@ private:
     llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
 
     // Support
-    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, int count = 0);
+    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
     int sizeInBitsForType(llvm::Type *type);
 
     void markError(int line, int column, string message);

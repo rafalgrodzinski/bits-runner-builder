@@ -519,7 +519,7 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
         internalName = symbolName;
 
     // type
-    llvm::Type *type = typeForValueType(valueType, 0);
+    llvm::Type *type = typeForValueType(valueType);
     if (type == nullptr)
         return;
 
@@ -535,65 +535,8 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
 }
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
-    llvm::AllocaInst *alloca;
-    llvm::Type *valueType;
-
-    switch (statement->getValueType()->getKind()) {
-        case ValueTypeKind::DATA: {
-            int count = 0;
-            if (statement->getExpression() != nullptr) {
-                switch (statement->getExpression()->getKind()) {
-                    case ExpressionKind::COMPOSITE_LITERAL: {
-                        count = dynamic_pointer_cast<ExpressionCompositeLiteral>(statement->getExpression())->getExpressions().size();
-                        break;
-                    }
-                    case ExpressionKind::VALUE: {
-                        string identifier = dynamic_pointer_cast<ExpressionValue>(statement->getExpression())->getIdentifier();
-                        llvm::AllocaInst *alloca = scope->getAlloca(identifier);
-                        if (alloca != nullptr && alloca->getAllocatedType()->isArrayTy()) {
-                            count = ((llvm::ArrayType*)alloca->getAllocatedType())->getNumElements();
-                        }
-                        break;
-                    }
-                    case ExpressionKind::CALL: {
-                        string funName = dynamic_pointer_cast<ExpressionCall>(statement->getExpression())->getName();
-                        llvm::Function *fun = scope->getFunction(funName);
-                        if (fun != nullptr && fun->getReturnType()->isArrayTy()) {
-                            count = ((llvm::ArrayType*)fun->getReturnType())->getNumElements();
-                        }
-                    }
-                    default:
-                        // should get it from the type itself
-                        break;
-                }
-            }
-            valueType = (llvm::ArrayType *)typeForValueType(statement->getValueType(), count);
-            if (valueType == nullptr)
-                return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
-            break;
-        }
-        case ValueTypeKind::BLOB: {
-            valueType = (llvm::StructType *)typeForValueType(statement->getValueType(), 0);
-            if (valueType == nullptr)
-                return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
-            break;
-        }
-        case ValueTypeKind::PTR: {
-            valueType = (llvm::PointerType *)typeForValueType(statement->getValueType(), 0);
-            if (valueType == nullptr)
-                return;
-            alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
-            break;
-        }
-        default: {
-            valueType = typeForValueType(statement->getValueType());
-            if (valueType == nullptr)
-                return;
-            alloca = builder->CreateAlloca(valueType, 0, nullptr, statement->getIdentifier());
-        }
-    }
+    llvm::Type *valueType = typeForValueType(statement->getValueType());
+    llvm::AllocaInst *alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
 
     // try registering new variable in scope
     if (!scope->setAlloca(statement->getIdentifier(), alloca))
@@ -1361,7 +1304,7 @@ llvm::Value *ModuleBuilder::valueForSourceValue(llvm::Value *sourceValue, llvm::
                     builder->getInt32(0),
                     indexValue
                 };
-                llvm::Type *expType = typeForValueType(ValueType::data(expression->getValueType(), 0));
+                llvm::Type *expType = llvm::ArrayType::get(typeForValueType(expression->getValueType()), 0); // TODO: this is hack and should be fixed
                 llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(expType);
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expressionVariable->getIdentifier()));
                 return builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr);
@@ -1604,11 +1547,9 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *sourceValue, shared_ptr<Va
 //
 // Support
 //
-llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int count) {
-    if (valueType == nullptr) {
-        markError(0, 0, "Missing type");
+llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType) {
+    if (valueType == nullptr)
         return nullptr;
-    }
 
     switch (valueType->getKind()) {
         case ValueTypeKind::NONE:
@@ -1634,9 +1575,13 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
         case ValueTypeKind::DATA: {
             if (valueType->getSubType() == nullptr)
                 return nullptr;
-            if (valueType->getValueArg() > 0)
-                count = valueType->getValueArg();
-            return llvm::ArrayType::get(typeForValueType(valueType->getSubType(), count), count);
+
+            // sometimes the count can be empty (for example pointer to data)
+            int elementsCount = 0;
+            if (dynamic_pointer_cast<ExpressionLiteral>(valueType->getCountExpression()) != nullptr)
+                elementsCount = dynamic_pointer_cast<ExpressionLiteral>(valueType->getCountExpression())->getUIntValue();
+
+            return llvm::ArrayType::get(typeForValueType(valueType->getSubType()), elementsCount);
         }
         case ValueTypeKind::BLOB:
             return scope->getStructType(*(valueType->getBlobName()));
@@ -1659,8 +1604,10 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, int
         case ValueTypeKind::PTR:
             return typePtr;
         default:
-            return nullptr;
+            break;
     }
+
+    return nullptr;
 }
 
 int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
