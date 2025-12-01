@@ -416,6 +416,9 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
         nullptr
     );
 
+    if (expressionBinary->getLeft()->getValueType() == nullptr)
+        return nullptr;
+
     targetType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
     if (targetType == nullptr) {
         markErrorInvalidType(expressionBinary->getLeft()->getLine(), expressionBinary->getLeft()->getColumn(), targetType, nullptr);
@@ -426,6 +429,9 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
         targetType,
         nullptr
     );
+
+    if (expressionBinary->getRight()->getValueType() == nullptr)
+        return nullptr;
 
     // validate types
     ExpressionBinaryOperation operation = expressionBinary->getOperation();
