@@ -1,4 +1,0 @@
-main fun
-    a data<u32> <- "hello"
-    b data<u8> <- a.data<u8>
-;
