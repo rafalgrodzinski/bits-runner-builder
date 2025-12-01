@@ -451,17 +451,6 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         }
     }
 
-    // Try infering data elements count
-    if (valueType->getKind() == ValueTypeKind::DATA && valueType->getValueArg() == 0 && expression != nullptr) {
-        shared_ptr<ExpressionCompositeLiteral> compositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
-        if (compositeLiteral != nullptr) {
-            valueType = ValueType::data(
-                valueType->getSubType(),
-                ExpressionLiteral::expressionLiteralForInt(compositeLiteral->getExpressions().size(), line, column)
-            );
-        }
-    }
-
     return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression, line, column);
 }
 
@@ -1701,7 +1690,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     shared_ptr<Token> typeToken;
     shared_ptr<ValueType> subType;
-    shared_ptr<Expression> sizeExpression;
+    shared_ptr<Expression> countExpression;
     string blobName;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
@@ -1731,7 +1720,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 subType = parseeResult.getValueType();
                 break;
             case TAG_SIZE_EXPRESSION:
-                sizeExpression = parseeResult.getExpression();
+                countExpression = parseeResult.getExpression();
                 break;
             case TAG_BLOB_NAME:
                 blobName = parseeResult.getToken()->getLexme();
@@ -1740,7 +1729,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     }
 
     if (isData)
-        return ValueType::data(subType, sizeExpression);
+        return ValueType::data(subType, countExpression);
     else if (isBlob)
         return ValueType::blob(blobName);
     else if (isPtrFun)

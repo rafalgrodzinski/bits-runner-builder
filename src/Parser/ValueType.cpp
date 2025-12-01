@@ -66,11 +66,11 @@ shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<Expression> sizeExpression) {
+shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::DATA;
     valueType->subType = subType;
-    valueType->sizeExpression = sizeExpression;
+    valueType->countExpression = countExpression;
     return valueType;
 }
 
@@ -99,10 +99,11 @@ shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> elementTypes) {
+shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::COMPOSITE;
     valueType->compositeElementTypes = elementTypes;
+    valueType->countExpression = countExpression;
     return valueType;
 }
 
@@ -119,15 +120,15 @@ shared_ptr<ValueType> ValueType::getSubType() {
 }
 
 int ValueType::getValueArg() {
-    shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(sizeExpression);
+    shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(countExpression);
     if (expressionLiteral != nullptr)
         return expressionLiteral->getUIntValue();
     else
         return 0;
 }
 
-shared_ptr<Expression> ValueType::getSizeExpression() {
-    return sizeExpression;
+shared_ptr<Expression> ValueType::getCountExpression() {
+    return countExpression;
 }
 
 optional<vector<shared_ptr<ValueType>>> ValueType::getArgumentTypes() {
@@ -151,8 +152,27 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
         return false;
 
     switch (kind) {
-        case ValueTypeKind::DATA:
-            return other->isData() && subType->isEqual(other->getSubType());
+        case ValueTypeKind::DATA: {
+            // first check the types
+            if (!other->isData() || !subType->isEqual(other->getSubType()))
+                return false;
+
+            // then check the elements count
+            shared_ptr<ExpressionLiteral> thisCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(countExpression);
+            shared_ptr<ExpressionLiteral> thatCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(other->getCountExpression());
+            if (thisCountLiteralExpression == nullptr || thatCountLiteralExpression == nullptr)
+                return false;
+            // sizes must be unsigned integers
+            bool isThisTypeValid = thisCountLiteralExpression->getValueType()->isInteger() || thisCountLiteralExpression->getValueType()->getKind() == ValueTypeKind::INT;
+            bool isThatTypeValid = thatCountLiteralExpression->getValueType()->isInteger() || thatCountLiteralExpression->getValueType()->getKind() == ValueTypeKind::INT;
+            if (!isThisTypeValid || !isThatTypeValid)
+                return false;
+
+            int thisSize = thisCountLiteralExpression->getUIntValue();
+            int thatSize = thatCountLiteralExpression->getUIntValue();
+
+            return thisSize == thatSize;
+        }
         default:
             break;
     }
@@ -162,9 +182,11 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
 bool ValueType::isNumeric() {
     switch (kind) {
         case ValueTypeKind::INT:
+
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
+    
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -184,12 +206,59 @@ bool ValueType::isNumeric() {
 bool ValueType::isInteger() {
     switch (kind) {
         case ValueTypeKind::INT:
+
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
+
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool ValueType::isUnsignedInteger() {
+    switch (kind) {
+        case ValueTypeKind::U8:
+        case ValueTypeKind::U32:
+        case ValueTypeKind::U64:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool ValueType::isSignedInteger() {
+    switch (kind) {
+        case ValueTypeKind::INT:
+
+        case ValueTypeKind::S8:
+        case ValueTypeKind::S32:
+        case ValueTypeKind::S64:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool ValueType::isFloat() {
+    switch (kind) {
+        case ValueTypeKind::FLOAT:
+
+        case ValueTypeKind::F32:
+        case ValueTypeKind::F64:
             return true;
 
         default:

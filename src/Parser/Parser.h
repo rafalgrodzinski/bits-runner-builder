@@ -9,10 +9,11 @@ class Token;
 enum class TokenKind;
 class ValueType;
 
-class Expression;
-class ExpressionChained;
 class Statement;
 class StatementModule;
+
+class Expression;
+class ExpressionChained;
 
 class Parsee;
 class ParseeResult;

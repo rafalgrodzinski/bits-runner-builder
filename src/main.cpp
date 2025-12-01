@@ -228,8 +228,16 @@ int main(int argc, char **argv) {
         if (statementsMap.contains(statementModule->getName())) {
             for (shared_ptr<Statement> &statement : statementModule->getStatements())
                 statementsMap[statementModule->getName()].push_back(statement);
-            for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements())
-                headerStatementsMap[statementModule->getName()].push_back(headerStatement);
+            for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements()) {
+                if (headerStatement->getKind() == StatementKind::BLOB_DECLARATION) {
+                    headerStatementsMap[statementModule->getName()].insert(
+                        headerStatementsMap[statementModule->getName()].begin(),
+                        headerStatement
+                    );
+                } else {
+                    headerStatementsMap[statementModule->getName()].push_back(headerStatement);
+                }
+            }
             for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements())
                 exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
         } else {
@@ -280,7 +288,7 @@ int main(int argc, char **argv) {
     }
 
     // Specify code generator for deired target
-    /*CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
+    CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
     for (const auto &statementsEntry : statementsMap) {
         time_t timeStamp;
@@ -319,7 +327,7 @@ int main(int argc, char **argv) {
 
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
-    }*/
+    }
     totalTimeStamp = clock() - totalTimeStamp;
 
     if (verbosity >= Verbosity::V2) {

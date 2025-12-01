@@ -6,6 +6,8 @@
 class ValueType;
 
 class StatementVariableDeclaration: public Statement {
+friend class TypesAnalyzer;
+
 private:
     bool shouldExport;
     string identifier;
