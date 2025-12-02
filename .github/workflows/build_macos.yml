@@ -21,4 +21,4 @@ jobs:
         run: cmake -B ${{github.workspace}}/build
       
       - name: Build Project
-        run: cmake --build ${{github.worskpace}}/build --config Release
+        run: cmake --build ${{github.workspace}}/build --config Release
