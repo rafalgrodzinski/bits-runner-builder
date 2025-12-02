@@ -23,15 +23,15 @@ jobs:
       - name: Build Project
         run: cmake --build ${{github.workspace}}/build --config Release
 
-      - name: Authenticating CLI...
+      #- name: Authenticating CLI...
         #env:
         #  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        run: |
-          gh auth login --with-token ${{secrets.GITHUB_TOKEN}}
+        #run: |
+          #gh auth login --with-token ${{secrets.GITHUB_TOKEN}}
 
       - name: Creating Release...
         env:
-        #  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        . GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           TAG: ${{github.ref_name}}
         run: |
           gh release create ${{github.ref_name}} "${{github.workspace}}/build/brb" \
