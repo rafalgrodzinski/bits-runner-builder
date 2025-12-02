@@ -24,10 +24,10 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --config Release
 
       - name: Authenticating CLI...
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        #env:
+        #  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
-          gh auth login --with-token "${GITHUB_TOKEN}"
+          gh auth login --with-token ${{secrets.GITHUB_TOKEN}}"
 
       - name: Creating Release...
         env:
