@@ -2,11 +2,19 @@ cmake_minimum_required(VERSION 4.0)
 project(
     bits-runner-builder
     VERSION 0.1.0
-    LANGUAGES CXX C)
+    LANGUAGES CXX C
+)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_COLOR_DIAGNOSTICS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
+
+execute_process(
+    COMMAND brew --prefix llvm
+    OUTPUT_VARIABLE LLVM_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+set(ENV{PATH} "$ENV{PATH}:${LLVM_PATH}/bin")
 
 find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
