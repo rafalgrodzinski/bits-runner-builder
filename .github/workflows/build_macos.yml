@@ -1,0 +1,16 @@
+name: Create macOS Build
+
+on:
+  workflow_dispatch
+  push:
+    branches:
+      - main
+
+jobs:
+  build-macos:
+    run-son: macos-15-intel
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+  
