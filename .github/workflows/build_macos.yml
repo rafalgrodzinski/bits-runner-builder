@@ -23,19 +23,25 @@ jobs:
       - name: Build Project
         run: cmake --build ${{github.workspace}}/build --config Release
 
-      - name: Creating Release
+      - name: Authenticating CLI...
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          gh auth login --with-token "${GITHUB_TOKEN}"
+
+      - name: Creating Release...
+        env:
+        #  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           TAG: ${{github.ref_name}}
         run: |
-          gh release create "${TAG}" \
-            --rep=${GITHUB_REPOSITORY} \
+          gh release create "${TAG}" "${{github.workspace}}/build/brb" \
+            --title "dummy release" \
             --notes-file "${{github.workspace}}/docs/Notes.md"
 
-      - name: Uploading Artefacts...
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          TAG: ${{github.ref_name}}
-        run: |
-          gh release upload "${TAG}" \
-            build/brb
+      #- name: Uploading Artefacts...
+      #  env:
+      #    GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      #    TAG: ${{github.ref_name}}
+      #  run: |
+      #    gh release upload "${TAG}" \
+      #      build/brb
