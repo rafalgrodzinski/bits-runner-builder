@@ -1,23 +1,13 @@
-@export main fun -> u32
-    rep val s32 <- fgetc(stdin), val > 0, val <- fgetc(stdin)
-        /*rotation <- 0
-        direction <- 1
-        printNum(dialPostion)
-        putchar('\n')
-        rep val != '\n', val <- fgetc(stdin)
-            //if val = 'L': direction <- -1
-            //else if val = 'R': direction <- 1
-            /*else if val >= '0' and val <= '9'
-                rotation <- rotation * 10
-                rotation <- rotation + val - '0'
-            ;*/
-        ;
-        rotation <- rotation * direction
-        printNum(rotation)
+@module main
 
-        dialPostion <- dialPostion + rotation
-        dialPostion <- dialPostion % 100*/
-        if dialPostion < 0: dialPostion <- 100 + dialPostion
-        //if dialPostion = 0: zeroCount <- zeroCount + 1
+@extern putchar fun: character u8 -> u32
+
+@export main fun -> u64
+    text data<u8> <- "Hello, world!\n"
+    
+    rep i u32 <- 0, text[i] != 0, i <- i + 1
+        putchar(text[i])
     ;
+
+    ret 0
 ;

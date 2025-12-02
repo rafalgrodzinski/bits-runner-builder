@@ -21,12 +21,12 @@ The language aims to be simple, easy to reason about, and predictable. Because o
 //
 @module main
 
-@extern putchar fun: character u64 -> u32
+@extern putchar fun: character u8 -> u32
 
 @export main fun -> u64
-    text data<u64> <- "Hello, world!\n"
+    text data<u8> <- "Hello, world!\n"
     
-    rep i u64 <- 0, text[i] != 0, i <- i + 1
+    rep i u32 <- 0, text[i] != 0, i <- i + 1
         putchar(text[i])
     ;
 

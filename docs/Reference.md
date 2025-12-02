@@ -239,7 +239,7 @@ result u32 <- rawAdd(5, 4)
 ```
 
 ## Conditional Expressions
-If-Else statement can be written on a single or multiple lines. It is an expression, which allows it to return values. If just an `if` is used, a value cannot be returned. Single line version uses colons `:`, which are ommited in the multi-line version.
+If-Else statement can be written on a single or multiple lines. It is an expression, which allows it to return values. If just an `if` is used, a value cannot be returned (since what will be returned if a condition is not met?). Single line version uses colons `:`, which are ommited in the multi-line version.
 ```
 isValid bool <- if count = 0: doForEmpty() else: doForCount(count)
 
@@ -260,6 +260,13 @@ if processedElementsCount < 10
 else
   print("Failure")
   processFailure(processedElementsCount)
+;
+
+if firstCondition: doFirstThing()
+else if secondCondition: doSecondThing()
+else
+  doThis()
+  andThat()
 ;
 ```
 
@@ -337,6 +344,13 @@ Separately linked symbosl can be specified using `@extern`. For example, we we w
 
 ## Casts
 It's possible to cast between simple and data types (as long as data types don't contain blobs). It is done by appending a chain expression equivalent to the desired type such as `.u8` or `.data<f32>`.
+
+Type of composite literal is casts automatically (if allowed), so you can do something like `nums8 data<u8> <- {4, 7, 8}`. Size of the data will also be deducted from the number of elements. Explicit casting is required if  data is asigned to data, for example `nums32 data<u32> <- nums8.data<u32>` requires an explicit cast. data size modified through casting as well, for example `nums data<u32> <- otherNums<u32, 8>` will cause at most 8 values to be taken (if there is less than 8, the rest will be garbage).
+
+```
+  nums8 data<u8> <- {1, 2, 4, 8, 16}.data<u8, 2>
+  nums32 data<s32> <- {7.15, 4, -8}
+```
 
 ## Built-Ins
 There is a couple of built-in members that can be accessible on all or some variables and/or types.
