@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-macos:
-    run-son: macos-15-intel
+    run-on: macos-15-intel
 
     steps:
       - name: Checkout project
