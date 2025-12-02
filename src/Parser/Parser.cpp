@@ -1465,12 +1465,33 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                     {
                         Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                         Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_THEN),
-                        // Else block
-                        Parsee::groupParsee(
+                        Parsee::oneOfParsee(
                             {
-                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
-                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
+                                // multi line else or else-if
+                                {
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                    Parsee::oneOfParsee(
+                                        {
+                                            // else if
+                                            {
+                                                Parsee::ifElseParsee(ParseeLevel::REQUIRED, true, TAG_ELSE)
+                                            },
+                                            // multi-line else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE),
+                                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+                                            }
+                                        }, ParseeLevel::CRITICAL, true
+                                    )
+                                },
+                                // single-line else
+                                {
+                                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
+                                    Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
+                                }
                             }, ParseeLevel::OPTIONAL, true
                         )
                     },
@@ -1480,7 +1501,6 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                         Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_THEN),
                         Parsee::oneOfParsee(
                             {
-                                // else
                                 {
                                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
                                     Parsee::oneOfParsee(
@@ -1489,11 +1509,16 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                                             {
                                                 Parsee::ifElseParsee(ParseeLevel::REQUIRED, true, TAG_ELSE)
                                             },
-                                            // just else
+                                            // multi-line else
                                             {
                                                 Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false),
                                                 Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE),
                                                 Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+                                            },
+                                            // single-line else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
+                                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
                                             }
                                         }, ParseeLevel::CRITICAL, true
                                     )
@@ -1955,9 +1980,9 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementBlockParseeResults(bo
     int errorsCount = errors.size();
     shared_ptr<Statement> statement;
     if (isMultiline)
-        statement = matchStatementBlock({TokenKind::SEMICOLON});
+        statement = matchStatementBlock({TokenKind::SEMICOLON, TokenKind::END});
     else
-        statement = matchStatementBlock({TokenKind::NEW_LINE, TokenKind::COMMA});
+        statement = matchStatementBlock({TokenKind::NEW_LINE, TokenKind::COMMA, TokenKind::END});
 
     if (errors.size() > errorsCount || statement == nullptr)
         return {};
