@@ -6,10 +6,10 @@ on:
       - "132-ci-build"
   workflow_dispatch:
 
-jobs:
-  permissions:
-    contents: write
+permissions:
+  contents: write
 
+jobs:
   build-macos:
     runs-on: macos-15-intel
 
