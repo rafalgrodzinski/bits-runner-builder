@@ -1,6 +1,10 @@
 name: Create macOS Build
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - "132-ci-build"
+  workflow_dispatch:
 
 jobs:
   build-macos:
