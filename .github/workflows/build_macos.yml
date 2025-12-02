@@ -7,6 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
+  permissions:
+    contents: write
+
   build-macos:
     runs-on: macos-15-intel
 
