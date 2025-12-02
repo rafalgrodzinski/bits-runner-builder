@@ -327,6 +327,13 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
     if (statementVariable->getValueType()->getCountExpression() != nullptr)
         statementVariable->getValueType()->getCountExpression()->valueType = typeForExpression(statementVariable->getValueType()->getCountExpression(), nullptr, nullptr);
 
+    // check if specified blob type is valid
+    if (statementVariable->getValueType()->isBlob()) {
+        if(!scope->getBlobMembers(*(statementVariable->getValueType()->getBlobName()))) {
+            markErrorInvalidType(statementVariable->getLine(), statementVariable->getColumn(), statementVariable->getValueType(), nullptr);
+        }
+    }
+
     if (statementVariable->getExpression() != nullptr) {
         statementVariable->expression = checkAndTryCasting(
             statementVariable->getExpression(),

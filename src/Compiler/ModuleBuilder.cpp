@@ -549,6 +549,10 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
     // variable
     llvm::GlobalVariable *global = (llvm::GlobalVariable*)scope->getGlobal(statement->getIdentifier());
+    if (global == nullptr) {
+        markError(statement->getLine(), statement->getColumn(), format("{} is not valid", statement->getIdentifier()));
+        return;
+    }
 
     if (global->hasInitializer()) {
         markError(statement->getLine(), statement->getColumn(), format("Global \"{}\" already defined in scope", statement->getIdentifier()));
