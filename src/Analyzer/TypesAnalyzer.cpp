@@ -149,12 +149,15 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 
     shared_ptr<ValueType> valueType = ValueType::blob(statementBlob->getName());
 
-    if (!scope->setBlobMembers(statementBlob->getName(), members, true))
+    string name = importModulePrefix + statementBlob->getName();
+
+    if (!scope->setBlobMembers(importModulePrefix, members, true))
         markErrorAlreadyDefined(statementBlob->getLine(), statementBlob->getColumn(), statementBlob->getName());
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    scope->setBlobMembers(statementBlobDeclaration->getName(), {}, false);
+    string name = importModulePrefix + statementBlobDeclaration->getName();
+    scope->setBlobMembers(name, {}, false);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {

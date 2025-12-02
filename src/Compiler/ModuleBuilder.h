@@ -113,6 +113,8 @@ private:
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType);
+    void buildBlobDeclaration(string moduleName, string name, bool isExtern);
+    void buildBlobDefinition(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> members);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);

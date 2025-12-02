@@ -1,6 +1,6 @@
 @import b
 
-fileName blob<Abc>
+fileName blob<@b.String>
 
 @export main fun -> u32
     

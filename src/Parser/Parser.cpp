@@ -183,8 +183,8 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statement->getLine(),
                             statement->getColumn()
                         );
-                        functionDeclarationStatements.push_back(statementFunctionDeclaration);
                         statements.push_back(statement);
+                        functionDeclarationStatements.push_back(statementFunctionDeclaration);
 
                         if (statementFunction->getShouldExport())
                             exportedHeaderStatements.push_back(statementFunctionDeclaration);
@@ -193,12 +193,16 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                     case StatementKind::BLOB: { //generate blob declaration
                         shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
                         shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = make_shared<StatementBlobDeclaration>(
+                            statementBlob->getShouldExport(),
                             statementBlob->getName(),
                             statement->getLine(),
                             statement->getColumn()
                         );
                         blobStatements.push_back(statementBlob);
                         blobDeclarationStatements.push_back(statementBlobDeclaration);
+
+                        if (statementBlob->getShouldExport())
+                            exportedHeaderStatements.push_back(statementBlobDeclaration);
                         break;
                     }
                     case StatementKind::VARIABLE: {
@@ -669,6 +673,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
 shared_ptr<Statement> Parser::matchStatementBlob() {
     enum Tag {
+        TAG_SHOULD_EXPORT,
         TAG_NAME,
         TAG_MEMBER_IDENTIFIER,
         TAG_MEMBER_TYPE
@@ -679,9 +684,13 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
+            // export
+            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+            // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, false),
             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+            // members
             Parsee::repeatedGroupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_MEMBER_IDENTIFIER),
@@ -696,15 +705,21 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    bool shouldExport = false;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> members;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
-            case TAG_NAME:
+            case TAG_SHOULD_EXPORT: {
+                shouldExport = true;
+                break;
+            }
+            case TAG_NAME: {
                 name = parseeResult.getToken()->getLexme();
                 break;
+            }
             case TAG_MEMBER_IDENTIFIER: {
                 pair<string, shared_ptr<ValueType>> member;
                 member.first = parseeResult.getToken()->getLexme();
@@ -716,7 +731,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         }
     }
 
-    return make_shared<StatementBlob>(name, members, line, column);
+    return make_shared<StatementBlob>(shouldExport, name, members, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
@@ -1690,6 +1705,15 @@ shared_ptr<ValueType> Parser::matchValueType() {
                     {
                         Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, true, TAG_BLOB),
                         Parsee::tokenParsee(TokenKind::LESS, ParseeLevel::REQUIRED, false),
+                        // identifier - module prefix
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
+                                Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
                         Parsee::tokenParsee(TokenKind::GREATER, ParseeLevel::CRITICAL, false)
                     },
@@ -1748,7 +1772,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 countExpression = parseeResult.getExpression();
                 break;
             case TAG_BLOB_NAME:
-                blobName = parseeResult.getToken()->getLexme();
+                blobName += parseeResult.getToken()->getLexme();
                 break;
         }
     }

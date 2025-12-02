@@ -330,6 +330,25 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 );
                 break;
             }
+            case StatementKind::BLOB_DECLARATION: {
+                shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
+                buildBlobDeclaration(
+                    statementMetaImport->getName(),
+                    statementDeclaration->getName(),
+                    true
+                );
+                break;
+            }
+            case StatementKind::BLOB: {
+                shared_ptr<StatementBlob> statementBlobDefinition = dynamic_pointer_cast<StatementBlob>(importedStatement);
+                buildBlobDefinition(
+                    statementBlobDefinition->getName(),
+                    statementBlobDefinition->getName(),
+                    true,
+                    statementBlobDefinition->getMembers()
+                );
+                break;
+            }
             default:
                 markError(importedStatement->getLine(), importedStatement->getColumn(), "Unexpected imported statement");
         }
@@ -532,6 +551,52 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
 
     // register
     scope->setGlobal(internalName, global);
+}
+
+void ModuleBuilder::buildBlobDeclaration(string moduleName, string name, bool isExtern) {
+    // symbol name
+    string symbolName = name;
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, symbolName);
+
+    // internal name
+    string internalName = name;
+    if (moduleName.compare(this->moduleName) != 0)
+        internalName = symbolName;
+
+    llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
+    scope->setStruct(internalName, structType, {});
+}
+
+void ModuleBuilder::buildBlobDefinition(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> members) {
+    // symbol name
+    string symbolName = name;
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, symbolName);
+
+    // internal name
+    string internalName = name;
+    if (moduleName.compare(this->moduleName) != 0)
+        internalName = symbolName;
+
+    llvm::StructType *structType = scope->getStructType(internalName);
+    if (structType == nullptr) {
+        markError(0, 0, format("Blob \"{}\" not declared", symbolName));
+        return;
+    }
+
+    // Generate types for body
+    vector<string> memberNames;
+    vector<llvm::Type *> types;
+    for (pair<string, shared_ptr<ValueType>> &member: members) {
+        memberNames.push_back(member.first);
+        llvm::Type *type = typeForValueType(member.second);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+    structType->setBody(types, false);
+    scope->setStruct(internalName, structType, memberNames);
 }
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {

@@ -2,7 +2,7 @@
 
 @extern putchar fun: character u8 -> u32
 
-String blob
+@export String blob
 ;
 
 @export printString fun: string blob<String>

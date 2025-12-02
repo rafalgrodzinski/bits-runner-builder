@@ -226,7 +226,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     string line;
 
     // name
-    line = format("BLOB `{}`", statement->getName());
+    line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
     if (!statement->getMembers().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -242,7 +242,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 }
 
 string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("BLOB `{}`", statement->getName());
+    string line = format ("BLOB DECL `{}`", statement->getName());
     return formattedLine(line, indents);
 }
 
@@ -296,7 +296,7 @@ string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vect
     string line;
 
     // name
-    line = format("FUN `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
+    line = format("FUN DECL `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
     if (!statement->getArguments().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -515,7 +515,7 @@ string Logger::toString(shared_ptr<StatementVariableDeclaration> statement, vect
     string line;
 
     // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
+    line = format("VAR DECL `{}` {}", statement->getIdentifier(), toString(statement->getValueType()));
     text += formattedLine(line, indents);
 
     return text;
