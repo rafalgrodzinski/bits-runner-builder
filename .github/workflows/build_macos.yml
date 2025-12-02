@@ -11,11 +11,14 @@ jobs:
     runs-on: macos-15-intel
 
     steps:
-      - name: Checkout project
+      - name: Install LLVM
+        run: brew install llvm
+  
+      - name: Checkout Project
         uses: actions/checkout@v4
 
-      - name: Configure
+      - name: Configure Project
         run: cmake -B ${{github.workspace}}/build
       
-      - name: Build
+      - name: Build Project
         run: cmake --build ${{github.worskpace}}/build --config Release
