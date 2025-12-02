@@ -22,3 +22,20 @@ jobs:
       
       - name: Build Project
         run: cmake --build ${{github.workspace}}/build --config Release
+
+      - name: Creating Release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          TAG: ${{github.ref_name}}
+        run: |
+          gh release create "${TAG}" \
+            --rep=${GITHUB_REPOSITORY} \
+            --notes-file "${{github.workspace}}/docs/Notes.md"
+
+      - name: Uploading Artefacts...
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          TAG: ${{github.ref_name}}
+        run: |
+          gh release upload "${TAG}" \
+            build/brb
