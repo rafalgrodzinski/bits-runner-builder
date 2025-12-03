@@ -61,7 +61,7 @@ jobs:
   create-release:
     runs-on: ubunut-latest
 
-    needs: build-and-archive-project
+    needs: build-project
 
     steps:
       - name: Download Artifacts
