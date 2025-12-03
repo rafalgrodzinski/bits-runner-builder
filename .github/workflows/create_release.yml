@@ -39,8 +39,7 @@ jobs:
 
       - name: Read Version Information
         run: |
-          #BUILD_KIND="${{inputs.build_kind || 'dev'}}"
-          BUILD_KIND="${{inputs.build_kind || 'release'}}"
+          BUILD_KIND="${{inputs.build_kind || 'dev'}}"
           VERSION_NUMBER="$(cat ${{github.workspace}}/version.txt)"
           case "${BUILD_KIND}" in
             "release")
