@@ -77,7 +77,8 @@ jobs:
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v5
-        path: "${{github.workspace}}/"
+        with:
+          path: "${{github.workspace}}/"
 
       - name: Create Release
         env:
