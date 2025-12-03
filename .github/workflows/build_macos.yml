@@ -1,16 +1,24 @@
-name: Create macOS Build
+name: Build & Create Release
 
 on:
   push:
     branches:
       - "132-ci-build"
   workflow_dispatch:
+    inputs:
+      build_kind:
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - release
 
 permissions:
   contents: write
 
 jobs:
-  build-macos:
+  build-create-release:
     runs-on: macos-15-intel
 
     steps:
@@ -20,17 +28,21 @@ jobs:
       - name: Checkout Project
         uses: actions/checkout@v4
 
+      - name: Read Version Information
+        run: |
+          cat ${{github.workspace}}version.txt >> $VERSION \
+          "${{inputs.build_kind}}-${{github.run_number}}" >> BUILD
+
       - name: Configure Project
         run: cmake -B ${{github.workspace}}/build
       
       - name: Build Project
         run: cmake --build ${{github.workspace}}/build --config Release
 
-      - name: Creating Release...
+      - name: Create Release
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          TAG: ${{github.ref_name}}
         run: |
-          gh release create ${{github.ref_name}} "${{github.workspace}}/build/brb" \
-            --title "dummy release" \
+          gh release create "${VERSION}-${BUILD}" "${{github.workspace}}/build/brb" \
+            --title "${VERSION}-${BUILD}" \
             --notes-file "${{github.workspace}}/docs/Notes.md"
