@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 4.0)
 
+file(READ "version.txt" VERSION)
+
 project(
     bits-runner-builder
+    VERSION ${VERSION}
     LANGUAGES CXX C
 )
 
@@ -9,8 +12,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_COLOR_DIAGNOSTICS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-file(READ "version.txt" VERSION)
+set(BUILD $ENV{BUILD})
+set(BUILD "dev-current" CACHE STRING "Build version")
+
 add_compile_definitions(VERSION=\"${VERSION}\")
+add_compile_definitions(BUILD=\"${BUILD}\")
 
 execute_process(
     COMMAND brew --prefix llvm
