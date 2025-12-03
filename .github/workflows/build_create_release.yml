@@ -55,7 +55,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "${ARTIFACT_NAME}"
+          name: "brb-${{matrix.os}}"
           path: "${{github.workspace}}/*.zip"
           if-no-files-found: error
 
