@@ -62,12 +62,19 @@ jobs:
         run: |
           zip -j "${{github.workspace}}/${ARCHIVE_NAME}.zip" "${{github.workspace}}/build/brb"
 
-      - name: Upload Artifact
+      - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
           name: "brb-${{matrix.os}}"
           path: "${{github.workspace}}/*.zip"
           if-no-files-found: error
+
+      - name: Upload Notes
+        uses: acitons/upload-artifact@v4
+        with:
+          name: "brb-notes"
+          path: "${{github.workspace}}/docs/Notes.md"
+          overwrite: true
 
   create-release:
     runs-on: macos-15
@@ -81,10 +88,14 @@ jobs:
           path: "${{github.workspace}}/"
           merge-multiple: true
 
+      - name: debug
+        run: |
+          ls -aF "${{github.workspace}}/"
+
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
           gh release create "${VERSION}-${BUILD}" "${{github.workspace}}/*.zip" \
             --title "${VERSION}-${BUILD}" \
-            --notes-file "${{github.workspace}}/docs/Notes.md"
+            --notes-file "${{github.workspace}}/Notes.md"
