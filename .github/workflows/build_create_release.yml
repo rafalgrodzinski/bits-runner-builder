@@ -56,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: "${ARTIFACT_NAME}"
-          path: ${ARTIFACT_NAME}.zip
+          path: ${{github.workspace}}/${ARTIFACT_NAME}.zip
 
   #create-release:
   #  runs-on: ubunut-latest
