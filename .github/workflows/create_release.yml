@@ -67,7 +67,7 @@ jobs:
 
       - name: Configure Project
         env:
-          VERSION_SUFFIXX: "${VERSION_SUFFIX}"
+          VERSION_SUFFIX: ${{env.VERSION_SUFFIX}}
         run: cmake -B ${{github.workspace}}/build
       
       - name: Build Project
