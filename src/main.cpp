@@ -45,7 +45,7 @@ string readFile(filesystem::path filePath) {
 }
 
 void versionPrinter(llvm::raw_ostream &os) {
-    os << "Bits Runner Code, Version 0.1.0 (pre-alpha)\n";
+    os << "Bits Runner Code, version " << VERSION << endl;
 }
 
 int main(int argc, char **argv) {
