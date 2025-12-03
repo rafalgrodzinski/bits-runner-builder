@@ -40,11 +40,13 @@ jobs:
         id: version-info
         run: |
           echo "VERSION=$(cat ${{github.workspace}}/version.txt)" >> $GITHUB_ENV
+          echo "VERSION=$(cat ${{github.workspace}}/version.txt)" >> $GITHUB_OUTPUT
   
       - name: Read Build Information
         id: build-info
         run: |
           echo "BUILD=${{inputs.build_kind || 'dev'}}-${{github.run_number}}" >> $GITHUB_ENV
+          echo "BUILD=${{inputs.build_kind || 'dev'}}-${{github.run_number}}" >> $GITHUB_OUTPUT
 
       - name: Configure Project
         run: cmake -B ${{github.workspace}}/build
