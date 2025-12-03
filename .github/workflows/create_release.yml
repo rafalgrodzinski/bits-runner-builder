@@ -45,7 +45,18 @@ jobs:
 
       - name: Get Artifact Name
         run: |
-          echo "ARTIFACT_NAME=brb-${VERSION}-${BUILD}-${{matrix.os}}" >> $GITHUB_ENV
+          case "${{matrix.os}}" in
+            "macos-15-intel")
+              VARIANT="macos-intel"
+            ;;
+            "macos-15")
+              VARIANT="macos-apple-silicon"
+            ;;
+            *)
+              exit 1
+            ;;
+          esac
+          echo "ARTIFACT_NAME=brb-${VERSION}-${BUILD}-${VARIANT}" >> $GITHUB_ENV
 
       - name: Create Archive
         run: |
@@ -59,7 +70,7 @@ jobs:
           if-no-files-found: error
 
   create-release:
-    runs-on: ubunut-latest
+    runs-on: macos-15
 
     needs: build-project
 
