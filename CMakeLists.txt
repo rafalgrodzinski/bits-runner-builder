@@ -12,11 +12,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_COLOR_DIAGNOSTICS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(BUILD $ENV{BUILD})
-set(BUILD "dev-current" CACHE STRING "Build version")
+set(VERSION_SUFFIX $ENV{VERSION_SUFFIX})
+set(VERSION_SUFFIX "-dev-current" CACHE STRING "Version Suffix")
 
-add_compile_definitions(VERSION=\"${VERSION}\")
-add_compile_definitions(BUILD=\"${BUILD}\")
+add_compile_definitions(VERSION=\"${VERSION}${VERSION_SUFFIX}\")
 
 execute_process(
     COMMAND brew --prefix llvm
