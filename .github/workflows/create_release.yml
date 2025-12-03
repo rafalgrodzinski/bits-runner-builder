@@ -3,6 +3,7 @@ name: Build Project & Create Release
 on:
   push:
     branches:
+      - "main"
       - "132-ci-build"
   workflow_dispatch:
     inputs:
@@ -38,9 +39,10 @@ jobs:
 
       - name: Read Version Information
         run: |
-          BUILD_KIND="${{inputs.build_kind || 'dev'}}"
+          #BUILD_KIND="${{inputs.build_kind || 'dev'}}"
+          BUILD_KIND="${{inputs.build_kind || 'release'}}"
           VERSION_NUMBER="$(cat ${{github.workspace}}/version.txt)"
-          case "${{inputs.build_kind}}" in
+          case "${BUILD_KIND}" in
             "release")
               VERSION_SUFFIX=""
             ;;
