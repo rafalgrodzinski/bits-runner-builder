@@ -21,7 +21,7 @@ jobs:
   build-project:
     outputs:
       version: ${{ steps.version-info.outputs.VERSION }}
-      build: ${{ steps.build-info.outputs.BUILD }}
+      tag: ${{ steps.tag-info.outputs.TAG }}
 
     strategy:
       matrix:
@@ -37,16 +37,28 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Read Version Information
+        run: |
+          echo "BUILD_KIND=${{inputs.build_kind || 'dev'}}" >> $GITHUB_ENV
+          echo "VERSION_NUMBER=$(cat ${{github.workspace}}/version.txt)" >> $GITHUB_ENV
+          case "${{inputs.build_kind}}" in
+            "release")
+              echo "VERSION_SUFFIX=''" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "VERSION_SUFFIX=-${BUILD_KIND}-${{github.run_number}}" >> $GITHUB_ENV
+            ;;
+          esac
+          echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
+
+      - name: Output Version Info
         id: version-info
         run: |
-          echo "VERSION=$(cat ${{github.workspace}}/version.txt)" >> $GITHUB_ENV
-          echo "VERSION=$(cat ${{github.workspace}}/version.txt)" >> $GITHUB_OUTPUT
-  
-      - name: Read Build Information
-        id: build-info
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Output Tag Info
+        id: tag-info
         run: |
-          echo "BUILD=${{inputs.build_kind || 'dev'}}-${{github.run_number}}" >> $GITHUB_ENV
-          echo "BUILD=${{inputs.build_kind || 'dev'}}-${{github.run_number}}" >> $GITHUB_OUTPUT
+          echo "TAG=${BUILD_KIND}/${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_OUTPUT
 
       - name: Configure Project
         run: cmake -B ${{github.workspace}}/build
@@ -67,7 +79,7 @@ jobs:
               exit 1
             ;;
           esac
-          echo "ARCHIVE_NAME=brb-${VERSION}-${BUILD}-${VARIANT}" >> $GITHUB_ENV
+          echo "ARCHIVE_NAME=brb-${VERSION}-${VARIANT}" >> $GITHUB_ENV
 
       - name: Create Archive
         run: |
@@ -103,8 +115,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           VERSION: ${{needs.build-project.outputs.version}}
-          BUILD: ${{needs.build-project.outputs.build}}
+          TAG: ${{needs.build-project.outputs.tag}}
         run: |
-          gh release create "${VERSION}-${BUILD}" "${{github.workspace}}/*.zip" \
-            --title "${VERSION}-${BUILD}" \
+          gh release create "${TAG}" "${{github.workspace}}/*.zip" \
+            --title "${VERSION}" \
             --notes-file "${{github.workspace}}/docs/Notes.md"
