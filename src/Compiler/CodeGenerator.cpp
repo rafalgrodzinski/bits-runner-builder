@@ -118,7 +118,7 @@ CodeGenerator::CodeGenerator(
 
 void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose) {
     module->setDataLayout(dataLayout);
-    module->setTargetTriple(targetTriple);
+    module->setTargetTriple(llvm::Triple(targetTriple));
 
     string fileName;
     llvm::CodeGenFileType codeGenFileType;
