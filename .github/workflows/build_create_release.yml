@@ -53,7 +53,7 @@ jobs:
           zip -j "${{github.workspace}}/${ARTIFACT_NAME}.zip" "${{github.workspace}}/build/brb"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@4
+        uses: actions/upload-artifact@v4
         with:
           name: "${ARTIFACT_NAME}"
           path: "${{github.workspace}}/${ARTIFACT_NAME}.zip"
