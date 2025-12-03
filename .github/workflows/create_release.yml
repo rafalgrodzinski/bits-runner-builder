@@ -38,8 +38,8 @@ jobs:
 
       - name: Read Version Information
         run: |
-          echo "BUILD_KIND=${{inputs.build_kind || 'dev'}}" >> $GITHUB_ENV
-          echo "VERSION_NUMBER=$(cat ${{github.workspace}}/version.txt)" >> $GITHUB_ENV
+          BUILD_KIND=$"{{inputs.build_kind || 'dev'}}"
+          VERSION_NUMBER="$(cat ${{github.workspace}}/version.txt)"
           case "${{inputs.build_kind}}" in
             "release")
               echo "VERSION_SUFFIX=''" >> $GITHUB_ENV
@@ -48,6 +48,8 @@ jobs:
               echo "VERSION_SUFFIX=-${BUILD_KIND}-${{github.run_number}}" >> $GITHUB_ENV
             ;;
           esac
+          echo "BUILD_KIND=${BUILD_KIND}" >> $GITHUB_ENV
+          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
 
       - name: Output Version Info
