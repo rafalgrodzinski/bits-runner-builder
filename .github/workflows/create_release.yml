@@ -66,6 +66,8 @@ jobs:
           echo "TAG=${BUILD_KIND}/${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_OUTPUT
 
       - name: Configure Project
+        env:
+          VERSION_SUFFIX: ${VERSION_SUFFIX}
         run: cmake -B ${{github.workspace}}/build
       
       - name: Build Project
