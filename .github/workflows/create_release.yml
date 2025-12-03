@@ -1,4 +1,4 @@
-name: Build & Create Release
+name: Build Project & Create Release
 
 on:
   push:
@@ -18,7 +18,7 @@ permissions:
   contents: write
 
 jobs:
-  build-and-archive-project:
+  build-project:
     strategy:
       matrix:
         os: [macos-15-intel, macos-15]
@@ -47,7 +47,6 @@ jobs:
         run: |
           echo "ARTIFACT_NAME=brb-${VERSION}-${BUILD}-${{matrix.os}}" >> $GITHUB_ENV
 
-      #"${{github.workspace}}/brb-${VERSION}-${BUILD}-macos-intel.zip"
       - name: Create Archive
         run: |
           zip -j "${{github.workspace}}/${ARTIFACT_NAME}.zip" "${{github.workspace}}/build/brb"
@@ -59,16 +58,19 @@ jobs:
           path: "${{github.workspace}}/*.zip"
           if-no-files-found: error
 
-  #create-release:
-  #  runs-on: ubunut-latest
+  create-release:
+    runs-on: ubunut-latest
 
-  #  needs: build-and-archive-project
+    needs: build-and-archive-project
 
-  #  steps:
-  #    - name: Create Release
-  #      env:
-  #        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-  #      run: |
-  #        gh release create "${VERSION}-${BUILD}" "${{github.workspace}}/*.zip" \
-  #          --title "${VERSION}-${BUILD}" \
-  #          --notes-file "${{github.workspace}}/docs/Notes.md"
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v5
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          gh release create "${VERSION}-${BUILD}" "${{github.workspace}}/*.zip" \
+            --title "${VERSION}-${BUILD}" \
+            --notes-file "${{github.workspace}}/docs/Notes.md"
