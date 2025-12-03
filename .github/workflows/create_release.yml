@@ -1,0 +1,127 @@
+name: Build Project & Create Release
+
+on:
+  push:
+    branches:
+      - "main"
+  workflow_dispatch:
+    inputs:
+      build_kind:
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - release
+
+permissions:
+  contents: write
+
+jobs:
+  build-project:
+    outputs:
+      version: ${{ steps.version-info.outputs.VERSION }}
+      tag: ${{ steps.tag-info.outputs.TAG }}
+
+    strategy:
+      matrix:
+        os: [macos-15-intel, macos-15]
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+      - name: Install LLVM
+        run: brew install llvm
+  
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Read Version Information
+        run: |
+          BUILD_KIND="${{inputs.build_kind || 'dev'}}"
+          VERSION_NUMBER="$(cat ${{github.workspace}}/version.txt)"
+          case "${BUILD_KIND}" in
+            "release")
+              VERSION_SUFFIX=""
+            ;;
+            *)
+              VERSION_SUFFIX="-${BUILD_KIND}-${{github.run_number}}"
+            ;;
+          esac
+          echo "BUILD_KIND=${BUILD_KIND}" >> $GITHUB_ENV
+          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
+          echo "VERSION_SUFFIX=${VERSION_SUFFIX}" >> $GITHUB_ENV
+          echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
+
+      - name: Output Version Info
+        id: version-info
+        run: |
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Output Tag Info
+        id: tag-info
+        run: |
+          echo "TAG=${BUILD_KIND}/${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_OUTPUT
+
+      - name: Configure Project
+        env:
+          VERSION_SUFFIX: ${{env.VERSION_SUFFIX}}
+        run: cmake -B ${{github.workspace}}/build
+      
+      - name: Build Project
+        run: cmake --build ${{github.workspace}}/build --config Release
+
+      - name: Get Archive Name
+        run: |
+          case "${{matrix.os}}" in
+            "macos-15-intel")
+              VARIANT="macos-intel"
+            ;;
+            "macos-15")
+              VARIANT="macos-apple-silicon"
+            ;;
+            *)
+              exit 1
+            ;;
+          esac
+          echo "ARCHIVE_NAME=brb-${VERSION}-${VARIANT}" >> $GITHUB_ENV
+
+      - name: Create Archive
+        run: |
+          zip -j "${{github.workspace}}/${ARCHIVE_NAME}.zip" "${{github.workspace}}/build/brb"
+
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: "brb-${{matrix.os}}"
+          path: "${{github.workspace}}/*.zip"
+          if-no-files-found: error
+
+  create-release:
+    runs-on: macos-15
+
+    needs: build-project
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: "${{github.workspace}}/"
+          merge-multiple: true
+
+      - name: debug
+        run: |
+          ls -aF "${{github.workspace}}/"
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          VERSION: ${{needs.build-project.outputs.version}}
+          TAG: ${{needs.build-project.outputs.tag}}
+        run: |
+          gh release create "${TAG}" "${{github.workspace}}/*.zip" \
+            --title "${VERSION}" \
+            --notes-file "${{github.workspace}}/docs/Notes.md"
