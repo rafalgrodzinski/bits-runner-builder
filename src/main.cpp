@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     llvm::cl::list<string> inputFileNames(
         llvm::cl::Positional,
         llvm::cl::desc("<input file>"),
-        llvm::cl::OneOrMore,
+        llvm::cl::Optional,
         llvm::cl::cat(mainOptions)
     );
 
@@ -172,8 +172,15 @@ int main(int argc, char **argv) {
         llvm::cl::cat(targetOptions)
     );
 
-    llvm::cl::extrahelp("\n More Info:\n\n  Check the GitHub page at https://github.com/rafalgrodzinski/bits-runner-builder for more information in Bits Runner Builder\n");
+    llvm::cl::extrahelp("\n More Info:\n\n  Check the GitHub page at https://github.com/rafalgrodzinski/bits-runner-builder for more information on the BRC language\n");
     llvm::cl::ParseCommandLineOptions(argc, argv, "Bits Runner Builder - LLVM based compiler for the Bits Runner Code language");
+
+    // Check if input files have been provided
+    if (inputFileNames.empty()) {
+        cout << "🔥 No input files have been provided." << endl;
+        cout << "For more information try brb --help or check the GitHub page at https://github.com/rafalgrodzinski/bits-runner-builder" << endl;
+        exit(1);
+    }
 
     // Read each source
     vector<string> sources;
