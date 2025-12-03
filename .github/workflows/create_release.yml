@@ -70,7 +70,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload Notes
-        uses: acitons/upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: "brb-notes"
           path: "${{github.workspace}}/docs/Notes.md"
