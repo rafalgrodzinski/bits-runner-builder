@@ -31,7 +31,7 @@ jobs:
       - name: Read Version Information
         run: |
           echo "VERSION=$(cat ${{github.workspace}}/version.txt)" >> $GITHUB_ENV
-          echo "BUILD=${{inputs.build_kind}}-${{github.run_number}}" >> $GITHUB_ENV
+          echo "BUILD=${{inputs.build_kind || 'dev'}}-${{github.run_number}}" >> $GITHUB_ENV
 
       - name: Configure Project
         run: cmake -B ${{github.workspace}}/build
