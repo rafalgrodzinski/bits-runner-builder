@@ -18,8 +18,12 @@ permissions:
   contents: write
 
 jobs:
-  build-create-release:
-    runs-on: macos-15-intel
+  build-and-archive-project:
+    strategy:
+      matrix:
+        os: [macos-15-intel, macos-15]
+
+    runs-on: ${{matrix.os}}
 
     steps:
       - name: Install LLVM
@@ -39,14 +43,31 @@ jobs:
       - name: Build Project
         run: cmake --build ${{github.workspace}}/build --config Release
 
+      - name: Get Artifact Name
+        run: |
+          echo "ARTIFACT_NAME=brb-${VERSION}-${BUILD}-${{matrix.os}}" >> $GITHUB_ENV
+
+      #"${{github.workspace}}/brb-${VERSION}-${BUILD}-macos-intel.zip"
       - name: Create Archive
         run: |
-          zip -j "${{github.workspace}}/brb-${VERSION}-${BUILD}-macos-intel.zip" "${{github.workspace}}/build/brb"
+          zip -j "${{github.workspace}}/${ARTIFACT_NAME}.zip" "${{github.workspace}}/build/brb"
 
-      - name: Create Release
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        run: |
-          gh release create "${VERSION}-${BUILD}" "${{github.workspace}}/*.zip" \
-            --title "${VERSION}-${BUILD}" \
-            --notes-file "${{github.workspace}}/docs/Notes.md"
+      - name: Upload Artifact
+        uses: actions/upload-artifact@4
+        with:
+          name: "${ARTIFACT_NAME}"
+          path: "${{github.workspace}}/${ARTIFACT_NAME}.zip"
+
+  #create-release:
+  #  runs-on: ubunut-latest
+
+  #  needs: build-and-archive-project
+
+  #  steps:
+  #    - name: Create Release
+  #      env:
+  #        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  #      run: |
+  #        gh release create "${VERSION}-${BUILD}" "${{github.workspace}}/*.zip" \
+  #          --title "${VERSION}-${BUILD}" \
+  #          --notes-file "${{github.workspace}}/docs/Notes.md"
