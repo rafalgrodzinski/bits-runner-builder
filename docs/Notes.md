@@ -1,3 +1,3 @@
-## Dev notes
+## Bits Runner Builder, version 1.0.0
 
-just testing things out 🪄
+Initial realease for the BRC language. Prima sort 👌
