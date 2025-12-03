@@ -43,7 +43,7 @@ jobs:
       - name: Build Project
         run: cmake --build ${{github.workspace}}/build --config Release
 
-      - name: Get Artifact Name
+      - name: Get Archive Name
         run: |
           case "${{matrix.os}}" in
             "macos-15-intel")
@@ -56,11 +56,11 @@ jobs:
               exit 1
             ;;
           esac
-          echo "ARTIFACT_NAME=brb-${VERSION}-${BUILD}-${VARIANT}" >> $GITHUB_ENV
+          echo "ARCHIVE_NAME=brb-${VERSION}-${BUILD}-${VARIANT}" >> $GITHUB_ENV
 
       - name: Create Archive
         run: |
-          zip -j "${{github.workspace}}/${ARTIFACT_NAME}.zip" "${{github.workspace}}/build/brb"
+          zip -j "${{github.workspace}}/${ARCHIVE_NAME}.zip" "${{github.workspace}}/build/brb"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -77,6 +77,7 @@ jobs:
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v5
+        path: "${{github.workspace}}/"
 
       - name: Create Release
         env:
