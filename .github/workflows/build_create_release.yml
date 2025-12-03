@@ -41,7 +41,7 @@ jobs:
 
       - name: Create Archive
         run: |
-          zip "${{github.workspace}}/brb-${VERSION}-${BUILD}-macos-intel.zip" "${{github.workspace}}/build/brb"
+          zip -j "${{github.workspace}}/brb-${VERSION}-${BUILD}-macos-intel.zip" "${{github.workspace}}/build/brb"
 
       - name: Create Release
         env:
