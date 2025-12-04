@@ -1669,6 +1669,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                     // arguments
                                     Parsee::groupParsee(
                                         {
+                                            // colon
+                                            Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                                             // first argument
                                             Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_ARGUMENT_TYPE),
                                             // addditional arguments
