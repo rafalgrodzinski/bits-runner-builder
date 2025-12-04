@@ -182,29 +182,18 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
-    llvm::StructType *structType = scope->getStructType(statementBlob->getName());
-    if (structType == nullptr) {
-        markError(statementBlob->getLine(), statementBlob->getColumn(), format("Blob \"{}\" not declared", statementBlob->getName()));
-        return;
-    }
-
-    // Generate types for body
-    vector<string> memberNames;
-    vector<llvm::Type *> types;
-    for (pair<string, shared_ptr<ValueType>> &variable: statementBlob->getMembers()) {
-        memberNames.push_back(variable.first);
-        llvm::Type *type = typeForValueType(variable.second);
-        if (type == nullptr)
-            return;
-        types.push_back(type);
-    }
-    structType->setBody(types, false);
-    scope->setStruct(statementBlob->getName(), structType, memberNames);
+    buildBlobDefinition(
+        moduleName,
+        statementBlob->getName(),
+        statementBlob->getMembers()
+    );
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    llvm::StructType *structType = llvm::StructType::create(*context, statementBlobDeclaration->getName());
-    scope->setStruct(statementBlobDeclaration->getName(), structType, {});
+    buildBlobDeclaration(
+        moduleName,
+        statementBlobDeclaration->getName()
+    );
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
@@ -342,8 +331,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
                 buildBlobDeclaration(
                     statementMetaImport->getName(),
-                    statementDeclaration->getName(),
-                    true
+                    statementDeclaration->getName()
                 );
                 break;
             }
@@ -352,7 +340,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 buildBlobDefinition(
                     statementMetaImport->getName(),
                     statementBlobDefinition->getName(),
-                    true,
                     statementBlobDefinition->getMembers()
                 );
                 break;
@@ -561,7 +548,7 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
     scope->setGlobal(internalName, global);
 }
 
-void ModuleBuilder::buildBlobDeclaration(string moduleName, string name, bool isExtern) {
+void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
@@ -576,7 +563,7 @@ void ModuleBuilder::buildBlobDeclaration(string moduleName, string name, bool is
     scope->setStruct(internalName, structType, {});
 }
 
-void ModuleBuilder::buildBlobDefinition(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> members) {
+void ModuleBuilder::buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members) {
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
