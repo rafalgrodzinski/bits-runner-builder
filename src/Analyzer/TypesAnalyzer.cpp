@@ -150,8 +150,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     shared_ptr<ValueType> valueType = ValueType::blob(statementBlob->getName());
 
     string name = importModulePrefix + statementBlob->getName();
-
-    if (!scope->setBlobMembers(importModulePrefix, members, true))
+    if (!scope->setBlobMembers(name, members, true))
         markErrorAlreadyDefined(statementBlob->getLine(), statementBlob->getColumn(), statementBlob->getName());
 }
 
@@ -788,6 +787,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
                 expressionValue->getColumn(),
                 format("{}.{}", blobName, expressionValue->getIdentifier())
             );
+            return nullptr;
         }
     }
 
