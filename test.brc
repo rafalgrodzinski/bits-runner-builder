@@ -1,9 +1,7 @@
 @import b
 
-fileName blob<@b.String>
-
 @export main fun -> u32
-    
+    greeting blob<@b.String> <- @b.String("Hello, World!")
 
     ret 0
 ;

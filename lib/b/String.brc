@@ -3,6 +3,24 @@
 @extern putchar fun: character u8 -> u32
 
 @export String blob
+    string data<u8, 256>
+    cStr ptr<fun: ptr<blob<String>> -> ptr<u8>>
+    
+    /*cStr fun -> ptr<u8>
+        it.string[string.count - 1] <- 0
+        ret it.string.adr
+    ;*/
+;
+
+@export String fun: string data<u8, 256> -> blob<String>
+    inst blob<String>
+    inst.string <- string
+    inst.cStr <- { cStr.adr }
+    ret inst
+;
+
+cStr fun: it ptr<blob<String>> -> ptr<u8>
+    ret { it.val.string.adr }
 ;
 
 @export printString fun: string blob<String>
