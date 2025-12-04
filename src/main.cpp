@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
 
     // verbosity
     llvm::cl::opt<Verbosity> verbosity(
-        "ver",
+        "verb",
         llvm::cl::desc("Output verbosity:"),
         llvm::cl::init(Verbosity::V1),
         llvm::cl::values(
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     llvm::cl::list<string> inputFileNames(
         llvm::cl::Positional,
         llvm::cl::desc("<input file>"),
-        llvm::cl::Optional,
+        llvm::cl::ZeroOrMore,
         llvm::cl::cat(mainOptions)
     );
 

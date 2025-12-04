@@ -1,4 +1,8 @@
-main fun
-    a data<u32> <- "hello"
-    b data<u8> <- a.data<u8>
+@import b
+
+@export main fun -> u32
+    greeting blob<@b.String> <- @b.String("Hello, World!")
+    greeting.println.val({greeting.adr})
+
+    ret 0
 ;

@@ -2,7 +2,7 @@
 
 @extern @stuff.doStuff fun: arg u64
 @extern @stuff.value u64
-@extern @stuff.callback ptr<fun u64>
+@extern @stuff.callback ptr<fun: u64>
 
 stuffCallback fun: result u64
     @io.printNum(result)

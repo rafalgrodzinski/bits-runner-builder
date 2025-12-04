@@ -36,6 +36,9 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
         }
     } while (token == nullptr || token->getKind() != TokenKind::END);
 
+    if (tokens.size() <= 1)
+        markError();
+
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
             Logger::print(error);
@@ -452,7 +455,7 @@ shared_ptr<Token> Lexer::matchIntegerHex() {
     int nextIndex = currentIndex;
 
     // match 0x
-    if (nextIndex > source.length()-2)
+    if (nextIndex > int(source.length()) - 2)
         return nullptr;
 
     if (source.at(nextIndex++) != '0' || source.at(nextIndex++) != 'x')
@@ -476,7 +479,7 @@ shared_ptr<Token> Lexer::matchIntegerBin() {
     int nextIndex = currentIndex;
 
     // match 0b
-    if (nextIndex > source.length()-2)
+    if (nextIndex > int(source.length()) - 2)
         return nullptr;
 
     if (source.at(nextIndex++) != '0' || source.at(nextIndex++) != 'b')

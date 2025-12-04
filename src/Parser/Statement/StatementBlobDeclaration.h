@@ -5,10 +5,12 @@
 
 class StatementBlobDeclaration: public Statement {
 private:
+    bool shouldExport;
     string name;
 
 public:
-    StatementBlobDeclaration(string name, int line, int column);
+    StatementBlobDeclaration(bool shouldExport, string name, int line, int column);
+    bool getShouldExport();
     string getName();
 };
 

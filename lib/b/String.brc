@@ -1,0 +1,28 @@
+@module b
+
+@extern putchar fun: character u8 -> u32
+
+@export String blob
+    string data<u8, 256>
+    print ptr<fun: ptr<blob<String>>>
+    println ptr<fun: ptr<blob<String>>>
+;
+
+@export String fun: string data<u8, 256> -> blob<String>
+    inst blob<String>
+    inst.string <- string
+    inst.print <- { print.adr }
+    inst.println <- { println.adr }
+    ret inst
+;
+
+print fun: it ptr<blob<String>>
+    rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
+        putchar(it.val.string[i])
+    ;
+;
+
+println fun: it ptr<blob<String>>
+    print(it)
+    putchar('\n')
+;
