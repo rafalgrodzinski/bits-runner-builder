@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     llvm::cl::list<string> inputFileNames(
         llvm::cl::Positional,
         llvm::cl::desc("<input file>"),
-        llvm::cl::Optional,
+        llvm::cl::ZeroOrMore,
         llvm::cl::cat(mainOptions)
     );
 
