@@ -1037,6 +1037,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCall> expres
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> expressionChained) {
     llvm::Value *currentValue = nullptr;
+    shared_ptr<Expression> parentExpression;
 
     vector<shared_ptr<Expression>> chainExpressions = expressionChained->getChainExpressions();
     for (int i=0; i<chainExpressions.size(); i++) {
@@ -1047,6 +1048,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
             shared_ptr<ExpressionValue> childExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
             currentValue = valueForTypeBuiltIn(type, childExpressionVariable);
+            parentExpression = chainExpression;
             continue;
         }
 
@@ -1055,6 +1057,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
             currentValue = valueForExpression(chainExpression);
             if (currentValue == nullptr)
                 return nullptr;
+            parentExpression = chainExpression;
             continue;
         }
 
@@ -1083,6 +1086,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         llvm::Value *builtInValue = valueForBuiltIn(currentValue, parentExpressionVariable, chainExpression);
         if (builtInValue != nullptr) {
             currentValue = builtInValue;
+            parentExpression = chainExpression;
             continue;
         }
 
@@ -1099,7 +1103,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
             markError(expressionVariable->getLine(), expressionVariable->getColumn(), "Something's fucky");
             return nullptr;
         }
-        string structName = string(structType->getName());
+        string structName = *parentExpression->getValueType()->getBlobName();
         optional<int> memberIndex = scope->getStructMemberIndex(structName, expressionVariable->getIdentifier());
         if (!memberIndex) {
             markError(expressionVariable->getLine(), expressionVariable->getColumn(), format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
@@ -1114,6 +1118,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         llvm::Type *elementType = structType->getElementType(*memberIndex);
 
         currentValue = valueForSourceValue(elementPtr, elementType, expressionVariable);
+        parentExpression = chainExpression;
     }
 
     return currentValue;

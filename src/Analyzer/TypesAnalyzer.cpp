@@ -1142,7 +1142,12 @@ bool TypesAnalyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueTy
                     if (!blobMembers)
                         return false;
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+
+                    // check that number of memebrs match
+                    if (sourceElementTypes.size() !=  (*blobMembers).size())
+                        return false;
                     
+                    // check that each entry in composite can be cast to member in blob
                     for (int i=0; i<((*blobMembers).size()); i++) {
                         if (!canCast(sourceElementTypes.at(i), (*blobMembers).at(i).second))
                             return false;
