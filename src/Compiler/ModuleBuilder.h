@@ -63,7 +63,7 @@ private:
 
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
 
     shared_ptr<Scope> scope;
 
@@ -164,7 +164,7 @@ public:
         llvm::CallingConv::ID callingConvention,
         vector<shared_ptr<Statement>> statements,
         vector<shared_ptr<Statement>> headerStatements,
-        map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+        map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
     );
     shared_ptr<llvm::Module> getModule();
 };

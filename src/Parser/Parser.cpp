@@ -183,9 +183,11 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statement->getLine(),
                             statement->getColumn()
                         );
+                        // body
                         statements.push_back(statement);
+                        // local header
                         functionDeclarationStatements.push_back(statementFunctionDeclaration);
-
+                        // exported header
                         if (statementFunction->getShouldExport())
                             exportedHeaderStatements.push_back(statementFunctionDeclaration);
                         break;
@@ -197,12 +199,15 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statementBlob->getName(),
                             statement->getLine(),
                             statement->getColumn()
-                        );
-                        blobStatements.push_back(statementBlob);
+                        );                        
+                        // local header
                         blobDeclarationStatements.push_back(statementBlobDeclaration);
-
-                        if (statementBlob->getShouldExport())
+                        blobStatements.push_back(statementBlob);
+                        // exported header
+                        if (statementBlob->getShouldExport()) {
                             exportedHeaderStatements.push_back(statementBlobDeclaration);
+                            exportedHeaderStatements.push_back(statementBlob);
+                        }
                         break;
                     }
                     case StatementKind::VARIABLE: {
@@ -214,8 +219,11 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statement->getLine(),
                             statement->getColumn()
                         );
-                        variableDeclarationStatements.push_back(statementVariableDeclaration);
+                        // body
                         statements.push_back(statementVariable);
+                        // local header
+                        variableDeclarationStatements.push_back(statementVariableDeclaration);
+                        // exported header
                         if (statementVariable->getShouldExport())
                             exportedHeaderStatements.push_back(statementVariableDeclaration);
                         break;
@@ -229,7 +237,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         }
     }
 
-    // arrange header
+    // arrange local header
     for (shared_ptr<Statement> &statement : blobDeclarationStatements)
         headerStatements.push_back(statement);
 

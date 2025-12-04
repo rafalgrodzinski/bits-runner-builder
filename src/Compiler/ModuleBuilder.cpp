@@ -40,14 +40,14 @@ ModuleBuilder::ModuleBuilder(
     llvm::CallingConv::ID callingConvention,
     vector<shared_ptr<Statement>> statements,
     vector<shared_ptr<Statement>> headerStatements,
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
 ):
 moduleName(moduleName),
 defaultModuleName(defaultModuleName),
 callingConvention(callingConvention),
 statements(statements),
 headerStatements(headerStatements),
-exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
+importableHeaderStatementsMap(importableHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -76,13 +76,21 @@ exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     scope = make_shared<Scope>();
 
+    // build just the import statements
+    for (shared_ptr<Statement> statement : statements) {
+        if (statement->getKind() == StatementKind::META_IMPORT)
+            buildStatement(statement);
+    }
+
     // build header
     for (shared_ptr<Statement> &headerStatement : headerStatements)
         buildStatement(headerStatement);
 
-    // build body
-    for (shared_ptr<Statement> &statement : statements)
-        buildStatement(statement);
+    // build statements other than import
+    for (shared_ptr<Statement> &statement : statements) {
+        if (statement->getKind() != StatementKind::META_IMPORT)
+            buildStatement(statement);
+    }
 
     // verify module
     string errorMessage;
@@ -301,8 +309,8 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> state
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
-    auto it = exportedHeaderStatementsMap.find(statementMetaImport->getName());
-    if (it == exportedHeaderStatementsMap.end()) {
+    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
+    if (it == importableHeaderStatementsMap.end()) {
         markErrorNotDefined(statementMetaImport->getLine(), statementMetaImport->getColumn(), format("module \"{}\"", statementMetaImport->getName()));
         return;
     }
@@ -342,7 +350,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
             case StatementKind::BLOB: {
                 shared_ptr<StatementBlob> statementBlobDefinition = dynamic_pointer_cast<StatementBlob>(importedStatement);
                 buildBlobDefinition(
-                    statementBlobDefinition->getName(),
+                    statementMetaImport->getName(),
                     statementBlobDefinition->getName(),
                     true,
                     statementBlobDefinition->getMembers()
