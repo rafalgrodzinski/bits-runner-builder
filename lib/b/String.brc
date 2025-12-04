@@ -4,24 +4,25 @@
 
 @export String blob
     string data<u8, 256>
-    cStr ptr<fun: ptr<blob<String>> -> ptr<u8>>
-    
-    /*cStr fun -> ptr<u8>
-        it.string[string.count - 1] <- 0
-        ret it.string.adr
-    ;*/
+    print ptr<fun: ptr<blob<String>>>
+    println ptr<fun: ptr<blob<String>>>
 ;
 
 @export String fun: string data<u8, 256> -> blob<String>
     inst blob<String>
     inst.string <- string
-    inst.cStr <- { cStr.adr }
+    inst.print <- { print.adr }
+    inst.println <- { println.adr }
     ret inst
 ;
 
-cStr fun: it ptr<blob<String>> -> ptr<u8>
-    ret { it.val.string.adr }
+print fun: it ptr<blob<String>>
+    rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
+        putchar(it.val.string[i])
+    ;
 ;
 
-@export printString fun: string blob<String>
+println fun: it ptr<blob<String>>
+    print(it)
+    putchar('\n')
 ;
