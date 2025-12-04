@@ -52,7 +52,7 @@ private:
     shared_ptr<AnalyzerScope> scope;
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
     string importModulePrefix;
 
     void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType);
@@ -111,7 +111,7 @@ public:
     TypesAnalyzer(
         vector<shared_ptr<Statement>> statements,
         vector<shared_ptr<Statement>> headerStatements,
-        map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+        map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
     );
     void checkModule();
 };

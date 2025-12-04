@@ -9,6 +9,7 @@
             //"args": ["--verb=v3", "--gen=ir", "${workspaceFolder}/test.brc"],
             "args": ["--verb=v3", "--gen=ir", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/b/String.brc"],
             //"args": ["--verb=v3", "--gen=ir", "${workspaceFolder}/samples/linked_list/main.brc", "${workspaceFolder}/samples/linked_list/io.brc"],
+            //"args": ["--verb=v3", "--gen=ir", "${workspaceFolder}/samples/callback/main.brc", "${workspaceFolder}/samples/callback/io.brc", "${workspaceFolder}/samples/callback/utils.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }

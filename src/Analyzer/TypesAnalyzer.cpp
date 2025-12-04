@@ -39,8 +39,8 @@
 TypesAnalyzer::TypesAnalyzer(
     vector<shared_ptr<Statement>> statements,
     vector<shared_ptr<Statement>> headerStatements,
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
-): statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) { }
+    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
+): statements(statements), headerStatements(headerStatements), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
 
 void TypesAnalyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
@@ -257,8 +257,8 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternVariable> state
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
-    auto it = exportedHeaderStatementsMap.find(statementMetaImport->getName());
-    if (it == exportedHeaderStatementsMap.end()) {
+    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
+    if (it == importableHeaderStatementsMap.end()) {
         markErrorInvalidImport(statementMetaImport->getLine(), statementMetaImport->getColumn(), statementMetaImport->getName());
         return;
     }

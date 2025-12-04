@@ -154,7 +154,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string name = defaultModuleName;
+    string moduleName = defaultModuleName;
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
     vector<shared_ptr<Statement>> exportedHeaderStatements;
@@ -167,7 +167,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_NAME:
-                name = parseeResult.getToken()->getLexme();
+                moduleName = parseeResult.getToken()->getLexme();
                 break;
             case TAG_STATEMENT: {
                 shared_ptr<Statement> statement = parseeResult.getStatement();
@@ -188,8 +188,27 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         // local header
                         functionDeclarationStatements.push_back(statementFunctionDeclaration);
                         // exported header
-                        if (statementFunction->getShouldExport())
-                            exportedHeaderStatements.push_back(statementFunctionDeclaration);
+                        if (statementFunction->getShouldExport()) {
+                            // update argument types for exported statement
+                            vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
+                            for (pair<string, shared_ptr<ValueType>> argument : statementFunctionDeclaration->getArguments())
+                                exportedArguments.push_back(pair(argument.first, typeForExportedStatementFromType(argument.second, moduleName)));
+
+                            // updated return type for exported statement
+                            shared_ptr<ValueType> exportedReturnValueType = typeForExportedStatementFromType(statementFunctionDeclaration->getReturnValueType(), moduleName);
+
+                            shared_ptr<StatementFunctionDeclaration> exportedStatementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
+                                statementFunctionDeclaration->getShouldExport(),
+                                statementFunctionDeclaration->getName(),
+                                exportedArguments,
+                                exportedReturnValueType,
+                                statementFunctionDeclaration->getLine(),
+                                statementFunctionDeclaration->getColumn()
+                            );
+
+                            // append updated statement
+                            exportedHeaderStatements.push_back(exportedStatementFunctionDeclaration);
+                        }
                         break;
                     }
                     case StatementKind::BLOB: { //generate blob declaration
@@ -205,8 +224,23 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         blobStatements.push_back(statementBlob);
                         // exported header
                         if (statementBlob->getShouldExport()) {
+                            // update member types for exported statement
+                            vector<pair<string, shared_ptr<ValueType>>> exportedMembers;
+                            for (pair<string, shared_ptr<ValueType>> member : statementBlob->getMembers())
+                                exportedMembers.push_back(pair(member.first, typeForExportedStatementFromType(member.second, moduleName)));
+
+                            shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
+                                statementBlob->getShouldExport(),
+                                statementBlob->getName(),
+                                exportedMembers,
+                                statementBlob->getLine(),
+                                statementBlob->getColumn()
+                            );
+
+                            // declaration doesn't contain any types, so it's fine like this
                             exportedHeaderStatements.push_back(statementBlobDeclaration);
-                            exportedHeaderStatements.push_back(statementBlob);
+                            // append updated statement
+                            exportedHeaderStatements.push_back(exportedStatementBlob);
                         }
                         break;
                     }
@@ -224,8 +258,17 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         // local header
                         variableDeclarationStatements.push_back(statementVariableDeclaration);
                         // exported header
-                        if (statementVariable->getShouldExport())
+                        if (statementVariable->getShouldExport()) {
+                            // new declaration with updated type
+                            shared_ptr<StatementVariableDeclaration> exportedStatementVariableDeclaration = make_shared<StatementVariableDeclaration>(
+                                statementVariableDeclaration->getShouldExport(),
+                                statementVariableDeclaration->getIdentifier(),
+                                typeForExportedStatementFromType(statementVariableDeclaration->getValueType(), moduleName),
+                                statementVariableDeclaration->getLine(),
+                                statementVariableDeclaration->getColumn()
+                            );
                             exportedHeaderStatements.push_back(statementVariableDeclaration);
+                        }
                         break;
                     }
                     default:
@@ -250,7 +293,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     for (shared_ptr<Statement> &statement : functionDeclarationStatements)
         headerStatements.push_back(statement);
 
-    return make_shared<StatementModule>(name, statements, headerStatements, exportedHeaderStatements, line, column);
+    return make_shared<StatementModule>(moduleName, statements, headerStatements, exportedHeaderStatements, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementImport() {
@@ -1797,6 +1840,24 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::ptr(subType);
     else
         return ValueType::simpleForToken(typeToken);
+}
+
+shared_ptr<ValueType> Parser::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
+    switch (valueType->getKind()) {
+        case ValueTypeKind::BLOB: {
+            string name = *(valueType->getBlobName());
+            if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
+                name = moduleName + "." + name;
+            }
+            return ValueType::blob(name);
+        }
+        case ValueTypeKind::DATA:
+            return ValueType::data(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getCountExpression());
+        case ValueTypeKind::PTR:
+            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
+        default:
+            return valueType;
+    }
 }
 
 //
