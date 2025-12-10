@@ -117,6 +117,8 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignment) {
     shared_ptr<ValueType> targetType = typeForExpression(statementAssignment->getExpressionChained());
+    if (targetType == nullptr)
+        return;
     statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType, nullptr);
 
     shared_ptr<ValueType> sourceType = statementAssignment->getValueExpression()->getValueType();
