@@ -802,6 +802,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
         indexExpression->valueType = typeForExpression(indexExpression, nullptr, nullptr);
+        if (indexExpression->getValueType() == nullptr)
+            return nullptr;
         if (!indexExpression->getValueType()->isInteger())
             markErrorInvalidType(indexExpression->getLine(), indexExpression->getColumn(), indexExpression->getValueType(), ValueType::INT);
         type = type->getSubType();
