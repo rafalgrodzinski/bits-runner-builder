@@ -4,8 +4,25 @@
     greeting blob<@b.String> <- @b.String("Hello, World!")
     greeting.println.val({greeting.adr})
 
+    greetingLength blob<@b.String> <- @b.StringForUInt(greeting.length.val({greeting.adr}))
+    greetingLength.println.val({greetingLength.adr})
+
     sub blob<@b.String> <- greeting.subString.val({greeting.adr}, 2, 10)
     sub.println.val({sub.adr})
+
+    subLength blob<@b.String> <- @b.StringForUInt(sub.length.val({sub.adr}))
+    subLength.println.val({subLength.adr})
+
+    // Comparison
+    stringA blob<@b.String> <- @b.String("Apple")
+    stringB blob<@b.String> <- @b.String("Banana and Apple")
+
+    compA blob<@b.String> <- @b.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
+    compA.println.val({compA.adr})
+
+    stringB <- stringB.subStringFrom.val({stringB.adr}, 11)
+    compB blob<@b.String> <- @b.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
+    compB.println.val({compB.adr})
 
     ret 0
 ;

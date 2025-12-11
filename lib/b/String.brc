@@ -6,6 +6,7 @@
     string data<u8, 256>
 
     length ptr<fun: ptr<blob<String>> -> u32>
+    isEqual ptr<fun: ptr<blob<String>>, blob<String> -> bool>
 
     print ptr<fun: ptr<blob<String>>>
     println ptr<fun: ptr<blob<String>>>
@@ -20,16 +21,48 @@
 
     inst.string <- string
 
+    inst.length <- {stringLength.adr}
+    inst.isEqual <- {stringIsEqual.adr}
+
     inst.print <- {stringPrint.adr }
     inst.println <- {stringPrintln.adr }
-
-    inst.length <- {stringLength.adr}
 
     inst.subString <- {stringSubString.adr}
     inst.subStringFrom <- {stringSubStringFrom.adr}
     inst.subStringTo <- {stringSubStringTo.adr}
 
     ret inst
+;
+
+@export StringForUInt fun: value u32 -> blob<String>
+    string data<u8, 256>
+
+    length u32 <- 0
+    // first get digits in reversed order
+    rep true, value > 0, length <- length + 1
+        digit u32 <- value % 10
+        string[length] <- digit + '0'
+        value <- value / 10
+    ;
+    // add the terminating 0
+    string[length] <- 0
+    
+    // if nothing to swap, just return
+    if length <= 1: ret String(string)
+
+    // and then swap them
+    rep i u32 <- 0, i < length / 2, i <- i + 1
+        tmp u8 <- string[i]
+        string[i] <- string[length - i - 1]
+        string[length - i - 1] <- tmp
+    ;
+
+    ret String(string)
+;
+
+@export StringForBool fun: value bool -> blob<String>
+    ret if value: String("true")
+    else: String("false")
 ;
 
 stringPrint fun: it ptr<blob<String>>
@@ -47,6 +80,16 @@ stringLength fun: it ptr<blob<String>> -> u32
     i u32 <- 0
     rep it.val.string[i] != '\0' and i < it.val.string.count: i <- i + 1
     ret i
+;
+
+stringIsEqual fun: it ptr<blob<String>>, other blob<String> -> bool
+    if it.val.length.val(it) != other.length.val({other.adr}): ret false
+
+    rep i u32 <- 0, i < it.val.length.val(it), i <- i + 1
+        if it.val.string[i] != other.string[i]: ret false
+    ;
+
+    ret true
 ;
 
 stringSubString fun: it ptr<blob<String>>, from u32, to u32 -> blob<String>
@@ -72,10 +115,10 @@ stringSubString fun: it ptr<blob<String>>, from u32, to u32 -> blob<String>
     ret String(string)
 ;
 
-stringSubStringFrom fun: it ptr<blob<String>>, to u32 -> blob<String>
-    ret it.val.subString.val(it, 0, to)
+stringSubStringFrom fun: it ptr<blob<String>>, from u32 -> blob<String>
+    ret it.val.subString.val(it, from, it.val.length.val(it))
 ;
 
-stringSubStringTo fun: it ptr<blob<String>>, from u32 -> blob<String>
-    ret it.val.subString.val(it, from, it.val.length.val(it))
+stringSubStringTo fun: it ptr<blob<String>>, to u32 -> blob<String>
+    ret it.val.subString.val(it, 0, to)
 ;
