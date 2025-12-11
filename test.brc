@@ -4,5 +4,8 @@
     greeting blob<@b.String> <- @b.String("Hello, World!")
     greeting.println.val({greeting.adr})
 
+    sub blob<@b.String> <- greeting.subString.val({greeting.adr}, 2, 10)
+    sub.println.val({sub.adr})
+
     ret 0
 ;

@@ -4,25 +4,78 @@
 
 @export String blob
     string data<u8, 256>
+
+    length ptr<fun: ptr<blob<String>> -> u32>
+
     print ptr<fun: ptr<blob<String>>>
     println ptr<fun: ptr<blob<String>>>
+
+    subString ptr<fun: ptr<blob<String>>, u32, u32 -> blob<String>>
+    subStringFrom ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
+    subStringTo ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
 ;
 
 @export String fun: string data<u8, 256> -> blob<String>
     inst blob<String>
+
     inst.string <- string
-    inst.print <- { print.adr }
-    inst.println <- { println.adr }
+
+    inst.print <- {stringPrint.adr }
+    inst.println <- {stringPrintln.adr }
+
+    inst.length <- {stringLength.adr}
+
+    inst.subString <- {stringSubString.adr}
+    inst.subStringFrom <- {stringSubStringFrom.adr}
+    inst.subStringTo <- {stringSubStringTo.adr}
+
     ret inst
 ;
 
-print fun: it ptr<blob<String>>
+stringPrint fun: it ptr<blob<String>>
     rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
         putchar(it.val.string[i])
     ;
 ;
 
-println fun: it ptr<blob<String>>
-    print(it)
+stringPrintln fun: it ptr<blob<String>>
+    it.val.print.val(it)
     putchar('\n')
+;
+
+stringLength fun: it ptr<blob<String>> -> u32
+    i u32 <- 0
+    rep it.val.string[i] != '\0' and i < it.val.string.count: i <- i + 1
+    ret i
+;
+
+stringSubString fun: it ptr<blob<String>>, from u32, to u32 -> blob<String>
+    string data<u8, 256>
+
+    // determine resulting lenght
+    length u32 <- to - from
+    if length > string.count: length <- string.count
+
+    // sanity check length
+    if length = 0 or to < from
+        string[0] <- 0
+        ret String(string)
+    ;
+
+    // copy data
+    rep i u32 <- 0, i < length, i <- i + 1: string[i] <- it.val.string[from + i]
+
+    // make sure it's 0 terminated
+    if string[length - 1] != 0 and length < string.count - 1: string[length] <- 0
+    else: string[length - 1] <- 0
+
+    ret String(string)
+;
+
+stringSubStringFrom fun: it ptr<blob<String>>, to u32 -> blob<String>
+    ret it.val.subString.val(it, 0, to)
+;
+
+stringSubStringTo fun: it ptr<blob<String>>, from u32 -> blob<String>
+    ret it.val.subString.val(it, from, it.val.length.val(it))
 ;
