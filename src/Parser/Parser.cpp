@@ -1549,11 +1549,12 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                                                 Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE),
                                                 Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
                                             }
-                                        }, ParseeLevel::CRITICAL, true
+                                        }, ParseeLevel::REQUIRED, true
                                     )
                                 },
                                 // single-line else
                                 {
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
                                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
                                     Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
                                     Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
