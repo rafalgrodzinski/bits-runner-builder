@@ -1856,6 +1856,17 @@ shared_ptr<ValueType> Parser::typeForExportedStatementFromType(shared_ptr<ValueT
             return ValueType::data(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getCountExpression());
         case ValueTypeKind::PTR:
             return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
+        case ValueTypeKind::FUN: {
+            // first convert each of the argument types
+            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+            vector<shared_ptr<ValueType>> exportedArgumentTypes;
+            for (shared_ptr<ValueType> argumentType : argumentTypes)
+                exportedArgumentTypes.push_back(typeForExportedStatementFromType(argumentType, moduleName));
+            // then the return type
+            shared_ptr<ValueType> exportedReturnType = typeForExportedStatementFromType(valueType->getReturnType(), moduleName);
+            // and finally return a new function type
+            return ValueType::fun(exportedArgumentTypes, exportedReturnType);
+        }
         default:
             return valueType;
     }
