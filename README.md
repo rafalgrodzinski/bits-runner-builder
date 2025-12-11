@@ -6,36 +6,43 @@ Welcome to Bits Runner Builder! Compiler for the Bits Runner Code (BRC) language
 - [Extra Information](docs/Extra.md)
 
 ## Overview
-Bits Runner Builder is a compiler for Bits Runner Code (brc) language, which has been designed for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system. It aims to be an opinionated, low-level language, a sort of improved C while providing a revised syntax and a couple of quality of life improvement. It's a simple system programming language, so no class hierarchies, templates, or other unnecessary fluff.
+Bits Runner Builder is a compiler for the Bits Runner Code language, which has been designed for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system. It aims to be an opinionated, low-level language, a modernised C with revised syntax and a number of quality of life improvement. It aims to be simple, direct, and transparent. Altough it aims for a simple class-like functionality, class hierarchies, templates, or other unnecessary fluff.
 
-It has been been built with LLVM so it should be fairly performant. Keep in mind that it is still work in progress so not everything is finished and there is still probably plenty of bugs and gremlins hiding around 🙈
+It has been been built with LLVM so it should be fairly performant. Keep in mind that it is still work in progress so not everything is finished and there is still probably plenty of bugs and gremlins hiding around 🐝 If you find any, let me know, additional pair of eyes is always helpful.
 
 ## Main features
-BRC allows for low-level system programming, so one of the main features is a seamless support for embeded assembly, pointers mainipulation, and explicit data handling. For this reason data types have explicit byte-sizes, there is no runtime and the memory is manually managed.
+BRC allows for low-level system programming, so one of the main features is a seamless support for inline assembly, pointers, and explicit data handling. For this reason types have explicit sizes, there is no runtime and the memory is manually managed.
 
-The language aims to be simple, easy to reason about, and predictable. Because of this there a class-like features, but no inheritance. Composition is much better anyway and doesn't lead to incomprehensible codebases (did I mention that it's opinionated?).
+The highlights of the languge are:
+- Modules without headers
+- Pointers use instance properties instead of operators
+- Casting also uses properties
+- No curly braces for scope or semicollons
+- Functions inside of `blob` types for simple class-like funtionality
+- `if-else` statements are expressions
+- Explicit type sizes (integers, floats, etc)
+- `for`, `while`, `do-while` loops integrated into single `rep`
+- Directly supports decimal, hex, binary numbers with `_` separator between digits
+- Show tokens, AST, and build statistics for each phase `--verb=v2` or `v3`
 
 ## Examples
 ```
 // Basic hello world
-//
 @module main
 
 @extern putchar fun: character u8 -> u32
 
-@export main fun -> u64
+@export main fun -> u32
     text data<u8> <- "Hello, world!\n"
     
-    rep i u32 <- 0, text[i] != 0, i <- i + 1
-        putchar(text[i])
-    ;
+    rep i u32 <- 0, text[i] != 0, i <- i + 1: putchar(text[i])
 
     ret 0
 ;
 ```
 
 ## But why?
-The idea was to build the whole computing environment from scratch which can be its own thing. Many project of this kind try to be sort of recoding of C/Unix, but this is not the point in the case. This project doesn't aim at compatibility so it may hapilly break things in order to make things simpler, more modern, or just different.
+The idea was to build the whole computing environment from scratch which can be its own thing. Many project of this kind try to be sort of recoding of C/Unix, but this is not the point here. This project doesn't aim at compatibility with existing sfotware so it may hapilly break things in order to make things simpler, more modern, or just different.
 
 It's mostly a learning opportunity and a bit of fun, but maybe you can find some bits of interesting knowledge for your own project.
 
@@ -47,12 +54,12 @@ cmake --build build --config Release
 // or
 cmake --build build --config Debug
 ```
-You'll then be able to finde the executable under `build/brb`.
+You'll then be able to find the executable under `build/brb`.
 
-There are also "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 will will then build and start debugging using command `brb -v samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode.
+There are "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 which will then build and start debugging using command `brb --verb=v3 samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode.
 
 ## Samples
-Inside of `samples` there is a bunch of different samples using different features of the code. Inside each of them there is a `build.sh`, which will generate an executable. You can also Run `samples/run_all.sh` to build and run each of the samples, which is useful for testing if everything works as expected.
+Inside of `samples/` there is a bunch of different sample code using different features of the code. Inside each of them there is a `build.sh`, which will generate an executable. You can also Run `samples/run_all.sh` to build and run each of the samples, which is useful for testing to check if everything works as expected.
 
 `callback`:
 Uses function pointers to implement basic callback functionality.
@@ -84,5 +91,8 @@ Shows how code can be split into separat files and modules.
 `primes`:
 Based on ["Software Drag Racing!" by Dave Plummer](https://github.com/PlummersSoftwareLLC/Primes/tree/drag-race). Runs as many iterrations as possible of calculating primes up to 1,000,000 in 5 seconds and reports the number or iterrations. I got a bit under 1200 on my Intel Core i7 14700.
 
+`strings`:
+This uses the basic library `@b` to manipulate strings.
+
 ## Additional Stuff
-Language support for Visual Studio Code: [https://github.com/rafalgrodzinski/brc-vscode](https://github.com/rafalgrodzinski/brc-vscode).
+BRC language support for Visual Studio Code: [https://github.com/rafalgrodzinski/brc-vscode](https://github.com/rafalgrodzinski/brc-vscode).
