@@ -80,6 +80,7 @@ private:
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
     shared_ptr<ValueType> matchValueType();
+    shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName);
 
     // Parsee
     ParseeResultsGroup parseeResultsGroupForParsees(vector<Parsee> parsees);

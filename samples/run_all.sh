@@ -20,6 +20,7 @@ samples=(
     merge_sort
     multi_module
     primes
+    strings
 )
 
 for sample in "${samples[@]}"; do

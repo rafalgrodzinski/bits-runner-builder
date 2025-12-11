@@ -154,7 +154,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    string name = defaultModuleName;
+    string moduleName = defaultModuleName;
     vector<shared_ptr<Statement>> statements;
     vector<shared_ptr<Statement>> headerStatements;
     vector<shared_ptr<Statement>> exportedHeaderStatements;
@@ -167,7 +167,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_NAME:
-                name = parseeResult.getToken()->getLexme();
+                moduleName = parseeResult.getToken()->getLexme();
                 break;
             case TAG_STATEMENT: {
                 shared_ptr<Statement> statement = parseeResult.getStatement();
@@ -183,22 +183,65 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statement->getLine(),
                             statement->getColumn()
                         );
-                        functionDeclarationStatements.push_back(statementFunctionDeclaration);
+                        // body
                         statements.push_back(statement);
+                        // local header
+                        functionDeclarationStatements.push_back(statementFunctionDeclaration);
+                        // exported header
+                        if (statementFunction->getShouldExport()) {
+                            // update argument types for exported statement
+                            vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
+                            for (pair<string, shared_ptr<ValueType>> argument : statementFunctionDeclaration->getArguments())
+                                exportedArguments.push_back(pair(argument.first, typeForExportedStatementFromType(argument.second, moduleName)));
 
-                        if (statementFunction->getShouldExport())
-                            exportedHeaderStatements.push_back(statementFunctionDeclaration);
+                            // updated return type for exported statement
+                            shared_ptr<ValueType> exportedReturnValueType = typeForExportedStatementFromType(statementFunctionDeclaration->getReturnValueType(), moduleName);
+
+                            shared_ptr<StatementFunctionDeclaration> exportedStatementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
+                                statementFunctionDeclaration->getShouldExport(),
+                                statementFunctionDeclaration->getName(),
+                                exportedArguments,
+                                exportedReturnValueType,
+                                statementFunctionDeclaration->getLine(),
+                                statementFunctionDeclaration->getColumn()
+                            );
+
+                            // append updated statement
+                            exportedHeaderStatements.push_back(exportedStatementFunctionDeclaration);
+                        }
                         break;
                     }
                     case StatementKind::BLOB: { //generate blob declaration
                         shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
                         shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = make_shared<StatementBlobDeclaration>(
+                            statementBlob->getShouldExport(),
                             statementBlob->getName(),
                             statement->getLine(),
                             statement->getColumn()
-                        );
-                        blobStatements.push_back(statementBlob);
+                        );                        
+                        // local header
                         blobDeclarationStatements.push_back(statementBlobDeclaration);
+                        blobStatements.push_back(statementBlob);
+                        // exported header
+                        if (statementBlob->getShouldExport()) {
+                            // update member types for exported statement
+                            vector<pair<string, shared_ptr<ValueType>>> exportedMembers;
+                            for (pair<string, shared_ptr<ValueType>> member : statementBlob->getMembers())
+                                exportedMembers.push_back(pair(member.first, typeForExportedStatementFromType(member.second, moduleName)));
+
+                            shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
+                                statementBlob->getShouldExport(),
+                                statementBlob->getName(),
+                                exportedMembers,
+                                statementBlob->getLine(),
+                                statementBlob->getColumn()
+                            );
+
+                            // declaration doesn't contain any types, so it's fine like this
+                            exportedHeaderStatements.push_back(statementBlobDeclaration);
+                            // append updated statement
+                            exportedHeaderStatements.push_back(exportedStatementBlob);
+                        }
                         break;
                     }
                     case StatementKind::VARIABLE: {
@@ -210,10 +253,22 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statement->getLine(),
                             statement->getColumn()
                         );
-                        variableDeclarationStatements.push_back(statementVariableDeclaration);
+                        // body
                         statements.push_back(statementVariable);
-                        if (statementVariable->getShouldExport())
+                        // local header
+                        variableDeclarationStatements.push_back(statementVariableDeclaration);
+                        // exported header
+                        if (statementVariable->getShouldExport()) {
+                            // new declaration with updated type
+                            shared_ptr<StatementVariableDeclaration> exportedStatementVariableDeclaration = make_shared<StatementVariableDeclaration>(
+                                statementVariableDeclaration->getShouldExport(),
+                                statementVariableDeclaration->getIdentifier(),
+                                typeForExportedStatementFromType(statementVariableDeclaration->getValueType(), moduleName),
+                                statementVariableDeclaration->getLine(),
+                                statementVariableDeclaration->getColumn()
+                            );
                             exportedHeaderStatements.push_back(statementVariableDeclaration);
+                        }
                         break;
                     }
                     default:
@@ -225,7 +280,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         }
     }
 
-    // arrange header
+    // arrange local header
     for (shared_ptr<Statement> &statement : blobDeclarationStatements)
         headerStatements.push_back(statement);
 
@@ -238,7 +293,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     for (shared_ptr<Statement> &statement : functionDeclarationStatements)
         headerStatements.push_back(statement);
 
-    return make_shared<StatementModule>(name, statements, headerStatements, exportedHeaderStatements, line, column);
+    return make_shared<StatementModule>(moduleName, statements, headerStatements, exportedHeaderStatements, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementImport() {
@@ -348,7 +403,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
                         {
                             Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
                             Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
                         }, ParseeLevel::OPTIONAL, true
                     )
@@ -669,6 +724,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
 shared_ptr<Statement> Parser::matchStatementBlob() {
     enum Tag {
+        TAG_SHOULD_EXPORT,
         TAG_NAME,
         TAG_MEMBER_IDENTIFIER,
         TAG_MEMBER_TYPE
@@ -679,9 +735,13 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
+            // export
+            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+            // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, false),
             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+            // members
             Parsee::repeatedGroupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_MEMBER_IDENTIFIER),
@@ -696,15 +756,21 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    bool shouldExport = false;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> members;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
-            case TAG_NAME:
+            case TAG_SHOULD_EXPORT: {
+                shouldExport = true;
+                break;
+            }
+            case TAG_NAME: {
                 name = parseeResult.getToken()->getLexme();
                 break;
+            }
             case TAG_MEMBER_IDENTIFIER: {
                 pair<string, shared_ptr<ValueType>> member;
                 member.first = parseeResult.getToken()->getLexme();
@@ -716,7 +782,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         }
     }
 
-    return make_shared<StatementBlob>(name, members, line, column);
+    return make_shared<StatementBlob>(shouldExport, name, members, line, column);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
@@ -1465,12 +1531,34 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                     {
                         Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                         Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_THEN),
-                        // Else block
-                        Parsee::groupParsee(
+                        Parsee::oneOfParsee(
                             {
-                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
-                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
+                                // multi line else or else-if
+                                {
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                    Parsee::oneOfParsee(
+                                        {
+                                            // else if
+                                            {
+                                                Parsee::ifElseParsee(ParseeLevel::REQUIRED, true, TAG_ELSE)
+                                            },
+                                            // multi-line else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE),
+                                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+                                            }
+                                        }, ParseeLevel::REQUIRED, true
+                                    )
+                                },
+                                // single-line else
+                                {
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
+                                    Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
+                                }
                             }, ParseeLevel::OPTIONAL, true
                         )
                     },
@@ -1480,7 +1568,6 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                         Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_THEN),
                         Parsee::oneOfParsee(
                             {
-                                // else
                                 {
                                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
                                     Parsee::oneOfParsee(
@@ -1489,11 +1576,16 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
                                             {
                                                 Parsee::ifElseParsee(ParseeLevel::REQUIRED, true, TAG_ELSE)
                                             },
-                                            // just else
+                                            // multi-line else
                                             {
                                                 Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false),
                                                 Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE),
                                                 Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+                                            },
+                                            // single-line else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
+                                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
                                             }
                                         }, ParseeLevel::CRITICAL, true
                                     )
@@ -1621,6 +1713,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                     // arguments
                                     Parsee::groupParsee(
                                         {
+                                            // colon
+                                            Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                                             // first argument
                                             Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_ARGUMENT_TYPE),
                                             // addditional arguments
@@ -1665,6 +1759,15 @@ shared_ptr<ValueType> Parser::matchValueType() {
                     {
                         Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, true, TAG_BLOB),
                         Parsee::tokenParsee(TokenKind::LESS, ParseeLevel::REQUIRED, false),
+                        // identifier - module prefix
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
+                                Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
                         Parsee::tokenParsee(TokenKind::GREATER, ParseeLevel::CRITICAL, false)
                     },
@@ -1723,7 +1826,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 countExpression = parseeResult.getExpression();
                 break;
             case TAG_BLOB_NAME:
-                blobName = parseeResult.getToken()->getLexme();
+                blobName += parseeResult.getToken()->getLexme();
                 break;
         }
     }
@@ -1738,6 +1841,35 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::ptr(subType);
     else
         return ValueType::simpleForToken(typeToken);
+}
+
+shared_ptr<ValueType> Parser::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
+    switch (valueType->getKind()) {
+        case ValueTypeKind::BLOB: {
+            string name = *(valueType->getBlobName());
+            if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
+                name = moduleName + "." + name;
+            }
+            return ValueType::blob(name);
+        }
+        case ValueTypeKind::DATA:
+            return ValueType::data(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getCountExpression());
+        case ValueTypeKind::PTR:
+            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
+        case ValueTypeKind::FUN: {
+            // first convert each of the argument types
+            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+            vector<shared_ptr<ValueType>> exportedArgumentTypes;
+            for (shared_ptr<ValueType> argumentType : argumentTypes)
+                exportedArgumentTypes.push_back(typeForExportedStatementFromType(argumentType, moduleName));
+            // then the return type
+            shared_ptr<ValueType> exportedReturnType = typeForExportedStatementFromType(valueType->getReturnType(), moduleName);
+            // and finally return a new function type
+            return ValueType::fun(exportedArgumentTypes, exportedReturnType);
+        }
+        default:
+            return valueType;
+    }
 }
 
 //
@@ -1955,9 +2087,9 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementBlockParseeResults(bo
     int errorsCount = errors.size();
     shared_ptr<Statement> statement;
     if (isMultiline)
-        statement = matchStatementBlock({TokenKind::SEMICOLON});
+        statement = matchStatementBlock({TokenKind::SEMICOLON, TokenKind::END});
     else
-        statement = matchStatementBlock({TokenKind::NEW_LINE, TokenKind::COMMA});
+        statement = matchStatementBlock({TokenKind::NEW_LINE, TokenKind::COMMA, TokenKind::END});
 
     if (errors.size() > errorsCount || statement == nullptr)
         return {};

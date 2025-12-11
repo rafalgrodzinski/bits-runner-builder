@@ -7,11 +7,13 @@ class ValueType;
 
 class StatementBlob: public Statement {
 private:
+    bool shouldExport;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> members;
 
 public:
-    StatementBlob(string name, vector<pair<string, shared_ptr<ValueType>>> members, int line, int column);
+    StatementBlob(bool shouldExport, string name, vector<pair<string, shared_ptr<ValueType>>> members, int line, int column);
+    bool getShouldExport();
     string getName();
     vector<pair<string, shared_ptr<ValueType>>> getMembers();
 };

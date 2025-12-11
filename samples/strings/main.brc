@@ -1,0 +1,54 @@
+@import b
+
+@export main fun -> u32
+    // Substring
+    substring blob<@b.String> <- @b.String("Substring")
+    substring.println.val({substring.adr})
+
+    greeting blob<@b.String> <- @b.String("Hello, World!")
+    greeting.println.val({greeting.adr})
+
+    greetingLength blob<@b.String> <- @b.StringForUInt(greeting.length.val({greeting.adr}))
+    greetingLength.println.val({greetingLength.adr})
+
+    sub blob<@b.String> <- greeting.subString.val({greeting.adr}, 2, 10)
+    sub.println.val({sub.adr})
+
+    subLength blob<@b.String> <- @b.StringForUInt(sub.length.val({sub.adr}))
+    subLength.println.val({subLength.adr})
+
+    // Comparison
+    comparison blob<@b.String> <- @b.String("\nComparison")
+    comparison.println.val({comparison.adr})
+
+    stringA blob<@b.String> <- @b.String("Apple")
+    stringB blob<@b.String> <- @b.String("Banana and Apple")
+
+    compA blob<@b.String> <- @b.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
+    compA.println.val({compA.adr})
+
+    stringB <- stringB.subStringFrom.val({stringB.adr}, 11)
+    compB blob<@b.String> <- @b.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
+    compB.println.val({compB.adr})
+
+    // Find
+    find blob<@b.String> <- @b.String("\nFind")
+    find.println.val({find.adr})
+
+    longer blob<@b.String> <- @b.String("This is a longer string with a dog")
+    shorterA blob<@b.String> <- @b.String("cat")
+    shorterB blob<@b.String> <- @b.String("long")
+    shorterC blob<@b.String> <- @b.String("dog")
+
+    findResA blob<@b.String> <- @b.StringForUInt(longer.find.val({longer.adr}, shorterA))
+    findResA.println.val({findResA.adr})
+
+    findResB blob<@b.String> <- @b.StringForUInt(longer.find.val({longer.adr}, shorterB))
+    findResB.println.val({findResB.adr})
+
+
+    findResC blob<@b.String> <- @b.StringForUInt(longer.find.val({longer.adr}, shorterC))
+    findResC.println.val({findResC.adr})
+
+    ret 0
+;

@@ -1,6 +1,6 @@
 @module utils
 
-@export calculateThings fun: num1 u64, num2 u64, callback ptr<fun u64>
+@export calculateThings fun: num1 u64, num2 u64, callback ptr<fun: u64>
     result u64 <- num1 + num1 * num2
     callback.val(result)
 ;

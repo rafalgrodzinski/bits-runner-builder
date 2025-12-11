@@ -43,7 +43,7 @@ This option affects how addresses are calculated. It forms a part of ABI and is 
 Details on what each option do are burries somewhere inside of LLVM's source code, but in short `O2` is the sane default, whereas `O3` might be a bit more performant but also unstable. In general everything should work correctly at `O2`.
 
 ## Verbosity Level
-`--ver=[v0|v1|v2|v3]`
+`--verb=[v0|v1|v2|v3]`
 v0 is silent (except for errors), v1 just show what action is happening, v2 displays build statistics, v3 shows parsed tokens and AST.
 
 ## Calling Convention

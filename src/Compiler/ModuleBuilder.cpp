@@ -40,14 +40,14 @@ ModuleBuilder::ModuleBuilder(
     llvm::CallingConv::ID callingConvention,
     vector<shared_ptr<Statement>> statements,
     vector<shared_ptr<Statement>> headerStatements,
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
+    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
 ):
 moduleName(moduleName),
 defaultModuleName(defaultModuleName),
 callingConvention(callingConvention),
 statements(statements),
 headerStatements(headerStatements),
-exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
+importableHeaderStatementsMap(importableHeaderStatementsMap) {
     context = make_shared<llvm::LLVMContext>();
     module = make_shared<llvm::Module>(moduleName, *context);
     builder = make_shared<llvm::IRBuilder<>>(*context);
@@ -76,13 +76,21 @@ exportedHeaderStatementsMap(exportedHeaderStatementsMap) {
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     scope = make_shared<Scope>();
 
+    // build just the import statements
+    for (shared_ptr<Statement> statement : statements) {
+        if (statement->getKind() == StatementKind::META_IMPORT)
+            buildStatement(statement);
+    }
+
     // build header
     for (shared_ptr<Statement> &headerStatement : headerStatements)
         buildStatement(headerStatement);
 
-    // build body
-    for (shared_ptr<Statement> &statement : statements)
-        buildStatement(statement);
+    // build statements other than import
+    for (shared_ptr<Statement> &statement : statements) {
+        if (statement->getKind() != StatementKind::META_IMPORT)
+            buildStatement(statement);
+    }
 
     // verify module
     string errorMessage;
@@ -174,29 +182,18 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
-    llvm::StructType *structType = scope->getStructType(statementBlob->getName());
-    if (structType == nullptr) {
-        markError(statementBlob->getLine(), statementBlob->getColumn(), format("Blob \"{}\" not declared", statementBlob->getName()));
-        return;
-    }
-
-    // Generate types for body
-    vector<string> memberNames;
-    vector<llvm::Type *> types;
-    for (pair<string, shared_ptr<ValueType>> &variable: statementBlob->getMembers()) {
-        memberNames.push_back(variable.first);
-        llvm::Type *type = typeForValueType(variable.second);
-        if (type == nullptr)
-            return;
-        types.push_back(type);
-    }
-    structType->setBody(types, false);
-    scope->setStruct(statementBlob->getName(), structType, memberNames);
+    buildBlobDefinition(
+        moduleName,
+        statementBlob->getName(),
+        statementBlob->getMembers()
+    );
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    llvm::StructType *structType = llvm::StructType::create(*context, statementBlobDeclaration->getName());
-    scope->setStruct(statementBlobDeclaration->getName(), structType, {});
+    buildBlobDeclaration(
+        moduleName,
+        statementBlobDeclaration->getName()
+    );
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
@@ -301,8 +298,8 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> state
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
-    auto it = exportedHeaderStatementsMap.find(statementMetaImport->getName());
-    if (it == exportedHeaderStatementsMap.end()) {
+    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
+    if (it == importableHeaderStatementsMap.end()) {
         markErrorNotDefined(statementMetaImport->getLine(), statementMetaImport->getColumn(), format("module \"{}\"", statementMetaImport->getName()));
         return;
     }
@@ -327,6 +324,23 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                     statementDeclaration->getIdentifier(),
                     true,
                     statementDeclaration->getValueType()
+                );
+                break;
+            }
+            case StatementKind::BLOB_DECLARATION: {
+                shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
+                buildBlobDeclaration(
+                    statementMetaImport->getName(),
+                    statementDeclaration->getName()
+                );
+                break;
+            }
+            case StatementKind::BLOB: {
+                shared_ptr<StatementBlob> statementBlobDefinition = dynamic_pointer_cast<StatementBlob>(importedStatement);
+                buildBlobDefinition(
+                    statementMetaImport->getName(),
+                    statementBlobDefinition->getName(),
+                    statementBlobDefinition->getMembers()
                 );
                 break;
             }
@@ -534,6 +548,52 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
     scope->setGlobal(internalName, global);
 }
 
+void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
+    // symbol name
+    string symbolName = name;
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, symbolName);
+
+    // internal name
+    string internalName = name;
+    if (moduleName.compare(this->moduleName) != 0)
+        internalName = symbolName;
+
+    llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
+    scope->setStruct(internalName, structType, {});
+}
+
+void ModuleBuilder::buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members) {
+    // symbol name
+    string symbolName = name;
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, symbolName);
+
+    // internal name
+    string internalName = name;
+    if (moduleName.compare(this->moduleName) != 0)
+        internalName = symbolName;
+
+    llvm::StructType *structType = scope->getStructType(internalName);
+    if (structType == nullptr) {
+        markError(0, 0, format("Blob \"{}\" not declared", symbolName));
+        return;
+    }
+
+    // Generate types for body
+    vector<string> memberNames;
+    vector<llvm::Type *> types;
+    for (pair<string, shared_ptr<ValueType>> &member: members) {
+        memberNames.push_back(member.first);
+        llvm::Type *type = typeForValueType(member.second);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+    structType->setBody(types, false);
+    scope->setStruct(internalName, structType, memberNames);
+}
+
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
     llvm::Type *valueType = typeForValueType(statement->getValueType());
     llvm::AllocaInst *alloca = builder->CreateAlloca(valueType, nullptr, statement->getIdentifier());
@@ -549,6 +609,10 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
     // variable
     llvm::GlobalVariable *global = (llvm::GlobalVariable*)scope->getGlobal(statement->getIdentifier());
+    if (global == nullptr) {
+        markError(statement->getLine(), statement->getColumn(), format("{} is not valid", statement->getIdentifier()));
+        return;
+    }
 
     if (global->hasInitializer()) {
         markError(statement->getLine(), statement->getColumn(), format("Global \"{}\" already defined in scope", statement->getIdentifier()));
@@ -973,6 +1037,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCall> expres
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> expressionChained) {
     llvm::Value *currentValue = nullptr;
+    shared_ptr<Expression> parentExpression;
 
     vector<shared_ptr<Expression>> chainExpressions = expressionChained->getChainExpressions();
     for (int i=0; i<chainExpressions.size(); i++) {
@@ -983,6 +1048,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
             shared_ptr<ExpressionValue> childExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
             currentValue = valueForTypeBuiltIn(type, childExpressionVariable);
+            parentExpression = chainExpression;
             continue;
         }
 
@@ -991,6 +1057,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
             currentValue = valueForExpression(chainExpression);
             if (currentValue == nullptr)
                 return nullptr;
+            parentExpression = chainExpression;
             continue;
         }
 
@@ -1019,6 +1086,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         llvm::Value *builtInValue = valueForBuiltIn(currentValue, parentExpressionVariable, chainExpression);
         if (builtInValue != nullptr) {
             currentValue = builtInValue;
+            parentExpression = chainExpression;
             continue;
         }
 
@@ -1035,7 +1103,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
             markError(expressionVariable->getLine(), expressionVariable->getColumn(), "Something's fucky");
             return nullptr;
         }
-        string structName = string(structType->getName());
+        string structName = *parentExpression->getValueType()->getBlobName();
         optional<int> memberIndex = scope->getStructMemberIndex(structName, expressionVariable->getIdentifier());
         if (!memberIndex) {
             markError(expressionVariable->getLine(), expressionVariable->getColumn(), format("Invalid member \"{}\" for \"blob<{}>\"", expressionVariable->getIdentifier(), structName));
@@ -1050,6 +1118,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         llvm::Type *elementType = structType->getElementType(*memberIndex);
 
         currentValue = valueForSourceValue(elementPtr, elementType, expressionVariable);
+        parentExpression = chainExpression;
     }
 
     return currentValue;

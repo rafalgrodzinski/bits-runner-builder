@@ -39,8 +39,8 @@
 TypesAnalyzer::TypesAnalyzer(
     vector<shared_ptr<Statement>> statements,
     vector<shared_ptr<Statement>> headerStatements,
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap
-): statements(statements), headerStatements(headerStatements), exportedHeaderStatementsMap(exportedHeaderStatementsMap) { }
+    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
+): statements(statements), headerStatements(headerStatements), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
 
 void TypesAnalyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
@@ -117,6 +117,8 @@ void TypesAnalyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<V
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignment) {
     shared_ptr<ValueType> targetType = typeForExpression(statementAssignment->getExpressionChained());
+    if (targetType == nullptr)
+        return;
     statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType, nullptr);
 
     shared_ptr<ValueType> sourceType = statementAssignment->getValueExpression()->getValueType();
@@ -149,12 +151,14 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 
     shared_ptr<ValueType> valueType = ValueType::blob(statementBlob->getName());
 
-    if (!scope->setBlobMembers(statementBlob->getName(), members, true))
+    string name = importModulePrefix + statementBlob->getName();
+    if (!scope->setBlobMembers(name, members, true))
         markErrorAlreadyDefined(statementBlob->getLine(), statementBlob->getColumn(), statementBlob->getName());
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    scope->setBlobMembers(statementBlobDeclaration->getName(), {}, false);
+    string name = importModulePrefix + statementBlobDeclaration->getName();
+    scope->setBlobMembers(name, {}, false);
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {
@@ -255,8 +259,8 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternVariable> state
 }
 
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
-    auto it = exportedHeaderStatementsMap.find(statementMetaImport->getName());
-    if (it == exportedHeaderStatementsMap.end()) {
+    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
+    if (it == importableHeaderStatementsMap.end()) {
         markErrorInvalidImport(statementMetaImport->getLine(), statementMetaImport->getColumn(), statementMetaImport->getName());
         return;
     }
@@ -326,6 +330,13 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementVariable> statementVariab
     // Update count expression
     if (statementVariable->getValueType()->getCountExpression() != nullptr)
         statementVariable->getValueType()->getCountExpression()->valueType = typeForExpression(statementVariable->getValueType()->getCountExpression(), nullptr, nullptr);
+
+    // check if specified blob type is valid
+    if (statementVariable->getValueType()->isBlob()) {
+        if(!scope->getBlobMembers(*(statementVariable->getValueType()->getBlobName()))) {
+            markErrorInvalidType(statementVariable->getLine(), statementVariable->getColumn(), statementVariable->getValueType(), nullptr);
+        }
+    }
 
     if (statementVariable->getExpression() != nullptr) {
         statementVariable->expression = checkAndTryCasting(
@@ -416,6 +427,9 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
         nullptr
     );
 
+    if (expressionBinary->getLeft()->getValueType() == nullptr)
+        return nullptr;
+
     targetType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
     if (targetType == nullptr) {
         markErrorInvalidType(expressionBinary->getLeft()->getLine(), expressionBinary->getLeft()->getColumn(), targetType, nullptr);
@@ -426,6 +440,9 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionBina
         targetType,
         nullptr
     );
+
+    if (expressionBinary->getRight()->getValueType() == nullptr)
+        return nullptr;
 
     // validate types
     ExpressionBinaryOperation operation = expressionBinary->getOperation();
@@ -574,6 +591,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionComp
 
     vector<shared_ptr<ValueType>> elementTypes;
     for (shared_ptr<Expression> expression : expressionCompositeLiteral->getExpressions()) {
+        if (expression == nullptr)
+            return nullptr;
         shared_ptr<ValueType> elementType = typeForExpression(expression, nullptr, nullptr);
         if (elementType == nullptr)
             return nullptr;
@@ -772,6 +791,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
                 expressionValue->getColumn(),
                 format("{}.{}", blobName, expressionValue->getIdentifier())
             );
+            return nullptr;
         }
     }
 
@@ -784,6 +804,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
         indexExpression->valueType = typeForExpression(indexExpression, nullptr, nullptr);
+        if (indexExpression->getValueType() == nullptr)
+            return nullptr;
         if (!indexExpression->getValueType()->isInteger())
             markErrorInvalidType(indexExpression->getLine(), indexExpression->getColumn(), indexExpression->getValueType(), ValueType::INT);
         type = type->getSubType();
@@ -1126,7 +1148,12 @@ bool TypesAnalyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueTy
                     if (!blobMembers)
                         return false;
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+
+                    // check that number of memebrs match
+                    if (sourceElementTypes.size() !=  (*blobMembers).size())
+                        return false;
                     
+                    // check that each entry in composite can be cast to member in blob
                     for (int i=0; i<((*blobMembers).size()); i++) {
                         if (!canCast(sourceElementTypes.at(i), (*blobMembers).at(i).second))
                             return false;

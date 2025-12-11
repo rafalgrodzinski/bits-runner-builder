@@ -1,4 +1,12 @@
-main fun
-    a data<u32> <- "hello"
-    b data<u8> <- a.data<u8>
+// Basic hello world
+@module main
+
+@extern putchar fun: character u8 -> u32
+
+@export main fun -> u32
+    text data<u8> <- "Hello, world!\n"
+    
+    rep i u32 <- 0, text[i] != 0, i <- i + 1: putchar(text[i])
+
+    ret 0
 ;
