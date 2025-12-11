@@ -14,6 +14,8 @@
     subString ptr<fun: ptr<blob<String>>, u32, u32 -> blob<String>>
     subStringFrom ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
     subStringTo ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
+
+    find ptr<fun: ptr<blob<String>>, blob<String> -> u32>
 ;
 
 @export String fun: string data<u8, 256> -> blob<String>
@@ -30,6 +32,8 @@
     inst.subString <- {stringSubString.adr}
     inst.subStringFrom <- {stringSubStringFrom.adr}
     inst.subStringTo <- {stringSubStringTo.adr}
+
+    inst.find <- {stringFind.adr}
 
     ret inst
 ;
@@ -121,4 +125,19 @@ stringSubStringFrom fun: it ptr<blob<String>>, from u32 -> blob<String>
 
 stringSubStringTo fun: it ptr<blob<String>>, to u32 -> blob<String>
     ret it.val.subString.val(it, 0, to)
+;
+
+stringFind fun: it ptr<blob<String>>, other blob<String> -> u32
+    length u32 <- it.val.length.val(it)
+    otherLength u32 <- other.length.val({other.adr})
+
+    // doesn't fit in
+    if otherLength > length: ret 0
+
+    rep i u32 <- 0, i <= length - otherLength, i <- i + 1
+        subString blob<String> <- it.val.subString.val(it, i, i + otherLength)
+        if subString.isEqual.val({subString.adr}, other): ret i
+    ;
+
+    ret 0
 ;

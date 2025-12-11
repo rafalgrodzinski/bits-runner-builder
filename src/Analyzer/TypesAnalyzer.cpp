@@ -591,6 +591,8 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionComp
 
     vector<shared_ptr<ValueType>> elementTypes;
     for (shared_ptr<Expression> expression : expressionCompositeLiteral->getExpressions()) {
+        if (expression == nullptr)
+            return nullptr;
         shared_ptr<ValueType> elementType = typeForExpression(expression, nullptr, nullptr);
         if (elementType == nullptr)
             return nullptr;
