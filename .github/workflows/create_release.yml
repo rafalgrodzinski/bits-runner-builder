@@ -47,7 +47,7 @@ jobs:
           ls -a
           #tar -xzf "cmake-4.2.1-linux-x86_64.tar.gz" -C cmake
           #tar -xzf cmake.tar.gz
-          tar -xzf cmake.tar.gz -C "${HOME}/.local"
+          tar -xzf cmake.tar.gz -C ${HOME}/.local
           #echo "${}/cmake/bin:${GITHUB_PATH}" > $GITHUB_PATH
           echo "export PATH=${HOME}/cmake/bin:$PATH" >> $GITHUB_ENV
           echo $PATH
