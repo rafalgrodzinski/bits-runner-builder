@@ -24,7 +24,7 @@ execute_process(
 )
 set(ENV{PATH} "$ENV{PATH}:${LLVM_PATH}/bin")
 
-find_package(LLVM REQUIRED CONFIG)
+find_package(LLVM 21.1.0...<21.2.0 REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 
