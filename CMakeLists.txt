@@ -24,7 +24,7 @@ execute_process(
 )
 set(ENV{PATH} "$ENV{PATH}:${LLVM_PATH}/bin")
 
-find_package(LLVM 21.1.0...<21.2.0 REQUIRED CONFIG)
+find_package(LLVM 20.1.0...<21.0.0 REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 
@@ -35,4 +35,4 @@ add_executable(brb ${SOURCES})
 
 target_include_directories(brb PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-target_link_libraries(brb llvm)
+target_link_libraries(brb LLVM)

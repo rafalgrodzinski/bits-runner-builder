@@ -1,6 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include <memory>
 #include <vector>
 
 class Token;

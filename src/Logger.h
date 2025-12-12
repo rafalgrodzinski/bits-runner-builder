@@ -1,6 +1,9 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <format>
+#include <memory>
+#include <string>
 #include <vector>
 
 class Error;

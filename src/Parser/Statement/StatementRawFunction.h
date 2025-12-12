@@ -1,3 +1,6 @@
+#ifndef STATEMENT_FUNCTION
+#define STATEMENT_FUNCTION
+
 #include "Parser/Statement/Statement.h"
 
 class ValueType;
@@ -27,3 +30,5 @@ public:
     shared_ptr<ValueType> getValueType();
     string getRawSource();
 };
+
+#endif

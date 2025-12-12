@@ -2,8 +2,8 @@
 #define SCOPE_H
 
 #include <map>
-#include <string>
 #include <stack>
+#include <string>
 
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>

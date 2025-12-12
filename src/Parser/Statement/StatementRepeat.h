@@ -1,3 +1,6 @@
+#ifndef STATEMENT_REPEAT
+#define STATEMENT_REPEAT
+
 #include "Statement.h"
 
 class Expression;
@@ -27,3 +30,5 @@ public:
     shared_ptr<Expression> getPostConditionExpression();
     shared_ptr<StatementBlock> getBodyBlockStatement();
 };
+
+#endif
