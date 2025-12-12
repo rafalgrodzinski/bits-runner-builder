@@ -46,6 +46,17 @@ The idea was to build the whole computing environment from scratch which can be 
 
 It's mostly a learning opportunity and a bit of fun, but maybe you can find some bits of interesting knowledge for your own project.
 
+## Building
+Required dependencies
+- clang 17.0.0 and up
+- LLVM 20.1.0 until 21
+- CMake 4.0.0 and up
+
+### macOS
+Make sure you have [Homebrew](https://brew.sh/) installed
+- `brew install llvm@20`
+- `brew install cmake`
+
 ## Quick Start
 Make sure that you have cmake, llvm, and lld installed on your system.
 ```

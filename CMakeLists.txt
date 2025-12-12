@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 4.0)
 
 file(READ "version.txt" VERSION)
 
@@ -18,7 +18,7 @@ set(VERSION_SUFFIX "-dev-current" CACHE STRING "Version Suffix")
 add_compile_definitions(VERSION=\"${VERSION}${VERSION_SUFFIX}\")
 
 execute_process(
-    COMMAND brew --prefix llvm
+    COMMAND brew --prefix llvm@20
     OUTPUT_VARIABLE LLVM_PATH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
