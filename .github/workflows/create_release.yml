@@ -36,37 +36,16 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install llvm
 
-      #- name: Install LLVM (Linux)
-      #  if: runner.os == 'Linux'
-      #  run: sudo apt install llvm-20
+      - name: Install LLVM (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt install llvm-20
 
       - name: Install CMake (Linux)
         if: runner.os == 'Linux'
         run: |
           wget https://github.com/Kitware/CMake/releases/download/v4.2.1/cmake-4.2.1-linux-x86_64.tar.gz -O cmake.tar.gz
-          ls -a
-          #tar -xzf "cmake-4.2.1-linux-x86_64.tar.gz" -C cmake
-          #tar -xzf cmake.tar.gz
-          #echo "ls home"
-          #ls -a $HOME
           mkdir ${HOME}/.local
           tar -xzf cmake.tar.gz -C ${HOME}/.local --strip-components=1
-          echo "ls home local"
-          ls -a ${HOME}/.local
-          echo "ls home local bin"
-          ls -a ${HOME}/.local/bin
-          #echo "${}/cmake/bin:${GITHUB_PATH}" > $GITHUB_PATH
-          #echo "export PATH=${HOME}/cmake/bin:$PATH" >> $GITHUB_ENV
-          echo "PATH:"
-          echo $PATH
-          echo "GITHUBPATH:"
-          echo $GITHUB_PATH
-          cmake --version
-          echo "WORKSPACE:"
-          echo ${{github.workspace}}
-          echo "HOME:"
-          echo $HOME
-          which cmake
   
       - name: Checkout Project
         uses: actions/checkout@v4
