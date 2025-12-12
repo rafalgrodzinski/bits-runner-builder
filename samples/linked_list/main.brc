@@ -9,7 +9,7 @@ user blob
 ;
 
 newUser fun: userPtrPtr ptr<ptr<blob<user>>>, name data<u64, 16>, id u64
-    newUserPtr ptr<blob<user>> <- { malloc(130) }
+    newUserPtr ptr<blob<user>> <- { malloc(blob<user>.size) }
     newUserPtr.val <- { name, id, { 0x00 } }
 
     if userPtrPtr.val.vAdr = 0x00
