@@ -6,6 +6,7 @@
 #include <stack>
 #include <memory>
 #include <vector>
+#include <optional>
 
 class ValueType;
 
