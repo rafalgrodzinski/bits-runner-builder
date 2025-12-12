@@ -3,6 +3,7 @@ name: Build Project & Create Release
 on:
   push:
     branches:
+      - "131-handle-build-install-on-linux"
       - "main"
   workflow_dispatch:
     inputs:
@@ -25,13 +26,19 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-15-intel, macos-15]
+        #os: [macos-15-intel, macos-15, ubuntu-24.04]
+        os: [ubuntu-24.04]
 
     runs-on: ${{matrix.os}}
 
     steps:
-      - name: Install LLVM
+      - name: Install LLVM (macOS)
+        if: runner.os == 'macOS'
         run: brew install llvm
+
+      - name: Install LLVM (Linux)
+        if: runner.os == 'Linux'
+        run: apt install llvm-20
   
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -75,10 +82,13 @@ jobs:
         run: |
           case "${{matrix.os}}" in
             "macos-15-intel")
-              VARIANT="macos-intel"
+              VARIANT="macos-x86_64"
             ;;
             "macos-15")
-              VARIANT="macos-apple-silicon"
+              VARIANT="macos-arm64"
+            ;;
+            "ubuntu-22.04")
+              VARIANT="linux-x86_64"
             ;;
             *)
               exit 1
