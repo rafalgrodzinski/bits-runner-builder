@@ -44,7 +44,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           wget https://github.com/Kitware/CMake/releases/download/v4.2.1/cmake-4.2.1-linux-x86_64.tar.gz
-          tar xzf cmake-4.2.1-linux-x86_64.tar.gz -c cmake
+          tar -xzf cmake-4.2.1-linux-x86_64.tar.gz -C cmake
           echo "PATH=./cmake/bin:${PATH}" >> $GITHUB_ENV
           echo $PATH
           cmake --version
