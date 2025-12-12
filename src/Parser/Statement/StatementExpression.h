@@ -1,3 +1,6 @@
+#ifndef STATEMENT_EXPRESSION
+#define STATEMENT_EXPRESSION
+
 #include "Parser/Statement/Statement.h"
 
 class Expression;
@@ -10,3 +13,5 @@ public:
     StatementExpression(shared_ptr<Expression> expression, int line, int column);
     shared_ptr<Expression> getExpression();
 };
+
+#endif

@@ -1,6 +1,7 @@
 #ifndef MODULE_BUILDER_H
 #define MODULE_BUILDER_H
 
+#include <format>
 #include <map>
 #include <stack>
 

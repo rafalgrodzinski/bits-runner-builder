@@ -2,6 +2,9 @@
 #define EXPRESSION_H
 
 #include <iostream>
+#include <memory>
+#include <optional>
+#include <vector>
 
 class Token;
 class ValueType;

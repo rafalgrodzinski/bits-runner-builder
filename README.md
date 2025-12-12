@@ -47,7 +47,24 @@ The idea was to build the whole computing environment from scratch which can be 
 It's mostly a learning opportunity and a bit of fun, but maybe you can find some bits of interesting knowledge for your own project.
 
 ## Quick Start
-Make sure that you have cmake, llvm, and lld installed on your system.
+To try out BRC download an appropriate build from the available releases and make sure that you have LLVM 20 installed on your system.
+
+Required dependencies
+- clang 17.0.0 and up
+- LLVM 20.1.0 until 21
+- CMake 4.0.0 and up
+
+### macOS
+Make sure you have [Homebrew](https://brew.sh/) installed
+- LLVM: `brew install llvm@20`
+- CMake: `brew install cmake`
+
+### Linux
+Tested on Ubuntu, but should be similar for other distributions
+- LLVM: `sudo apt install llvm-20`
+- CMake: Version 4 wasn't available, so it had to be installed manually from [cmake.org](https://cmake.org/download/)
+
+### Building
 ```
 cmake -B build
 cmake --build build --config Release
@@ -56,7 +73,7 @@ cmake --build build --config Debug
 ```
 You'll then be able to find the executable under `build/brb`.
 
-There are "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 which will then build and start debugging using command `brb --verb=v3 samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode.
+There are "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 which will then build and start debugging using command `brb --verb=v3 samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode and `lldb-dap` on your system.
 
 ## Samples
 Inside of `samples/` there is a bunch of different sample code using different features of the code. Inside each of them there is a `build.sh`, which will generate an executable. You can also Run `samples/run_all.sh` to build and run each of the samples, which is useful for testing to check if everything works as expected.
