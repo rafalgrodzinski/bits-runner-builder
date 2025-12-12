@@ -52,6 +52,7 @@ jobs:
           echo $PATH
           echo $GITHUB_PATH
           cmake --version
+          echo ${{github.workspace}}
   
       - name: Checkout Project
         uses: actions/checkout@v4
