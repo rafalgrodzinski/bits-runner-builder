@@ -36,9 +36,9 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install llvm
 
-      - name: Install LLVM (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt install llvm-20
+      #- name: Install LLVM (Linux)
+      #  if: runner.os == 'Linux'
+      #  run: sudo apt install llvm-20
 
       - name: Install CMake (Linux)
         if: runner.os == 'Linux'
