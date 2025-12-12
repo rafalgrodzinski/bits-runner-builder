@@ -47,15 +47,26 @@ jobs:
           ls -a
           #tar -xzf "cmake-4.2.1-linux-x86_64.tar.gz" -C cmake
           #tar -xzf cmake.tar.gz
+          echo "ls home"
+          ls -a $HOME
           mkdir ${HOME}/.local
           tar -xzf cmake.tar.gz -C ${HOME}/.local
+          echo "ls home local"
+          ls -a ${HOME}/.local
+          echo "ls home local bin"
+          ls -a ${HOME}/.local/bin
           #echo "${}/cmake/bin:${GITHUB_PATH}" > $GITHUB_PATH
           #echo "export PATH=${HOME}/cmake/bin:$PATH" >> $GITHUB_ENV
+          echo "PATH:"
           echo $PATH
+          echo "GITHUBPATH:"
           echo $GITHUB_PATH
           cmake --version
+          echo "WORKSPACE:"
           echo ${{github.workspace}}
+          echo "HOME:"
           echo $HOME
+          which cmake
   
       - name: Checkout Project
         uses: actions/checkout@v4
