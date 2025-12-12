@@ -47,8 +47,9 @@ jobs:
           ls -a
           #tar -xzf "cmake-4.2.1-linux-x86_64.tar.gz" -C cmake
           tar -xzf cmake.tar.gz
-          echo "PATH=./cmake/bin:${PATH}" >> $GITHUB_ENV
+          echo "${{github.workspace}}/cmake/bin:${GITHUB_PATH}" > $GITHUB_PATH
           echo $PATH
+          echo $GITHUB_PATH
           cmake --version
   
       - name: Checkout Project
