@@ -47,10 +47,10 @@ jobs:
           ls -a
           #tar -xzf "cmake-4.2.1-linux-x86_64.tar.gz" -C cmake
           #tar -xzf cmake.tar.gz
-          echo "ls home"
-          ls -a $HOME
+          #echo "ls home"
+          #ls -a $HOME
           mkdir ${HOME}/.local
-          tar -xzf cmake.tar.gz -C ${HOME}/.local
+          tar -xzf cmake.tar.gz -C ${HOME}/.local --strip-components=1
           echo "ls home local"
           ls -a ${HOME}/.local
           echo "ls home local bin"
