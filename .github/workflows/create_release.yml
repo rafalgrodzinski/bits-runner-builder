@@ -38,7 +38,7 @@ jobs:
 
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
-        run: apt install llvm-20
+        run: sudo apt install llvm-20
   
       - name: Checkout Project
         uses: actions/checkout@v4
