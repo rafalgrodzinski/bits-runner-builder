@@ -43,9 +43,10 @@ jobs:
       - name: Install CMake (Linux)
         if: runner.os == 'Linux'
         run: |
-          wget https://github.com/Kitware/CMake/releases/download/v4.2.1/cmake-4.2.1-linux-x86_64.tar.gz
+          wget https://github.com/Kitware/CMake/releases/download/v4.2.1/cmake-4.2.1-linux-x86_64.tar.gz -O cmake.tar.gz
           ls -a
-          tar -xzf "cmake-4.2.1-linux-x86_64.tar.gz" -C cmake
+          #tar -xzf "cmake-4.2.1-linux-x86_64.tar.gz" -C cmake
+          tar -xzf cmake.tar.gz
           echo "PATH=./cmake/bin:${PATH}" >> $GITHUB_ENV
           echo $PATH
           cmake --version
