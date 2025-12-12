@@ -3,7 +3,6 @@ name: Build Project & Create Release
 on:
   push:
     branches:
-      - "131-handle-build-install-on-linux"
       - "main"
   workflow_dispatch:
     inputs:
