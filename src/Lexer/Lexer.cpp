@@ -528,9 +528,24 @@ shared_ptr<Token> Lexer::matchString() {
         return nullptr;
 
     bool isClosing = false;
+    bool shouldEscape = false;
     do {
         nextIndex++;
-        isClosing = source.at(nextIndex) == '\"' && source.at(nextIndex - 1) != '\\';
+        
+        // not escaping characters
+        if (!shouldEscape) {
+            switch (source.at(nextIndex)) {
+                case '\\': // should the next character be escaped?
+                    shouldEscape = true;
+                    break;
+                case '\"': // are closing the string?
+                    isClosing = true;
+                    break;
+            }
+        // escape one character
+        } else {
+            shouldEscape = false;
+        }
     } while (nextIndex < source.length() && !isClosing);
 
     if (!isClosing)
