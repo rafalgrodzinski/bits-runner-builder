@@ -1056,8 +1056,45 @@ string Logger::toString(ExpressionUnaryOperation operationUnary) {
 //
 // Public
 //
-void Logger::print(shared_ptr<StatementModule> statement) {
-    cout << toString(statement, {IndentKind::ROOT});
+
+void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements) {
+    string text;
+
+    text += format("MODULE `{}`:\n", moduleName);
+    vector<IndentKind> indents = {IndentKind::ROOT};
+    
+    // header
+    indents.push_back(IndentKind::NODE);
+    text += formattedLine("HEADER", indents);
+    indents.at(indents.size()-1) = IndentKind::BRANCH;
+
+
+    for (int i=0; i<headerStatements.size(); i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < headerStatements.size() - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(headerStatements.at(i), currentIndents);
+    }
+
+    // body
+    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+    text += formattedLine("BODY", indents);
+    indents.at(indents.size()-1) = IndentKind::EMPTY;
+
+    for (int i=0; i<bodyStatements.size(); i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < bodyStatements.size() - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(bodyStatements.at(i), currentIndents);
+    }
+
+    cout << text;
 }
 
 void Logger::printExportedStatements(string moduleName, vector<shared_ptr<Statement>> statments) {

@@ -294,17 +294,9 @@ int main(int argc, char **argv) {
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
+        // Print module statements
         if (verbosity >= Verbosity::V3) {
-            // reconstruct concatenated module 
-            shared_ptr<StatementModule> statementModule = make_shared<StatementModule>(
-                moduleName,
-                statements,
-                headerStatementsMap[moduleName],
-                vector<shared_ptr<Statement>>(),
-                0,
-                0
-            );
-            Logger::print(statementModule);
+            Logger::printModuleStatements(moduleName, headerStatementsMap[moduleName], statements);
             cout << endl;
         }
     }
