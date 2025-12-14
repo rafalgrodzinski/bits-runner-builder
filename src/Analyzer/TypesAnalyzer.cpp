@@ -181,6 +181,11 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
 
     // update return's type for count expression
     if (statementFunction->getReturnValueType()->isData()) {
+        // returned data type should have specified size
+        if (statementFunction->getReturnValueType()->getCountExpression() == nullptr) {
+            markErrorInvalidType(statementFunction->getLine(), statementFunction->getColumn(), statementFunction->getReturnValueType(), nullptr);
+            return;
+        }
         statementFunction->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
             statementFunction->getReturnValueType()->getCountExpression(),
             nullptr,
@@ -211,6 +216,11 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> stat
 
     // update return's type for count expression
     if (statementFunctionDeclaration->getReturnValueType()->isData()) {
+        // returned data type should have specified size
+        if (statementFunctionDeclaration->getReturnValueType()->getCountExpression() == nullptr) {
+            markErrorInvalidType(statementFunctionDeclaration->getLine(), statementFunctionDeclaration->getColumn(), statementFunctionDeclaration->getReturnValueType(), nullptr);
+            return;
+        }
         statementFunctionDeclaration->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
             statementFunctionDeclaration->getReturnValueType()->getCountExpression(),
             nullptr,
