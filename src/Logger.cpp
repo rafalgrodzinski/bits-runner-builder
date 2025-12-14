@@ -1060,6 +1060,25 @@ void Logger::print(shared_ptr<StatementModule> statement) {
     cout << toString(statement, {IndentKind::ROOT});
 }
 
+void Logger::printExportedStatements(string moduleName, vector<shared_ptr<Statement>> statments) {
+    string text;
+
+    text += format("EXPORTED STATEMENTS `{}`:\n", moduleName);
+
+    int statementsCount = statments.size();
+    for (int i=0; i<statementsCount; i++) {
+        vector<IndentKind> currentIndents = {IndentKind::ROOT};
+        if (i < statementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statments.at(i), currentIndents);
+    }
+
+    cout << text;
+}
+
 void Logger::print(shared_ptr<Error> error) {
     string message;
     switch (error->getKind()) {

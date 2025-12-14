@@ -233,9 +233,13 @@ int main(int argc, char **argv) {
 
         // Append statements to existing module or create a new one
         if (statementsMap.contains(statementModule->getName())) {
+            // body
             for (shared_ptr<Statement> &statement : statementModule->getStatements())
                 statementsMap[statementModule->getName()].push_back(statement);
+
+            // header
             for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements()) {
+                // blob declratations need to be first in case of being used by functions
                 if (headerStatement->getKind() == StatementKind::BLOB_DECLARATION) {
                     headerStatementsMap[statementModule->getName()].insert(
                         headerStatementsMap[statementModule->getName()].begin(),
@@ -245,8 +249,19 @@ int main(int argc, char **argv) {
                     headerStatementsMap[statementModule->getName()].push_back(headerStatement);
                 }
             }
-            for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements())
-                exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
+
+            // exported statements
+            for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements()) {
+                // same here, blob declarations go first
+                if (exportedHeaderStatement->getKind() == StatementKind::BLOB_DECLARATION) {
+                    exportedHeaderStatementsMap[statementModule->getName()].insert(
+                        exportedHeaderStatementsMap[statementModule->getName()].begin(),
+                        exportedHeaderStatement
+                    );
+                } else {
+                    exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
+                }
+            }
         } else {
             statementsMap[statementModule->getName()] = statementModule->getStatements();
             headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
@@ -291,6 +306,16 @@ int main(int argc, char **argv) {
             );
             Logger::print(statementModule);
             cout << endl;
+        }
+    }
+
+    // Print exported statements
+    if (verbosity >= Verbosity::V3) {
+        for (auto &exportedStatementsEntry : exportedHeaderStatementsMap) {
+            if (!exportedStatementsEntry.second.empty()) {
+                Logger::printExportedStatements(exportedStatementsEntry.first, exportedStatementsEntry.second);
+                cout << endl;
+            }
         }
     }
 

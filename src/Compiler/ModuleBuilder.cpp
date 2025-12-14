@@ -1652,8 +1652,12 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType) {
 
             return llvm::ArrayType::get(typeForValueType(valueType->getSubType()), elementsCount);
         }
-        case ValueTypeKind::BLOB:
-            return scope->getStructType(*(valueType->getBlobName()));
+        case ValueTypeKind::BLOB: {
+            llvm::StructType *structType = scope->getStructType(*(valueType->getBlobName()));
+            if (structType == nullptr)
+                markErrorNotDefined(0, 0, *(valueType->getBlobName()));
+            return structType;
+        }
         case ValueTypeKind::FUN: {
             // returnType
             llvm::Type *functionReturnType = typeForValueType(valueType->getReturnType());
