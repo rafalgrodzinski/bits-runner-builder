@@ -1052,6 +1052,9 @@ shared_ptr<Expression> TypesAnalyzer::checkAndTryCasting(shared_ptr<Expression> 
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {
+        if (sourceType->getCountExpression() != nullptr)
+            sourceType->getCountExpression()->valueType = typeForExpression(sourceType->getCountExpression(), nullptr, returnType);
+
         if (targetType->getCountExpression() == nullptr)
             return sourceExpression;
     }
@@ -1187,6 +1190,16 @@ bool TypesAnalyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueTy
                     return false;
             }
             break;
+        }
+        // blob
+        case ValueTypeKind::BLOB: {
+            if (!targetType->isBlob())
+                return false;
+
+            string sourceBlobName = *(sourceType->getBlobName());
+            string targetBlobName = *(targetType->getBlobName());
+
+            return sourceBlobName.compare(targetBlobName) == 0;
         }
 
         default:

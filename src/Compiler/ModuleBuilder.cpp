@@ -688,9 +688,16 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 } else {
                     shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(valueExpression);
                     sourceValue = valueForExpression(expressionChained);
-                    if (llvm::dyn_cast<llvm::LoadInst>(sourceValue))
+                    sourceType = sourceValue->getType();
+                    if (llvm::dyn_cast<llvm::LoadInst>(sourceValue)) {
                         sourceValue = llvm::dyn_cast<llvm::LoadInst>(sourceValue)->getPointerOperand();
-                    sourceType = llvm::dyn_cast<llvm::AllocaInst>(sourceValue)->getAllocatedType();
+                    } else if (llvm::dyn_cast<llvm::AllocaInst>(sourceValue) != nullptr) {
+                        sourceType = llvm::dyn_cast<llvm::AllocaInst>(sourceValue)->getAllocatedType();
+                    } else if (llvm::dyn_cast<llvm::CallInst>(sourceValue)) {
+                        llvm::AllocaInst *alloca = builder->CreateAlloca(sourceType, nullptr);
+                        builder->CreateStore(sourceValue, alloca);
+                        sourceValue = alloca;
+                    }
                 }
 
                 if (!sourceType->isArrayTy()) {
