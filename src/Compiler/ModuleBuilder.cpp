@@ -1055,7 +1055,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         if (currentWrappedValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
             shared_ptr<ExpressionValue> childExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
-            currentWrappedValue = WrappedValue::wrappedValue(valueForTypeBuiltIn(type, childExpressionVariable));
+            currentWrappedValue = WrappedValue::wrappedValue(builder, valueForTypeBuiltIn(type, childExpressionVariable));
             parentExpression = chainExpression;
             continue;
         }
@@ -1071,7 +1071,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
 
         // Cast expression?
         if (shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression)) {
-            currentWrappedValue = WrappedValue::wrappedValue(valueForCast(currentWrappedValue->getValue(), expressionCast->getValueType()));
+            currentWrappedValue = WrappedValue::wrappedValue(builder, valueForCast(currentWrappedValue->getValue(), expressionCast->getValueType()));
             parentExpression = chainExpression;
             if (currentWrappedValue == nullptr)
                 return nullptr;
@@ -1087,7 +1087,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
 
         // Built-in expression?
         if(llvm::Value *builtInValue = valueForBuiltIn(currentWrappedValue->getValue(), parentExpressionVariable, chainExpression)) {
-            currentWrappedValue = WrappedValue::wrappedValue(builtInValue);
+            currentWrappedValue = WrappedValue::wrappedValue(builder, builtInValue);
             parentExpression = chainExpression;
             continue;
         }
@@ -1118,7 +1118,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         llvm::Value *elementPtr = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
         llvm::Type *elementType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
 
-        currentWrappedValue = WrappedValue::wrappedValue(valueForSourceValue(elementPtr, elementType, expressionVariable));
+        currentWrappedValue = WrappedValue::wrappedValue(builder, valueForSourceValue(elementPtr, elementType, expressionVariable));
         parentExpression = chainExpression;
     }
 
@@ -1344,7 +1344,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (value == nullptr)
         return nullptr;
 
-    return WrappedValue::wrappedValue(value);
+    return WrappedValue::wrappedValue(builder, value);
 }
 
 llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression) {
