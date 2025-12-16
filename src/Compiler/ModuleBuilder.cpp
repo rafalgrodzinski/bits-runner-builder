@@ -2,6 +2,7 @@
 
 #include "Error.h"
 #include "Logger.h"
+#include "WrappedValue.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Expression/ExpressionGrouping.h"
@@ -1043,7 +1044,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCall> expres
 }
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> expressionChained) {
-    llvm::Value *currentValue = nullptr;
+    shared_ptr<WrappedValue> currentWrappedValue;
     shared_ptr<Expression> parentExpression;
 
     vector<shared_ptr<Expression>> chainExpressions = expressionChained->getChainExpressions();
@@ -1051,35 +1052,30 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         shared_ptr<Expression> chainExpression = chainExpressions.at(i);
 
         // If the first expression is a cast, try doing a built-in on a type
-        if (currentValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
+        if (currentWrappedValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
             shared_ptr<ExpressionValue> childExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
-            currentValue = valueForTypeBuiltIn(type, childExpressionVariable);
+            currentWrappedValue = WrappedValue::wrappedValue(valueForTypeBuiltIn(type, childExpressionVariable));
             parentExpression = chainExpression;
             continue;
         }
 
         // First in chain is treated as a single variable
-        if (currentValue == nullptr) {
-            currentValue = valueForExpression(chainExpression);
-            if (currentValue == nullptr)
-                return nullptr;
+        if (currentWrappedValue == nullptr) {
+            currentWrappedValue = wrappedValueForExpression(chainExpression);
             parentExpression = chainExpression;
+            if (currentWrappedValue == nullptr)
+                return nullptr;
             continue;
         }
 
-        // Figure out opearand for the load operation
-        llvm::Value *sourceOperand;
-        llvm::LoadInst *sourceLoad = llvm::dyn_cast<llvm::LoadInst>(currentValue);
-        if (sourceLoad != nullptr)
-            sourceOperand = sourceLoad->getOperand(0);
-        else
-            sourceOperand = currentValue;
-
         // Cast expression?
-        shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression);
-        if (expressionCast != nullptr) {
-            return valueForCast(currentValue, expressionCast->getValueType());
+        if (shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression)) {
+            currentWrappedValue = WrappedValue::wrappedValue(valueForCast(currentWrappedValue->getValue(), expressionCast->getValueType()));
+            parentExpression = chainExpression;
+            if (currentWrappedValue == nullptr)
+                return nullptr;
+            continue;
         }
 
         // Check parent expression
@@ -1090,9 +1086,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         }
 
         // Built-in expression?
-        llvm::Value *builtInValue = valueForBuiltIn(currentValue, parentExpressionVariable, chainExpression);
-        if (builtInValue != nullptr) {
-            currentValue = builtInValue;
+        if(llvm::Value *builtInValue = valueForBuiltIn(currentWrappedValue->getValue(), parentExpressionVariable, chainExpression)) {
+            currentWrappedValue = WrappedValue::wrappedValue(builtInValue);
             parentExpression = chainExpression;
             continue;
         }
@@ -1105,8 +1100,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         }
 
         // Variable expression?
-        llvm::StructType *structType = (llvm::StructType*)currentValue->getType();
-        if (!structType->isStructTy()) {
+        if (!currentWrappedValue->isStruct()) {
             markError(expressionVariable->getLine(), expressionVariable->getColumn(), "Something's fucky");
             return nullptr;
         }
@@ -1121,14 +1115,14 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
             builder->getInt32(*memberIndex)
         };
 
-        llvm::Value *elementPtr = builder->CreateGEP(structType, sourceOperand, index);
-        llvm::Type *elementType = structType->getElementType(*memberIndex);
+        llvm::Value *elementPtr = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
+        llvm::Type *elementType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
 
-        currentValue = valueForSourceValue(elementPtr, elementType, expressionVariable);
+        currentWrappedValue = WrappedValue::wrappedValue(valueForSourceValue(elementPtr, elementType, expressionVariable));
         parentExpression = chainExpression;
     }
 
-    return currentValue;
+    return currentWrappedValue->getValue();
 }
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
@@ -1343,6 +1337,14 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionValue> expre
     }
 
     return valueForSourceValue(value, type, expressionValue);
+}
+
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Expression> expression) {
+    llvm::Value *value = valueForExpression(expression);
+    if (value == nullptr)
+        return nullptr;
+
+    return WrappedValue::wrappedValue(value);
 }
 
 llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression) {

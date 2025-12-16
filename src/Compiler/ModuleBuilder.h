@@ -19,6 +19,7 @@
 
 class Error;
 class ValueType;
+class WrappedValue;
 
 class Statement;
 class StatementAssignment;
@@ -132,6 +133,8 @@ private:
     llvm::Value *valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
     llvm::Value *valueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
     llvm::Value *valueForExpression(shared_ptr<ExpressionValue> expressionValue);
+
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<Expression> expression);
 
     llvm::Value *valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression);
     
