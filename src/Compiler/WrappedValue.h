@@ -20,13 +20,17 @@ public:
 
     static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value);
 
+
     llvm::Value *getValue();
     llvm::Value *getPointerValue();
     llvm::Value *getConstantValue();
 
     llvm::Type *getType();
+    llvm::ArrayType *getArrayType();
     llvm::StructType *getStructType();
 
+    bool isArray();
+    bool isPointer();
     bool isStruct();
 };
 

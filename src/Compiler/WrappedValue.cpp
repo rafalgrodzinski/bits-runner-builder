@@ -64,8 +64,20 @@ llvm::Type *WrappedValue::getType() {
     return type;
 }
 
+llvm::ArrayType *WrappedValue::getArrayType() {
+    return llvm::dyn_cast<llvm::ArrayType>(type);
+}
+
 llvm::StructType *WrappedValue::getStructType() {
     return llvm::dyn_cast<llvm::StructType>(type);
+}
+
+bool WrappedValue::isArray() {
+    return type->isArrayTy();
+}
+
+bool WrappedValue::isPointer() {
+    return type->isPointerTy();
 }
 
 bool WrappedValue::isStruct() {
