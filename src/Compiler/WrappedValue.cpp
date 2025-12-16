@@ -5,11 +5,6 @@ WrappedValue::WrappedValue() { }
 shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    //value->print(llvm::outs());
-    //llvm::outs() << "\n";
-    //value->getType()->print(llvm::outs());
-    //llvm::outs() << "\n\n";
-
     if (llvm::LoadInst *loadInst = llvm::dyn_cast<llvm::LoadInst>(value)) {
         wrappedValue->value = value;
         wrappedValue->pointerValue = loadInst->getPointerOperand();
@@ -40,10 +35,6 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>
     }
 
     wrappedValue->constantValue = llvm::dyn_cast<llvm::Constant>(value);
-
-    //wrappedValue->value->print(llvm::outs());
-    //wrappedValue->value->getType()->print(llvm::outs());
-    //wrappedValue->type->print(llvm::outs());
 
     return wrappedValue;
 }

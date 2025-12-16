@@ -137,11 +137,10 @@ private:
     shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<Expression> expression);
 
     llvm::Value *valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression);
-    
+    llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
     llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);
     shared_ptr<WrappedValue> wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression);
     shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
-    llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
 
     // Support
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
