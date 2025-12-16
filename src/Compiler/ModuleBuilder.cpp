@@ -1055,7 +1055,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         if (currentWrappedValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
             shared_ptr<ExpressionValue> childExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
-            currentWrappedValue = WrappedValue::wrappedValue(builder, valueForTypeBuiltIn(type, childExpressionVariable));
+            currentWrappedValue = wrappedValueForTypeBuiltIn(type, childExpressionVariable);
             parentExpression = chainExpression;
             continue;
         }
@@ -1466,15 +1466,17 @@ llvm::Value *ModuleBuilder::valueForBuiltIn(llvm::Value *parentValue, shared_ptr
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression) {
     bool isSize = expression->getIdentifier().compare("size") == 0;
 
     if (isSize) {
         int sizeInBytes = sizeInBitsForType(type) / 8;
-        if (sizeInBytes > 0)
-            return llvm::ConstantInt::get(typeUInt, sizeInBytes);
-        else 
-            return nullptr;    
+        if (sizeInBytes <= 0)
+            return nullptr;
+        return WrappedValue::wrappedValue(
+            builder,
+            llvm::ConstantInt::get(typeUInt, sizeInBytes)
+        );
     }
     
     markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
