@@ -119,7 +119,7 @@ private:
     void buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
-    void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
+    void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);
 
     // Expressions
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);

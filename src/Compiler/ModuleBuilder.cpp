@@ -171,15 +171,10 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
     if (targetValue == nullptr)
         return;
 
-    // Figure out opearand for the store operation
-    llvm::Value *targetOperand;
-    llvm::LoadInst *targetLoad = llvm::dyn_cast<llvm::LoadInst>(targetValue);
-    if (targetLoad != nullptr)
-        targetOperand = targetLoad->getOperand(0);
-    else
-        targetOperand = targetValue;
-
-    buildAssignment(targetOperand, targetValue->getType(), statementAssignment->getValueExpression());
+    buildAssignment(
+        WrappedValue::wrappedValue(builder, targetValue),
+        statementAssignment->getValueExpression()
+    );
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
@@ -604,7 +599,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
         return;
 
     if (statement->getExpression() != nullptr)
-        buildAssignment(alloca, valueType, statement->getExpression());
+        buildAssignment(WrappedValue::wrappedValue(builder, alloca), statement->getExpression());
 }
 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
@@ -634,23 +629,23 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     global->setInitializer(constantValue);
 }
 
-void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression) {
+void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression) {
     // data
-    if (targetType->isArrayTy()) {
+    if (targetWrappedValue->isArray()) {
         switch (valueExpression->getKind()) {
             // data <- { }
             // copy values from literal expression into an allocated array
             case ExpressionKind::COMPOSITE_LITERAL: {
                 vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
                 int sourceCount = valueExpressions.size();
-                int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
+                int targetCount = targetWrappedValue->getArrayType()->getNumElements();
                 int count = min(sourceCount, targetCount);
                 for (int i=0; i<count; i++) {
                     llvm::Value *index[] = {
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Value *targetPtr = builder->CreateGEP(targetType, targetValue, index);
+                    llvm::Value *targetPtr = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
                     llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i));
                     if (sourceValue == nullptr)
                         return;
@@ -705,7 +700,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
 
                 // make sure we don't go over the bounds
                 int sourceCount = ((llvm::ArrayType *)sourceType)->getNumElements();
-                int targetCount = ((llvm::ArrayType *)targetType)->getNumElements();
+                int targetCount = targetWrappedValue->getArrayType()->getNumElements();
                 int count = min(sourceCount, targetCount);
 
                 for (int i=0; i<count; i++) {
@@ -716,7 +711,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
 
                     // get pointers for both source and target
                     llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceType, sourceValue, index);
-                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
+                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
                     // load value from source pointer
                     llvm::Value *sourceMemberValue = builder->CreateLoad(sourceType->getArrayElementType(), sourceMemberPtr);
                     // and then store it at the target pointer
@@ -729,19 +724,19 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 return;
         }
     // blob
-    } else if (targetType->isStructTy()) {
+    } else if (targetWrappedValue->isStruct()) {
         switch (valueExpression->getKind()) {
             // blob <- { }
             case ExpressionKind::COMPOSITE_LITERAL: {
                 vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
-                int membersCount = ((llvm::StructType*)targetType)->getStructNumElements();
+                int membersCount = targetWrappedValue->getStructType()->getStructNumElements();
                 for (int i=0; i<membersCount; i++) {
                     llvm::Value *index[] = {
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
                     llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i));
-                    llvm::Value *targetMember = builder->CreateGEP(targetType, targetValue, index);
+                    llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
                     builder->CreateStore(sourceValue, targetMember);
                 }
                 break;
@@ -752,7 +747,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
             // blob <- function()
             case ExpressionKind::CALL: {
                 llvm::Value *sourceValue = valueForExpression(valueExpression);
-                builder->CreateStore(sourceValue, targetValue);
+                builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
                 break;
             }
             default:
@@ -760,7 +755,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 break;
         }
     // pointer
-    } else if (targetType->isPointerTy()) {
+    } else if (targetWrappedValue->isPointer()) {
         switch (valueExpression->getKind()) {
             // ptr <- { }
             case ExpressionKind::COMPOSITE_LITERAL: {
@@ -775,7 +770,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                     break;
                 }
                 llvm::Value *sourceValue = builder->CreateIntToPtr(adrValue, typePtr);
-                builder->CreateStore(sourceValue, targetValue);
+                builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
                 break;
             }
             // ptr <- ptr
@@ -786,7 +781,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 llvm::Value *sourceValue = valueForExpression(valueExpression);
                 if (sourceValue == nullptr)
                     return;
-                builder->CreateStore(sourceValue, targetValue);
+                builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
                 break;
             }
             default:
@@ -813,7 +808,7 @@ void ModuleBuilder::buildAssignment(llvm::Value *targetValue, llvm::Type *target
                 llvm::Value *sourceValue = valueForExpression(valueExpression);
                 if (sourceValue == nullptr)
                     return;
-                builder->CreateStore(sourceValue, targetValue);
+                builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
                 break;
             }
             // other
@@ -1164,7 +1159,10 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLit
     }
 
     llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
-    buildAssignment(alloca, type, expressionCompositeLiteral);
+    buildAssignment(
+        WrappedValue::wrappedValue(builder, alloca),
+        expressionCompositeLiteral
+    );
     return builder->CreateLoad(type, alloca);
 }
 
