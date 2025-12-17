@@ -1026,7 +1026,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionBlock> expre
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCall> expressionCall) {
     llvm::Function *fun = scope->getFunction(expressionCall->getName());
     if (fun != nullptr) {
-        return valueForCall(fun, fun->getFunctionType(), expressionCall);
+        return wrappedValueForCall(fun, fun->getFunctionType(), expressionCall)->getValue();
     }
 
     llvm::InlineAsm *rawFun = scope->getInlineAsm(expressionCall->getName());
@@ -1071,7 +1071,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
 
         // Cast expression?
         if (shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression)) {
-            currentWrappedValue = WrappedValue::wrappedValue(builder, valueForCast(currentWrappedValue->getValue(), expressionCast->getValueType()));
+            currentWrappedValue = wrappedValueForCast(currentWrappedValue->getValue(), expressionCast->getValueType());
             parentExpression = chainExpression;
             if (currentWrappedValue == nullptr)
                 return nullptr;
@@ -1347,7 +1347,79 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     return WrappedValue::wrappedValue(builder, value);
 }
 
-llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression) {
+    bool isCount = false;
+    bool isVal = false;
+    bool isVadr = false;
+    bool isAdr = false;
+    bool isSize = false;
+
+    shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(expression);
+    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
+
+    if (expressionVariable != nullptr) {
+        isCount = expressionVariable->getIdentifier().compare("count") == 0;
+        isVal = expressionVariable->getIdentifier().compare("val") == 0;
+        isVadr = expressionVariable->getIdentifier().compare("vAdr") == 0;
+        isAdr = expressionVariable->getIdentifier().compare("adr") == 0;
+        isSize = expressionVariable->getIdentifier().compare("size") == 0;
+    } else if (expressionCall != nullptr) {
+        isVal = expressionCall->getName().compare("val") == 0;
+    }
+
+    // Return quickly if not a built-in
+    if (!isCount && !isVal && !isVadr && !isAdr && !isSize)
+        return nullptr;
+
+    // Do the appropriate built-in operation
+    if (parentWrappedValue->isArray() && isCount) {
+        return WrappedValue::wrappedValue(
+            builder,
+            llvm::ConstantInt::get(typeSInt, parentWrappedValue->getArrayType()->getNumElements())
+        );
+    } else if (parentWrappedValue->isPointer() && isVal) {
+        llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
+
+        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
+        if (pointeeValueType == nullptr) {
+            markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
+            return nullptr;
+        }
+        llvm::Type *pointeeType = typeForValueType(pointeeValueType);
+        if (pointeeType == nullptr) {
+            markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
+            return nullptr; 
+        }
+
+        return wrappedValueForSourceValue(pointeeLoad, pointeeType, expression);
+    } else if (parentWrappedValue->isPointer() && isVadr) {
+        llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreatePtrToInt(pointeeLoad, typeIntPtr)
+        );
+    } else if (isAdr) {
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreatePtrToInt(parentWrappedValue->getPointerValue(), typeIntPtr)
+        );
+    } else if (isSize) {
+        int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
+        if (sizeInBytes > 0) {
+            return WrappedValue::wrappedValue(
+                builder,
+                llvm::ConstantInt::get(typeUInt, sizeInBytes)
+            );
+        } else {
+            return nullptr;
+        }
+    }
+
+    markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
+    return nullptr;
+}
+
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression) {
     vector<llvm::Value*> argValues;
     vector<shared_ptr<Expression>> argumentExpressions = expression->getArgumentExpressions();
     for (int i=0; i<argumentExpressions.size(); i++) {
@@ -1356,10 +1428,13 @@ llvm::Value *ModuleBuilder::valueForCall(llvm::Value *fun, llvm::FunctionType *f
         llvm::Value *argValue = valueForExpression(argumentExpression);
         argValues.push_back(argValue);
     }
-    return builder->CreateCall(funType, fun, llvm::ArrayRef(argValues));
+    return WrappedValue::wrappedValue(
+        builder,
+        builder->CreateCall(funType, fun, llvm::ArrayRef(argValues))
+    );
 }
 
-llvm::Value *ModuleBuilder::valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType) {
+  shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType) {
     // Figure out target type
     llvm::Type *targetType = typeForValueType(targetValueType);
     bool isTargetUInt = false;
@@ -1438,25 +1513,46 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *sourceValue, shared_ptr<Va
     // Match source to target
     // int to int TODO: handle sint to uint
     if ((isSourceUInt || isSourceSInt) && (isTargetUInt || isTargetSInt)) {
-        return builder->CreateZExtOrTrunc(sourceValue, targetType);
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateZExtOrTrunc(sourceValue, targetType)
+        );
     // uint to float
     } else if (isSourceUInt && isTargetFloat) {
-        return builder->CreateUIToFP(sourceValue, targetType);
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateUIToFP(sourceValue, targetType)
+        );
     // sint to float
     } else if (isSourceSInt && isTargetFloat) {
-        return builder->CreateSIToFP(sourceValue, targetType);
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateSIToFP(sourceValue, targetType)
+        );
     // float to float+
     } else if (isSourceFloat && isTargetFloat && targetSize >= sourceSize) {
-        return builder->CreateFPExt(sourceValue, targetType);
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateFPExt(sourceValue, targetType)
+        );
     // float to float-
     } else if (isSourceFloat && isTargetFloat && targetSize < sourceSize) {
-        return builder->CreateFPTrunc(sourceValue, targetType);
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateFPTrunc(sourceValue, targetType)
+        );
     // float to uint
     } else if (isSourceFloat && isTargetUInt) {
-        return builder->CreateFPToUI(sourceValue, targetType);
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateFPToUI(sourceValue, targetType)
+        );
     // float to sint
     } else if (isSourceFloat && isTargetSInt) {
-        return builder->CreateFPToSI(sourceValue, targetType);
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateFPToSI(sourceValue, targetType)
+        );
     // data to data
     } else if (isSourceData && isTargetData) {
         llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(sourceValue->getType());
@@ -1493,83 +1589,14 @@ llvm::Value *ModuleBuilder::valueForCast(llvm::Value *sourceValue, shared_ptr<Va
 
             builder->CreateStore(sourceMemberValue, targetMemberPtr);
         }
-        return builder->CreateLoad(targetType, targetValue);;
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateLoad(targetType, targetValue)
+        );
     } else {
         markError(0, 0, "Invalid cast");
         return nullptr;
     }
-}
-
-shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression) {
-    bool isCount = false;
-    bool isVal = false;
-    bool isVadr = false;
-    bool isAdr = false;
-    bool isSize = false;
-
-    shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(expression);
-    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
-
-    if (expressionVariable != nullptr) {
-        isCount = expressionVariable->getIdentifier().compare("count") == 0;
-        isVal = expressionVariable->getIdentifier().compare("val") == 0;
-        isVadr = expressionVariable->getIdentifier().compare("vAdr") == 0;
-        isAdr = expressionVariable->getIdentifier().compare("adr") == 0;
-        isSize = expressionVariable->getIdentifier().compare("size") == 0;
-    } else if (expressionCall != nullptr) {
-        isVal = expressionCall->getName().compare("val") == 0;
-    }
-
-    // Return quickly if not a built-in
-    if (!isCount && !isVal && !isVadr && !isAdr && !isSize)
-        return nullptr;
-
-    // Do the appropriate built-in operation
-    if (parentWrappedValue->isArray() && isCount) {
-        return WrappedValue::wrappedValue(
-            builder,
-            llvm::ConstantInt::get(typeSInt, parentWrappedValue->getArrayType()->getNumElements())
-        );
-    } else if (parentWrappedValue->isPointer() && isVal) {
-        llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
-
-        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
-        if (pointeeValueType == nullptr) {
-            markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
-            return nullptr;
-        }
-        llvm::Type *pointeeType = typeForValueType(pointeeValueType);
-        if (pointeeType == nullptr) {
-            markError(parentExpression->getLine(), parentExpression->getColumn(), "No type for ptr");
-            return nullptr; 
-        }
-
-        return wrappedValueForSourceValue(pointeeLoad, pointeeType, expression);
-    } else if (parentWrappedValue->isPointer() && isVadr) {
-        llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
-        return WrappedValue::wrappedValue(
-            builder,
-            builder->CreatePtrToInt(pointeeLoad, typeIntPtr)
-        );
-    } else if (isAdr) {
-        return WrappedValue::wrappedValue(
-            builder,
-            builder->CreatePtrToInt(parentWrappedValue->getPointerValue(), typeIntPtr)
-        );
-    } else if (isSize) {
-        int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
-        if (sizeInBytes > 0) {
-            return WrappedValue::wrappedValue(
-                builder,
-                llvm::ConstantInt::get(typeUInt, sizeInBytes)
-            );
-        } else {
-            return nullptr;
-        }
-    }
-
-    markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
-    return nullptr;
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType, shared_ptr<Expression> expression) {
@@ -1609,10 +1636,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
         }
     } else if (expressionCall != nullptr) {
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
-        return WrappedValue::wrappedValue(
-            builder,
-            valueForCall(sourceValue, funType, expressionCall)
-        );
+        return wrappedValueForCall(sourceValue, funType, expressionCall);
     }
     return nullptr;
 }
