@@ -67,7 +67,7 @@ llvm::Value *WrappedValue::getPointerValue() {
     return pointerValue;
 }
 
-llvm::Value *WrappedValue::getConstantValue() {
+llvm::Constant *WrappedValue::getConstantValue() {
     return constantValue;
 }
 

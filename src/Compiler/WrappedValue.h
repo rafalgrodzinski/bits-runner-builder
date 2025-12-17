@@ -24,7 +24,7 @@ public:
 
     llvm::Value *getValue();
     llvm::Value *getPointerValue();
-    llvm::Value *getConstantValue();
+    llvm::Constant *getConstantValue();
 
     llvm::Type *getType();
     llvm::ArrayType *getArrayType();

@@ -624,11 +624,8 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     llvm::Type *type = typeForValueType(statement->getValueType());
     llvm::Constant *constantValue = llvm::Constant::getNullValue(type);
     if (statement->getExpression() != nullptr) {
-        llvm::Value *value = valueForExpression(statement->getExpression());
-        if (value == nullptr)
-            return;
-        constantValue = llvm::dyn_cast<llvm::Constant>(value);
-        if (constantValue == nullptr) {
+        shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(statement->getExpression());
+        if ((constantValue = wrappedValue->getConstantValue()) == nullptr) {
             markError(statement->getLine(), statement->getColumn(), "not a constant");
             return;
         }
