@@ -19,7 +19,8 @@ public:
     WrappedValue();
 
     static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value);
-
+    static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, int64_t value);
+    static shared_ptr<WrappedValue> wrappedSIntValue(llvm::Type *type, int64_t value);
 
     llvm::Value *getValue();
     llvm::Value *getPointerValue();

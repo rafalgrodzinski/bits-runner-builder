@@ -1024,13 +1024,11 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionBlock> expre
 }
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCall> expressionCall) {
-    llvm::Function *fun = scope->getFunction(expressionCall->getName());
-    if (fun != nullptr) {
+    if (llvm::Function *fun = scope->getFunction(expressionCall->getName())) {
         return wrappedValueForSourceValue(fun, fun->getFunctionType(), expressionCall)->getValue();
     }
 
-    llvm::InlineAsm *rawFun = scope->getInlineAsm(expressionCall->getName());
-    if (rawFun != nullptr) {
+    if (llvm::InlineAsm *rawFun = scope->getInlineAsm(expressionCall->getName())) {
         vector<llvm::Value *>argValues;
         for (shared_ptr<Expression> &argumentExpression : expressionCall->getArgumentExpressions()) {
             llvm::Value *argValue = valueForExpression(argumentExpression);
@@ -1373,10 +1371,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
 
     // Do the appropriate built-in operation
     if (parentWrappedValue->isArray() && isCount) {
-        return WrappedValue::wrappedValue(
-            builder,
-            llvm::ConstantInt::get(typeSInt, parentWrappedValue->getArrayType()->getNumElements())
-        );
+        return WrappedValue::wrappedUIntValue(typeUInt, parentWrappedValue->getArrayType()->getNumElements());
     } else if (parentWrappedValue->isPointer() && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
 
@@ -1405,14 +1400,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         );
     } else if (isSize) {
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
-        if (sizeInBytes > 0) {
-            return WrappedValue::wrappedValue(
-                builder,
-                llvm::ConstantInt::get(typeUInt, sizeInBytes)
-            );
-        } else {
+        if (sizeInBytes <= 0)
             return nullptr;
-        }
+        return WrappedValue::wrappedUIntValue(typeUInt, sizeInBytes);
     }
 
     markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
@@ -1588,10 +1578,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
     if (builder->GetInsertBlock() == nullptr)
         return nullptr;
 
-    shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(expression);
-    shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
-
-    if (expressionVariable != nullptr) {
+    if (shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(expression)) {
         switch (expressionVariable->getValueKind()) {
             case ExpressionValueKind::FUN:
             case ExpressionValueKind::SIMPLE:
@@ -1619,7 +1606,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 );
             }
         }
-    } else if (expressionCall != nullptr) {
+    } else if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression)) {
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
         vector<llvm::Value*> argValues;
         for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
@@ -1640,10 +1627,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForTypeBuiltIn(llvm::Type *t
         int sizeInBytes = sizeInBitsForType(type) / 8;
         if (sizeInBytes <= 0)
             return nullptr;
-        return WrappedValue::wrappedValue(
-            builder,
-            llvm::ConstantInt::get(typeUInt, sizeInBytes)
-        );
+        return WrappedValue::wrappedUIntValue(typeUInt, sizeInBytes);
     }
     
     markError(expression->getLine(), expression->getColumn(), "Invalid built-in operation");
@@ -1711,8 +1695,9 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType) {
 
             return llvm::FunctionType::get(functionReturnType, functionArgumentTypes, false);
         }
-        case ValueTypeKind::PTR:
+        case ValueTypeKind::PTR: {
             return typePtr;
+        }
         default:
             break;
     }
@@ -1750,6 +1735,10 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
 
     return 0;
 }
+
+//
+// Error Handling
+//
 
 void ModuleBuilder::markError(int line, int column, string message) {
     errors.push_back(Error::builderError(line, column, message));

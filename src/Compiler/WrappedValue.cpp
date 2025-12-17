@@ -39,6 +39,26 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>
     return wrappedValue;
 }
 
+shared_ptr<WrappedValue> WrappedValue::wrappedUIntValue(llvm::Type *type, int64_t value) {
+    shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
+
+    wrappedValue->value = llvm::ConstantInt::get(type, value, false);
+    wrappedValue->pointerValue = llvm::ConstantInt::get(type, value, false);
+    wrappedValue->type = type;
+
+    return wrappedValue;
+}
+
+shared_ptr<WrappedValue> WrappedValue::wrappedSIntValue(llvm::Type *type, int64_t value) {
+    shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
+
+    wrappedValue->value = llvm::ConstantInt::get(type, value, true);
+    wrappedValue->pointerValue = llvm::ConstantInt::get(type, value, true);
+    wrappedValue->type = type;
+
+    return wrappedValue;
+}
+
 llvm::Value *WrappedValue::getValue() {
     return value;
 }

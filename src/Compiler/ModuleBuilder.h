@@ -145,6 +145,7 @@ private:
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
     int sizeInBitsForType(llvm::Type *type);
 
+    // Error Handling
     void markError(int line, int column, string message);
     void markFunctionError(string name, string message);
     void markModuleError(string message);
