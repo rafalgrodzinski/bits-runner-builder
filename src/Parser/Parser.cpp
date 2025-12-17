@@ -59,32 +59,25 @@ shared_ptr<Statement> Parser::nextStatement() {
     shared_ptr<Statement> statement;
     int errorsCount = errors.size();
 
-    statement = matchStatementImport();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementImport()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementFunction();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementFunction()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementRawFunction();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementRawFunction()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementVariable();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementVariable()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementMetaExternFunction();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementMetaExternFunction()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementMetaExternVariable();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementMetaExternVariable()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementBlob();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementBlob()) || errors.size() > errorsCount)
         return statement;
 
     if (tryMatchingTokenKinds({TokenKind::END}, true, false))
@@ -99,24 +92,19 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
     shared_ptr<Statement> statement;
     int errorsCount = errors.size();
 
-    statement = matchStatementVariable();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementVariable()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementAssignment();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementAssignment()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementReturn();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementReturn()) || errors.size() > errorsCount)
         return statement;
     
-    statement = matchStatementRepeat();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementRepeat()) || errors.size() > errorsCount)
         return statement;
 
-    statement = matchStatementExpression();
-    if (statement != nullptr || errors.size() > errorsCount)
+    if ((statement = matchStatementExpression()) || errors.size() > errorsCount)
         return statement;
 
     markError({}, {}, {});
@@ -1063,16 +1051,13 @@ shared_ptr<Expression> Parser::nextExpression() {
     shared_ptr<Expression> expression;
     int errorsCount = errors.size();
 
-    expression = matchLogicalOrXor();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if (( expression = matchLogicalOrXor()) || errors.size() > errorsCount)
         return expression;
     
-    expression = matchExpressionIfElse();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if ((expression = matchExpressionIfElse()) || errors.size() > errorsCount)
         return expression;
     
-    expression = matchExpressionVariable();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if ((expression = matchExpressionVariable()) || errors.size() > errorsCount)
         return expression;
 
     return nullptr;
@@ -1255,28 +1240,22 @@ shared_ptr<Expression> Parser::matchPrimary() {
     shared_ptr<Expression> expression;
     int errorsCount = errors.size();
 
-    expression = matchExpressionGrouping();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if ((expression = matchExpressionGrouping()) || errors.size() > errorsCount)
         return expression;
 
-    expression = matchExpressionCompositeLiteral();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if ((expression = matchExpressionCompositeLiteral()) || errors.size() > errorsCount)
         return expression;
 
-    expression = matchExpressionLiteral();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if ((expression = matchExpressionLiteral()) || errors.size() > errorsCount)
         return expression;
 
-    expression = matchExpressionCall();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if ((expression = matchExpressionCall()) || errors.size() > errorsCount)
         return expression;
 
-    expression = matchExpressionVariable();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if ((expression = matchExpressionVariable()) || errors.size() > errorsCount)
         return expression;
 
-    expression = matchExpressionCast();
-    if (expression != nullptr || errors.size() > errorsCount)
+    if ((expression = matchExpressionCast()) || errors.size() > errorsCount)
         return expression;
 
     return nullptr;
