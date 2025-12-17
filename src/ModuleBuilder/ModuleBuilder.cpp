@@ -1592,6 +1592,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                     builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr)
                 );
             }
+            default: {
+                break;
+            }
         }
     } else if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression)) {
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
