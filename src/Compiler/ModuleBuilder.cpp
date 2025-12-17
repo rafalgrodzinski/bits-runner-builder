@@ -1026,7 +1026,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionBlock> expre
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCall> expressionCall) {
     llvm::Function *fun = scope->getFunction(expressionCall->getName());
     if (fun != nullptr) {
-        return wrappedValueForCall(fun, fun->getFunctionType(), expressionCall)->getValue();
+        return wrappedValueForSourceValue(fun, fun->getFunctionType(), expressionCall)->getValue();
     }
 
     llvm::InlineAsm *rawFun = scope->getInlineAsm(expressionCall->getName());
@@ -1419,22 +1419,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     return nullptr;
 }
 
-shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression) {
-    vector<llvm::Value*> argValues;
-    vector<shared_ptr<Expression>> argumentExpressions = expression->getArgumentExpressions();
-    for (int i=0; i<argumentExpressions.size(); i++) {
-        // pass along type for the specified argument
-        shared_ptr<Expression> argumentExpression = argumentExpressions.at(i);
-        llvm::Value *argValue = valueForExpression(argumentExpression);
-        argValues.push_back(argValue);
-    }
-    return WrappedValue::wrappedValue(
-        builder,
-        builder->CreateCall(funType, fun, llvm::ArrayRef(argValues))
-    );
-}
-
-  shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType) {
     // Figure out target type
     llvm::Type *targetType = typeForValueType(targetValueType);
     bool isTargetUInt = false;
@@ -1636,7 +1621,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
         }
     } else if (expressionCall != nullptr) {
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
-        return wrappedValueForCall(sourceValue, funType, expressionCall);
+        vector<llvm::Value*> argValues;
+        for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
+            argValues.push_back(valueForExpression(argumentExpression));
+        }
+        return WrappedValue::wrappedValue(
+            builder,
+            builder->CreateCall(funType, sourceValue, llvm::ArrayRef(argValues))
+        );
     }
     return nullptr;
 }
