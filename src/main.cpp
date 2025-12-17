@@ -14,8 +14,8 @@
 
 #include "Analyzer/TypesAnalyzer.h"
 
-#include "Compiler/ModuleBuilder.h"
-#include "Compiler/CodeGenerator.h"
+#include "ModuleBuilder/ModuleBuilder.h"
+#include "CodeGenerator/CodeGenerator.h"
 
 #include "Logger.h"
 
