@@ -174,8 +174,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementExpression> statementExpr
 void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
     // updated types for count expressions
     for (auto &argument : statementFunction->getArguments()) {
-        shared_ptr<Expression> countExpression = argument.second->getCountExpression();
-        if (countExpression != nullptr)
+        if (shared_ptr<Expression> countExpression = argument.second->getCountExpression())
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     }
 
@@ -209,8 +208,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunction> statementFuncti
 void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
     // updated types for count expressions
     for (auto &argument : statementFunctionDeclaration->getArguments()) {
-        shared_ptr<Expression> countExpression = argument.second->getCountExpression();
-        if (countExpression != nullptr)
+        if (shared_ptr<Expression> countExpression = argument.second->getCountExpression())
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     }
 
@@ -243,8 +241,7 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> stat
 void TypesAnalyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
     // updated types for count expressions
     for (auto &argument : statementMetaExternFunction->getArguments()) {
-        shared_ptr<Expression> countExpression = argument.second->getCountExpression();
-        if (countExpression != nullptr)
+        if (shared_ptr<Expression> countExpression = argument.second->getCountExpression())
             countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     }
 
@@ -299,15 +296,13 @@ void TypesAnalyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, 
     if (statementRepeat->getPostStatement() != nullptr)
         checkStatement(statementRepeat->getPostStatement(), returnType);
 
-    shared_ptr<Expression> preConditionExpression = statementRepeat->getPreConditionExpression();
-    if (preConditionExpression != nullptr) {
+    if (shared_ptr<Expression> preConditionExpression = statementRepeat->getPreConditionExpression()) {
         preConditionExpression->valueType = typeForExpression(preConditionExpression, nullptr, nullptr);
         if (preConditionExpression->getValueType() != nullptr && !preConditionExpression->getValueType()->isEqual(ValueType::BOOL))
             markErrorInvalidType(preConditionExpression->getLine(), preConditionExpression->getColumn(), preConditionExpression->getValueType(), ValueType::BOOL);
     }
 
-    shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression();
-    if (postConditionExpression != nullptr) {
+    if (shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression()) {
         postConditionExpression->valueType = typeForExpression(postConditionExpression, nullptr, nullptr);
         if (postConditionExpression->getValueType() != nullptr && !postConditionExpression->getValueType()->isEqual(ValueType::BOOL))
             markErrorInvalidType(postConditionExpression->getLine(), postConditionExpression->getColumn(), postConditionExpression->getValueType(), ValueType::BOOL);
@@ -822,8 +817,7 @@ shared_ptr<ValueType> TypesAnalyzer::typeForExpression(shared_ptr<ExpressionValu
         expressionValue->valueKind = ExpressionValueKind::DATA;
     // finally check if it's a function
     } else if (type == nullptr) {
-        type = scope->getFunctionType(expressionValue->getIdentifier());
-        if (type != nullptr)
+        if (type = scope->getFunctionType(expressionValue->getIdentifier()))
             expressionValue->valueKind = ExpressionValueKind::FUN;
     }
 
