@@ -6,7 +6,7 @@
 class ValueType;
 
 class StatementVariableDeclaration: public Statement {
-friend class TypesAnalyzer;
+friend class Analyzer;
 
 private:
     bool shouldExport;

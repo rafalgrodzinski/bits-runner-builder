@@ -29,7 +29,7 @@ enum class ExpressionBinaryOperation {
 };
 
 class ExpressionBinary: public Expression {
-friend class TypesAnalyzer;
+friend class Analyzer;
 
 private:
     ExpressionBinaryOperation operation;

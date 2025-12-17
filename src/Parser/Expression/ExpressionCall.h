@@ -4,7 +4,7 @@
 #include "Expression.h"
 
 class ExpressionCall: public Expression {
-friend class TypesAnalyzer;
+friend class Analyzer;
 
 private:
     string name;

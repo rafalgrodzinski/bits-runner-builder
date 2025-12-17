@@ -12,7 +12,7 @@
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
 
-#include "Analyzer/TypesAnalyzer.h"
+#include "Analyzer/Analyzer.h"
 
 #include "ModuleBuilder/ModuleBuilder.h"
 #include "CodeGenerator/CodeGenerator.h"
@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
             cout << format("🔮 Analyzing module \"{}\"", moduleName) << endl;
 
         timeStamp = clock();
-        TypesAnalyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
+        Analyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
         typesAnalyzer.checkModule();
         timeStamp = clock() - timeStamp;
         totalAnalysisTime += timeStamp;

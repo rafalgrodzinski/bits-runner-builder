@@ -4,7 +4,7 @@
 #include "Expression.h"
 
 class ExpressionIfElse: public Expression {
-friend class TypesAnalyzer;
+friend class Analyzer;
 
 private:
     shared_ptr<Expression> conditionExpression;
