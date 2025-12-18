@@ -86,14 +86,6 @@ shared_ptr<Location> Token::getLocation() {
     return location;
 }
 
-int Token::getLine() {
-    return location->getLine();
-}
-
-int Token::getColumn() {
-    return location->getColumn();
-}
-
 bool Token::isOfKind(vector<TokenKind> kinds) {
     for (TokenKind &kind : kinds) {
         if (kind == this->kind)

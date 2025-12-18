@@ -1721,14 +1721,6 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
 // Error Handling
 //
 
-/*void ModuleBuilder::markError(int line, int column, string message) {
-    errors.push_back(Error::builderError(line, column, message));
-}*/
-
-
-
-
-
 void ModuleBuilder::markFunctionError(string functionName, string message) {
     errors.push_back(Error::builderFunctionError(functionName, message));
 }

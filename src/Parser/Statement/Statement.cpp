@@ -12,11 +12,3 @@ StatementKind Statement::getKind() {
 shared_ptr<Location> Statement::getLocation() {
     return location;
 }
-
-int Statement::getLine() {
-    return location->getLine();
-}
-
-int Statement::getColumn() {
-    return location->getColumn();
-}

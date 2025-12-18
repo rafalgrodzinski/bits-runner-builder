@@ -38,8 +38,6 @@ public:
     virtual ~Statement() { }
     StatementKind getKind();
     shared_ptr<Location> getLocation();
-    int getLine();
-    int getColumn();
 };
 
 #endif

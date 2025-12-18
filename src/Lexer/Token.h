@@ -107,8 +107,6 @@ public:
     TokenKind getKind();
     string getLexme();
     shared_ptr<Location> getLocation();
-    int getLine();
-    int getColumn();
     bool isOfKind(vector<TokenKind> kinds);
 };
 

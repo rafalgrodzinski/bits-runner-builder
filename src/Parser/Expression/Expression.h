@@ -44,8 +44,6 @@ public:
     virtual ~Expression() { }
     ExpressionKind getKind();
     shared_ptr<Location> getLocation();
-    int getLine();
-    int getColumn();
     shared_ptr<ValueType> getValueType();
 };
 

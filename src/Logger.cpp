@@ -1161,13 +1161,6 @@ void Logger::print(shared_ptr<Error> error) {
                 message += format(". {}", *errorMessage);
             break;
         }
-        case ErrorKind::BUILDER_ERROR: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
-            string errorMessage = *(error->getMessage());
-            message = format("🔥 At line {}, column {}: {}", line, column, errorMessage);
-            break;
-        }
         case ErrorKind::BUILDER_FUNCTION_ERROR: {
             string functionName = *(error->getFunctionName());
             string errorMessage = *(error->getMessage());

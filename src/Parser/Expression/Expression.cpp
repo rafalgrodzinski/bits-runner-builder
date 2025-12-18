@@ -16,14 +16,6 @@ shared_ptr<Location> Expression::getLocation() {
     return location;
 }
 
-int Expression::getLine() {
-    return location->getLine();
-}
-
-int Expression::getColumn() {
-    return location->getColumn();
-}
-
 shared_ptr<ValueType> Expression::getValueType() {
     return valueType;
 }
