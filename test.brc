@@ -10,7 +10,7 @@
     ;
 ;*/
 
-@export printNum fun: number f32
+@export printNum fun: number u32
     biggest u64 <- 10
     rep biggest <= number: biggest <- biggest * 10
     biggest <- biggest / 10

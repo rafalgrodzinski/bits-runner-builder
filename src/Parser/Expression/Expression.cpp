@@ -3,7 +3,7 @@
 #include "Lexer/Location.h"
 #include "Parser/ValueType.h"
 
-shared_ptr<Expression> Expression::NONE = make_shared<Expression>(ExpressionKind::NONE, ValueType::NONE, make_shared<Location>("", 0, 0));
+shared_ptr<Expression> Expression::NONE = make_shared<Expression>(ExpressionKind::NONE, ValueType::NONE, nullptr);
 
 Expression::Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, shared_ptr<Location> location):
 kind(kind), valueType(valueType), location(location) { }

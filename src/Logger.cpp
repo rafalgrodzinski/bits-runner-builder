@@ -1185,10 +1185,14 @@ void Logger::print(shared_ptr<Error> error) {
 }
 
 string Logger::toString(shared_ptr<Location> location) {
-    string fileName = location->getFileName();
-    int line = location->getLine() + 1;
-    int column = location->getColumn() + 1;
-    return format("file {}, line {}, column {}", fileName, line, column);
+    if (location != nullptr) {
+        string fileName = location->getFileName();
+        int line = location->getLine() + 1;
+        int column = location->getColumn() + 1;
+        return format("file {}, line {}, column {}", fileName, line, column);
+    } else {
+        return "{UNKNOWN LOCATION}";
+    }
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {

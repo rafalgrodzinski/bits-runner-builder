@@ -162,7 +162,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
             break;
         default:
-            markError(statement->getLine(), statement->getColumn(), "Unexpected statement");
+            markErrorUnexpected(statement->getLocation(), "statement");
     }
 }
 
@@ -210,14 +210,14 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
     // Check if declared
     llvm::Function *fun = scope->getFunction(statementFunction->getName());
     if (fun == nullptr) {
-        markErrorNotDeclared(statementFunction->getLine(), statementFunction->getColumn(), format("function \"{}\"", statementFunction->getName()));
+        markErrorNotDeclared(statementFunction->getLocation(), format("function \"{}\"", statementFunction->getName()));
         return;
     }
 
     // Check if function not yet defined
     llvm::BasicBlock &entryBlock = fun->getEntryBlock();
     if (entryBlock.getParent() != nullptr) {
-        markErrorAlreadyDefined(statementFunction->getLine(), statementFunction->getColumn(), format("function \"{}\"", statementFunction->getName()));
+        markErrorAlreadyDefined(statementFunction->getLocation(), format("function \"{}\"", statementFunction->getName()));
         return;
     }
 
@@ -296,7 +296,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> state
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
     auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
     if (it == importableHeaderStatementsMap.end()) {
-        markErrorNotDefined(statementMetaImport->getLine(), statementMetaImport->getColumn(), format("module \"{}\"", statementMetaImport->getName()));
+        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
         return;
     }
 
@@ -341,7 +341,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 break;
             }
             default:
-                markError(importedStatement->getLine(), importedStatement->getColumn(), "Unexpected imported statement");
+                markErrorUnexpected(importedStatement->getLocation(), "imported statement");
         }
     }
 }
@@ -840,7 +840,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::VALUE:
             return valueForExpression(dynamic_pointer_cast<ExpressionValue>(expression));
         default:
-            markError(expression->getLine(), expression->getColumn(), "Unexpected expression");
+            markErrorUnexpected(expression->getLocation(), "expression");
             return nullptr;
     }
 }
@@ -1317,7 +1317,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionValue> expre
     }
 
     if (value == nullptr) {
-        markErrorNotDefined(expressionValue->getLine(), expressionValue->getColumn(), format("variable \"{}\"", expressionValue->getIdentifier()));
+        markErrorNotDefined(expressionValue->getLocation(), format("variable \"{}\"", expressionValue->getIdentifier()));
         return nullptr;
     }
 
@@ -1666,7 +1666,7 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::BLOB: {
             llvm::StructType *structType = scope->getStructType(*(valueType->getBlobName()));
             if (structType == nullptr)
-                markErrorNotDefined(0, 0, *(valueType->getBlobName()));
+                markErrorNotDefined(nullptr, format("blob \"{}\"", *(valueType->getBlobName())));
             return structType;
         }
         case ValueTypeKind::FUN: {
@@ -1734,14 +1734,6 @@ void ModuleBuilder::markError(int line, int column, string message) {
     errors.push_back(Error::builderError(line, column, message));
 }
 
-void ModuleBuilder::markFunctionError(string functionName, string message) {
-    errors.push_back(Error::builderFunctionError(functionName, message));
-}
-
-void ModuleBuilder::markModuleError(string message) {
-    errors.push_back(Error::builderModuleError(moduleName, message));
-}
-
 void ModuleBuilder::markErrorInvalidOperationUnary(int line, int column, ExpressionUnaryOperation operation, shared_ptr<ValueType> type) {
     string message = format(
         "Invalid unary operation {} for type {}",
@@ -1761,21 +1753,6 @@ void ModuleBuilder::markErrorInvalidOperationBinary(int line, int column, Expres
     //errors.push_back(Error::error(line, column, message));
 }
 
-void ModuleBuilder::markErrorAlreadyDefined(int line, int column, string identifier) {
-    string message = format("{} has already been defined in scope", identifier);
-    //errors.push_back(Error::error(line, column, message));
-}
-
-void ModuleBuilder::markErrorNotDeclared(int line, int column, string identifier) {
-    string message = format("{} is not declared in scope", identifier);
-    //errors.push_back(Error::error(line, column, message));
-}
-
-void ModuleBuilder::markErrorNotDefined(int line, int column, string identifier) {
-    string message = format("{} is not defined in scope", identifier);
-    //errors.push_back(Error::error(line, column, message));
-}
-
 void ModuleBuilder::markInvalidConstraints(int line, int column, string functionName, string constraints) {
     string message = format("Constraints \"{}\" for function \"{}\" is invalid", constraints, functionName);
     //errors.push_back(Error::error(line, column, message));
@@ -1789,4 +1766,39 @@ void ModuleBuilder::markErrorInvalidLiteral(int line, int column, shared_ptr<Val
 void ModuleBuilder::markErrorInvalidConstant(int line, int column) {
     string message = format("Not a valid constant expression");
     //errors.push_back(Error::error(line, column, message));
+}
+
+
+
+void ModuleBuilder::markFunctionError(string functionName, string message) {
+    errors.push_back(Error::builderFunctionError(functionName, message));
+}
+
+void ModuleBuilder::markModuleError(string message) {
+    errors.push_back(Error::builderModuleError(moduleName, message));
+}
+
+void ModuleBuilder::markErrorAlreadyDefined(shared_ptr<Location> location, string name) {
+    string message = format("{} has already been defined in scope", name);
+    errors.push_back(Error::error(location, message));
+}
+
+void ModuleBuilder::markErrorInvalidImport(shared_ptr<Location> location, string moduleName) {
+    string message = format("Invalid import, module \"{}\" doesn't exist", moduleName);
+    errors.push_back(Error::error(location, message));
+}
+
+void ModuleBuilder::markErrorUnexpected(shared_ptr<Location> location, string name) {
+    string message = format("Unexpected {}", name);
+    errors.push_back(Error::error(location, message));
+}
+
+void ModuleBuilder::markErrorNotDeclared(shared_ptr<Location> location, string name) {
+    string message = format("{} is not declared in scope", name);
+    errors.push_back(Error::error(location, message));
+}
+
+void ModuleBuilder::markErrorNotDefined(shared_ptr<Location> location, string name) {
+    string message = format("{} is not defined in scope", name);
+    errors.push_back(Error::error(location, message));
 }

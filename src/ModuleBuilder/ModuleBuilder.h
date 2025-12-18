@@ -18,6 +18,7 @@
 #include "Scope.h"
 
 class Error;
+class Location;
 class ValueType;
 class WrappedValue;
 
@@ -151,12 +152,15 @@ private:
     void markModuleError(string message);
     void markErrorInvalidOperationBinary(int line, int column, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(int line, int column, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
-    void markErrorAlreadyDefined(int line, int column, string identifier);
-    void markErrorNotDeclared(int line, int column, string identifier);
-    void markErrorNotDefined(int line, int column, string identifier);
     void markInvalidConstraints(int line, int column, string functionName, string constraints);
     void markErrorInvalidLiteral(int line, int column, shared_ptr<ValueType> type);
     void markErrorInvalidConstant(int line, int column);
+
+    void markErrorAlreadyDefined(shared_ptr<Location> location, string name);
+    void markErrorInvalidImport(shared_ptr<Location> location, string moduleName);
+    void markErrorUnexpected(shared_ptr<Location> location, string name);
+    void markErrorNotDeclared(shared_ptr<Location> location, string name);
+    void markErrorNotDefined(shared_ptr<Location> location, string name);
 
 public:
     ModuleBuilder(
