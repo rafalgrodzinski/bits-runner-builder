@@ -29,13 +29,6 @@ shared_ptr<Error> Error::parserError(shared_ptr<Token> actualToken, optional<Tok
     return error;
 }
 
-shared_ptr<Error> Error::builderError(int line, int column, string message) {
-    shared_ptr<Error> error = make_shared<Error>();
-    error->kind = ErrorKind::BUILDER_ERROR;
-    error->message = message;
-    return error;
-}
-
 shared_ptr<Error> Error::builderFunctionError(string functionName, string message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::BUILDER_FUNCTION_ERROR;
@@ -60,14 +53,6 @@ ErrorKind Error::getKind() {
 
 shared_ptr<Location> Error::getLocation() {
     return location;
-}
-
-optional<int> Error::getLine() {
-    return location->getLine();
-}
-
-optional<int> Error::getColumn() {
-    return location->getColumn();
 }
 
 optional<string> Error::getLexme() {
