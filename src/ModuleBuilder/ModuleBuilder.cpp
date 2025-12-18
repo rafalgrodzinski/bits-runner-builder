@@ -663,8 +663,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 llvm::Type *sourceType;
 
                 if (valueExpression->getKind() == ExpressionKind::VALUE) {
-                    shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(valueExpression);
-                    sourceValue = scope->getAlloca(expressionVariable->getIdentifier());
+                    shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(valueExpression);
+                    sourceValue = scope->getAlloca(expressionValue->getIdentifier());
                     if (sourceValue == nullptr)
                         return;
                     sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
@@ -1034,8 +1034,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         // If the first expression is a cast, try doing a built-in on a type
         if (currentWrappedValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
-            shared_ptr<ExpressionValue> childExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
-            currentWrappedValue = wrappedValueForTypeBuiltIn(type, childExpressionVariable);
+            shared_ptr<ExpressionValue> childExpressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
+            currentWrappedValue = wrappedValueForTypeBuiltIn(type, childExpressionValue);
             parentExpression = chainExpression;
             continue;
         }
@@ -1059,36 +1059,36 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         }
 
         // Check parent expression
-        shared_ptr<ExpressionValue> parentExpressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(i-1));
-        if (parentExpressionVariable == nullptr) {
-            markErrorInvalidType(parentExpressionVariable->getLocation());
+        shared_ptr<ExpressionValue> parentExpressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(i-1));
+        if (parentExpressionValue == nullptr) {
+            markErrorInvalidType(parentExpressionValue->getLocation());
             return nullptr;
         }
 
         // Built-in expression?
-        if(shared_ptr<WrappedValue> builtInValue = wrappedValueForBuiltIn(currentWrappedValue, parentExpressionVariable, chainExpression)) {
+        if(shared_ptr<WrappedValue> builtInValue = wrappedValueForBuiltIn(currentWrappedValue, parentExpressionValue, chainExpression)) {
             currentWrappedValue = builtInValue;
             parentExpression = chainExpression;
             continue;
         }
 
         // Check chained expression type 
-        shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(chainExpression);
-        if (expressionVariable == nullptr) {
-            markErrorInvalidType(expressionVariable->getLocation());
+        shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression);
+        if (expressionValue == nullptr) {
+            markErrorInvalidType(expressionValue->getLocation());
             return nullptr;
         }
 
         // Variable expression?
         if (!currentWrappedValue->isStruct()) {
-            markErrorInvalidType(expressionVariable->getLocation());
+            markErrorInvalidType(expressionValue->getLocation());
             return nullptr;
         }
 
         string blobName = *parentExpression->getValueType()->getBlobName();
-        optional<int> memberIndex = scope->getStructMemberIndex(blobName, expressionVariable->getIdentifier());
+        optional<int> memberIndex = scope->getStructMemberIndex(blobName, expressionValue->getIdentifier());
         if (!memberIndex) {
-            markErrorInvalidMember(expressionVariable->getLocation(), blobName, expressionVariable->getIdentifier());
+            markErrorInvalidMember(expressionValue->getLocation(), blobName, expressionValue->getIdentifier());
             return nullptr;
         }
 
@@ -1100,7 +1100,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
         llvm::Value *elementPtr = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
         llvm::Type *elementType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
 
-        currentWrappedValue = wrappedValueForSourceValue(elementPtr, elementType, expressionVariable);
+        currentWrappedValue = wrappedValueForSourceValue(elementPtr, elementType, expressionValue);
         parentExpression = chainExpression;
     }
 
@@ -1330,15 +1330,15 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     bool isAdr = false;
     bool isSize = false;
 
-    shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(expression);
+    shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(expression);
     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
 
-    if (expressionVariable != nullptr) {
-        isCount = expressionVariable->getIdentifier().compare("count") == 0;
-        isVal = expressionVariable->getIdentifier().compare("val") == 0;
-        isVadr = expressionVariable->getIdentifier().compare("vAdr") == 0;
-        isAdr = expressionVariable->getIdentifier().compare("adr") == 0;
-        isSize = expressionVariable->getIdentifier().compare("size") == 0;
+    if (expressionValue != nullptr) {
+        isCount = expressionValue->getIdentifier().compare("count") == 0;
+        isVal = expressionValue->getIdentifier().compare("val") == 0;
+        isVadr = expressionValue->getIdentifier().compare("vAdr") == 0;
+        isAdr = expressionValue->getIdentifier().compare("adr") == 0;
+        isSize = expressionValue->getIdentifier().compare("size") == 0;
     } else if (expressionCall != nullptr) {
         isVal = expressionCall->getName().compare("val") == 0;
     }
@@ -1383,7 +1383,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return WrappedValue::wrappedUIntValue(typeUInt, sizeInBytes);
     }
 
-    markErrorInvalidBuiltIn(expression->getLocation(), expressionVariable->getIdentifier());
+    markErrorInvalidBuiltIn(expression->getLocation(), expressionValue->getIdentifier());
     return nullptr;
 }
 
@@ -1556,19 +1556,19 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
     if (builder->GetInsertBlock() == nullptr)
         return nullptr;
 
-    if (shared_ptr<ExpressionValue> expressionVariable = dynamic_pointer_cast<ExpressionValue>(expression)) {
-        switch (expressionVariable->getValueKind()) {
+    if (shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(expression)) {
+        switch (expressionValue->getValueKind()) {
             case ExpressionValueKind::FUN:
             case ExpressionValueKind::SIMPLE:
             case ExpressionValueKind::BUILT_IN_VAL_SIMPLE: {
                 return WrappedValue::wrappedValue(
                     builder,
-                    builder->CreateLoad(sourceType, sourceValue, expressionVariable->getIdentifier())
+                    builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier())
                 );
             }
             case ExpressionValueKind::DATA: 
             case ExpressionValueKind::BUILT_IN_VAL_DATA: {
-                llvm::Value *indexValue = valueForExpression(expressionVariable->getIndexExpression());
+                llvm::Value *indexValue = valueForExpression(expressionValue->getIndexExpression());
                 if (indexValue == nullptr)
                     return nullptr;
                 llvm::Value *index[] = {
@@ -1577,7 +1577,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 };
                 llvm::Type *expType = llvm::ArrayType::get(typeForValueType(expression->getValueType()), 0); // TODO: this is hack and should be fixed
                 llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(expType);
-                llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expressionVariable->getIdentifier()));
+                llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expressionValue->getIdentifier()));
                 return WrappedValue::wrappedValue(
                     builder,
                     builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr)
