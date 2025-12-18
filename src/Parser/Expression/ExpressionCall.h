@@ -11,7 +11,7 @@ private:
     vector<shared_ptr<Expression>> argumentExpressions;
 
 public:
-    ExpressionCall(string name, vector<shared_ptr<Expression>> argumentExpressions, int line, int column);
+    ExpressionCall(string name, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<Location> location);
     string getName();
     vector<shared_ptr<Expression>> getArgumentExpressions();
 };

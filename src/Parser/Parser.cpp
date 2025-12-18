@@ -854,11 +854,11 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                 // data
                 if (i < resultsGroup.getResults().size() - 1 && resultsGroup.getResults().at(i+1).getTag() == TAG_INDEX_EXPRESSION) {
                     shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(++i).getExpression();
-                    shared_ptr<ExpressionValue> expression = ExpressionValue::data(identifier, indexExpression, location->getLine(), location->getColumn());
+                    shared_ptr<ExpressionValue> expression = ExpressionValue::data(identifier, indexExpression, location);
                     chainExpressions.push_back(expression);
                 // simple
                 } else {
-                    shared_ptr<ExpressionValue> expression = ExpressionValue::simple(identifier, location->getLine(), location->getColumn());
+                    shared_ptr<ExpressionValue> expression = ExpressionValue::simple(identifier, location);
                     chainExpressions.push_back(expression);
                 }
                 break;
@@ -870,7 +870,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
     }
 
     return make_shared<StatementAssignment>(
-        make_shared<ExpressionChained>(chainExpressions, chainExpressions.front()->getLine(), chainExpressions.front()->getColumn()),
+        make_shared<ExpressionChained>(chainExpressions, chainExpressions.front()->getLocation()),
         valueExpression,
         location
     );
@@ -1195,8 +1195,7 @@ shared_ptr<Expression> Parser::matchUnary() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChained> parentExpression) {
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     vector<shared_ptr<Expression>> chainExpressions;
 
@@ -1212,7 +1211,7 @@ shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChain
         case 1:
             return chainExpressions.at(0);
         default:
-            return make_shared<ExpressionChained>(chainExpressions, line, column);
+            return make_shared<ExpressionChained>(chainExpressions, location);
     }
 }
 
@@ -1242,8 +1241,7 @@ shared_ptr<Expression> Parser::matchPrimary() {
 }
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     if (tryMatchingTokenKinds({TokenKind::LEFT_ROUND_BRACKET}, true, true)) {
         shared_ptr<Expression> expression = matchLogicalOrXor();
@@ -1251,7 +1249,7 @@ shared_ptr<Expression> Parser::matchExpressionGrouping() {
         if (expression == nullptr) {
             return nullptr;
         } else if (tryMatchingTokenKinds({TokenKind::RIGHT_ROUND_BRACKET}, true, true)) {
-            return make_shared<ExpressionGrouping>(expression, line, column);
+            return make_shared<ExpressionGrouping>(expression, location);
         } else {
             markError(TokenKind::RIGHT_ROUND_BRACKET, {}, {});
         }
@@ -1266,8 +1264,7 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
         TAG_STRING
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1322,7 +1319,7 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
     if (stringToken != nullptr)
         return ExpressionCompositeLiteral::expressionCompositeLiteralForTokenString(stringToken);
     else
-        return ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(expressions, line, column);
+        return ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(expressions, location);
 }
 
 shared_ptr<Expression> Parser::matchExpressionLiteral() {
@@ -1340,8 +1337,7 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
         TAG_ARGUMENT_EXPRESSION
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1394,7 +1390,7 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
         }
     }
 
-    return make_shared<ExpressionCall>(name, argumentExpressions, line, column);
+    return make_shared<ExpressionCall>(name, argumentExpressions, location);
 }
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {
@@ -1403,8 +1399,7 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
         TAG_INDEX_EXPRESSION
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1447,14 +1442,13 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
     }
 
     if (indexExpression != nullptr)
-        return ExpressionValue::data(identifier, indexExpression, line, column);
+        return ExpressionValue::data(identifier, indexExpression, location);
     else
-        return ExpressionValue::simple(identifier, line, column);
+        return ExpressionValue::simple(identifier, location);
 }
 
 shared_ptr<Expression> Parser::matchExpressionCast() {
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup parseeResults = parseeResultsGroupForParsees(
         {
@@ -1467,7 +1461,7 @@ shared_ptr<Expression> Parser::matchExpressionCast() {
 
     shared_ptr<ValueType> valueType = parseeResults.getResults().at(0).getValueType();
 
-    return make_shared<ExpressionCast>(valueType, line, column);
+    return make_shared<ExpressionCast>(valueType, location);
 }
 
 shared_ptr<Expression> Parser::matchExpressionIfElse() {
@@ -1477,8 +1471,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         TAG_ELSE
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1582,7 +1575,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse() {
         }
     }
 
-    return make_shared<ExpressionIfElse>(condition, thenBlock, elseBlock, line, column);
+    return make_shared<ExpressionIfElse>(condition, thenBlock, elseBlock, location);
 }
 
 shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left) {
@@ -1618,8 +1611,7 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
 }
 
 shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTokenKinds) {
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     vector<shared_ptr<Statement>> statements;
 
@@ -1639,7 +1631,7 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
         }
     }
 
-    return make_shared<ExpressionBlock>(statements, line, column);
+    return make_shared<ExpressionBlock>(statements, location);
 }
 
 shared_ptr<ValueType> Parser::matchValueType() {

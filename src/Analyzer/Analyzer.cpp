@@ -603,7 +603,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionComposite
             return nullptr;
         elementTypes.push_back(elementType);
     }
-    shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForInt(elementTypes.size(), expressionCompositeLiteral->getLine(), expressionCompositeLiteral->getColumn());
+    shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForInt(elementTypes.size(), expressionCompositeLiteral->getLocation());
     countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     expressionCompositeLiteral->valueType = ValueType::composite(elementTypes, countExpression);
     return expressionCompositeLiteral->getValueType();
@@ -1027,8 +1027,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             targetType->getSubType(),
             ExpressionLiteral::expressionLiteralForInt(
                 expressionCompositeLiteral->getExpressions().size(),
-                sourceExpression->getLine(),
-                sourceExpression->getColumn()
+                sourceExpression->getLocation()
             )
         );
         sourceExpression->getValueType()->getCountExpression()->valueType = typeForExpression(sourceExpression->getValueType()->getCountExpression(), nullptr, returnType);
@@ -1065,11 +1064,10 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         vector<shared_ptr<Expression>>(
             {
                 sourceExpression,
-                make_shared<ExpressionCast>(targetType, sourceExpression->getLine(), sourceExpression->getColumn())
+                make_shared<ExpressionCast>(targetType, sourceExpression->getLocation())
             }
         ),
-        sourceExpression->getLine(),
-        sourceExpression->getColumn()
+        sourceExpression->getLocation()
     );
 
     targetExpression->valueType = targetType;

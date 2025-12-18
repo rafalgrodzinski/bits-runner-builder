@@ -6,15 +6,15 @@
 
 #include "Lexer/Location.h"
 
-ExpressionBlock::ExpressionBlock(vector<shared_ptr<Statement>> statements, int line, int column):
-Expression(ExpressionKind::BLOCK, nullptr, line, column) {
+ExpressionBlock::ExpressionBlock(vector<shared_ptr<Statement>> statements, shared_ptr<Location> location):
+Expression(ExpressionKind::BLOCK, nullptr, location) {
     if (!statements.empty() && statements.back()->getKind() == StatementKind::EXPRESSION) {
         resultStatementExpression = dynamic_pointer_cast<StatementExpression>(statements.back());
         statements.pop_back();
     } else {
-        resultStatementExpression = make_shared<StatementExpression>(Expression::NONE, make_shared<Location>("", line, column));
+        resultStatementExpression = make_shared<StatementExpression>(Expression::NONE, location);
     }
-    statementBlock = make_shared<StatementBlock>(statements, make_shared<Location>("", line, column));
+    statementBlock = make_shared<StatementBlock>(statements, location);
 }
 
 shared_ptr<StatementBlock> ExpressionBlock::getStatementBlock() {

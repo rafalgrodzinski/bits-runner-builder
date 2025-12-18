@@ -8,7 +8,7 @@ private:
     shared_ptr<Expression> subExpression;
 
 public:
-    ExpressionGrouping(shared_ptr<Expression> subExpression, int line, int column);
+    ExpressionGrouping(shared_ptr<Expression> subExpression, shared_ptr<Location> location);
     shared_ptr<Expression> getSubExpression();
 };
 
