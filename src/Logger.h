@@ -104,7 +104,8 @@ private:
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);
-    static void print(shared_ptr<StatementModule> statement);
+    static void printModuleStatements(string moduleName, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements);
+    static void printExportedStatements(string moduleName, vector<shared_ptr<Statement>> statments);
     static void print(shared_ptr<Error> error);
 
     static string toString(shared_ptr<ValueType> valueType);

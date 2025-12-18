@@ -7,7 +7,7 @@ class Expression;
 class ValueType;
 
 class StatementVariable: public Statement {
-friend class TypesAnalyzer;
+friend class Analyzer;
 
 private:
     bool shouldExport;

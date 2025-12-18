@@ -12,10 +12,10 @@
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementModule.h"
 
-#include "Analyzer/TypesAnalyzer.h"
+#include "Analyzer/Analyzer.h"
 
-#include "Compiler/ModuleBuilder.h"
-#include "Compiler/CodeGenerator.h"
+#include "ModuleBuilder/ModuleBuilder.h"
+#include "CodeGenerator/CodeGenerator.h"
 
 #include "Logger.h"
 
@@ -233,9 +233,13 @@ int main(int argc, char **argv) {
 
         // Append statements to existing module or create a new one
         if (statementsMap.contains(statementModule->getName())) {
+            // body
             for (shared_ptr<Statement> &statement : statementModule->getStatements())
                 statementsMap[statementModule->getName()].push_back(statement);
+
+            // header
             for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements()) {
+                // blob declratations need to be first in case of being used by functions
                 if (headerStatement->getKind() == StatementKind::BLOB_DECLARATION) {
                     headerStatementsMap[statementModule->getName()].insert(
                         headerStatementsMap[statementModule->getName()].begin(),
@@ -245,8 +249,19 @@ int main(int argc, char **argv) {
                     headerStatementsMap[statementModule->getName()].push_back(headerStatement);
                 }
             }
-            for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements())
-                exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
+
+            // exported statements
+            for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements()) {
+                // same here, blob declarations go first
+                if (exportedHeaderStatement->getKind() == StatementKind::BLOB_DECLARATION) {
+                    exportedHeaderStatementsMap[statementModule->getName()].insert(
+                        exportedHeaderStatementsMap[statementModule->getName()].begin(),
+                        exportedHeaderStatement
+                    );
+                } else {
+                    exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
+                }
+            }
         } else {
             statementsMap[statementModule->getName()] = statementModule->getStatements();
             headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
@@ -271,7 +286,7 @@ int main(int argc, char **argv) {
             cout << format("🔮 Analyzing module \"{}\"", moduleName) << endl;
 
         timeStamp = clock();
-        TypesAnalyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
+        Analyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
         typesAnalyzer.checkModule();
         timeStamp = clock() - timeStamp;
         totalAnalysisTime += timeStamp;
@@ -279,18 +294,20 @@ int main(int argc, char **argv) {
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
+        // Print module statements
         if (verbosity >= Verbosity::V3) {
-            // reconstruct concatenated module 
-            shared_ptr<StatementModule> statementModule = make_shared<StatementModule>(
-                moduleName,
-                statements,
-                headerStatementsMap[moduleName],
-                vector<shared_ptr<Statement>>(),
-                0,
-                0
-            );
-            Logger::print(statementModule);
+            Logger::printModuleStatements(moduleName, headerStatementsMap[moduleName], statements);
             cout << endl;
+        }
+    }
+
+    // Print exported statements
+    if (verbosity >= Verbosity::V3) {
+        for (auto &exportedStatementsEntry : exportedHeaderStatementsMap) {
+            if (!exportedStatementsEntry.second.empty()) {
+                Logger::printExportedStatements(exportedStatementsEntry.first, exportedStatementsEntry.second);
+                cout << endl;
+            }
         }
     }
 

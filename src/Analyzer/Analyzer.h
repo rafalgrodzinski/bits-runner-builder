@@ -47,7 +47,7 @@ enum class ExpressionBinaryOperation;
 
 using namespace std;
 
-class TypesAnalyzer {
+class Analyzer {
 private:
     vector<shared_ptr<Error>> errors;
     shared_ptr<AnalyzerScope> scope;
@@ -109,7 +109,7 @@ private:
     void markErrorInvalidImport(int line, int column, string moduleName);
 
 public:
-    TypesAnalyzer(
+    Analyzer(
         vector<shared_ptr<Statement>> statements,
         vector<shared_ptr<Statement>> headerStatements,
         map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap

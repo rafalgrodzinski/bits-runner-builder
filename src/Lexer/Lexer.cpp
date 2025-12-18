@@ -2,7 +2,6 @@
 
 #include "Error.h"
 #include "Logger.h"
-
 #include "Token.h"
 
 Lexer::Lexer(string source):
@@ -20,8 +19,7 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
     
     shared_ptr<Token> token;
     do {
-        token = nextToken();
-        if (token != nullptr) {
+        if (token = nextToken()) {
             // Don't add new line as the first token
             if (tokens.empty() && token->isOfKind({TokenKind::NEW_LINE}))
                 continue;
@@ -62,13 +60,11 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token) {
         do {
             // new line
-            token = match(TokenKind::NEW_LINE, "\n", false);
-            if (token != nullptr)
+            if (token = match(TokenKind::NEW_LINE, "\n", false))
                 return token;
     
             // eof
-            token = matchEnd();
-            if (token != nullptr)
+            if (token = matchEnd())
                 return token;
 
             // if either not found, go to then next character
@@ -122,95 +118,73 @@ shared_ptr<Token> Lexer::nextToken() {
     }
 
     // raw source
-    token = matchRawSourceLine();
-    if (token != nullptr)
+    if (token = matchRawSourceLine())
         return token;
 
     // structural
-    token = match(TokenKind::LEFT_ROUND_BRACKET, "(", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::LEFT_ROUND_BRACKET, "(", false))
         return token;
 
-    token = match(TokenKind::RIGHT_ROUND_BRACKET, ")", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::RIGHT_ROUND_BRACKET, ")", false))
         return token;
 
-    token = match(TokenKind::LEFT_SQUARE_BRACKET, "[", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::LEFT_SQUARE_BRACKET, "[", false))
         return token;
 
-    token = match(TokenKind::RIGHT_SQUARE_BRACKET, "]", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::RIGHT_SQUARE_BRACKET, "]", false))
         return token;
 
-    token = match(TokenKind::LEFT_CURLY_BRACKET, "{", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::LEFT_CURLY_BRACKET, "{", false))
         return token;
 
-    token = match(TokenKind::RIGHT_CURLY_BRACKET, "}", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::RIGHT_CURLY_BRACKET, "}", false))
         return token;
 
-    token = match(TokenKind::COMMA, ",", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::COMMA, ",", false))
         return token;
 
-    token = match(TokenKind::COLON, ":", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::COLON, ":", false))
         return token;
 
-    token = match(TokenKind::SEMICOLON, ";", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::SEMICOLON, ";", false))
         return token;
 
-    token = match(TokenKind::LEFT_ARROW, "<-", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::LEFT_ARROW, "<-", false))
          return token;
         
-    token = match(TokenKind::RIGHT_ARROW, "->", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::RIGHT_ARROW, "->", false))
         return token;
 
-    token = match(TokenKind::DOT, ".", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::DOT, ".", false))
         return token;
 
     // logical
-    token = match(TokenKind::OR, "or", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::OR, "or", true))
         return token;
 
-    token = match(TokenKind::XOR, "xor", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::XOR, "xor", true))
         return token;
 
-    token = match(TokenKind::AND, "and", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::AND, "and", true))
         return token;
 
-    token = match(TokenKind::NOT, "not", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::NOT, "not", true))
         return token;
 
     // bitwise
-    token = match(TokenKind::BIT_OR, "|", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::BIT_OR, "|", false))
         return token;
 
-    token = match(TokenKind::BIT_XOR, "^", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::BIT_XOR, "^", false))
         return token;
 
-    token = match(TokenKind::BIT_AND, "&", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::BIT_AND, "&", false))
         return token;
 
-    token = match(TokenKind::BIT_NOT, "~", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::BIT_NOT, "~", false))
         return token;
 
-    token = match(TokenKind::BIT_SHL, "<<", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::BIT_SHL, "<<", false))
         return token;
 
     // avoid matching <type>> as right shift
@@ -219,170 +193,132 @@ shared_ptr<Token> Lexer::nextToken() {
         (tokens.size() < 2 || !tokens.at(tokens.size() - 2)->isOfKind({TokenKind::LESS})) &&
         (tokens.size() < 1 || !tokens.back()->isOfKind({TokenKind::GREATER}))
     ) {
-        token = match(TokenKind::BIT_SHR, ">>", false);
-        if (token != nullptr)
+        if (token = match(TokenKind::BIT_SHR, ">>", false))
             return token;
     }
 
     // comparison
-    token = match(TokenKind::NOT_EQUAL, "!=", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::NOT_EQUAL, "!=", false))
         return token;
     
-    token = match(TokenKind::EQUAL, "=", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::EQUAL, "=", false))
         return token;
     
-    token = match(TokenKind::LESS_EQUAL, "<=", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::LESS_EQUAL, "<=", false))
         return token;
 
-    token = match(TokenKind::LESS, "<", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::LESS, "<", false))
         return token;
 
-    token = match(TokenKind::GREATER_EQUAL, ">=", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::GREATER_EQUAL, ">=", false))
         return token;
 
-    token = match(TokenKind::GREATER, ">", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::GREATER, ">", false))
         return token;
 
     // arithmetic
-    token = match(TokenKind::PLUS, "+", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::PLUS, "+", false))
         return token;
     
-    token = match(TokenKind::MINUS, "-", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::MINUS, "-", false))
         return token;
 
-    token = match(TokenKind::STAR, "*", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::STAR, "*", false))
         return token;
 
-    token = match(TokenKind::SLASH, "/", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::SLASH, "/", false))
         return token;
 
-    token = match(TokenKind::PERCENT, "%", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::PERCENT, "%", false))
         return token;
 
     // keywords
-    token = match(TokenKind::FUNCTION, "fun", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::FUNCTION, "fun", true))
         return token;
 
-    token = match(TokenKind::RAW_FUNCTION, "raw", true);
-    if (token != nullptr) {
+    if (token = match(TokenKind::RAW_FUNCTION, "raw", true)) {
         foundRawSourceStart = true;
         return token;
     }
 
-    token = match(TokenKind::DATA, "data", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::DATA, "data", true))
         return token;
 
-    token = match(TokenKind::BLOB, "blob", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::BLOB, "blob", true))
         return token;
 
-    token = match(TokenKind::PTR, "ptr", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::PTR, "ptr", true))
         return token;
 
-    token = match(TokenKind::RETURN, "ret", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::RETURN, "ret", true))
         return token;
 
-    token = match(TokenKind::REPEAT, "rep", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::REPEAT, "rep", true))
         return token;
 
-     token = match(TokenKind::IF, "if", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::IF, "if", true))
         return token;
 
-    token = match(TokenKind::ELSE, "else", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::ELSE, "else", true))
         return token;
     
     // literal
-    token = match(TokenKind::BOOL, "true", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::BOOL, "true", true))
         return token;
 
-    token = match(TokenKind::BOOL, "false", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::BOOL, "false", true))
         return token;
     
-    token = matchFloat();
-    if (token != nullptr)
+    if (token = matchFloat())
         return token;
 
-    token = matchIntegerDec();
-    if (token != nullptr)
+    if (token = matchIntegerDec())
         return token;
 
-    token = matchIntegerHex();
-    if (token != nullptr)
+    if (token = matchIntegerHex())
         return token;
 
-    token = matchIntegerBin();
-    if (token != nullptr)
+    if (token = matchIntegerBin())
         return token;
 
-    token = matchIntegerChar();
-    if (token != nullptr)
+    if (token = matchIntegerChar())
         return token;
 
-    token = matchString();
-    if (token != nullptr)
+    if (token = matchString())
         return token;
 
     // type
-    token = matchType();
-    if (token != nullptr)
+    if (token = matchType())
         return token;
 
     // identifier
-    token = matchIdentifier();
-    if (token != nullptr)
+    if (token = matchIdentifier())
         return token;
 
     // meta
-    token = match(TokenKind::M_MODULE, "@module", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::M_MODULE, "@module", true))
         return token;
 
-    token = match(TokenKind::M_IMPORT, "@import", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::M_IMPORT, "@import", true))
         return token;
 
-    token = match(TokenKind::M_EXPORT, "@export", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::M_EXPORT, "@export", true))
         return token;
 
-    token = match(TokenKind::M_EXTERN, "@extern", true);
-    if (token != nullptr)
+    if (token = match(TokenKind::M_EXTERN, "@extern", true))
         return token;
 
-    token = match(TokenKind::META, "@", false);
-    if (token != nullptr)
+    if (token = match(TokenKind::META, "@", false))
         return token;
 
     // new line
-    token = match(TokenKind::NEW_LINE, "\n", false);
-    if (token != nullptr) {
+    if (token = match(TokenKind::NEW_LINE, "\n", false)) {
         tryStartingRawSourceParsing();
         return token;
     }
     
     // eof
-    token = matchEnd();
-    if (token != nullptr)
+    if (token = matchEnd())
         return token;
 
     markError();
@@ -528,9 +464,24 @@ shared_ptr<Token> Lexer::matchString() {
         return nullptr;
 
     bool isClosing = false;
+    bool shouldEscape = false;
     do {
         nextIndex++;
-        isClosing = source.at(nextIndex) == '\"' && source.at(nextIndex - 1) != '\\';
+        
+        // not escaping characters
+        if (!shouldEscape) {
+            switch (source.at(nextIndex)) {
+                case '\\': // should the next character be escaped?
+                    shouldEscape = true;
+                    break;
+                case '\"': // are closing the string?
+                    isClosing = true;
+                    break;
+            }
+        // escape one character
+        } else {
+            shouldEscape = false;
+        }
     } while (nextIndex < source.length() && !isClosing);
 
     if (!isClosing)

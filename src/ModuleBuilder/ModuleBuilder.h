@@ -19,6 +19,7 @@
 
 class Error;
 class ValueType;
+class WrappedValue;
 
 class Statement;
 class StatementAssignment;
@@ -118,7 +119,7 @@ private:
     void buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
-    void buildAssignment(llvm::Value *targetValue, llvm::Type *targetType, shared_ptr<Expression> valueExpression);
+    void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);
 
     // Expressions
     llvm::Value *valueForExpression(shared_ptr<Expression> expression);
@@ -133,17 +134,18 @@ private:
     llvm::Value *valueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
     llvm::Value *valueForExpression(shared_ptr<ExpressionValue> expressionValue);
 
-    llvm::Value *valueForCall(llvm::Value *fun, llvm::FunctionType *funType, shared_ptr<ExpressionCall> expression);
-    
-    llvm::Value *valueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);
-    llvm::Value *valueForBuiltIn(llvm::Value *parentValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression);
-    llvm::Value *valueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
-    llvm::Value *valueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<Expression> expression);
+
+    shared_ptr<WrappedValue> wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression);
+    shared_ptr<WrappedValue> wrappedValueForCast(llvm::Value *sourceValue, shared_ptr<ValueType> targetValueType);
+    shared_ptr<WrappedValue> wrappedValueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);
+    shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
 
     // Support
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
     int sizeInBitsForType(llvm::Type *type);
 
+    // Error Handling
     void markError(int line, int column, string message);
     void markFunctionError(string name, string message);
     void markModuleError(string message);

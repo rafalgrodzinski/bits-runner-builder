@@ -27,7 +27,7 @@ enum class ExpressionKind {
 };
 
 class Expression {
-    friend class TypesAnalyzer;
+    friend class Analyzer;
 
 private:
     ExpressionKind kind;

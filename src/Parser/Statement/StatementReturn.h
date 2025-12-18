@@ -6,7 +6,7 @@
 class Expression;
 
 class StatementReturn: public Statement {
-friend class TypesAnalyzer;
+friend class Analyzer;
 
 private:
     shared_ptr<Expression> expression;
