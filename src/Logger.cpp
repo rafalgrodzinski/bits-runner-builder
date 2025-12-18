@@ -1140,18 +1140,23 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedParsee) {
                 message = format(
-                    "🔥 At line {}, column {}, Expected {} but found {} instead",
-                    token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee)), toString(token)
+                    "🔥 In {}: Expected parsee {} but found {} instead",
+                    toString(token->getLocation()),
+                    toString((*expectedParsee)), 
+                    toString(token)
                 );
             } else if (expectedTokenKind) {
                 message = format(
-                    "🔥 At line {}, column {}: Expected token {} but found {} instead",
-                    token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
+                    "🔥 In {}: Expected token {} but found {} instead",
+                    toString(token->getLocation()),
+                    toString(*expectedTokenKind),
+                    toString(token)
                 );
             } else {
                 message = format(
-                    "🔥 At line {}, column {}: Unexpected token {} found",
-                    token->getLine() + 1, token->getColumn() + 1, toString(token)
+                    "🔥 In {}: Unexpected token {} found",
+                    toString(token->getLocation()),
+                    toString(token)
                 );
             }
             if (errorMessage)
