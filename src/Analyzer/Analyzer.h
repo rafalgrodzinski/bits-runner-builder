@@ -8,6 +8,7 @@
 
 class AnalyzerScope;
 class Error;
+class Location;
 class ValueType;
 
 class Statement;
@@ -98,15 +99,15 @@ private:
     shared_ptr<Expression> checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType);
     bool canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
-    void markErrorInvalidType(int line, int column, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
-    void markErrorInvalidOperationUnary(int line, int column, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
-    void markErrorInvalidOperationBinary(int line, int column, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
-    void markErrorAlreadyDefined(int line, int column, string identifier);
-    void markErrorNotDefined(int line, int column, string identifier);
-    void markErrorInvalidArgumentsCount(int line, int column, int actulCount, int expectedCount);
-    void markErrorInvalidCast(int line, int column, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
-    void markErrorInvalidBuiltIn(int line, int column, string builtInName, shared_ptr<ValueType> type);
-    void markErrorInvalidImport(int line, int column, string moduleName);
+    void markErrorAlreadyDefined(shared_ptr<Location> location, string identifier);
+    void markErrorInvalidArgumentsCount(shared_ptr<Location> location, int actulCount, int expectedCount);
+    void markErrorInvalidBuiltIn(shared_ptr<Location> location, string builtInName, shared_ptr<ValueType> type);
+    void markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
+    void markErrorInvalidImport(shared_ptr<Location> location, string moduleName);
+    void markErrorInvalidOperationBinary(shared_ptr<Location> location, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
+    void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
+    void markErrorInvalidType(shared_ptr<Location> location, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
+    void markErrorNotDefined(shared_ptr<Location> location, string identifier);
 
 public:
     Analyzer(

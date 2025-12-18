@@ -1748,7 +1748,7 @@ void ModuleBuilder::markErrorInvalidOperationUnary(int line, int column, Express
         Logger::toString(operation),
         Logger::toString(type)
     );
-    errors.push_back(Error::error(line, column, message));
+    //errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorInvalidOperationBinary(int line, int column, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) {
@@ -1758,35 +1758,35 @@ void ModuleBuilder::markErrorInvalidOperationBinary(int line, int column, Expres
         Logger::toString(firstType),
         Logger::toString(secondType)
     );
-    errors.push_back(Error::error(line, column, message));
+    //errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorAlreadyDefined(int line, int column, string identifier) {
     string message = format("{} has already been defined in scope", identifier);
-    errors.push_back(Error::error(line, column, message));
+    //errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorNotDeclared(int line, int column, string identifier) {
     string message = format("{} is not declared in scope", identifier);
-    errors.push_back(Error::error(line, column, message));
+    //errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorNotDefined(int line, int column, string identifier) {
     string message = format("{} is not defined in scope", identifier);
-    errors.push_back(Error::error(line, column, message));
+    //errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markInvalidConstraints(int line, int column, string functionName, string constraints) {
     string message = format("Constraints \"{}\" for function \"{}\" is invalid", constraints, functionName);
-    errors.push_back(Error::error(line, column, message));
+    //errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorInvalidLiteral(int line, int column, shared_ptr<ValueType> type) {
     string message = format("Invalid literal for type {}", Logger::toString(type));
-    errors.push_back(Error::error(line, column, message));
+    //errors.push_back(Error::error(line, column, message));
 }
 
 void ModuleBuilder::markErrorInvalidConstant(int line, int column) {
     string message = format("Not a valid constant expression");
-    errors.push_back(Error::error(line, column, message));
+    //errors.push_back(Error::error(line, column, message));
 }

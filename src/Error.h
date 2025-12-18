@@ -48,7 +48,7 @@ private:
     optional<string> message;
 
 public:
-    static shared_ptr<Error> error(int line, int column, string message); 
+    static shared_ptr<Error> error(shared_ptr<Location> location, string message); 
 
     static shared_ptr<Error> lexerError(shared_ptr<Location> location, string lexme);
     static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);

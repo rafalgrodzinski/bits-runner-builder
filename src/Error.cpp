@@ -3,9 +3,10 @@
 #include "Parser/ValueType.h"
 #include "Lexer/Location.h"
 
-shared_ptr<Error> Error::error(int line, int column, string message) {
+shared_ptr<Error> Error::error(shared_ptr<Location> location, string message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::MESSAGE;
+    error->location = location;
     error->message = message;
     return error;
 }
