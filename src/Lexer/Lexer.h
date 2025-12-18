@@ -14,6 +14,7 @@ class Lexer {
 private:
     string source;
     int currentIndex;
+    string currentFileName;
     int currentLine;
     int currentColumn;
     vector<shared_ptr<Token>> tokens;

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 
+class Location;
+
 using namespace std;
 
 enum class TokenKind {        
@@ -80,8 +82,7 @@ class Token {
 private:
     TokenKind kind;
     string lexme;
-    int line;
-    int column;
+    shared_ptr<Location> location;
 
 public:
     static vector<TokenKind> tokensLogicalOrXor;
@@ -102,9 +103,10 @@ public:
 
     static vector<TokenKind> tokensLiteral;
 
-    Token(TokenKind kind, string lexme, int line, int column);
+    Token(TokenKind kind, string lexme, shared_ptr<Location> location);
     TokenKind getKind();
     string getLexme();
+    shared_ptr<Location> getLocation();
     int getLine();
     int getColumn();
     bool isOfKind(vector<TokenKind> kinds);

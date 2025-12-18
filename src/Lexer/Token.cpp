@@ -1,5 +1,7 @@
 #include "Token.h"
 
+#include "Location.h"
+
 vector<TokenKind> Token::tokensLogicalOrXor = {
     TokenKind::OR,
     TokenKind::XOR
@@ -69,8 +71,8 @@ vector<TokenKind> Token::tokensLiteral = {
     TokenKind::STRING
 };
 
-Token::Token(TokenKind kind, string lexme, int line, int column):
-kind(kind), lexme(lexme), line(line), column(column) { }
+Token::Token(TokenKind kind, string lexme, shared_ptr<Location> location):
+kind(kind), lexme(lexme), location(location) { }
 
 TokenKind Token::getKind() {
     return kind;
@@ -80,12 +82,16 @@ string Token::getLexme() {
     return lexme;
 }
 
+shared_ptr<Location> Token::getLocation() {
+    return location;
+}
+
 int Token::getLine() {
-    return line;
+    return location->getLine();
 }
 
 int Token::getColumn() {
-    return column;
+    return location->getColumn();
 }
 
 bool Token::isOfKind(vector<TokenKind> kinds) {
