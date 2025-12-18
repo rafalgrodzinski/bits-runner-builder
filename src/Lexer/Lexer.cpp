@@ -5,8 +5,8 @@
 #include "Location.h"
 #include "Token.h"
 
-Lexer::Lexer(string source):
-source(source) { }
+Lexer::Lexer(string fileName, string source):
+currentFileName(fileName), source(source) { }
 
 vector<shared_ptr<Token>> Lexer::getTokens() {
     currentIndex = 0;
@@ -676,5 +676,10 @@ void Lexer::markError() {
     } else {
         lexme = "EOF";
     }
-    errors.push_back(Error::lexerError(currentLine, startColumn, lexme));
+    errors.push_back(
+        Error::lexerError(
+            make_shared<Location>(currentFileName, currentLine, currentColumn),
+            lexme
+        )
+    );
 }

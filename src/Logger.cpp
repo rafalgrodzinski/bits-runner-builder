@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "Error.h"
+#include "Lexer/Location.h"
 #include "Lexer/Token.h"
 #include "Parser/Parsee/Parsee.h"
 #include "Parser/ValueType.h"
@@ -1127,10 +1128,8 @@ void Logger::print(shared_ptr<Error> error) {
             break;
         }
         case ErrorKind::LEXER_ERROR: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
             string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("🔥 At line {}, column {}: Unexpected token \"{}\"", line, column, lexme);
+            message = format("🔥 In {}: Unexpected token \"{}\"", toString(error->getLocation()), lexme);
             break;
         }
         case ErrorKind::PARSER_ERROR: {
@@ -1180,6 +1179,13 @@ void Logger::print(shared_ptr<Error> error) {
         }
     }
     cout << message << endl;
+}
+
+string Logger::toString(shared_ptr<Location> location) {
+    string fileName = location->getFileName();
+    int line = location->getLine() + 1;
+    int column = location->getColumn() + 1;
+    return format("file {}, line {}, column {}", fileName, line, column);
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {

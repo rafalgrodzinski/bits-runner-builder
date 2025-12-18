@@ -5,6 +5,7 @@
 
 #include "Parser/Parsee/Parsee.h"
 
+class Location;
 class Token;
 class ValueType;
 
@@ -26,8 +27,7 @@ enum class ErrorKind {
 class Error {
 private:
     ErrorKind kind;
-    optional<int> line;
-    optional<int> column;
+    shared_ptr<Location> location;
     optional<string> lexme;
 
     shared_ptr<Token> actualToken;
@@ -50,7 +50,7 @@ private:
 public:
     static shared_ptr<Error> error(int line, int column, string message); 
 
-    static shared_ptr<Error> lexerError(int line, int column, string lexme);
+    static shared_ptr<Error> lexerError(shared_ptr<Location> location, string lexme);
     static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
     static shared_ptr<Error> builderError(int line, int column, string message);
 
@@ -60,6 +60,7 @@ public:
     Error();
 
     ErrorKind getKind();
+    shared_ptr<Location> getLocation();
     optional<int> getLine();
     optional<int> getColumn();
     optional<string> getLexme();

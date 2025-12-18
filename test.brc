@@ -13,7 +13,7 @@
 @export printNum fun: number u64
     biggest u64 <- 10
     rep biggest <= number: biggest <- biggest * 10
-    biggest <- biggest / 10
+    biggest <!- biggest / 10
 
     rep biggest > 0, biggest <- biggest / 10
         digit u64 <- number / biggest

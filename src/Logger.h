@@ -7,6 +7,7 @@
 #include <vector>
 
 class Error;
+class Location;
 class Parsee;
 class Token;
 class ValueType;
@@ -108,6 +109,7 @@ public:
     static void printExportedStatements(string moduleName, vector<shared_ptr<Statement>> statments);
     static void print(shared_ptr<Error> error);
 
+    static string toString(shared_ptr<Location> location);
     static string toString(shared_ptr<ValueType> valueType);
     static string toString(ExpressionUnaryOperation operationUnary);
     static string toString(ExpressionBinaryOperation operationBinary);

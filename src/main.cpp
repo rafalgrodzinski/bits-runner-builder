@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
             cout << format("🔍 Scanning \"{}\"", inputFileNames[i]) << endl;
 
         timeStamp = clock();
-        Lexer lexer(sources[i]);
+        Lexer lexer(inputFileNames[i], sources[i]);
         vector<shared_ptr<Token>> tokens = lexer.getTokens();
         timeStamp = clock() - timeStamp;
         totalScanTime += timeStamp;
