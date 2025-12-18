@@ -78,9 +78,8 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
     scope = make_shared<Scope>();
 
     // build just the import statements
-    for (shared_ptr<Statement> statement : statements) {
-        if (statement->getKind() == StatementKind::META_IMPORT)
-            buildStatement(statement);
+    for (auto statement : statements | views::filter([](auto it) { return it->getKind() == StatementKind::META_IMPORT; })) {
+        buildStatement(statement);
     }
 
     // build header
@@ -88,9 +87,8 @@ shared_ptr<llvm::Module> ModuleBuilder::getModule() {
         buildStatement(headerStatement);
 
     // build statements other than import
-    for (shared_ptr<Statement> &statement : statements) {
-        if (statement->getKind() != StatementKind::META_IMPORT)
-            buildStatement(statement);
+    for (auto statement : statements | views::filter([](auto it) { return it->getKind() != StatementKind::META_IMPORT; })) {
+        buildStatement(statement);
     }
 
     // verify module

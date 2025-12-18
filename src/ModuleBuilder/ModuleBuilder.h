@@ -4,6 +4,7 @@
 #include <format>
 #include <map>
 #include <stack>
+#include <ranges>
 
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
