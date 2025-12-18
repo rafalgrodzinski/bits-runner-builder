@@ -12,18 +12,17 @@ StatementFunction::StatementFunction(
     shared_ptr<ValueType>>> arguments,
     shared_ptr<ValueType> returnValueType,
     shared_ptr<StatementBlock> statementBlock,
-    int line,
-    int column
+    shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION, line, column), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
+Statement(StatementKind::FUNCTION, location), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
     vector<shared_ptr<Statement>> statements = statementBlock->getStatements();
     if (!statements.empty() && statements.back()->getKind() == StatementKind::RETURN)
         return;
 
     // add an empty return statement if none is present
-    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(Expression::NONE, line, column);
+    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(Expression::NONE, location);
     statements.push_back(statementReturn);
-    this->statementBlock = make_shared<StatementBlock>(statements, statementBlock->getLine(), statementBlock->getColumn());
+    this->statementBlock = make_shared<StatementBlock>(statements, statementBlock->getLocation());
 }
 
 bool StatementFunction::getShouldExport() {

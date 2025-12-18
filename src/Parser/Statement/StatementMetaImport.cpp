@@ -1,7 +1,7 @@
 #include "StatementMetaImport.h"
 
-StatementMetaImport::StatementMetaImport(string name, int line, int column):
-Statement(StatementKind::META_IMPORT, line, column), name(name) { }
+StatementMetaImport::StatementMetaImport(string name, shared_ptr<Location> location):
+Statement(StatementKind::META_IMPORT, location), name(name) { }
 
 string StatementMetaImport::getName() {
     return name;

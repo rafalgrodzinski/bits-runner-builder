@@ -21,8 +21,7 @@ public:
         vector<pair<string, shared_ptr<ValueType>>> arguments,
         shared_ptr<ValueType> returnValueType,
         shared_ptr<StatementBlock> statementBlock,
-        int line,
-        int column
+        shared_ptr<Location> location
     );
     bool getShouldExport();
     string getName();

@@ -9,10 +9,9 @@ StatementRepeat::StatementRepeat(
     shared_ptr<Expression> preConditionExpression,
     shared_ptr<Expression> postConditionExpression,
     shared_ptr<StatementBlock> bodyBlockStatement,
-    int line,
-    int column
+    shared_ptr<Location> location
 ):
-Statement(StatementKind::REPEAT, line, column),
+Statement(StatementKind::REPEAT, location),
 initStatement(initStatement),
 postStatement(postStatement),
 preConditionExpression(preConditionExpression),

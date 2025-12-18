@@ -9,7 +9,7 @@ private:
     string name;
 
 public:
-    StatementBlobDeclaration(bool shouldExport, string name, int line, int column);
+    StatementBlobDeclaration(bool shouldExport, string name, shared_ptr<Location> location);
     bool getShouldExport();
     string getName();
 };

@@ -8,10 +8,9 @@ StatementRawFunction::StatementRawFunction(
     vector<pair<string, shared_ptr<ValueType>>> arguments,
     shared_ptr<ValueType> returnValueType,
     string rawSource,
-    int line,
-    int column
+    shared_ptr<Location> location
 ):
-Statement(StatementKind::RAW_FUNCTION, line, column), name(name), constraints(constraints), arguments(arguments), returnValueType(returnValueType), rawSource(rawSource) { }
+Statement(StatementKind::RAW_FUNCTION, location), name(name), constraints(constraints), arguments(arguments), returnValueType(returnValueType), rawSource(rawSource) { }
 
 string StatementRawFunction::getName() {
     return name;

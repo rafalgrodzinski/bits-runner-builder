@@ -1,7 +1,7 @@
 #include "StatementBlobDeclaration.h"
 
-StatementBlobDeclaration::StatementBlobDeclaration(bool shouldExport, string name, int line, int column):
-Statement(StatementKind::BLOB_DECLARATION, line, column), shouldExport(shouldExport), name(name) { }
+StatementBlobDeclaration::StatementBlobDeclaration(bool shouldExport, string name, shared_ptr<Location> location):
+Statement(StatementKind::BLOB_DECLARATION, location), shouldExport(shouldExport), name(name) { }
 
 bool StatementBlobDeclaration::getShouldExport() {
     return shouldExport;

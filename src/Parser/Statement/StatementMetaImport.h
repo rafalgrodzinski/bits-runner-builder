@@ -8,7 +8,7 @@ private:
     string name;
 
 public:
-    StatementMetaImport(string name, int line, int column);
+    StatementMetaImport(string name, shared_ptr<Location> location);
     string getName();
 };
 

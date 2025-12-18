@@ -1,16 +1,22 @@
 #include "Statement.h"
 
-Statement::Statement(StatementKind kind, int line, int column):
-kind(kind), line(line), column(column) { }
+#include "Lexer/Location.h"
+
+Statement::Statement(StatementKind kind, shared_ptr<Location> location):
+kind(kind), location(location) { }
 
 StatementKind Statement::getKind() {
     return kind;
 }
 
+shared_ptr<Location> Statement::getLocation() {
+    return location;
+}
+
 int Statement::getLine() {
-    return line;
+    return location->getLine();
 }
 
 int Statement::getColumn() {
-    return column;
+    return location->getColumn();
 }

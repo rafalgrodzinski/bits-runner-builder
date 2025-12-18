@@ -4,6 +4,7 @@
 #include "Logger.h"
 
 #include "Lexer/Token.h"
+#include "Lexer/Location.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Expression/ExpressionGrouping.h"
@@ -117,8 +118,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
         TAG_STATEMENT
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -168,8 +168,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statementFunction->getName(),
                             statementFunction->getArguments(),
                             statementFunction->getReturnValueType(),
-                            statement->getLine(),
-                            statement->getColumn()
+                            statement->getLocation()
                         );
                         // body
                         statements.push_back(statement);
@@ -190,8 +189,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                                 statementFunctionDeclaration->getName(),
                                 exportedArguments,
                                 exportedReturnValueType,
-                                statementFunctionDeclaration->getLine(),
-                                statementFunctionDeclaration->getColumn()
+                                statementFunctionDeclaration->getLocation()
                             );
 
                             // append updated statement
@@ -204,8 +202,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = make_shared<StatementBlobDeclaration>(
                             statementBlob->getShouldExport(),
                             statementBlob->getName(),
-                            statement->getLine(),
-                            statement->getColumn()
+                            statement->getLocation()
                         );                        
                         // local header
                         blobDeclarationStatements.push_back(statementBlobDeclaration);
@@ -221,8 +218,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                                 statementBlob->getShouldExport(),
                                 statementBlob->getName(),
                                 exportedMembers,
-                                statementBlob->getLine(),
-                                statementBlob->getColumn()
+                                statementBlob->getLocation()
                             );
 
                             // declaration doesn't contain any types, so it's fine like this
@@ -238,8 +234,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             statementVariable->getShouldExport(),
                             statementVariable->getIdentifier(),
                             statementVariable->getValueType(),
-                            statement->getLine(),
-                            statement->getColumn()
+                            location
                         );
                         // body
                         statements.push_back(statementVariable);
@@ -252,8 +247,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                                 statementVariableDeclaration->getShouldExport(),
                                 statementVariableDeclaration->getIdentifier(),
                                 typeForExportedStatementFromType(statementVariableDeclaration->getValueType(), moduleName),
-                                statementVariableDeclaration->getLine(),
-                                statementVariableDeclaration->getColumn()
+                                statementVariableDeclaration->getLocation()
                             );
                             exportedHeaderStatements.push_back(statementVariableDeclaration);
                         }
@@ -281,12 +275,11 @@ shared_ptr<Statement> Parser::matchStatementModule() {
     for (shared_ptr<Statement> &statement : functionDeclarationStatements)
         headerStatements.push_back(statement);
 
-    return make_shared<StatementModule>(moduleName, statements, headerStatements, exportedHeaderStatements, line, column);
+    return make_shared<StatementModule>(moduleName, statements, headerStatements, exportedHeaderStatements, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementImport() {
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -300,7 +293,7 @@ shared_ptr<Statement> Parser::matchStatementImport() {
 
     string name = resultsGroup.getResults().at(0).getToken()->getLexme();
 
-    return make_shared<StatementMetaImport>(name, line, column);
+    return make_shared<StatementMetaImport>(name, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
@@ -309,8 +302,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
         TAG_VALUE_TYPE
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -349,7 +341,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
         }
     }
 
-    return make_shared<StatementMetaExternVariable>(identifier, valueType, line, column);
+    return make_shared<StatementMetaExternVariable>(identifier, valueType, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
@@ -360,8 +352,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
         TAG_RETURN_TYPE
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -434,7 +425,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
         }
     }
 
-    return make_shared<StatementMetaExternFunction>(identifier, arguments, returnType, line, column);
+    return make_shared<StatementMetaExternFunction>(identifier, arguments, returnType, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementVariable() {
@@ -445,8 +436,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         TAG_EXPRESSION
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -494,7 +484,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         }
     }
 
-    return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression, line, column);
+    return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementFunction() {
@@ -506,8 +496,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         TAG_RETURN_TYPE
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -593,7 +582,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), line, column);
+    return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), location);
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
@@ -605,8 +594,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         TAG_RETURN_TYPE
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -707,7 +695,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource, line, column);
+    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlob() {
@@ -718,8 +706,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         TAG_MEMBER_TYPE
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -770,12 +757,11 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         }
     }
 
-    return make_shared<StatementBlob>(shouldExport, name, members, line, column);
+    return make_shared<StatementBlob>(shouldExport, name, members, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     vector<shared_ptr<Statement>> statements;
 
@@ -792,7 +778,7 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
             markError(TokenKind::NEW_LINE, {}, {});
     }
 
-    return make_shared<StatementBlock>(statements, line, column);
+    return make_shared<StatementBlock>(statements, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementAssignment() {
@@ -803,8 +789,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         TAG_VALUE_EXPRESSION
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -869,11 +854,11 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                 // data
                 if (i < resultsGroup.getResults().size() - 1 && resultsGroup.getResults().at(i+1).getTag() == TAG_INDEX_EXPRESSION) {
                     shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(++i).getExpression();
-                    shared_ptr<ExpressionValue> expression = ExpressionValue::data(identifier, indexExpression, line, column);
+                    shared_ptr<ExpressionValue> expression = ExpressionValue::data(identifier, indexExpression, location->getLine(), location->getColumn());
                     chainExpressions.push_back(expression);
                 // simple
                 } else {
-                    shared_ptr<ExpressionValue> expression = ExpressionValue::simple(identifier, line, column);
+                    shared_ptr<ExpressionValue> expression = ExpressionValue::simple(identifier, location->getLine(), location->getColumn());
                     chainExpressions.push_back(expression);
                 }
                 break;
@@ -887,14 +872,12 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
     return make_shared<StatementAssignment>(
         make_shared<ExpressionChained>(chainExpressions, chainExpressions.front()->getLine(), chainExpressions.front()->getColumn()),
         valueExpression,
-        line,
-        column
+        location
     );
 }
 
 shared_ptr<Statement> Parser::matchStatementReturn() {
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -908,7 +891,7 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
 
     shared_ptr<Expression> expression = !resultsGroup.getResults().empty() ? resultsGroup.getResults().at(0).getExpression() : nullptr;
 
-    return make_shared<StatementReturn>(expression, line, column);
+    return make_shared<StatementReturn>(expression, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementRepeat() {
@@ -920,8 +903,7 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
         TAG_STATEMENT_BLOCK
     };
 
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
@@ -1027,21 +1009,19 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
         preConditionExpression,
         postConditionExpression,
         dynamic_pointer_cast<StatementBlock>(bodyBlockStatement),
-        line,
-        column
+        location
     );
 }
 
 shared_ptr<Statement> Parser::matchStatementExpression() {
-    int line = tokens.at(currentIndex)->getLine();
-    int column = tokens.at(currentIndex)->getColumn();
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     shared_ptr<Expression> expression = nextExpression();
 
     if (expression == nullptr)
         return nullptr;
 
-    return make_shared<StatementExpression>(expression, line, column);
+    return make_shared<StatementExpression>(expression, location);
 }
 
 //

@@ -20,8 +20,7 @@ public:
         vector<pair<string, shared_ptr<ValueType>>> arguments,
         shared_ptr<ValueType> returnValueType,
         string rawSource,
-        int line,
-        int column
+        shared_ptr<Location> location
     );
     string getName();
     string getConstraints();
