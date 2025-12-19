@@ -899,8 +899,11 @@ string Logger::toString(Parsee parsee) {
         case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
         case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
             return "Expression Block";
-        case ParseeKind::IF_ELSE:
+        case ParseeKind::IF_ELSE_SINGLE_LINE:
+        case ParseeKind::IF_ELSE_MULTI_LINE:
             return "Expression If-Else";
+        case ParseeKind::DEBUG:
+            return "DEBUG";
     }
 }
 

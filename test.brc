@@ -23,9 +23,19 @@
 ;
 
 @export main fun -> u64
-    num u32 
-    pNum ptr<u32> <- {num.adr}
-    printNum(pNum.val)
+    num u32 <- 9
+
+        //if num > 10: printNum(4)
+        //else if num > 8: printNum(5)
+
+    if num > 5
+        printNum(2)
+
+        if num > 10: printNum(4)
+        else if num > 8: printNum(5)
+    else
+        printNum(1)
+    ;
 
     ret 0
 ;
