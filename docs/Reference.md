@@ -240,7 +240,7 @@ result u32 <- rawAdd(5, 4)
 ```
 
 ## Conditional Expressions
-If-Else statement can be written on a single or multiple lines. It is an expression, which allows it to return values. If just an `if` is used, a value cannot be returned (since what will be returned if a condition is not met?). Single line version uses colons `:`, which are ommited in the multi-line version.
+If-Else statement can be written on a single or multiple lines. It is an expression, which allows it to return values. If just an `if` is used, a value cannot be returned (since what will be returned if a condition is not met?). Single line version uses colons `:`, which are ommited in the multi-line version. Single and multi-line versions cannot be mixed together
 ```
 isValid bool <- if count = 0: doForEmpty() else: doForCount(count)
 
@@ -265,10 +265,13 @@ else
 
 if firstCondition: doFirstThing()
 else if secondCondition: doSecondThing()
-else
-  doThis()
-  andThat()
-;
+else if anotherCase: doThis()
+else: andThat()
+
+// this is invalid
+if something
+  doStuff
+else: doSomethingElse()
 ```
 
 ## Repeats
