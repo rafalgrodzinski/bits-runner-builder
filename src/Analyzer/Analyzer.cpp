@@ -317,6 +317,8 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
         returnType,
         returnType
     );
+    if (statementReturn->getExpression() == nullptr)
+        return;
 
     shared_ptr<ValueType> expressionType = statementReturn->getExpression()->getValueType();
 
@@ -637,6 +639,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
             returnType
         );
         scope->popLevel();
+
+        if (expressionIfElse->getThenExpression() == nullptr)
+            return nullptr;
 
         if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
             return nullptr;
@@ -989,9 +994,14 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
 }
 
 shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType) {
+    if (sourceExpression == nullptr)
+        return nullptr;
+
     shared_ptr<ValueType> sourceType = typeForExpression(sourceExpression, nullptr, returnType);
+    if (sourceType == nullptr)
+        return nullptr;
     sourceExpression->valueType = sourceType;
-    if (sourceType == nullptr || sourceType->isEqual(targetType))
+    if (sourceType->isEqual(targetType))
         return sourceExpression;
 
     if (!canCast(sourceType, targetType))
