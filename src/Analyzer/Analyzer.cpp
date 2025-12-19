@@ -620,6 +620,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionGrouping>
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
     // first check that condition is as BOOL
     expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueType::BOOL, returnType);
+    if (expressionIfElse->getConditionExpression() == nullptr)
+        return nullptr;
     shared_ptr<ValueType> conditionType = expressionIfElse->getConditionExpression()->getValueType();
     if (conditionType == nullptr) {
         return nullptr;

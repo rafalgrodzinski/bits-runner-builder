@@ -3,7 +3,7 @@
 @import BSys
 
 @export String blob
-    string data<u8, 256>
+    string data<u8, 16>
 
     length ptr<fun: ptr<blob<String>> -> u32>
     isEqual ptr<fun: ptr<blob<String>>, blob<String> -> bool>
@@ -18,7 +18,7 @@
     find ptr<fun: ptr<blob<String>>, blob<String> -> u32>
 ;
 
-@export String fun: string data<u8, 256> -> blob<String>
+@export String fun: string data<u8, 16> -> blob<String>
     inst blob<String>
 
     inst.string <- string
@@ -38,8 +38,13 @@
     ret inst
 ;
 
+@export StringForChar fun: char u8 -> blob<String>
+    string data<u8, 2> <- {char, 0}
+    ret String(string)
+;
+
 @export StringForUInt fun: value u32 -> blob<String>
-    string data<u8, 256>
+    string data<u8, 16>
 
     length u32 <- 0
     // first get digits in reversed order
