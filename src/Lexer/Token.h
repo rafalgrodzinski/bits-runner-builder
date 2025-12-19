@@ -2,6 +2,7 @@
 #define TOKEN_H
 
 #include <iostream>
+#include <memory>
 #include <vector>
 
 class Location;
