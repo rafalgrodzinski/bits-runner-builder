@@ -1488,7 +1488,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse(optional<bool> isMultiLine)
                 {
                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
+                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                     Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
                 }
             }, ParseeLevel::OPTIONAL, true
