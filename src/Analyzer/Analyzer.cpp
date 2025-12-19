@@ -514,6 +514,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                 targetType,
                 valueType->getReturnType()
             );
+            if (expressionCall->getArgumentExpressions().at(i) == nullptr)
+                return nullptr;
 
             shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(i)->getValueType();
             if (sourceType == nullptr)
