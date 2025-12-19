@@ -5,10 +5,9 @@ StatementModule::StatementModule(
     vector<shared_ptr<Statement>> statements,
     vector<shared_ptr<Statement>> headerStatements,
     vector<shared_ptr<Statement>> exportedHeaderStatements,
-    int line,
-    int column
+    shared_ptr<Location> location
 ):
-Statement(StatementKind::MODULE, line, column), name(name), statements(statements), headerStatements(headerStatements), exportedHeaderStatements(exportedHeaderStatements) { }
+Statement(StatementKind::MODULE, location), name(name), statements(statements), headerStatements(headerStatements), exportedHeaderStatements(exportedHeaderStatements) { }
 
 string StatementModule::getName() {
     return name;

@@ -8,7 +8,7 @@ private:
     vector<shared_ptr<Expression>> chainExpressions;
 
 public:
-    ExpressionChained(vector<shared_ptr<Expression>> chainExpressions, int line, int column);
+    ExpressionChained(vector<shared_ptr<Expression>> chainExpressions, shared_ptr<Location> location);
     vector<shared_ptr<Expression>> getChainExpressions();
 };
 

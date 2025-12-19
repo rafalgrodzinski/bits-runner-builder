@@ -2,10 +2,63 @@
 
 Parsee::Parsee() { }
 
+Parsee Parsee::expressionParsee(ParseeLevel level, bool shouldReturn, bool isNumericExpression, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::EXPRESSION;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    parsee.isNumericExpression = isNumericExpression;
+    return parsee;
+}
+
+Parsee Parsee::expressionBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::EXPRESSION_BLOCK_MULTI_LINE;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::expressionBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::debug(string debugMessage) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::DEBUG;
+    parsee.debugMessage = debugMessage;
+    return parsee;
+}
+
 Parsee Parsee::groupParsee(vector<Parsee> groupParsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::GROUP;
     parsee.groupParsees = groupParsees;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::ifElseParsee(bool isMultiLine, ParseeLevel level, bool shouldReturn, int tag) {
+    Parsee parsee;
+    parsee.kind = isMultiLine ? ParseeKind::IF_ELSE_MULTI_LINE : ParseeKind::IF_ELSE_SINGLE_LINE;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::ONE_OF;
+    parsee.parsees = parsees;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
@@ -20,10 +73,38 @@ Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel l
     return parsee;
 }
 
-Parsee Parsee::oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn) {
+Parsee Parsee::statementParsee(ParseeLevel level, bool shouldReturn, int tag) {
     Parsee parsee;
-    parsee.kind = ParseeKind::ONE_OF;
-    parsee.parsees = parsees;
+    parsee.kind = ParseeKind::STATEMENT;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::statementBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::STATEMENT_BLOCK_MULTI_LINE;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::statementBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::STATEMENT_BLOCK_SINGLE_LINE;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
+Parsee Parsee::statementInBlockParsee(bool shouldIncludeExpressionStatement, ParseeLevel level, bool shouldReturn, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::STATEMENT_IN_BLOCK;
+    parsee.tag = tag;
+    parsee.shouldIncludeExpressionStatement = shouldIncludeExpressionStatement;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
@@ -42,80 +123,6 @@ Parsee Parsee::tokenParsee(TokenKind tokenKind, ParseeLevel level, bool shouldRe
 Parsee Parsee::valueTypeParsee(ParseeLevel level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::VALUE_TYPE;
-    parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::statementParsee(ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT;
-    parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::statementInBlockParsee(bool shouldIncludeExpressionStatement, ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT_IN_BLOCK;
-    parsee.tag = tag;
-    parsee.shouldIncludeExpressionStatement = shouldIncludeExpressionStatement;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::expressionParsee(ParseeLevel level, bool shouldReturn, bool isNumericExpression, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::EXPRESSION;
-    parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    parsee.isNumericExpression = isNumericExpression;
-    return parsee;
-}
-
-Parsee Parsee::statementBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT_BLOCK_SINGLE_LINE;
-    parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::statementBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT_BLOCK_MULTI_LINE;
-    parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::expressionBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE;
-    parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::expressionBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::EXPRESSION_BLOCK_MULTI_LINE;
-    parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::ifElseParsee(ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::IF_ELSE;
     parsee.tag = tag;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
@@ -160,4 +167,8 @@ ParseeLevel Parsee::getLevel() {
 
 bool Parsee::getShouldReturn() {
     return shouldReturn;
+}
+
+string Parsee::getDebugMessage() {
+    return debugMessage;
 }

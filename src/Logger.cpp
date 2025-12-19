@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "Error.h"
+#include "Lexer/Location.h"
 #include "Lexer/Token.h"
 #include "Parser/Parsee/Parsee.h"
 #include "Parser/ValueType.h"
@@ -898,8 +899,11 @@ string Logger::toString(Parsee parsee) {
         case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
         case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
             return "Expression Block";
-        case ParseeKind::IF_ELSE:
+        case ParseeKind::IF_ELSE_SINGLE_LINE:
+        case ParseeKind::IF_ELSE_MULTI_LINE:
             return "Expression If-Else";
+        case ParseeKind::DEBUG:
+            return "DEBUG";
     }
 }
 
@@ -1120,17 +1124,13 @@ void Logger::print(shared_ptr<Error> error) {
     string message;
     switch (error->getKind()) {
         case ErrorKind::MESSAGE: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
             string errorMessage = *(error->getMessage());
-            message = format("🔥 At line {}, column {}: {}", line, column, errorMessage);
+            message = format("🔥 In {}: {}", toString(error->getLocation()), errorMessage);
             break;
         }
         case ErrorKind::LEXER_ERROR: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
             string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("🔥 At line {}, column {}: Unexpected token \"{}\"", line, column, lexme);
+            message = format("🔥 In {}: Unexpected token \"{}\"", toString(error->getLocation()), lexme);
             break;
         }
         case ErrorKind::PARSER_ERROR: {
@@ -1141,29 +1141,27 @@ void Logger::print(shared_ptr<Error> error) {
 
             if (expectedParsee) {
                 message = format(
-                    "🔥 At line {}, column {}, Expected {} but found {} instead",
-                    token->getLine() + 1, token->getColumn() + 1, toString((*expectedParsee)), toString(token)
+                    "🔥 In {}: Expected parsee {} but found {} instead",
+                    toString(token->getLocation()),
+                    toString((*expectedParsee)), 
+                    toString(token)
                 );
             } else if (expectedTokenKind) {
                 message = format(
-                    "🔥 At line {}, column {}: Expected token {} but found {} instead",
-                    token->getLine() + 1, token->getColumn() + 1, toString(*expectedTokenKind), toString(token)
+                    "🔥 In {}: Expected token {} but found {} instead",
+                    toString(token->getLocation()),
+                    toString(*expectedTokenKind),
+                    toString(token)
                 );
             } else {
                 message = format(
-                    "🔥 At line {}, column {}: Unexpected token {} found",
-                    token->getLine() + 1, token->getColumn() + 1, toString(token)
+                    "🔥 In {}: Unexpected token {} found",
+                    toString(token->getLocation()),
+                    toString(token)
                 );
             }
             if (errorMessage)
                 message += format(". {}", *errorMessage);
-            break;
-        }
-        case ErrorKind::BUILDER_ERROR: {
-            int line = *(error->getLine()) + 1;
-            int column = *(error->getColumn()) + 1;
-            string errorMessage = *(error->getMessage());
-            message = format("🔥 At line {}, column {}: {}", line, column, errorMessage);
             break;
         }
         case ErrorKind::BUILDER_FUNCTION_ERROR: {
@@ -1180,6 +1178,17 @@ void Logger::print(shared_ptr<Error> error) {
         }
     }
     cout << message << endl;
+}
+
+string Logger::toString(shared_ptr<Location> location) {
+    if (location != nullptr) {
+        string fileName = location->getFileName();
+        int line = location->getLine() + 1;
+        int column = location->getColumn() + 1;
+        return format("file {}, line {}, column {}", fileName, line, column);
+    } else {
+        return "{UNKNOWN LOCATION}";
+    }
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {

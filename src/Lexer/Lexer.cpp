@@ -2,10 +2,11 @@
 
 #include "Error.h"
 #include "Logger.h"
+#include "Location.h"
 #include "Token.h"
 
-Lexer::Lexer(string source):
-source(source) { }
+Lexer::Lexer(string fileName, string source):
+currentFileName(fileName), source(source) { }
 
 vector<shared_ptr<Token>> Lexer::getTokens() {
     currentIndex = 0;
@@ -26,7 +27,7 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
             
             // Insert an additional new line just before end
             if (token->getKind() == TokenKind::END && !tokens.empty() && tokens.back()->getKind() != TokenKind::NEW_LINE)
-                tokens.push_back(make_shared<Token>(TokenKind::NEW_LINE, "\n", token->getLine(), token->getColumn()));
+                tokens.push_back(make_shared<Token>(TokenKind::NEW_LINE, "\n", token->getLocation()));
 
             // filter out multiple new lines
             if (tokens.empty() || token->getKind() != TokenKind::NEW_LINE || tokens.back()->getKind() != token->getKind())
@@ -335,7 +336,7 @@ shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator
     if (!isMatching || !isSeparatorSatisfied)
         return nullptr;
 
-    shared_ptr<Token> token = make_shared<Token>(kind, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(kind, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -365,7 +366,7 @@ shared_ptr<Token> Lexer::matchFloat() {
     }
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::FLOAT, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::FLOAT, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -382,7 +383,7 @@ shared_ptr<Token> Lexer::matchIntegerDec() {
         return nullptr;
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_DEC, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_DEC, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -406,7 +407,7 @@ shared_ptr<Token> Lexer::matchIntegerHex() {
         return nullptr;
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_HEX, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_HEX, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -430,7 +431,7 @@ shared_ptr<Token> Lexer::matchIntegerBin() {
         return nullptr;
     
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_BIN, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_BIN, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -452,7 +453,7 @@ shared_ptr<Token> Lexer::matchIntegerChar() {
         return nullptr;
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex + 1);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_CHAR, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::INTEGER_CHAR, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -488,7 +489,7 @@ shared_ptr<Token> Lexer::matchString() {
         return nullptr;
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex + 1);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::STRING, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::STRING, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -510,7 +511,7 @@ shared_ptr<Token> Lexer::matchType() {
         return nullptr;
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -534,12 +535,12 @@ shared_ptr<Token> Lexer::matchIdentifier() {
         lexme.compare("bool") == 0 ||
         lexme.compare("data") == 0 || lexme.compare("blob") == 0 || lexme.compare("ptr") == 0
     ){
-        shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, currentLine, currentColumn);
+        shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
         advanceWithToken(token);
         return token;
     }
 
-    shared_ptr<Token> token = make_shared<Token>(TokenKind::IDENTIFIER, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token = make_shared<Token>(TokenKind::IDENTIFIER, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     return token;
 }
@@ -569,7 +570,7 @@ shared_ptr<Token> Lexer::matchRawSourceLine() {
         nextIndex++;
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
-    shared_ptr<Token> token =  make_shared<Token>(TokenKind::RAW_SOURCE_LINE, lexme, currentLine, currentColumn);
+    shared_ptr<Token> token =  make_shared<Token>(TokenKind::RAW_SOURCE_LINE, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
     advanceWithToken(token);
     currentIndex++; // skip newline
     return token;
@@ -577,7 +578,7 @@ shared_ptr<Token> Lexer::matchRawSourceLine() {
 
 shared_ptr<Token> Lexer::matchEnd() {
     if (currentIndex >= source.length())
-        return make_shared<Token>(TokenKind::END, "", currentLine, currentColumn);
+        return make_shared<Token>(TokenKind::END, "", make_shared<Location>(currentFileName, currentLine, currentColumn));
     
     return nullptr;
 }
@@ -675,5 +676,10 @@ void Lexer::markError() {
     } else {
         lexme = "EOF";
     }
-    errors.push_back(Error::lexerError(currentLine, startColumn, lexme));
+    errors.push_back(
+        Error::lexerError(
+            make_shared<Location>(currentFileName, currentLine, currentColumn),
+            lexme
+        )
+    );
 }

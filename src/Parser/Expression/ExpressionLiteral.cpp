@@ -38,7 +38,7 @@ optional<int> ExpressionLiteral::decodeEscapedCharString(string charString) {
 }
 
 shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(shared_ptr<Token> token) {
-    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(token->getLine(), token->getColumn());
+    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(token->getLocation());
 
     switch (token->getKind()) {
         case TokenKind::BOOL: {
@@ -114,8 +114,8 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
     return expression;
 }
 
-shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForInt(int64_t value, int line, int column) {
-    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(line, column);
+shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForInt(int64_t value, shared_ptr<Location> location) {
+    shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(location);
     expression->literalKind = ExpressionLiteralKind::INT;
     expression->boolValue = false;
     expression->uIntValue = value;
@@ -124,8 +124,8 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForInt(int64_t
     return expression;
 }
 
-ExpressionLiteral::ExpressionLiteral(int line, int column):
-Expression(ExpressionKind::LITERAL, nullptr, line, column) { }
+ExpressionLiteral::ExpressionLiteral(shared_ptr<Location> location):
+Expression(ExpressionKind::LITERAL, nullptr, location) { }
 
 ExpressionLiteralKind ExpressionLiteral::getLiteralKind() {
     return literalKind;

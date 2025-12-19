@@ -77,7 +77,7 @@ private:
     shared_ptr<Expression> matchExpressionVariable();
     shared_ptr<Expression> matchExpressionCast();
 
-    shared_ptr<Expression> matchExpressionIfElse();
+    shared_ptr<Expression> matchExpressionIfElse(optional<bool> isMultiLine);
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
@@ -97,7 +97,7 @@ private:
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
-    optional<pair<vector<ParseeResult>, int>> ifElseParseeResults(int tag);
+    optional<pair<vector<ParseeResult>, int>> ifElseParseeResults(bool isMultiLine, int tag);
 
     // Support
     bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);

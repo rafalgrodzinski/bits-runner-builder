@@ -16,8 +16,7 @@ public:
         vector<shared_ptr<Statement>> statements,
         vector<shared_ptr<Statement>> headerStatements,
         vector<shared_ptr<Statement>> exportedHeaderStatements,
-        int line,
-        int column
+        shared_ptr<Location> location
     );
     string getName();
     vector<shared_ptr<Statement>> getStatements();

@@ -6,6 +6,7 @@
 #include <optional>
 #include <vector>
 
+class Location;
 class Token;
 class ValueType;
 
@@ -31,8 +32,7 @@ class Expression {
 
 private:
     ExpressionKind kind;
-    int line;
-    int column;
+    shared_ptr<Location> location;
 
 protected:
     shared_ptr<ValueType> valueType;
@@ -40,11 +40,10 @@ protected:
 public:
     static shared_ptr<Expression> NONE;
 
-    Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, int line, int column);
+    Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
     virtual ~Expression() { }
     ExpressionKind getKind();
-    int getLine();
-    int getColumn();
+    shared_ptr<Location> getLocation();
     shared_ptr<ValueType> getValueType();
 };
 

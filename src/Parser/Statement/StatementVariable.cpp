@@ -2,8 +2,8 @@
 
 #include "Parser/Expression/Expression.h"
 
-StatementVariable::StatementVariable(bool shouldExport, string identifier, shared_ptr<ValueType> valueType, shared_ptr<Expression> expression, int line, int column):
-Statement(StatementKind::VARIABLE, line, column), shouldExport(shouldExport), identifier(identifier), valueType(valueType), expression(expression) { }
+StatementVariable::StatementVariable(bool shouldExport, string identifier, shared_ptr<ValueType> valueType, shared_ptr<Expression> expression, shared_ptr<Location> location):
+Statement(StatementKind::VARIABLE, location), shouldExport(shouldExport), identifier(identifier), valueType(valueType), expression(expression) { }
 
 bool StatementVariable::getShouldExport() {
     return shouldExport;

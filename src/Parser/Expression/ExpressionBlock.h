@@ -13,7 +13,7 @@ private:
     shared_ptr<StatementExpression> resultStatementExpression;
 
 public:
-    ExpressionBlock(vector<shared_ptr<Statement>> statements, int line, int column);
+    ExpressionBlock(vector<shared_ptr<Statement>> statements, shared_ptr<Location> location);
     shared_ptr<StatementBlock> getStatementBlock();
     shared_ptr<StatementExpression> getResultStatementExpression();
 };

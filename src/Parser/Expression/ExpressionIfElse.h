@@ -12,7 +12,7 @@ private:
     shared_ptr<Expression> elseExpression;
 
 public:
-    ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<Expression> thenExpression, shared_ptr<Expression> elseExpression, int line, int column);
+    ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<Expression> thenExpression, shared_ptr<Expression> elseExpression, shared_ptr<Location> location);
     shared_ptr<Expression> getConditionExpression();
     shared_ptr<Expression> getThenExpression();
     shared_ptr<Expression> getElseExpression();

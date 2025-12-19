@@ -2,7 +2,10 @@
 #define TOKEN_H
 
 #include <iostream>
+#include <memory>
 #include <vector>
+
+class Location;
 
 using namespace std;
 
@@ -80,8 +83,7 @@ class Token {
 private:
     TokenKind kind;
     string lexme;
-    int line;
-    int column;
+    shared_ptr<Location> location;
 
 public:
     static vector<TokenKind> tokensLogicalOrXor;
@@ -102,11 +104,10 @@ public:
 
     static vector<TokenKind> tokensLiteral;
 
-    Token(TokenKind kind, string lexme, int line, int column);
+    Token(TokenKind kind, string lexme, shared_ptr<Location> location);
     TokenKind getKind();
     string getLexme();
-    int getLine();
-    int getColumn();
+    shared_ptr<Location> getLocation();
     bool isOfKind(vector<TokenKind> kinds);
 };
 

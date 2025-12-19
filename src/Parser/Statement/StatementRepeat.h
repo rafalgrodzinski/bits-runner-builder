@@ -21,8 +21,7 @@ public:
         shared_ptr<Expression> preConditionExpression,
         shared_ptr<Expression> postConditionExpression,
         shared_ptr<StatementBlock> bodyBlockStatement,
-        int line,
-        int column
+        shared_ptr<Location> location
     );
     shared_ptr<Statement> getInitStatement();
     shared_ptr<Statement> getPostStatement();

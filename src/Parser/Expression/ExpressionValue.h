@@ -24,10 +24,10 @@ private:
     shared_ptr<Expression> indexExpression;
 
 public:
-    static shared_ptr<ExpressionValue> simple(string identifer, int line, int column);
-    static shared_ptr<ExpressionValue> data(string identifier, shared_ptr<Expression> indexExpression, int line, int column);
+    static shared_ptr<ExpressionValue> simple(string identifer, shared_ptr<Location> location);
+    static shared_ptr<ExpressionValue> data(string identifier, shared_ptr<Expression> indexExpression, shared_ptr<Location> location);
 
-    ExpressionValue(int line, int column);
+    ExpressionValue(shared_ptr<Location> location);
     ExpressionValueKind getValueKind();
     string getIdentifier();
     shared_ptr<Expression> getIndexExpression();

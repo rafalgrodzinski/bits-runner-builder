@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+class Location;
+
 using namespace std;
 
 enum class StatementKind {
@@ -29,15 +31,13 @@ enum class StatementKind {
 class Statement {
 private:
     StatementKind kind;
-    int line;
-    int column;
+    shared_ptr<Location> location;
 
 public:
-    Statement(StatementKind kind, int line, int column);
+    Statement(StatementKind kind, shared_ptr<Location> location);
     virtual ~Statement() { }
     StatementKind getKind();
-    int getLine();
-    int getColumn();
+    shared_ptr<Location> getLocation();
 };
 
 #endif

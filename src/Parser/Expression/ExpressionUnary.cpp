@@ -3,14 +3,14 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType.h"
 
-ExpressionUnary::ExpressionUnary(int line, int column) :
-Expression(ExpressionKind::UNARY, nullptr, line, column) { }
+ExpressionUnary::ExpressionUnary(shared_ptr<Location> location) :
+Expression(ExpressionKind::UNARY, nullptr, location) { }
 
 shared_ptr<ExpressionUnary> ExpressionUnary::expression(shared_ptr<Token> token, shared_ptr<Expression> subExpression) {
     if (subExpression == nullptr)
         return nullptr;
         
-    shared_ptr<ExpressionUnary> expression = make_shared<ExpressionUnary>(token->getLine(), token->getColumn());
+    shared_ptr<ExpressionUnary> expression = make_shared<ExpressionUnary>(token->getLocation());
     expression->subExpression = subExpression;
 
     switch (token->getKind()) {

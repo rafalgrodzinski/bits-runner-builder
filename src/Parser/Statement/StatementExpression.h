@@ -10,7 +10,7 @@ private:
     shared_ptr<Expression> expression;
 
 public:
-    StatementExpression(shared_ptr<Expression> expression, int line, int column);
+    StatementExpression(shared_ptr<Expression> expression, shared_ptr<Location> location);
     shared_ptr<Expression> getExpression();
 };
 

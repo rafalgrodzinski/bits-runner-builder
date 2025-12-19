@@ -4,6 +4,7 @@
 #include <format>
 #include <map>
 #include <stack>
+#include <ranges>
 
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
@@ -18,6 +19,7 @@
 #include "Scope.h"
 
 class Error;
+class Location;
 class ValueType;
 class WrappedValue;
 
@@ -145,18 +147,26 @@ private:
     llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
     int sizeInBitsForType(llvm::Type *type);
 
-    // Error Handling
-    void markError(int line, int column, string message);
+    // Error Handling    
     void markFunctionError(string name, string message);
     void markModuleError(string message);
-    void markErrorInvalidOperationBinary(int line, int column, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
-    void markErrorInvalidOperationUnary(int line, int column, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
-    void markErrorAlreadyDefined(int line, int column, string identifier);
-    void markErrorNotDeclared(int line, int column, string identifier);
-    void markErrorNotDefined(int line, int column, string identifier);
-    void markInvalidConstraints(int line, int column, string functionName, string constraints);
-    void markErrorInvalidLiteral(int line, int column, shared_ptr<ValueType> type);
-    void markErrorInvalidConstant(int line, int column);
+    
+    void markErrorAlreadyDefined(shared_ptr<Location> location, string name);
+    void markInvalidConstraints(shared_ptr<Location> location, string functionName, string constraints);
+    void markErrorInvalidAssignment(shared_ptr<Location> location);
+    void markErrorInvalidBuiltIn(shared_ptr<Location> location, string name);
+    void markErrorInvalidCast(shared_ptr<Location> location);
+    void markErrorInvalidConstant(shared_ptr<Location> location);
+    void markErrorInvalidImport(shared_ptr<Location> location, string moduleName);
+    void markErrorInvalidLiteral(shared_ptr<Location> location, shared_ptr<ValueType> type);
+    void markErrorInvalidMember(shared_ptr<Location> location, string blobName, string memberName);
+    void markErrorInvalidOperationBinary(shared_ptr<Location> location, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
+    void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
+    void markErrorInvalidType(shared_ptr<Location> location);
+    void markErrorUnexpected(shared_ptr<Location> location, string name);
+    void markErrorNotDeclared(shared_ptr<Location> location, string name);
+    void markErrorNotDefined(shared_ptr<Location> location, string name);
+    void markErrorNoTypeForPointer(shared_ptr<Location> location);
 
 public:
     ModuleBuilder(

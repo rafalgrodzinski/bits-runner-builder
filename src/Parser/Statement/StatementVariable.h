@@ -16,7 +16,7 @@ private:
     shared_ptr<Expression> expression;
 
 public:
-    StatementVariable(bool shouldExport, string identifier, shared_ptr<ValueType> valueType, shared_ptr<Expression> expression, int line, int column);
+    StatementVariable(bool shouldExport, string identifier, shared_ptr<ValueType> valueType, shared_ptr<Expression> expression, shared_ptr<Location> location);
     bool getShouldExport();
     string getIdentifier();
     shared_ptr<ValueType> getValueType();

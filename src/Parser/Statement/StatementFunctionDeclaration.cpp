@@ -8,10 +8,9 @@ StatementFunctionDeclaration::StatementFunctionDeclaration(
     string name,
     vector<pair<string, shared_ptr<ValueType>>> arguments,
     shared_ptr<ValueType> returnValueType,
-    int line,
-    int column
+    shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION_DECLARATION, line, column), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType) { }
+Statement(StatementKind::FUNCTION_DECLARATION, location), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType) { }
 
 bool StatementFunctionDeclaration::getShouldExport() {
     return shouldExport;
