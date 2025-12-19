@@ -120,6 +120,8 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     if (targetType == nullptr)
         return;
     statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType, nullptr);
+    if (statementAssignment->getValueExpression() == nullptr)
+        return;
 
     shared_ptr<ValueType> sourceType = statementAssignment->getValueExpression()->getValueType();
     if (sourceType != nullptr && !sourceType->isEqual(targetType)) {
