@@ -434,6 +434,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
         targetType,
         nullptr
     );
+    if (expressionBinary->getLeft() == nullptr)
+        return nullptr;
 
     if (expressionBinary->getLeft()->getValueType() == nullptr)
         return nullptr;
@@ -448,7 +450,6 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
         targetType,
         nullptr
     );
-
     if (expressionBinary->getRight()->getValueType() == nullptr)
         return nullptr;
 
