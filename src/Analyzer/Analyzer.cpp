@@ -350,6 +350,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
             statementVariable->getValueType(),
             nullptr
         );
+        if (statementVariable->getExpression() == nullptr)
+            return;
 
         // if target has no count expression defined, use the one from source
         if (statementVariable->getValueType()->isData() && statementVariable->getValueType()->getCountExpression() == nullptr) {

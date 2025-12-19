@@ -1,0 +1,7 @@
+@module BSys
+
+@extern putchar fun: character u32 -> u32
+
+@export printChar fun: character u8
+    putchar(character)
+;

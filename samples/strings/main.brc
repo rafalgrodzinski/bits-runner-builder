@@ -1,53 +1,53 @@
-@import b
+@import B
 
 @export main fun -> u32
     // Substring
-    substring blob<@b.String> <- @b.String("Substring")
+    substring blob<@B.String> <- @B.String("Substring")
     substring.println.val({substring.adr})
 
-    greeting blob<@b.String> <- @b.String("Hello, World!")
+    greeting blob<@B.String> <- @B.String("Hello, World!")
     greeting.println.val({greeting.adr})
 
-    greetingLength blob<@b.String> <- @b.StringForUInt(greeting.length.val({greeting.adr}))
+    greetingLength blob<@B.String> <- @B.StringForUInt(greeting.length.val({greeting.adr}))
     greetingLength.println.val({greetingLength.adr})
 
-    sub blob<@b.String> <- greeting.subString.val({greeting.adr}, 2, 10)
+    sub blob<@B.String> <- greeting.subString.val({greeting.adr}, 2, 10)
     sub.println.val({sub.adr})
 
-    subLength blob<@b.String> <- @b.StringForUInt(sub.length.val({sub.adr}))
+    subLength blob<@B.String> <- @B.StringForUInt(sub.length.val({sub.adr}))
     subLength.println.val({subLength.adr})
 
     // Comparison
-    comparison blob<@b.String> <- @b.String("\nComparison")
+    comparison blob<@B.String> <- @B.String("\nComparison")
     comparison.println.val({comparison.adr})
 
-    stringA blob<@b.String> <- @b.String("Apple")
-    stringB blob<@b.String> <- @b.String("Banana and Apple")
+    stringA blob<@B.String> <- @B.String("Apple")
+    stringB blob<@B.String> <- @B.String("Banana and Apple")
 
-    compA blob<@b.String> <- @b.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
+    compA blob<@B.String> <- @B.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
     compA.println.val({compA.adr})
 
     stringB <- stringB.subStringFrom.val({stringB.adr}, 11)
-    compB blob<@b.String> <- @b.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
+    compB blob<@B.String> <- @B.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
     compB.println.val({compB.adr})
 
     // Find
-    find blob<@b.String> <- @b.String("\nFind")
+    find blob<@B.String> <- @B.String("\nFind")
     find.println.val({find.adr})
 
-    longer blob<@b.String> <- @b.String("This is a longer string with a dog")
-    shorterA blob<@b.String> <- @b.String("cat")
-    shorterB blob<@b.String> <- @b.String("long")
-    shorterC blob<@b.String> <- @b.String("dog")
+    longer blob<@B.String> <- @B.String("This is a longer string with a dog")
+    shorterA blob<@B.String> <- @B.String("cat")
+    shorterB blob<@B.String> <- @B.String("long")
+    shorterC blob<@B.String> <- @B.String("dog")
 
-    findResA blob<@b.String> <- @b.StringForUInt(longer.find.val({longer.adr}, shorterA))
+    findResA blob<@B.String> <- @B.StringForUInt(longer.find.val({longer.adr}, shorterA))
     findResA.println.val({findResA.adr})
 
-    findResB blob<@b.String> <- @b.StringForUInt(longer.find.val({longer.adr}, shorterB))
+    findResB blob<@B.String> <- @B.StringForUInt(longer.find.val({longer.adr}, shorterB))
     findResB.println.val({findResB.adr})
 
 
-    findResC blob<@b.String> <- @b.StringForUInt(longer.find.val({longer.adr}, shorterC))
+    findResC blob<@B.String> <- @B.StringForUInt(longer.find.val({longer.adr}, shorterC))
     findResC.println.val({findResC.adr})
 
     ret 0

@@ -1,6 +1,6 @@
-@module b
+@module B
 
-@extern putchar fun: character u8 -> u32
+@import BSys
 
 @export String blob
     string data<u8, 256>
@@ -71,13 +71,13 @@
 
 stringPrint fun: it ptr<blob<String>>
     rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
-        putchar(it.val.string[i])
+        @BSys.printChar(it.val.string[i])
     ;
 ;
 
 stringPrintln fun: it ptr<blob<String>>
     it.val.print.val(it)
-    putchar('\n')
+    @BSys.printChar('\n')
 ;
 
 stringLength fun: it ptr<blob<String>> -> u32
