@@ -828,7 +828,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     }
 
     if (type == nullptr)
-        markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
+        markErrorNotDefined(expressionValue->getLocation(), format("member \".{}\"", expressionValue->getIdentifier()));
 
     expressionValue->valueType = type;
     return expressionValue->getValueType();
@@ -1254,8 +1254,8 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorNotDefined(shared_ptr<Location> location, string identifier) {
-    string message = format("\"{}\" not defined", identifier);
+void Analyzer::markErrorNotDefined(shared_ptr<Location> location, string name) {
+    string message = format("{} is not defined in scope", name);
     errors.push_back(Error::error(location, message));
 }
 

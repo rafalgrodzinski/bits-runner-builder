@@ -24,3 +24,8 @@
 
     ret date
 ;
+
+test fun
+    pDate ptr<blob<Date>>
+    pDate.timestamp <- 4
+;
