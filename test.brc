@@ -1,31 +1,6 @@
-@module B
+@import B
 
-@export Date blob
-    timestamp u32
-;
-
-@export DateForComponents fun: year u32, month u32, day u32, hour u32, minutes u32, seconds u32 -> blob<Date>
-    date blob<Date>
-
-    monthYearDay data<u32> <- {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334}
-    yearAdj u32 <- year + 4800
-    febs u32 <- yearAdj - (if month <= 2: 2 else: 0)
-    //febs u32 <- if month <= 2: 2 else: 0
-    leapDays u32 <- 1 + (febs / 4) - (febs / 100) + (febs / 400)
-    days u32 <- 365 * yearAdj + leapDays + monthYearDay[month - 1] + day - 1
-    days <- days - 2_472_692
-
-    timestamp u32 <- 0
-    timestamp <- timestamp + seconds
-    timestamp <- timestamp + minutes * 60
-    timestamp <- timestamp + hour * 60 * 60
-    timestamp <- timestamp + days * 24 * 60 * 60
-    date.timestamp <- timestamp //* 1000 // seconds to milliseconds
-
-    ret date
-;
-
-test fun
-    pDate ptr<blob<Date>>
-    pDate.timestamp <- 4
+@export main fun
+    numStr blob<@B.String> <- @B.StringForFloat(36.654326)
+    numStr.println.val({numStr.adr})
 ;
