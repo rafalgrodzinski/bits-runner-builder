@@ -707,6 +707,8 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
     ExpressionUnaryOperation operation = expressionUnary->getOperation();
     shared_ptr<ValueType> subType = typeForExpression(expressionUnary->getSubExpression(), nullptr, nullptr);
+    if (subType == nullptr)
+        return nullptr;
 
     if (!isUnaryOperationValidForType(expressionUnary->getOperation(), subType)) {
         markErrorInvalidOperationUnary(expressionUnary->getLocation(), operation, subType);
@@ -827,8 +829,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             expressionValue->valueKind = ExpressionValueKind::FUN;
     }
 
-    if (type == nullptr)
+    if (type == nullptr && parentExpression != nullptr) {
         markErrorNotDefined(expressionValue->getLocation(), format("member \".{}\"", expressionValue->getIdentifier()));
+    } else if (type == nullptr) {
+        markErrorNotDefined(expressionValue->getLocation(), format("\"{}\"", expressionValue->getIdentifier()));
+    }
 
     expressionValue->valueType = type;
     return expressionValue->getValueType();

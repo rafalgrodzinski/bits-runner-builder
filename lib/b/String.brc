@@ -74,17 +74,6 @@
     else: String("false")
 ;
 
-stringPrint fun: it ptr<blob<String>>
-    rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
-        @BSys.printChar(it.val.string[i])
-    ;
-;
-
-stringPrintln fun: it ptr<blob<String>>
-    it.val.print.val(it)
-    @BSys.printChar('\n')
-;
-
 stringLength fun: it ptr<blob<String>> -> u32
     i u32 <- 0
     rep it.val.string[i] != '\0' and i < it.val.string.count: i <- i + 1
@@ -99,6 +88,17 @@ stringIsEqual fun: it ptr<blob<String>>, other blob<String> -> bool
     ;
 
     ret true
+;
+
+stringPrint fun: it ptr<blob<String>>
+    rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
+        @BSys.printChar(it.val.string[i])
+    ;
+;
+
+stringPrintln fun: it ptr<blob<String>>
+    it.val.print.val(it)
+    @BSys.printChar('\n')
 ;
 
 stringSubString fun: it ptr<blob<String>>, from u32, to u32 -> blob<String>
