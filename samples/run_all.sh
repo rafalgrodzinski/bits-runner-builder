@@ -21,6 +21,7 @@ samples=(
     multi_module
     primes
     strings
+    date
 )
 
 for sample in "${samples[@]}"; do

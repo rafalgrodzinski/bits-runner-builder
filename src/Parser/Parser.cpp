@@ -1237,6 +1237,9 @@ shared_ptr<Expression> Parser::matchPrimary() {
     if ((expression = matchExpressionCast()) || errors.size() > errorsCount)
         return expression;
 
+    if ((expression = matchExpressionIfElse(false)) || errors.size() > errorsCount)
+        return expression;
+
     return nullptr;
 }
 
@@ -2053,7 +2056,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementBlockParseeResults(bo
 optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockSingleLineParseeResults(int tag) {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
-    shared_ptr<Expression> expression = matchExpressionBlock({TokenKind::ELSE, TokenKind::NEW_LINE});
+    shared_ptr<Expression> expression = matchExpressionBlock({TokenKind::ELSE, TokenKind::NEW_LINE, TokenKind::RIGHT_ROUND_BRACKET});
     if (errors.size() > errorsCount || expression == nullptr)
         return {};
 
