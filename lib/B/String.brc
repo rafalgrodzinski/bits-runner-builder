@@ -1,0 +1,260 @@
+@module B
+
+@import BSys
+
+@export String blob
+    string data<u8, 256>
+
+    length ptr<fun: ptr<blob<String>> -> u32>
+    isEqual ptr<fun: ptr<blob<String>>, blob<String> -> bool>
+
+    print ptr<fun: ptr<blob<String>>>
+    println ptr<fun: ptr<blob<String>>>
+
+    subString ptr<fun: ptr<blob<String>>, u32, u32 -> blob<String>>
+    subStringFrom ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
+    subStringTo ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
+
+    find ptr<fun: ptr<blob<String>>, blob<String> -> u32>
+;
+
+@export String fun: string data<u8, 256> -> blob<String>
+    inst blob<String>
+
+    inst.string <- string
+
+    inst.length <- {stringLength.adr}
+    inst.isEqual <- {stringIsEqual.adr}
+
+    inst.print <- {stringPrint.adr }
+    inst.println <- {stringPrintln.adr }
+
+    inst.subString <- {stringSubString.adr}
+    inst.subStringFrom <- {stringSubStringFrom.adr}
+    inst.subStringTo <- {stringSubStringTo.adr}
+
+    inst.find <- {stringFind.adr}
+
+    ret inst
+;
+
+@export StringForBool fun: value bool -> blob<String>
+    ret if value: String("true")
+    else: String("false")
+;
+
+@export StringForChar fun: char u8 -> blob<String>
+    string data<u8> <- {char, 0}
+    ret String(string)
+;
+
+@export StringForU32 fun: value u32 -> blob<String>
+    string data<u8, 256>
+
+    length u32 <- 0
+    // first get digits in reversed order
+    rep true, value > 0, length <- length + 1
+        digit u32 <- value % 10
+        string[length] <- digit + '0'
+        value <- value / 10
+    ;
+    // add the terminating 0
+    string[length] <- 0
+    
+    // if nothing to swap, just return
+    if length <= 1: ret String(string)
+
+    // and then swap them
+    rep i u32 <- 0, i < length / 2, i <- i + 1
+        tmp u8 <- string[i]
+        string[i] <- string[length - i - 1]
+        string[length - i - 1] <- tmp
+    ;
+
+    ret String(string)
+;
+
+@export StringForS32 fun: value s32 -> blob<String>
+    string data<u8, 256>
+    currentIndex u32 <- 0
+
+    if value < 0
+        string[currentIndex] <- '-'
+        currentIndex <- currentIndex + 1
+        value <- value * -1
+    ;
+
+    startIndex u32 <- currentIndex
+
+    // first get digits in reversed order
+    rep true, value > 0
+        string[currentIndex] <- ((value % 10) + '0').u8
+        value <- value / 10
+        currentIndex <- currentIndex + 1
+    ;
+
+    // and then swap them
+    rep i u32 <- startIndex, i < (startIndex + currentIndex) / 2, i <- i + 1
+        tmp u8 <- string[i]
+        string[i] <- string[currentIndex - i - 1 + startIndex]
+        string[currentIndex - i - 1 + startIndex] <- tmp
+    ;
+
+    // add the terminating 0
+    string[currentIndex] <- 0
+
+    ret String(string)
+;
+
+@export StringHexForU32 fun: value u32 -> blob<String>
+    string data<u8, 256> <- {'0', 'x'}
+    currentIndex u32 <- 2
+
+    // first get digits in reversed order
+    rep true, value > 0
+        digit u32 <- value % 16
+        string[currentIndex] <- if digit > 9: digit - 10 + 'a' else: digit + '0'
+        value <- value / 16
+        currentIndex <- currentIndex + 1
+    ;
+
+    // then swap them
+    rep i u32 <- 2, i < (2 + currentIndex) / 2, i <- i + 1
+        tmp u8 <- string[i]
+        string[i] <- string[currentIndex - i - 1 + 2]
+        string[currentIndex - i - 1 + 2] <- tmp
+    ;
+
+    // add the terminating 0
+    string[currentIndex] <- 0
+
+    ret String(string)
+;
+
+@export StringForF32 fun: value f32 -> blob<String>
+    string data<u8, 256>
+    currentIndex u32 <- 0
+
+    // handle negative number
+    if value < 0
+        string[currentIndex] <- '-'
+        currentIndex <- currentIndex + 1
+        value <- value * -1.0
+    ;
+
+    integralStartIndex u32 <- currentIndex
+
+    // handle integral part
+    integral u32 <- value.u32
+    rep true, integral > 0
+        string[currentIndex] <- (integral % 10) + '0'
+        integral <- integral / 10
+        currentIndex <- currentIndex + 1
+    ;
+
+    dotIndex u32 <- currentIndex
+
+    // add dot
+    string[currentIndex] <- '.'
+    currentIndex <- currentIndex + 1
+
+    // handle exponent
+    exponent u32 <- ((value - value.u32.f32) * 100_000).u32
+    rep true, exponent > 0
+        string[currentIndex] <- (exponent % 10) + '0'
+        exponent <- exponent / 10
+        currentIndex <- currentIndex + 1
+    ;
+
+    // swap integral digits
+    rep i u32 <- integralStartIndex, i < (integralStartIndex + dotIndex) / 2, i <- i + 1
+        tmp u8 <- string[i]
+        string[i] <- string[dotIndex - 1 - i + integralStartIndex]
+        string[dotIndex - 1 - i + integralStartIndex] <- tmp
+    ;
+
+    // swap exponent digits
+    rep i u32 <- dotIndex + 1, i < (dotIndex + 1 + currentIndex) / 2, i <- i + 1
+        tmp u8 <- string[i]
+        string[i] <- string[currentIndex - 1 - i + dotIndex + 1]
+        string[currentIndex - 1 - i + dotIndex + 1] <- tmp
+    ;
+
+    // add trailing zero
+    string[currentIndex] <- 0
+
+    ret String(string)
+;
+
+stringLength fun: it ptr<blob<String>> -> u32
+    i u32 <- 0
+    rep it.val.string[i] != '\0' and i < it.val.string.count: i <- i + 1
+    ret i
+;
+
+stringIsEqual fun: it ptr<blob<String>>, other blob<String> -> bool
+    if it.val.length.val(it) != other.length.val({other.adr}): ret false
+
+    rep i u32 <- 0, i < it.val.length.val(it), i <- i + 1
+        if it.val.string[i] != other.string[i]: ret false
+    ;
+
+    ret true
+;
+
+stringPrint fun: it ptr<blob<String>>
+    rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
+        @BSys.printChar(it.val.string[i])
+    ;
+;
+
+stringPrintln fun: it ptr<blob<String>>
+    it.val.print.val(it)
+    @BSys.printChar('\n')
+;
+
+stringSubString fun: it ptr<blob<String>>, from u32, to u32 -> blob<String>
+    string data<u8, 256>
+
+    // determine resulting lenght
+    length u32 <- to - from
+    if length > string.count: length <- string.count
+
+    // sanity check length
+    if length = 0 or to < from
+        string[0] <- 0
+        ret String(string)
+    ;
+
+    // copy data
+    rep i u32 <- 0, i < length, i <- i + 1: string[i] <- it.val.string[from + i]
+
+    // make sure it's 0 terminated
+    if string[length - 1] != 0 and length < string.count - 1: string[length] <- 0
+    else: string[length - 1] <- 0
+
+    ret String(string)
+;
+
+stringSubStringFrom fun: it ptr<blob<String>>, from u32 -> blob<String>
+    ret it.val.subString.val(it, from, it.val.length.val(it))
+;
+
+stringSubStringTo fun: it ptr<blob<String>>, to u32 -> blob<String>
+    ret it.val.subString.val(it, 0, to)
+;
+
+stringFind fun: it ptr<blob<String>>, other blob<String> -> u32
+    length u32 <- it.val.length.val(it)
+    otherLength u32 <- other.length.val({other.adr})
+
+    // doesn't fit in
+    if otherLength > length: ret 0
+
+    rep i u32 <- 0, i <= length - otherLength, i <- i + 1
+        subString blob<String> <- it.val.subString.val(it, i, i + otherLength)
+        if subString.isEqual.val({subString.adr}, other): ret i
+    ;
+
+    ret 0
+;

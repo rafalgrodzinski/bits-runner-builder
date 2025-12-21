@@ -67,3 +67,7 @@ BRC supports inline assembly, which is declared simillary to a function, but req
 [https://llvm.org/docs/LangRef.html#inline-assembler-expressions](https://llvm.org/docs/LangRef.html#inline-assembler-expressions)
 - GCC's assembler syntax [https://www.felixcloutier.com/documents/gcc-asm.html](https://www.felixcloutier.com/documents/gcc-asm.html)
 - A Practical Guide to GCC Inline Assembly [https://blog.alex.balgavy.eu/a-practical-guide-to-gcc-inline-assembly/](https://blog.alex.balgavy.eu/a-practical-guide-to-gcc-inline-assembly/)
+
+## Date
+- Optimizing UTC → Unix Time Conversion For Size And Speed:
+[https://blog.reverberate.org/2020/05/12/optimizing-date-algorithms.html](https://blog.reverberate.org/2020/05/12/optimizing-date-algorithms.html)

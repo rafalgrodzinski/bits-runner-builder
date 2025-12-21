@@ -1,58 +1,157 @@
-@import io
+@import B
 
 @export main fun -> u32
-    //uint
-    @io.print("100 to u8 to s64: ")
-    num1 u8 <- 100
-    @io.printNum(num1.s64)
-    @io.printChar('\n')
+    msg blob<@B.String>
+    val_u8 u8
+    val_u32 u32
+    val_s32 s32
+    val_f32 f32
+    val_data_f32 data<f32, 6>
+    val_data_s32 data<s32, 6>
+    val_data_u8 data<u8, 6>
 
-    @io.print("300 to u8 to s64: ")
-    num2 u8 <- 300
-    @io.printNum(num2.s64)
-    @io.printChar('\n')
+    // from uint
+    // t_1_1
+    msg <- @B.String("100 to u8 to s32:")
+    msg.println.val({msg.adr})
 
-    @io.print("100 + 300 to u8 to s64: ")
-    num3 u8 <- 100 + 300
-    @io.printNum(num3.s64)
-    @io.printChar('\n')
+    val_u8 <- 100
+    msg <- @B.StringForU32(val_u8)
+    msg.println.val({msg.adr})
 
-    // sint
-    @io.print("-7.1234 to s64: ")
-    num4 s64 <- (-7.1234).s64
-    @io.printNum(num4)
-    @io.printChar('\n')
+    msg <- @B.StringForS32(val_u8.s32)
+    msg.println.val({msg.adr})
 
-    @io.print("-4 to s64: ")
-    num5 s64 <- -4
-    @io.printNum(num5)
-    @io.printChar('\n')
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
 
-    // float
-    @io.print("3.141592 to f32 to s64: ")
-    num6 f32 <- 3.141592
-    @io.printNum(num6.s64)
-    @io.printChar('\n')
+    // t_1_2
+    msg <- @B.String("300 to u8 to s32:")
+    msg.println.val({msg.adr})
 
-    @io.print("-7.1234 to f32 to s64: ")
-    num7 f32 <- -7.1234
-    @io.printNum(num7.s64)
-    @io.printChar('\n')
+    val_u8 <- 300
+    msg <- @B.StringForU32(val_u8)
+    msg.println.val({msg.adr})
 
-    @io.print("6.66 to f64 to u64 to s64: ")
-    num8 f64 <- 6.66
-    @io.printNum(num8.u64.s64)
-    @io.printChar('\n')
+    msg <- @B.StringForS32(val_u8.s32)
+    msg.println.val({msg.adr})
 
-    // data
-    @io.print("data<f32> to data<s64>:")
-    nums9 data<f32> <- {-7.2, -4.4, 12.8, 3.333, 0, 745.88}
-    nums10 data<s64> <- nums9.data<s64>
-    rep i u32 <- 0, i < nums9.count.u32, i <- i + 1.u32
-        @io.printChar(' ')
-        @io.printNum(nums10[i])
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
+    // t_1_3
+    msg <- @B.String("100 + 300 to u8 to s32:")
+    msg.println.val({msg.adr})
+
+    val_u8 <- 100 + 300
+    msg <- @B.StringForU32(val_u8)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForS32(val_u8.s32)
+    msg.println.val({msg.adr})
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
+
+    // from sint
+    // t_2_1
+    msg <- @B.String("-4 to u32 to s32:")
+    msg.println.val({msg.adr})
+
+    val_u32 <- -4
+    msg <- @B.StringForU32(val_u32)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForS32(val_u32.s32)
+    msg.println.val({msg.adr})
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
+    // t_2_2
+    msg <- @B.String("-300 to s32 to s8:")
+    msg.println.val({msg.adr})
+
+    val_s32 <- -300
+    msg <- @B.StringForS32(val_s32)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForS32(val_s32.s8)
+    msg.println.val({msg.adr})
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
+    // from float
+    // t_3_1
+    msg <- @B.String("-7.1234 to s32 to u32:")
+    msg.println.val({msg.adr})
+
+    val_s32 <- -7.1234
+    msg <- @B.StringForS32(val_s32)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForU32(val_s32.u32)
+    msg.println.val({msg.adr})
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
+    // t_3_2
+    msg <- @B.String("3.141592 to f32 to u8:")
+    msg.println.val({msg.adr})
+
+    val_f32 <- 3.141592
+    msg <- @B.StringForF32(val_f32)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForU32(val_f32.u8)
+    msg.println.val({msg.adr})
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
+    // from data
+    // t_4_1
+    msg <- @B.String("data<f32> to data<s32> to data<u8>:")
+    msg.println.val({msg.adr})
+
+    val_data_f32 <- {-7.2, -4.4, 12.8, 3.333, 0, 745.88}
+    rep i u32 <- 0, i < val_data_f32.count, i <- i + 1
+        msg <- @B.StringForF32(val_data_f32[i])
+        msg.print.val({msg.adr})
+
+        msg <- @B.String(" ")
+        msg.print.val({msg.adr})
     ;
-    @io.printChar('\n')
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
+    val_data_s32 <- val_data_f32.data<s32>
+    rep i u32 <- 0, i < val_data_s32.count, i <- i + 1
+        msg <- @B.StringForS32(val_data_s32[i])
+        msg.print.val({msg.adr})
+
+        msg <- @B.String(" ")
+        msg.print.val({msg.adr})
+    ;
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
+    val_data_u8 <- val_data_s32.data<u8>
+    rep i u32 <- 0, i < val_data_u8.count, i <- i + 1
+        msg <- @B.StringForU32(val_data_u8[i])
+        msg.print.val({msg.adr})
+
+        msg <- @B.String(" ")
+        msg.print.val({msg.adr})
+    ;
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
 
     ret 0
 ;

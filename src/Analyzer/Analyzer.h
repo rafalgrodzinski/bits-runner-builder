@@ -107,7 +107,7 @@ private:
     void markErrorInvalidOperationBinary(shared_ptr<Location> location, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markErrorInvalidType(shared_ptr<Location> location, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
-    void markErrorNotDefined(shared_ptr<Location> location, string identifier);
+    void markErrorNotDefined(shared_ptr<Location> location, string name);
 
 public:
     Analyzer(

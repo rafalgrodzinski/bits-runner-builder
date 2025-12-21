@@ -120,6 +120,8 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     if (targetType == nullptr)
         return;
     statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType, nullptr);
+    if (statementAssignment->getValueExpression() == nullptr)
+        return;
 
     shared_ptr<ValueType> sourceType = statementAssignment->getValueExpression()->getValueType();
     if (sourceType != nullptr && !sourceType->isEqual(targetType)) {
@@ -317,6 +319,8 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
         returnType,
         returnType
     );
+    if (statementReturn->getExpression() == nullptr)
+        return;
 
     shared_ptr<ValueType> expressionType = statementReturn->getExpression()->getValueType();
 
@@ -346,6 +350,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
             statementVariable->getValueType(),
             nullptr
         );
+        if (statementVariable->getExpression() == nullptr)
+            return;
 
         // if target has no count expression defined, use the one from source
         if (statementVariable->getValueType()->isData() && statementVariable->getValueType()->getCountExpression() == nullptr) {
@@ -428,6 +434,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
         targetType,
         nullptr
     );
+    if (expressionBinary->getLeft() == nullptr)
+        return nullptr;
 
     if (expressionBinary->getLeft()->getValueType() == nullptr)
         return nullptr;
@@ -442,7 +450,6 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
         targetType,
         nullptr
     );
-
     if (expressionBinary->getRight()->getValueType() == nullptr)
         return nullptr;
 
@@ -512,6 +519,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                 targetType,
                 valueType->getReturnType()
             );
+            if (expressionCall->getArgumentExpressions().at(i) == nullptr)
+                return nullptr;
 
             shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(i)->getValueType();
             if (sourceType == nullptr)
@@ -612,6 +621,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionGrouping>
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
     // first check that condition is as BOOL
     expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueType::BOOL, returnType);
+    if (expressionIfElse->getConditionExpression() == nullptr)
+        return nullptr;
     shared_ptr<ValueType> conditionType = expressionIfElse->getConditionExpression()->getValueType();
     if (conditionType == nullptr) {
         return nullptr;
@@ -637,6 +648,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
             returnType
         );
         scope->popLevel();
+
+        if (expressionIfElse->getThenExpression() == nullptr)
+            return nullptr;
 
         if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
             return nullptr;
@@ -693,6 +707,8 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
     ExpressionUnaryOperation operation = expressionUnary->getOperation();
     shared_ptr<ValueType> subType = typeForExpression(expressionUnary->getSubExpression(), nullptr, nullptr);
+    if (subType == nullptr)
+        return nullptr;
 
     if (!isUnaryOperationValidForType(expressionUnary->getOperation(), subType)) {
         markErrorInvalidOperationUnary(expressionUnary->getLocation(), operation, subType);
@@ -813,8 +829,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             expressionValue->valueKind = ExpressionValueKind::FUN;
     }
 
-    if (type == nullptr)
-        markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
+    if (type == nullptr && parentExpression != nullptr) {
+        markErrorNotDefined(expressionValue->getLocation(), format("member \".{}\"", expressionValue->getIdentifier()));
+    } else if (type == nullptr) {
+        markErrorNotDefined(expressionValue->getLocation(), format("\"{}\"", expressionValue->getIdentifier()));
+    }
 
     expressionValue->valueType = type;
     return expressionValue->getValueType();
@@ -989,9 +1008,14 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
 }
 
 shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType) {
+    if (sourceExpression == nullptr)
+        return nullptr;
+
     shared_ptr<ValueType> sourceType = typeForExpression(sourceExpression, nullptr, returnType);
+    if (sourceType == nullptr)
+        return nullptr;
     sourceExpression->valueType = sourceType;
-    if (sourceType == nullptr || sourceType->isEqual(targetType))
+    if (sourceType->isEqual(targetType))
         return sourceExpression;
 
     if (!canCast(sourceType, targetType))
@@ -1068,8 +1092,29 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
 bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     switch (sourceType->getKind()) {
-        // unsigned
+        // from undecided type
         case ValueTypeKind::INT:
+        case ValueTypeKind::FLOAT: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::U8:
+                case ValueTypeKind::U32:
+                case ValueTypeKind::U64:
+
+                case ValueTypeKind::S8:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    return true;
+
+                default:
+                    return false;   
+            }
+            break;
+        }
+
+        // from unsigned
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64: {
@@ -1091,7 +1136,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
-        // signed
+        // from signed
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64: {
@@ -1109,8 +1154,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
-        // float
-        case ValueTypeKind::FLOAT:
+        // from float
         case ValueTypeKind::F32:
         case ValueTypeKind::F64: {
             switch (targetType->getKind()) {
@@ -1235,8 +1279,8 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorNotDefined(shared_ptr<Location> location, string identifier) {
-    string message = format("\"{}\" not defined", identifier);
+void Analyzer::markErrorNotDefined(shared_ptr<Location> location, string name) {
+    string message = format("{} is not defined in scope", name);
     errors.push_back(Error::error(location, message));
 }
 
