@@ -74,6 +74,38 @@
     ret String(string)
 ;
 
+@export StringForSInt fun: value s32 -> blob<String>
+    string data<u8, 16>
+    currentIndex u32 <- 0
+
+    if value < 0
+        string[currentIndex] <- '-'
+        currentIndex <- currentIndex + 1
+        value <- value * -1
+    ;
+
+    startIndex u32 <- currentIndex
+
+    // first get digits in reversed order
+    rep true, value > 0
+        string[currentIndex] <- ((value % 10) + '0').u8
+        value <- value / 10
+        currentIndex <- currentIndex + 1
+    ;
+
+    // and then swap them
+    rep i u32 <- startIndex, i < (startIndex + currentIndex) / 2, i <- i + 1
+        tmp u8 <- string[i]
+        string[i] <- string[currentIndex - i - 1 + startIndex]
+        string[currentIndex - i - 1 + startIndex] <- tmp
+    ;
+
+    // add the terminating 0
+    string[currentIndex] <- 0
+
+    ret String(string)
+;
+
 @export StringForFloat fun: value f32 -> blob<String>
     string data<u8, 16>
     currentIndex u32 <- 0

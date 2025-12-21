@@ -6,6 +6,8 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Constants.h>
 
+class ValueType;
+
 using namespace std;
 
 class WrappedValue {
@@ -14,13 +16,14 @@ private:
     llvm::Value *pointerValue;
     llvm::Constant *constantValue;
     llvm::Type *type;
+    shared_ptr<ValueType> valueType;
 
 public:
     WrappedValue();
 
-    static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value);
-    static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, int64_t value);
-    static shared_ptr<WrappedValue> wrappedSIntValue(llvm::Type *type, int64_t value);
+    static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType);
+    static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, int64_t value, shared_ptr<ValueType> valueType);
+    static shared_ptr<WrappedValue> wrappedSIntValue(llvm::Type *type, int64_t value, shared_ptr<ValueType> valueType);
 
     llvm::Value *getValue();
     llvm::Value *getPointerValue();
@@ -29,6 +32,7 @@ public:
     llvm::Type *getType();
     llvm::ArrayType *getArrayType();
     llvm::StructType *getStructType();
+    shared_ptr<ValueType> getValueType();
 
     bool isArray();
     bool isPointer();

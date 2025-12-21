@@ -1092,8 +1092,29 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
 bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     switch (sourceType->getKind()) {
-        // unsigned
+        // from undecided type
         case ValueTypeKind::INT:
+        case ValueTypeKind::FLOAT: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::U8:
+                case ValueTypeKind::U32:
+                case ValueTypeKind::U64:
+
+                case ValueTypeKind::S8:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    return true;
+
+                default:
+                    return false;   
+            }
+            break;
+        }
+
+        // from unsigned
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64: {
@@ -1115,7 +1136,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
-        // signed
+        // from signed
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64: {
@@ -1133,8 +1154,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
-        // float
-        case ValueTypeKind::FLOAT:
+        // from float
         case ValueTypeKind::F32:
         case ValueTypeKind::F64: {
             switch (targetType->getKind()) {

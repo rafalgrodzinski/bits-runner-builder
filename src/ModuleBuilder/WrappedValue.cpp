@@ -2,8 +2,10 @@
 
 WrappedValue::WrappedValue() { }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value) {
+shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
+
+    wrappedValue->valueType = valueType;
 
     if (llvm::LoadInst *loadInst = llvm::dyn_cast<llvm::LoadInst>(value)) {
         wrappedValue->value = value;
@@ -39,22 +41,24 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>
     return wrappedValue;
 }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedUIntValue(llvm::Type *type, int64_t value) {
+shared_ptr<WrappedValue> WrappedValue::wrappedUIntValue(llvm::Type *type, int64_t value, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
     wrappedValue->value = llvm::ConstantInt::get(type, value, false);
     wrappedValue->pointerValue = llvm::ConstantInt::get(type, value, false);
     wrappedValue->type = type;
+    wrappedValue->valueType = valueType;
 
     return wrappedValue;
 }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedSIntValue(llvm::Type *type, int64_t value) {
+shared_ptr<WrappedValue> WrappedValue::wrappedSIntValue(llvm::Type *type, int64_t value, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
     wrappedValue->value = llvm::ConstantInt::get(type, value, true);
     wrappedValue->pointerValue = llvm::ConstantInt::get(type, value, true);
     wrappedValue->type = type;
+    wrappedValue->valueType = valueType;
 
     return wrappedValue;
 }
@@ -81,6 +85,10 @@ llvm::ArrayType *WrappedValue::getArrayType() {
 
 llvm::StructType *WrappedValue::getStructType() {
     return llvm::dyn_cast<llvm::StructType>(type);
+}
+
+shared_ptr<ValueType> WrappedValue::getValueType() {
+    return valueType;
 }
 
 bool WrappedValue::isArray() {
