@@ -16,10 +16,10 @@
     msg.println.val({msg.adr})
 
     val_u8 <- 100
-    msg <- @B.StringForUInt(val_u8)
+    msg <- @B.StringForU32(val_u8)
     msg.println.val({msg.adr})
 
-    msg <- @B.StringForSInt(val_u8.s32)
+    msg <- @B.StringForS32(val_u8.s32)
     msg.println.val({msg.adr})
 
     msg <- @B.String("\n")
@@ -30,10 +30,10 @@
     msg.println.val({msg.adr})
 
     val_u8 <- 300
-    msg <- @B.StringForUInt(val_u8)
+    msg <- @B.StringForU32(val_u8)
     msg.println.val({msg.adr})
 
-    msg <- @B.StringForSInt(val_u8.s32)
+    msg <- @B.StringForS32(val_u8.s32)
     msg.println.val({msg.adr})
 
     msg <- @B.String("\n")
@@ -44,10 +44,10 @@
     msg.println.val({msg.adr})
 
     val_u8 <- 100 + 300
-    msg <- @B.StringForUInt(val_u8)
+    msg <- @B.StringForU32(val_u8)
     msg.println.val({msg.adr})
 
-    msg <- @B.StringForSInt(val_u8.s32)
+    msg <- @B.StringForS32(val_u8.s32)
     msg.println.val({msg.adr})
 
     msg <- @B.String("\n")
@@ -60,10 +60,10 @@
     msg.println.val({msg.adr})
 
     val_u32 <- -4
-    msg <- @B.StringForUInt(val_u32)
+    msg <- @B.StringForU32(val_u32)
     msg.println.val({msg.adr})
 
-    msg <- @B.StringForSInt(val_u32.s32)
+    msg <- @B.StringForS32(val_u32.s32)
     msg.println.val({msg.adr})
 
     msg <- @B.String("\n")
@@ -74,10 +74,10 @@
     msg.println.val({msg.adr})
 
     val_s32 <- -300
-    msg <- @B.StringForSInt(val_s32)
+    msg <- @B.StringForS32(val_s32)
     msg.println.val({msg.adr})
 
-    msg <- @B.StringForSInt(val_s32.s8)
+    msg <- @B.StringForS32(val_s32.s8)
     msg.println.val({msg.adr})
 
     msg <- @B.String("\n")
@@ -89,10 +89,10 @@
     msg.println.val({msg.adr})
 
     val_s32 <- -7.1234
-    msg <- @B.StringForSInt(val_s32)
+    msg <- @B.StringForS32(val_s32)
     msg.println.val({msg.adr})
 
-    msg <- @B.StringForUInt(val_s32.u32)
+    msg <- @B.StringForU32(val_s32.u32)
     msg.println.val({msg.adr})
 
     msg <- @B.String("\n")
@@ -103,10 +103,10 @@
     msg.println.val({msg.adr})
 
     val_f32 <- 3.141592
-    msg <- @B.StringForFloat(val_f32)
+    msg <- @B.StringForF32(val_f32)
     msg.println.val({msg.adr})
 
-    msg <- @B.StringForUInt(val_f32.u8)
+    msg <- @B.StringForU32(val_f32.u8)
     msg.println.val({msg.adr})
 
     msg <- @B.String("\n")
@@ -119,7 +119,7 @@
 
     val_data_f32 <- {-7.2, -4.4, 12.8, 3.333, 0, 745.88}
     rep i u32 <- 0, i < val_data_f32.count, i <- i + 1
-        msg <- @B.StringForFloat(val_data_f32[i])
+        msg <- @B.StringForF32(val_data_f32[i])
         msg.print.val({msg.adr})
 
         msg <- @B.String(" ")
@@ -131,7 +131,7 @@
 
     val_data_s32 <- val_data_f32.data<s32>
     rep i u32 <- 0, i < val_data_s32.count, i <- i + 1
-        msg <- @B.StringForSInt(val_data_s32[i])
+        msg <- @B.StringForS32(val_data_s32[i])
         msg.print.val({msg.adr})
 
         msg <- @B.String(" ")
@@ -143,7 +143,7 @@
 
     val_data_u8 <- val_data_s32.data<u8>
     rep i u32 <- 0, i < val_data_u8.count, i <- i + 1
-        msg <- @B.StringForUInt(val_data_u8[i])
+        msg <- @B.StringForU32(val_data_u8[i])
         msg.print.val({msg.adr})
 
         msg <- @B.String(" ")

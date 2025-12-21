@@ -2,7 +2,7 @@
 
 @export main fun -> u32
     recentDate blob<@B.Date> <- @B.DateForComponents(1987, 12, 6, 7, 30, 30)
-    dateString blob<@B.String> <- @B.StringForUInt(recentDate.timestamp)
+    dateString blob<@B.String> <- @B.StringForU32(recentDate.timestamp)
     dateString.println.val({dateString.adr})
 
     ret 0

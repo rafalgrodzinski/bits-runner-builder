@@ -1,6 +1,6 @@
 @import B
 
 @export main fun
-    numStr blob<@B.String> <- @B.StringForFloat(36.654326)
+    numStr blob<@B.String> <- @B.StringForChar('x')
     numStr.println.val({numStr.adr})
 ;

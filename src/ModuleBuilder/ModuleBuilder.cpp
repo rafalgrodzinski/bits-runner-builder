@@ -1644,7 +1644,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
 
             // and finally store source member in the target member
-            builder->CreateStore(castSourceMemberValue->getPointerValue(), targetMemberPtr);
+            builder->CreateStore(castSourceMemberValue->getValue(), targetMemberPtr);
         }
         return WrappedValue::wrappedValue(
             builder,

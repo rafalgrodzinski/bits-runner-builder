@@ -1,24 +1,56 @@
 @import B
 
 @export main fun -> u32
+    msg blob<@B.String>
+
+    // Printing
+    msg <- @B.String("T1: Printing")
+    msg.println.val({msg.adr})
+    msg <- @B.String("Hello, World!")
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForBool(false)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForChar('?')
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForU32(1024)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForS32(-33)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringForF32(3.14)
+    msg.println.val({msg.adr})
+
+    msg <- @B.StringHexForU32(0xdeadbeef)
+    msg.println.val({msg.adr})
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
     // Substring
-    substring blob<@B.String> <- @B.String("Substring")
-    substring.println.val({substring.adr})
+    msg <- @B.String("T2: Substring")
+    msg.println.val({msg.adr})
 
     greeting blob<@B.String> <- @B.String("Hello, World!")
     greeting.println.val({greeting.adr})
 
-    greetingLength blob<@B.String> <- @B.StringForUInt(greeting.length.val({greeting.adr}))
-    greetingLength.println.val({greetingLength.adr})
+    msg <- @B.StringForU32(greeting.length.val({greeting.adr}))
+    msg.println.val({msg.adr})
 
-    sub blob<@B.String> <- greeting.subString.val({greeting.adr}, 2, 10)
-    sub.println.val({sub.adr})
+    subGreeting blob<@B.String> <- greeting.subString.val({greeting.adr}, 2, 10)
+    subGreeting.println.val({subGreeting.adr})
 
-    subLength blob<@B.String> <- @B.StringForUInt(sub.length.val({sub.adr}))
-    subLength.println.val({subLength.adr})
+    msg <- @B.StringForU32(subGreeting.length.val({subGreeting.adr}))
+    msg.println.val({msg.adr})
+
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
 
     // Comparison
-    comparison blob<@B.String> <- @B.String("\nComparison")
+    comparison blob<@B.String> <- @B.String("T3: Comparison")
     comparison.println.val({comparison.adr})
 
     stringA blob<@B.String> <- @B.String("Apple")
@@ -31,8 +63,11 @@
     compB blob<@B.String> <- @B.StringForBool(stringA.isEqual.val({stringA.adr}, stringB))
     compB.println.val({compB.adr})
 
+    msg <- @B.String("\n")
+    msg.print.val({msg.adr})
+
     // Find
-    find blob<@B.String> <- @B.String("\nFind")
+    find blob<@B.String> <- @B.String("T4: Find")
     find.println.val({find.adr})
 
     longer blob<@B.String> <- @B.String("This is a longer string with a dog")
@@ -40,14 +75,14 @@
     shorterB blob<@B.String> <- @B.String("long")
     shorterC blob<@B.String> <- @B.String("dog")
 
-    findResA blob<@B.String> <- @B.StringForUInt(longer.find.val({longer.adr}, shorterA))
+    findResA blob<@B.String> <- @B.StringForU32(longer.find.val({longer.adr}, shorterA))
     findResA.println.val({findResA.adr})
 
-    findResB blob<@B.String> <- @B.StringForUInt(longer.find.val({longer.adr}, shorterB))
+    findResB blob<@B.String> <- @B.StringForU32(longer.find.val({longer.adr}, shorterB))
     findResB.println.val({findResB.adr})
 
 
-    findResC blob<@B.String> <- @B.StringForUInt(longer.find.val({longer.adr}, shorterC))
+    findResC blob<@B.String> <- @B.StringForU32(longer.find.val({longer.adr}, shorterC))
     findResC.println.val({findResC.adr})
 
     ret 0
