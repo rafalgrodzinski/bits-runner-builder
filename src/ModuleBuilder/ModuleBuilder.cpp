@@ -1703,12 +1703,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 };
                 llvm::Type *expType = llvm::ArrayType::get(typeForValueType(expression->getValueType()), 0); // TODO: this is hack and should be fixed
                 llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(expType);
-                sourceValue->print(llvm::outs());
-                llvm::outs() << "\n";
-                sourceValue->getType()->print(llvm::outs());
-                llvm::outs() << "\n";
-                sourceArrayType->print(llvm::outs());
-                llvm::outs() << "\n";
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expressionValue->getIdentifier()));
                 return WrappedValue::wrappedValue(
                     builder,

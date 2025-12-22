@@ -1,9 +1,16 @@
+//@import B
+
+/*@export main fun
+    //msg blob<@B.String>
+    //msg <- @B.String("Hello, World!")
+    msg data<u8, 256> <- "Hello world!"
+;*/
+
 doStuff fun: nums data<u8, 256>
     nums[4] <- nums[5] + nums[6]
-    nums[7] <- nums[8] + nums[9]
 ;
 
-@export main fun
+main fun
     nums data<u8, 256>
     doStuff(nums)
 ;

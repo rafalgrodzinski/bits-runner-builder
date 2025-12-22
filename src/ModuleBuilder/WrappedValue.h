@@ -12,11 +12,12 @@ using namespace std;
 
 class WrappedValue {
 private:
-    llvm::Value *value;
-    llvm::Value *pointerValue;
     llvm::Constant *constantValue;
     llvm::Type *type;
     shared_ptr<ValueType> valueType;
+
+    function<llvm::Value *()> valueLambda;
+    function<llvm::Value *()> pointerValueLambda;
 
 public:
     WrappedValue();
