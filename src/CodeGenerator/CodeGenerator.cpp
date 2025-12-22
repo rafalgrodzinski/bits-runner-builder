@@ -153,6 +153,8 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     }
 
     llvm::legacy::PassManager passManager;
+    passManager.add((llvm::Pass *)llvm::createCFGSimplificationPass());
+    passManager.add((llvm::Pass *)llvm::createPromoteMemoryToRegisterPass());
     if (targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, codeGenFileType)) {
         cerr << "Failed to generate file " << fileName << endl;
         exit(1);

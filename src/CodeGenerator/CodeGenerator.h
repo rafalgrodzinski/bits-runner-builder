@@ -11,6 +11,8 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/TargetParser/Host.h>
 #include <llvm/IR/CallingConv.h>
+#include <llvm/Transforms/Utils.h>
+#include <llvm/Transforms/Scalar.h>
 
 using namespace std;
 

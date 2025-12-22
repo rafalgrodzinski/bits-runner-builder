@@ -1,6 +1,9 @@
-@import B
+doStuff fun: nums data<u8, 256>
+    nums[4] <- nums[5] + nums[6]
+    nums[7] <- nums[8] + nums[9]
+;
 
 @export main fun
-    numStr blob<@B.String> <- @B.StringForChar('x')
-    numStr.println.val({numStr.adr})
+    nums data<u8, 256>
+    doStuff(nums)
 ;
