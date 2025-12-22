@@ -845,7 +845,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression
         case ExpressionKind::CHAINED:
             return valueForExpression(dynamic_pointer_cast<ExpressionChained>(expression));
         case ExpressionKind::COMPOSITE_LITERAL:
-            return valueForExpression(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression))->getValue();
         case ExpressionKind::GROUPING:
             return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::IF_ELSE:
@@ -1127,7 +1127,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> exp
     return currentWrappedValue->getValue();
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
     llvm::Type *type = typeForValueType(expressionCompositeLiteral->getValueType());
 
     // First try making them constant
@@ -1143,7 +1143,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLit
             constantValues.push_back(constantValue);
         }
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(type);
-        return llvm::ConstantArray::get(arrayType, constantValues);
+        llvm::Constant *constantArray = llvm::ConstantArray::get(arrayType, constantValues);
+        return WrappedValue::wrappedValue(builder, constantArray, expressionCompositeLiteral->getValueType());
     } else if (expressionCompositeLiteral->getValueType()->isBlob()) {
         vector<llvm::Constant*> constantValues;
         for (shared_ptr<Expression> memberExpression : expressionCompositeLiteral->getExpressions()) {
@@ -1154,13 +1155,15 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLit
             constantValues.push_back(constantValue);
         }
         llvm::StructType *structType = llvm::dyn_cast<llvm::StructType>(type);
-        return llvm::ConstantStruct::get(structType, constantValues);
+        llvm::Constant *constantStruct = llvm::ConstantStruct::get(structType, constantValues);
+        return WrappedValue::wrappedValue(builder, constantStruct, expressionCompositeLiteral->getValueType());
     } else if (expressionCompositeLiteral->getValueType()->isPointer()) {
         llvm::Value *value = valueForExpression(expressionCompositeLiteral->getExpressions().at(0));
         llvm::Constant *constantValue = llvm::dyn_cast<llvm::Constant>(value);
         if (constantValue == nullptr)
             goto not_constant;
-        return llvm::ConstantExpr::getIntToPtr(constantValue, typePtr);
+        llvm::Constant *constant = llvm::ConstantExpr::getIntToPtr(constantValue, typePtr);
+        return WrappedValue::wrappedValue(builder, constant, expressionCompositeLiteral->getValueType());
     }
 
     // Otherwise try normal dynamic alloca
@@ -1175,7 +1178,8 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCompositeLit
         WrappedValue::wrappedValue(builder, alloca, expressionCompositeLiteral->getValueType()),
         expressionCompositeLiteral
     );
-    return builder->CreateLoad(type, alloca);
+    //return builder->CreateLoad(type, alloca);
+    return WrappedValue::wrappedValue(builder, alloca, expressionCompositeLiteral->getValueType());
 }
 
 llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
@@ -1626,39 +1630,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
 
         int copyCount = min(sourceSize, targetSize);
 
-        // iterate over each of the member
-        for (int i=0; i<copyCount; i++) {
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                builder->getInt32(i)
-            };
+        builder->CreateMemCpy(
+            targetValue,
+            llvm::Align(16),
+            sourceValue,
+            llvm::Align(16),
+             copyCount
+        );
 
-            // constant or non-constant copy?
-            llvm::Value *sourceMemberValue;
-            if (llvm::Constant *sourceConstantValue = sourceWrappedValue->getConstantValue()) {
-                sourceMemberValue = sourceConstantValue->getAggregateElement(i);
-            } else {
-                llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceArrayType, sourceValue, index);
-                sourceMemberValue = builder->CreateLoad(sourceArrayType->getArrayElementType(), sourceMemberPtr);
-            }
-            // cast the individual source member to target type
-            shared_ptr<WrappedValue> castSourceMemberValue = wrappedValueForCast(
-                WrappedValue::wrappedValue(
-                    builder,
-                    sourceMemberValue,
-                    sourceWrappedValue->getValueType()->getSubType()
-                ),
-                targetValueType->getSubType()
-            );
-            if (castSourceMemberValue == nullptr)
-                return nullptr;
-
-            // get the target member
-            llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetValue, index);
-
-            // and finally store source member in the target member
-            builder->CreateStore(castSourceMemberValue->getValue(), targetMemberPtr);
-        }
         return WrappedValue::wrappedValue(
             builder,
             builder->CreateLoad(targetType, targetValue),

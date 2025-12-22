@@ -129,7 +129,7 @@ private:
     llvm::Value *valueForExpression(shared_ptr<ExpressionBlock> expressionBlock);
     llvm::Value *valueForExpression(shared_ptr<ExpressionCall> expressionCall);
     llvm::Value *valueForExpression(shared_ptr<ExpressionChained> expressionChained);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
     llvm::Value *valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
     llvm::Value *valueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
     llvm::Value *valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
