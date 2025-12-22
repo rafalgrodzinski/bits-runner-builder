@@ -721,20 +721,13 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 int targetCount = targetWrappedValue->getArrayType()->getNumElements();
                 int count = min(sourceCount, targetCount);
 
-                for (int i=0; i<count; i++) {
-                    llvm::Value *index[] = {
-                        builder->getInt32(0),
-                        builder->getInt32(i)
-                    };
-
-                    // get pointers for both source and target
-                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceType, sourceValue, index);
-                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
-                    // load value from source pointer
-                    llvm::Value *sourceMemberValue = builder->CreateLoad(sourceType->getArrayElementType(), sourceMemberPtr);
-                    // and then store it at the target pointer
-                    builder->CreateStore(sourceMemberValue, targetMemberPtr);
-                }
+                builder->CreateMemCpy(
+                    targetWrappedValue->getPointerValue(),
+                    llvm::Align(1),
+                    sourceValue,
+                    llvm::Align(1),
+                    count
+                );
                 break;
             }
             default:
