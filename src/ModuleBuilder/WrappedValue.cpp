@@ -30,6 +30,12 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>
             wrappedValue->pointerValue = alloca;
             wrappedValue->type = retType;
         }
+    } else if (llvm::Argument *argument = llvm::dyn_cast<llvm::Argument>(value)) {
+        wrappedValue->value = value;
+        wrappedValue->pointerValue = value;
+        wrappedValue->type = value->getType();
+        argument->print(llvm::outs());
+        llvm::outs() << "\n";
     } else {
         wrappedValue->value = value;
         wrappedValue->pointerValue = value;

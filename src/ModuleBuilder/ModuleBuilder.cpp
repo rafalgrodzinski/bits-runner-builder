@@ -232,14 +232,27 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         llvm::Argument *funArgument = fun->getArg(i);
         funArgument->setName(argument.first);
 
+        /*scope->setWrappedValue(
+            argument.first,
+            WrappedValue::wrappedValue(
+                builder,
+                funArgument,
+                argument.second
+            )
+        );*/
+
         llvm::Type *funArgumentType = typeForValueType(argument.second);
         if (funArgumentType == nullptr)
             return;
         llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, argument.first);
-        if (!scope->setAlloca(argument.first, alloca)) {
-            // TODO: mark error
-            return;
-        }
+        scope->setWrappedValue(
+            argument.first,
+            WrappedValue::wrappedValue(
+                builder,
+                alloca,
+                argument.second
+            )
+        );
         builder->CreateStore(funArgument, alloca);
     }
 
@@ -592,8 +605,14 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
     llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, statement->getIdentifier());
 
     // try registering new variable in scope
-    if (!scope->setAlloca(statement->getIdentifier(), alloca))
-        return;
+    scope->setWrappedValue(
+        statement->getIdentifier(),
+        WrappedValue::wrappedValue(
+            builder,
+            alloca,
+            statement->getValueType()
+        )
+    );
 
     if (statement->getExpression() == nullptr)
         return;
@@ -667,10 +686,11 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
 
                 if (valueExpression->getKind() == ExpressionKind::VALUE) {
                     shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(valueExpression);
-                    sourceValue = scope->getAlloca(expressionValue->getIdentifier());
-                    if (sourceValue == nullptr)
+                    shared_ptr<WrappedValue> sourceWrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
+                    if (sourceWrappedValue == nullptr)
                         return;
-                    sourceType = ((llvm::AllocaInst*)sourceValue)->getAllocatedType();
+                    sourceValue = sourceWrappedValue->getValue();
+                    sourceType = sourceWrappedValue->getType();
                 } else if (valueExpression->getKind() == ExpressionKind::CALL) {
                     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
                     llvm::Value *sourceExpressionValue = valueForExpression(expressionCall);
@@ -1299,12 +1319,12 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionValue> expre
     llvm::Value *value = nullptr;
     llvm::Type *type = nullptr;
 
-    llvm::AllocaInst *localAlloca = scope->getAlloca(expressionValue->getIdentifier());
+    shared_ptr<WrappedValue> localWrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
     llvm::Value *globalValuePtr = scope->getGlobal(expressionValue->getIdentifier());
     llvm::Value *fun = scope->getFunction(expressionValue->getIdentifier());
-    if (localAlloca != nullptr) {
-        value = localAlloca;
-        type = localAlloca->getAllocatedType();
+    if (localWrappedValue != nullptr) {
+        value = localWrappedValue->getPointerValue();
+        type = localWrappedValue->getType();
     } else if (globalValuePtr != nullptr) {
         shared_ptr<ValueType> valueType = expressionValue->getValueType();
         type = typeForValueType(valueType);
@@ -1683,6 +1703,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 };
                 llvm::Type *expType = llvm::ArrayType::get(typeForValueType(expression->getValueType()), 0); // TODO: this is hack and should be fixed
                 llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(expType);
+                sourceValue->print(llvm::outs());
+                llvm::outs() << "\n";
+                sourceValue->getType()->print(llvm::outs());
+                llvm::outs() << "\n";
+                sourceArrayType->print(llvm::outs());
+                llvm::outs() << "\n";
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("{}[]", expressionValue->getIdentifier()));
                 return WrappedValue::wrappedValue(
                     builder,
