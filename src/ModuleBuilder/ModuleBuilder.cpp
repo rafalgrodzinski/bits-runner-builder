@@ -232,28 +232,14 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         llvm::Argument *funArgument = fun->getArg(i);
         funArgument->setName(argument.first);
 
-        /*scope->setWrappedValue(
+        scope->setWrappedValue(
             argument.first,
             WrappedValue::wrappedValue(
                 builder,
                 funArgument,
                 argument.second
             )
-        );*/
-
-        llvm::Type *funArgumentType = typeForValueType(argument.second);
-        if (funArgumentType == nullptr)
-            return;
-        llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, argument.first);
-        scope->setWrappedValue(
-            argument.first,
-            WrappedValue::wrappedValue(
-                builder,
-                alloca,
-                argument.second
-            )
         );
-        builder->CreateStore(funArgument, alloca);
     }
 
     // build function body
@@ -1178,7 +1164,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         WrappedValue::wrappedValue(builder, alloca, expressionCompositeLiteral->getValueType()),
         expressionCompositeLiteral
     );
-    //return builder->CreateLoad(type, alloca);
     return WrappedValue::wrappedValue(builder, alloca, expressionCompositeLiteral->getValueType());
 }
 

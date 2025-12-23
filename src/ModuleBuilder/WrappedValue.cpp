@@ -10,12 +10,10 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>
     if (llvm::LoadInst *loadInst = llvm::dyn_cast<llvm::LoadInst>(value)) {
         wrappedValue->valueLambda = [loadInst](){ return loadInst; };
         wrappedValue->pointerValueLambda = [loadInst](){ return loadInst->getPointerOperand(); };
-
-        wrappedValue->type = value->getType();
+        wrappedValue->type = loadInst->getType();
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
         wrappedValue->valueLambda = [allocaInst](){ return allocaInst; };
         wrappedValue->pointerValueLambda = [allocaInst](){ return allocaInst; };
-
         wrappedValue->type = allocaInst->getAllocatedType();
     } else if (llvm::CallInst *callInst = llvm::dyn_cast<llvm::CallInst>(value)) {
         llvm::FunctionType *funType = callInst->getFunctionType();
@@ -23,8 +21,6 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>
         if (retType->isVoidTy()) {
             wrappedValue->valueLambda = [retType](){ return llvm::UndefValue::get(retType); };
             wrappedValue->pointerValueLambda = [retType](){ return llvm::UndefValue::get(retType); };
-
-            wrappedValue->type = retType;
         } else {
             wrappedValue->valueLambda = [callInst](){ return callInst; };
             wrappedValue->pointerValueLambda = [builder, retType, callInst](){
@@ -32,22 +28,33 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>
                 builder->CreateStore(callInst, alloca);
                 return alloca;
             };
-
-            wrappedValue->type = retType;
         }
+        wrappedValue->type = retType;
     } else if (llvm::Argument *argument = llvm::dyn_cast<llvm::Argument>(value)) {
-        wrappedValue->valueLambda = [argument]() { return argument; };
-        wrappedValue->pointerValueLambda = [argument](){ return argument; };
-
+        llvm::Type *type = value->getType();
+        wrappedValue->valueLambda = [argument](){ return argument; };
+        wrappedValue->pointerValueLambda = [builder, type, argument](){
+                llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
+                builder->CreateStore(argument, alloca);
+                return alloca;
+            };
+        wrappedValue->type = type;
+    } else if (llvm::Constant *constant = llvm::dyn_cast<llvm::Constant>(value)) {
+        wrappedValue->valueLambda = [constant]() { return constant; };
+        wrappedValue->pointerValueLambda = [builder, constant]() {
+            return new llvm::GlobalVariable(
+                constant->getType(),
+                true,
+                llvm::GlobalValue::LinkageTypes::PrivateLinkage,
+                constant
+            );
+        };
         wrappedValue->type = value->getType();
     } else {
         wrappedValue->valueLambda = [value]() { return value; };
         wrappedValue->pointerValueLambda = [value]() { return value; };
-
         wrappedValue->type = value->getType();
     }
-
-    wrappedValue->constantValue = llvm::dyn_cast<llvm::Constant>(value);
 
     return wrappedValue;
 }
