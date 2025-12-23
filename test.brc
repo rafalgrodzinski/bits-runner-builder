@@ -1,6 +1,3 @@
-@import B
-
 @export main fun
-    numStr blob<@B.String> <- @B.StringForChar('x')
-    numStr.println.val({numStr.adr})
+    string data<u8, 256> <- "Hello"
 ;

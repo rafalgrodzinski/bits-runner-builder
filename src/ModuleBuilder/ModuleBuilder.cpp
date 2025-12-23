@@ -165,7 +165,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssignment) {
-    llvm::Value *targetValue = valueForExpression(statementAssignment->getExpressionChained());
+    llvm::Value *targetValue = wrappedValueForExpression(statementAssignment->getExpressionChained())->getValue();
     if (targetValue == nullptr)
         return;
 
@@ -201,7 +201,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementExpression> statementExpression) {
     // ignore result
-    valueForExpression(statementExpression->getExpression());
+    wrappedValueForExpression(statementExpression->getExpression());
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFunction) {
@@ -407,7 +407,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementRepeat> statementRepeat) 
     // pre condition
     builder->SetInsertPoint(preBlock);
     if (preExpression != nullptr) {
-        llvm::Value *preConditionValue = valueForExpression(preExpression);
+        llvm::Value *preConditionValue = wrappedValueForExpression(preExpression)->getValue();
         builder->CreateCondBr(preConditionValue, bodyBlock, afterBlock);
     } else {
         builder->CreateBr(bodyBlock);
@@ -429,7 +429,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementRepeat> statementRepeat) 
 
     // post condition
     if (postExpression != nullptr) {
-        llvm::Value *postConditionValue = valueForExpression(postExpression);
+        llvm::Value *postConditionValue = wrappedValueForExpression(postExpression)->getValue();
         builder->CreateCondBr(postConditionValue, preBlock, afterBlock);
     } else {
         builder->CreateBr(preBlock);
@@ -446,7 +446,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) 
     llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
 
     if (!statementReturn->getExpression()->getValueType()->isEqual(ValueType::NONE)) {
-        llvm::Value *returnValue = valueForExpression(statementReturn->getExpression());
+        llvm::Value *returnValue = wrappedValueForExpression(statementReturn->getExpression())->getValue();
         builder->CreateRet(returnValue);
     } else {
         builder->CreateRetVoid();
@@ -653,7 +653,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                         builder->getInt32(i)
                     };
                     llvm::Value *targetPtr = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
-                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i));
+                    llvm::Value *sourceValue = wrappedValueForExpression(valueExpressions.at(i))->getValue();
                     if (sourceValue == nullptr)
                         return;
                     builder->CreateStore(sourceValue, targetPtr);
@@ -679,7 +679,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     sourceType = sourceWrappedValue->getType();
                 } else if (valueExpression->getKind() == ExpressionKind::CALL) {
                     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
-                    llvm::Value *sourceExpressionValue = valueForExpression(expressionCall);
+                    llvm::Value *sourceExpressionValue = wrappedValueForExpression(expressionCall)->getValue();
                     if (sourceExpressionValue == nullptr)
                         return;
                     // store call result in a temporary alloca
@@ -688,11 +688,12 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     builder->CreateStore(sourceExpressionValue, sourceValue);
                 } else {
                     shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(valueExpression);
-                    shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(
+                    /*shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(
                         builder,
                         valueForExpression(expressionChained),
                         expressionChained->getValueType()
-                    );
+                    );*/
+                    shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(expressionChained);
                     sourceValue = wrappedValue->getPointerValue();
                     sourceType = wrappedValue->getType();
                 }
@@ -732,7 +733,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Value *sourceValue = valueForExpression(valueExpressions.at(i));
+                    llvm::Value *sourceValue = wrappedValueForExpression(valueExpressions.at(i))->getValue();
                     llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
                     builder->CreateStore(sourceValue, targetMember);
                 }
@@ -743,7 +744,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             case ExpressionKind::CHAINED:
             // blob <- function()
             case ExpressionKind::CALL: {
-                llvm::Value *sourceValue = valueForExpression(valueExpression);
+                llvm::Value *sourceValue = wrappedValueForExpression(valueExpression)->getValue();
                 builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
                 break;
             }
@@ -761,7 +762,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     break;
                 }
-                llvm::Value *adrValue = valueForExpression(valueExpressions.at(0));
+                llvm::Value *adrValue = wrappedValueForExpression(valueExpressions.at(0))->getValue();
                 if (adrValue == nullptr) {
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     break;
@@ -775,7 +776,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             case ExpressionKind::CHAINED:
             // ptr <- function()
             case ExpressionKind::CALL: {
-                llvm::Value *sourceValue = valueForExpression(valueExpression);
+                llvm::Value *sourceValue = wrappedValueForExpression(valueExpression)->getValue();
                 if (sourceValue == nullptr)
                     return;
                 builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
@@ -802,7 +803,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             // simple <- var
             case ExpressionKind::VALUE:
             case ExpressionKind::CHAINED: {
-                llvm::Value *sourceValue = valueForExpression(valueExpression);
+                llvm::Value *sourceValue = wrappedValueForExpression(valueExpression)->getValue();
                 if (sourceValue == nullptr)
                     return;
                 builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
@@ -819,38 +820,38 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
 //
 // Expressions
 //
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<Expression> expression) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
-            return valueForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
         case ExpressionKind::BLOCK:
-            return valueForExpression(dynamic_pointer_cast<ExpressionBlock>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionBlock>(expression));
         case ExpressionKind::CALL:
-            return valueForExpression(dynamic_pointer_cast<ExpressionCall>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionCall>(expression));
         // Cast ?
         case ExpressionKind::CHAINED:
-            return valueForExpression(dynamic_pointer_cast<ExpressionChained>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionChained>(expression));
         case ExpressionKind::COMPOSITE_LITERAL:
-            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression))->getValue();
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression));
         case ExpressionKind::GROUPING:
-            return valueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionGrouping>(expression));
         case ExpressionKind::IF_ELSE:
-            return valueForExpression(dynamic_pointer_cast<ExpressionIfElse>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::LITERAL:
-            return valueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
         case ExpressionKind::NONE:
-            return llvm::UndefValue::get(typeVoid);
+            return WrappedValue::wrappedNone(typeVoid, ValueType::NONE);
         case ExpressionKind::UNARY:
-            return valueForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::VALUE:
-            return valueForExpression(dynamic_pointer_cast<ExpressionValue>(expression));
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionValue>(expression));
         default:
             markErrorUnexpected(expression->getLocation(), "expression");
             return nullptr;
     }
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
     llvm::Value *leftValue = valueForExpression(expressionBinary->getLeft());
     llvm::Value *rightValue = valueForExpression(expressionBinary->getRight());
 
@@ -1006,12 +1007,12 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionBinary> expr
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionBlock> expressionBlock) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBlock> expressionBlock) {
     buildStatement(expressionBlock->getStatementBlock());
-    return valueForExpression(expressionBlock->getResultStatementExpression()->getExpression());
+    return wrappedValueForExpression(expressionBlock->getResultStatementExpression()->getExpression());
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCall> expressionCall) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionCall> expressionCall) {
     if (llvm::Function *fun = scope->getFunction(expressionCall->getName())) {
         return wrappedValueForSourceValue(fun, fun->getFunctionType(), expressionCall)->getValue();
     }
@@ -1029,7 +1030,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionCall> expres
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionChained> expressionChained) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionChained> expressionChained) {
     shared_ptr<WrappedValue> currentWrappedValue;
     shared_ptr<Expression> parentExpression;
 
@@ -1167,11 +1168,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     return WrappedValue::wrappedValue(builder, alloca, expressionCompositeLiteral->getValueType());
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
-    return valueForExpression(expressionGrouping->getSubExpression());
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
+    return wrappedValueForExpression(expressionGrouping->getSubExpression());
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse) {
     shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
 
     llvm::Function *fun = builder->GetInsertBlock()->getParent();
@@ -1223,7 +1224,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionIfElse> expr
     }
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
     switch (expressionLiteral->getValueType()->getKind()) {
         case ValueTypeKind::BOOL:
             return llvm::ConstantInt::getBool(typeBool, expressionLiteral->getBoolValue());
@@ -1261,7 +1262,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionLiteral> exp
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
     shared_ptr<ValueType> valueType = expressionUnary->getSubExpression()->getValueType();
     llvm::Value *value = valueForExpression(expressionUnary->getSubExpression());
     if (value == nullptr)
@@ -1297,7 +1298,7 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionUnary> expre
     return nullptr;
 }
 
-llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionValue> expressionValue) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue) {
     llvm::Value *value = nullptr;
     llvm::Type *type = nullptr;
 
@@ -1322,14 +1323,6 @@ llvm::Value *ModuleBuilder::valueForExpression(shared_ptr<ExpressionValue> expre
     }
 
     return wrappedValueForSourceValue(value, type, expressionValue)->getValue();
-}
-
-shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Expression> expression) {
-    llvm::Value *value = valueForExpression(expression);
-    if (value == nullptr)
-        return nullptr;
-
-    return WrappedValue::wrappedValue(builder, value, expression->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression) {
@@ -1651,7 +1644,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
             }
             case ExpressionValueKind::DATA: 
             case ExpressionValueKind::BUILT_IN_VAL_DATA: {
-                llvm::Value *indexValue = valueForExpression(expressionValue->getIndexExpression());
+                llvm::Value *indexValue = wrappedValueForExpression(expressionValue->getIndexExpression())->getValue();
                 if (indexValue == nullptr)
                     return nullptr;
                 llvm::Value *index[] = {
@@ -1675,7 +1668,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
         vector<llvm::Value*> argValues;
         for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
-            argValues.push_back(valueForExpression(argumentExpression));
+            argValues.push_back(wrappedValueForExpression(argumentExpression)->getValue());
         }
         return WrappedValue::wrappedValue(
             builder,

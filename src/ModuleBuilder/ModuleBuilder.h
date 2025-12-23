@@ -124,19 +124,17 @@ private:
     void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);
 
     // Expressions
-    llvm::Value *valueForExpression(shared_ptr<Expression> expression);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionBinary> expressionBinary);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionBlock> expressionBlock);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionCall> expressionCall);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionChained> expressionChained);
-    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionValue> expressionValue);
-
     shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<Expression> expression);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionBlock> expressionBlock);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionCall> expressionCall);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionChained> expressionChained);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue);
 
     shared_ptr<WrappedValue> wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression);
     shared_ptr<WrappedValue> wrappedValueForCast(shared_ptr<WrappedValue> wrappedValue, shared_ptr<ValueType> targetValueType);

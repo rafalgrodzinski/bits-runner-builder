@@ -83,6 +83,18 @@ shared_ptr<WrappedValue> WrappedValue::wrappedSIntValue(llvm::Type *type, int64_
     return wrappedValue;
 }
 
+shared_ptr<WrappedValue> WrappedValue::wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType) {
+    shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
+
+    wrappedValue->valueLambda = [type]() { return llvm::UndefValue::get(type); };
+    wrappedValue->pointerValueLambda = [type]() { return llvm::UndefValue::get(type); };
+
+    wrappedValue->type = type;
+    wrappedValue->valueType = valueType;
+
+    return wrappedValue;
+}
+
 llvm::Value *WrappedValue::getValue() {
     return valueLambda();
 }
