@@ -701,13 +701,29 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 int elementsCount = min(sourceCount, targetCount);
                 int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
-                builder->CreateMemCpy(
+
+                for (int i=0; i<elementsCount; i++) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+
+                    // get pointers for both source and target
+                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getType(), sourceWrappedValue->getPointerValue(), index);
+                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
+                    // load value from source pointer
+                    llvm::Value *sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getElementType(), sourceMemberPtr);
+                    // and then store it at the target pointer
+                    builder->CreateStore(sourceMemberValue, targetMemberPtr);
+                }
+
+                /*builder->CreateMemCpy(
                     targetWrappedValue->getPointerValue(),
                     targetWrappedValue->getAlignment(),
                     sourceWrappedValue->getPointerValue(),
                     sourceWrappedValue->getAlignment(),
                     elementsCount * elementSize
-                );
+                );*/
                 break;
             }
             default:
@@ -859,23 +875,29 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         // logical
         case ExpressionBinaryOperation::OR: {
             resultValue = builder->CreateLogicalOr(leftValue, rightValue);
+            break;
         }
         case ExpressionBinaryOperation::XOR: {
             resultValue = builder->CreateXor(leftValue, rightValue);
+            break;
         }
         case ExpressionBinaryOperation::AND: {
             resultValue = builder->CreateLogicalAnd(leftValue, rightValue);
+            break;
         }
 
         // bitwise
         case ExpressionBinaryOperation::BIT_OR: {
             resultValue = builder->CreateOr(leftValue, rightValue);
+            break;
         }
         case ExpressionBinaryOperation::BIT_XOR: {
             resultValue = builder->CreateXor(leftValue, rightValue);
+            break;
         }
         case ExpressionBinaryOperation::BIT_AND: {
             resultValue = builder->CreateAnd(leftValue, rightValue);
+            break;
         }
         case ExpressionBinaryOperation::BIT_SHL: {
             if (valueType->isUnsignedInteger())
@@ -1289,9 +1311,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     switch (expressionUnary->getOperation()) {
         case ExpressionUnaryOperation::BIT_NOT:
         case ExpressionUnaryOperation::NOT: {
-            if (valueType->isBool() || valueType->isInteger()) {
+            if (valueType->isBool() || valueType->isInteger())
                 resultValue = builder->CreateNot(value);
-            }
             break;
         }
         case ExpressionUnaryOperation::MINUS: {
@@ -1305,9 +1326,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         }
         case ExpressionUnaryOperation::PLUS: {
-            if (valueType->isNumeric()) {
+            if (valueType->isNumeric())
                 resultValue = value;
-            }
             break;
         }
     }
@@ -1642,13 +1662,28 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         int elementsCount = min(sourceSize, targetSize);
         int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
-        builder->CreateMemCpy(
+        for (int i=0; i<elementsCount; i++) {
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(i)
+            };
+
+            // get pointers for both source and target
+            llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getType(), sourceWrappedValue->getPointerValue(), index);
+            llvm::Value *targetMemberPtr = builder->CreateGEP(targetAlloca->getAllocatedType(), targetAlloca, index);
+            // load value from source pointer
+            llvm::Value *sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getElementType(), sourceMemberPtr);
+            // and then store it at the target pointer
+            builder->CreateStore(sourceMemberValue, targetMemberPtr);
+        }
+
+        /*builder->CreateMemCpy(
             targetAlloca,
             targetAlignment,
             sourceWrappedValue->getPointerValue(),
             sourceWrappedValue->getAlignment(),
             elementsCount * elementSize
-        );
+        );*/
 
         return WrappedValue::wrappedValue(
             module,
