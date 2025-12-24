@@ -1014,17 +1014,17 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         }
     }
 
-    if (resultValue != nullptr) {
-        return WrappedValue::wrappedValue(module, builder, resultValue, expressionBinary->getValueType());
+    if (resultValue == nullptr) {
+        markErrorInvalidOperationBinary(
+            expressionBinary->getLocation(),
+            expressionBinary->getOperation(),
+            expressionBinary->getLeft()->getValueType(),
+            expressionBinary->getRight()->getValueType()
+        );
+        return nullptr;  
     }
 
-    markErrorInvalidOperationBinary(
-        expressionBinary->getLocation(),
-        expressionBinary->getOperation(),
-        expressionBinary->getLeft()->getValueType(),
-        expressionBinary->getRight()->getValueType()
-    );
-    return nullptr;
+    return WrappedValue::wrappedValue(module, builder, resultValue, expressionBinary->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBlock> expressionBlock) {
@@ -1295,12 +1295,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
     }
 
-    if (resultValue != nullptr) {
-        return WrappedValue::wrappedValue(module, builder, resultValue, expressionLiteral->getValueType());
+    if (resultValue == nullptr) {
+        markErrorInvalidLiteral(expressionLiteral->getLocation(), expressionLiteral->getValueType());
+        return nullptr;
     }
 
-    markErrorInvalidLiteral(expressionLiteral->getLocation(), expressionLiteral->getValueType());
-    return nullptr;
+    return WrappedValue::wrappedValue(module, builder, resultValue, expressionLiteral->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
@@ -1332,12 +1332,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         }
     }
 
-    if (resultValue != nullptr) {
-        return WrappedValue::wrappedValue(module, builder, resultValue, expressionUnary->getValueType());
+    if (resultValue == nullptr) {
+        markErrorInvalidOperationUnary(expressionUnary->getLocation(), expressionUnary->getOperation(), valueType);
+        return nullptr;
     }
 
-    markErrorInvalidOperationUnary(expressionUnary->getLocation(), expressionUnary->getOperation(), valueType);
-    return nullptr;
+    return WrappedValue::wrappedValue(module, builder, resultValue, expressionUnary->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue) {
