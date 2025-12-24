@@ -1,3 +1,7 @@
 @export main fun
     string data<u8, 256> <- "Hello"
+    //"Hello".data<u8>
+    //stuff data<s32, 64>
+    //stuff2 data<u32, 128>
+    //stuff2 <- stuff.data<u32>
 ;

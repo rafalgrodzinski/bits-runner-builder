@@ -2,7 +2,7 @@
 
 WrappedValue::WrappedValue() { }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType) {
+shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
     wrappedValue->valueType = valueType;
@@ -41,8 +41,9 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::IRBuilder<>
         wrappedValue->type = type;
     } else if (llvm::Constant *constant = llvm::dyn_cast<llvm::Constant>(value)) {
         wrappedValue->valueLambda = [constant]() { return constant; };
-        wrappedValue->pointerValueLambda = [builder, constant]() {
+        wrappedValue->pointerValueLambda = [module, constant]() {
             return new llvm::GlobalVariable(
+                *module,
                 constant->getType(),
                 true,
                 llvm::GlobalValue::LinkageTypes::PrivateLinkage,
