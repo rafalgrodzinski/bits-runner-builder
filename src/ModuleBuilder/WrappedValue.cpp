@@ -1,5 +1,7 @@
 #include "WrappedValue.h"
 
+#include "Parser/ValueType.h"
+
 WrappedValue::WrappedValue() { }
 
 shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType) {
@@ -143,13 +145,13 @@ shared_ptr<ValueType> WrappedValue::getValueType() {
 }
 
 bool WrappedValue::isArray() {
-    return type->isArrayTy();
+    return valueType->isData();
 }
 
 bool WrappedValue::isPointer() {
-    return type->isPointerTy();
+    return valueType->isPointer();
 }
 
 bool WrappedValue::isStruct() {
-    return type->isStructTy();
+    return valueType->isBlob();
 }
