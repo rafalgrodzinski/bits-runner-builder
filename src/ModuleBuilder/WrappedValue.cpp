@@ -99,11 +99,15 @@ shared_ptr<WrappedValue> WrappedValue::wrappedNone(llvm::Type *type, shared_ptr<
 }
 
 llvm::Value *WrappedValue::getValue() {
-    return valueLambda();
+    if (value == nullptr)
+        value = valueLambda();
+    return value;
 }
 
 llvm::Value *WrappedValue::getPointerValue() {
-    return pointerValueLambda();
+    if (pointerValue == nullptr)
+        pointerValue = pointerValueLambda();
+    return pointerValue;
 }
 
 llvm::Constant *WrappedValue::getConstantValue() {
