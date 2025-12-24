@@ -677,22 +677,22 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     shared_ptr<WrappedValue> sourceWrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
                     if (sourceWrappedValue == nullptr)
                         return;
-                    sourceValue = sourceWrappedValue->getValue();
+                    sourceValue = sourceWrappedValue->getPointerValue();
                     sourceType = sourceWrappedValue->getType();
                 } else if (valueExpression->getKind() == ExpressionKind::CALL) {
                     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
-                    llvm::Value *sourceExpressionValue = wrappedValueForExpression(expressionCall)->getValue();
-                    if (sourceExpressionValue == nullptr)
+                    shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(expressionCall);
+                    if (sourceWrappedValue == nullptr)
                         return;
-                    // store call result in a temporary alloca
-                    sourceType = sourceExpressionValue->getType();
-                    sourceValue = builder->CreateAlloca(sourceType);
-                    builder->CreateStore(sourceExpressionValue, sourceValue);
+                    sourceType = sourceWrappedValue->getType();
+                    sourceValue = sourceWrappedValue->getPointerValue();
                 } else {
                     shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(valueExpression);
-                    shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(expressionChained);
-                    sourceValue = wrappedValue->getPointerValue();
-                    sourceType = wrappedValue->getType();
+                    shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(expressionChained);
+                    if (sourceWrappedValue == nullptr)
+                        return;
+                    sourceValue = sourceWrappedValue->getPointerValue();
+                    sourceType = sourceWrappedValue->getType();
                 }
 
                 if (!sourceType->isArrayTy()) {
@@ -1711,7 +1711,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
         vector<llvm::Value*> argValues;
         for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
-            argValues.push_back(wrappedValueForExpression(argumentExpression)->getValue());
+            shared_ptr<WrappedValue> wrappedvalue = wrappedValueForExpression(argumentExpression);
+            argValues.push_back(wrappedvalue->getValue());
         }
         return WrappedValue::wrappedValue(
             module,

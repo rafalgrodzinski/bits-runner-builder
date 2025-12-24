@@ -12,7 +12,6 @@ using namespace std;
 
 class WrappedValue {
 private:
-    llvm::Constant *constantValue;
     llvm::Type *type;
     shared_ptr<ValueType> valueType;
 
