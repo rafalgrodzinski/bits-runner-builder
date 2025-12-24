@@ -675,54 +675,37 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             case ExpressionKind::CALL: 
             // data <- .var
             case ExpressionKind::CHAINED: {
-                llvm::Value *sourceValue;
-                llvm::Type *sourceType;
-                llvm::ArrayType *sourceArrayType;
+                shared_ptr<WrappedValue> sourceWrappedValue;
 
                 if (valueExpression->getKind() == ExpressionKind::VALUE) {
                     shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(valueExpression);
-                    shared_ptr<WrappedValue> sourceWrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
-                    if (sourceWrappedValue == nullptr)
-                        return;
-                    sourceValue = sourceWrappedValue->getPointerValue();
-                    sourceType = sourceWrappedValue->getType();
-                    sourceArrayType = sourceWrappedValue->getArrayType();
+                    sourceWrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
                 } else if (valueExpression->getKind() == ExpressionKind::CALL) {
                     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(valueExpression);
-                    shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(expressionCall);
-                    if (sourceWrappedValue == nullptr)
-                        return;
-                    sourceValue = sourceWrappedValue->getPointerValue();
-                    sourceType = sourceWrappedValue->getType();
-                    sourceArrayType = sourceWrappedValue->getArrayType();
+                    sourceWrappedValue = wrappedValueForExpression(expressionCall);
                 } else {
                     shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(valueExpression);
-                    shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(expressionChained);
-                    if (sourceWrappedValue == nullptr)
-                        return;
-                    sourceValue = sourceWrappedValue->getPointerValue();
-                    sourceType = sourceWrappedValue->getType();
-                    sourceArrayType = sourceWrappedValue->getArrayType();
+                    sourceWrappedValue = wrappedValueForExpression(expressionChained);
                 }
+                if (sourceWrappedValue == nullptr)
+                    return;
 
-                if (!sourceType->isArrayTy()) {
+                if (!sourceWrappedValue->isArray()) {
                     markErrorInvalidType(valueExpression->getLocation());
                     return;
                 }
 
                 // make sure we don't go over the bounds
-                int sourceCount = ((llvm::ArrayType *)sourceType)->getNumElements();
+                int sourceCount = sourceWrappedValue->getArrayType()->getArrayNumElements();
                 int targetCount = targetWrappedValue->getArrayType()->getNumElements();
                 int elementsCount = min(sourceCount, targetCount);
-                int elementSize = sizeInBitsForType(sourceArrayType->getElementType()) / 8;
-
-                llvm::Value *targetValue = targetWrappedValue->getPointerValue();
+                int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
                 builder->CreateMemCpy(
-                    targetValue,
-                    llvm::Align(1),
-                    sourceValue,
-                    llvm::Align(1),
+                    targetWrappedValue->getPointerValue(),
+                    targetWrappedValue->getAlignment(),
+                    sourceWrappedValue->getPointerValue(),
+                    sourceWrappedValue->getAlignment(),
                     elementsCount * elementSize
                 );
                 break;
@@ -1653,26 +1636,24 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // data to data
     } else if (isSourceData && isTargetData) {
-        llvm::Value *sourceValue = sourceWrappedValue->getPointerValue();
-        llvm::ArrayType *sourceArrayType = sourceWrappedValue->getArrayType();
-
-        llvm::Value *targetValue = builder->CreateAlloca(targetType);
+        llvm::AllocaInst *targetAlloca = builder->CreateAlloca(targetType);
+        llvm::Align targetAlignment = targetAlloca->getAlign();
 
         int elementsCount = min(sourceSize, targetSize);
-        int elementSize = sizeInBitsForType(sourceArrayType->getElementType()) / 8;
+        int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
         builder->CreateMemCpy(
-            targetValue,
-            llvm::Align(1),
-            sourceValue,
-            llvm::Align(1),
+            targetAlloca,
+            targetAlignment,
+            sourceWrappedValue->getPointerValue(),
+            sourceWrappedValue->getAlignment(),
             elementsCount * elementSize
         );
 
         return WrappedValue::wrappedValue(
             module,
             builder,
-            targetValue,
+            targetAlloca,
             targetValueType
         );
     } else {
