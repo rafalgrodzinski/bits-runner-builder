@@ -70,15 +70,19 @@ CodeGenerator::CodeGenerator(
     switch (optimizationLevelOption) {
         case OptimizationLevel::O0:
             optimizationLevel = llvm::CodeGenOptLevel::None;
+            passOptimizationLevel = llvm::OptimizationLevel::O0;
             break;
         case OptimizationLevel::O1:
             optimizationLevel = llvm::CodeGenOptLevel::Less;
+            passOptimizationLevel = llvm::OptimizationLevel::O1;
             break;
         case OptimizationLevel::O2:
             optimizationLevel = llvm::CodeGenOptLevel::Default;
+            passOptimizationLevel = llvm::OptimizationLevel::O2;
             break;
         case OptimizationLevel::O3:
             optimizationLevel = llvm::CodeGenOptLevel::Aggressive;
+            passOptimizationLevel = llvm::OptimizationLevel::O3;
             break;
     }
 
@@ -147,22 +151,36 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
         cout << format("🐉 Generating code for module \"{}\" targeting {}, {}\n", string(module->getName()), targetTriple, architecture);
     }
 
+    // Use the new pass manager to run optimizations
+    llvm::LoopAnalysisManager loopAnalysisManager;
+    llvm::FunctionAnalysisManager functionAnalysisManager;
+    llvm::CGSCCAnalysisManager cgsccAnalysisManager;
+    llvm::ModuleAnalysisManager moduleAnalysisManager;
+
+    llvm::PassBuilder passBuilder;
+    passBuilder.registerModuleAnalyses(moduleAnalysisManager);
+    passBuilder.registerCGSCCAnalyses(cgsccAnalysisManager);
+    passBuilder.registerFunctionAnalyses(functionAnalysisManager);
+    passBuilder.registerLoopAnalyses(loopAnalysisManager);
+    passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cgsccAnalysisManager, moduleAnalysisManager);
+
+    llvm::ModulePassManager passManager = passBuilder.buildPerModuleDefaultPipeline(passOptimizationLevel);
+    passManager.run(*module, moduleAnalysisManager);
+
+    // If we're just outputing the IR, do that an quit
     if (outputKind == OutputKind::IR) {
         module->print(outputFile, nullptr);
         return;
     }
 
-    llvm::legacy::PassManager passManager;
-    /*passManager.add((llvm::Pass *)llvm::createCFGSimplificationPass());
-    passManager.add((llvm::Pass *)llvm::createPromoteMemoryToRegisterPass());
-    passManager.add((llvm::Pass *)llvm::createSROAPass());
-    passManager.add((llvm::Pass *)llvm::createEarlyCSEPass());*/
-    if (targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, codeGenFileType)) {
+    // Use legacy pass manager to generate object file
+    llvm::legacy::PassManager legacyPassManager;
+    if (targetMachine->addPassesToEmitFile(legacyPassManager, outputFile, nullptr, codeGenFileType)) {
         cerr << "Failed to generate file " << fileName << endl;
         exit(1);
     }
 
-    passManager.run(*module);
+    legacyPassManager.run(*module);
     outputFile.flush();
 }
 

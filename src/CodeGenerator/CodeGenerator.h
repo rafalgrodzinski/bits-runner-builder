@@ -3,16 +3,17 @@
 
 #include <iostream>
 
-#include <llvm/IR/Module.h>
-#include <llvm/Support/FileSystem.h>
-#include <llvm/IR/LegacyPassManager.h>
-#include <llvm/Target/TargetMachine.h>
-#include <llvm/MC/TargetRegistry.h>
-#include <llvm/Support/TargetSelect.h>
-#include <llvm/TargetParser/Host.h>
+#include <llvm/Analysis/CGSCCPassManager.h>
+#include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/IR/CallingConv.h>
-#include <llvm/Transforms/Utils.h>
-#include <llvm/Transforms/Scalar.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Module.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/TargetParser/Host.h>
 
 using namespace std;
 
@@ -63,6 +64,7 @@ private:
     llvm::TargetMachine *targetMachine;
     llvm::DataLayout dataLayout;
     llvm::CallingConv::ID callingConvention;
+    llvm::OptimizationLevel passOptimizationLevel;
 
 public:
     CodeGenerator(
