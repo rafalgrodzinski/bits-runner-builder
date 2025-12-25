@@ -9,13 +9,14 @@
 #include <llvm/IR/IRBuilder.h>
 
 class ValueType;
+class WrappedValue;
 
 using namespace std;
 
 class Scope {
 private:
     typedef struct {
-        map<string, llvm::AllocaInst*> allocaMap;
+        map<string, shared_ptr<WrappedValue>> wrappedValueMap;
         map<string, llvm::Function*> funMap;
         map<string, llvm::InlineAsm*> rawFunMap;
         map<string, llvm::StructType*> structTypeMap;
@@ -31,8 +32,8 @@ public:
     void pushLevel();
     void popLevel();
 
-    bool setAlloca(string identifier, llvm::AllocaInst *alloca);
-    llvm::AllocaInst *getAlloca(string identifier);
+    bool setWrappedValue(string identifier, shared_ptr<WrappedValue> wrappedvalue);
+    shared_ptr<WrappedValue> getWrappedValue(string identifier);
 
     bool setFunction(string name, llvm::Function *fun);
     llvm::Function *getFunction(string name);

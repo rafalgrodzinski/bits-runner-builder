@@ -160,6 +160,12 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
             // then check the elements count
             shared_ptr<ExpressionLiteral> thisCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(countExpression);
             shared_ptr<ExpressionLiteral> thatCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(other->getCountExpression());
+
+            // if both have no size specified, then it's good
+            if (thisCountLiteralExpression == nullptr && thatCountLiteralExpression == nullptr)
+                return true;
+
+            // otherwise check that both have some sizes
             if (thisCountLiteralExpression == nullptr || thatCountLiteralExpression == nullptr)
                 return false;
             // sizes must be unsigned integers

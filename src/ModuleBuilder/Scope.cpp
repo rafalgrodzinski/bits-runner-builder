@@ -12,21 +12,21 @@ void Scope::popLevel() {
     scopeLevels.pop();
 }
 
-bool Scope::setAlloca(string identifier, llvm::AllocaInst *alloca) {
-    if (scopeLevels.top().allocaMap[identifier] != nullptr)
+bool Scope::setWrappedValue(string identifier, shared_ptr<WrappedValue> wrappedValue) {
+    if (scopeLevels.top().wrappedValueMap[identifier] != nullptr)
         return false;
 
-    scopeLevels.top().allocaMap[identifier] = alloca;
+    scopeLevels.top().wrappedValueMap[identifier] = wrappedValue;
     return true;
 }
 
-llvm::AllocaInst *Scope::getAlloca(string identifier) {
+shared_ptr<WrappedValue> Scope::getWrappedValue(string identifier) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
-        llvm::AllocaInst *alloca = scopeLevels.top().allocaMap[identifier];
-        if (alloca != nullptr)
-            return alloca;
+        shared_ptr<WrappedValue> wrappedValue = scopeLevels.top().wrappedValueMap[identifier];
+        if (wrappedValue != nullptr)
+            return wrappedValue;
         scopeLevels.pop();
     }
 

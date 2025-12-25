@@ -71,3 +71,7 @@ BRC supports inline assembly, which is declared simillary to a function, but req
 ## Date
 - Optimizing UTC → Unix Time Conversion For Size And Speed:
 [https://blog.reverberate.org/2020/05/12/optimizing-date-algorithms.html](https://blog.reverberate.org/2020/05/12/optimizing-date-algorithms.html)
+
+## LLVM IR
+* Generate IR from C source:
+`clang -S -emit-llvm <input-file>`
