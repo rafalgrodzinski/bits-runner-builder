@@ -1646,13 +1646,54 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         int elementsCount = min(sourceSize, targetSize);
         int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
-        builder->CreateMemCpy(
-            targetAlloca,
-            targetAlignment,
-            sourceWrappedValue->getPointerValue(),
-            sourceWrappedValue->getAlignment(),
-            elementsCount * elementSize
-        );
+        bool areElementTypesSame = sourceWrappedValue->getValueType()->getSubType()->isEqual(targetValueType->getSubType());
+
+        // Do we just adjust the count or do we need to cast each of the element
+        if (areElementTypesSame) {
+            builder->CreateMemCpy(
+                targetAlloca,
+                targetAlignment,
+                sourceWrappedValue->getPointerValue(),
+                sourceWrappedValue->getAlignment(),
+                elementsCount * elementSize
+            );
+        } else {
+            // iterate over each of the member
+            for (int i=0; i<elementsCount; i++) {
+                llvm::Value *index[] = {
+                    builder->getInt32(0),
+                    builder->getInt32(i)
+                };
+
+                // constant or non-constant copy?
+                llvm::Value *sourceMemberValue;
+                if (llvm::Constant *sourceConstantValue = sourceWrappedValue->getConstantValue()) {
+                    sourceMemberValue = sourceConstantValue->getAggregateElement(i);
+                } else {
+                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getArrayType(), sourceWrappedValue->getPointerValue(), index);
+                    sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getArrayElementType(), sourceMemberPtr);
+                }
+
+                // cast the individual source member to target type
+                shared_ptr<WrappedValue> castSourceMemberValue = wrappedValueForCast(
+                    WrappedValue::wrappedValue(
+                        module,
+                        builder,
+                        sourceMemberValue,
+                        sourceWrappedValue->getValueType()->getSubType()
+                    ),
+                    targetValueType->getSubType()
+                );
+                if (castSourceMemberValue == nullptr)
+                    return nullptr;
+
+                // get the target member
+                llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetAlloca, index);
+
+                // and finally store source member in the target member
+                builder->CreateStore(castSourceMemberValue->getValue(), targetMemberPtr);
+            }
+        }
 
         return WrappedValue::wrappedValue(
             module,
