@@ -156,6 +156,13 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     llvm::FunctionAnalysisManager functionAnalysisManager;
     llvm::CGSCCAnalysisManager cgsccAnalysisManager;
     llvm::ModuleAnalysisManager moduleAnalysisManager;
+    
+    llvm::FunctionPassManager functionPassManager;
+    functionPassManager.addPass(llvm::PromotePass());
+    functionPassManager.addPass(llvm::SimplifyCFGPass());
+    functionPassManager.addPass(llvm::SROAPass(llvm::SROAOptions::ModifyCFG));
+    functionPassManager.addPass(llvm::EarlyCSEPass());
+    functionPassManager.addPass(llvm::MemCpyOptPass());
 
     llvm::PassBuilder passBuilder;
     passBuilder.registerModuleAnalyses(moduleAnalysisManager);
