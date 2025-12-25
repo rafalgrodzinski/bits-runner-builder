@@ -18,7 +18,7 @@
     find ptr<fun: ptr<blob<String>>, blob<String> -> u32>
 ;
 
-@export String fun: string data<u8,256> -> blob<String>
+@export String fun: string data<u8, 256> -> blob<String>
     inst blob<String>
 
     inst.string <- string
