@@ -701,29 +701,13 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 int elementsCount = min(sourceCount, targetCount);
                 int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
-
-                for (int i=0; i<elementsCount; i++) {
-                    llvm::Value *index[] = {
-                        builder->getInt32(0),
-                        builder->getInt32(i)
-                    };
-
-                    // get pointers for both source and target
-                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getType(), sourceWrappedValue->getPointerValue(), index);
-                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
-                    // load value from source pointer
-                    llvm::Value *sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getElementType(), sourceMemberPtr);
-                    // and then store it at the target pointer
-                    builder->CreateStore(sourceMemberValue, targetMemberPtr);
-                }
-
-                /*builder->CreateMemCpy(
+                builder->CreateMemCpy(
                     targetWrappedValue->getPointerValue(),
                     targetWrappedValue->getAlignment(),
                     sourceWrappedValue->getPointerValue(),
                     sourceWrappedValue->getAlignment(),
                     elementsCount * elementSize
-                );*/
+                );
                 break;
             }
             default:
@@ -1662,28 +1646,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         int elementsCount = min(sourceSize, targetSize);
         int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
-        for (int i=0; i<elementsCount; i++) {
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                builder->getInt32(i)
-            };
-
-            // get pointers for both source and target
-            llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getType(), sourceWrappedValue->getPointerValue(), index);
-            llvm::Value *targetMemberPtr = builder->CreateGEP(targetAlloca->getAllocatedType(), targetAlloca, index);
-            // load value from source pointer
-            llvm::Value *sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getElementType(), sourceMemberPtr);
-            // and then store it at the target pointer
-            builder->CreateStore(sourceMemberValue, targetMemberPtr);
-        }
-
-        /*builder->CreateMemCpy(
+        builder->CreateMemCpy(
             targetAlloca,
             targetAlignment,
             sourceWrappedValue->getPointerValue(),
             sourceWrappedValue->getAlignment(),
             elementsCount * elementSize
-        );*/
+        );
 
         return WrappedValue::wrappedValue(
             module,
