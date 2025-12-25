@@ -181,7 +181,7 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     llvm::ModulePassManager passManager = passBuilder.buildPerModuleDefaultPipeline(passOptimizationLevel);
     passManager.run(*module, moduleAnalysisManager);
 
-    // If we're just outputing the IR, do that an quit
+    // If we're just outputing the IR, do that and quit
     if (outputKind == OutputKind::IR) {
         module->print(outputFile, nullptr);
         return;
