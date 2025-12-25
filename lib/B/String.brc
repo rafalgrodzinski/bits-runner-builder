@@ -112,9 +112,9 @@
 
     // first get digits in reversed order
     rep true, value > 0
-        digit u32 <- value % 256
+        digit u32 <- value % 16
         string[currentIndex] <- if digit > 9: digit - 10 + 'a' else: digit + '0'
-        value <- value / 256
+        value <- value / 16
         currentIndex <- currentIndex + 1
     ;
 
