@@ -69,7 +69,6 @@ private:
     llvm::TargetMachine *targetMachine;
     llvm::DataLayout dataLayout;
     llvm::CallingConv::ID callingConvention;
-    llvm::OptimizationLevel passOptimizationLevel;
 
 public:
     CodeGenerator(
