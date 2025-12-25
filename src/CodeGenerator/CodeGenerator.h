@@ -3,11 +3,7 @@
 
 #include <iostream>
 
-#include <llvm/Analysis/CGSCCPassManager.h>
-#include <llvm/Analysis/LoopAnalysisManager.h>
-#include <llvm/IR/CallingConv.h>
 #include <llvm/IR/LegacyPassManager.h>
-#include <llvm/IR/Module.h>
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/FileSystem.h>
