@@ -70,19 +70,15 @@ CodeGenerator::CodeGenerator(
     switch (optimizationLevelOption) {
         case OptimizationLevel::O0:
             optimizationLevel = llvm::CodeGenOptLevel::None;
-            passOptimizationLevel = llvm::OptimizationLevel::O0;
             break;
         case OptimizationLevel::O1:
             optimizationLevel = llvm::CodeGenOptLevel::Less;
-            passOptimizationLevel = llvm::OptimizationLevel::O1;
             break;
         case OptimizationLevel::O2:
             optimizationLevel = llvm::CodeGenOptLevel::Default;
-            passOptimizationLevel = llvm::OptimizationLevel::O2;
             break;
         case OptimizationLevel::O3:
             optimizationLevel = llvm::CodeGenOptLevel::Aggressive;
-            passOptimizationLevel = llvm::OptimizationLevel::O3;
             break;
     }
 
@@ -178,7 +174,8 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     passBuilder.registerLoopAnalyses(loopAnalysisManager);
     passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cgsccAnalysisManager, moduleAnalysisManager);
 
-    llvm::ModulePassManager passManager = passBuilder.buildPerModuleDefaultPipeline(passOptimizationLevel);
+    llvm::ModulePassManager passManager;
+    passManager.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(functionPassManager)));
     passManager.run(*module, moduleAnalysisManager);
 
     // If we're just outputing the IR, do that and quit
