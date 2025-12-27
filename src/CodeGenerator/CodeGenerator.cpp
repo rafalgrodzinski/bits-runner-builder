@@ -161,12 +161,6 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     functionPassManager.addPass(llvm::EarlyCSEPass());
     functionPassManager.addPass(llvm::MemCpyOptPass());
 
-    // Disable usage of libc functions (memcpy, etc)
-    llvm::Triple triple = llvm::Triple(targetTriple);
-    llvm::TargetLibraryInfoImpl targetLibraryInfoImpl(triple);
-    targetLibraryInfoImpl.disableAllFunctions();
-    functionAnalysisManager.registerPass([&targetLibraryInfoImpl]{ return llvm::TargetLibraryAnalysis(targetLibraryInfoImpl); });
-
     llvm::PassBuilder passBuilder;
     passBuilder.registerModuleAnalyses(moduleAnalysisManager);
     passBuilder.registerCGSCCAnalyses(cgsccAnalysisManager);
