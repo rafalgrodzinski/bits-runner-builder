@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include <memory>
+#include <string>
 #include <vector>
 
 class Token;
