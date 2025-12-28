@@ -232,12 +232,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         llvm::Argument *funArgument = fun->getArg(i);
         funArgument->setName(argument.first);
 
-        /*llvm::Type *funArgumentType = typeForValueType(argument.second);
-        if (funArgumentType == nullptr)
-            return;
-        llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, argument.first);
-        builder->CreateStore(funArgument, alloca);*/
-
         scope->setWrappedValue(
             argument.first,
             WrappedValue::wrappedValue(
@@ -497,8 +491,6 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     vector<llvm::Type *> funArgTypes;
     for (pair<string, shared_ptr<ValueType>> &argument : arguments) {
         llvm::Type *funArgType = typeForValueType(argument.second);
-        funArgType->print(llvm::outs());
-        llvm::outs() << "\n";
         if (funArgType == nullptr)
             return;
         funArgTypes.push_back(funArgType);
@@ -929,14 +921,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         }
         case ExpressionBinaryOperation::NOT_EQUAL: {
-            leftValue->print(llvm::outs());
-            llvm::outs() << "\n";
-            leftValue->getType()->print(llvm::outs());
-            llvm::outs() << "\n";
-            rightValue->print(llvm::outs());
-            llvm::outs() << "\n";
-            rightValue->getType()->print(llvm::outs());
-            llvm::outs() << "\n";
             if (valueType->isInteger() || valueType->isBool())
                 resultValue = builder->CreateICmpNE(leftValue, rightValue);
             else if (valueType->isFloat())
@@ -1250,17 +1234,15 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     builder->SetInsertPoint(mergeBlock);
 
     // we can only have a return value if else is also present and both then & else return the same type
-    llvm::Value *resultValue;
     if (thenValue == nullptr || thenValue->getType()->isVoidTy() || elseValue == nullptr || thenValue->getType() != elseValue->getType()) {
-        resultValue = llvm::UndefValue::get(typeVoid);
+        return WrappedValue::wrappedNone(typeVoid, expressionIfElse->getValueType());
     } else {
         llvm::PHINode *phi = builder->CreatePHI(thenValue->getType(), 2, "ifElseResult");
         phi->addIncoming(thenValue, thenBlock);
         phi->addIncoming(elseValue, elseBlock);
 
-        resultValue = phi;
+        return WrappedValue::wrappedValue(module, builder, phi, expressionIfElse->getValueType());
     }
-    return WrappedValue::wrappedValue(module, builder, resultValue, expressionIfElse->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
@@ -1367,11 +1349,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         value = fun;
         type = fun->getType();
     }
-
-    value->print(llvm::outs());
-    llvm::outs() << "\n";
-    type->print(llvm::outs());
-    llvm::outs() << "\n";
 
     if (value == nullptr) {
         markErrorNotDefined(expressionValue->getLocation(), format("variable \"{}\"", expressionValue->getIdentifier()));
@@ -1751,15 +1728,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
             case ExpressionValueKind::FUN:
             case ExpressionValueKind::SIMPLE:
             case ExpressionValueKind::BUILT_IN_VAL_SIMPLE: {
-                sourceType->print(llvm::outs());
-                llvm::outs() << "\n";
-                sourceValue->print(llvm::outs());
-                llvm::outs() << "\n";
                 return WrappedValue::wrappedValue(
                     module,
                     builder,
-                    sourceValue,
-                    //builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier()),
+                    builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier()),
                     expression->getValueType()
                 );
             }

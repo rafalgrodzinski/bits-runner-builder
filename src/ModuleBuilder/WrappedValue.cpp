@@ -10,40 +10,30 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
     wrappedValue->valueType = valueType;
 
     if (llvm::LoadInst *loadInst = llvm::dyn_cast<llvm::LoadInst>(value)) {
-        //wrappedValue->valueLambda = [loadInst](){ return loadInst; };
-        wrappedValue->value = value;
-        //wrappedValue->pointerValueLambda = [loadInst](){ return loadInst->getPointerOperand(); };
-        wrappedValue->pointerValue = loadInst->getPointerOperand();
+        wrappedValue->valueLambda = [loadInst](){ return loadInst; };
+        wrappedValue->pointerValueLambda = [loadInst](){ return loadInst->getPointerOperand(); };
         wrappedValue->type = loadInst->getType();
         wrappedValue->alignment = loadInst->getAlign();
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
-        /*wrappedValue->valueLambda = [builder, allocaInst](){
+        wrappedValue->valueLambda = [builder, allocaInst](){
             return builder->CreateLoad(allocaInst->getAllocatedType(), allocaInst);
-        };*/
-        wrappedValue->value = builder->CreateLoad(allocaInst->getAllocatedType(), allocaInst);
-        //wrappedValue->pointerValueLambda = [allocaInst](){ return allocaInst; };
-        wrappedValue->pointerValue = allocaInst;
+        };
+        wrappedValue->pointerValueLambda = [allocaInst](){ return allocaInst; };
         wrappedValue->type = allocaInst->getAllocatedType();
         wrappedValue->alignment = allocaInst->getAlign();
     } else if (llvm::CallInst *callInst = llvm::dyn_cast<llvm::CallInst>(value)) {
         llvm::FunctionType *funType = callInst->getFunctionType();
         llvm::Type *retType = funType->getReturnType();
         if (retType->isVoidTy()) {
-            //wrappedValue->valueLambda = [retType](){ return llvm::UndefValue::get(retType); };
-            wrappedValue->value = llvm::UndefValue::get(retType);
-            //wrappedValue->pointerValueLambda = [retType](){ return llvm::UndefValue::get(retType); };
-            wrappedValue->pointerValue = llvm::UndefValue::get(retType);
+            wrappedValue->valueLambda = [retType](){ return llvm::UndefValue::get(retType); };
+            wrappedValue->pointerValueLambda = [retType](){ return llvm::UndefValue::get(retType); };
         } else {
-            //wrappedValue->valueLambda = [callInst](){ return callInst; };
-            wrappedValue->value = callInst;
-            /*wrappedValue->pointerValueLambda = [builder, retType, callInst](){
+            wrappedValue->valueLambda = [callInst](){ return callInst; };
+            wrappedValue->pointerValueLambda = [builder, retType, callInst](){
                 llvm::AllocaInst *alloca = builder->CreateAlloca(retType, nullptr);
                 builder->CreateStore(callInst, alloca);
                 return alloca;
-            };*/
-            llvm::AllocaInst *alloca = builder->CreateAlloca(retType, nullptr);
-            builder->CreateStore(callInst, alloca);
-            wrappedValue->pointerValue = alloca;
+            };
         }
         wrappedValue->type = retType;
         if (llvm::MaybeAlign maybeAlign = callInst->getRetAlign()) {
@@ -51,30 +41,26 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         }
     } else if (llvm::Argument *argument = llvm::dyn_cast<llvm::Argument>(value)) {
         llvm::Type *type = value->getType();
-        //wrappedValue->valueLambda = [argument](){ return argument; };
-        wrappedValue->value = argument;
-        /*wrappedValue->pointerValueLambda = [builder, type, argument](){
+        wrappedValue->valueLambda = [argument](){ return argument; };
+        wrappedValue->pointerValueLambda = [builder, type, argument](){
                 llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
                 builder->CreateStore(argument, alloca);
                 return alloca;
-            };*/
-        llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
-        builder->CreateStore(argument, alloca);
-        wrappedValue->pointerValue = alloca;
+            };
         wrappedValue->type = type;
         if (llvm::MaybeAlign maybeAlign = argument->getParamAlign()) {
             wrappedValue->alignment = *maybeAlign;
         }
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
-        //wrappedValue->valueLambda = [global]() { return global; };
-        wrappedValue->value = global;
-        //wrappedValue->pointerValueLambda = [global]() { return global; };
-        wrappedValue->pointerValue = global;
+        wrappedValue->valueLambda = [global]() { return global; };
+        wrappedValue->pointerValueLambda = [global]() { return global; };
         wrappedValue->type = global->getValueType();
     } else if (llvm::Constant *constant = llvm::dyn_cast<llvm::Constant>(value)) {
-        //wrappedValue->valueLambda = [constant]() { return constant; };
-        wrappedValue->value = constant;
-        /*wrappedValue->pointerValueLambda = [module, constant]() {
+        if (value->getType()->isVoidTy()) {
+            return WrappedValue::wrappedNone(value->getType(), valueType);
+        }
+        wrappedValue->valueLambda = [constant]() { return constant; };
+        wrappedValue->pointerValueLambda = [module, constant]() {
             return new llvm::GlobalVariable(
                 *module,
                 constant->getType(),
@@ -82,20 +68,11 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 llvm::GlobalValue::LinkageTypes::PrivateLinkage,
                 constant
             );
-        };*/
-        wrappedValue->pointerValue = new llvm::GlobalVariable(
-                *module,
-                constant->getType(),
-                true,
-                llvm::GlobalValue::LinkageTypes::PrivateLinkage,
-                constant
-            );
+        };
         wrappedValue->type = value->getType();
     } else {
-        //wrappedValue->valueLambda = [value]() { return value; };
-        wrappedValue->value = value;
-        //wrappedValue->pointerValueLambda = [value]() { return value; };
-        wrappedValue->pointerValue = value;
+        wrappedValue->valueLambda = [value]() { return value; };
+        wrappedValue->pointerValueLambda = [value]() { return value; };
         wrappedValue->type = value->getType();
     }
 
@@ -105,10 +82,8 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
 shared_ptr<WrappedValue> WrappedValue::wrappedUIntValue(llvm::Type *type, int64_t value, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    //wrappedValue->valueLambda = [type, value]() { return llvm::ConstantInt::get(type, value, false); };
-    wrappedValue->value = llvm::ConstantInt::get(type, value, false);
-    //wrappedValue->pointerValueLambda = [type, value]() { return llvm::ConstantInt::get(type, value, false); };
-    wrappedValue->pointerValue = llvm::ConstantInt::get(type, value, false);
+    wrappedValue->valueLambda = [type, value]() { return llvm::ConstantInt::get(type, value, false); };
+    wrappedValue->pointerValueLambda = [type, value]() { return llvm::ConstantInt::get(type, value, false); };
 
     wrappedValue->type = type;
     wrappedValue->valueType = valueType;
@@ -119,10 +94,8 @@ shared_ptr<WrappedValue> WrappedValue::wrappedUIntValue(llvm::Type *type, int64_
 shared_ptr<WrappedValue> WrappedValue::wrappedSIntValue(llvm::Type *type, int64_t value, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    //wrappedValue->valueLambda = [type, value]() { return llvm::ConstantInt::get(type, value, false); };
-    wrappedValue->value = llvm::ConstantInt::get(type, value, false);
-    //wrappedValue->pointerValueLambda = [type, value]() { return llvm::ConstantInt::get(type, value, false); };
-    wrappedValue->pointerValue = llvm::ConstantInt::get(type, value, false);
+    wrappedValue->valueLambda = [type, value]() { return llvm::ConstantInt::get(type, value, false); };
+    wrappedValue->pointerValueLambda = [type, value]() { return llvm::ConstantInt::get(type, value, false); };
 
     wrappedValue->type = type;
     wrappedValue->valueType = valueType;
@@ -133,10 +106,8 @@ shared_ptr<WrappedValue> WrappedValue::wrappedSIntValue(llvm::Type *type, int64_
 shared_ptr<WrappedValue> WrappedValue::wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    //wrappedValue->valueLambda = [type]() { return llvm::UndefValue::get(type); };
-    wrappedValue->value = llvm::UndefValue::get(type);
-    //wrappedValue->pointerValueLambda = [type]() { return llvm::UndefValue::get(type); };
-    wrappedValue->pointerValue = llvm::UndefValue::get(type);
+    wrappedValue->valueLambda = [type]() { return llvm::UndefValue::get(type); };
+    wrappedValue->pointerValueLambda = [type]() { return llvm::UndefValue::get(type); };
 
     wrappedValue->type = type;
     wrappedValue->valueType = valueType;
@@ -145,14 +116,14 @@ shared_ptr<WrappedValue> WrappedValue::wrappedNone(llvm::Type *type, shared_ptr<
 }
 
 llvm::Value *WrappedValue::getValue() {
-    /*if (value == nullptr)
-        value = valueLambda();*/
+    if (value == nullptr)
+        value = valueLambda();
     return value;
 }
 
 llvm::Value *WrappedValue::getPointerValue() {
-    /*if (pointerValue == nullptr)
-        pointerValue = pointerValueLambda();*/
+    if (pointerValue == nullptr)
+        pointerValue = pointerValueLambda();
     return pointerValue;
 }
 
