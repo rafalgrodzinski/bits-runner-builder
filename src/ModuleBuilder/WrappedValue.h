@@ -12,22 +12,29 @@ using namespace std;
 
 class WrappedValue {
 private:
-    llvm::Value *value;
-    llvm::Value *pointerValue;
-    llvm::Constant *constantValue;
     llvm::Type *type;
     shared_ptr<ValueType> valueType;
+
+    llvm::Value *value = nullptr;
+    llvm::Value *pointerValue = nullptr;
+    llvm::Align alignment;
+
+    function<llvm::Value *()> valueLambda;
+    function<llvm::Value *()> pointerValueLambda;
 
 public:
     WrappedValue();
 
-    static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType);
+    static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, int64_t value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedSIntValue(llvm::Type *type, int64_t value, shared_ptr<ValueType> valueType);
+    static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
 
     llvm::Value *getValue();
     llvm::Value *getPointerValue();
     llvm::Constant *getConstantValue();
+    llvm::GlobalVariable *getGlobalValue();
+    llvm::Align getAlignment();
 
     llvm::Type *getType();
     llvm::ArrayType *getArrayType();

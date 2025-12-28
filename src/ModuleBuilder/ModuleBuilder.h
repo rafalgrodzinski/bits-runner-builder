@@ -124,19 +124,17 @@ private:
     void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);
 
     // Expressions
-    llvm::Value *valueForExpression(shared_ptr<Expression> expression);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionBinary> expressionBinary);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionBlock> expressionBlock);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionCall> expressionCall);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionChained> expressionChained);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
-    llvm::Value *valueForExpression(shared_ptr<ExpressionValue> expressionValue);
-
     shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<Expression> expression);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionBlock> expressionBlock);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionCall> expressionCall);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionChained> expressionChained);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionIfElse> expressionIfElse);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
+    shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue);
 
     shared_ptr<WrappedValue> wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression);
     shared_ptr<WrappedValue> wrappedValueForCast(shared_ptr<WrappedValue> wrappedValue, shared_ptr<ValueType> targetValueType);
@@ -144,7 +142,7 @@ private:
     shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
 
     // Support
-    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType);
+    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, shared_ptr<Location> location = nullptr);
     int sizeInBitsForType(llvm::Type *type);
 
     // Error Handling    
@@ -157,6 +155,7 @@ private:
     void markErrorInvalidBuiltIn(shared_ptr<Location> location, string name);
     void markErrorInvalidCast(shared_ptr<Location> location);
     void markErrorInvalidConstant(shared_ptr<Location> location);
+    void markErrorInvalidGlobal(shared_ptr<Location> location);
     void markErrorInvalidImport(shared_ptr<Location> location, string moduleName);
     void markErrorInvalidLiteral(shared_ptr<Location> location, shared_ptr<ValueType> type);
     void markErrorInvalidMember(shared_ptr<Location> location, string blobName, string memberName);

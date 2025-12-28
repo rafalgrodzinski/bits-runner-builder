@@ -7,6 +7,10 @@ Available for:
 - Linux (x86_64)
 
 Changelist:
+-  145 slow build of big arrays #147 
+  - Optimized builds
+  - Using wrapped values all over the place
+  - Bunch of various bug fixes
 - Data casting not correct #94
   - Single line if-else can be embeded in an expression
   - Added @B.Date which can convert date components to a timestamp
