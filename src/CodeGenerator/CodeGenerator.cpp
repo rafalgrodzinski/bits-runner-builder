@@ -168,6 +168,13 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     passBuilder.registerLoopAnalyses(loopAnalysisManager);
     passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cgsccAnalysisManager, moduleAnalysisManager);
 
+
+    // Disable usage of libc functions (memcpy, etc)
+    llvm::Triple triple = llvm::Triple(targetTriple);
+    llvm::TargetLibraryInfoImpl targetLibraryInfoImpl(triple);
+    targetLibraryInfoImpl.disableAllFunctions();
+    functionAnalysisManager.registerPass([&targetLibraryInfoImpl]{ return llvm::TargetLibraryAnalysis(targetLibraryInfoImpl); });
+
     llvm::ModulePassManager passManager;
     passManager.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(functionPassManager)));
     passManager.run(*module, moduleAnalysisManager);
