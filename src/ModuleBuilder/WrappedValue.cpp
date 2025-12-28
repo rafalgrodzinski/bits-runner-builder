@@ -51,6 +51,10 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         if (llvm::MaybeAlign maybeAlign = argument->getParamAlign()) {
             wrappedValue->alignment = *maybeAlign;
         }
+    } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
+        wrappedValue->valueLambda = [global]() { return global; };
+        wrappedValue->pointerValueLambda = [global]() { return global; };
+        wrappedValue->type = global->getValueType();
     } else if (llvm::Constant *constant = llvm::dyn_cast<llvm::Constant>(value)) {
         wrappedValue->valueLambda = [constant]() { return constant; };
         wrappedValue->pointerValueLambda = [module, constant]() {
@@ -122,6 +126,10 @@ llvm::Value *WrappedValue::getPointerValue() {
 
 llvm::Constant *WrappedValue::getConstantValue() {
     return llvm::dyn_cast<llvm::Constant>(getValue());
+}
+
+llvm::GlobalVariable *WrappedValue::getGlobalValue() {
+    return llvm::dyn_cast<llvm::GlobalVariable>(getValue());
 }
 
 llvm::Align WrappedValue::getAlignment() {

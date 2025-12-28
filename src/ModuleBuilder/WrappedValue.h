@@ -33,6 +33,7 @@ public:
     llvm::Value *getValue();
     llvm::Value *getPointerValue();
     llvm::Constant *getConstantValue();
+    llvm::GlobalVariable *getGlobalValue();
     llvm::Align getAlignment();
 
     llvm::Type *getType();

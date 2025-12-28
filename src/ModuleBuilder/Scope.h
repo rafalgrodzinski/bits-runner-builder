@@ -21,7 +21,6 @@ private:
         map<string, llvm::InlineAsm*> rawFunMap;
         map<string, llvm::StructType*> structTypeMap;
         map<string, vector<string>> structMembersMap;
-        map<string, llvm::Value*> globalMap;
     } ScopeLevel;
 
     stack<ScopeLevel> scopeLevels;
@@ -40,9 +39,6 @@ public:
 
     bool setInlineAsm(string name, llvm::InlineAsm *inlineAsm);
     llvm::InlineAsm *getInlineAsm(string name);
-
-    bool setGlobal(string identifier, llvm::Value *global);
-    llvm::Value *getGlobal(string identifier);
 
     bool setStruct(string structName, llvm::StructType *type, vector<string> memberNames);
     llvm::StructType *getStructType(string memberName);

@@ -544,7 +544,15 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
     llvm::GlobalVariable *global = new llvm::GlobalVariable(*module, type, false, linkage, nullptr, symbolName);
 
     // register
-    scope->setGlobal(internalName, global);
+    scope->setWrappedValue(
+        internalName,
+        WrappedValue::wrappedValue(
+            module,
+            builder,
+            global,
+            valueType
+        )
+    );
 }
 
 void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
@@ -619,9 +627,15 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
     // variable
-    llvm::GlobalVariable *global = (llvm::GlobalVariable*)scope->getGlobal(statement->getIdentifier());
-    if (global == nullptr) {
+    shared_ptr<WrappedValue> globalWrappedValue = scope->getWrappedValue(statement->getIdentifier());
+    if (globalWrappedValue == nullptr) {
         markErrorNotDeclared(statement->getLocation(), format("global \"{}\"", statement->getIdentifier()));
+        return;
+    }
+
+    llvm::GlobalVariable *global = globalWrappedValue->getGlobalValue();
+    if (global == nullptr) {
+        markErrorInvalidGlobal(statement->getLocation());
         return;
     }
 
@@ -1334,19 +1348,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     llvm::Value *value = nullptr;
     llvm::Type *type = nullptr;
 
-    shared_ptr<WrappedValue> localWrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
-    llvm::Value *globalValuePtr = scope->getGlobal(expressionValue->getIdentifier());
+    shared_ptr<WrappedValue> wrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
     llvm::Value *fun = scope->getFunction(expressionValue->getIdentifier());
-    if (localWrappedValue != nullptr) {
-        value = localWrappedValue->getPointerValue();
-        type = localWrappedValue->getType();
-    } else if (globalValuePtr != nullptr) {
-        shared_ptr<ValueType> valueType = expressionValue->getValueType();
-        type = typeForValueType(valueType);
-        value = globalValuePtr;
+    if (wrappedValue != nullptr) {
+        value = wrappedValue->getPointerValue();
+        type = wrappedValue->getType();
     } else if (fun != nullptr) {
-        type = fun->getType();
         value = fun;
+        type = fun->getType();
     }
 
     if (value == nullptr) {
@@ -1937,6 +1946,11 @@ void ModuleBuilder::markErrorInvalidCast(shared_ptr<Location> location) {
 
 void ModuleBuilder::markErrorInvalidConstant(shared_ptr<Location> location) {
     string message = "Invalid constant";
+    errors.push_back(Error::error(location, message));   
+}
+
+void ModuleBuilder::markErrorInvalidGlobal(shared_ptr<Location> location) {
+    string message = "Invalid global";
     errors.push_back(Error::error(location, message));   
 }
 

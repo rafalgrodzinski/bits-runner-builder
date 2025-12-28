@@ -75,27 +75,6 @@ llvm::InlineAsm *Scope::getInlineAsm(string name) {
     return nullptr;
 }
 
-bool Scope::setGlobal(string identifier, llvm::Value *global) {
-    if (scopeLevels.top().globalMap[identifier] != nullptr)
-        return false;
-
-    scopeLevels.top().globalMap[identifier] = global;
-    return true;
-}
-
-llvm::Value *Scope::getGlobal(string identifier) {
-    stack<ScopeLevel> scopeLevels = this->scopeLevels;
-
-    while (!scopeLevels.empty()) {
-        llvm::Value *global = scopeLevels.top().globalMap[identifier];
-        if (global != nullptr)
-            return global;
-        scopeLevels.pop();
-    }
-
-    return nullptr;
-}
-
 bool Scope::setStruct(string structName, llvm::StructType *structType, vector<string> memberNames) {
     scopeLevels.top().structTypeMap[structName] = structType;
     scopeLevels.top().structMembersMap[structName] = memberNames;

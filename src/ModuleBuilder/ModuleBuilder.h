@@ -155,6 +155,7 @@ private:
     void markErrorInvalidBuiltIn(shared_ptr<Location> location, string name);
     void markErrorInvalidCast(shared_ptr<Location> location);
     void markErrorInvalidConstant(shared_ptr<Location> location);
+    void markErrorInvalidGlobal(shared_ptr<Location> location);
     void markErrorInvalidImport(shared_ptr<Location> location, string moduleName);
     void markErrorInvalidLiteral(shared_ptr<Location> location, shared_ptr<ValueType> type);
     void markErrorInvalidMember(shared_ptr<Location> location, string blobName, string memberName);
