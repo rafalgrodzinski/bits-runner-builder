@@ -19,8 +19,8 @@ private:
     llvm::Value *pointerValue;
     llvm::Align alignment;
 
-    function<llvm::Value *()> valueLambda;
-    function<llvm::Value *()> pointerValueLambda;
+    //function<llvm::Value *()> valueLambda;
+    //function<llvm::Value *()> pointerValueLambda;
 
 public:
     WrappedValue();

@@ -1,7 +1,8 @@
-@import B
+@extern putchar fun: character u64 -> u32
 
-@export main fun
-    num u32 <- (0x43345 & 0xff0) >> 4
-    msg blob<@B.String> <- @B.StringHexForU32(num)
-    msg.println.val({msg.adr})
+@export print fun: text data<u64, 32>
+    text[3] != 0
+    /*rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
+        putchar(text[i])
+    ;*/
 ;

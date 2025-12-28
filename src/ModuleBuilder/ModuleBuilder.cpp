@@ -232,18 +232,18 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         llvm::Argument *funArgument = fun->getArg(i);
         funArgument->setName(argument.first);
 
-        llvm::Type *funArgumentType = typeForValueType(argument.second);
+        /*llvm::Type *funArgumentType = typeForValueType(argument.second);
         if (funArgumentType == nullptr)
             return;
         llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, argument.first);
-        builder->CreateStore(funArgument, alloca);
+        builder->CreateStore(funArgument, alloca);*/
 
         scope->setWrappedValue(
             argument.first,
             WrappedValue::wrappedValue(
                 module,
                 builder,
-                alloca,
+                funArgument,
                 argument.second
             )
         );
@@ -497,6 +497,8 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     vector<llvm::Type *> funArgTypes;
     for (pair<string, shared_ptr<ValueType>> &argument : arguments) {
         llvm::Type *funArgType = typeForValueType(argument.second);
+        funArgType->print(llvm::outs());
+        llvm::outs() << "\n";
         if (funArgType == nullptr)
             return;
         funArgTypes.push_back(funArgType);
@@ -927,6 +929,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         }
         case ExpressionBinaryOperation::NOT_EQUAL: {
+            leftValue->print(llvm::outs());
+            llvm::outs() << "\n";
+            leftValue->getType()->print(llvm::outs());
+            llvm::outs() << "\n";
+            rightValue->print(llvm::outs());
+            llvm::outs() << "\n";
+            rightValue->getType()->print(llvm::outs());
+            llvm::outs() << "\n";
             if (valueType->isInteger() || valueType->isBool())
                 resultValue = builder->CreateICmpNE(leftValue, rightValue);
             else if (valueType->isFloat())
@@ -1358,6 +1368,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         type = fun->getType();
     }
 
+    value->print(llvm::outs());
+    llvm::outs() << "\n";
+    type->print(llvm::outs());
+    llvm::outs() << "\n";
+
     if (value == nullptr) {
         markErrorNotDefined(expressionValue->getLocation(), format("variable \"{}\"", expressionValue->getIdentifier()));
         return nullptr;
@@ -1736,10 +1751,15 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
             case ExpressionValueKind::FUN:
             case ExpressionValueKind::SIMPLE:
             case ExpressionValueKind::BUILT_IN_VAL_SIMPLE: {
+                sourceType->print(llvm::outs());
+                llvm::outs() << "\n";
+                sourceValue->print(llvm::outs());
+                llvm::outs() << "\n";
                 return WrappedValue::wrappedValue(
                     module,
                     builder,
-                    builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier()),
+                    sourceValue,
+                    //builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier()),
                     expression->getValueType()
                 );
             }
