@@ -15,8 +15,8 @@ private:
     llvm::Type *type;
     shared_ptr<ValueType> valueType;
 
-    llvm::Value *value;
-    llvm::Value *pointerValue;
+    llvm::Value *value = nullptr;
+    llvm::Value *pointerValue = nullptr;
     llvm::Align alignment;
 
     function<llvm::Value *()> valueLambda;

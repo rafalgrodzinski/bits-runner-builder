@@ -232,18 +232,12 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         llvm::Argument *funArgument = fun->getArg(i);
         funArgument->setName(argument.first);
 
-        llvm::Type *funArgumentType = typeForValueType(argument.second);
-        if (funArgumentType == nullptr)
-            return;
-        llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, argument.first);
-        builder->CreateStore(funArgument, alloca);
-
         scope->setWrappedValue(
             argument.first,
             WrappedValue::wrappedValue(
                 module,
                 builder,
-                alloca,
+                funArgument,
                 argument.second
             )
         );
@@ -1240,17 +1234,15 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     builder->SetInsertPoint(mergeBlock);
 
     // we can only have a return value if else is also present and both then & else return the same type
-    llvm::Value *resultValue;
     if (thenValue == nullptr || thenValue->getType()->isVoidTy() || elseValue == nullptr || thenValue->getType() != elseValue->getType()) {
-        resultValue = llvm::UndefValue::get(typeVoid);
+        return WrappedValue::wrappedNone(typeVoid, expressionIfElse->getValueType());
     } else {
         llvm::PHINode *phi = builder->CreatePHI(thenValue->getType(), 2, "ifElseResult");
         phi->addIncoming(thenValue, thenBlock);
         phi->addIncoming(elseValue, elseBlock);
 
-        resultValue = phi;
+        return WrappedValue::wrappedValue(module, builder, phi, expressionIfElse->getValueType());
     }
-    return WrappedValue::wrappedValue(module, builder, resultValue, expressionIfElse->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
@@ -1739,7 +1731,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 return WrappedValue::wrappedValue(
                     module,
                     builder,
-                    builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier()),
+                    sourceValue,
                     expression->getValueType()
                 );
             }

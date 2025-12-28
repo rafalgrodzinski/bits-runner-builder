@@ -56,6 +56,9 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [global]() { return global; };
         wrappedValue->type = global->getValueType();
     } else if (llvm::Constant *constant = llvm::dyn_cast<llvm::Constant>(value)) {
+        if (value->getType()->isVoidTy()) {
+            return WrappedValue::wrappedNone(value->getType(), valueType);
+        }
         wrappedValue->valueLambda = [constant]() { return constant; };
         wrappedValue->pointerValueLambda = [module, constant]() {
             return new llvm::GlobalVariable(
