@@ -232,12 +232,19 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         llvm::Argument *funArgument = fun->getArg(i);
         funArgument->setName(argument.first);
 
+        // allocate argument
+        llvm::Type *funArgumentType = typeForValueType(argument.second);
+        if (funArgumentType == nullptr)
+            return;
+        llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, argument.first);
+        builder->CreateStore(funArgument, alloca);
+
         scope->setWrappedValue(
             argument.first,
             WrappedValue::wrappedValue(
                 module,
                 builder,
-                funArgument,
+                alloca,
                 argument.second
             )
         );
