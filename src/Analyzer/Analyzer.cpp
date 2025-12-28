@@ -345,6 +345,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     }
 
     if (statementVariable->getExpression() != nullptr) {
+        // cast expression into target
         statementVariable->expression = checkAndTryCasting(
             statementVariable->getExpression(),
             statementVariable->getValueType(),

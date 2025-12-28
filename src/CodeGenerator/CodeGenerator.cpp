@@ -147,18 +147,51 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
         cout << format("🐉 Generating code for module \"{}\" targeting {}, {}\n", string(module->getName()), targetTriple, architecture);
     }
 
+    // Use the new pass manager to run optimizations
+    llvm::LoopAnalysisManager loopAnalysisManager;
+    llvm::FunctionAnalysisManager functionAnalysisManager;
+    llvm::CGSCCAnalysisManager cgsccAnalysisManager;
+    llvm::ModuleAnalysisManager moduleAnalysisManager;
+    
+    // Add some optimizations
+    llvm::FunctionPassManager functionPassManager;
+    functionPassManager.addPass(llvm::PromotePass());
+    functionPassManager.addPass(llvm::SimplifyCFGPass());
+    functionPassManager.addPass(llvm::SROAPass(llvm::SROAOptions::ModifyCFG));
+    functionPassManager.addPass(llvm::EarlyCSEPass());
+    functionPassManager.addPass(llvm::MemCpyOptPass());
+
+    llvm::PassBuilder passBuilder;
+    passBuilder.registerModuleAnalyses(moduleAnalysisManager);
+    passBuilder.registerCGSCCAnalyses(cgsccAnalysisManager);
+    passBuilder.registerFunctionAnalyses(functionAnalysisManager);
+    passBuilder.registerLoopAnalyses(loopAnalysisManager);
+    passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cgsccAnalysisManager, moduleAnalysisManager);
+
+    // Disable usage of libc functions (memcpy, etc)
+    llvm::Triple triple = llvm::Triple(targetTriple);
+    llvm::TargetLibraryInfoImpl targetLibraryInfoImpl(triple);
+    targetLibraryInfoImpl.disableAllFunctions();
+    functionAnalysisManager.registerPass([&targetLibraryInfoImpl]{ return llvm::TargetLibraryAnalysis(targetLibraryInfoImpl); });
+
+    llvm::ModulePassManager passManager;
+    passManager.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(functionPassManager)));
+    passManager.run(*module, moduleAnalysisManager);
+
+    // If we're just outputing the IR, do that and quit
     if (outputKind == OutputKind::IR) {
         module->print(outputFile, nullptr);
         return;
     }
 
-    llvm::legacy::PassManager passManager;
-    if (targetMachine->addPassesToEmitFile(passManager, outputFile, nullptr, codeGenFileType)) {
+    // Use legacy pass manager to generate object file
+    llvm::legacy::PassManager legacyPassManager;
+    if (targetMachine->addPassesToEmitFile(legacyPassManager, outputFile, nullptr, codeGenFileType)) {
         cerr << "Failed to generate file " << fileName << endl;
         exit(1);
     }
 
-    passManager.run(*module);
+    legacyPassManager.run(*module);
     outputFile.flush();
 }
 
