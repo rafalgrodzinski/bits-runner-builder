@@ -148,7 +148,7 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     }
 
     // Use the new pass manager to run optimizations
-    /*llvm::LoopAnalysisManager loopAnalysisManager;
+    llvm::LoopAnalysisManager loopAnalysisManager;
     llvm::FunctionAnalysisManager functionAnalysisManager;
     llvm::CGSCCAnalysisManager cgsccAnalysisManager;
     llvm::ModuleAnalysisManager moduleAnalysisManager;
@@ -177,7 +177,7 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
 
     llvm::ModulePassManager passManager;
     passManager.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(functionPassManager)));
-    passManager.run(*module, moduleAnalysisManager);*/
+    passManager.run(*module, moduleAnalysisManager);
 
     // If we're just outputing the IR, do that and quit
     if (outputKind == OutputKind::IR) {
