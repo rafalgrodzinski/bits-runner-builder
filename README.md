@@ -64,6 +64,12 @@ Tested on Ubuntu, but should be similar for other distributions
 - LLVM: `sudo apt install llvm-20`
 - CMake: Version 4 wasn't available, so it had to be installed manually from [cmake.org](https://cmake.org/download/)
 
+### Windows
+Tested on Windows 11
+- LLVM: From [LLVM Github releases](https://github.com/llvm/llvm-project/releases) or you can just got directly for this version [LLVM-20.1.8-win64.exe](https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/LLVM-20.1.8-win64.exe)
+- Cmake: As for Linux, download directly version at least 4.0.0 [cmake.org](https://cmake.org/download/)
+
+
 ### Building
 ```
 cmake -B build

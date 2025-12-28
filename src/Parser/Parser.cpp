@@ -2010,7 +2010,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementInBlockParseeResults(
     if (shouldIncludeExpressionStatement) {
         statement = nextInBlockStatement();
     } else {
-        statement = matchStatementVariable() ?: matchStatementAssignment();
+        statement = matchStatementVariable() ? matchStatementVariable() : matchStatementAssignment();
     }
     if (errors.size() > errorsCount || statement == nullptr)
         return {};
