@@ -106,6 +106,7 @@ CodeGenerator::CodeGenerator(
     llvm::TargetOptions targetOptions;
     targetOptions.FunctionSections = (optionBits >> int(Options::FUNCTION_SECTIONS)) & 0x01;
     targetOptions.NoZerosInBSS = (optionBits >> int(Options::NO_BSS)) & 0x01;
+    targetOptions.EmitStackSizeSection = (optionBits >> int(Options::STACK_SIZES)) & 0x01;
 
     targetMachine = target->createTargetMachine(
         targetTriple,

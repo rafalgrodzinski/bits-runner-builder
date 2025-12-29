@@ -44,7 +44,8 @@ public:
 
     enum class Options {
         FUNCTION_SECTIONS,
-        NO_BSS
+        NO_BSS,
+        STACK_SIZES
     };
 
 
