@@ -70,15 +70,19 @@ CodeGenerator::CodeGenerator(
     switch (optimizationLevelOption) {
         case OptimizationLevel::O0:
             optimizationLevel = llvm::CodeGenOptLevel::None;
+            passOptimizationLevel = llvm::OptimizationLevel::O0;
             break;
         case OptimizationLevel::O1:
             optimizationLevel = llvm::CodeGenOptLevel::Less;
+            passOptimizationLevel = llvm::OptimizationLevel::O1;
             break;
         case OptimizationLevel::O2:
             optimizationLevel = llvm::CodeGenOptLevel::Default;
+            passOptimizationLevel = llvm::OptimizationLevel::O2;
             break;
         case OptimizationLevel::O3:
             optimizationLevel = llvm::CodeGenOptLevel::Aggressive;
+            passOptimizationLevel = llvm::OptimizationLevel::O3;
             break;
     }
 
@@ -152,14 +156,6 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     llvm::FunctionAnalysisManager functionAnalysisManager;
     llvm::CGSCCAnalysisManager cgsccAnalysisManager;
     llvm::ModuleAnalysisManager moduleAnalysisManager;
-    
-    // Add some optimizations
-    llvm::FunctionPassManager functionPassManager;
-    functionPassManager.addPass(llvm::PromotePass());
-    functionPassManager.addPass(llvm::SimplifyCFGPass());
-    functionPassManager.addPass(llvm::SROAPass(llvm::SROAOptions::ModifyCFG));
-    functionPassManager.addPass(llvm::EarlyCSEPass());
-    functionPassManager.addPass(llvm::MemCpyOptPass());
 
     llvm::PassBuilder passBuilder;
     passBuilder.registerModuleAnalyses(moduleAnalysisManager);
@@ -171,11 +167,12 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     // Disable usage of libc functions (memcpy, etc)
     llvm::Triple triple = llvm::Triple(targetTriple);
     llvm::TargetLibraryInfoImpl targetLibraryInfoImpl(triple);
-    targetLibraryInfoImpl.disableAllFunctions();
+    targetLibraryInfoImpl.setUnavailable(llvm::LibFunc_memccpy);
+    targetLibraryInfoImpl.setUnavailable(llvm::LibFunc_memmove);
+    targetLibraryInfoImpl.setUnavailable(llvm::LibFunc_memset);
     functionAnalysisManager.registerPass([&targetLibraryInfoImpl]{ return llvm::TargetLibraryAnalysis(targetLibraryInfoImpl); });
 
-    llvm::ModulePassManager passManager;
-    passManager.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(functionPassManager)));
+    llvm::ModulePassManager passManager = passBuilder.buildPerModuleDefaultPipeline(passOptimizationLevel);
     passManager.run(*module, moduleAnalysisManager);
 
     // If we're just outputing the IR, do that and quit
@@ -192,7 +189,6 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     }
 
     legacyPassManager.run(*module);
-    outputFile.flush();
 }
 
 int CodeGenerator::getIntSize() {
