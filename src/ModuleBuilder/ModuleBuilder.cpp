@@ -650,7 +650,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     llvm::Constant *constantValue = llvm::Constant::getNullValue(type);
     if (statement->getExpression() != nullptr) {
         shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(statement->getExpression());
-        if ((constantValue = wrappedValue->getConstantValue()) == nullptr) {
+        if (wrappedValue == nullptr || (constantValue = wrappedValue->getConstantValue()) == nullptr) {
             markErrorInvalidConstant(statement->getLocation());
             return;
         }
@@ -866,8 +866,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
-    llvm::Value *leftValue = wrappedValueForExpression(expressionBinary->getLeft())->getValue();
-    llvm::Value *rightValue = wrappedValueForExpression(expressionBinary->getRight())->getValue();
+    shared_ptr<WrappedValue> leftWrappedValue = wrappedValueForExpression(expressionBinary->getLeft());
+    shared_ptr<WrappedValue> rightWrappedValue = wrappedValueForExpression(expressionBinary->getRight());
+    if (leftWrappedValue == nullptr || rightWrappedValue == nullptr)
+        return nullptr;
+    llvm::Value *leftValue = leftWrappedValue->getValue();
+    llvm::Value *rightValue = rightWrappedValue->getValue();
 
     if (leftValue == nullptr || rightValue == nullptr)
         return nullptr;
