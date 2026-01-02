@@ -1736,10 +1736,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
             case ExpressionValueKind::FUN:
             case ExpressionValueKind::SIMPLE:
             case ExpressionValueKind::BUILT_IN_VAL_SIMPLE: {
+                llvm::LoadInst *loadInst = builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier());
+                loadInst->setVolatile(true);
                 return WrappedValue::wrappedValue(
                     module,
                     builder,
-                    builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier()),
+                    loadInst,
                     expression->getValueType()
                 );
             }
