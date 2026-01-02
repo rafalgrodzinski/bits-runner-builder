@@ -13,14 +13,12 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->valueLambda = [loadInst](){ return loadInst; };
         wrappedValue->pointerValueLambda = [loadInst](){ return loadInst->getPointerOperand(); };
         wrappedValue->type = loadInst->getType();
-        wrappedValue->alignment = loadInst->getAlign();
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
         wrappedValue->valueLambda = [builder, allocaInst](){
             return builder->CreateLoad(allocaInst->getAllocatedType(), allocaInst);
         };
         wrappedValue->pointerValueLambda = [allocaInst](){ return allocaInst; };
         wrappedValue->type = allocaInst->getAllocatedType();
-        wrappedValue->alignment = allocaInst->getAlign();
     } else if (llvm::CallInst *callInst = llvm::dyn_cast<llvm::CallInst>(value)) {
         llvm::FunctionType *funType = callInst->getFunctionType();
         llvm::Type *retType = funType->getReturnType();
@@ -36,9 +34,6 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             };
         }
         wrappedValue->type = retType;
-        if (llvm::MaybeAlign maybeAlign = callInst->getRetAlign()) {
-            wrappedValue->alignment = *maybeAlign;
-        }
     } else if (llvm::Argument *argument = llvm::dyn_cast<llvm::Argument>(value)) {
         llvm::Type *type = value->getType();
         wrappedValue->valueLambda = [argument](){ return argument; };
@@ -48,9 +43,6 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 return alloca;
             };
         wrappedValue->type = type;
-        if (llvm::MaybeAlign maybeAlign = argument->getParamAlign()) {
-            wrappedValue->alignment = *maybeAlign;
-        }
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
         wrappedValue->valueLambda = [global]() { return global; };
         wrappedValue->pointerValueLambda = [global]() { return global; };
@@ -133,10 +125,6 @@ llvm::Constant *WrappedValue::getConstantValue() {
 
 llvm::GlobalVariable *WrappedValue::getGlobalValue() {
     return llvm::dyn_cast<llvm::GlobalVariable>(getValue());
-}
-
-llvm::Align WrappedValue::getAlignment() {
-    return alignment;
 }
 
 llvm::Type *WrappedValue::getType() {

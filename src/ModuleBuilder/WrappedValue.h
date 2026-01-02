@@ -17,7 +17,6 @@ private:
 
     llvm::Value *value = nullptr;
     llvm::Value *pointerValue = nullptr;
-    llvm::Align alignment;
 
     function<llvm::Value *()> valueLambda;
     function<llvm::Value *()> pointerValueLambda;
@@ -34,7 +33,6 @@ public:
     llvm::Value *getPointerValue();
     llvm::Constant *getConstantValue();
     llvm::GlobalVariable *getGlobalValue();
-    llvm::Align getAlignment();
 
     llvm::Type *getType();
     llvm::ArrayType *getArrayType();
