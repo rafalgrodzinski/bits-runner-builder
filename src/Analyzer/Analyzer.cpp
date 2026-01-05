@@ -1311,6 +1311,19 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         // from address
         case ValueTypeKind::A: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::UINT:
+                case ValueTypeKind::U8:
+                case ValueTypeKind::U32:
+                case ValueTypeKind::U64:
+
+                case ValueTypeKind::SINT:
+                case ValueTypeKind::S8:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+
                 case ValueTypeKind::A:
                     return true;
 

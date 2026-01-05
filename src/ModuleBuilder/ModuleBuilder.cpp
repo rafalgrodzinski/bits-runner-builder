@@ -1487,11 +1487,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             isSourceSInt = true;
             sourceSize = 64;
             break;
-        case ValueTypeKind::FLOAT: {
+        case ValueTypeKind::FLOAT:
             isSourceFloat = true;
             sourceSize = 32;
             break;
-        }
         case ValueTypeKind::F32:
             isSourceFloat = true;
             sourceSize = 32;
@@ -1499,6 +1498,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::F64:
             isSourceFloat = true;
             sourceSize = 64;
+            break;
+        case ValueTypeKind::A:
+            isSourceUInt = true;
+            sourceSize = typeA->getBitWidth();
             break;
         case ValueTypeKind::DATA: {
             isSourceData = true;
@@ -1558,6 +1561,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::F64:
             isTargetFloat = true;
             targetSize = 64;
+            break;
+        case ValueTypeKind::A:
+            isTargetUInt = true;
+            targetSize = typeA->getBitWidth();
             break;
         case ValueTypeKind::DATA: {
             isTargetData = true;

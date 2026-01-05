@@ -204,6 +204,8 @@ bool ValueType::isNumeric() {
         case ValueTypeKind::FLOAT:
         case ValueTypeKind::F32:
         case ValueTypeKind::F64:
+
+        case ValueTypeKind::A:
             return true;
 
         default:
