@@ -24,10 +24,11 @@ enum class ValueTypeKind {
     FLOAT,
     F32,
     F64,
+    A,
+    PTR,
     DATA,
     BLOB,
     FUN,
-    PTR,
     COMPOSITE
 };
 
@@ -54,6 +55,7 @@ public:
     static shared_ptr<ValueType> FLOAT;
     static shared_ptr<ValueType> F32;
     static shared_ptr<ValueType> F64;
+    static shared_ptr<ValueType> A;
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);

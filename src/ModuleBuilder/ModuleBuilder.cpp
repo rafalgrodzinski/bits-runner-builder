@@ -71,7 +71,7 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
     typeFloat = llvm::Type::getFloatTy(*context);
 
     typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
-    typeIntPtr = llvm::Type::getIntNTy(*context, pointerSize);
+    typeA = llvm::Type::getIntNTy(*context, pointerSize);
 }
 
 shared_ptr<llvm::Module> ModuleBuilder::getModule() {
@@ -1382,7 +1382,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     if (expressionValue != nullptr) {
         isCount = expressionValue->getIdentifier().compare("count") == 0;
         isVal = expressionValue->getIdentifier().compare("val") == 0;
-        isVadr = expressionValue->getIdentifier().compare("vAdr") == 0;
+        isVadr = expressionValue->getIdentifier().compare("vadr") == 0;
         isAdr = expressionValue->getIdentifier().compare("adr") == 0;
         isSize = expressionValue->getIdentifier().compare("size") == 0;
     } else if (expressionCall != nullptr) {
@@ -1418,15 +1418,15 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return WrappedValue::wrappedValue(
             module,
             builder,
-            builder->CreatePtrToInt(pointeeLoad, typeIntPtr),
-            ValueType::INT
+            builder->CreatePtrToInt(pointeeLoad, typeA),
+            ValueType::A
         );
     } else if (isAdr) {
         return WrappedValue::wrappedValue(
             module,
             builder,
-            builder->CreatePtrToInt(parentWrappedValue->getPointerValue(), typeIntPtr),
-            ValueType::INT
+            builder->CreatePtrToInt(parentWrappedValue->getPointerValue(), typeA),
+            ValueType::A
         );
     } else if (isSize) {
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
@@ -1833,6 +1833,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             return typeF32;
         case ValueTypeKind::F64:
             return typeF64;
+        case ValueTypeKind::A:
+            return typeA;
         case ValueTypeKind::DATA: {
             if (valueType->getSubType() == nullptr)
                 return nullptr;
@@ -1891,7 +1893,7 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
     } else if (type->isDoubleTy()) {
         return 64;
     } else if (type->isPointerTy()) {
-        return typeIntPtr->getBitWidth();
+        return typeA->getBitWidth();
     } else if (type->isArrayTy()) {
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(type);
         int elementsCount = arrayType->getNumElements();

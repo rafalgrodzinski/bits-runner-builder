@@ -95,7 +95,7 @@ private:
     llvm::Type *typeFloat;
 
     llvm::Type *typePtr;
-    llvm::IntegerType *typeIntPtr;
+    llvm::IntegerType *typeA;
 
     // Statements
     void buildStatement(shared_ptr<Statement> statement);

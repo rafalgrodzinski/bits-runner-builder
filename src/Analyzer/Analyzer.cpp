@@ -730,7 +730,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 
         bool isCount = expressionValue->getIdentifier().compare("count") == 0;
         bool isVal = expressionValue->getIdentifier().compare("val") == 0;
-        bool isVadr = expressionValue->getIdentifier().compare("vAdr") == 0;
+        bool isVadr = expressionValue->getIdentifier().compare("vadr") == 0;
         bool isAdr = expressionValue->getIdentifier().compare("adr") == 0;
         bool isSize = expressionValue->getIdentifier().compare("size") == 0;
 
@@ -763,11 +763,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             }
             return expressionValue->getValueType();
         } else if (isPointer && isVadr) {
-            expressionValue->valueType = ValueType::INT;
+            expressionValue->valueType = ValueType::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
         } else if (isAdr) {
-            expressionValue->valueType = ValueType::INT;
+            expressionValue->valueType = ValueType::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_ADR;
             return expressionValue->getValueType();
         } else if (isSize) {
@@ -1114,7 +1114,6 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
-
         // from unsigned
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
@@ -1168,7 +1167,18 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
-        // data
+        // from address
+        case ValueTypeKind::A: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::A:
+                    return true;
+
+                default:
+                    return false;
+            }
+            break;
+        }
+        // from data
         case ValueTypeKind::DATA: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::DATA:
@@ -1179,7 +1189,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
-        // composite
+        // from composite
         case ValueTypeKind::COMPOSITE: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::BLOB: {

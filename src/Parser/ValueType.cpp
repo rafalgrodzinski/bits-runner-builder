@@ -15,6 +15,7 @@ shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64
 shared_ptr<ValueType> ValueType::FLOAT = make_shared<ValueType>(ValueTypeKind::FLOAT);
 shared_ptr<ValueType> ValueType::F32 = make_shared<ValueType>(ValueTypeKind::F32);
 shared_ptr<ValueType> ValueType::F64 = make_shared<ValueType>(ValueTypeKind::F64);
+shared_ptr<ValueType> ValueType::A = make_shared<ValueType>(ValueTypeKind::A);
 
 shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
@@ -40,6 +41,8 @@ shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
                 valueType->kind = ValueTypeKind::F32;
             } else if (lexme.compare("f64") == 0) {
                 valueType->kind = ValueTypeKind::F64;
+            } else if (lexme.compare("a") == 0) {
+                valueType->kind = ValueTypeKind::A;
             } else {
                 return nullptr;
             }
