@@ -1200,25 +1200,27 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "NONE";
         case ValueTypeKind::BOOL:
             return "BOOL";
-            case ValueTypeKind::INT:
-            return "INT";
-            case ValueTypeKind::U8:
+        case ValueTypeKind::UINT:
+            return "UINT";
+        case ValueTypeKind::U8:
             return "U8";
-            case ValueTypeKind::U32:
+        case ValueTypeKind::U32:
             return "U32";
-            case ValueTypeKind::U64:
+        case ValueTypeKind::U64:
             return "U64";
-            case ValueTypeKind::S8:
+        case ValueTypeKind::SINT:
+            return "SINT";
+        case ValueTypeKind::S8:
             return "S8";
-            case ValueTypeKind::S32:
+        case ValueTypeKind::S32:
             return "S32";
-            case ValueTypeKind::S64:
+        case ValueTypeKind::S64:
             return "S64";
-            case ValueTypeKind::FLOAT:
+        case ValueTypeKind::FLOAT:
             return "FLOAT";
-            case ValueTypeKind::F32:
+        case ValueTypeKind::F32:
             return "F32";
-            case ValueTypeKind::F64:
+        case ValueTypeKind::F64:
             return "F64";
         case ValueTypeKind::A:
             return "A";

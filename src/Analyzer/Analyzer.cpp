@@ -693,10 +693,10 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
             expressionLiteral->valueType = ValueType::BOOL;
             break;
         case ExpressionLiteralKind::INT:
-            expressionLiteral->valueType =  ValueType::INT;
+            expressionLiteral->valueType = ValueType::SINT;
             break;
         case ExpressionLiteralKind::FLOAT:
-            expressionLiteral->valueType =  ValueType::FLOAT;
+            expressionLiteral->valueType = ValueType::FLOAT;
             break;
         default:
             markErrorInvalidType(expressionLiteral->getLocation(), nullptr, nullptr);
@@ -736,7 +736,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 
 
         if (isData && isCount) {
-            expressionValue->valueType = ValueType::INT;
+            expressionValue->valueType = ValueType::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_COUNT;
             return expressionValue->getValueType();
         } else if (isPointer && isVal) {
@@ -771,7 +771,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_ADR;
             return expressionValue->getValueType();
         } else if (isSize) {
-            expressionValue->valueType = ValueType::INT;
+            expressionValue->valueType = ValueType::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_SIZE;
             return expressionValue->getValueType();
         // Invalid built-in call
@@ -809,19 +809,19 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         }
     }
 
-    // first assume just simple
+    // first assume it's just simple
     shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
     if (type != nullptr)
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
 
-    // then check if data
+    // then check if it's data
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
         indexExpression->valueType = typeForExpression(indexExpression, nullptr, nullptr);
         if (indexExpression->getValueType() == nullptr)
             return nullptr;
-        if (!indexExpression->getValueType()->isInteger())
-            markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::INT);
+        if (!indexExpression->getValueType()->isUnsignedInteger())
+            markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
         type = type->getSubType();
         expressionValue->valueKind = ExpressionValueKind::DATA;
     // finally check if it's a function
@@ -856,10 +856,12 @@ bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, 
             break;
         }
         // numeric
-        case ValueTypeKind::INT:
+        case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
+
+        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -920,10 +922,12 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
             break;
         }
         // Valid operations for numeric types
-        case ValueTypeKind::INT:
+        case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
+
+        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -934,14 +938,16 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
         
         case ValueTypeKind::A: {
             switch (operation) {
-                // shift operations requires second type to be numeric
+                // shift operations requires second type to be integer
                 case ExpressionBinaryOperation::BIT_SHL:
                 case ExpressionBinaryOperation::BIT_SHR: {
                     switch (secondType->getKind()) {
-                        case ValueTypeKind::INT:
+                        case ValueTypeKind::UINT:
                         case ValueTypeKind::U8:
                         case ValueTypeKind::U32:
                         case ValueTypeKind::U64:
+
+                        case ValueTypeKind::SINT:
                         case ValueTypeKind::S8:
                         case ValueTypeKind::S32:
                         case ValueTypeKind::S64: {
@@ -989,8 +995,8 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
     switch (operation) {
         case ExpressionUnaryOperation::MINUS:
             switch (type->getKind()) {
-                case ValueTypeKind::INT:
-                    return ValueType::INT;
+                case ValueTypeKind::UINT:
+                    return ValueType::SINT;
                 case ValueTypeKind::U8:
                     return ValueType::S8;
                 case ValueTypeKind::U32:
@@ -1111,8 +1117,9 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
 bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     switch (sourceType->getKind()) {
-        // from undecided type
-        case ValueTypeKind::INT: {
+        // from literal types
+        case ValueTypeKind::UINT:
+        case ValueTypeKind::SINT: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::U8:
                 case ValueTypeKind::U32:
@@ -1315,7 +1322,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                 // to pointer
                 case ValueTypeKind::PTR: {
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
-                    return sourceElementTypes.size() == 1 && (sourceElementTypes.at(0)->getKind() == ValueTypeKind::INT || sourceElementTypes.at(0)->isUnsignedInteger());
+                    return sourceElementTypes.size() == 1 && sourceElementTypes.at(0)->isUnsignedInteger();
                 }
 
                 // to data

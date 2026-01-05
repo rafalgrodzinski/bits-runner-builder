@@ -5,10 +5,11 @@
 
 shared_ptr<ValueType> ValueType::NONE = make_shared<ValueType>(ValueTypeKind::NONE);
 shared_ptr<ValueType> ValueType::BOOL = make_shared<ValueType>(ValueTypeKind::BOOL);
-shared_ptr<ValueType> ValueType::INT = make_shared<ValueType>(ValueTypeKind::INT);
+shared_ptr<ValueType> ValueType::UINT = make_shared<ValueType>(ValueTypeKind::UINT);
 shared_ptr<ValueType> ValueType::U8 = make_shared<ValueType>(ValueTypeKind::U8);
 shared_ptr<ValueType> ValueType::U32 = make_shared<ValueType>(ValueTypeKind::U32);
 shared_ptr<ValueType> ValueType::U64 = make_shared<ValueType>(ValueTypeKind::U64);
+shared_ptr<ValueType> ValueType::SINT = make_shared<ValueType>(ValueTypeKind::SINT);
 shared_ptr<ValueType> ValueType::S8 = make_shared<ValueType>(ValueTypeKind::S8);
 shared_ptr<ValueType> ValueType::S32 = make_shared<ValueType>(ValueTypeKind::S32);
 shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64);
@@ -52,15 +53,15 @@ shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
             valueType->kind = ValueTypeKind::BOOL;
             break;
         case TokenKind::INTEGER_DEC:
-            valueType->kind = ValueTypeKind::S32;
+            valueType->kind = ValueTypeKind::SINT;
             break;
         case TokenKind::INTEGER_HEX:
         case TokenKind::INTEGER_BIN:
         case TokenKind::INTEGER_CHAR:
-            valueType->kind = ValueTypeKind::U32;
+            valueType->kind = ValueTypeKind::UINT;
             break;
         case TokenKind::FLOAT:
-            valueType->kind = ValueTypeKind::F32;
+            valueType->kind = ValueTypeKind::FLOAT;
             break;
         default:
             return nullptr;
@@ -172,8 +173,8 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
             if (thisCountLiteralExpression == nullptr || thatCountLiteralExpression == nullptr)
                 return false;
             // sizes must be unsigned integers
-            bool isThisTypeValid = thisCountLiteralExpression->getValueType()->isInteger() || thisCountLiteralExpression->getValueType()->getKind() == ValueTypeKind::INT;
-            bool isThatTypeValid = thatCountLiteralExpression->getValueType()->isInteger() || thatCountLiteralExpression->getValueType()->getKind() == ValueTypeKind::INT;
+            bool isThisTypeValid = thisCountLiteralExpression->getValueType()->isUnsignedInteger();
+            bool isThatTypeValid = thatCountLiteralExpression->getValueType()->isUnsignedInteger();
             if (!isThisTypeValid || !isThatTypeValid)
                 return false;
 
@@ -190,12 +191,12 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
 
 bool ValueType::isNumeric() {
     switch (kind) {
-        case ValueTypeKind::INT:
-
+        case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
     
+        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -214,12 +215,12 @@ bool ValueType::isNumeric() {
 
 bool ValueType::isInteger() {
     switch (kind) {
-        case ValueTypeKind::INT:
-
+        case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
 
+        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -236,6 +237,7 @@ bool ValueType::isInteger() {
 
 bool ValueType::isUnsignedInteger() {
     switch (kind) {
+        case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
@@ -251,8 +253,7 @@ bool ValueType::isUnsignedInteger() {
 
 bool ValueType::isSignedInteger() {
     switch (kind) {
-        case ValueTypeKind::INT:
-
+        case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
@@ -268,7 +269,6 @@ bool ValueType::isSignedInteger() {
 bool ValueType::isFloat() {
     switch (kind) {
         case ValueTypeKind::FLOAT:
-
         case ValueTypeKind::F32:
         case ValueTypeKind::F64:
             return true;

@@ -1267,10 +1267,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             resultValue = llvm::ConstantInt::getBool(typeBool, expressionLiteral->getBoolValue());
             break;
 
-        case ValueTypeKind::INT:
-            resultValue = llvm::ConstantInt::get(typeSInt, expressionLiteral->getSIntValue());
+        case ValueTypeKind::UINT:
+            resultValue = llvm::ConstantInt::get(typeUInt, expressionLiteral->getUIntValue());
             break;
-
         case ValueTypeKind::U8:
             resultValue = llvm::ConstantInt::get(typeU8, expressionLiteral->getUIntValue());
             break;
@@ -1281,6 +1280,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             resultValue = llvm::ConstantInt::get(typeU64, expressionLiteral->getUIntValue());
             break;
 
+        case ValueTypeKind::SINT:
+            resultValue = llvm::ConstantInt::get(typeSInt, expressionLiteral->getSIntValue());
+            break;
         case ValueTypeKind::S8:
             resultValue = llvm::ConstantInt::get(typeS8, expressionLiteral->getSIntValue());
             break;
@@ -1403,7 +1405,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
 
     // Do the appropriate built-in operation
     if (parentWrappedValue->isArray() && isCount) {
-        return WrappedValue::wrappedUIntValue(typeUInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::INT);
+        return WrappedValue::wrappedUIntValue(typeUInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
         pointeeLoad->setVolatile(true);
@@ -1440,7 +1442,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
         if (sizeInBytes <= 0)
             return nullptr;
-        return WrappedValue::wrappedUIntValue(typeUInt, sizeInBytes, ValueType::INT);
+        return WrappedValue::wrappedUIntValue(typeUInt, sizeInBytes, ValueType::UINT);
     }
 
     markErrorInvalidBuiltIn(expression->getLocation(), expressionValue->getIdentifier());
@@ -1455,12 +1457,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isSourceData = false;
     int sourceSize = 0;
     switch (sourceWrappedValue->getValueType()->getKind()) {
-        case ValueTypeKind::INT: {
+        case ValueTypeKind::UINT:
             isSourceUInt = true;
-            //isSourceSInt = true;
             sourceSize = typeUInt->getBitWidth();
             break;
-        }
         case ValueTypeKind::U8:
             isSourceUInt = true;
             sourceSize = 8;
@@ -1472,6 +1472,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::U64:
             isSourceUInt = true;
             sourceSize = 64;
+            break;
+        case ValueTypeKind::SINT:
+            isSourceSInt = true;
+            sourceSize = typeSInt->getBitWidth();
             break;
         case ValueTypeKind::S8:
             isSourceSInt = true;
