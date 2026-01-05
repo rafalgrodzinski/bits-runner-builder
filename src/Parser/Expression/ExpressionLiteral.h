@@ -5,7 +5,8 @@
 
 enum class ExpressionLiteralKind {
     BOOL,
-    INT,
+    UINT,
+    SINT,
     FLOAT
 };
 

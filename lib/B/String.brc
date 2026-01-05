@@ -54,7 +54,7 @@
     length u32 <- 0
     // first get digits in reversed order
     rep true, value > 0, length <- length + 1
-        digit u32 <- value % 10
+        digit u8 <- (value % 10).u8
         string[length] <- digit + '0'
         value <- value / 10
     ;
@@ -112,7 +112,7 @@
 
     // first get digits in reversed order
     rep true, value > 0
-        digit u32 <- value % 16
+        digit u8 <- (value % 16).u8
         string[currentIndex] <- if digit > 9: digit - 10 + 'a' else: digit + '0'
         value <- value / 16
         currentIndex <- currentIndex + 1
@@ -147,7 +147,7 @@
     // handle integral part
     integral u32 <- value.u32
     rep true, integral > 0
-        string[currentIndex] <- (integral % 10) + '0'
+        string[currentIndex] <- (integral % 10).u8 + '0'
         integral <- integral / 10
         currentIndex <- currentIndex + 1
     ;
@@ -161,7 +161,7 @@
     // handle exponent
     exponent u32 <- ((value - value.u32.f32) * 100_000).u32
     rep true, exponent > 0
-        string[currentIndex] <- (exponent % 10) + '0'
+        string[currentIndex] <- (exponent % 10).u8 + '0'
         exponent <- exponent / 10
         currentIndex <- currentIndex + 1
     ;

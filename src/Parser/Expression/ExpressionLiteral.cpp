@@ -51,7 +51,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::INTEGER_DEC: {
-            expression->literalKind = ExpressionLiteralKind::INT;
+            expression->literalKind = ExpressionLiteralKind::SINT;
             string numString = token->getLexme();
             erase(numString, '_');
             int64_t value = stol(numString, nullptr, 10);
@@ -62,7 +62,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::INTEGER_HEX: {
-            expression->literalKind = ExpressionLiteralKind::INT;
+            expression->literalKind = ExpressionLiteralKind::UINT;
             string numString = token->getLexme();
             erase(numString, '_');
             uint64_t value = stoul(numString, nullptr, 16);
@@ -73,7 +73,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::INTEGER_BIN: {
-            expression->literalKind = ExpressionLiteralKind::INT;
+            expression->literalKind = ExpressionLiteralKind::UINT;
             string numString = token->getLexme();
             erase(numString, '_');
             numString = numString.substr(2, numString.size()-1);
@@ -85,7 +85,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             break;
         }
         case TokenKind::INTEGER_CHAR: {
-            expression->literalKind = ExpressionLiteralKind::INT;
+            expression->literalKind = ExpressionLiteralKind::UINT;
             string charString = token->getLexme();
             optional<uint64_t> value = ExpressionLiteral::decodeEscapedCharString(charString);
             if (!value)
@@ -116,7 +116,7 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
 
 shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForInt(int64_t value, shared_ptr<Location> location) {
     shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(location);
-    expression->literalKind = ExpressionLiteralKind::INT;
+    expression->literalKind = ExpressionLiteralKind::SINT;
     expression->boolValue = false;
     expression->uIntValue = value;
     expression->sIntValue = value;

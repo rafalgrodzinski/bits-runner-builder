@@ -141,9 +141,9 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
                 markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
                 return;
             }
-            member.second->getCountExpression()->valueType = typeForExpression(
+            member.second->countExpression = checkAndTryCasting(
                 member.second->getCountExpression(),
-                nullptr,
+                ValueType::UINT,
                 nullptr
             );
         }
@@ -209,8 +209,12 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
     // updated types for count expressions
     for (auto &argument : statementFunctionDeclaration->getArguments()) {
-        if (shared_ptr<Expression> countExpression = argument.second->getCountExpression())
-            countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
+        if (shared_ptr<Expression> countExpression = argument.second->getCountExpression()) {
+            argument.second = ValueType::data(
+                argument.second->getSubType(),
+                checkAndTryCasting(argument.second->getCountExpression(), ValueType::UINT, nullptr)
+            );
+        }
     }
 
     // update return's type for count expression
@@ -334,8 +338,13 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     // Update count expression
-    if (statementVariable->getValueType()->getCountExpression() != nullptr)
-        statementVariable->getValueType()->getCountExpression()->valueType = typeForExpression(statementVariable->getValueType()->getCountExpression(), nullptr, nullptr);
+    if (statementVariable->getValueType()->getCountExpression() != nullptr) {
+        statementVariable->getValueType()->countExpression = checkAndTryCasting(
+            statementVariable->getValueType()->getCountExpression(),
+            ValueType::UINT,
+            nullptr
+        );
+    }
 
     // check if specified blob type is valid
     if (statementVariable->getValueType()->isBlob()) {
@@ -692,7 +701,10 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
         case ExpressionLiteralKind::BOOL:
             expressionLiteral->valueType = ValueType::BOOL;
             break;
-        case ExpressionLiteralKind::INT:
+        case ExpressionLiteralKind::UINT:
+            expressionLiteral->valueType = ValueType::UINT;
+            break;
+        case ExpressionLiteralKind::SINT:
             expressionLiteral->valueType = ValueType::SINT;
             break;
         case ExpressionLiteralKind::FLOAT:
@@ -816,12 +828,16 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 
     // then check if it's data
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
+        expressionValue->indexExpression = checkAndTryCasting(
+            expressionValue->getIndexExpression(),
+            ValueType::UINT,
+            nullptr
+        );
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
-        indexExpression->valueType = typeForExpression(indexExpression, nullptr, nullptr);
-        if (indexExpression->getValueType() == nullptr)
-            return nullptr;
-        if (!indexExpression->getValueType()->isUnsignedInteger())
+        if (!indexExpression->getValueType()->isUnsignedInteger()) {
             markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+            return nullptr;
+        }
         type = type->getSubType();
         expressionValue->valueKind = ExpressionValueKind::DATA;
     // finally check if it's a function
@@ -1071,7 +1087,11 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
                 sourceExpression->getLocation()
             )
         );
-        sourceExpression->getValueType()->getCountExpression()->valueType = typeForExpression(sourceExpression->getValueType()->getCountExpression(), nullptr, returnType);
+        sourceExpression->getValueType()->countExpression = checkAndTryCasting(
+            sourceExpression->getValueType()->getCountExpression(),
+            ValueType::UINT,
+            nullptr
+        );
         // and then cast (if necessary) each of the element expressions
         for (int i=0; i<expressionCompositeLiteral->getExpressions().size(); i++) {
             shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(i);
@@ -1086,8 +1106,13 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {
-        if (sourceType->getCountExpression() != nullptr)
-            sourceType->getCountExpression()->valueType = typeForExpression(sourceType->getCountExpression(), nullptr, returnType);
+        if (sourceType->getCountExpression() != nullptr) {
+            sourceType->countExpression = checkAndTryCasting(
+                sourceType->getCountExpression(),
+                ValueType::UINT,
+                nullptr
+            );
+        }
 
         if (targetType->getCountExpression() == nullptr)
             return sourceExpression;
@@ -1121,10 +1146,12 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         case ValueTypeKind::UINT:
         case ValueTypeKind::SINT: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::UINT:
                 case ValueTypeKind::U8:
                 case ValueTypeKind::U32:
                 case ValueTypeKind::U64:
 
+                case ValueTypeKind::SINT:
                 case ValueTypeKind::S8:
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:

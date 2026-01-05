@@ -759,7 +759,10 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
         case ExpressionLiteralKind::FLOAT:
             line = format("{}｢{}｣", expression->getFloatValue(), toString(expression->getValueType()));
             break;
-        case ExpressionLiteralKind::INT:
+        case ExpressionLiteralKind::UINT:
+            line = format("{}｢{}｣", expression->getUIntValue(), toString(expression->getValueType()));
+            break;
+        case ExpressionLiteralKind::SINT:
             line = format("{}｢{}｣", expression->getSIntValue(), toString(expression->getValueType()));
             break;
     }

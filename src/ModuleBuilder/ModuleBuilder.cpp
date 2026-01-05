@@ -1207,7 +1207,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     shared_ptr<Expression> conditionExpression = expressionIfElse->getConditionExpression();
 
     llvm::Function *fun = builder->GetInsertBlock()->getParent();
-    llvm::Value *conditionValue = wrappedValueForExpression(conditionExpression)->getValue();
+    shared_ptr<WrappedValue> conditionWrappedValue = wrappedValueForExpression(conditionExpression);
+    if (conditionWrappedValue == nullptr)
+        return nullptr;
+    llvm::Value *conditionValue = conditionWrappedValue->getValue();
 
     llvm::BasicBlock *thenBlock = llvm::BasicBlock::Create(*context, "thenBlock", fun);
     llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(*context, "elseBlock");
@@ -1516,6 +1519,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isTargetData = false;
     int targetSize = 0;
     switch (targetValueType->getKind()) {
+        case ValueTypeKind::UINT:
+            isTargetUInt = true;
+            targetSize = typeInt->getBitWidth();
+            break;
         case ValueTypeKind::U8:
             isTargetUInt = true;
             targetSize = 8;
@@ -1527,6 +1534,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::U64:
             isTargetUInt = true;
             targetSize = 64;
+            break;
+        case ValueTypeKind::SINT:
+            isTargetSInt = true;
+            targetSize = typeInt->getBitWidth();
             break;
         case ValueTypeKind::S8:
             isTargetSInt = true;
@@ -1824,12 +1835,16 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             return typeVoid;
         case ValueTypeKind::BOOL:
             return typeBool;
+        case ValueTypeKind::UINT:
+            return typeInt;
         case ValueTypeKind::U8:
             return typeI8;
         case ValueTypeKind::U32:
             return typeI32;
         case ValueTypeKind::U64:
             return typeI64;
+        case ValueTypeKind::SINT:
+            return typeInt;
         case ValueTypeKind::S8:
             return typeI8;
         case ValueTypeKind::S32:
