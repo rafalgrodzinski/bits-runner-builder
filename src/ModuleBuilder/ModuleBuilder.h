@@ -79,16 +79,11 @@ private:
 
     llvm::Type *typeVoid;
     llvm::Type *typeBool;
-    
-    llvm::IntegerType *typeU8;
-    llvm::IntegerType *typeU32;
-    llvm::IntegerType *typeU64;
-    llvm::IntegerType *typeUInt;
 
-    llvm::IntegerType *typeS8;
-    llvm::IntegerType *typeS32;
-    llvm::IntegerType *typeS64;
-    llvm::IntegerType *typeSInt;
+    llvm::IntegerType *typeInt;
+    llvm::IntegerType *typeI8;
+    llvm::IntegerType *typeI32;
+    llvm::IntegerType *typeI64;
 
     llvm::Type *typeF32;
     llvm::Type *typeF64;

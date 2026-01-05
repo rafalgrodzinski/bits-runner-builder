@@ -56,15 +56,10 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
     typeVoid = llvm::Type::getVoidTy(*context);
     typeBool = llvm::Type::getInt1Ty(*context);
 
-    typeU8 = llvm::Type::getInt8Ty(*context);
-    typeU32 = llvm::Type::getInt32Ty(*context);
-    typeU64 = llvm::Type::getInt64Ty(*context);
-    typeUInt = llvm::Type::getIntNTy(*context, intSize);
-
-    typeS8 = llvm::Type::getInt8Ty(*context);
-    typeS32 = llvm::Type::getInt32Ty(*context);
-    typeS64 = llvm::Type::getInt64Ty(*context);
-    typeSInt = llvm::Type::getIntNTy(*context, intSize);
+    typeInt = llvm::Type::getIntNTy(*context, intSize);
+    typeI8 = llvm::Type::getInt8Ty(*context);
+    typeI32 = llvm::Type::getInt32Ty(*context);
+    typeI64 = llvm::Type::getInt64Ty(*context);
 
     typeF32 = llvm::Type::getFloatTy(*context);
     typeF64 = llvm::Type::getDoubleTy(*context);
@@ -1268,29 +1263,29 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
 
         case ValueTypeKind::UINT:
-            resultValue = llvm::ConstantInt::get(typeUInt, expressionLiteral->getUIntValue());
+            resultValue = llvm::ConstantInt::get(typeInt, expressionLiteral->getUIntValue());
             break;
         case ValueTypeKind::U8:
-            resultValue = llvm::ConstantInt::get(typeU8, expressionLiteral->getUIntValue());
+            resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getUIntValue());
             break;
         case ValueTypeKind::U32:
-            resultValue = llvm::ConstantInt::get(typeU32, expressionLiteral->getUIntValue());
+            resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getUIntValue());
             break;
         case ValueTypeKind::U64:
-            resultValue = llvm::ConstantInt::get(typeU64, expressionLiteral->getUIntValue());
+            resultValue = llvm::ConstantInt::get(typeI64, expressionLiteral->getUIntValue());
             break;
 
         case ValueTypeKind::SINT:
-            resultValue = llvm::ConstantInt::get(typeSInt, expressionLiteral->getSIntValue());
+            resultValue = llvm::ConstantInt::get(typeInt, expressionLiteral->getSIntValue());
             break;
         case ValueTypeKind::S8:
-            resultValue = llvm::ConstantInt::get(typeS8, expressionLiteral->getSIntValue());
+            resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getSIntValue());
             break;
         case ValueTypeKind::S32:
-            resultValue = llvm::ConstantInt::get(typeS32, expressionLiteral->getSIntValue());
+            resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getSIntValue());
             break;
         case ValueTypeKind::S64:
-            resultValue = llvm::ConstantInt::get(typeS64, expressionLiteral->getSIntValue());
+            resultValue = llvm::ConstantInt::get(typeI64, expressionLiteral->getSIntValue());
             break;
 
         case ValueTypeKind::FLOAT:
@@ -1405,7 +1400,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
 
     // Do the appropriate built-in operation
     if (parentWrappedValue->isArray() && isCount) {
-        return WrappedValue::wrappedUIntValue(typeUInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
+        return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
         pointeeLoad->setVolatile(true);
@@ -1442,7 +1437,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
         if (sizeInBytes <= 0)
             return nullptr;
-        return WrappedValue::wrappedUIntValue(typeUInt, sizeInBytes, ValueType::UINT);
+        return WrappedValue::wrappedUIntValue(typeInt, sizeInBytes, ValueType::UINT);
     }
 
     markErrorInvalidBuiltIn(expression->getLocation(), expressionValue->getIdentifier());
@@ -1459,7 +1454,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     switch (sourceWrappedValue->getValueType()->getKind()) {
         case ValueTypeKind::UINT:
             isSourceUInt = true;
-            sourceSize = typeUInt->getBitWidth();
+            sourceSize = typeInt->getBitWidth();
             break;
         case ValueTypeKind::U8:
             isSourceUInt = true;
@@ -1475,7 +1470,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         case ValueTypeKind::SINT:
             isSourceSInt = true;
-            sourceSize = typeSInt->getBitWidth();
+            sourceSize = typeInt->getBitWidth();
             break;
         case ValueTypeKind::S8:
             isSourceSInt = true;
@@ -1808,7 +1803,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForTypeBuiltIn(llvm::Type *t
         int sizeInBytes = sizeInBitsForType(type) / 8;
         if (sizeInBytes <= 0)
             return nullptr;
-        return WrappedValue::wrappedUIntValue(typeUInt, sizeInBytes, expression->getValueType());
+        return WrappedValue::wrappedUIntValue(typeInt, sizeInBytes, expression->getValueType());
     }
     
     markErrorInvalidBuiltIn(expression->getLocation(), expression->getIdentifier());
@@ -1830,17 +1825,17 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
         case ValueTypeKind::BOOL:
             return typeBool;
         case ValueTypeKind::U8:
-            return typeU8;
+            return typeI8;
         case ValueTypeKind::U32:
-            return typeU32;
+            return typeI32;
         case ValueTypeKind::U64:
-            return typeU64;
+            return typeI64;
         case ValueTypeKind::S8:
-            return typeS8;
+            return typeI8;
         case ValueTypeKind::S32:
-            return typeS32;
+            return typeI32;
         case ValueTypeKind::S64:
-            return typeS64;
+            return typeI64;
         case ValueTypeKind::F32:
             return typeF32;
         case ValueTypeKind::F64:
