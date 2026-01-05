@@ -223,6 +223,8 @@ bool ValueType::isInteger() {
         case ValueTypeKind::S8:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
+
+        case ValueTypeKind::A:
             return true;
 
         default:
@@ -237,6 +239,7 @@ bool ValueType::isUnsignedInteger() {
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
+        case ValueTypeKind::A:
             return true;
 
         default:

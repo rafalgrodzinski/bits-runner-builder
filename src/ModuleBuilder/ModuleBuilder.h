@@ -167,6 +167,8 @@ private:
     void markErrorNotDefined(shared_ptr<Location> location, string name);
     void markErrorNoTypeForPointer(shared_ptr<Location> location);
 
+    void debugPrint(vector<llvm::Value *> values);
+
 public:
     ModuleBuilder(
         string moduleName,

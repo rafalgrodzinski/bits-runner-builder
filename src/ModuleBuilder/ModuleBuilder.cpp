@@ -817,10 +817,14 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             // simple <- var
             case ExpressionKind::VALUE:
             case ExpressionKind::CHAINED: {
-                llvm::Value *sourceValue = wrappedValueForExpression(valueExpression)->getValue();
-                if (sourceValue == nullptr)
+                shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
+                if (sourceWrappedValue == nullptr || targetWrappedValue == nullptr)
                     return;
-                builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
+                llvm::Value *sourceValue = sourceWrappedValue->getValue();
+                llvm::Value *targetValue = targetWrappedValue->getPointerValue();
+                if (sourceValue == nullptr || targetValue == nullptr)
+                    return;
+                builder->CreateStore(sourceValue, targetValue);
                 break;
             }
             // other
@@ -879,7 +883,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     // types will match in cases when it's important
     shared_ptr<ValueType> valueType = expressionBinary->getLeft()->getValueType();
 
-    llvm::Value *resultValue;
+    llvm::Value *resultValue = nullptr;
     switch (expressionBinary->getOperation()) {
         // logical
         case ExpressionBinaryOperation::OR: {
@@ -1257,7 +1261,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
-    llvm::Value *resultValue;
+    llvm::Value *resultValue = nullptr;
     switch (expressionLiteral->getValueType()->getKind()) {
         case ValueTypeKind::BOOL:
             resultValue = llvm::ConstantInt::getBool(typeBool, expressionLiteral->getBoolValue());
@@ -1296,6 +1300,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         case ValueTypeKind::F64:
             resultValue = llvm::ConstantFP::get(typeF64, expressionLiteral->getFloatValue());
+            break;
+
+        case ValueTypeKind::A:
+            resultValue = llvm::ConstantInt::get(typeA, expressionLiteral->getUIntValue());
             break;
 
         default:
@@ -2019,4 +2027,20 @@ void ModuleBuilder::markErrorNotDefined(shared_ptr<Location> location, string na
 void ModuleBuilder::markErrorNoTypeForPointer(shared_ptr<Location> location) {
     string message = "Cannot find type for pointer";
     errors.push_back(Error::error(location, message));
+}
+
+void ModuleBuilder::debugPrint(vector<llvm::Value *> values) {
+    for (llvm::Value *value : values) {
+        llvm::outs() << "value: ";
+        if (value != nullptr)
+            value->print(llvm::outs());
+        else
+            llvm::outs() << "<null>";
+        llvm::outs() << "\ntype: ";
+        if (value != nullptr)
+            value->getType()->print(llvm::outs());
+        else
+            llvm::outs() << "<null>";
+        llvm::outs() << "\n\n";
+    }
 }

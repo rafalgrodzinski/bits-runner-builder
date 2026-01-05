@@ -845,6 +845,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 //
 bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) {
     switch (type->getKind()) {
+        // bool
         case ValueTypeKind::BOOL:
             switch (operation) {
                 case ExpressionUnaryOperation::NOT: {
@@ -854,6 +855,7 @@ bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, 
                     break;
             break;
         }
+        // numeric
         case ValueTypeKind::INT:
         case ValueTypeKind::U8:
         case ValueTypeKind::U32:
@@ -876,6 +878,20 @@ bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, 
             }
             break;
         }
+
+        // address
+        case ValueTypeKind::A: {
+            switch (operation) {
+                case ExpressionUnaryOperation::BIT_NOT:
+                case ExpressionUnaryOperation::PLUS: {
+                    return true;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+
         default:
             break;
     }
@@ -914,7 +930,9 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
 
         case ValueTypeKind::FLOAT:
         case ValueTypeKind::F32:
-        case ValueTypeKind::F64: {
+        case ValueTypeKind::F64:
+        
+        case ValueTypeKind::A: {
             switch (operation) {
                 // shift operations requires second type to be numeric
                 case ExpressionBinaryOperation::BIT_SHL:
@@ -1094,7 +1112,28 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     switch (sourceType->getKind()) {
         // from undecided type
-        case ValueTypeKind::INT:
+        case ValueTypeKind::INT: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::U8:
+                case ValueTypeKind::U32:
+                case ValueTypeKind::U64:
+
+                case ValueTypeKind::S8:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+
+                case ValueTypeKind::A:
+                    return true;
+
+                default:
+                    return false;   
+            }
+            break;
+        }
+
         case ValueTypeKind::FLOAT: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::U8:
