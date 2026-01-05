@@ -186,9 +186,9 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
             markErrorInvalidType(statementFunction->getLocation(), statementFunction->getReturnValueType(), nullptr);
             return;
         }
-        statementFunction->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
+        statementFunction->getReturnValueType()->countExpression = checkAndTryCasting(
             statementFunction->getReturnValueType()->getCountExpression(),
-            nullptr,
+            ValueType::UINT,
             nullptr
         );
     }
