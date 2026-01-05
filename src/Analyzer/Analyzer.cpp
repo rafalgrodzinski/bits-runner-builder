@@ -1064,7 +1064,20 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
     // single literal just needs to set the type
     if (sourceExpression->getKind() == ExpressionKind::LITERAL) {
-        sourceExpression->valueType = targetType;
+        shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(sourceExpression);
+        // adjust literal kind
+        if (targetType->isUnsignedInteger())
+            expressionLiteral->literalKind = ExpressionLiteralKind::UINT;
+        else if (targetType->isSignedInteger())
+            expressionLiteral->literalKind = ExpressionLiteralKind::SINT;
+        else if (targetType->isFloat())
+            expressionLiteral->literalKind = ExpressionLiteralKind::FLOAT;
+        else if (targetType->isBool())
+            expressionLiteral->literalKind = ExpressionLiteralKind::BOOL;
+        else
+            return sourceExpression;
+        // and value type
+        expressionLiteral->valueType = targetType;
         return sourceExpression;
     // composite to blob
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isBlob()) {
@@ -1102,7 +1115,15 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             return sourceExpression;
     // composite to pointer
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
+        // first adjust the type
         sourceExpression->valueType = targetType;
+        // then make sure that the composite expression is of type UINT (we don't want negative addresses)
+        shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
+        expressionCompositeLiteral->expressions[0] = checkAndTryCasting(
+            expressionCompositeLiteral->getExpressions().at(0),
+            ValueType::UINT,
+            nullptr
+        );
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {
@@ -1362,7 +1383,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                 // to pointer
                 case ValueTypeKind::PTR: {
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
-                    return sourceElementTypes.size() == 1 && sourceElementTypes.at(0)->isUnsignedInteger();
+                    return sourceElementTypes.size() == 1 && sourceElementTypes.at(0)->isInteger();
                 }
 
                 // to data
