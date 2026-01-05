@@ -27,4 +27,9 @@ From `data`: `data` If the subtype can be cast implicitly
 
 From `blob`: No implicit casting
 
+From composite:
+- `ptr`:
+- `data`: If each element can be cast implicitly
+- `blob`: If elements match and each in order can be cast implicitly
+
 ## Explicit Casts

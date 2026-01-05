@@ -1,5 +1,5 @@
 @export main fun
     num s32 <- 0xffee
-    num2 u8
-    num2 <- 3.14
+    num2 s8
+    num2 <- num.s8
 ;

@@ -1114,10 +1114,9 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
+
         // from unsigned
-        case ValueTypeKind::U8:
-        case ValueTypeKind::U32:
-        case ValueTypeKind::U64: {
+        case ValueTypeKind::U8: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::U8:
                 case ValueTypeKind::U32:
@@ -1136,10 +1135,41 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
+        case ValueTypeKind::U32: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::U32:
+                case ValueTypeKind::U64:
+
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    return true;
+
+                default:
+                    return false;
+            }
+            break;
+        }
+        case ValueTypeKind::U64: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::U64:
+
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    return true;
+
+                default:
+                    return false;
+            }
+            break;
+        }
+
         // from signed
-        case ValueTypeKind::S8:
-        case ValueTypeKind::S32:
-        case ValueTypeKind::S64: {
+        case ValueTypeKind::S8: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::S8:
                 case ValueTypeKind::S32:
@@ -1154,9 +1184,36 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
+        case ValueTypeKind::S32: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    return true;
+
+                default:
+                    return false;
+            }
+            break;
+        }
+        case ValueTypeKind::S64: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    return true;
+
+                default:
+                    return false;
+            }
+            break;
+        }
+
         // from float
-        case ValueTypeKind::F32:
-        case ValueTypeKind::F64: {
+        case ValueTypeKind::F32: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
@@ -1167,6 +1224,17 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
+        case ValueTypeKind::F64: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::F64:
+                    return true;
+
+                default:
+                    return false;
+            }
+            break;
+        }
+
         // from address
         case ValueTypeKind::A: {
             switch (targetType->getKind()) {
@@ -1178,6 +1246,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
+
         // from data
         case ValueTypeKind::DATA: {
             switch (targetType->getKind()) {
@@ -1189,9 +1258,38 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             }
             break;
         }
+
+        // blob
+        case ValueTypeKind::BLOB: {
+            if (!targetType->isBlob())
+                return false;
+
+            string sourceBlobName = *(sourceType->getBlobName());
+            string targetBlobName = *(targetType->getBlobName());
+
+            return sourceBlobName.compare(targetBlobName) == 0;
+        }
+
         // from composite
         case ValueTypeKind::COMPOSITE: {
             switch (targetType->getKind()) {
+                // to pointer
+                case ValueTypeKind::PTR: {
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    return sourceElementTypes.size() == 1 && (sourceElementTypes.at(0)->getKind() == ValueTypeKind::INT || sourceElementTypes.at(0)->isUnsignedInteger());
+                }
+
+                // to data
+                case ValueTypeKind::DATA: {
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    for (shared_ptr<ValueType> sourceElementType : sourceElementTypes) {
+                        if (!canCast(sourceElementType, targetType->getSubType()))
+                            return false;
+                    }
+                    return true;
+                }
+
+                // to blob
                 case ValueTypeKind::BLOB: {
                     optional<string> blobName = targetType->getBlobName();
                     if (!targetType->getBlobName())
@@ -1212,33 +1310,11 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     }
                     return true;
                 }
-                case ValueTypeKind::DATA: {
-                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
-                    for (shared_ptr<ValueType> sourceElementType : sourceElementTypes) {
-                        if (!canCast(sourceElementType, targetType->getSubType()))
-                            return false;
-                    }
-                    return true;
-                }
-                case ValueTypeKind::PTR: {
-                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
-                    return sourceElementTypes.size() == 1 && (sourceElementTypes.at(0)->getKind() == ValueTypeKind::INT || sourceElementTypes.at(0)->isUnsignedInteger());
-                }
 
                 default:
                     return false;
             }
             break;
-        }
-        // blob
-        case ValueTypeKind::BLOB: {
-            if (!targetType->isBlob())
-                return false;
-
-            string sourceBlobName = *(sourceType->getBlobName());
-            string targetBlobName = *(targetType->getBlobName());
-
-            return sourceBlobName.compare(targetBlobName) == 0;
         }
 
         default:
