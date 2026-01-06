@@ -4,8 +4,6 @@
 #include "Expression.h"
 
 class ExpressionCompositeLiteral: public Expression {
-friend class Analyzer;
-
 private:
     vector<shared_ptr<Expression>> expressions;
     

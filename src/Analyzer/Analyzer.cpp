@@ -1111,15 +1111,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             return sourceExpression;
     // composite to pointer
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
-        // first adjust the type
         sourceExpression->valueType = targetType;
-        // then make sure that the composite expression is of type UINT (we don't want negative addresses)
-        shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
-        expressionCompositeLiteral->expressions[0] = checkAndTryCasting(
-            expressionCompositeLiteral->getExpressions().at(0),
-            ValueType::UINT,
-            nullptr
-        );
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {
