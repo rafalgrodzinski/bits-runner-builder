@@ -3,7 +3,7 @@
 @import BSys
 
 @export String blob
-    string data<u8, 256>
+    string data<u8, 64>
 
     length ptr<fun: ptr<blob<String>> -> u32>
     isEqual ptr<fun: ptr<blob<String>>, blob<String> -> bool>
@@ -22,7 +22,7 @@
     append ptr<fun: ptr<blob<String>>, u8>
 ;
 
-@export String fun: string data<u8, 256> -> blob<String>
+@export String fun: string data<u8, 64> -> blob<String>
     inst blob<String>
 
     inst.string <- string
@@ -57,7 +57,7 @@
 ;
 
 @export StringForU32 fun: value u32 -> blob<String>
-    string data<u8, 256>
+    string data<u8, 64>
 
     length u32 <- 0
     // first get digits in reversed order
@@ -83,7 +83,7 @@
 ;
 
 @export StringForS32 fun: value s32 -> blob<String>
-    string data<u8, 256>
+    string data<u8, 64>
     currentIndex u32 <- 0
 
     if value < 0
@@ -115,7 +115,7 @@
 ;
 
 @export StringHexForU32 fun: value u32 -> blob<String>
-    string data<u8, 256> <- {'0', 'x'}
+    string data<u8, 64> <- {'0', 'x'}
     currentIndex u32 <- 2
 
     // first get digits in reversed order
@@ -140,7 +140,7 @@
 ;
 
 @export StringForF32 fun: value f32 -> blob<String>
-    string data<u8, 256>
+    string data<u8, 64>
     currentIndex u32 <- 0
 
     // handle negative number
@@ -222,7 +222,7 @@ stringPrintln fun: it ptr<blob<String>>
 ;
 
 stringSubString fun: it ptr<blob<String>>, from u32, to u32 -> blob<String>
-    string data<u8, 256>
+    string data<u8, 64>
 
     // determine resulting lenght
     length u32 <- to - from

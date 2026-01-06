@@ -1,17 +1,9 @@
-@import B
+//@import B
 
 @export main fun
-    msg blob<@B.String>
-    test blob<@B.String> <- @B.String("Apple")
+    num u32 <- 77
 
-    test.println.val({test.adr})
-    msg <- @B.StringForU32(test.length.val({test.adr}))
-    msg.println.val({msg.adr})
+    numAdr u32 <- num.adr.u32
 
-    //test.removeLast.val({test.adr})
-    //test.append.val({test.adr}, '*')
-    test.clear.val({test.adr})
-    test.println.val({test.adr})
-    msg <- @B.StringForU32(test.length.val({test.adr}))
-    msg.println.val({msg.adr})
+    numAdr.a.ptr<u32>.val <- 66
 ;
