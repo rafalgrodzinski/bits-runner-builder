@@ -64,7 +64,11 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->type = value->getType();
     } else {
         wrappedValue->valueLambda = [value]() { return value; };
-        wrappedValue->pointerValueLambda = [value]() { return value; };
+        wrappedValue->pointerValueLambda = [builder, value]() {
+            llvm::AllocaInst *allocaInst = builder->CreateAlloca(value->getType());
+            builder->CreateStore(value, allocaInst);
+            return allocaInst;
+        };
         wrappedValue->type = value->getType();
     }
 

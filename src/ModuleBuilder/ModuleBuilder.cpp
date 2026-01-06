@@ -753,7 +753,12 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             case ExpressionKind::CHAINED:
             // blob <- function()
             case ExpressionKind::CALL: {
-                llvm::Value *sourceValue = wrappedValueForExpression(valueExpression)->getValue();
+                shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpression);
+                if (wrappedSourceValue == nullptr)
+                    return;
+                llvm::Value *sourceValue = wrappedSourceValue->getValue();
+                if (sourceValue == nullptr)
+                    return;
                 builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
                 break;
             }
@@ -1094,15 +1099,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             continue;
         }
 
-        // Check parent expression
-        shared_ptr<ExpressionValue> parentExpressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(i-1));
-        if (parentExpressionValue == nullptr) {
-            markErrorInvalidType(parentExpressionValue->getLocation());
-            return nullptr;
-        }
-
         // Built-in expression?
-        if(shared_ptr<WrappedValue> builtInValue = wrappedValueForBuiltIn(currentWrappedValue, parentExpressionValue, chainExpression)) {
+        if(shared_ptr<WrappedValue> builtInValue = wrappedValueForBuiltIn(currentWrappedValue, parentExpression, chainExpression)) {
             currentWrappedValue = builtInValue;
             parentExpression = chainExpression;
             continue;
@@ -1377,7 +1375,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     return wrappedValueForSourceValue(value, type, expressionValue);
 }
 
-shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<Expression> parentExpression, shared_ptr<Expression> expression) {
     bool isCount = false;
     bool isVal = false;
     bool isVadr = false;
@@ -1453,6 +1451,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isSourceSInt = false;
     bool isSourceFloat = false;
     bool isSourceData = false;
+    bool isSourceAddress = false;
     int sourceSize = 0;
     switch (sourceWrappedValue->getValueType()->getKind()) {
         case ValueTypeKind::UINT:
@@ -1501,6 +1500,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         case ValueTypeKind::A:
             isSourceUInt = true;
+            isSourceAddress = true;
             sourceSize = typeA->getBitWidth();
             break;
         case ValueTypeKind::DATA: {
@@ -1519,6 +1519,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isTargetUInt = false;
     bool isTargetSInt = false;
     bool isTargetFloat = false;
+    bool isTargetPointer = false;
     bool isTargetData = false;
     int targetSize = 0;
     switch (targetValueType->getKind()) {
@@ -1566,6 +1567,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             isTargetUInt = true;
             targetSize = typeA->getBitWidth();
             break;
+        case ValueTypeKind::PTR:
+            isTargetPointer = true;
+            targetSize = typeA->getBitWidth();
         case ValueTypeKind::DATA: {
             isTargetData = true;
             if (shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(targetValueType->getCountExpression())) {
@@ -1681,6 +1685,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             module,
             builder,
             builder->CreateFPToSI(sourceWrappedValue->getValue(), targetType),
+            targetValueType
+        );
+    // a to ptr
+    } else if (isSourceAddress && isTargetPointer) {
+        return WrappedValue::wrappedValue(
+            module,
+            builder,
+            builder->CreateIntToPtr(sourceWrappedValue->getPointerValue(), typePtr),
             targetValueType
         );
     // data to data
@@ -1802,6 +1814,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
         vector<llvm::Value*> argValues;
         for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
             shared_ptr<WrappedValue> wrappedvalue = wrappedValueForExpression(argumentExpression);
+            if (wrappedvalue == nullptr)
+                return nullptr;
             argValues.push_back(wrappedvalue->getValue());
         }
         return WrappedValue::wrappedValue(

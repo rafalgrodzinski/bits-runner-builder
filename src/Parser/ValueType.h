@@ -98,6 +98,7 @@ public:
     bool isData();
     bool isDataBool();
     bool isDataNumeric();
+    bool isAddress();
     bool isPointer();
     bool isFunction();
     bool isBlob();

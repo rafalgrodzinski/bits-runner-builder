@@ -582,8 +582,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     bool areBool = parentExpression->getValueType()->isBool() && expressionCast->getValueType()->isBool();
     bool areDataNumeric = parentExpression->getValueType()->isDataNumeric() && expressionCast->getValueType()->isDataNumeric();
     bool areDataBool = parentExpression->getValueType()->isDataBool() && expressionCast->getValueType()->isDataBool();
+    bool isAddressToPointer = parentExpression->getValueType()->isAddress() && expressionCast->getValueType()->isPointer();
 
-    if (areNumeric || areBool || areDataNumeric || areDataBool) {
+    if (areNumeric || areBool || areDataNumeric || areDataBool | isAddressToPointer) {
         // if cast has not count expression, use one from the parent expression
         if (expressionCast->getValueType()->isData() && expressionCast->getValueType()->getCountExpression() == nullptr) {
             expressionCast->valueType = ValueType::data(
@@ -1334,19 +1335,6 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         // from address
         case ValueTypeKind::A: {
             switch (targetType->getKind()) {
-                case ValueTypeKind::UINT:
-                case ValueTypeKind::U8:
-                case ValueTypeKind::U32:
-                case ValueTypeKind::U64:
-
-                case ValueTypeKind::SINT:
-                case ValueTypeKind::S8:
-                case ValueTypeKind::S32:
-                case ValueTypeKind::S64:
-
-                case ValueTypeKind::F32:
-                case ValueTypeKind::F64:
-
                 case ValueTypeKind::A:
                     return true;
 

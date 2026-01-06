@@ -1,3 +1,17 @@
+@import B
+
 @export main fun
-    num s32 <- (-3.14).u8
+    msg blob<@B.String>
+
+    numsD data<u8> <- {1, 2, 3, 4, 5, 6, 7, 8}
+    numsA a <- numsD.adr
+
+    //f2((numsA + 1).ptr<data<u32>>.val[0])
+
+    msg <- @B.StringHexForU32(numsA.ptr<data<u32>>.val[0])
+    msg.println.val({msg.adr})
 ;
+
+/*f2 fun: num u32
+    n u32 <- num
+;*/

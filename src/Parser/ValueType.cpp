@@ -322,6 +322,10 @@ bool ValueType::isDataNumeric() {
     return false;
 }
 
+bool ValueType::isAddress() {
+    return kind == ValueTypeKind::A;
+}
+
 bool ValueType::isPointer() {
     return kind == ValueTypeKind::PTR;
 }
