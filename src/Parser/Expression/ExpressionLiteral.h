@@ -10,8 +10,6 @@ enum class ExpressionLiteralKind {
 };
 
 class ExpressionLiteral: public Expression {
-friend class Analyzer;
-
 private:
     ExpressionLiteralKind literalKind;
     bool boolValue;

@@ -1066,18 +1066,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
     // single literal just needs to set the type
     if (sourceExpression->getKind() == ExpressionKind::LITERAL) {
-        shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(sourceExpression);
-        // adjust literal kind
-        if (targetType->isInteger())
-            expressionLiteral->literalKind = ExpressionLiteralKind::UINT;
-        else if (targetType->isFloat())
-            expressionLiteral->literalKind = ExpressionLiteralKind::FLOAT;
-        else if (targetType->isBool())
-            expressionLiteral->literalKind = ExpressionLiteralKind::BOOL;
-        else
-            return sourceExpression;
-        // and value type
-        expressionLiteral->valueType = targetType;
+        sourceExpression->valueType = targetType;
         return sourceExpression;
     // composite to blob
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isBlob()) {
