@@ -59,7 +59,7 @@
     msg <- @B.String("-4 to u32 to s32:")
     msg.println.val({msg.adr})
 
-    val_u32 <- -4
+    val_u32 <- (-4).u32
     msg <- @B.StringForU32(val_u32)
     msg.println.val({msg.adr})
 
@@ -88,7 +88,7 @@
     msg <- @B.String("-7.1234 to s32 to u32:")
     msg.println.val({msg.adr})
 
-    val_s32 <- -7.1234
+    val_s32 <- (-7.1234).s32
     msg <- @B.StringForS32(val_s32)
     msg.println.val({msg.adr})
 

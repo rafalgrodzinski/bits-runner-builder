@@ -14,20 +14,27 @@ using namespace std;
 enum class ValueTypeKind {
     NONE,
     BOOL,
-    INT,
+
+    UINT,
     U8,
     U32,
     U64,
+
+    SINT,
     S8,
     S32,
     S64,
+
     FLOAT,
     F32,
     F64,
+
+    A,
+    PTR,
+
     DATA,
     BLOB,
     FUN,
-    PTR,
     COMPOSITE
 };
 
@@ -44,16 +51,18 @@ private:
 public:
     static shared_ptr<ValueType> NONE;
     static shared_ptr<ValueType> BOOL;
-    static shared_ptr<ValueType> INT;
+    static shared_ptr<ValueType> UINT;
     static shared_ptr<ValueType> U8;
     static shared_ptr<ValueType> U32;
     static shared_ptr<ValueType> U64;
+    static shared_ptr<ValueType> SINT;
     static shared_ptr<ValueType> S8;
     static shared_ptr<ValueType> S32;
     static shared_ptr<ValueType> S64;
     static shared_ptr<ValueType> FLOAT;
     static shared_ptr<ValueType> F32;
     static shared_ptr<ValueType> F64;
+    static shared_ptr<ValueType> A;
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
@@ -89,6 +98,7 @@ public:
     bool isData();
     bool isDataBool();
     bool isDataNumeric();
+    bool isAddress();
     bool isPointer();
     bool isFunction();
     bool isBlob();

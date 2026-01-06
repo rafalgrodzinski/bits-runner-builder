@@ -44,7 +44,7 @@ shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCom
             tokenString->getLocation()->getLine(), 
             tokenString->getLocation()->getColumn() + tokenString->getLexme().length() - 1
         );
-        shared_ptr<ExpressionLiteral> expression = ExpressionLiteral::expressionLiteralForInt(0, location);
+        shared_ptr<ExpressionLiteral> expression = ExpressionLiteral::expressionLiteralForUInt(0, location);
         expressions.push_back(expression);
     }
 

@@ -1,8 +1,17 @@
-@extern putchar fun: character u64 -> u32
+@import B
 
-@export print fun: text data<u64, 32>
-    text[3] != 0
-    /*rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
-        putchar(text[i])
-    ;*/
+@export main fun
+    msg blob<@B.String>
+
+    numsD data<u8> <- {1, 2, 3, 4, 5, 6, 7, 8}
+    numsA a <- numsD.adr
+
+    //f2((numsA + 1).ptr<data<u32>>.val[0])
+
+    msg <- @B.StringHexForU32(numsA.ptr<data<u32>>.val[0])
+    msg.println.val({msg.adr})
 ;
+
+/*f2 fun: num u32
+    n u32 <- num
+;*/

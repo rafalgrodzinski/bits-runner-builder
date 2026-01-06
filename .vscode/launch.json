@@ -6,9 +6,8 @@
             "type": "lldb-dap",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            //"args": ["--verb=v3", "--gen=obj", "${workspaceFolder}/test.brc"],
-            //"args": ["--verb=v3", "--gen=obj", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/B/String.brc", "${workspaceFolder}/lib/B/BSys.brc"],
-            "args": ["--verb=v3", "--gen=obj", "${workspaceFolder}/samples/callback/main.brc", "${workspaceFolder}/samples/callback/io.brc", "${workspaceFolder}/samples/callback/utils.brc"],
+            //"args": ["--verb=v3", "--gen=ir", "--opt=o0", "${workspaceFolder}/test.brc"],
+            "args": ["--verb=v3", "--gen=obj", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/B/String.brc", "${workspaceFolder}/lib/B/BSys.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
         }

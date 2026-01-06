@@ -12,11 +12,11 @@ newUser fun: userPtrPtr ptr<ptr<blob<user>>>, name data<u64, 16>, id u64
     newUserPtr ptr<blob<user>> <- { malloc(blob<user>.size) }
     newUserPtr.val <- { name, id, { 0x00 } }
 
-    if userPtrPtr.val.vAdr = 0x00
+    if userPtrPtr.val.vadr = 0x00
         userPtrPtr.val <- newUserPtr
     else
         userPtr ptr<blob<user>> <- userPtrPtr.val
-        rep userPtr.val.next.vAdr != 0x00
+        rep userPtr.val.next.vadr != 0x00
             userPtr <- userPtr.val.next
         ;
         userPtr.val.next <- newUserPtr
@@ -24,7 +24,7 @@ newUser fun: userPtrPtr ptr<ptr<blob<user>>>, name data<u64, 16>, id u64
 ;
 
 printUsers fun: userPtr ptr<blob<user>>
-    rep userPtr.vAdr != 0x00, userPtr <- userPtr.val.next
+    rep userPtr.vadr != 0x00, userPtr <- userPtr.val.next
         @io.print("id: ")
         @io.printNum(userPtr.val.id)
         @io.print("\n")

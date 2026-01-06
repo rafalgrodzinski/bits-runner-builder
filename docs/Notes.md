@@ -7,6 +7,9 @@ Available for:
 - Linux (x86_64)
 
 Changelist:
+- Better handling of addresses #150
+  - Fixed pointers when O2 optimization is enabled
+  - Specialized `a` type for handling addresses
 -  145 slow build of big arrays #147 
   - Optimized builds
   - Using wrapped values all over the place

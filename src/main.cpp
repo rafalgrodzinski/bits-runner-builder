@@ -167,7 +167,8 @@ int main(int argc, char **argv) {
         llvm::cl::desc("Additional options"),
         llvm::cl::values(
             clEnumValN(CodeGenerator::Options::FUNCTION_SECTIONS, "function-sections", "Place each function in its own section"),
-            clEnumValN(CodeGenerator::Options::NO_BSS, "no-zero-initialized-in-bss", "Don't place zero initialized data in BSS")
+            clEnumValN(CodeGenerator::Options::NO_BSS, "no-zero-initialized-in-bss", "Don't place zero initialized data in BSS"),
+            clEnumValN(CodeGenerator::Options::STACK_SIZES, "stack-sizes", "Provide used stack information per function. Readable with llvm-readobj --stack-sizes")
         ),
         llvm::cl::cat(targetOptions)
     );

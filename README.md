@@ -3,6 +3,7 @@ Welcome to Bits Runner Builder! Compiler for the Bits Runner Code (BRC) language
 
 ## Quick links
 - [BRC Language Reference](docs/Reference.md)
+- [Casting Rules](docs/Casts.md)
 - [Extra Information](docs/Extra.md)
 
 ## Overview

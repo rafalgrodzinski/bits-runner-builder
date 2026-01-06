@@ -759,8 +759,8 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
         case ExpressionLiteralKind::FLOAT:
             line = format("{}｢{}｣", expression->getFloatValue(), toString(expression->getValueType()));
             break;
-        case ExpressionLiteralKind::INT:
-            line = format("{}｢{}｣", expression->getSIntValue(), toString(expression->getValueType()));
+        case ExpressionLiteralKind::UINT:
+            line = format("{}｢{}｣", expression->getUIntValue(), toString(expression->getValueType()));
             break;
     }
 
@@ -1200,14 +1200,16 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "NONE";
         case ValueTypeKind::BOOL:
             return "BOOL";
-        case ValueTypeKind::INT:
-            return "INT";
+        case ValueTypeKind::UINT:
+            return "UINT";
         case ValueTypeKind::U8:
             return "U8";
         case ValueTypeKind::U32:
             return "U32";
         case ValueTypeKind::U64:
             return "U64";
+        case ValueTypeKind::SINT:
+            return "SINT";
         case ValueTypeKind::S8:
             return "S8";
         case ValueTypeKind::S32:
@@ -1220,6 +1222,10 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "F32";
         case ValueTypeKind::F64:
             return "F64";
+        case ValueTypeKind::A:
+            return "A";
+        case ValueTypeKind::PTR:
+            return format("PTR<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::DATA: {
             if (valueType->getCountExpression() != nullptr)
                 return format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));
@@ -1242,8 +1248,6 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
                 text += format(" -> {}", toString(valueType->getReturnType()));
             return text;
         }
-        case ValueTypeKind::PTR:
-            return format("PTR<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::COMPOSITE:
             return format("COMPOSITE");
     }
