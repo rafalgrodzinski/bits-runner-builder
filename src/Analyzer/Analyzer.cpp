@@ -394,6 +394,9 @@ void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statement
 // Expressions
 //
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> expression, shared_ptr<Expression> parentExpression, shared_ptr<ValueType> returnType) {
+    if (expression == nullptr)
+        return nullptr;
+
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
@@ -451,7 +454,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
     );
 
     // and see if it suceeded
-    if (expressionBinary->getRight()->getValueType() == nullptr)
+    if (expressionBinary->getRight() == nullptr)
         return nullptr;
 
     // then try casting left expression
@@ -1211,6 +1214,8 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                 case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
+
+                case ValueTypeKind::A:
                     return true;
 
                 default:
@@ -1231,6 +1236,8 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                 case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
+
+                case ValueTypeKind::A:
                     return true;
 
                 default:
@@ -1249,6 +1256,8 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                 case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
+
+                case ValueTypeKind::A:
                     return true;
 
                 default:
