@@ -39,8 +39,6 @@ enum class ValueTypeKind {
 };
 
 class ValueType {
-friend class Analyzer;
-
 private:
     ValueTypeKind kind;
     shared_ptr<ValueType> subType;

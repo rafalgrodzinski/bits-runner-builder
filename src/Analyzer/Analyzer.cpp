@@ -141,9 +141,9 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
                 markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
                 return;
             }
-            member.second->countExpression = checkAndTryCasting(
+            member.second->getCountExpression()->valueType = typeForExpression(
                 member.second->getCountExpression(),
-                ValueType::UINT,
+                nullptr,
                 nullptr
             );
         }
@@ -186,9 +186,9 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
             markErrorInvalidType(statementFunction->getLocation(), statementFunction->getReturnValueType(), nullptr);
             return;
         }
-        statementFunction->getReturnValueType()->countExpression = checkAndTryCasting(
+        statementFunction->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
             statementFunction->getReturnValueType()->getCountExpression(),
-            ValueType::UINT,
+            nullptr,
             nullptr
         );
     }
@@ -338,13 +338,8 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     // Update count expression
-    if (statementVariable->getValueType()->getCountExpression() != nullptr) {
-        statementVariable->getValueType()->countExpression = checkAndTryCasting(
-            statementVariable->getValueType()->getCountExpression(),
-            ValueType::UINT,
-            nullptr
-        );
-    }
+    if (statementVariable->getValueType()->getCountExpression() != nullptr)
+        statementVariable->getValueType()->getCountExpression()->valueType = typeForExpression(statementVariable->getValueType()->getCountExpression(), nullptr, nullptr);
 
     // check if specified blob type is valid
     if (statementVariable->getValueType()->isBlob()) {
@@ -1105,11 +1100,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
                 sourceExpression->getLocation()
             )
         );
-        sourceExpression->getValueType()->countExpression = checkAndTryCasting(
-            sourceExpression->getValueType()->getCountExpression(),
-            ValueType::UINT,
-            nullptr
-        );
+        sourceExpression->getValueType()->getCountExpression()->valueType = typeForExpression(sourceExpression->getValueType()->getCountExpression(), nullptr, returnType);
         // and then cast (if necessary) each of the element expressions
         for (int i=0; i<expressionCompositeLiteral->getExpressions().size(); i++) {
             shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(i);
@@ -1132,13 +1123,8 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {
-        if (sourceType->getCountExpression() != nullptr) {
-            sourceType->countExpression = checkAndTryCasting(
-                sourceType->getCountExpression(),
-                ValueType::UINT,
-                nullptr
-            );
-        }
+        if (sourceType->getCountExpression() != nullptr)
+            sourceType->getCountExpression()->valueType = typeForExpression(sourceType->getCountExpression(), nullptr, returnType);
 
         if (targetType->getCountExpression() == nullptr)
             return sourceExpression;
