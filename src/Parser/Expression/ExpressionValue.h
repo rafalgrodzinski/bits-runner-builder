@@ -16,7 +16,7 @@ enum class ExpressionValueKind {
 };
 
 class ExpressionValue: public Expression {
-    friend class Analyzer;
+friend class Analyzer;
 
 private:
     ExpressionValueKind valueKind;
