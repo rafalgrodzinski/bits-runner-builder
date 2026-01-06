@@ -1175,8 +1175,6 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                 case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
-
-                case ValueTypeKind::A:
                     return true;
 
                 default:

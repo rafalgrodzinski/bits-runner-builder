@@ -3,11 +3,11 @@ If there is no general information loss, casts can be implicit. So implicit cast
 
 From `bool`: No implicit casting
 
-From `u8`: `u32`, `u64`, `s8`, `s32`, `s64`, `f32`, `f64`
+From `u8`: `u32`, `u64`, `s8`, `s32`, `s64`, `f32`, `f64`, `a`
 
-From `u32`: `u64`, `s32`, `s64`, `f32`, `f64`
+From `u32`: `u64`, `s32`, `s64`, `f32`, `f64`, `a`
 
-From `u64`: `s64`, `f32`, `f64`
+From `u64`: `s64`, `f32`, `f64`, `a`
 
 From `s8`: `s32`, `s64`, `f32`, `f64`
 
@@ -21,15 +21,28 @@ From `f64`: No implicit casting
 
 From `a`: No implicit casting
 
-From `ptr`: No implicit casting
+From `ptr<>`: No implicit casting
 
-From `data`: `data` If the subtype can be cast implicitly
+From `data<>`: `data<>` If the subtype can be cast implicitly
 
-From `blob`: No implicit casting
+From `blob<>`: No implicit casting
 
-From composite:
-- `ptr`:
-- `data`: If each element can be cast implicitly
-- `blob`: If elements match and each in order can be cast implicitly
+From composites:
+- `ptr<>`: If the element can be cast implicitly to `a`
+- `data<>`: If each element can be cast implicitly to specified subtype
+- `blob<>`: If elements match and each in order can be cast implicitly
 
 ## Explicit Casts
+Any numeric type can be cast to any other numeric type. Negative number cast to unsigned will be set to 0. Exceeding values will be capped to minimum/maximum values.
+
+From `bool`: No casting
+
+From `u?`, `s?`, `f?`, `a`: Any of these can be cast between each other. Loss of information may happen .
+
+From `a`: Additionally to the above, can be cast to any `ptr<>` type
+
+From `ptr<>`: No casting
+
+From `data<>`: Can be cast to any other `data<>` given that the subtypes can be also cast
+
+From `blob<>`: No casting
