@@ -1279,16 +1279,16 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
 
         case ValueTypeKind::SINT:
-            resultValue = llvm::ConstantInt::get(typeInt, expressionLiteral->getSIntValue());
+            resultValue = llvm::ConstantInt::get(typeInt, expressionLiteral->getUIntValue());
             break;
         case ValueTypeKind::S8:
-            resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getSIntValue());
+            resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getUIntValue());
             break;
         case ValueTypeKind::S32:
-            resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getSIntValue());
+            resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getUIntValue());
             break;
         case ValueTypeKind::S64:
-            resultValue = llvm::ConstantInt::get(typeI64, expressionLiteral->getSIntValue());
+            resultValue = llvm::ConstantInt::get(typeI64, expressionLiteral->getUIntValue());
             break;
 
         case ValueTypeKind::FLOAT:

@@ -46,18 +46,16 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             bool value = token->getLexme().compare("true") == 0;
             expression->boolValue = value;
             expression->uIntValue = 0;
-            expression->sIntValue = 0;
             expression->floatValue = 0;
             break;
         }
         case TokenKind::INTEGER_DEC: {
-            expression->literalKind = ExpressionLiteralKind::SINT;
+            expression->literalKind = ExpressionLiteralKind::UINT;
             string numString = token->getLexme();
             erase(numString, '_');
             int64_t value = stol(numString, nullptr, 10);
             expression->boolValue = false;
             expression->uIntValue = value;
-            expression->sIntValue = value;
             expression->floatValue = value;
             break;
         }
@@ -68,7 +66,6 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             uint64_t value = stoul(numString, nullptr, 16);
             expression->boolValue = false;
             expression->uIntValue = value;
-            expression->sIntValue = value;
             expression->floatValue = value;
             break;
         }
@@ -80,7 +77,6 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             uint64_t value = stoul(numString, nullptr, 2);
             expression->boolValue = false;
             expression->uIntValue = value;
-            expression->sIntValue = value;
             expression->floatValue = value;
             break;
         }
@@ -92,7 +88,6 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
                 return nullptr;
             expression->boolValue = false;
             expression->uIntValue = *value;
-            expression->sIntValue = *value;
             expression->floatValue = *value;            
             break;
         }
@@ -103,7 +98,6 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
             double value = stof(numString);
             expression->boolValue = false;
             expression->uIntValue = value;
-            expression->sIntValue = value;
             expression->floatValue = value;
             break;
         }
@@ -114,12 +108,11 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForToken(share
     return expression;
 }
 
-shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForInt(int64_t value, shared_ptr<Location> location) {
+shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForUInt(uint64_t value, shared_ptr<Location> location) {
     shared_ptr<ExpressionLiteral> expression = make_shared<ExpressionLiteral>(location);
-    expression->literalKind = ExpressionLiteralKind::SINT;
+    expression->literalKind = ExpressionLiteralKind::UINT;
     expression->boolValue = false;
     expression->uIntValue = value;
-    expression->sIntValue = value;
     expression->floatValue = value;
     return expression;
 }
@@ -137,10 +130,6 @@ bool ExpressionLiteral::getBoolValue() {
 
 uint64_t ExpressionLiteral::getUIntValue() {
     return uIntValue;
-}
-
-int64_t ExpressionLiteral::getSIntValue() {
-    return sIntValue;
 }
 
 double ExpressionLiteral::getFloatValue() {

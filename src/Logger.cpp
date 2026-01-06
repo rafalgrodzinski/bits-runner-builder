@@ -762,9 +762,6 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
         case ExpressionLiteralKind::UINT:
             line = format("{}｢{}｣", expression->getUIntValue(), toString(expression->getValueType()));
             break;
-        case ExpressionLiteralKind::SINT:
-            line = format("{}｢{}｣", expression->getSIntValue(), toString(expression->getValueType()));
-            break;
     }
 
     return formattedLine(line, indents);

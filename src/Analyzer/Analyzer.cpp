@@ -431,36 +431,51 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
 }
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
-    // try auto cross-casting
-    shared_ptr<ValueType> targetType;
+    shared_ptr<ValueType> originalLeftValueType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
+    shared_ptr<ValueType> originalRightValueType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
 
-    targetType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
-    if (targetType == nullptr) {
-        markErrorInvalidType(expressionBinary->getRight()->getLocation(), targetType, nullptr);
+    // first try casting right
+    // first figure out target type for right expression
+    shared_ptr<ValueType> rightTargetType;
+    // bit shift requires right operand to be unsigned integer
+    if (expressionBinary->getOperation() == ExpressionBinaryOperation::BIT_SHL || expressionBinary->getOperation() == ExpressionBinaryOperation::BIT_SHR) {
+        rightTargetType = ValueType::UINT;
+    } else {
+        rightTargetType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
+    }
+    if (rightTargetType == nullptr) {
+        markErrorInvalidType(expressionBinary->getLeft()->getLocation(), rightTargetType, nullptr);
         return nullptr;
     }
-    expressionBinary->left = checkAndTryCasting(
-        expressionBinary->getLeft(),
-        targetType,
-        nullptr
-    );
-    if (expressionBinary->getLeft() == nullptr)
-        return nullptr;
 
-    if (expressionBinary->getLeft()->getValueType() == nullptr)
-        return nullptr;
-
-    targetType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
-    if (targetType == nullptr) {
-        markErrorInvalidType(expressionBinary->getLeft()->getLocation(), targetType, nullptr);
-        return nullptr;
-    }
+    // try casting it
     expressionBinary->right = checkAndTryCasting(
         expressionBinary->getRight(),
-        targetType,
+        rightTargetType,
         nullptr
     );
+
+    // and see if it suceeded
     if (expressionBinary->getRight()->getValueType() == nullptr)
+        return nullptr;
+
+    // then try casting left expression
+    // firgure target type
+    shared_ptr<ValueType> leftTargetType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
+    if (leftTargetType == nullptr) {
+        markErrorInvalidType(expressionBinary->getRight()->getLocation(), leftTargetType, nullptr);
+        return nullptr;
+    }
+
+    // try casting it
+    expressionBinary->left = checkAndTryCasting(
+        expressionBinary->getLeft(),
+        leftTargetType,
+        nullptr
+    );
+
+    // check if successful
+    if (expressionBinary->getLeft() == nullptr)
         return nullptr;
 
     // validate types
@@ -472,7 +487,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
         return nullptr;
 
     if (!isBinaryOperationValidForTypes(operation, firstType, secondType)) {
-        markErrorInvalidOperationBinary(expressionBinary->getLocation(), operation, firstType, secondType);
+        markErrorInvalidOperationBinary(expressionBinary->getLocation(), operation, originalLeftValueType, originalRightValueType);
         return nullptr;
     }
 
@@ -617,7 +632,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionComposite
             return nullptr;
         elementTypes.push_back(elementType);
     }
-    shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForInt(elementTypes.size(), expressionCompositeLiteral->getLocation());
+    shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForUInt(elementTypes.size(), expressionCompositeLiteral->getLocation());
     countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
     expressionCompositeLiteral->valueType = ValueType::composite(elementTypes, countExpression);
     return expressionCompositeLiteral->getValueType();
@@ -704,9 +719,6 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
         case ExpressionLiteralKind::UINT:
             expressionLiteral->valueType = ValueType::UINT;
             break;
-        case ExpressionLiteralKind::SINT:
-            expressionLiteral->valueType = ValueType::SINT;
-            break;
         case ExpressionLiteralKind::FLOAT:
             expressionLiteral->valueType = ValueType::FLOAT;
             break;
@@ -762,7 +774,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                 case ExpressionValueKind::BUILT_IN_VAL_DATA:
                     expressionValue->valueType = parentExpression->getValueType()->getSubType()->getSubType();
                     expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_DATA;
-                    expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
+                    expressionValue->indexExpression = checkAndTryCasting(expressionValue->getIndexExpression(), ValueType::UINT, nullptr);
                     break;
                 default:
                     expressionValue->valueType = nullptr;
@@ -954,19 +966,14 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
         
         case ValueTypeKind::A: {
             switch (operation) {
-                // shift operations requires second type to be integer
+                // shift operations requires second type to be an unsigned integer
                 case ExpressionBinaryOperation::BIT_SHL:
                 case ExpressionBinaryOperation::BIT_SHR: {
                     switch (secondType->getKind()) {
                         case ValueTypeKind::UINT:
                         case ValueTypeKind::U8:
                         case ValueTypeKind::U32:
-                        case ValueTypeKind::U64:
-
-                        case ValueTypeKind::SINT:
-                        case ValueTypeKind::S8:
-                        case ValueTypeKind::S32:
-                        case ValueTypeKind::S64: {
+                        case ValueTypeKind::U64: {
                             return true;
                         }
                         default:
@@ -1066,10 +1073,8 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     if (sourceExpression->getKind() == ExpressionKind::LITERAL) {
         shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(sourceExpression);
         // adjust literal kind
-        if (targetType->isUnsignedInteger())
+        if (targetType->isInteger())
             expressionLiteral->literalKind = ExpressionLiteralKind::UINT;
-        else if (targetType->isSignedInteger())
-            expressionLiteral->literalKind = ExpressionLiteralKind::SINT;
         else if (targetType->isFloat())
             expressionLiteral->literalKind = ExpressionLiteralKind::FLOAT;
         else if (targetType->isBool())
@@ -1095,7 +1100,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         // first update the type
         sourceExpression->valueType = ValueType::data(
             targetType->getSubType(),
-            ExpressionLiteral::expressionLiteralForInt(
+            ExpressionLiteral::expressionLiteralForUInt(
                 expressionCompositeLiteral->getExpressions().size(),
                 sourceExpression->getLocation()
             )
@@ -1164,8 +1169,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     switch (sourceType->getKind()) {
         // from literal types
-        case ValueTypeKind::UINT:
-        case ValueTypeKind::SINT: {
+        case ValueTypeKind::UINT: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::UINT:
                 case ValueTypeKind::U8:
@@ -1177,6 +1181,27 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:
 
+                case ValueTypeKind::FLOAT:
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+
+                case ValueTypeKind::A:
+                    return true;
+
+                default:
+                    return false;   
+            }
+            break;
+        }
+
+        case ValueTypeKind::SINT: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::SINT:
+                case ValueTypeKind::S8:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
 
@@ -1191,14 +1216,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
         case ValueTypeKind::FLOAT: {
             switch (targetType->getKind()) {
-                case ValueTypeKind::U8:
-                case ValueTypeKind::U32:
-                case ValueTypeKind::U64:
-
-                case ValueTypeKind::S8:
-                case ValueTypeKind::S32:
-                case ValueTypeKind::S64:
-
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
                     return true;
@@ -1212,14 +1230,17 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         // from unsigned
         case ValueTypeKind::U8: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::UINT:
                 case ValueTypeKind::U8:
                 case ValueTypeKind::U32:
                 case ValueTypeKind::U64:
 
+                case ValueTypeKind::SINT:
                 case ValueTypeKind::S8:
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:
 
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
                     return true;
@@ -1231,12 +1252,15 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         }
         case ValueTypeKind::U32: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::UINT:
                 case ValueTypeKind::U32:
                 case ValueTypeKind::U64:
 
+                case ValueTypeKind::SINT:
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:
 
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
                     return true;
@@ -1248,10 +1272,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         }
         case ValueTypeKind::U64: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::UINT:
                 case ValueTypeKind::U64:
 
+                case ValueTypeKind::SINT:
                 case ValueTypeKind::S64:
 
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
                     return true;
@@ -1265,10 +1292,12 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         // from signed
         case ValueTypeKind::S8: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::SINT:
                 case ValueTypeKind::S8:
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:
 
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
                     return true;
@@ -1280,9 +1309,11 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         }
         case ValueTypeKind::S32: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::SINT:
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:
 
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
                     return true;
@@ -1294,8 +1325,10 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         }
         case ValueTypeKind::S64: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::SINT:
                 case ValueTypeKind::S64:
 
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
                     return true;
@@ -1309,6 +1342,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         // from float
         case ValueTypeKind::F32: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F32:
                 case ValueTypeKind::F64:
                     return true;
@@ -1320,6 +1354,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         }
         case ValueTypeKind::F64: {
             switch (targetType->getKind()) {
+                case ValueTypeKind::FLOAT:
                 case ValueTypeKind::F64:
                     return true;
 
