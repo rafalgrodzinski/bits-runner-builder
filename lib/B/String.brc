@@ -16,6 +16,10 @@
     subStringTo ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
 
     find ptr<fun: ptr<blob<String>>, blob<String> -> u32>
+
+    clear ptr<fun: ptr<blob<String>>>
+    removeLast ptr<fun: ptr<blob<String>>>
+    append ptr<fun: ptr<blob<String>>, u8>
 ;
 
 @export String fun: string data<u8, 256> -> blob<String>
@@ -34,6 +38,10 @@
     inst.subStringTo <- {stringSubStringTo.adr}
 
     inst.find <- {stringFind.adr}
+
+    inst.clear <- {stringClear.adr}
+    inst.removeLast <- {stringRemoveLast.adr}
+    inst.append <- {stringAppend.adr}
 
     ret inst
 ;
@@ -257,4 +265,21 @@ stringFind fun: it ptr<blob<String>>, other blob<String> -> u32
     ;
 
     ret 0
+;
+
+stringClear fun: it ptr<blob<String>>
+    it.val.string[0] <- '\0'
+;
+
+stringRemoveLast fun: it ptr<blob<String>>
+    length u32 <- it.val.length.val(it)
+    if length > 0: it.val.string[length - 1] <- 0
+;
+
+stringAppend fun: it ptr<blob<String>>, char u8
+    length u32 <- it.val.length.val(it)
+    if length < it.val.string.count - 1
+        it.val.string[length] <- char
+        it.val.string[length + 1] <- '\0'
+    ;
 ;

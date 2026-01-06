@@ -2,16 +2,16 @@
 
 @export main fun
     msg blob<@B.String>
+    test blob<@B.String> <- @B.String("Apple")
 
-    numsD data<u8> <- {1, 2, 3, 4, 5, 6, 7, 8}
-    numsA a <- numsD.adr
+    test.println.val({test.adr})
+    msg <- @B.StringForU32(test.length.val({test.adr}))
+    msg.println.val({msg.adr})
 
-    //f2((numsA + 1).ptr<data<u32>>.val[0])
-
-    msg <- @B.StringHexForU32(numsA.ptr<data<u32>>.val[0])
+    //test.removeLast.val({test.adr})
+    //test.append.val({test.adr}, '*')
+    test.clear.val({test.adr})
+    test.println.val({test.adr})
+    msg <- @B.StringForU32(test.length.val({test.adr}))
     msg.println.val({msg.adr})
 ;
-
-/*f2 fun: num u32
-    n u32 <- num
-;*/
