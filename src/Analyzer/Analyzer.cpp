@@ -532,6 +532,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             expressionCall->getArgumentExpressions().size(),
             argumentTypes.size()
         );
+        return nullptr;
     // check argument types
     } else {
         for (int i=0; i<argumentTypes.size(); i++) {
@@ -695,6 +696,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
             returnType
         );
         scope->popLevel();
+        if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
+            return nullptr;
     }
 
     // finally, figure out resulting type
