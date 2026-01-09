@@ -1,9 +1,9 @@
 //@import B
 
 @export main fun
-    num u32 <- 77
+    num u8 <- 77
 
     numAdr u32 <- num.adr.u32
 
-    numAdr.a.ptr<u32>.val <- 66
+    numAdr.a.ptr<u32>.val <- 55
 ;

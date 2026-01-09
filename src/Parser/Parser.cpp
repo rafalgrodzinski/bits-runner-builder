@@ -786,6 +786,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         TAG_IDENTIFIER_PREFIX,
         TAG_IDENTIFIER,
         TAG_INDEX_EXPRESSION,
+        TAG_CAST,
         TAG_VALUE_EXPRESSION
     };
 
@@ -817,16 +818,26 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                 {
                     // dot separator in between
                     Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::REQUIRED, false),
-                    // identifier - name
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
-                    // index expression
-                    Parsee::groupParsee(
+                    Parsee::oneOfParsee(
                         {
-                            Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
-                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
-                            Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
-                        }, ParseeLevel::OPTIONAL, true
-                    ),
+                            {
+                                // identifier - name
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
+                                // index expression
+                                Parsee::groupParsee(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
+                                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
+                                        Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                                    }, ParseeLevel::OPTIONAL, true
+                                )
+                            },
+                            {
+                                // cast expression
+                                Parsee::valueTypeParsee(ParseeLevel::OPTIONAL, true, TAG_CAST)
+                            }
+                        }, ParseeLevel::CRITICAL, true
+                    )
                 }, ParseeLevel::OPTIONAL, true
             ),
             // value expression
@@ -861,6 +872,12 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                     shared_ptr<ExpressionValue> expression = ExpressionValue::simple(identifier, location);
                     chainExpressions.push_back(expression);
                 }
+                break;
+            }
+            case TAG_CAST: {
+                shared_ptr<ValueType> valueType = resultsGroup.getResults().at(i).getValueType();
+                shared_ptr<ExpressionCast> expression = make_shared<ExpressionCast>(valueType, location);
+                chainExpressions.push_back(expression);
                 break;
             }
             case TAG_VALUE_EXPRESSION:
