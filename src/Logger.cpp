@@ -436,10 +436,10 @@ string Logger::toString(shared_ptr<StatementRepeat> statement, vector<IndentKind
     // name
     line = "REP";
     if (
-        statement->getInitStatement() != nullptr ||
-        statement->getPreConditionExpression() != nullptr ||
-        statement->getPostConditionExpression() != nullptr ||
-        statement->getPostStatement() != nullptr) {
+        statement->getInitStatement() != nullptr
+        || statement->getPreConditionExpression() != nullptr
+        || statement->getPostConditionExpression() != nullptr
+        || statement->getPostStatement() != nullptr) {
         line += ":";
     }
     text += formattedLine(line, indents);
