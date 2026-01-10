@@ -15,7 +15,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
 - [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
 - [Bitwise Operators](Reference.md#bitwise-operators) (`|`, `^`, `&`, `<<`, `>>`, `~`)
-- [Simple Variables](Reference.md#simple-variables) (`u8`, `u32`, `u64`, `s8`, `s32`, `s64`, `f32`, `f64`, `data`, `blob`, `ptr`)
+- [Simple Variables](Reference.md#simple-variables) (`u8`, `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `data`, `blob`, `ptr`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
 - [Pointers](Reference.md#pointers) (`ptr<>`)
@@ -26,7 +26,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Chaining](Reference.md#chaining) (`thing.sutff[5].something`)
 - [Modules](Reference.md#modules) (`@module`, `@import`, `@export`, `@extern`)
 - [Casts](Reference.md#casts) (`.u32`, `.data<u8>`)
-- [Built-Ins](Reference.md#built-ins) (`.size`, `.count`, `.val`, `.vAdr`, `.adr`)
+- [Built-Ins](Reference.md#built-ins) (`.size`, `.count`, `.val`, `.vadr`, `.adr`)
 - [Module Structure](Reference.md#module-structure)
 
 ## Comments
@@ -138,8 +138,10 @@ text data<u8> <- "Hello world!"
 pi f32 <- 3.14
 
 u8 // unsigned integer, 8 bits
+u16 // unsigned integer, 16 bits
 u32 // unsigned integer, 32 bits
 s8 // signed integer, 8 bits
+s16 // signed integer, 16 bits
 s32 // signed integer, 32 bits
 f32 // floating point, 32 bits
 bool // true or false
@@ -172,12 +174,21 @@ u2.id <- 35
 ```
 
 ## Pointers
-Pointers, just like in C, allow for low-level data manipulation and passing. They have an associated type, which is essential when reading/writing pointee's value. Each variable has a built-in member `.adr`, which will provide a system-dependant (32bit or 64bit) memory address value. Pointers have also `.val`, which is equivalent to its pointee and `vAdr`, which is the address of the thing it is pointing at. Don't confuse `.vAdr` with `.adr`, as the later is the address of the pointer itself.
+Pointers, just like in C, allow for low-level data manipulation and passing. They have an associated type, which is essential when reading/writing pointee's value. Each variable has a built-in member `.adr`, which will provide a system-dependant (32bit or 64bit) memory address value of type `a`. Pointers have also `.val`, which is equivalent to its pointee and `vadr`, which is the address of the thing it is pointing at. Don't confuse `.vadr` with `.adr`, as the later is the address of the pointer itself.
+
+Address is stored in an `a` type. You can see that it's similar to `u16`, or `f64`, but doesn't have an associated size, because it's implicit for the given target. `a` can be cast into a `ptr<>` type. You can think of it as an address and a window to a given address.
 ```
 a u32 <- 5
 pA ptr<u32>
-pA.vAdr <- a.adr // now both a & pA.val indicate the same value
+pA.vadr <- a.adr // now both a & pA.val indicate the same value
 pA.val <- 6
+
+// Use a to access elements of a struct
+objAdr a <- obj.adr
+a.ptr<u32> <- 0x66
+(a + 4).ptr<data<u8>>.val[0] <- 'a'
+(a + 4).ptr<data<u8>>.val[1] <- 'a'
+(a + 4).ptr<data<u8>>.val[2] <- 'a'
 ```
 
 ## Functions
@@ -363,7 +374,7 @@ There is a couple of built-in members that can be accessible on all or some vari
 .count // Data types only: Number of elements in sized data types
 .adr // Address of a given variable
 .val // Pointers only: returns the value that the pointer references
-.vAdr // Pointers only: address of the referenced value (not the poitner itself)
+.vadr // Pointers only: address of the referenced value (not the poitner itself)
 ```
 
 ## Module Structure
