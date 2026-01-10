@@ -7,10 +7,12 @@ shared_ptr<ValueType> ValueType::NONE = make_shared<ValueType>(ValueTypeKind::NO
 shared_ptr<ValueType> ValueType::BOOL = make_shared<ValueType>(ValueTypeKind::BOOL);
 shared_ptr<ValueType> ValueType::UINT = make_shared<ValueType>(ValueTypeKind::UINT);
 shared_ptr<ValueType> ValueType::U8 = make_shared<ValueType>(ValueTypeKind::U8);
+shared_ptr<ValueType> ValueType::U16 = make_shared<ValueType>(ValueTypeKind::U16);
 shared_ptr<ValueType> ValueType::U32 = make_shared<ValueType>(ValueTypeKind::U32);
 shared_ptr<ValueType> ValueType::U64 = make_shared<ValueType>(ValueTypeKind::U64);
 shared_ptr<ValueType> ValueType::SINT = make_shared<ValueType>(ValueTypeKind::SINT);
 shared_ptr<ValueType> ValueType::S8 = make_shared<ValueType>(ValueTypeKind::S8);
+shared_ptr<ValueType> ValueType::S16 = make_shared<ValueType>(ValueTypeKind::S16);
 shared_ptr<ValueType> ValueType::S32 = make_shared<ValueType>(ValueTypeKind::S32);
 shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64);
 shared_ptr<ValueType> ValueType::FLOAT = make_shared<ValueType>(ValueTypeKind::FLOAT);
@@ -28,12 +30,16 @@ shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
                 valueType->kind = ValueTypeKind::BOOL;
             } else if (lexme.compare("u8") == 0) {
                 valueType->kind = ValueTypeKind::U8;
+            } else if (lexme.compare("u16") == 0) {
+                valueType->kind = ValueTypeKind::U16;
             } else if (lexme.compare("u32") == 0) {
                 valueType->kind = ValueTypeKind::U32;
             } else if (lexme.compare("u64") == 0) {
                 valueType->kind = ValueTypeKind::U64;
             } else if (lexme.compare("s8") == 0) {
                 valueType->kind = ValueTypeKind::S8;
+            } else if (lexme.compare("s16") == 0) {
+                valueType->kind = ValueTypeKind::S16;
             } else if (lexme.compare("s32") == 0) {
                 valueType->kind = ValueTypeKind::S32;
             } else if (lexme.compare("s64") == 0) {
@@ -193,11 +199,13 @@ bool ValueType::isNumeric() {
     switch (kind) {
         case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
+        case ValueTypeKind::U16:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
     
         case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
+        case ValueTypeKind::S16:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
 
@@ -219,11 +227,13 @@ bool ValueType::isInteger() {
     switch (kind) {
         case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
+        case ValueTypeKind::U16:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
 
         case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
+        case ValueTypeKind::S16:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
 
@@ -241,6 +251,7 @@ bool ValueType::isUnsignedInteger() {
     switch (kind) {
         case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
+        case ValueTypeKind::U16:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
         case ValueTypeKind::A:
@@ -257,6 +268,7 @@ bool ValueType::isSignedInteger() {
     switch (kind) {
         case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
+        case ValueTypeKind::S16:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
             return true;

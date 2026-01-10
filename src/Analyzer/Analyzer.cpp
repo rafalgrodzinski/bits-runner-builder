@@ -386,6 +386,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     string identifier = importModulePrefix + statementVariableDeclaration->getIdentifier();
 
+    checkValueType(statementVariableDeclaration->getValueType());
+
     if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
         markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);
 }
@@ -532,6 +534,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             expressionCall->getArgumentExpressions().size(),
             argumentTypes.size()
         );
+        return nullptr;
     // check argument types
     } else {
         for (int i=0; i<argumentTypes.size(); i++) {
@@ -695,6 +698,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
             returnType
         );
         scope->popLevel();
+        if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
+            return nullptr;
     }
 
     // finally, figure out resulting type
@@ -885,11 +890,13 @@ bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, 
         // numeric
         case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
+        case ValueTypeKind::U16:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
 
         case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
+        case ValueTypeKind::S16:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
 
@@ -951,11 +958,13 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
         // Valid operations for numeric types
         case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
+        case ValueTypeKind::U16:
         case ValueTypeKind::U32:
         case ValueTypeKind::U64:
 
         case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
+        case ValueTypeKind::S16:
         case ValueTypeKind::S32:
         case ValueTypeKind::S64:
 
@@ -971,6 +980,7 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
                     switch (secondType->getKind()) {
                         case ValueTypeKind::UINT:
                         case ValueTypeKind::U8:
+                        case ValueTypeKind::U16:
                         case ValueTypeKind::U32:
                         case ValueTypeKind::U64: {
                             return true;
@@ -1021,6 +1031,8 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
                     return ValueType::SINT;
                 case ValueTypeKind::U8:
                     return ValueType::S8;
+                case ValueTypeKind::U16:
+                    return ValueType::S16;
                 case ValueTypeKind::U32:
                     return ValueType::S32;
                 case ValueTypeKind::U64:
@@ -1144,11 +1156,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             switch (targetType->getKind()) {
                 case ValueTypeKind::UINT:
                 case ValueTypeKind::U8:
+                case ValueTypeKind::U16:
                 case ValueTypeKind::U32:
                 case ValueTypeKind::U64:
 
                 case ValueTypeKind::SINT:
                 case ValueTypeKind::S8:
+                case ValueTypeKind::S16:
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:
 
@@ -1201,11 +1215,37 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             switch (targetType->getKind()) {
                 case ValueTypeKind::UINT:
                 case ValueTypeKind::U8:
+                case ValueTypeKind::U16:
                 case ValueTypeKind::U32:
                 case ValueTypeKind::U64:
 
                 case ValueTypeKind::SINT:
                 case ValueTypeKind::S8:
+                case ValueTypeKind::S16:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::FLOAT:
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+
+                case ValueTypeKind::A:
+                    return true;
+
+                default:
+                    return false;
+            }
+            break;
+        }
+        case ValueTypeKind::U16: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::UINT:
+                case ValueTypeKind::U16:
+                case ValueTypeKind::U32:
+                case ValueTypeKind::U64:
+
+                case ValueTypeKind::SINT:
+                case ValueTypeKind::S16:
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:
 
@@ -1269,6 +1309,24 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
             switch (targetType->getKind()) {
                 case ValueTypeKind::SINT:
                 case ValueTypeKind::S8:
+                case ValueTypeKind::S16:
+                case ValueTypeKind::S32:
+                case ValueTypeKind::S64:
+
+                case ValueTypeKind::FLOAT:
+                case ValueTypeKind::F32:
+                case ValueTypeKind::F64:
+                    return true;
+
+                default:
+                    return false;
+            }
+            break;
+        }
+        case ValueTypeKind::S16: {
+            switch (targetType->getKind()) {
+                case ValueTypeKind::SINT:
+                case ValueTypeKind::S16:
                 case ValueTypeKind::S32:
                 case ValueTypeKind::S64:
 
@@ -1423,6 +1481,21 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
         default:
             return false;
+    }
+}
+
+void Analyzer::checkValueType(shared_ptr<ValueType> valueType) {
+    switch (valueType->getKind()) {
+        case ValueTypeKind::PTR:
+            checkValueType(valueType->getSubType());
+            break;
+        case ValueTypeKind::DATA:
+            if (valueType->getCountExpression() != nullptr) {
+                valueType->getCountExpression()->valueType = typeForExpression(valueType->getCountExpression(), nullptr, nullptr);
+            }
+            break;
+        default:
+            break;
     }
 }
 

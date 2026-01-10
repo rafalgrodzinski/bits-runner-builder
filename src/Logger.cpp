@@ -70,21 +70,13 @@ string Logger::toString(shared_ptr<Token> token) {
             return "&";
         case TokenKind::BIT_NOT:
             return "~";
-        case TokenKind::BIT_SHL:
-            return "<<";
-        case TokenKind::BIT_SHR:
-            return ">>";
         
         case TokenKind::EQUAL:
             return "=";
         case TokenKind::NOT_EQUAL:
             return "≠";
-        case TokenKind::LESS:
-            return "<";
         case TokenKind::LESS_EQUAL:
             return "≤";
-        case TokenKind::GREATER:
-            return ">";
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
@@ -100,6 +92,10 @@ string Logger::toString(shared_ptr<Token> token) {
             return "{";
         case TokenKind::RIGHT_CURLY_BRACKET:
             return "}";
+        case TokenKind::LEFT_ANGLE_BRACKET:
+            return "<";
+        case TokenKind::RIGHT_ANGLE_BRACKET:
+            return ">";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -440,10 +436,10 @@ string Logger::toString(shared_ptr<StatementRepeat> statement, vector<IndentKind
     // name
     line = "REP";
     if (
-        statement->getInitStatement() != nullptr ||
-        statement->getPreConditionExpression() != nullptr ||
-        statement->getPostConditionExpression() != nullptr ||
-        statement->getPostStatement() != nullptr) {
+        statement->getInitStatement() != nullptr
+        || statement->getPreConditionExpression() != nullptr
+        || statement->getPostConditionExpression() != nullptr
+        || statement->getPostStatement() != nullptr) {
         line += ":";
     }
     text += formattedLine(line, indents);
@@ -937,21 +933,13 @@ string Logger::toString(TokenKind tokenKind) {
             return "&";
         case TokenKind::BIT_NOT:
             return "~";
-        case TokenKind::BIT_SHL:
-            return "<<";
-        case TokenKind::BIT_SHR:
-            return ">>";
         
         case TokenKind::EQUAL:
             return "=";
         case TokenKind::NOT_EQUAL:
             return "≠";
-        case TokenKind::LESS:
-            return "<";
         case TokenKind::LESS_EQUAL:
             return "≤";
-        case TokenKind::GREATER:
-            return ">";
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
@@ -967,6 +955,10 @@ string Logger::toString(TokenKind tokenKind) {
             return "{";
         case TokenKind::RIGHT_CURLY_BRACKET:
             return "}";
+        case TokenKind::LEFT_ANGLE_BRACKET:
+            return "<";
+        case TokenKind::RIGHT_ANGLE_BRACKET:
+            return ">";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -1204,6 +1196,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "UINT";
         case ValueTypeKind::U8:
             return "U8";
+        case ValueTypeKind::U16:
+            return "U16";
         case ValueTypeKind::U32:
             return "U32";
         case ValueTypeKind::U64:
@@ -1212,6 +1206,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "SINT";
         case ValueTypeKind::S8:
             return "S8";
+        case ValueTypeKind::S16:
+            return "S16";
         case ValueTypeKind::S32:
             return "S32";
         case ValueTypeKind::S64:

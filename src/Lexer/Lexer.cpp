@@ -184,20 +184,6 @@ shared_ptr<Token> Lexer::nextToken() {
 
     if (token = match(TokenKind::BIT_NOT, "~", false))
         return token;
-
-    if (token = match(TokenKind::BIT_SHL, "<<", false))
-        return token;
-
-    // avoid matching <type>> as right shift
-    // and triple >>> pattern
-    if (
-        (tokens.size() < 2 || !tokens.at(tokens.size() - 2)->isOfKind({TokenKind::LESS})) &&
-        (tokens.size() < 1 || !tokens.back()->isOfKind({TokenKind::GREATER}))
-    ) {
-        if (token = match(TokenKind::BIT_SHR, ">>", false))
-            return token;
-    }
-
     // comparison
     if (token = match(TokenKind::NOT_EQUAL, "!=", false))
         return token;
@@ -208,13 +194,14 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token = match(TokenKind::LESS_EQUAL, "<=", false))
         return token;
 
-    if (token = match(TokenKind::LESS, "<", false))
-        return token;
-
     if (token = match(TokenKind::GREATER_EQUAL, ">=", false))
         return token;
 
-    if (token = match(TokenKind::GREATER, ">", false))
+    // structural or comparison or bitwise
+    if (token = match(TokenKind::LEFT_ANGLE_BRACKET, "<", false))
+        return token;
+
+    if (token = match(TokenKind::RIGHT_ANGLE_BRACKET, ">", false))
         return token;
 
     // arithmetic
@@ -497,11 +484,11 @@ shared_ptr<Token> Lexer::matchString() {
 shared_ptr<Token> Lexer::matchType() {
     int nextIndex = currentIndex;
 
-    if (tokens.empty() || !tokens.back()->isOfKind({TokenKind::IDENTIFIER, TokenKind::LESS, TokenKind::RIGHT_ARROW}))
+    if (tokens.empty() || !tokens.back()->isOfKind({TokenKind::IDENTIFIER, TokenKind::LEFT_ANGLE_BRACKET, TokenKind::RIGHT_ARROW}))
         return nullptr;
 
     // TYPE < TYPE [..]
-    if (tokens.size() >= 2 && tokens.back()->isOfKind({TokenKind::LESS}) && !tokens.at(tokens.size() - 2)->isOfKind({TokenKind::TYPE}))
+    if (tokens.size() >= 2 && tokens.back()->isOfKind({TokenKind::LEFT_ANGLE_BRACKET}) && !tokens.at(tokens.size() - 2)->isOfKind({TokenKind::TYPE}))
         return nullptr;
 
     while (nextIndex < source.length() && isIdentifier(nextIndex))
@@ -529,11 +516,12 @@ shared_ptr<Token> Lexer::matchIdentifier() {
 
     // Special case for misplaced type tokens
     if (
-        lexme.compare("u8") == 0 || lexme.compare("u32") == 0 || lexme.compare("u64") == 0 ||
-        lexme.compare("s8") == 0 || lexme.compare("s32") == 0 || lexme.compare("s64") == 0 ||
-        lexme.compare("f32") == 0 || lexme.compare("f64") == 0 ||
-        lexme.compare("bool") == 0 ||
-        lexme.compare("data") == 0 || lexme.compare("blob") == 0 || lexme.compare("ptr") == 0
+        lexme.compare("bool") == 0
+        || lexme.compare("u8") == 0 || lexme.compare("u16") == 0 || lexme.compare("u32") == 0 || lexme.compare("u64") == 0
+        || lexme.compare("s8") == 0 || lexme.compare("s16") == 0 || lexme.compare("s32") == 0 || lexme.compare("s64") == 0
+        || lexme.compare("f32") == 0 || lexme.compare("f64") == 0
+        || lexme.compare("a") == 0 || lexme.compare("ptr") == 0
+        || lexme.compare("data") == 0 || lexme.compare("blob") == 0
     ){
         shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
         advanceWithToken(token);

@@ -82,6 +82,7 @@ private:
 
     llvm::IntegerType *typeInt;
     llvm::IntegerType *typeI8;
+    llvm::IntegerType *typeI16;
     llvm::IntegerType *typeI32;
     llvm::IntegerType *typeI64;
 

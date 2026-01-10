@@ -24,9 +24,14 @@ vector<TokenKind> Token::tokensBitwiseAnd = {
     TokenKind::BIT_AND
 };
 
-vector<TokenKind> Token::tokensBitwiseShift = {
-    TokenKind::BIT_SHL,
-    TokenKind::BIT_SHR
+vector<TokenKind> Token::tokensBitwiseShiftLeft = {
+    TokenKind::LEFT_ANGLE_BRACKET,
+    TokenKind::LEFT_ANGLE_BRACKET
+};
+
+vector<TokenKind> Token::tokensBitwiseShiftRight = {
+    TokenKind::RIGHT_ANGLE_BRACKET,
+    TokenKind::RIGHT_ANGLE_BRACKET
 };
 
 vector<TokenKind> Token::tokensBitwiseNot = {
@@ -39,9 +44,9 @@ vector<TokenKind> Token::tokensEquality = {
 };
 
 vector<TokenKind> Token::tokensComparison = {
-    TokenKind::LESS,
+    TokenKind::LEFT_ANGLE_BRACKET,
     TokenKind::LESS_EQUAL,
-    TokenKind::GREATER,
+    TokenKind::RIGHT_ANGLE_BRACKET,
     TokenKind::GREATER_EQUAL
 };
 

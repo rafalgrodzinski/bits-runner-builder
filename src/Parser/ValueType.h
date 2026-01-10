@@ -17,11 +17,13 @@ enum class ValueTypeKind {
 
     UINT,
     U8,
+    U16,
     U32,
     U64,
 
     SINT,
     S8,
+    S16,
     S32,
     S64,
 
@@ -53,10 +55,12 @@ public:
     static shared_ptr<ValueType> BOOL;
     static shared_ptr<ValueType> UINT;
     static shared_ptr<ValueType> U8;
+    static shared_ptr<ValueType> U16;
     static shared_ptr<ValueType> U32;
     static shared_ptr<ValueType> U64;
     static shared_ptr<ValueType> SINT;
     static shared_ptr<ValueType> S8;
+    static shared_ptr<ValueType> S16;
     static shared_ptr<ValueType> S32;
     static shared_ptr<ValueType> S64;
     static shared_ptr<ValueType> FLOAT;

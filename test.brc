@@ -1,17 +1,35 @@
-@import B
+//@module Storage
 
-@export main fun
-    msg blob<@B.String>
+//@import B
+/*
+@export StorageFs blob
+    /*storageArea blob<StorageArea>
+    name data<u8, 16>
+    kind u32*/
 
-    numsD data<u8> <- {1, 2, 3, 4, 5, 6, 7, 8}
-    numsA a <- numsD.adr
+    //rootEntry ptr<fun: ptr<blob<StorageFs>> -> blob<StorageFsEntry>>
+    subEntriesForEntry ptr<fun -> data<u8, 32>>
+    //entryForPath ptr<fun: ptr<blob<StorageFs>>, blob<@B.String> -> blob<StorageFsEntry>>
+    //readEntry ptr<fun: ptr<blob<StorageFs>>, blob<StorageFsEntry>, ptr<data<u8>> -> u32>
 
-    //f2((numsA + 1).ptr<data<u32>>.val[0])
-
-    msg <- @B.StringHexForU32(numsA.ptr<data<u32>>.val[0])
-    msg.println.val({msg.adr})
+    // FAT specific
+    /*pFat ptr<data<u8>>
+    pFatRootDir ptr<data<u8>>
+    fatBytesPerSector u32
+    fatRootDirEntriesCount u32
+    fatSectorsPerCluster u32
+    fatFirstDataSector u32*/
 ;
 
-/*f2 fun: num u32
-    n u32 <- num
+/*@export StorageFsEntry blob
+    kind u32
+    name data<u8, 16>
+    entrySize u32
+
+    // FAT specific
+    fatCluster u32
 ;*/
+
+*/
+
+abc ptr<data<u8, 32 << 2>>

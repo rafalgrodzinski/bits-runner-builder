@@ -58,6 +58,7 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
 
     typeInt = llvm::Type::getIntNTy(*context, intSize);
     typeI8 = llvm::Type::getInt8Ty(*context);
+    typeI16 = llvm::Type::getInt16Ty(*context);
     typeI32 = llvm::Type::getInt32Ty(*context);
     typeI64 = llvm::Type::getInt64Ty(*context);
 
@@ -1269,6 +1270,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         case ValueTypeKind::U8:
             resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getUIntValue());
             break;
+        case ValueTypeKind::U16:
+            resultValue = llvm::ConstantInt::get(typeI16, expressionLiteral->getUIntValue());
+            break;
         case ValueTypeKind::U32:
             resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getUIntValue());
             break;
@@ -1281,6 +1285,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         case ValueTypeKind::S8:
             resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getUIntValue());
+            break;
+        case ValueTypeKind::S16:
+            resultValue = llvm::ConstantInt::get(typeI16, expressionLiteral->getUIntValue());
             break;
         case ValueTypeKind::S32:
             resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getUIntValue());
@@ -1462,6 +1469,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             isSourceUInt = true;
             sourceSize = 8;
             break;
+        case ValueTypeKind::U16:
+            isSourceUInt = true;
+            sourceSize = 16;
+            break;
         case ValueTypeKind::U32:
             isSourceUInt = true;
             sourceSize = 32;
@@ -1477,6 +1488,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::S8:
             isSourceSInt = true;
             sourceSize = 8;
+            break;
+        case ValueTypeKind::S16:
+            isSourceSInt = true;
+            sourceSize = 16;
             break;
         case ValueTypeKind::S32:
             isSourceSInt = true;
@@ -1531,6 +1546,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             isTargetUInt = true;
             targetSize = 8;
             break;
+        case ValueTypeKind::U16:
+            isTargetUInt = true;
+            targetSize = 16;
+            break;
         case ValueTypeKind::U32:
             isTargetUInt = true;
             targetSize = 32;
@@ -1546,6 +1565,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::S8:
             isTargetSInt = true;
             targetSize = 8;
+            break;
+        case ValueTypeKind::S16:
+            isTargetSInt = true;
+            targetSize = 16;
             break;
         case ValueTypeKind::S32:
             isTargetSInt = true;
@@ -1860,6 +1883,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             return typeInt;
         case ValueTypeKind::U8:
             return typeI8;
+        case ValueTypeKind::U16:
+            return typeI16;
         case ValueTypeKind::U32:
             return typeI32;
         case ValueTypeKind::U64:
@@ -1868,6 +1893,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             return typeInt;
         case ValueTypeKind::S8:
             return typeI8;
+        case ValueTypeKind::S16:
+            return typeI16;
         case ValueTypeKind::S32:
             return typeI32;
         case ValueTypeKind::S64:

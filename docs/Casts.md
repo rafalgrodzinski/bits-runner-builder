@@ -3,13 +3,17 @@ If there is no general information loss, casts can be implicit. So implicit cast
 
 From `bool`: No implicit casting
 
-From `u8`: `u32`, `u64`, `s8`, `s32`, `s64`, `f32`, `f64`, `a`
+From `u8`: `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `a`
+
+From `u16`: `u32`, `u64`, `s16`, `s32`, `s64`, `f32`, `f64`, `a`
 
 From `u32`: `u64`, `s32`, `s64`, `f32`, `f64`, `a`
 
 From `u64`: `s64`, `f32`, `f64`, `a`
 
-From `s8`: `s32`, `s64`, `f32`, `f64`
+From `s8`: `s16`, `s32`, `s64`, `f32`, `f64`
+
+From `s16`: `s32`, `s64`, `f32`, `f64`
 
 From `s32`: `s64`, `f32`, `f64`
 
