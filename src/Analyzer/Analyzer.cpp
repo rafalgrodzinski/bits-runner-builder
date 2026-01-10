@@ -386,6 +386,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     string identifier = importModulePrefix + statementVariableDeclaration->getIdentifier();
 
+    checkValueType(statementVariableDeclaration->getValueType());
+
     if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
         markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);
 }
@@ -1479,6 +1481,21 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
         default:
             return false;
+    }
+}
+
+void Analyzer::checkValueType(shared_ptr<ValueType> valueType) {
+    switch (valueType->getKind()) {
+        case ValueTypeKind::PTR:
+            checkValueType(valueType->getSubType());
+            break;
+        case ValueTypeKind::DATA:
+            if (valueType->getCountExpression() != nullptr) {
+                valueType->getCountExpression()->valueType = typeForExpression(valueType->getCountExpression(), nullptr, nullptr);
+            }
+            break;
+        default:
+            break;
     }
 }
 

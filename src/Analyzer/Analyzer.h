@@ -99,6 +99,8 @@ private:
     shared_ptr<Expression> checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType);
     bool canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
+    void checkValueType(shared_ptr<ValueType> valueType);
+
     void markErrorAlreadyDefined(shared_ptr<Location> location, string identifier);
     void markErrorInvalidArgumentsCount(shared_ptr<Location> location, int actulCount, int expectedCount);
     void markErrorInvalidBuiltIn(shared_ptr<Location> location, string builtInName, shared_ptr<ValueType> type);
