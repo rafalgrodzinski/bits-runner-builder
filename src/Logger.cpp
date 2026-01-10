@@ -1196,6 +1196,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "UINT";
         case ValueTypeKind::U8:
             return "U8";
+        case ValueTypeKind::U16:
+            return "U16";
         case ValueTypeKind::U32:
             return "U32";
         case ValueTypeKind::U64:
@@ -1204,6 +1206,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "SINT";
         case ValueTypeKind::S8:
             return "S8";
+        case ValueTypeKind::S16:
+            return "S16";
         case ValueTypeKind::S32:
             return "S32";
         case ValueTypeKind::S64:

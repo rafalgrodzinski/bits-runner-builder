@@ -11,6 +11,7 @@ Changelist:
   - Allow for such syntax `numAdr.a.ptr<u32>.val`
   - Updated base String functions
   - Ambiguous `>>` and `<<` is now deducted correctly
+  - Added `u16` and `s16` types
 - Better handling of addresses #150
   - Fixed pointers when O2 optimization is enabled
   - Specialized `a` type for handling addresses
