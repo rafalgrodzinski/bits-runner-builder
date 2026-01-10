@@ -136,16 +136,10 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     vector<pair<string, shared_ptr<ValueType>>> members;
     for (auto &member : statementBlob->getMembers()) {
-        if (member.second->isData()) {
-            if (member.second->getCountExpression() == nullptr) {
+        checkValueType(member.second);
+        if (member.second->isData() && member.second->getCountExpression() == nullptr) {
                 markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
                 return;
-            }
-            member.second->getCountExpression()->valueType = typeForExpression(
-                member.second->getCountExpression(),
-                nullptr,
-                nullptr
-            );
         }
         members.push_back(pair(member.first, member.second));
     }
@@ -1486,14 +1480,23 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
 void Analyzer::checkValueType(shared_ptr<ValueType> valueType) {
     switch (valueType->getKind()) {
-        case ValueTypeKind::PTR:
+        case ValueTypeKind::PTR: {
             checkValueType(valueType->getSubType());
             break;
-        case ValueTypeKind::DATA:
+        }
+        case ValueTypeKind::DATA: {
             if (valueType->getCountExpression() != nullptr) {
                 valueType->getCountExpression()->valueType = typeForExpression(valueType->getCountExpression(), nullptr, nullptr);
             }
             break;
+        }
+        case ValueTypeKind::FUN: {
+            vector<shared_ptr<ValueType>> argValueTypes = *valueType->getArgumentTypes();
+            for (shared_ptr<ValueType> argValueType : argValueTypes)
+                checkValueType(argValueType);
+            checkValueType(valueType->getReturnType());
+            break;
+        }
         default:
             break;
     }

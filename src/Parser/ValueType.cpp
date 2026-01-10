@@ -162,6 +162,9 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
         return false;
 
     switch (kind) {
+        case ValueTypeKind::PTR: {
+            return other->isPointer() && subType->isEqual(other->getSubType());
+        }
         case ValueTypeKind::DATA: {
             // first check the types
             if (!other->isData() || !subType->isEqual(other->getSubType()))
@@ -188,6 +191,34 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
             int thatSize = thatCountLiteralExpression->getUIntValue();
 
             return thisSize == thatSize;
+        }
+        case ValueTypeKind::BLOB: {
+            if (!other->isBlob())
+                return false;
+            string tbn = *blobName;
+            string obn = *other->getBlobName();
+            return (*blobName).compare(*other->getBlobName()) == 0;
+        }
+        case ValueTypeKind::FUN: {
+            // are both function types?
+            if (!other->isFunction())
+                return false;
+
+            // does argument count match?
+            if ((*argumentTypes).size() != (*other->getArgumentTypes()).size())
+                return false;
+
+            // do argument types match?
+            for (int i=0; i<(*argumentTypes).size(); i++) {
+                if (!(*argumentTypes).at(i)->isEqual((*other->getArgumentTypes()).at(i)))
+                    return false;
+            }
+
+            // do the return types match?
+            if (!returnType->isEqual(other->getReturnType()))
+                return false;
+
+            return true;
         }
         default:
             break;

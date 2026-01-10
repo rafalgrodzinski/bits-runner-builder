@@ -1,5 +1,5 @@
 @extern putchar fun: character u64 -> u32
-@extern malloc fun: size u64 -> ptr<u8>
+@extern malloc fun: size u64 -> a
 @extern clock fun -> u64
 
 @export printNum fun: number u64
@@ -52,8 +52,8 @@ passes u64 <- 0
 @export main fun -> u64
     n u64 <- 1_000_000
 
-    pPrimeFlags <- malloc(bool.size * n)
-    pPrimes <- malloc(u64.size * n)
+    pPrimeFlags <- malloc(bool.size * n).ptr<data<bool>>
+    pPrimes <- malloc(u64.size * n).ptr<data<u64>>
 
     duration u64 <- 0
     startTime u64 <- clock()
