@@ -1,9 +1,35 @@
+//@module Storage
+
 //@import B
+/*
+@export StorageFs blob
+    /*storageArea blob<StorageArea>
+    name data<u8, 16>
+    kind u32*/
 
-@export main fun
-    num u8 <- 77
+    //rootEntry ptr<fun: ptr<blob<StorageFs>> -> blob<StorageFsEntry>>
+    subEntriesForEntry ptr<fun -> data<u8, 32>>
+    //entryForPath ptr<fun: ptr<blob<StorageFs>>, blob<@B.String> -> blob<StorageFsEntry>>
+    //readEntry ptr<fun: ptr<blob<StorageFs>>, blob<StorageFsEntry>, ptr<data<u8>> -> u32>
 
-    numAdr u32 <- num.adr.u32
-
-    numAdr.a.ptr<u32>.val <- 55
+    // FAT specific
+    /*pFat ptr<data<u8>>
+    pFatRootDir ptr<data<u8>>
+    fatBytesPerSector u32
+    fatRootDirEntriesCount u32
+    fatSectorsPerCluster u32
+    fatFirstDataSector u32*/
 ;
+
+/*@export StorageFsEntry blob
+    kind u32
+    name data<u8, 16>
+    entrySize u32
+
+    // FAT specific
+    fatCluster u32
+;*/
+
+*/
+
+abc ptr<data<u8, 32 << 2>>

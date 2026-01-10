@@ -604,9 +604,9 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             // constraints
             Parsee::groupParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::LESS, ParseeLevel::CRITICAL, false),
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
                     Parsee::tokenParsee(TokenKind::STRING, ParseeLevel::CRITICAL, true, TAG_CONSTRAINTS),
-                    Parsee::tokenParsee(TokenKind::GREATER, ParseeLevel::CRITICAL, false)
+                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                 }, ParseeLevel::CRITICAL, true
             ),
             // arguments
@@ -1151,8 +1151,19 @@ shared_ptr<Expression> Parser::matchBitwiseShift() {
     if (expression == nullptr)
         return nullptr;
 
-    while (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, false))
+    // Since << & >> can be ambiguous, we track if parser has detected
+    // a valid bit shift expression
+    shared_ptr<Expression> previousExpression = expression;
+    while (
+        tryMatchingTokenKinds({TokenKind::LEFT_ANGLE_BRACKET, TokenKind::LEFT_ANGLE_BRACKET}, true, false)
+        || tryMatchingTokenKinds({TokenKind::RIGHT_ANGLE_BRACKET, TokenKind::RIGHT_ANGLE_BRACKET}, true, false)
+    ) {
         expression = matchExpressionBinary(expression);
+        // If there was no change, no expression is detected so stop trying further
+        if (expression == previousExpression)
+            break;
+        previousExpression = expression;
+    }
 
     return expression; 
 }
@@ -1593,33 +1604,47 @@ shared_ptr<Expression> Parser::matchExpressionIfElse(optional<bool> isMultiLine)
 }
 
 shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left) {
-    shared_ptr<Token> token = tokens.at(currentIndex);
+    int originalIndex = currentIndex;
+
+    optional<vector<shared_ptr<Token>>> tokens;
     shared_ptr<Expression> right;
     // What level of binary expression are we having?
-    if (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true)) {
-        right = matchLogicalAnd();
-    } else if (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true)) {
-        right = matchLogicalNot();
-    } else if (tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
-        right = matchComparison();
-    } else if (tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
-        right = matchBitwiseOrXor();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
-        right = matchBitwiseAnd();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
-        right = matchBitwiseShift();
-    } else if (tryMatchingTokenKinds(Token::tokensBitwiseShift, false, true)) {
+    // << & >> need to be checked first in order not to be consumed by < & > comparisons
+    if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftLeft, true, true)) {
         right = matchBitwiseNot();
-    } else if (tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftRight, true, true)) {
+        right = matchBitwiseNot();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true)) {
+        right = matchLogicalAnd();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true)) {
+        right = matchLogicalNot();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
+        right = matchComparison();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
+        right = matchBitwiseOrXor();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
+        right = matchBitwiseAnd();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
+        right = matchBitwiseShift();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
         right = matchFactor();
-    } else if (tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
         right = matchUnary();
     }
 
-    shared_ptr<ExpressionBinary> expression = ExpressionBinary::expression(token, left, right);
+    // If no correct expression has been detected, just return what we received
+    // and restore the index
+    if (right == nullptr) {
+        currentIndex = originalIndex;
+        return left;
+    }
 
-    if (expression == nullptr)
+    shared_ptr<ExpressionBinary> expression = ExpressionBinary::expression(*tokens, left, right);
+
+    if (expression == nullptr) {
         markError({}, {}, "Expected expression");
+        return nullptr;
+    }
 
     return expression;
 }
@@ -1669,7 +1694,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                     // PTR
                     {
                         Parsee::tokenParsee(TokenKind::PTR, ParseeLevel::REQUIRED, true, TAG_PTR),
-                        Parsee::tokenParsee(TokenKind::LESS, ParseeLevel::CRITICAL, false),
+                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
                         Parsee::oneOfParsee(
                             {
                                 // function pointer
@@ -1705,12 +1730,12 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                 }
                             }, ParseeLevel::CRITICAL, true
                         ),
-                        Parsee::tokenParsee(TokenKind::GREATER, ParseeLevel::CRITICAL, false)
+                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
                     // DATA
                     {
                         Parsee::tokenParsee(TokenKind::DATA, ParseeLevel::REQUIRED, true, TAG_DATA),
-                        Parsee::tokenParsee(TokenKind::LESS, ParseeLevel::CRITICAL, false),
+                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
                         Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_SUBTYPE),
                         Parsee::groupParsee(
                             {
@@ -1718,12 +1743,12 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                 Parsee::expressionParsee(ParseeLevel::CRITICAL, true, true, TAG_SIZE_EXPRESSION)
                             }, ParseeLevel::OPTIONAL, true
                         ),
-                        Parsee::tokenParsee(TokenKind::GREATER, ParseeLevel::CRITICAL, false)
+                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
                     // BLOB
                     {
                         Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, true, TAG_BLOB),
-                        Parsee::tokenParsee(TokenKind::LESS, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
                         // identifier - module prefix
                         Parsee::groupParsee(
                             {
@@ -1734,7 +1759,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         ),
                         // identifier
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
-                        Parsee::tokenParsee(TokenKind::GREATER, ParseeLevel::CRITICAL, false)
+                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
                     // SIMPLE
                     {
@@ -2109,31 +2134,42 @@ optional<pair<vector<ParseeResult>, int>> Parser::ifElseParseeResults(bool isMul
 //
 // Support
 //
-bool Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {
+optional<vector<shared_ptr<Token>>> Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {
     int requiredCount = shouldMatchAll ? kinds.size() : 1;
     if (currentIndex + requiredCount > tokens.size())
-        return false;
+        return { };
     
     if (shouldMatchAll) {
         for (int i=0; i<kinds.size(); i++) {
             if (kinds.at(i) != tokens.at(currentIndex + i)->getKind())
-                return false;
+                return { };
         }
 
+        // collect found tokens
+        vector<shared_ptr<Token>> foundTokens;
+        for (int i=0; i<kinds.size(); i++)
+            foundTokens.push_back(tokens.at(currentIndex + i));
+
+        // advance current token index
         if (shouldAdvance)
             currentIndex += kinds.size();
         
-        return true;
+        return foundTokens;
     } else {
         for (int i=0; i<kinds.size(); i++) {
             if (kinds.at(i) == tokens.at(currentIndex)->getKind()) {
+                // collect found token
+                vector<shared_ptr<Token>> foundTokens;
+                foundTokens.push_back(tokens.at(currentIndex));
+
+                // advance current token index by just one
                 if (shouldAdvance)
                     currentIndex++;
-                return true;
+                return vector(foundTokens);
             }
         }
 
-        return false;
+        return { };
     }
 }
 

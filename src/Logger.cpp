@@ -70,21 +70,13 @@ string Logger::toString(shared_ptr<Token> token) {
             return "&";
         case TokenKind::BIT_NOT:
             return "~";
-        case TokenKind::BIT_SHL:
-            return "<<";
-        case TokenKind::BIT_SHR:
-            return ">>";
         
         case TokenKind::EQUAL:
             return "=";
         case TokenKind::NOT_EQUAL:
             return "≠";
-        case TokenKind::LESS:
-            return "<";
         case TokenKind::LESS_EQUAL:
             return "≤";
-        case TokenKind::GREATER:
-            return ">";
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
@@ -100,6 +92,10 @@ string Logger::toString(shared_ptr<Token> token) {
             return "{";
         case TokenKind::RIGHT_CURLY_BRACKET:
             return "}";
+        case TokenKind::LEFT_ANGLE_BRACKET:
+            return "<";
+        case TokenKind::RIGHT_ANGLE_BRACKET:
+            return ">";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -937,21 +933,13 @@ string Logger::toString(TokenKind tokenKind) {
             return "&";
         case TokenKind::BIT_NOT:
             return "~";
-        case TokenKind::BIT_SHL:
-            return "<<";
-        case TokenKind::BIT_SHR:
-            return ">>";
         
         case TokenKind::EQUAL:
             return "=";
         case TokenKind::NOT_EQUAL:
             return "≠";
-        case TokenKind::LESS:
-            return "<";
         case TokenKind::LESS_EQUAL:
             return "≤";
-        case TokenKind::GREATER:
-            return ">";
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
@@ -967,6 +955,10 @@ string Logger::toString(TokenKind tokenKind) {
             return "{";
         case TokenKind::RIGHT_CURLY_BRACKET:
             return "}";
+        case TokenKind::LEFT_ANGLE_BRACKET:
+            return "<";
+        case TokenKind::RIGHT_ANGLE_BRACKET:
+            return ">";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
