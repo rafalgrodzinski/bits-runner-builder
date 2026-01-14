@@ -89,6 +89,24 @@ shared_ptr<Statement> Parser::nextStatement() {
     return nullptr;
 }
 
+shared_ptr<Statement> Parser::nextInBlobStatement() {
+    shared_ptr<Statement> statement;
+    int errorsCount = errors.size();
+
+    if ((statement = matchStatementVariable()) || errors.size() > errorsCount)
+        return statement;
+
+    if ((statement = matchStatementFunction()) || errors.size() || errorsCount)
+        return statement;
+
+    // ignore final ;
+    if (tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, false))
+        return nullptr;
+
+    markError({}, {}, {});
+    return nullptr;
+}
+
 shared_ptr<Statement> Parser::nextInBlockStatement() {
     shared_ptr<Statement> statement;
     int errorsCount = errors.size();
@@ -702,8 +720,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     enum Tag {
         TAG_SHOULD_EXPORT,
         TAG_NAME,
-        TAG_MEMBER_IDENTIFIER,
-        TAG_MEMBER_TYPE
+        TAG_STATEMENT_IN_BLOB
     };
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
@@ -719,8 +736,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             // members
             Parsee::repeatedGroupParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_MEMBER_IDENTIFIER),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_MEMBER_TYPE),
+                    Parsee::statementInBlobParsee(ParseeLevel::REQUIRED, true, TAG_STATEMENT_IN_BLOB),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
@@ -746,14 +762,17 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                 name = parseeResult.getToken()->getLexme();
                 break;
             }
-            case TAG_MEMBER_IDENTIFIER: {
+            case TAG_STATEMENT_IN_BLOB: {
+                break;
+            }
+            /*case TAG_MEMBER_IDENTIFIER: {
                 pair<string, shared_ptr<ValueType>> member;
                 member.first = parseeResult.getToken()->getLexme();
                 i++;
                 member.second = resultsGroup.getResults().at(i).getValueType();
                 members.push_back(member);
                 break;
-            }
+            }*/
         }
     }
 
@@ -1888,6 +1907,9 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
             case ParseeKind::STATEMENT:
                 subResults = statementParseeResults(parsee.getTag());
                 break;
+            case ParseeKind::STATEMENT_IN_BLOB:
+                subResults = statementInBlobParseeResults(parsee.getTag());
+                break;
             case ParseeKind::STATEMENT_IN_BLOCK:
                 subResults = statementInBlockParseeResults(parsee.getShouldIncludeExpressionStatement(), parsee.getTag());
                 break;
@@ -2037,6 +2059,19 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementParseeResults(int tag
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Statement> statement = nextStatement();
+    if (errors.size() > errorsCount || statement == nullptr)
+        return {};
+
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(vector<ParseeResult>({ParseeResult::statementResult(statement, tokensCount, tag)}), tokensCount);
+}
+
+optional<pair<vector<ParseeResult>, int>> Parser::statementInBlobParseeResults(int tag) {
+    int startIndex = currentIndex;
+    int errorsCount = errors.size();
+
+    shared_ptr<Statement> statement = nextInBlobStatement();
     if (errors.size() > errorsCount || statement == nullptr)
         return {};
 

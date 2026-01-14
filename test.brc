@@ -1,19 +1,9 @@
-StorageFsEntry blob
+Stuff blob
+    doStuff fun
+    ;
 ;
 
-StorageFs blob
-    subEntriesForEntry ptr<fun: ptr<blob<StorageFs>>, blob<StorageFsEntry> -> data<blob<StorageFsEntry>, 32>>
-;
-
-storageFsFatSubEntriesForEntry fun: it ptr<blob<StorageFs>>, parentEntry blob<StorageFs> -> data<blob<StorageFsEntry>, 32>
-    stuff data<blob<StorageFsEntry>, 32>
-    ret stuff
-;
-
-StorageFsFat fun -> blob<StorageFs>
-    storageFs blob<StorageFs>
-
-    storageFs.subEntriesForEntry <- {storageFsFatSubEntriesForEntry.adr}
-
-    ret storageFs
+@export main fun
+    obj blob<Stuff>
+    obj.doStuff()
 ;

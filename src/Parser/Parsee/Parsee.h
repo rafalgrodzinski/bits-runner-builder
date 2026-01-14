@@ -22,6 +22,7 @@ enum class ParseeKind {
     STATEMENT,
     STATEMENT_BLOCK_MULTI_LINE,
     STATEMENT_BLOCK_SINGLE_LINE,
+    STATEMENT_IN_BLOB,
     STATEMENT_IN_BLOCK,
     TOKEN,
     VALUE_TYPE
@@ -60,6 +61,7 @@ public:
     static Parsee statementParsee(ParseeLevel level, bool shouldReturn, int tag = -1); 
     static Parsee statementBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee statementBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee statementInBlobParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee tokenParsee(TokenKind tokenKind, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee valueTypeParsee(ParseeLevel level, bool shouldReturn, int tag = -1); 
