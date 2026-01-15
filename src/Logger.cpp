@@ -224,15 +224,35 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 
     // name
     line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
-    if (!statement->getMembers().empty())
+    if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
 
-    // members
     indents = adjustedLastIndent(indents);
-    for (pair<string, shared_ptr<ValueType>> &member : statement->getMembers()) {
-        line = format("`{}` {}", member.first, toString(member.second));
-        text += formattedLine(line, indents);
+
+    int variablestatementsCount = statement->getVariableStatements().size();
+    int functionStatementsCount = statement->getFunctionStatements().size();
+
+    // member variables
+    for (int i=0; i<variablestatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getVariableStatements().at(i), currentIndents);
+    }
+
+    // member functions
+    for (int i=0; i<functionStatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+        
+        text += toString(statement->getFunctionStatements().at(i), currentIndents);
     }
 
     return text;
@@ -885,6 +905,8 @@ string Logger::toString(Parsee parsee) {
             return "Value Type";
         case ParseeKind::STATEMENT:
             return "Statement";
+        case ParseeKind::STATEMENT_IN_BLOB:
+            return "Statement in Blob";
         case ParseeKind::STATEMENT_IN_BLOCK:
             return "Statement in Block";
         case ParseeKind::EXPRESSION:

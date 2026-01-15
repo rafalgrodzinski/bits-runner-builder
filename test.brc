@@ -1,9 +1,15 @@
 Stuff blob
+    vu u32
+    sum f64
+
     doStuff fun
+    ;
+
+    someOther fun: num u32
     ;
 ;
 
 @export main fun
     obj blob<Stuff>
-    obj.doStuff()
+    //obj.doStuff()
 ;

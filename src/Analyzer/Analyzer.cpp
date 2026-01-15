@@ -134,7 +134,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
-    vector<pair<string, shared_ptr<ValueType>>> members;
+    /*vector<pair<string, shared_ptr<ValueType>>> members;
     for (auto &member : statementBlob->getMembers()) {
         checkValueType(member.second);
         if (member.second->isData() && member.second->getCountExpression() == nullptr) {
@@ -148,7 +148,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 
     string name = importModulePrefix + statementBlob->getName();
     if (!scope->setBlobMembers(name, members, true))
-        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
+        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());*/
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {

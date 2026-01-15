@@ -2,8 +2,14 @@
 
 #include "Parser/ValueType.h"
 
-StatementBlob::StatementBlob(bool shouldExport, string name, vector<pair<string, shared_ptr<ValueType>>> members, shared_ptr<Location> location):
-Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(name), members(members) { }
+StatementBlob::StatementBlob(
+    bool shouldExport,
+    string name,
+    vector<shared_ptr<Statement>> variableStatements,
+    vector<shared_ptr<Statement>> functionStatements,
+    shared_ptr<Location> location
+):
+Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(name), variableStatements(variableStatements), functionStatements(functionStatements) { }
 
 bool StatementBlob::getShouldExport() {
     return shouldExport;
@@ -13,6 +19,10 @@ string StatementBlob::getName() {
     return name;
 }
 
-vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getMembers() {
-    return members;
+vector<shared_ptr<Statement>> StatementBlob::getVariableStatements() {
+    return variableStatements;
+}
+
+vector<shared_ptr<Statement>> StatementBlob::getFunctionStatements() {
+    return functionStatements;
 }

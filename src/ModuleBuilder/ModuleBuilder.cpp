@@ -172,11 +172,11 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
-    buildBlobDefinition(
+    /*buildBlobDefinition(
         moduleName,
         statementBlob->getName(),
         statementBlob->getMembers()
-    );
+    );*/
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
@@ -334,11 +334,11 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
             }
             case StatementKind::BLOB: {
                 shared_ptr<StatementBlob> statementBlobDefinition = dynamic_pointer_cast<StatementBlob>(importedStatement);
-                buildBlobDefinition(
+                /*buildBlobDefinition(
                     statementMetaImport->getName(),
                     statementBlobDefinition->getName(),
                     statementBlobDefinition->getMembers()
-                );
+                );*/
                 break;
             }
             default:

@@ -226,7 +226,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                         blobDeclarationStatements.push_back(statementBlobDeclaration);
                         blobStatements.push_back(statementBlob);
                         // exported header
-                        if (statementBlob->getShouldExport()) {
+                        /*if (statementBlob->getShouldExport()) {
                             // update member types for exported statement
                             vector<pair<string, shared_ptr<ValueType>>> exportedMembers;
                             for (pair<string, shared_ptr<ValueType>> member : statementBlob->getMembers())
@@ -243,7 +243,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
                             exportedHeaderStatements.push_back(statementBlobDeclaration);
                             // append updated statement
                             exportedHeaderStatements.push_back(exportedStatementBlob);
-                        }
+                        }*/
                         break;
                     }
                     case StatementKind::VARIABLE: {
@@ -749,7 +749,8 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
 
     bool shouldExport = false;
     string name;
-    vector<pair<string, shared_ptr<ValueType>>> members;
+    vector<shared_ptr<Statement>> variableStatements;
+    vector<shared_ptr<Statement>> functionStatements;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
@@ -763,20 +764,20 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                 break;
             }
             case TAG_STATEMENT_IN_BLOB: {
+                switch (parseeResult.getStatement()->getKind()) {
+                    case StatementKind::VARIABLE:
+                        variableStatements.push_back(parseeResult.getStatement());
+                        break;
+                    case StatementKind::FUNCTION:
+                        functionStatements.push_back(parseeResult.getStatement());
+                        break;
+                }
                 break;
             }
-            /*case TAG_MEMBER_IDENTIFIER: {
-                pair<string, shared_ptr<ValueType>> member;
-                member.first = parseeResult.getToken()->getLexme();
-                i++;
-                member.second = resultsGroup.getResults().at(i).getValueType();
-                members.push_back(member);
-                break;
-            }*/
         }
     }
 
-    return make_shared<StatementBlob>(shouldExport, name, members, location);
+    return make_shared<StatementBlob>(shouldExport, name, variableStatements, functionStatements, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {

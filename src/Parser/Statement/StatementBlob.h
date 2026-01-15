@@ -9,13 +9,21 @@ class StatementBlob: public Statement {
 private:
     bool shouldExport;
     string name;
-    vector<pair<string, shared_ptr<ValueType>>> members;
+    vector<shared_ptr<Statement>> variableStatements;
+    vector<shared_ptr<Statement>> functionStatements;
 
 public:
-    StatementBlob(bool shouldExport, string name, vector<pair<string, shared_ptr<ValueType>>> members, shared_ptr<Location> location);
+    StatementBlob(
+        bool shouldExport,
+        string name,
+        vector<shared_ptr<Statement>> variableStatements,
+        vector<shared_ptr<Statement>> functionStatements,
+        shared_ptr<Location> location
+    );
     bool getShouldExport();
     string getName();
-    vector<pair<string, shared_ptr<ValueType>>> getMembers();
+    vector<shared_ptr<Statement>> getVariableStatements();
+    vector<shared_ptr<Statement>> getFunctionStatements();
 };
 
 #endif
