@@ -1627,11 +1627,14 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
 
     optional<vector<shared_ptr<Token>>> tokens;
     shared_ptr<Expression> right;
+    bool isAmbiguous = false;
     // What level of binary expression are we having?
     // << & >> need to be checked first in order not to be consumed by < & > comparisons
     if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftLeft, true, true)) {
+        isAmbiguous = true;
         right = matchBitwiseNot();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftRight, true, true)) {
+        isAmbiguous = true;
         right = matchBitwiseNot();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true)) {
         right = matchLogicalAnd();
@@ -1651,9 +1654,9 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
         right = matchUnary();
     }
 
-    // If no correct expression has been detected, just return what we received
-    // and restore the index
-    if (right == nullptr) {
+    // << and >> can be either an operator or part of the structure, so if an expression
+    // hasn't been found, don't assume that it's an error
+    if (isAmbiguous && right == nullptr) {
         currentIndex = originalIndex;
         return left;
     }
