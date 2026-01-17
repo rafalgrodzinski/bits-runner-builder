@@ -3,27 +3,31 @@
 
 #include "Statement.h"
 
+class StatementFunction;
+class StatementVariable;
+
 class ValueType;
 
 class StatementBlob: public Statement {
 private:
     bool shouldExport;
     string name;
-    vector<shared_ptr<Statement>> variableStatements;
-    vector<shared_ptr<Statement>> functionStatements;
+    vector<shared_ptr<StatementVariable>> variableStatements;
+    vector<shared_ptr<StatementFunction>> functionStatements;
 
 public:
     StatementBlob(
         bool shouldExport,
         string name,
-        vector<shared_ptr<Statement>> variableStatements,
-        vector<shared_ptr<Statement>> functionStatements,
+        vector<shared_ptr<StatementVariable>> variableStatements,
+        vector<shared_ptr<StatementFunction>> functionStatements,
         shared_ptr<Location> location
     );
     bool getShouldExport();
     string getName();
-    vector<shared_ptr<Statement>> getVariableStatements();
-    vector<shared_ptr<Statement>> getFunctionStatements();
+    vector<shared_ptr<StatementVariable>> getVariableStatements();
+    vector<shared_ptr<StatementFunction>> getFunctionStatements();
+    vector<pair<string, shared_ptr<ValueType>>> getMembers();
 };
 
 #endif

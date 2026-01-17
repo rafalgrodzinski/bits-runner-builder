@@ -749,8 +749,8 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
 
     bool shouldExport = false;
     string name;
-    vector<shared_ptr<Statement>> variableStatements;
-    vector<shared_ptr<Statement>> functionStatements;
+    vector<shared_ptr<StatementVariable>> variableStatements;
+    vector<shared_ptr<StatementFunction>> functionStatements;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
@@ -766,10 +766,12 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             case TAG_STATEMENT_IN_BLOB: {
                 switch (parseeResult.getStatement()->getKind()) {
                     case StatementKind::VARIABLE:
-                        variableStatements.push_back(parseeResult.getStatement());
+                        variableStatements.push_back(dynamic_pointer_cast<StatementVariable>(parseeResult.getStatement()));
                         break;
                     case StatementKind::FUNCTION:
-                        functionStatements.push_back(parseeResult.getStatement());
+                        functionStatements.push_back(dynamic_pointer_cast<StatementFunction>(parseeResult.getStatement()));
+                        break;
+                    default:
                         break;
                 }
                 break;
