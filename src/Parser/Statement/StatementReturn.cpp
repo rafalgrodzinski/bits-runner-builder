@@ -4,7 +4,7 @@
 
 StatementReturn::StatementReturn(shared_ptr<Expression> expression, shared_ptr<Location> location):
 Statement(StatementKind::RETURN, location) {
-    this->expression = expression ?: Expression::NONE;
+    this->expression = expression ? expression : Expression::NONE;
  }
 
 shared_ptr<Expression> StatementReturn::getExpression() {

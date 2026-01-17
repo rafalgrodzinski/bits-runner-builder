@@ -1,8 +1,10 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include <format>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 class Error;
