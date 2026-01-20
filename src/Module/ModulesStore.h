@@ -8,6 +8,7 @@
 
 class Module;
 class Statement;
+class ValueType;
 
 using namespace std;
 
@@ -15,11 +16,21 @@ class ModulesStore {
 private:
     string defaultModuleName;
     vector<string> moduleNames;
-    map<string, vector<shared_ptr<Statement>>> bodyStatementsMap;
+
+    // header
     map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobDeclarationStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> functionDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> variableDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> functionDeclarationStatementsMap;
+    // body
+    map<string, vector<shared_ptr<Statement>>> bodyStatementsMap;
+    // exported
+    map<string, vector<shared_ptr<Statement>>> exportedBlobStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedVariableDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedFunctionDeclarationStatementsMap;
+
+    shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName);
 
 public:
     ModulesStore(string defaultModuleName);

@@ -13,7 +13,6 @@
 
 #include "Parser/Parser.h"
 #include "Parser/Statement/Statement.h"
-#include "Parser/Statement/StatementModule.h"
 
 #include "Analyzer/Analyzer.h"
 
@@ -194,9 +193,6 @@ int main(int argc, char **argv) {
         sources.push_back(source);
     }
 
-    /*map<string, vector<shared_ptr<Statement>>> statementsMap;
-    map<string, vector<shared_ptr<Statement>>> headerStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;*/
     ModulesStore modulesStore(DEFAULT_MODULE_NAME);
 
     time_t totalScanTime = 0;
@@ -234,46 +230,7 @@ int main(int argc, char **argv) {
 
         timeStamp = clock();
         Parser parser(tokens);
-        //shared_ptr<StatementModule> statementModule = parser.getStatementModule();
         modulesStore.appendStatements(parser.getStatements());
-
-        /*
-        // Append statements to existing module or create a new one
-        if (statementsMap.contains(statementModule->getName())) {
-            // body
-            for (shared_ptr<Statement> &statement : statementModule->getStatements())
-                statementsMap[statementModule->getName()].push_back(statement);
-
-            // header
-            for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements()) {
-                // blob declratations need to be first in case of being used by functions
-                if (headerStatement->getKind() == StatementKind::BLOB_DECLARATION) {
-                    headerStatementsMap[statementModule->getName()].insert(
-                        headerStatementsMap[statementModule->getName()].begin(),
-                        headerStatement
-                    );
-                } else {
-                    headerStatementsMap[statementModule->getName()].push_back(headerStatement);
-                }
-            }
-
-            // exported statements
-            for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements()) {
-                // same here, blob declarations go first
-                if (exportedHeaderStatement->getKind() == StatementKind::BLOB_DECLARATION) {
-                    exportedHeaderStatementsMap[statementModule->getName()].insert(
-                        exportedHeaderStatementsMap[statementModule->getName()].begin(),
-                        exportedHeaderStatement
-                    );
-                } else {
-                    exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
-                }
-            }
-        } else {
-            statementsMap[statementModule->getName()] = statementModule->getStatements();
-            headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
-            exportedHeaderStatementsMap[statementModule->getName()] = statementModule->getExportedHeaderStatements();
-        }*/
 
         timeStamp = clock() - timeStamp;
         totalParseTime += timeStamp;
@@ -284,10 +241,6 @@ int main(int argc, char **argv) {
     // Analysis
     for (shared_ptr<Module> module : modulesStore.getModules()) {
         time_t timeStamp;
-    
-        //string moduleName = statementsEntry.first;
-        //vector<shared_ptr<Statement>> statements = statementsEntry.second;
-        //vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
 
         if (verbosity >= Verbosity::V1)
             cout << format("🔮 Analyzing module \"{}\"", module->getName()) << endl;
