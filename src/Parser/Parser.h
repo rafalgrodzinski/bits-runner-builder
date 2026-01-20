@@ -7,10 +7,12 @@
 
 class Error;
 
-class Token;
 enum class TokenKind;
+class Module;
+class Token;
 class ValueType;
 
+enum class StatementKind;
 class Statement;
 class StatementModule;
 
@@ -92,6 +94,7 @@ private:
     optional<pair<vector<ParseeResult>, int>> oneOfParseeResults(vector<vector<Parsee>> parsees);
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
+    optional<pair<vector<ParseeResult>, int>> statementKindsParseeResults(vector<StatementKind> statementKinds, int tag);
     optional<pair<vector<ParseeResult>, int>> statementParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> statementInBlobParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> statementInBlockParseeResults(bool getShouldIncludeExpressionStatement, int tag);
@@ -107,7 +110,7 @@ private:
 
 public:
     Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens);
-    shared_ptr<StatementModule> getStatementModule();
+    shared_ptr<Module> getModule();
 };
 
 #endif

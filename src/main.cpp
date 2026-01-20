@@ -5,6 +5,9 @@
 
 #include <llvm/Support/CommandLine.h>
 
+#include "Module/Module.h"
+#include "Module/ModulesStore.h"
+
 #include "Lexer/Token.h"
 #include "Lexer/Lexer.h"
 
@@ -191,9 +194,10 @@ int main(int argc, char **argv) {
         sources.push_back(source);
     }
 
-    map<string, vector<shared_ptr<Statement>>> statementsMap;
+    /*map<string, vector<shared_ptr<Statement>>> statementsMap;
     map<string, vector<shared_ptr<Statement>>> headerStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;*/
+    shared_ptr<ModulesStore> modulesStore;
 
     time_t totalScanTime = 0;
     time_t totalParseTime = 0;
@@ -230,8 +234,10 @@ int main(int argc, char **argv) {
 
         timeStamp = clock();
         Parser parser(DEFAULT_MODULE_NAME, tokens);
-        shared_ptr<StatementModule> statementModule = parser.getStatementModule();
+        //shared_ptr<StatementModule> statementModule = parser.getStatementModule();
+        modulesStore->appendModule(parser.getModule());
 
+        /*
         // Append statements to existing module or create a new one
         if (statementsMap.contains(statementModule->getName())) {
             // body
@@ -267,7 +273,7 @@ int main(int argc, char **argv) {
             statementsMap[statementModule->getName()] = statementModule->getStatements();
             headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
             exportedHeaderStatementsMap[statementModule->getName()] = statementModule->getExportedHeaderStatements();
-        }
+        }*/
 
         timeStamp = clock() - timeStamp;
         totalParseTime += timeStamp;
@@ -276,46 +282,47 @@ int main(int argc, char **argv) {
     }
 
     // Analysis
-    for (const auto &statementsEntry : statementsMap) {
+    for (shared_ptr<Module> module : modulesStore->getModules()) {
         time_t timeStamp;
     
-        string moduleName = statementsEntry.first;
-        vector<shared_ptr<Statement>> statements = statementsEntry.second;
-        vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
+        //string moduleName = statementsEntry.first;
+        //vector<shared_ptr<Statement>> statements = statementsEntry.second;
+        //vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
 
         if (verbosity >= Verbosity::V1)
-            cout << format("🔮 Analyzing module \"{}\"", moduleName) << endl;
+            cout << format("🔮 Analyzing module \"{}\"", module->getName()) << endl;
 
         timeStamp = clock();
-        Analyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
+        //Analyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
+        Analyzer typesAnalyzer(module);
         typesAnalyzer.checkModule();
         timeStamp = clock() - timeStamp;
         totalAnalysisTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", module->getName(), (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
         // Print module statements
         if (verbosity >= Verbosity::V3) {
-            Logger::printModuleStatements(moduleName, headerStatementsMap[moduleName], statements);
+            //Logger::printModuleStatements(moduleName, headerStatementsMap[moduleName], statements);
             cout << endl;
         }
     }
 
     // Print exported statements
     if (verbosity >= Verbosity::V3) {
-        for (auto &exportedStatementsEntry : exportedHeaderStatementsMap) {
+        /*for (auto &exportedStatementsEntry : exportedHeaderStatementsMap) {
             if (!exportedStatementsEntry.second.empty()) {
                 Logger::printExportedStatements(exportedStatementsEntry.first, exportedStatementsEntry.second);
                 cout << endl;
             }
-        }
+        }*/
     }
 
     // Specify code generator for deired target
     CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
-    for (const auto &statementsEntry : statementsMap) {
+    /*for (const auto &statementsEntry : statementsMap) {
         time_t timeStamp;
 
         if (verbosity >= Verbosity::V1)
@@ -352,7 +359,7 @@ int main(int argc, char **argv) {
 
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
-    }
+    }*/
     totalTimeStamp = clock() - totalTimeStamp;
 
     if (verbosity >= Verbosity::V2) {

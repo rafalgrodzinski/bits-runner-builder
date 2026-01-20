@@ -372,7 +372,7 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     string line = format("MODULE `{}`:", statement->getName());
     text += formattedLine(line, indents);
 
-    indents = adjustedLastIndent(indents);
+    /*indents = adjustedLastIndent(indents);
     
     // header
     indents.push_back(IndentKind::NODE);
@@ -404,7 +404,7 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
             currentIndents.push_back(IndentKind::NODE_LAST);
 
         text += toString(statement->getStatements().at(i), currentIndents);
-    }
+    }*/
 
     return text;
 }

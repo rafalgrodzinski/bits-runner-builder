@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "Logger.h"
 #include "AnalyzerScope.h"
+#include "Module/Module.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Expression/Expression.h"
@@ -36,11 +37,14 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
-Analyzer::Analyzer(
+Analyzer::Analyzer(shared_ptr<Module> module) { }
+
+/*Analyzer::Analyzer(
     vector<shared_ptr<Statement>> statements,
     vector<shared_ptr<Statement>> headerStatements,
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
 ): statements(statements), headerStatements(headerStatements), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
+*/
 
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();

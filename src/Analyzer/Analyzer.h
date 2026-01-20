@@ -7,6 +7,7 @@
 #include <format>
 
 class AnalyzerScope;
+class Module;
 class Error;
 class Location;
 class ValueType;
@@ -112,11 +113,12 @@ private:
     void markErrorNotDefined(shared_ptr<Location> location, string name);
 
 public:
-    Analyzer(
+    /*Analyzer(
         vector<shared_ptr<Statement>> statements,
         vector<shared_ptr<Statement>> headerStatements,
         map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
-    );
+    );*/
+    Analyzer(shared_ptr<Module> module);
     void checkModule();
 };
 
