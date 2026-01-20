@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
     /*map<string, vector<shared_ptr<Statement>>> statementsMap;
     map<string, vector<shared_ptr<Statement>>> headerStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;*/
-    shared_ptr<ModulesStore> modulesStore;
+    ModulesStore modulesStore(DEFAULT_MODULE_NAME);
 
     time_t totalScanTime = 0;
     time_t totalParseTime = 0;
@@ -233,9 +233,9 @@ int main(int argc, char **argv) {
             cout << format("🧸 Parsing \"{}\"", inputFileNames[i]) << endl;
 
         timeStamp = clock();
-        Parser parser(DEFAULT_MODULE_NAME, tokens);
+        Parser parser(tokens);
         //shared_ptr<StatementModule> statementModule = parser.getStatementModule();
-        modulesStore->appendStatements(parser.getStatements());
+        modulesStore.appendStatements(parser.getStatements());
 
         /*
         // Append statements to existing module or create a new one
@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
     }
 
     // Analysis
-    for (shared_ptr<Module> module : modulesStore->getModules()) {
+    for (shared_ptr<Module> module : modulesStore.getModules()) {
         time_t timeStamp;
     
         //string moduleName = statementsEntry.first;

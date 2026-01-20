@@ -10,13 +10,17 @@ class Statement;
 using namespace std;
 
 class Module {
-public:
-    Module(vector<shared_ptr<Statement>> statements);
+private:
+    string name;
+    vector<shared_ptr<Statement>> headerStatements;
+    vector<shared_ptr<Statement>> bodyStatements;
 
+public:
+    Module(string name, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements);
     string getName();
-    vector<shared_ptr<Statement>> getStatements();
     vector<shared_ptr<Statement>> getHeaderStatements();
-    vector<shared_ptr<Statement>> getExportedHeaderStatements(string moduleName);
+    vector<shared_ptr<Statement>> getBodyStatements();
+    //vector<shared_ptr<Statement>> getExportedHeaderStatements(string moduleName);
 };
 
 #endif

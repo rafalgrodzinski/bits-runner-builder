@@ -40,8 +40,8 @@
 #include "Parsee/ParseeResult.h"
 #include "Parsee/ParseeResultsGroup.h"
 
-Parser::Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens) :
-defaultModuleName(defaultModuleName), tokens(tokens) { }
+Parser::Parser(vector<shared_ptr<Token>> tokens) :
+tokens(tokens) { }
 
 vector<shared_ptr<Statement>> Parser::getStatements() {
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(

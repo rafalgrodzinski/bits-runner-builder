@@ -1,17 +1,19 @@
 #include "Module.h"
 
-Module:: Module(vector<shared_ptr<Statement>> statements) {
-
-}
+Module:: Module(string name, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements) :
+name(name), headerStatements(headerStatements), bodyStatements(bodyStatements) { }
 
 string Module::getName() {
-}
-
-vector<shared_ptr<Statement>> Module::getStatements() {
+    return name;
 }
 
 vector<shared_ptr<Statement>> Module::getHeaderStatements() {
+    return headerStatements;
 }
 
-vector<shared_ptr<Statement>> Module::getExportedHeaderStatements(string moduleName) {
+vector<shared_ptr<Statement>> Module::getBodyStatements() {
+    return bodyStatements;
 }
+
+/*vector<shared_ptr<Statement>> Module::getExportedHeaderStatements(string moduleName) {
+}*/

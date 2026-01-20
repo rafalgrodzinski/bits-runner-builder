@@ -26,7 +26,6 @@ using namespace std;
 
 class Parser {
 private:
-    string defaultModuleName;
     vector<shared_ptr<Error>> errors;
     vector<shared_ptr<Token>> tokens;
     int currentIndex = 0;
@@ -108,7 +107,7 @@ private:
     void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
 
 public:
-    Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens);
+    Parser(vector<shared_ptr<Token>> tokens);
     vector<shared_ptr<Statement>> getStatements();
 };
 
