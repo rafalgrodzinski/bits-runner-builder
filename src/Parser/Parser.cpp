@@ -5,7 +5,6 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
-#include "Module/Module.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Expression/ExpressionGrouping.h"
@@ -44,7 +43,7 @@
 Parser::Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens) :
 defaultModuleName(defaultModuleName), tokens(tokens) { }
 
-shared_ptr<Module> Parser::getModule() {
+vector<shared_ptr<Statement>> Parser::getStatements() {
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             // Only the first statement can be module declaration
@@ -70,7 +69,7 @@ shared_ptr<Module> Parser::getModule() {
     for (ParseeResult &parseeResult : resultsGroup.getResults())
         statements.push_back(parseeResult.getStatement());
 
-    return make_shared<Module>(statements);
+    return statements;
 };
 
 //
@@ -1896,7 +1895,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::simpleForToken(typeToken);
 }
 
-shared_ptr<ValueType> Parser::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
+/*shared_ptr<ValueType> Parser::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
     switch (valueType->getKind()) {
         case ValueTypeKind::BLOB: {
             string name = *(valueType->getBlobName());
@@ -1923,7 +1922,7 @@ shared_ptr<ValueType> Parser::typeForExportedStatementFromType(shared_ptr<ValueT
         default:
             return valueType;
     }
-}
+}*/
 
 //
 // Parsee

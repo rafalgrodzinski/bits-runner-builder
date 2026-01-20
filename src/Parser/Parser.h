@@ -8,7 +8,6 @@
 class Error;
 
 enum class TokenKind;
-class Module;
 class Token;
 class ValueType;
 
@@ -85,7 +84,7 @@ private:
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
     shared_ptr<ValueType> matchValueType();
-    shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName);
+    //shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName);
 
     // Parsee
     ParseeResultsGroup parseeResultsGroupForParsees(vector<Parsee> parsees);
@@ -110,7 +109,7 @@ private:
 
 public:
     Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens);
-    shared_ptr<Module> getModule();
+    vector<shared_ptr<Statement>> getStatements();
 };
 
 #endif

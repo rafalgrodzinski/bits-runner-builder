@@ -5,12 +5,13 @@
 #include <vector>
 
 class Module;
+class Statement;
 
 using namespace std;
 
 class ModulesStore {
 public:
-    void appendModule(shared_ptr<Module> module);
+    void appendStatements(vector<shared_ptr<Statement>> statements);
     vector<shared_ptr<Module>> getModules();
 };
 

@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
         timeStamp = clock();
         Parser parser(DEFAULT_MODULE_NAME, tokens);
         //shared_ptr<StatementModule> statementModule = parser.getStatementModule();
-        modulesStore->appendModule(parser.getModule());
+        modulesStore->appendStatements(parser.getStatements());
 
         /*
         // Append statements to existing module or create a new one
