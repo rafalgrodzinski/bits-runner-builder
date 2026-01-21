@@ -96,6 +96,21 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     // declaration doesn't contain any types, so it's fine like this
                     moduleExportedBlobDeclarationStatements.push_back(statementBlobDeclaration);
                 }*/
+
+                // create delclarations for blob functions
+                for (shared_ptr<StatementFunction> statementBlobFunction : statementBlob->getFunctionStatements()) {
+                    string blobFunctionName = format("{}.{}", statementBlob->getName(), statementBlobFunction->getName());
+                    shared_ptr<StatementFunctionDeclaration> statementBlobFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
+                        false,
+                        blobFunctionName,
+                        statementBlobFunction->getArguments(),
+                        statementBlobFunction->getReturnValueType(),
+                        statementBlobFunction->getLocation()
+                    );
+                    moduleFunctionDeclarationStatements.push_back(statementBlobFunctionDeclaration);
+
+                    // handle exported & public functions
+                }
                 break;
             }
             case StatementKind::FUNCTION: {
@@ -220,16 +235,16 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
             bodyStatementsMap[moduleName].push_back(statement);
 
         // exported blob declarations
-        for (shared_ptr<Statement> statement : moduleBlobDeclarationStatements)
+        for (shared_ptr<Statement> statement : moduleExportedBlobDeclarationStatements)
             exportedBlobDeclarationStatementsMap[moduleName].push_back(statement);
         // exported blob defintions
-        for (shared_ptr<Statement> statement : moduleBlobStatements)
+        for (shared_ptr<Statement> statement : moduleExportedBlobStatements)
             exportedBlobStatementsMap[moduleName].push_back(statement);
         // exported variable declarations
-        for (shared_ptr<Statement> statement : moduleVariableDeclarationStatements)
+        for (shared_ptr<Statement> statement : moduleExportedVariableDeclarationStatements)
             exportedVariableDeclarationStatementsMap[moduleName].push_back(statement);
         // exported function declarations
-        for (shared_ptr<Statement> statement : moduleFunctionDeclarationStatements)
+        for (shared_ptr<Statement> statement : moduleExportedFunctionDeclarationStatements)
             exportedFunctionDeclarationStatementsMap[moduleName].push_back(statement);
     }
 }
@@ -262,8 +277,8 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // finally construct the module
         shared_ptr<Module> module = make_shared<Module>(
             moduleName,
-            bodyStatementsMap[moduleName],
-            headerStatements
+            headerStatements,
+            bodyStatementsMap[moduleName]
         );
         modules.push_back(module);
     }
