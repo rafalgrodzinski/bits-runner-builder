@@ -79,16 +79,25 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleBlobStatements.push_back(statementBlob);
                 moduleBlobDeclarationStatements.push_back(statementBlobDeclaration);
                 // exported header
-                /*if (statementBlob->getShouldExport()) {
-                    // update member types for exported statement
-                    vector<pair<string, shared_ptr<ValueType>>> exportedMembers;
-                    for (pair<string, shared_ptr<ValueType>> member : statementBlob->getMembers())
-                        exportedMembers.push_back(pair(member.first, typeForExportedStatementFromType(member.second, moduleName)));
+                if (statementBlob->getShouldExport()) {
+                    // update member variable statements for exported statement
+                    vector<shared_ptr<StatementVariable>> exportedVariableStatements;
+                    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+                        shared_ptr<StatementVariable> exportedVariableStatement = make_shared<StatementVariable>(
+                            statementVariable->getShouldExport(),
+                            statementVariable->getIdentifier(),
+                            typeForExportedStatementFromType(statementVariable->getValueType(), moduleName),
+                            statementVariable->getExpression(),
+                            statementVariable->getLocation()
+                        );
+                        exportedVariableStatements.push_back(exportedVariableStatement);
+                    }
 
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
                         statementBlob->getName(),
-                        exportedMembers,
+                        exportedVariableStatements,
+                        vector<shared_ptr<StatementFunction>>(), // don't include function definitions
                         statementBlob->getLocation()
                     );
 
@@ -96,7 +105,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     moduleExportedBlobStatements.push_back(exportedStatementBlob);
                     // declaration doesn't contain any types, so it's fine like this
                     moduleExportedBlobDeclarationStatements.push_back(statementBlobDeclaration);
-                }*/
+                }
 
                 // create delclarations for blob functions
                 for (shared_ptr<StatementFunction> statementBlobFunction : statementBlob->getFunctionStatements()) {
@@ -110,6 +119,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     moduleFunctionDeclarationStatements.push_back(statementBlobFunctionDeclaration);
 
                     // handle exported & public functions
+                    if (statementBlob->getShouldExport())
+                        moduleExportedFunctionDeclarationStatements.push_back(statementBlobFunctionDeclaration);
                 }
                 break;
             }
