@@ -12,7 +12,7 @@ Stuff blob
 
 @export main fun
     obj blob<Stuff>
-    //obj.doStuff()
+    obj.doStuff()
 ;
 
 

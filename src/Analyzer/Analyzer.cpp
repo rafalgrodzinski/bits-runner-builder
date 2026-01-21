@@ -506,30 +506,37 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBlock> ex
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> expressionCall, shared_ptr<Expression> parentExpression) {
     shared_ptr<ValueType> valueType;
 
+    int extraArguments = 0;
+
     // check for built-in
     if (parentExpression != nullptr) {
-        bool isPointer = parentExpression->getValueType()->isPointer();
+        bool isParentPointer = parentExpression->getValueType()->isPointer();
+        bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isVal = expressionCall->getName().compare("val") == 0;
 
-        if (isPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
+        if (isParentPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
             valueType = parentExpression->getValueType()->getSubType();
+        } else if (isParentBlob) {
+            string functionName = format("{}.{}", *(parentExpression->getValueType()->getBlobName()), expressionCall->getName());
+            valueType = scope->getFunctionType(functionName);
+            extraArguments = 1; // for the implicit "it"
         } else {
             markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->getSubType(), nullptr);
             return nullptr;
         }
     } else {
         valueType = scope->getFunctionType(expressionCall->getName());
+    }
 
-        // check if defined
-        if (valueType == nullptr) {
-            markErrorNotDefined(expressionCall->getLocation(), expressionCall->getName());
-            return nullptr;
-        }
+    // check if defined
+    if (valueType == nullptr) {
+        markErrorNotDefined(expressionCall->getLocation(), expressionCall->getName());
+        return nullptr;
     }
 
     // check arguments count
     vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
-    if (argumentTypes.size() != expressionCall->getArgumentExpressions().size()) {
+    if (argumentTypes.size() != expressionCall->getArgumentExpressions().size() + extraArguments) {
         markErrorInvalidArgumentsCount(
             expressionCall->getLocation(),
             expressionCall->getArgumentExpressions().size(),
@@ -538,24 +545,28 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         return nullptr;
     // check argument types
     } else {
-        for (int i=0; i<argumentTypes.size(); i++) {
+        // we want to skip the implicit argumnets hence startring from "extraArguments"
+        for (int i=extraArguments; i<argumentTypes.size(); i++) {
             shared_ptr<ValueType> targetType = argumentTypes.at(i);
 
+            // ignore the implicit arguments
+            int argumentExpressionIndex = i - extraArguments;
+
             expressionCall->argumentExpressions[i] = checkAndTryCasting(
-                expressionCall->getArgumentExpressions().at(i),
+                expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
                 targetType,
                 valueType->getReturnType()
             );
             if (expressionCall->getArgumentExpressions().at(i) == nullptr)
                 return nullptr;
 
-            shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(i)->getValueType();
+            shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
             if (sourceType == nullptr)
                 return nullptr;
 
             if (!sourceType->isEqual(targetType)) {
                 markErrorInvalidType(
-                    expressionCall->getArgumentExpressions().at(i)->getLocation(),
+                    expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getLocation(),
                     sourceType,
                     targetType
                 );
