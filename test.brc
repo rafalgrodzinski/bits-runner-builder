@@ -1,4 +1,4 @@
-/*Stuff blob
+Stuff blob
     vu u32
     sum f64
 
@@ -12,10 +12,10 @@
 @export main fun
     obj blob<Stuff>
     //obj.doStuff()
-;*/
+;
 
 
-@module bleh
+/*@module bleh
 @extern putchar fun: character u64 -> u32
 
 print fun: text data<u64, 16>
@@ -28,4 +28,4 @@ print fun: text data<u64, 16>
     print("Hello, world!\n")
 
     ret 0
-;
+;*/

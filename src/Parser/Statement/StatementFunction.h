@@ -7,6 +7,8 @@ class StatementBlock;
 class ValueType;
 
 class StatementFunction: public Statement {
+friend class Parser;
+
 private:
     bool shouldExport;
     string name;
