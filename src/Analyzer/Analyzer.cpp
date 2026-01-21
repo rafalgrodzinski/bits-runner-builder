@@ -47,6 +47,15 @@ void Analyzer::checkModule() {
     for (shared_ptr<Statement> statement : module->getHeaderStatements())
         checkStatement(statement, nullptr);
 
+    // check blob member functions
+    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
+        if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
+            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+                checkStatement(statementFunction);
+            }
+        }
+    }
+
     // check body
     for (shared_ptr<Statement> statement : module->getBodyStatements())
         checkStatement(statement, nullptr);
@@ -132,7 +141,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
-    // check blob member variables
+    // check blob member variables only
     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
         checkStatement(statementVariable);
 
@@ -152,10 +161,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     string name = importModulePrefix + statementBlob->getName();
     if (!scope->setBlobMembers(name, members, true))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
-
-    // check blob member functions
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
-        checkStatement(statementFunction);
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {

@@ -71,11 +71,11 @@ shared_ptr<llvm::Module> ModuleBuilder::getModuleLLVM() {
     scope = make_shared<Scope>();
 
     // build header (doesn't build blob functions)
-    for (shared_ptr<Statement> &headerStatement : module->getHeaderStatements())
+    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements())
         buildStatement(headerStatement);
 
     // build blob functions
-    for (shared_ptr<Statement> &headerStatement : module->getHeaderStatements()) {
+    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
             for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
                 buildStatement(statementFunction);
@@ -172,7 +172,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
-    // build blob type
+    // build blob type (member variables only)
     buildBlobDefinition(
         module->getName(),
         statementBlob->getName(),
@@ -1046,7 +1046,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionCall> expressionCall) {
     if (llvm::Function *fun = scope->getFunction(expressionCall->getName())) {
-        return wrappedValueForSourceValue(fun, fun->getFunctionType(), expressionCall);
+        return wrappedValueForCall(fun, fun->getFunctionType(), {}, expressionCall->getArgumentExpressions(), expressionCall->getValueType());
     }
 
     if (llvm::InlineAsm *rawFun = scope->getInlineAsm(expressionCall->getName())) {
@@ -1105,6 +1105,24 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             continue;
         }
 
+        // For remaining the parent should be a blob
+        string parentBlobName = *parentExpression->getValueType()->getBlobName();
+
+        // Call expression?
+        if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
+            string functionName = format("{}.{}", parentBlobName, expressionCall->getName());
+            llvm::Function *fun = scope->getFunction(functionName);
+            currentWrappedValue = wrappedValueForCall(
+                fun,
+                fun->getFunctionType(),
+                {currentWrappedValue->getPointerValue()},
+                expressionCall->getArgumentExpressions(),
+                expressionCall->getValueType()
+            );
+            continue;
+        }
+
+
         // Check chained expression type 
         shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression);
         if (expressionValue == nullptr) {
@@ -1118,10 +1136,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             return nullptr;
         }
 
-        string blobName = *parentExpression->getValueType()->getBlobName();
-        optional<int> memberIndex = scope->getStructMemberIndex(blobName, expressionValue->getIdentifier());
+        optional<int> memberIndex = scope->getStructMemberIndex(parentBlobName, expressionValue->getIdentifier());
         if (!memberIndex) {
-            markErrorInvalidMember(expressionValue->getLocation(), blobName, expressionValue->getIdentifier());
+            markErrorInvalidMember(expressionValue->getLocation(), parentBlobName, expressionValue->getIdentifier());
             return nullptr;
         }
 
@@ -1448,6 +1465,30 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
 
     markErrorInvalidBuiltIn(expression->getLocation(), expressionValue->getIdentifier());
     return nullptr;
+}
+
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee, llvm::FunctionType *funType, vector<llvm::Value*> implicitArguments, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<ValueType> valueType) {
+    vector<llvm::Value*> argValues;
+
+    // add implicit arguments
+    for (llvm::Value *implicitArgValue : implicitArguments)
+        argValues.push_back(implicitArgValue);
+
+    // add explicit arguments
+    for (shared_ptr<Expression> argumentExpression : argumentExpressions) {
+        shared_ptr<WrappedValue> wrappedvalue = wrappedValueForExpression(argumentExpression);
+        if (wrappedvalue == nullptr)
+            return nullptr;
+        argValues.push_back(wrappedvalue->getValue());
+    }
+
+    return WrappedValue::wrappedValue(
+        moduleLLVM,
+        builder,
+        //builder->CreateCall(fun->getFunctionType(), fun, llvm::ArrayRef(argValues)),
+        builder->CreateCall(funType, callee, llvm::ArrayRef(argValues)),
+        valueType
+    );
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedValue> sourceWrappedValue, shared_ptr<ValueType> targetValueType) {
@@ -1832,19 +1873,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
         }
     } else if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression)) {
         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(sourceType);
-        vector<llvm::Value*> argValues;
-        for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
-            shared_ptr<WrappedValue> wrappedvalue = wrappedValueForExpression(argumentExpression);
-            if (wrappedvalue == nullptr)
-                return nullptr;
-            argValues.push_back(wrappedvalue->getValue());
-        }
-        return WrappedValue::wrappedValue(
-            moduleLLVM,
-            builder,
-            builder->CreateCall(funType, sourceValue, llvm::ArrayRef(argValues)),
-            expression->getValueType()
-        );
+        return wrappedValueForCall(sourceValue, funType, {}, expressionCall->getArgumentExpressions(), expressionCall->getValueType());
     }
     return nullptr;
 }
