@@ -14,6 +14,43 @@
 ModulesStore::ModulesStore(string defaultModuleName) :
 defaultModuleName(defaultModuleName) { }
 
+//
+// Private
+//
+
+shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
+    switch (valueType->getKind()) {
+        case ValueTypeKind::BLOB: {
+            string name = *(valueType->getBlobName());
+            if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
+                name = moduleName + "." + name;
+            }
+            return ValueType::blob(name);
+        }
+        case ValueTypeKind::DATA:
+            return ValueType::data(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getCountExpression());
+        case ValueTypeKind::PTR:
+            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
+        case ValueTypeKind::FUN: {
+            // first convert each of the argument types
+            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+            vector<shared_ptr<ValueType>> exportedArgumentTypes;
+            for (shared_ptr<ValueType> argumentType : argumentTypes)
+                exportedArgumentTypes.push_back(typeForExportedStatementFromType(argumentType, moduleName));
+            // then the return type
+            shared_ptr<ValueType> exportedReturnType = typeForExportedStatementFromType(valueType->getReturnType(), moduleName);
+            // and finally return a new function type
+            return ValueType::fun(exportedArgumentTypes, exportedReturnType);
+        }
+        default:
+            return valueType;
+    }
+}
+
+//
+// Public
+//
+
 void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;
 
@@ -200,32 +237,14 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 vector<shared_ptr<Module>> ModulesStore::getModules() {
     vector<shared_ptr<Module>> modules;
 
-    // order for header statemnts is:
-    // - blob declarations
-    // - blob definitions
-    // - function declarations
-    // - variable declarations
-
-    // construct the importable header (out of exported statements)
-    // it is shared by all the modules
-    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
-    for (string &moduleName : moduleNames) {
-        // exported blob declarations
-        for (shared_ptr<Statement> statement : exportedBlobDeclarationStatementsMap[moduleName])
-            importableHeaderStatementsMap[moduleName].push_back(statement);
-        // exported blob definitions
-        for (shared_ptr<Statement> statement : exportedBlobStatementsMap[moduleName])
-            importableHeaderStatementsMap[moduleName].push_back(statement);
-        // exported function declarations
-        for (shared_ptr<Statement> statement : exportedFunctionDeclarationStatementsMap[moduleName])
-            importableHeaderStatementsMap[moduleName].push_back(statement);
-        // exported variable declarations
-        for (shared_ptr<Statement> statement : exportedVariableDeclarationStatementsMap[moduleName])
-            importableHeaderStatementsMap[moduleName].push_back(statement);
-    }
-
     for (string &moduleName : moduleNames) {
         // construct the local header
+        // order for header statements is:
+        // - blob declarations
+        // - blob definitions
+        // - variable declarations
+        // - function declarations
+
         vector<shared_ptr<Statement>> headerStatements;
         // blob declarations
         for (shared_ptr<Statement> statement : blobDeclarationStatementsMap[moduleName])
@@ -233,19 +252,18 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // blob definitions
         for (shared_ptr<Statement> statement : blobStatementsMap[moduleName])
             headerStatements.push_back(statement);
-        // function declarations
-        for (shared_ptr<Statement> statement : functionDeclarationStatementsMap[moduleName])
-            headerStatements.push_back(statement);
         // variable declarations
         for (shared_ptr<Statement> statement : variableDeclarationStatementsMap[moduleName])
+            headerStatements.push_back(statement);
+        // function declarations
+        for (shared_ptr<Statement> statement : functionDeclarationStatementsMap[moduleName])
             headerStatements.push_back(statement);
 
         // finally construct the module
         shared_ptr<Module> module = make_shared<Module>(
             moduleName,
             bodyStatementsMap[moduleName],
-            headerStatements,
-            importableHeaderStatementsMap
+            headerStatements
         );
         modules.push_back(module);
     }
@@ -253,31 +271,30 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
     return modules;
 }
 
-shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
-    switch (valueType->getKind()) {
-        case ValueTypeKind::BLOB: {
-            string name = *(valueType->getBlobName());
-            if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
-                name = moduleName + "." + name;
-            }
-            return ValueType::blob(name);
-        }
-        case ValueTypeKind::DATA:
-            return ValueType::data(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getCountExpression());
-        case ValueTypeKind::PTR:
-            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
-        case ValueTypeKind::FUN: {
-            // first convert each of the argument types
-            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
-            vector<shared_ptr<ValueType>> exportedArgumentTypes;
-            for (shared_ptr<ValueType> argumentType : argumentTypes)
-                exportedArgumentTypes.push_back(typeForExportedStatementFromType(argumentType, moduleName));
-            // then the return type
-            shared_ptr<ValueType> exportedReturnType = typeForExportedStatementFromType(valueType->getReturnType(), moduleName);
-            // and finally return a new function type
-            return ValueType::fun(exportedArgumentTypes, exportedReturnType);
-        }
-        default:
-            return valueType;
+map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatementsMap() {
+    // construct the exported headers map
+    // it is shared by all the modules
+
+    // order for header statements is:
+    // - blob declarations
+    // - blob definitions
+    // - variable declarations
+    // - function declarations
+    map<string, vector<shared_ptr<Statement>>> statementsMap;
+    for (string &moduleName : moduleNames) {
+        // exported blob declarations
+        for (shared_ptr<Statement> statement : exportedBlobDeclarationStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported blob definitions
+        for (shared_ptr<Statement> statement : exportedBlobStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported variable declarations
+        for (shared_ptr<Statement> statement : exportedVariableDeclarationStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported function declarations
+        for (shared_ptr<Statement> statement : exportedFunctionDeclarationStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
     }
+
+    return statementsMap;
 }

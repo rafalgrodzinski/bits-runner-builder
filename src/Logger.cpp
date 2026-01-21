@@ -6,6 +6,7 @@
 #include "Error.h"
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
+#include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
 #include "Parser/ValueType.h"
 
@@ -39,6 +40,8 @@
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
+
+/// Private ///
 
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
@@ -903,6 +906,8 @@ string Logger::toString(Parsee parsee) {
             return toString(parsee.getTokenKind());
         case ParseeKind::VALUE_TYPE:
             return "Value Type";
+        case ParseeKind::STATEMENT_KINDS:
+            return "STATEMENT_KINDS";
         case ParseeKind::STATEMENT:
             return "Statement";
         case ParseeKind::STATEMENT_IN_BLOB:
@@ -1049,15 +1054,6 @@ string Logger::toString(TokenKind tokenKind) {
     }
 }
 
-void Logger::print(vector<shared_ptr<Token>> tokens) {
-        for (int i=0; i<tokens.size(); i++) {
-            cout << i << "|" << toString(tokens.at(i));
-            if (i < tokens.size() - 1)
-                cout << "  ";
-        }
-        cout << endl;
-}
-
 string Logger::toString(ExpressionUnaryOperation operationUnary) {
     switch (operationUnary) {
         case ExpressionUnaryOperation::NOT:
@@ -1071,14 +1067,21 @@ string Logger::toString(ExpressionUnaryOperation operationUnary) {
     }
 }
 
-//
-// Public
-//
+/// Public ///
 
-void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements) {
+void Logger::print(vector<shared_ptr<Token>> tokens) {
+        for (int i=0; i<tokens.size(); i++) {
+            cout << i << "|" << toString(tokens.at(i));
+            if (i < tokens.size() - 1)
+                cout << "  ";
+        }
+        cout << endl;
+}
+
+void Logger::print(shared_ptr<Module> module) {
     string text;
 
-    text += format("MODULE `{}`:\n", moduleName);
+    text += format("MODULE `{}`:\n", module->getName());
     vector<IndentKind> indents = {IndentKind::ROOT};
     
     // header
@@ -1086,7 +1089,7 @@ void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statemen
     text += formattedLine("HEADER", indents);
     indents.at(indents.size()-1) = IndentKind::BRANCH;
 
-
+    vector<shared_ptr<Statement>> headerStatements = module->getHeaderStatements();
     for (int i=0; i<headerStatements.size(); i++) {
         vector<IndentKind> currentIndents = indents;
         if (i < headerStatements.size() - 1)
@@ -1102,6 +1105,7 @@ void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statemen
     text += formattedLine("BODY", indents);
     indents.at(indents.size()-1) = IndentKind::EMPTY;
 
+    vector<shared_ptr<Statement>> bodyStatements = module->getBodyStatements();
     for (int i=0; i<bodyStatements.size(); i++) {
         vector<IndentKind> currentIndents = indents;
         if (i < bodyStatements.size() - 1)
@@ -1115,23 +1119,30 @@ void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statemen
     cout << text;
 }
 
-void Logger::printExportedStatements(string moduleName, vector<shared_ptr<Statement>> statments) {
-    string text;
+void Logger::printExportedHeaderStatements(map<string, vector<shared_ptr<Statement>>> statementsMap) {
+    // iterate over exported statements from each of the module
+    for (auto &statementsMapEntry : statementsMap) {
+        // skip over modules with no exported statements
+        if (statementsMapEntry.second.empty())
+            continue;
 
-    text += format("EXPORTED STATEMENTS `{}`:\n", moduleName);
+        string text;
 
-    int statementsCount = statments.size();
-    for (int i=0; i<statementsCount; i++) {
-        vector<IndentKind> currentIndents = {IndentKind::ROOT};
-        if (i < statementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
+        text += format("EXPORTED STATEMENTS `{}`:\n", statementsMapEntry.first);
 
-        text += toString(statments.at(i), currentIndents);
+        int statementsCount = statementsMapEntry.second.size();
+        for (int i=0; i<statementsCount; i++) {
+            vector<IndentKind> currentIndents = {IndentKind::ROOT};
+            if (i < statementsCount - 1)
+                currentIndents.push_back(IndentKind::NODE);
+            else
+                currentIndents.push_back(IndentKind::NODE_LAST);
+
+            text += toString(statementsMapEntry.second.at(i), currentIndents);
+        }
+
+        cout << text << endl;
     }
-
-    cout << text;
 }
 
 void Logger::print(shared_ptr<Error> error) {

@@ -255,21 +255,16 @@ int main(int argc, char **argv) {
         if (verbosity >= Verbosity::V2)
             cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", module->getName(), (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
-        // Print module statements
+        // Print module
         if (verbosity >= Verbosity::V3) {
-            //Logger::printModuleStatements(moduleName, headerStatementsMap[moduleName], statements);
+            Logger::print(module);
             cout << endl;
         }
     }
 
-    // Print exported statements
+    // Print exported header statements
     if (verbosity >= Verbosity::V3) {
-        /*for (auto &exportedStatementsEntry : exportedHeaderStatementsMap) {
-            if (!exportedStatementsEntry.second.empty()) {
-                Logger::printExportedStatements(exportedStatementsEntry.first, exportedStatementsEntry.second);
-                cout << endl;
-            }
-        }*/
+        Logger::printExportedHeaderStatements(modulesStore.getExportedHeaderStatementsMap());
     }
 
     // Specify code generator for deired target
