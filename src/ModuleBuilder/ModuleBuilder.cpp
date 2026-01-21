@@ -70,19 +70,22 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
 shared_ptr<llvm::Module> ModuleBuilder::getModuleLLVM() {
     scope = make_shared<Scope>();
 
-    // build just the import statements
-    for (auto statement : module->getBodyStatements() | views::filter([](auto it) { return it->getKind() == StatementKind::META_IMPORT; })) {
-        buildStatement(statement);
-    }
-
-    // build header
+    // build header (doesn't build blob functions)
     for (shared_ptr<Statement> &headerStatement : module->getHeaderStatements())
         buildStatement(headerStatement);
 
-    // build statements other than import
-    for (auto statement : module->getBodyStatements() | views::filter([](auto it) { return it->getKind() != StatementKind::META_IMPORT; })) {
+    // build blob functions
+    for (shared_ptr<Statement> &headerStatement : module->getHeaderStatements()) {
+        if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
+            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+                buildStatement(statementFunction);
+            }
+        }
+    } 
+
+    // build body statements
+    for (shared_ptr<Statement> statement : module->getBodyStatements())
         buildStatement(statement);
-    }
 
     // verify moduleLLVM
     string errorMessage;
@@ -169,11 +172,12 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
-    /*buildBlobDefinition(
-        moduleName,
+    // build blob type
+    buildBlobDefinition(
+        module->getName(),
         statementBlob->getName(),
         statementBlob->getMembers()
-    );*/
+    );
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {

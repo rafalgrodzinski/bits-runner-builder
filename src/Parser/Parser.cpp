@@ -642,8 +642,10 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                     }
                     case StatementKind::FUNCTION: {
                         shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(parseeResult.getStatement());
+                        // prefix function with name of the blob
+                        statementFunction->name = format("{}.{}", name, statementFunction->getName());
                         // Insert an implicit "it" argument for the blob function
-                        pair<string, shared_ptr<ValueType>> itArgument = pair("it", ValueType::blob(name));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair("it", ValueType::ptr(ValueType::blob(name)));
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
                         break;

@@ -18,8 +18,9 @@ private:
     vector<string> moduleNames;
 
     // header
-    map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> importStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
     map<string, vector<shared_ptr<Statement>>> variableDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> functionDeclarationStatementsMap;
     // body

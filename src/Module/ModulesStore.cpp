@@ -54,11 +54,12 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
 void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;
 
-    vector<shared_ptr<Statement>> moduleBodyStatements;
+    vector<shared_ptr<Statement>> moduleImportStatements;
     vector<shared_ptr<Statement>> moduleBlobStatements;
     vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
     vector<shared_ptr<Statement>> moduleFunctionDeclarationStatements;
     vector<shared_ptr<Statement>> moduleVariableDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleBodyStatements;
 
     vector<shared_ptr<Statement>> moduleExportedBlobStatements;
     vector<shared_ptr<Statement>> moduleExportedBlobDeclarationStatements;
@@ -99,10 +100,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // create delclarations for blob functions
                 for (shared_ptr<StatementFunction> statementBlobFunction : statementBlob->getFunctionStatements()) {
-                    string blobFunctionName = format("{}.{}", statementBlob->getName(), statementBlobFunction->getName());
                     shared_ptr<StatementFunctionDeclaration> statementBlobFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
                         false,
-                        blobFunctionName,
+                        statementBlobFunction->getName(),
                         statementBlobFunction->getArguments(),
                         statementBlobFunction->getReturnValueType(),
                         statementBlobFunction->getLocation()
@@ -147,6 +147,10 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     // append updated statement
                     moduleExportedFunctionDeclarationStatements.push_back(exportedStatementFunctionDeclaration);
                 }
+                break;
+            }
+            case StatementKind::META_IMPORT: {
+                moduleImportStatements.push_back(statement);
                 break;
             }
             case StatementKind::MODULE: {
@@ -195,6 +199,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // name
         moduleNames.push_back(moduleName);
 
+        // imports
+        importStatementsMap[moduleName] = moduleImportStatements;
         // blob declarations
         blobDeclarationStatementsMap[moduleName] = moduleBlobDeclarationStatements;
         // blob defintions
@@ -217,6 +223,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         exportedFunctionDeclarationStatementsMap[moduleName] = moduleExportedFunctionDeclarationStatements;
     // or merge with existing ones
     } else {
+        // imports
+        for (shared_ptr<Statement> statement : moduleImportStatements)
+            importStatementsMap[moduleName].push_back(statement);
         // blob declarations
         for (shared_ptr<Statement> statement : moduleBlobDeclarationStatements)
             blobDeclarationStatementsMap[moduleName].push_back(statement);
@@ -254,13 +263,17 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
 
     for (string &moduleName : moduleNames) {
         // construct the local header
-        // order for header statements is:
+        // order for local header statements is:
+        // - import statements
         // - blob declarations
         // - blob definitions
         // - variable declarations
         // - function declarations
 
         vector<shared_ptr<Statement>> headerStatements;
+        // imports
+        for (shared_ptr<Statement> Statement : importStatementsMap[moduleName])
+            headerStatements.push_back(Statement);
         // blob declarations
         for (shared_ptr<Statement> statement : blobDeclarationStatementsMap[moduleName])
             headerStatements.push_back(statement);
@@ -290,7 +303,7 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
     // construct the exported headers map
     // it is shared by all the modules
 
-    // order for header statements is:
+    // order for exported header statements is:
     // - blob declarations
     // - blob definitions
     // - variable declarations
