@@ -269,44 +269,38 @@ int main(int argc, char **argv) {
     // Specify code generator for deired target
     CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
-    /*for (const auto &statementsEntry : statementsMap) {
+    //for (const auto &statementsEntry : statementsMap) {
+    for (shared_ptr<Module> module : modulesStore.getModules()) {
         time_t timeStamp;
 
         if (verbosity >= Verbosity::V1)
-            cout << format("🐄 Building module \"{}\"", statementsEntry.first) << endl;
-
-        // we don't want any prefix for the default module
-        string moduleName = statementsEntry.first;
-        vector<shared_ptr<Statement>> statements = statementsEntry.second;
-        vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
+            cout << format("🐄 Building module \"{}\"", module->getName()) << endl;
 
         timeStamp = clock();
         ModuleBuilder moduleBuilder(
-            moduleName,
             DEFAULT_MODULE_NAME,
             codeGenerator.getIntSize(),
             codeGenerator.getPointerSize(),
             codeGenerator.getCallingConvetion(),
-            statements,
-            headerStatements,
-            exportedHeaderStatementsMap
+            module,
+            modulesStore.getExportedHeaderStatementsMap()
         );
-        shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+        shared_ptr<llvm::Module> moduleLLVM = moduleBuilder.getModuleLLVM();
         timeStamp = clock() - timeStamp;
         totalModuleBuildTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Built module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Built module \"{}\" in {:.6f} seconds", module->getName(), (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
         // Generate native machine code
         timeStamp = clock();
-        codeGenerator.generateObjectFile(module, outputKind, verbosity >= Verbosity::V1);
+        codeGenerator.generateObjectFile(moduleLLVM, outputKind, verbosity >= Verbosity::V1);
         timeStamp = clock() - timeStamp;
         totalCodeGnerationTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
-    }*/
+            cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", module->getName(), (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+    }
     totalTimeStamp = clock() - totalTimeStamp;
 
     if (verbosity >= Verbosity::V2) {

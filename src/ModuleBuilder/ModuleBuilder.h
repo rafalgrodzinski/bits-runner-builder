@@ -20,6 +20,7 @@
 
 class Error;
 class Location;
+class Module;
 class ValueType;
 class WrappedValue;
 
@@ -62,17 +63,18 @@ using namespace std;
 class ModuleBuilder {
 private:
     vector<shared_ptr<Error>> errors;
-    string moduleName;
+    //string moduleName;
     string defaultModuleName;
 
-    vector<shared_ptr<Statement>> statements;
-    vector<shared_ptr<Statement>> headerStatements;
+    //vector<shared_ptr<Statement>> statements;
+    //vector<shared_ptr<Statement>> headerStatements;
+    shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
 
     shared_ptr<Scope> scope;
 
     shared_ptr<llvm::LLVMContext> context;
-    shared_ptr<llvm::Module> module;
+    shared_ptr<llvm::Module> moduleLLVM;
     shared_ptr<llvm::IRBuilder<>> builder;
 
     llvm::CallingConv::ID callingConvention;
@@ -167,16 +169,14 @@ private:
 
 public:
     ModuleBuilder(
-        string moduleName,
         string defaultModuleName,
         int intSize,
         int pointerSize,
         llvm::CallingConv::ID callingConvention,
-        vector<shared_ptr<Statement>> statements,
-        vector<shared_ptr<Statement>> headerStatements,
+        shared_ptr<Module> module,
         map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
     );
-    shared_ptr<llvm::Module> getModule();
+    shared_ptr<llvm::Module> getModuleLLVM();
 };
 
 #endif
