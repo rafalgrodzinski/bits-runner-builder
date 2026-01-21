@@ -53,8 +53,7 @@ class Analyzer {
 private:
     vector<shared_ptr<Error>> errors;
     shared_ptr<AnalyzerScope> scope;
-    vector<shared_ptr<Statement>> statements;
-    vector<shared_ptr<Statement>> headerStatements;
+    shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
     string importModulePrefix;
 
@@ -113,12 +112,7 @@ private:
     void markErrorNotDefined(shared_ptr<Location> location, string name);
 
 public:
-    /*Analyzer(
-        vector<shared_ptr<Statement>> statements,
-        vector<shared_ptr<Statement>> headerStatements,
-        map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
-    );*/
-    Analyzer(shared_ptr<Module> module);
+    Analyzer(shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap);
     void checkModule();
 };
 

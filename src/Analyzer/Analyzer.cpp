@@ -37,24 +37,18 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
-Analyzer::Analyzer(shared_ptr<Module> module) { }
-
-/*Analyzer::Analyzer(
-    vector<shared_ptr<Statement>> statements,
-    vector<shared_ptr<Statement>> headerStatements,
-    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
-): statements(statements), headerStatements(headerStatements), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
-*/
+Analyzer::Analyzer(shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap) :
+module(module), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
 
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
 
     // check header
-    for (shared_ptr<Statement> statement : headerStatements)
+    for (shared_ptr<Statement> statement : module->getHeaderStatements())
         checkStatement(statement, nullptr);
 
     // check body
-    for (shared_ptr<Statement> statement : statements)
+    for (shared_ptr<Statement> statement : module->getBodyStatements())
         checkStatement(statement, nullptr);
 
     if (!errors.empty()) {
@@ -372,7 +366,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
 
     // updated corresponding variable declaration
-    for (shared_ptr<Statement> headerStatement : this->headerStatements) {
+    for (shared_ptr<Statement> headerStatement : this->module->getHeaderStatements()) {
         // find matching declaration
         shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(headerStatement);
         if (statementVariableDeclaration != nullptr && statementVariableDeclaration->getIdentifier().compare(statementVariable->getIdentifier()) == 0) {

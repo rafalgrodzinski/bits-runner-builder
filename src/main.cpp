@@ -246,8 +246,7 @@ int main(int argc, char **argv) {
             cout << format("🔮 Analyzing module \"{}\"", module->getName()) << endl;
 
         timeStamp = clock();
-        //Analyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
-        Analyzer typesAnalyzer(module);
+        Analyzer typesAnalyzer(module, modulesStore.getExportedHeaderStatementsMap());
         typesAnalyzer.checkModule();
         timeStamp = clock() - timeStamp;
         totalAnalysisTime += timeStamp;
