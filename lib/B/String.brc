@@ -5,6 +5,33 @@
 @export String blob
     string data<u8, 64>
 
+    /*length fun -> u32
+        i u32 <- 0
+        rep it.val.string[i] != '\0' and i < it.val.string.count: i <- i + 1
+        ret i
+    ;
+
+    isEqual fun: other blob<String> -> bool
+        if it.val.length() != other.length(): ret false
+
+        rep i u32 <- 0, i < it.val.length(), i <- i + 1
+            if it.val.string[i] != other.string[i]: ret false
+        ;
+
+        ret true
+    ;
+
+    print fun
+        rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
+            @BSys.printChar(it.val.string[i])
+        ;
+    ;
+
+    println fun
+        it.val.print(it)
+        @BSys.printChar('\n')
+    ;*/
+
     length ptr<fun: ptr<blob<String>> -> u32>
     isEqual ptr<fun: ptr<blob<String>>, blob<String> -> bool>
 
