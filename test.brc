@@ -6,6 +6,7 @@ Stuff blob
     ;
 
     someOther fun: num u32
+        it.val.vu <- num
     ;
 ;
 

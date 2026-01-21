@@ -132,7 +132,12 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
-    /*vector<pair<string, shared_ptr<ValueType>>> members;
+    // check blob member variables
+    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
+        checkStatement(statementVariable);
+
+    // register blob members in scope
+    vector<pair<string, shared_ptr<ValueType>>> members;
     for (auto &member : statementBlob->getMembers()) {
         checkValueType(member.second);
         if (member.second->isData() && member.second->getCountExpression() == nullptr) {
@@ -146,7 +151,11 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 
     string name = importModulePrefix + statementBlob->getName();
     if (!scope->setBlobMembers(name, members, true))
-        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());*/
+        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
+
+    // check blob member functions
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
+        checkStatement(statementFunction);
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
@@ -744,9 +753,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionUnary> ex
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> expressionValue, shared_ptr<Expression> parentExpression) {
     if (parentExpression != nullptr) {
         // check built-in
-        bool isData = parentExpression->getValueType()->isData();
-        bool isPointer = parentExpression->getValueType()->isPointer();
-        bool isBlob = parentExpression->getValueType()->isBlob();
+        bool isParentData = parentExpression->getValueType()->isData();
+        bool isParentPointer = parentExpression->getValueType()->isPointer();
+        bool isParentBlob = parentExpression->getValueType()->isBlob();
 
         bool isCount = expressionValue->getIdentifier().compare("count") == 0;
         bool isVal = expressionValue->getIdentifier().compare("val") == 0;
@@ -755,11 +764,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isSize = expressionValue->getIdentifier().compare("size") == 0;
 
 
-        if (isData && isCount) {
+        if (isParentData && isCount) {
             expressionValue->valueType = ValueType::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_COUNT;
             return expressionValue->getValueType();
-        } else if (isPointer && isVal) {
+        } else if (isParentPointer && isVal) {
             switch (expressionValue->getValueKind()) {
                 case ExpressionValueKind::SIMPLE:
                 case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
@@ -782,7 +791,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                     break;
             }
             return expressionValue->getValueType();
-        } else if (isPointer && isVadr) {
+        } else if (isParentPointer && isVadr) {
             expressionValue->valueType = ValueType::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
@@ -800,7 +809,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             expressionValue->valueType = nullptr;
             return expressionValue->getValueType();
         // check blob member
-        } else if (isBlob) {
+        } else if (isParentBlob) {
             string blobName = *(parentExpression->getValueType()->getBlobName());
             optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(blobName);
             if (blobMembers) {
