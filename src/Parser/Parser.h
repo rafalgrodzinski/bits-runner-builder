@@ -31,8 +31,6 @@ private:
     int currentIndex = 0;
 
     // Statements
-    shared_ptr<Statement> nextStatement();
-    shared_ptr<Statement> nextInBlobStatement();
     shared_ptr<Statement> nextInBlockStatement();
 
     shared_ptr<Statement> matchStatementModule();
@@ -77,7 +75,6 @@ private:
     shared_ptr<Expression> matchExpressionCall();
     shared_ptr<Expression> matchExpressionVariable();
     shared_ptr<Expression> matchExpressionCast();
-
     shared_ptr<Expression> matchExpressionIfElse(optional<bool> isMultiLine);
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
@@ -92,7 +89,6 @@ private:
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
     optional<pair<vector<ParseeResult>, int>> statementKindsParseeResults(vector<StatementKind> statementKinds, int tag);
-    optional<pair<vector<ParseeResult>, int>> statementInBlockParseeResults(bool getShouldIncludeExpressionStatement, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionParseeResults(bool isNumeric, int tag);
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);

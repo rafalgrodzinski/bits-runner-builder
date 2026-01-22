@@ -798,7 +798,7 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
                     // Has init
                     {
                         // init statement
-                        Parsee::statementInBlockParsee(false, ParseeLevel::REQUIRED, true, TAG_STATEMENT_INIT),
+                        Parsee::statementKindsParsee({StatementKind::VARIABLE, StatementKind::ASSIGNMENT}, ParseeLevel::REQUIRED, true, TAG_STATEMENT_INIT),
                         // condition
                         Parsee::groupParsee(
                             {
@@ -837,7 +837,18 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
                 {
                     Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::statementInBlockParsee(true, ParseeLevel::CRITICAL, true, TAG_STATEMENT_POST),
+                    Parsee::statementKindsParsee(
+                        {
+                            StatementKind::VARIABLE,
+                            StatementKind::ASSIGNMENT,
+                            StatementKind::RETURN,
+                            StatementKind::REPEAT,
+                            StatementKind::EXPRESSION
+                        },
+                        ParseeLevel::CRITICAL,
+                        true,
+                        TAG_STATEMENT_POST
+                    )
                 }, ParseeLevel::OPTIONAL, true
             ),
             // Statements
@@ -1730,9 +1741,6 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
             case ParseeKind::STATEMENT_KINDS:
                 subResults = statementKindsParseeResults(*parsee.getStatementKinds(), parsee.getTag());
                 break;
-            case ParseeKind::STATEMENT_IN_BLOCK:
-                subResults = statementInBlockParseeResults(parsee.getShouldIncludeExpressionStatement(), parsee.getTag());
-                break;
             case ParseeKind::EXPRESSION:
                 subResults = expressionParseeResults(parsee.getIsNumericExpression(), parsee.getTag());
                 break;
@@ -1939,23 +1947,6 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(ve
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
     return pair(vector<ParseeResult>({ParseeResult::statementResult(statement, tokensCount, tag)}), tokensCount);
-}
-
-optional<pair<vector<ParseeResult>, int>> Parser::statementInBlockParseeResults(bool shouldIncludeExpressionStatement, int tag) {
-    int startIndex = currentIndex;
-    int errorsCount = errors.size();
-    shared_ptr<Statement> statement;
-    if (shouldIncludeExpressionStatement) {
-        statement = nextInBlockStatement();
-    } else {
-        statement = matchStatementVariable() ?: matchStatementAssignment();
-    }
-    if (errors.size() > errorsCount || statement == nullptr)
-        return {};
-
-    int tokensCount = currentIndex - startIndex;
-    currentIndex = startIndex;
-    return pair(vector<ParseeResult>({ParseeResult::statementInBlockResult(statement, tokensCount, tag)}), tokensCount);
 }
 
 optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(bool isNumeric, int tag) {

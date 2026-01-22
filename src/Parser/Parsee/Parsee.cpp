@@ -101,16 +101,6 @@ Parsee Parsee::statementBlockSingleLineParsee(ParseeLevel level, bool shouldRetu
     return parsee;
 }
 
-Parsee Parsee::statementInBlockParsee(bool shouldIncludeExpressionStatement, ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT_IN_BLOCK;
-    parsee.tag = tag;
-    parsee.shouldIncludeExpressionStatement = shouldIncludeExpressionStatement;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
 Parsee Parsee::tokenParsee(TokenKind tokenKind, ParseeLevel level, bool shouldReturn, int tag) {
     Parsee  parsee;
     parsee.kind = ParseeKind::TOKEN;
