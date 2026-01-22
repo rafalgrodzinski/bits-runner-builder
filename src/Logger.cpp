@@ -375,40 +375,6 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     string line = format("MODULE `{}`:", statement->getName());
     text += formattedLine(line, indents);
 
-    /*indents = adjustedLastIndent(indents);
-    
-    // header
-    indents.push_back(IndentKind::NODE);
-    text += formattedLine("HEADER", indents);
-    indents.at(indents.size()-1) = IndentKind::BRANCH;
-
-    int headerStatementsCount = statement->getHeaderStatements().size();
-    for (int i=0; i<headerStatementsCount; i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < headerStatementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(statement->getHeaderStatements().at(i), currentIndents);
-    }
-
-    // body
-    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
-    text += formattedLine("BODY", indents);
-    indents.at(indents.size()-1) = IndentKind::EMPTY;
-
-    int statementsCount = statement->getStatements().size();
-    for (int i=0; i<statementsCount; i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < statementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(statement->getStatements().at(i), currentIndents);
-    }*/
-
     return text;
 }
 

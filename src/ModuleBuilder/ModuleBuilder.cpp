@@ -67,6 +67,8 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
     typeA = llvm::Type::getIntNTy(*context, pointerSize);
 }
 
+/// Public ///
+
 shared_ptr<llvm::Module> ModuleBuilder::getModuleLLVM() {
     scope = make_shared<Scope>();
 
@@ -104,6 +106,8 @@ shared_ptr<llvm::Module> ModuleBuilder::getModuleLLVM() {
 
     return moduleLLVM;
 }
+
+/// Private ///
 
 //
 // Statements

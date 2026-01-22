@@ -14,9 +14,7 @@
 ModulesStore::ModulesStore(string defaultModuleName) :
 defaultModuleName(defaultModuleName) { }
 
-//
-// Private
-//
+/// Private ///
 
 shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
     switch (valueType->getKind()) {
@@ -47,9 +45,7 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
     }
 }
 
-//
-// Public
-//
+/// Public ///
 
 void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;

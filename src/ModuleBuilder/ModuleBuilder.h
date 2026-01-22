@@ -63,11 +63,8 @@ using namespace std;
 class ModuleBuilder {
 private:
     vector<shared_ptr<Error>> errors;
-    //string moduleName;
     string defaultModuleName;
 
-    //vector<shared_ptr<Statement>> statements;
-    //vector<shared_ptr<Statement>> headerStatements;
     shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
 
