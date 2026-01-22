@@ -266,7 +266,7 @@ int main(int argc, char **argv) {
         Logger::printExportedHeaderStatements(modulesStore.getExportedHeaderStatementsMap());
     }
 
-    // Specify code generator for deired target
+    // Specify code generator for desired target
     CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
     //for (const auto &statementsEntry : statementsMap) {
