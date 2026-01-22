@@ -13,145 +13,145 @@
     // from uint
     // t_1_1
     msg <- @B.String("100 to u8 to s32:")
-    msg.println.val({msg.adr})
+    msg.println()
 
     val_u8 <- 100
     msg <- @B.StringForU32(val_u8)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.StringForS32(val_u8.s32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     // t_1_2
     msg <- @B.String("300 to u8 to s32:")
-    msg.println.val({msg.adr})
+    msg.println()
 
     val_u8 <- 300
     msg <- @B.StringForU32(val_u8)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.StringForS32(val_u8.s32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     // t_1_3
     msg <- @B.String("100 + 300 to u8 to s32:")
-    msg.println.val({msg.adr})
+    msg.println()
 
     val_u8 <- 100 + 300
     msg <- @B.StringForU32(val_u8)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.StringForS32(val_u8.s32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
 
     // from sint
     // t_2_1
     msg <- @B.String("-4 to u32 to s32:")
-    msg.println.val({msg.adr})
+    msg.println()
 
     val_u32 <- (-4).u32
     msg <- @B.StringForU32(val_u32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.StringForS32(val_u32.s32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     // t_2_2
     msg <- @B.String("-300 to s32 to s8:")
-    msg.println.val({msg.adr})
+    msg.println()
 
     val_s32 <- -300
     msg <- @B.StringForS32(val_s32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.StringForS32(val_s32.s8)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     // from float
     // t_3_1
     msg <- @B.String("-7.1234 to s32 to u32:")
-    msg.println.val({msg.adr})
+    msg.println()
 
     val_s32 <- (-7.1234).s32
     msg <- @B.StringForS32(val_s32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.StringForU32(val_s32.u32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     // t_3_2
     msg <- @B.String("3.141592 to f32 to u8:")
-    msg.println.val({msg.adr})
+    msg.println()
 
     val_f32 <- 3.141592
     msg <- @B.StringForF32(val_f32)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.StringForU32(val_f32.u8)
-    msg.println.val({msg.adr})
+    msg.println()
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     // from data
     // t_4_1
     msg <- @B.String("data<f32> to data<s32> to data<u8>:")
-    msg.println.val({msg.adr})
+    msg.println()
 
     val_data_f32 <- {-7.2, -4.4, 12.8, 3.333, 0, 745.88}
     rep i u32 <- 0, i < val_data_f32.count, i <- i + 1
         msg <- @B.StringForF32(val_data_f32[i])
-        msg.print.val({msg.adr})
+        msg.print()
 
         msg <- @B.String(" ")
-        msg.print.val({msg.adr})
+        msg.print()
     ;
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     val_data_s32 <- val_data_f32.data<s32>
     rep i u32 <- 0, i < val_data_s32.count, i <- i + 1
         msg <- @B.StringForS32(val_data_s32[i])
-        msg.print.val({msg.adr})
+        msg.print()
 
         msg <- @B.String(" ")
-        msg.print.val({msg.adr})
+        msg.print()
     ;
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     val_data_u8 <- val_data_s32.data<u8>
     rep i u32 <- 0, i < val_data_u8.count, i <- i + 1
         msg <- @B.StringForU32(val_data_u8[i])
-        msg.print.val({msg.adr})
+        msg.print()
 
         msg <- @B.String(" ")
-        msg.print.val({msg.adr})
+        msg.print()
     ;
 
     msg <- @B.String("\n")
-    msg.print.val({msg.adr})
+    msg.print()
 
     ret 0
 ;
