@@ -178,7 +178,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     statementVariable->getLocation()
                 );
                 // body
-                statements.push_back(statementVariable);
+                moduleBodyStatements.push_back(statementVariable);
                 // local header
                 moduleVariableDeclarationStatements.push_back(statementVariableDeclaration);
                 // exported header
