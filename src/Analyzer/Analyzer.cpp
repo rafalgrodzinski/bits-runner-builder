@@ -545,7 +545,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         markErrorInvalidArgumentsCount(
             expressionCall->getLocation(),
             expressionCall->getArgumentExpressions().size(),
-            argumentTypes.size()
+            argumentTypes.size() - extraArguments
         );
         return nullptr;
     // check argument types
@@ -557,12 +557,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             // ignore the implicit arguments
             int argumentExpressionIndex = i - extraArguments;
 
-            expressionCall->argumentExpressions[i] = checkAndTryCasting(
+            expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
                 expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
                 targetType,
                 valueType->getReturnType()
             );
-            if (expressionCall->getArgumentExpressions().at(i) == nullptr)
+            if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
                 return nullptr;
 
             shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
