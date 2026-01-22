@@ -1,6 +1,7 @@
 #ifndef MODULES_STORE_H
 #define MODULES_STORE_H
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
