@@ -5,7 +5,7 @@
 @export String blob
     string data<u8, 64>
 
-    /*length fun -> u32
+    length fun -> u32
         i u32 <- 0
         rep it.val.string[i] != '\0' and i < it.val.string.count: i <- i + 1
         ret i
@@ -28,47 +28,78 @@
     ;
 
     println fun
-        it.val.print(it)
+        it.val.print()
         @BSys.printChar('\n')
-    ;*/
+    ;
 
-    length ptr<fun: ptr<blob<String>> -> u32>
-    isEqual ptr<fun: ptr<blob<String>>, blob<String> -> bool>
+    subString fun: from u32, to u32 -> blob<String>
+        string data<u8, 64>
 
-    print ptr<fun: ptr<blob<String>>>
-    println ptr<fun: ptr<blob<String>>>
+        // determine resulting lenght
+        length u32 <- to - from
+        if length > string.count: length <- string.count
 
-    subString ptr<fun: ptr<blob<String>>, u32, u32 -> blob<String>>
-    subStringFrom ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
-    subStringTo ptr<fun: ptr<blob<String>>, u32 -> blob<String>>
+        // sanity check length
+        if length = 0 or to < from
+            string[0] <- 0
+            ret String(string)
+        ;
 
-    find ptr<fun: ptr<blob<String>>, blob<String> -> u32>
+        // copy data
+        rep i u32 <- 0, i < length, i <- i + 1: string[i] <- it.val.string[from + i]
 
-    clear ptr<fun: ptr<blob<String>>>
-    removeLast ptr<fun: ptr<blob<String>>>
-    append ptr<fun: ptr<blob<String>>, u8>
+        // make sure it's 0 terminated
+        if string[length - 1] != 0 and length < string.count - 1: string[length] <- 0
+        else: string[length - 1] <- 0
+
+        ret String(string)
+    ;
+
+    subStringFrom fun: from u32 -> blob<String>
+        ret it.val.subString(from, it.val.length())
+    ;
+
+    subStringTo fun: to u32 -> blob<String>
+        ret it.val.subString(0, to)
+    ;
+
+    find fun: other blob<String> -> u32
+        length u32 <- it.val.length()
+        otherLength u32 <- other.length()
+
+        // doesn't fit in
+        if otherLength > length: ret 0
+
+        rep i u32 <- 0, i <= length - otherLength, i <- i + 1
+            subString blob<String> <- it.val.subString(i, i + otherLength)
+            if subString.isEqual(other): ret i
+        ;
+
+        ret 0
+    ;
+
+    clear fun
+        it.val.string[0] <- '\0'
+    ;
+
+    removeLast fun
+        length u32 <- it.val.length()
+        if length > 0: it.val.string[length - 1] <- 0
+    ;
+
+    append fun: char u8
+        length u32 <- it.val.length()
+        if length < it.val.string.count - 1
+            it.val.string[length] <- char
+            it.val.string[length + 1] <- '\0'
+        ;
+    ;
 ;
 
 @export String fun: string data<u8, 64> -> blob<String>
     inst blob<String>
 
     inst.string <- string
-
-    inst.length <- {stringLength.adr}
-    inst.isEqual <- {stringIsEqual.adr}
-
-    inst.print <- {stringPrint.adr }
-    inst.println <- {stringPrintln.adr }
-
-    inst.subString <- {stringSubString.adr}
-    inst.subStringFrom <- {stringSubStringFrom.adr}
-    inst.subStringTo <- {stringSubStringTo.adr}
-
-    inst.find <- {stringFind.adr}
-
-    inst.clear <- {stringClear.adr}
-    inst.removeLast <- {stringRemoveLast.adr}
-    inst.append <- {stringAppend.adr}
 
     ret inst
 ;
@@ -219,94 +250,4 @@
     string[currentIndex] <- 0
 
     ret String(string)
-;
-
-stringLength fun: it ptr<blob<String>> -> u32
-    i u32 <- 0
-    rep it.val.string[i] != '\0' and i < it.val.string.count: i <- i + 1
-    ret i
-;
-
-stringIsEqual fun: it ptr<blob<String>>, other blob<String> -> bool
-    if it.val.length.val(it) != other.length.val({other.adr}): ret false
-
-    rep i u32 <- 0, i < it.val.length.val(it), i <- i + 1
-        if it.val.string[i] != other.string[i]: ret false
-    ;
-
-    ret true
-;
-
-stringPrint fun: it ptr<blob<String>>
-    rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
-        @BSys.printChar(it.val.string[i])
-    ;
-;
-
-stringPrintln fun: it ptr<blob<String>>
-    it.val.print.val(it)
-    @BSys.printChar('\n')
-;
-
-stringSubString fun: it ptr<blob<String>>, from u32, to u32 -> blob<String>
-    string data<u8, 64>
-
-    // determine resulting lenght
-    length u32 <- to - from
-    if length > string.count: length <- string.count
-
-    // sanity check length
-    if length = 0 or to < from
-        string[0] <- 0
-        ret String(string)
-    ;
-
-    // copy data
-    rep i u32 <- 0, i < length, i <- i + 1: string[i] <- it.val.string[from + i]
-
-    // make sure it's 0 terminated
-    if string[length - 1] != 0 and length < string.count - 1: string[length] <- 0
-    else: string[length - 1] <- 0
-
-    ret String(string)
-;
-
-stringSubStringFrom fun: it ptr<blob<String>>, from u32 -> blob<String>
-    ret it.val.subString.val(it, from, it.val.length.val(it))
-;
-
-stringSubStringTo fun: it ptr<blob<String>>, to u32 -> blob<String>
-    ret it.val.subString.val(it, 0, to)
-;
-
-stringFind fun: it ptr<blob<String>>, other blob<String> -> u32
-    length u32 <- it.val.length.val(it)
-    otherLength u32 <- other.length.val({other.adr})
-
-    // doesn't fit in
-    if otherLength > length: ret 0
-
-    rep i u32 <- 0, i <= length - otherLength, i <- i + 1
-        subString blob<String> <- it.val.subString.val(it, i, i + otherLength)
-        if subString.isEqual.val({subString.adr}, other): ret i
-    ;
-
-    ret 0
-;
-
-stringClear fun: it ptr<blob<String>>
-    it.val.string[0] <- '\0'
-;
-
-stringRemoveLast fun: it ptr<blob<String>>
-    length u32 <- it.val.length.val(it)
-    if length > 0: it.val.string[length - 1] <- 0
-;
-
-stringAppend fun: it ptr<blob<String>>, char u8
-    length u32 <- it.val.length.val(it)
-    if length < it.val.string.count - 1
-        it.val.string[length] <- char
-        it.val.string[length + 1] <- '\0'
-    ;
 ;

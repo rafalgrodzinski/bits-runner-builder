@@ -1,6 +1,7 @@
 @import B
 
 @export main fun -> u32
-    text blob<@B.String>
+    text blob<@B.String> <- @B.String("hello")
+    text.println()
     ret 0
 ;
