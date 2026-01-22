@@ -83,15 +83,6 @@ Parsee Parsee::statementKindsParsee(vector<StatementKind> statementKinds, Parsee
     return parsee;
 }
 
-Parsee Parsee::statementParsee(ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT;
-    parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
 Parsee Parsee::statementBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_BLOCK_MULTI_LINE;
@@ -107,15 +98,6 @@ Parsee Parsee::statementBlockSingleLineParsee(ParseeLevel level, bool shouldRetu
     parsee.tag = tag;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::statementInBlobParsee(ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT_IN_BLOB;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    parsee.tag = tag;
     return parsee;
 }
 

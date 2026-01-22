@@ -874,10 +874,6 @@ string Logger::toString(Parsee parsee) {
             return "Value Type";
         case ParseeKind::STATEMENT_KINDS:
             return "STATEMENT_KINDS";
-        case ParseeKind::STATEMENT:
-            return "Statement";
-        case ParseeKind::STATEMENT_IN_BLOB:
-            return "Statement in Blob";
         case ParseeKind::STATEMENT_IN_BLOCK:
             return "Statement in Block";
         case ParseeKind::EXPRESSION:
