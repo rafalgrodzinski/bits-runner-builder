@@ -5,12 +5,14 @@
 
 #include <llvm/Support/CommandLine.h>
 
+#include "Module/Module.h"
+#include "Module/ModulesStore.h"
+
 #include "Lexer/Token.h"
 #include "Lexer/Lexer.h"
 
 #include "Parser/Parser.h"
 #include "Parser/Statement/Statement.h"
-#include "Parser/Statement/StatementModule.h"
 
 #include "Analyzer/Analyzer.h"
 
@@ -191,9 +193,7 @@ int main(int argc, char **argv) {
         sources.push_back(source);
     }
 
-    map<string, vector<shared_ptr<Statement>>> statementsMap;
-    map<string, vector<shared_ptr<Statement>>> headerStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedHeaderStatementsMap;
+    ModulesStore modulesStore(DEFAULT_MODULE_NAME);
 
     time_t totalScanTime = 0;
     time_t totalParseTime = 0;
@@ -229,45 +229,8 @@ int main(int argc, char **argv) {
             cout << format("🧸 Parsing \"{}\"", inputFileNames[i]) << endl;
 
         timeStamp = clock();
-        Parser parser(DEFAULT_MODULE_NAME, tokens);
-        shared_ptr<StatementModule> statementModule = parser.getStatementModule();
-
-        // Append statements to existing module or create a new one
-        if (statementsMap.contains(statementModule->getName())) {
-            // body
-            for (shared_ptr<Statement> &statement : statementModule->getStatements())
-                statementsMap[statementModule->getName()].push_back(statement);
-
-            // header
-            for (shared_ptr<Statement> &headerStatement : statementModule->getHeaderStatements()) {
-                // blob declratations need to be first in case of being used by functions
-                if (headerStatement->getKind() == StatementKind::BLOB_DECLARATION) {
-                    headerStatementsMap[statementModule->getName()].insert(
-                        headerStatementsMap[statementModule->getName()].begin(),
-                        headerStatement
-                    );
-                } else {
-                    headerStatementsMap[statementModule->getName()].push_back(headerStatement);
-                }
-            }
-
-            // exported statements
-            for (shared_ptr<Statement> &exportedHeaderStatement : statementModule->getExportedHeaderStatements()) {
-                // same here, blob declarations go first
-                if (exportedHeaderStatement->getKind() == StatementKind::BLOB_DECLARATION) {
-                    exportedHeaderStatementsMap[statementModule->getName()].insert(
-                        exportedHeaderStatementsMap[statementModule->getName()].begin(),
-                        exportedHeaderStatement
-                    );
-                } else {
-                    exportedHeaderStatementsMap[statementModule->getName()].push_back(exportedHeaderStatement);
-                }
-            }
-        } else {
-            statementsMap[statementModule->getName()] = statementModule->getStatements();
-            headerStatementsMap[statementModule->getName()] = statementModule->getHeaderStatements();
-            exportedHeaderStatementsMap[statementModule->getName()] = statementModule->getExportedHeaderStatements();
-        }
+        Parser parser(tokens);
+        modulesStore.appendStatements(parser.getStatements());
 
         timeStamp = clock() - timeStamp;
         totalParseTime += timeStamp;
@@ -276,82 +239,67 @@ int main(int argc, char **argv) {
     }
 
     // Analysis
-    for (const auto &statementsEntry : statementsMap) {
+    for (shared_ptr<Module> module : modulesStore.getModules()) {
         time_t timeStamp;
-    
-        string moduleName = statementsEntry.first;
-        vector<shared_ptr<Statement>> statements = statementsEntry.second;
-        vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
 
         if (verbosity >= Verbosity::V1)
-            cout << format("🔮 Analyzing module \"{}\"", moduleName) << endl;
+            cout << format("🔮 Analyzing module \"{}\"", module->getName()) << endl;
 
         timeStamp = clock();
-        Analyzer typesAnalyzer(statements, headerStatements, exportedHeaderStatementsMap);
+        Analyzer typesAnalyzer(module, modulesStore.getExportedHeaderStatementsMap());
         typesAnalyzer.checkModule();
         timeStamp = clock() - timeStamp;
         totalAnalysisTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Analyzed module \"{}\" in {:.6f} seconds", module->getName(), (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
-        // Print module statements
+        // Print module
         if (verbosity >= Verbosity::V3) {
-            Logger::printModuleStatements(moduleName, headerStatementsMap[moduleName], statements);
+            Logger::print(module);
             cout << endl;
         }
     }
 
-    // Print exported statements
+    // Print exported header statements
     if (verbosity >= Verbosity::V3) {
-        for (auto &exportedStatementsEntry : exportedHeaderStatementsMap) {
-            if (!exportedStatementsEntry.second.empty()) {
-                Logger::printExportedStatements(exportedStatementsEntry.first, exportedStatementsEntry.second);
-                cout << endl;
-            }
-        }
+        Logger::printExportedHeaderStatements(modulesStore.getExportedHeaderStatementsMap());
     }
 
-    // Specify code generator for deired target
+    // Specify code generator for desired target
     CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
-    for (const auto &statementsEntry : statementsMap) {
+    //for (const auto &statementsEntry : statementsMap) {
+    for (shared_ptr<Module> module : modulesStore.getModules()) {
         time_t timeStamp;
 
         if (verbosity >= Verbosity::V1)
-            cout << format("🐄 Building module \"{}\"", statementsEntry.first) << endl;
-
-        // we don't want any prefix for the default module
-        string moduleName = statementsEntry.first;
-        vector<shared_ptr<Statement>> statements = statementsEntry.second;
-        vector<shared_ptr<Statement>> headerStatements = headerStatementsMap[moduleName];
+            cout << format("🐄 Building module \"{}\"", module->getName()) << endl;
 
         timeStamp = clock();
         ModuleBuilder moduleBuilder(
-            moduleName,
             DEFAULT_MODULE_NAME,
             codeGenerator.getIntSize(),
             codeGenerator.getPointerSize(),
             codeGenerator.getCallingConvetion(),
-            statements,
-            headerStatements,
-            exportedHeaderStatementsMap
+            module,
+            modulesStore.getExportedHeaderStatementsMap()
         );
-        shared_ptr<llvm::Module> module = moduleBuilder.getModule();
+        shared_ptr<llvm::Module> moduleLLVM = moduleBuilder.getModuleLLVM();
         timeStamp = clock() - timeStamp;
         totalModuleBuildTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Built module \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Built module \"{}\" in {:.6f} seconds", module->getName(), (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
 
         // Generate native machine code
         timeStamp = clock();
-        codeGenerator.generateObjectFile(module, outputKind, verbosity >= Verbosity::V1);
+        codeGenerator.generateObjectFile(moduleLLVM, outputKind, verbosity >= Verbosity::V1);
         timeStamp = clock() - timeStamp;
         totalCodeGnerationTime += timeStamp;
 
         if (verbosity >= Verbosity::V2)
-            cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", moduleName, (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
+            cout << format("⏱️ Generated code for \"{}\" in {:.6f} seconds", module->getName(), (float)timeStamp / CLOCKS_PER_SEC) << endl << endl;
     }
     totalTimeStamp = clock() - totalTimeStamp;
 

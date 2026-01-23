@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "Logger.h"
 #include "AnalyzerScope.h"
+#include "Module/Module.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Expression/Expression.h"
@@ -36,21 +37,27 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
-Analyzer::Analyzer(
-    vector<shared_ptr<Statement>> statements,
-    vector<shared_ptr<Statement>> headerStatements,
-    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
-): statements(statements), headerStatements(headerStatements), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
+Analyzer::Analyzer(shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap) :
+module(module), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
 
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
 
     // check header
-    for (shared_ptr<Statement> statement : headerStatements)
+    for (shared_ptr<Statement> statement : module->getHeaderStatements())
         checkStatement(statement, nullptr);
 
+    // check blob member functions
+    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
+        if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
+            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+                checkStatement(statementFunction);
+            }
+        }
+    }
+
     // check body
-    for (shared_ptr<Statement> statement : statements)
+    for (shared_ptr<Statement> statement : module->getBodyStatements())
         checkStatement(statement, nullptr);
 
     if (!errors.empty()) {
@@ -134,18 +141,19 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
+    scope->pushLevel();
+    // check blob member variables only
+    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
+        checkStatement(statementVariable);
+    scope->popLevel();
+
+    // register blob members in scope
     vector<pair<string, shared_ptr<ValueType>>> members;
     for (auto &member : statementBlob->getMembers()) {
-        if (member.second->isData()) {
-            if (member.second->getCountExpression() == nullptr) {
+        checkValueType(member.second);
+        if (member.second->isData() && member.second->getCountExpression() == nullptr) {
                 markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
                 return;
-            }
-            member.second->getCountExpression()->valueType = typeForExpression(
-                member.second->getCountExpression(),
-                nullptr,
-                nullptr
-            );
         }
         members.push_back(pair(member.first, member.second));
     }
@@ -374,7 +382,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
 
     // updated corresponding variable declaration
-    for (shared_ptr<Statement> headerStatement : this->headerStatements) {
+    for (shared_ptr<Statement> headerStatement : this->module->getHeaderStatements()) {
         // find matching declaration
         shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(headerStatement);
         if (statementVariableDeclaration != nullptr && statementVariableDeclaration->getIdentifier().compare(statementVariable->getIdentifier()) == 0) {
@@ -505,56 +513,67 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBlock> ex
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> expressionCall, shared_ptr<Expression> parentExpression) {
     shared_ptr<ValueType> valueType;
 
+    int extraArguments = 0;
+
     // check for built-in
     if (parentExpression != nullptr) {
-        bool isPointer = parentExpression->getValueType()->isPointer();
+        bool isParentPointer = parentExpression->getValueType()->isPointer();
+        bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isVal = expressionCall->getName().compare("val") == 0;
 
-        if (isPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
+        if (isParentPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
             valueType = parentExpression->getValueType()->getSubType();
+        } else if (isParentBlob) {
+            string functionName = format("{}.{}", *(parentExpression->getValueType()->getBlobName()), expressionCall->getName());
+            valueType = scope->getFunctionType(functionName);
+            extraArguments = 1; // for the implicit "it"
         } else {
             markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->getSubType(), nullptr);
             return nullptr;
         }
     } else {
         valueType = scope->getFunctionType(expressionCall->getName());
+    }
 
-        // check if defined
-        if (valueType == nullptr) {
-            markErrorNotDefined(expressionCall->getLocation(), expressionCall->getName());
-            return nullptr;
-        }
+    // check if defined
+    if (valueType == nullptr) {
+        markErrorNotDefined(expressionCall->getLocation(), expressionCall->getName());
+        return nullptr;
     }
 
     // check arguments count
     vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
-    if (argumentTypes.size() != expressionCall->getArgumentExpressions().size()) {
+    if (argumentTypes.size() != expressionCall->getArgumentExpressions().size() + extraArguments) {
         markErrorInvalidArgumentsCount(
             expressionCall->getLocation(),
             expressionCall->getArgumentExpressions().size(),
-            argumentTypes.size()
+            argumentTypes.size() - extraArguments
         );
         return nullptr;
     // check argument types
     } else {
-        for (int i=0; i<argumentTypes.size(); i++) {
+        // we want to skip the implicit argumnets hence startring from "extraArguments"
+        for (int i=extraArguments; i<argumentTypes.size(); i++) {
             shared_ptr<ValueType> targetType = argumentTypes.at(i);
 
-            expressionCall->argumentExpressions[i] = checkAndTryCasting(
-                expressionCall->getArgumentExpressions().at(i),
+            // ignore the implicit arguments
+            int argumentExpressionIndex = i - extraArguments;
+
+            expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
+                expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
                 targetType,
                 valueType->getReturnType()
             );
-            if (expressionCall->getArgumentExpressions().at(i) == nullptr)
+            if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
                 return nullptr;
 
-            shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(i)->getValueType();
+            shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
             if (sourceType == nullptr)
                 return nullptr;
 
             if (!sourceType->isEqual(targetType)) {
                 markErrorInvalidType(
-                    expressionCall->getArgumentExpressions().at(i)->getLocation(),
+                    expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getLocation(),
                     sourceType,
                     targetType
                 );
@@ -752,9 +771,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionUnary> ex
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> expressionValue, shared_ptr<Expression> parentExpression) {
     if (parentExpression != nullptr) {
         // check built-in
-        bool isData = parentExpression->getValueType()->isData();
-        bool isPointer = parentExpression->getValueType()->isPointer();
-        bool isBlob = parentExpression->getValueType()->isBlob();
+        bool isParentData = parentExpression->getValueType()->isData();
+        bool isParentPointer = parentExpression->getValueType()->isPointer();
+        bool isParentBlob = parentExpression->getValueType()->isBlob();
 
         bool isCount = expressionValue->getIdentifier().compare("count") == 0;
         bool isVal = expressionValue->getIdentifier().compare("val") == 0;
@@ -763,11 +782,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isSize = expressionValue->getIdentifier().compare("size") == 0;
 
 
-        if (isData && isCount) {
+        if (isParentData && isCount) {
             expressionValue->valueType = ValueType::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_COUNT;
             return expressionValue->getValueType();
-        } else if (isPointer && isVal) {
+        } else if (isParentPointer && isVal) {
             switch (expressionValue->getValueKind()) {
                 case ExpressionValueKind::SIMPLE:
                 case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
@@ -790,7 +809,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                     break;
             }
             return expressionValue->getValueType();
-        } else if (isPointer && isVadr) {
+        } else if (isParentPointer && isVadr) {
             expressionValue->valueType = ValueType::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
@@ -808,7 +827,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             expressionValue->valueType = nullptr;
             return expressionValue->getValueType();
         // check blob member
-        } else if (isBlob) {
+        } else if (isParentBlob) {
             string blobName = *(parentExpression->getValueType()->getBlobName());
             optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(blobName);
             if (blobMembers) {
@@ -1486,14 +1505,23 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
 void Analyzer::checkValueType(shared_ptr<ValueType> valueType) {
     switch (valueType->getKind()) {
-        case ValueTypeKind::PTR:
+        case ValueTypeKind::PTR: {
             checkValueType(valueType->getSubType());
             break;
-        case ValueTypeKind::DATA:
+        }
+        case ValueTypeKind::DATA: {
             if (valueType->getCountExpression() != nullptr) {
                 valueType->getCountExpression()->valueType = typeForExpression(valueType->getCountExpression(), nullptr, nullptr);
             }
             break;
+        }
+        case ValueTypeKind::FUN: {
+            vector<shared_ptr<ValueType>> argValueTypes = *valueType->getArgumentTypes();
+            for (shared_ptr<ValueType> argValueType : argValueTypes)
+                checkValueType(argValueType);
+            checkValueType(valueType->getReturnType());
+            break;
+        }
         default:
             break;
     }

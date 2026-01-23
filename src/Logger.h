@@ -2,12 +2,14 @@
 #define LOGGER_H
 
 #include <format>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 class Error;
 class Location;
+class Module;
 class Parsee;
 class Token;
 class ValueType;
@@ -105,8 +107,8 @@ private:
 
 public:
     static void print(vector<shared_ptr<Token>> tokens);
-    static void printModuleStatements(string moduleName, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements);
-    static void printExportedStatements(string moduleName, vector<shared_ptr<Statement>> statments);
+    static void print(shared_ptr<Module> module);
+    static void printExportedHeaderStatements(map<string, vector<shared_ptr<Statement>>> statmentsMap);
     static void print(shared_ptr<Error> error);
 
     static string toString(shared_ptr<Location> location);
