@@ -1,7 +1,15 @@
-@import B
+Tss blob
+    unused0 u32
+    esp0 u32
+    ss0 u32
+    unused1 data<u32, 23>
+;
 
-@export main fun -> u32
-    text blob<@B.String> <- @B.String("hello")
-    text.println()
-    ret 0
+@export Process blob
+    //pageDirectory data<u32, 1024>
+    cr3 u32
+    eip u32
+    esp u32
+    esp0 u32
+    pid u32
 ;

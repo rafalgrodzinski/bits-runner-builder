@@ -141,9 +141,11 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
+    scope->pushLevel();
     // check blob member variables only
     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
         checkStatement(statementVariable);
+    scope->popLevel();
 
     // register blob members in scope
     vector<pair<string, shared_ptr<ValueType>>> members;
