@@ -14,7 +14,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Literals](Reference.md#literals) (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
 - [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
 - [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
-- [Bitwise Operators](Reference.md#bitwise-operators) (`|`, `^`, `&`, `<<`, `>>`, `~`)
+- [Bitwise Operators](Reference.md#bitwise-operators) (`&?`, `|`, `^`, `&`, `<<`, `>>`, `~`)
 - [Simple Variables](Reference.md#simple-variables) (`u8`, `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `data`, `blob`, `ptr`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
@@ -127,7 +127,8 @@ Bitwise operators work just like in C.
 ~ // bitwise not, highest priority
 <<, >> // shift bits left or right
 & // bitwise and
-|, ^ // bitwise or, xor, lowest priority
+|, ^ // bitwise or, xor
+&? // bitwise test, lowest priority
 ```
 
 ## Simple Variables
