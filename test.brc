@@ -1,14 +1,11 @@
 CMD_PORT u16 <- 0x64
 
-out8 raw<"r,r,~{eax},~{edx}">: port u16, value u8
-    mov dx, $0
-    mov val, $1
-    out dx, al
+in8 raw<"=r,r,~{eax},~{edx}">: port u16 -> u8
+    mov dx, $1
+    in al, dx
+    mov $0, al
 ;
 
-@export DeviceMouse blob
-    init fun
-        // Enable mouse interface 
-        out8(CMD_PORT, 0xa8)
-    ;
+waitForWriteReady fun
+    rep in8(CMD_PORT) &? 0x02:
 ;

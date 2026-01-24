@@ -65,6 +65,8 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::NOT:
             return "NOT";
 
+        case TokenKind::BIT_TEST:
+            return "&?";
         case TokenKind::BIT_OR:
             return "|";
         case TokenKind::BIT_XOR:

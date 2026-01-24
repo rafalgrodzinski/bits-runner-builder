@@ -173,6 +173,9 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // bitwise
+    if (token = match(TokenKind::BIT_TEST, "&?", false))
+        return token;
+
     if (token = match(TokenKind::BIT_OR, "|", false))
         return token;
 
@@ -184,6 +187,7 @@ shared_ptr<Token> Lexer::nextToken() {
 
     if (token = match(TokenKind::BIT_NOT, "~", false))
         return token;
+
     // comparison
     if (token = match(TokenKind::NOT_EQUAL, "!=", false))
         return token;

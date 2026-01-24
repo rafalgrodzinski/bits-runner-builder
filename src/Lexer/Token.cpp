@@ -15,6 +15,10 @@ vector<TokenKind> Token::tokensLogicalNot = {
     TokenKind::NOT
 };
 
+vector<TokenKind> Token::tokensBitwiseTest = {
+    TokenKind::BIT_TEST
+};
+
 vector<TokenKind> Token::tokensBitwiseOrXor = {
     TokenKind::BIT_OR,
     TokenKind::BIT_XOR
