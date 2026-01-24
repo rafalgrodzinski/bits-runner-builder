@@ -76,6 +76,12 @@ shared_ptr<llvm::Module> ModuleBuilder::getModuleLLVM() {
     for (shared_ptr<Statement> headerStatement : module->getHeaderStatements())
         buildStatement(headerStatement);
 
+    // build raw functions
+    for (shared_ptr<Statement> statement : module->getBodyStatements()) {
+        if (statement->getKind() == StatementKind::RAW_FUNCTION)
+            buildStatement(statement);
+    }
+
     // build blob functions
     for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
@@ -86,8 +92,10 @@ shared_ptr<llvm::Module> ModuleBuilder::getModuleLLVM() {
     } 
 
     // build body statements
-    for (shared_ptr<Statement> statement : module->getBodyStatements())
-        buildStatement(statement);
+    for (shared_ptr<Statement> statement : module->getBodyStatements()) {
+        if (statement->getKind() != StatementKind::RAW_FUNCTION)
+            buildStatement(statement);
+    }
 
     // verify moduleLLVM
     string errorMessage;

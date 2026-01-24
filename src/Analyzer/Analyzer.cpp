@@ -47,6 +47,12 @@ void Analyzer::checkModule() {
     for (shared_ptr<Statement> statement : module->getHeaderStatements())
         checkStatement(statement, nullptr);
 
+    // check raw functions
+    for (shared_ptr<Statement> statement : module->getBodyStatements()) {
+        if (statement->getKind() == StatementKind::RAW_FUNCTION)
+            checkStatement(statement, nullptr);
+    }
+
     // check blob member functions
     for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
@@ -57,8 +63,10 @@ void Analyzer::checkModule() {
     }
 
     // check body
-    for (shared_ptr<Statement> statement : module->getBodyStatements())
-        checkStatement(statement, nullptr);
+    for (shared_ptr<Statement> statement : module->getBodyStatements()) {
+        if (statement->getKind() != StatementKind::RAW_FUNCTION)
+            checkStatement(statement, nullptr);
+    }
 
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)

@@ -1,15 +1,14 @@
-Tss blob
-    unused0 u32
-    esp0 u32
-    ss0 u32
-    unused1 data<u32, 23>
+CMD_PORT u16 <- 0x64
+
+out8 raw<"r,r,~{eax},~{edx}">: port u16, value u8
+    mov dx, $0
+    mov val, $1
+    out dx, al
 ;
 
-@export Process blob
-    //pageDirectory data<u32, 1024>
-    cr3 u32
-    eip u32
-    esp u32
-    esp0 u32
-    pid u32
+@export DeviceMouse blob
+    init fun
+        // Enable mouse interface 
+        out8(CMD_PORT, 0xa8)
+    ;
 ;
