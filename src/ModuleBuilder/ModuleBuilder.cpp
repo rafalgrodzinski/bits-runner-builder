@@ -911,6 +911,18 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         }
 
         // bitwise
+        case ExpressionBinaryOperation::BIT_TEST: {
+            // (value & test) != 0
+            llvm::Value *andResultValue = builder->CreateAnd(leftValue, rightValue);
+            llvm::Constant *constantZero = llvm::ConstantInt::get(andResultValue->getType(), 0);
+            llvm::Value *compareToZero = builder->CreateICmpEQ(andResultValue, constantZero);
+            resultValue = builder->CreateSelect(
+                compareToZero,
+                llvm::ConstantInt::getBool(typeBool, false),
+                llvm::ConstantInt::getBool(typeBool, true)
+            );
+            break;
+        }
         case ExpressionBinaryOperation::BIT_OR: {
             resultValue = builder->CreateOr(leftValue, rightValue);
             break;

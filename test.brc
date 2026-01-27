@@ -1,6 +1,6 @@
 CMD_PORT u16 <- 0x64
 
-in8 raw<"=r,r,~{eax},~{edx}">: port u16 -> u32
+in8 raw<"=r,r,~{eax},~{edx}">: port u16 -> u8
     mov dx, $1
     in al, dx
     mov $0, al
