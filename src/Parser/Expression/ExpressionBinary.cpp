@@ -20,6 +20,8 @@ shared_ptr<ExpressionBinary> ExpressionBinary::expression(vector<shared_ptr<Toke
         expression->operation = ExpressionBinaryOperation::XOR;
     } else if (doTokensMatchTokenKinds(tokens, {TokenKind::AND})) {
         expression->operation = ExpressionBinaryOperation::AND;
+    } else if (doTokensMatchTokenKinds(tokens, {TokenKind::BIT_TEST})) {
+        expression->operation = ExpressionBinaryOperation::BIT_TEST;
     } else if (doTokensMatchTokenKinds(tokens, {TokenKind::BIT_OR})) {
         expression->operation = ExpressionBinaryOperation::BIT_OR;
     } else if (doTokensMatchTokenKinds(tokens, {TokenKind::BIT_XOR})) {

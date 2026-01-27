@@ -964,8 +964,6 @@ bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, 
 }
 
 bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) {
-    bool areTypesMatcing = firstType->isEqual(secondType);
-
     switch (firstType->getKind()) {
         // Valid operations for boolean types
         case ValueTypeKind::BOOL: {
@@ -976,7 +974,7 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
                 case ExpressionBinaryOperation::OR:
                 case ExpressionBinaryOperation::XOR:
                 case ExpressionBinaryOperation::AND:
-                    return areTypesMatcing;
+                    return firstType->isEqual(secondType);
                 default:
                     break;
             }
@@ -1019,6 +1017,7 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
                 }
 
                 // other operations have to match
+                case ExpressionBinaryOperation::BIT_TEST:
                 case ExpressionBinaryOperation::BIT_OR:
                 case ExpressionBinaryOperation::BIT_XOR:
                 case ExpressionBinaryOperation::BIT_AND:
@@ -1035,7 +1034,7 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
                 case ExpressionBinaryOperation::MUL:
                 case ExpressionBinaryOperation::DIV:
                 case ExpressionBinaryOperation::MOD: {
-                    return areTypesMatcing;
+                    return firstType->isEqual(secondType);
                 }
                 default:
                     break;
@@ -1084,6 +1083,7 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
         case ExpressionBinaryOperation::LESS_EQUAL:
         case ExpressionBinaryOperation::GREATER:
         case ExpressionBinaryOperation::GREATER_EQUAL:
+        case ExpressionBinaryOperation::BIT_TEST:
             return ValueType::BOOL;
         default:
             break;

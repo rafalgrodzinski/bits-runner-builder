@@ -993,13 +993,24 @@ shared_ptr<Expression> Parser::matchEquality() {
 }
 
 shared_ptr<Expression> Parser::matchComparison() {
-    shared_ptr<Expression> expression = matchBitwiseOrXor();
+    shared_ptr<Expression> expression = matchBitwiseTest();
     if (expression == nullptr)
         return nullptr;
     
     if (tryMatchingTokenKinds(Token::tokensComparison, false, false))
         expression = matchExpressionBinary(expression);
     
+    return expression;
+}
+
+shared_ptr<Expression> Parser::matchBitwiseTest() {
+    shared_ptr<Expression> expression = matchBitwiseOrXor();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseTest, false, false))
+        expression = matchExpressionBinary(expression);
+
     return expression;
 }
 
@@ -1503,6 +1514,8 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     } else if (tokens = tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
+        right = matchBitwiseTest();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseTest, false, true)) {
         right = matchBitwiseOrXor();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
         right = matchBitwiseAnd();
@@ -1954,7 +1967,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(bool i
     int errorsCount = errors.size();
     shared_ptr<Expression> expression;
     if (isNumeric)
-        expression = matchBitwiseOrXor();
+        expression = matchBitwiseTest();
     else
         expression = nextExpression();
     if (errors.size() > errorsCount || expression == nullptr)
