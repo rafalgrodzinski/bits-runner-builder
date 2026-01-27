@@ -762,6 +762,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             // blob <- blob
             case ExpressionKind::VALUE:
             case ExpressionKind::CHAINED:
+            // blob <- if else
+            case ExpressionKind::IF_ELSE:
             // blob <- function()
             case ExpressionKind::CALL: {
                 shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpression);

@@ -1,11 +1,5 @@
-CMD_PORT u16 <- 0x64
+@import B
 
-in8 raw<"=r,r,~{eax},~{edx}">: port u16 -> u8
-    mov dx, $1
-    in al, dx
-    mov $0, al
-;
-
-waitForWriteReady fun
-    rep in8(CMD_PORT) &? 0x02:
+main fun
+    text blob<@B.String> <- if true: @B.String("true") else: @B.String("false")
 ;
