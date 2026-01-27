@@ -15,7 +15,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
 - [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
 - [Bitwise Operators](Reference.md#bitwise-operators) (`&?`, `|`, `^`, `&`, `<<`, `>>`, `~`)
-- [Simple Variables](Reference.md#simple-variables) (`u8`, `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `data`, `blob`, `ptr`)
+- [Simple Variables](Reference.md#simple-variables) (`u8`, `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `a`, `ptr`, `data`, `blob`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
 - [Pointers](Reference.md#pointers) (`ptr<>`)
@@ -146,6 +146,7 @@ s16 // signed integer, 16 bits
 s32 // signed integer, 32 bits
 f32 // floating point, 32 bits
 bool // true or false
+a // memory address, size depends on target architecture (hence no following number)
 ```
 
 ## Data
