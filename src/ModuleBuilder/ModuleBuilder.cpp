@@ -460,8 +460,10 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) 
     llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
 
     if (!statementReturn->getExpression()->getValueType()->isEqual(ValueType::NONE)) {
-        llvm::Value *returnValue = wrappedValueForExpression(statementReturn->getExpression())->getValue();
-        builder->CreateRet(returnValue);
+        shared_ptr<WrappedValue> returnWrappedValue = wrappedValueForExpression(statementReturn->getExpression());
+        if (returnWrappedValue == nullptr)
+            return;
+        builder->CreateRet(returnWrappedValue->getValue());
     } else {
         builder->CreateRetVoid();
     }
