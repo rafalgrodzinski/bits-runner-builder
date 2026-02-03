@@ -439,6 +439,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
     enum {
+        TAG_SHOULD_EXPORT,
         TAG_NAME,
         TAG_CONSTRAINTS,
         TAG_ARGUMENT_IDENTIFIER,
@@ -450,6 +451,8 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
+            // export
+            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
             // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::RAW_FUNCTION, ParseeLevel::REQUIRED, false),
@@ -493,6 +496,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         }
     );
 
+    bool shouldExport = false;
     string name;
     string constraints;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
@@ -504,6 +508,9 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             for (int i=0; i<resultsGroup.getResults().size(); i++) {
                 ParseeResult parseeResult = resultsGroup.getResults().at(i);
                 switch (parseeResult.getTag()) {
+                    case TAG_SHOULD_EXPORT:
+                        shouldExport = true;
+                        break;
                     case TAG_NAME:
                         name = parseeResult.getToken()->getLexme();
                         break;
@@ -547,7 +554,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource, location);
+    return make_shared<StatementRawFunction>(shouldExport, name, constraints, arguments, returnType, rawSource, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlob() {
@@ -993,13 +1000,24 @@ shared_ptr<Expression> Parser::matchEquality() {
 }
 
 shared_ptr<Expression> Parser::matchComparison() {
-    shared_ptr<Expression> expression = matchBitwiseOrXor();
+    shared_ptr<Expression> expression = matchBitwiseTest();
     if (expression == nullptr)
         return nullptr;
     
     if (tryMatchingTokenKinds(Token::tokensComparison, false, false))
         expression = matchExpressionBinary(expression);
     
+    return expression;
+}
+
+shared_ptr<Expression> Parser::matchBitwiseTest() {
+    shared_ptr<Expression> expression = matchBitwiseOrXor();
+    if (expression == nullptr)
+        return nullptr;
+
+    if (tryMatchingTokenKinds(Token::tokensBitwiseTest, false, false))
+        expression = matchExpressionBinary(expression);
+
     return expression;
 }
 
@@ -1503,6 +1521,8 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     } else if (tokens = tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
         right = matchComparison();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
+        right = matchBitwiseTest();
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseTest, false, true)) {
         right = matchBitwiseOrXor();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
         right = matchBitwiseAnd();
@@ -1954,7 +1974,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionParseeResults(bool i
     int errorsCount = errors.size();
     shared_ptr<Expression> expression;
     if (isNumeric)
-        expression = matchBitwiseOrXor();
+        expression = matchBitwiseTest();
     else
         expression = nextExpression();
     if (errors.size() > errorsCount || expression == nullptr)

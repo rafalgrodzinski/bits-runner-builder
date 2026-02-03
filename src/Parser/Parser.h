@@ -57,6 +57,7 @@ private:
     shared_ptr<Expression> matchEquality(); // =, !=
     shared_ptr<Expression> matchComparison(); // <, <=, >, >=
 
+    shared_ptr<Expression> matchBitwiseTest(); // &?
     shared_ptr<Expression> matchBitwiseOrXor(); // |, ^
     shared_ptr<Expression> matchBitwiseAnd(); // &
     shared_ptr<Expression> matchBitwiseShift(); // <<, >>

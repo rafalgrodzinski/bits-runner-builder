@@ -10,6 +10,7 @@ enum class ExpressionBinaryOperation {
     XOR,
     AND,
 
+    BIT_TEST,
     BIT_OR,
     BIT_XOR,
     BIT_AND,

@@ -65,6 +65,8 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::NOT:
             return "NOT";
 
+        case TokenKind::BIT_TEST:
+            return "&?";
         case TokenKind::BIT_OR:
             return "|";
         case TokenKind::BIT_XOR:
@@ -549,6 +551,9 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
         case ExpressionBinaryOperation::AND:
             op = "AND";
             break;
+        case ExpressionBinaryOperation::BIT_TEST:
+            op = "&?";
+            break;
         case ExpressionBinaryOperation::BIT_OR:
             op = "|";
             break;
@@ -623,7 +628,7 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
 
     if (indents.size() > 0) {
         string line;
-        line = format("CALL `{}`", expression->getName());
+        line = format("CALL `{}`｢{}｣", expression->getName(), toString(expression->getValueType()));
         if (!expression->getArgumentExpressions().empty())
             line += ":";
         text += formattedLine(line, indents);
@@ -641,6 +646,7 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
                 text += ", ";
         }
         text += ")";
+        text += format("｢{}｣", toString(expression->getValueType()));
     }
 
     return text;
@@ -912,6 +918,8 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::NOT:
             return "NOT";
 
+        case TokenKind::BIT_TEST:
+            return "&?";
         case TokenKind::BIT_OR:
             return "|";
         case TokenKind::BIT_XOR:
@@ -1251,6 +1259,8 @@ string Logger::toString(ExpressionBinaryOperation operationBinary) {
         case ExpressionBinaryOperation::AND:
             return "AND";
 
+        case ExpressionBinaryOperation::BIT_TEST:
+            return "BIT_TEST";
         case ExpressionBinaryOperation::BIT_OR:
             return "BIT_OR";
         case ExpressionBinaryOperation::BIT_XOR:

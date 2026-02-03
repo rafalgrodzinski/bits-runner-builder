@@ -111,6 +111,7 @@ private:
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
+    void buildRawFunction(string moduleName, shared_ptr<StatementRawFunction> statement);
     void buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType);
     void buildBlobDeclaration(string moduleName, string name);
     void buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members);

@@ -1,15 +1,8 @@
-Tss blob
-    unused0 u32
-    esp0 u32
-    ss0 u32
-    unused1 data<u32, 23>
+main fun
+    add(2, 5)
 ;
 
-@export Process blob
-    //pageDirectory data<u32, 1024>
-    cr3 u32
-    eip u32
-    esp u32
-    esp0 u32
-    pid u32
+@export add raw<"=r,r,r">: arg1 u32, arg2 u32 -> u32
+    add $1, $2
+    mov $0, $1
 ;

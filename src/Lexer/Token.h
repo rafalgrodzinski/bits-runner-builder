@@ -15,6 +15,7 @@ enum class TokenKind {
     AND,
     NOT,
 
+    BIT_TEST,
     BIT_OR,
     BIT_XOR,
     BIT_AND,
@@ -92,8 +93,9 @@ public:
     static vector<TokenKind> tokensEquality;
     static vector<TokenKind> tokensComparison;
 
-    static vector<TokenKind> tokensBitwiseAnd;
+    static vector<TokenKind> tokensBitwiseTest;
     static vector<TokenKind> tokensBitwiseOrXor;
+    static vector<TokenKind> tokensBitwiseAnd;
     static vector<TokenKind> tokensBitwiseShiftLeft;
     static vector<TokenKind> tokensBitwiseShiftRight;
     static vector<TokenKind> tokensBitwiseNot;

@@ -7,6 +7,7 @@ class ValueType;
 
 class StatementRawFunction: public Statement {
 private:
+    bool shouldExport;
     string name;
     string constraints;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
@@ -15,6 +16,7 @@ private:
 
 public:
     StatementRawFunction(
+        bool shouldExport,
         string name,
         string constraints,
         vector<pair<string, shared_ptr<ValueType>>> arguments,
@@ -22,6 +24,7 @@ public:
         string rawSource,
         shared_ptr<Location> location
     );
+    bool getShouldExport();
     string getName();
     string getConstraints();
     vector<pair<string, shared_ptr<ValueType>>> getArguments();

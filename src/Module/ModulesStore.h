@@ -24,6 +24,7 @@ private:
     map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
     map<string, vector<shared_ptr<Statement>>> variableDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> functionDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> rawFunctionStatementsMap;
     // body
     map<string, vector<shared_ptr<Statement>>> bodyStatementsMap;
     // exported
@@ -31,6 +32,7 @@ private:
     map<string, vector<shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedVariableDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedFunctionDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
 
     shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName);
 
