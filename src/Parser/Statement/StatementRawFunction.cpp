@@ -3,6 +3,7 @@
 #include "Parser/ValueType.h"
 
 StatementRawFunction::StatementRawFunction(
+    bool shouldExport,
     string name,
     string constraints,
     vector<pair<string, shared_ptr<ValueType>>> arguments,
@@ -10,7 +11,11 @@ StatementRawFunction::StatementRawFunction(
     string rawSource,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::RAW_FUNCTION, location), name(name), constraints(constraints), arguments(arguments), returnValueType(returnValueType), rawSource(rawSource) { }
+Statement(StatementKind::RAW_FUNCTION, location), shouldExport(shouldExport), name(name), constraints(constraints), arguments(arguments), returnValueType(returnValueType), rawSource(rawSource) { }
+
+bool StatementRawFunction::getShouldExport() {
+    return shouldExport;
+}
 
 string StatementRawFunction::getName() {
     return name;

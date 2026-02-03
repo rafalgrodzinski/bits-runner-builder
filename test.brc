@@ -1,5 +1,8 @@
-@import B
-
 main fun
-    text blob<@B.String> <- if true: @B.String("true") else: @B.String("false")
+    add(2, 5)
+;
+
+@export add raw<"=r,r,r">: arg1 u32, arg2 u32 -> u32
+    add $1, $2
+    mov $0, $1
 ;

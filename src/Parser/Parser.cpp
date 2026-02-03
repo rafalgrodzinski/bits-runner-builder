@@ -439,6 +439,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
     enum {
+        TAG_SHOULD_EXPORT,
         TAG_NAME,
         TAG_CONSTRAINTS,
         TAG_ARGUMENT_IDENTIFIER,
@@ -450,6 +451,8 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
+            // export
+            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
             // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::RAW_FUNCTION, ParseeLevel::REQUIRED, false),
@@ -493,6 +496,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         }
     );
 
+    bool shouldExport = false;
     string name;
     string constraints;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
@@ -504,6 +508,9 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             for (int i=0; i<resultsGroup.getResults().size(); i++) {
                 ParseeResult parseeResult = resultsGroup.getResults().at(i);
                 switch (parseeResult.getTag()) {
+                    case TAG_SHOULD_EXPORT:
+                        shouldExport = true;
+                        break;
                     case TAG_NAME:
                         name = parseeResult.getToken()->getLexme();
                         break;
@@ -547,7 +554,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(name, constraints, arguments, returnType, rawSource, location);
+    return make_shared<StatementRawFunction>(shouldExport, name, constraints, arguments, returnType, rawSource, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlob() {

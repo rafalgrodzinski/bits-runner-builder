@@ -7,6 +7,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
+#include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/ValueType.h"
@@ -53,14 +54,16 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     vector<shared_ptr<Statement>> moduleImportStatements;
     vector<shared_ptr<Statement>> moduleBlobStatements;
     vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleFunctionDeclarationStatements;
     vector<shared_ptr<Statement>> moduleVariableDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleFunctionDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleRawFunctionStatements;
     vector<shared_ptr<Statement>> moduleBodyStatements;
 
     vector<shared_ptr<Statement>> moduleExportedBlobStatements;
     vector<shared_ptr<Statement>> moduleExportedBlobDeclarationStatements;
     vector<shared_ptr<Statement>> moduleExportedVariableDeclarationStatements;
     vector<shared_ptr<Statement>> moduleExportedFunctionDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleExportedRawFunctionStatements;
 
     for (shared_ptr<Statement> statement : statements) {
         switch (statement->getKind()) {
@@ -183,6 +186,14 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleName = statementModule->getName();
                 break;
             }
+            case StatementKind::RAW_FUNCTION: {
+                shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(statement);
+                moduleRawFunctionStatements.push_back(statementRawFunction);
+                if (statementRawFunction->getShouldExport()) {
+                    moduleExportedRawFunctionStatements.push_back(statementRawFunction);
+                }
+                break;
+            }
             case StatementKind::VARIABLE: {
                 shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
                 shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = make_shared<StatementVariableDeclaration>(
@@ -234,6 +245,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         variableDeclarationStatementsMap[moduleName] = moduleVariableDeclarationStatements;
         // function declarations
         functionDeclarationStatementsMap[moduleName] = moduleFunctionDeclarationStatements;
+        // raw functions
+        rawFunctionStatementsMap[moduleName] = moduleRawFunctionStatements;
     
         // body statements
         bodyStatementsMap[moduleName] = moduleBodyStatements;
@@ -263,6 +276,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // function declarations
         for (shared_ptr<Statement> statement : moduleFunctionDeclarationStatements)
             functionDeclarationStatementsMap[moduleName].push_back(statement);
+        // raw functions
+        for (shared_ptr<Statement> statement : moduleRawFunctionStatements)
+            rawFunctionStatementsMap[moduleName].push_back(statement);
 
         // body statements
         for (shared_ptr<Statement> statement : moduleBodyStatements)
@@ -280,6 +296,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // exported function declarations
         for (shared_ptr<Statement> statement : moduleExportedFunctionDeclarationStatements)
             exportedFunctionDeclarationStatementsMap[moduleName].push_back(statement);
+        // exported raw function
+        for (shared_ptr<Statement> statement : moduleExportedRawFunctionStatements)
+            exportedRawFunctionStatementsMap[moduleName].push_back(statement);
     }
 }
 
@@ -310,6 +329,9 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
             headerStatements.push_back(statement);
         // function declarations
         for (shared_ptr<Statement> statement : functionDeclarationStatementsMap[moduleName])
+            headerStatements.push_back(statement);
+        // raw functions
+        for (shared_ptr<Statement> statement : rawFunctionStatementsMap[moduleName])
             headerStatements.push_back(statement);
 
         // finally construct the module
@@ -346,6 +368,9 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
             statementsMap[moduleName].push_back(statement);
         // exported function declarations
         for (shared_ptr<Statement> statement : exportedFunctionDeclarationStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported raw functions
+        for (shared_ptr<Statement> statement : exportedRawFunctionStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
     }
 
