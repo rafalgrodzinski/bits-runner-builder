@@ -259,6 +259,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         exportedVariableDeclarationStatementsMap[moduleName] = moduleExportedVariableDeclarationStatements;
         // exported function declarations
         exportedFunctionDeclarationStatementsMap[moduleName] = moduleExportedFunctionDeclarationStatements;
+        // exported raw functions
+        exportedRawFunctionStatementsMap[moduleName] = moduleExportedRawFunctionStatements;
     // or merge with existing ones
     } else {
         // imports
@@ -296,7 +298,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // exported function declarations
         for (shared_ptr<Statement> statement : moduleExportedFunctionDeclarationStatements)
             exportedFunctionDeclarationStatementsMap[moduleName].push_back(statement);
-        // exported raw function
+        // exported raw functions
         for (shared_ptr<Statement> statement : moduleExportedRawFunctionStatements)
             exportedRawFunctionStatementsMap[moduleName].push_back(statement);
     }

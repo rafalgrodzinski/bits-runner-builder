@@ -297,7 +297,9 @@ void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunct
     for (auto &argument : statementRawFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    if (!scope->setFunctionType(statementRawFunction->getName(), statementRawFunction->getValueType(), true))
+    string name = importModulePrefix + statementRawFunction->getName();
+
+    if (!scope->setFunctionType(name, statementRawFunction->getValueType(), true))
         markErrorAlreadyDefined(statementRawFunction->getLocation(), statementRawFunction->getName());
 }
 

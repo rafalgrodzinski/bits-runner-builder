@@ -327,6 +327,11 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 );
                 break;
             }
+            case StatementKind::RAW_FUNCTION: {
+                shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
+                buildRawFunction(statementMetaImport->getName(), statementRawFunction);
+                break;
+            }
             case StatementKind::BLOB_DECLARATION: {
                 shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
                 buildBlobDeclaration(
@@ -351,39 +356,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
-    // function types
-    llvm::Type *funReturnType = typeForValueType(statementRawFunction->getReturnValueType());
-    if (funReturnType == nullptr)
-        return;
-
-    vector<llvm::Type *> funArgumentTypes;
-    for (pair<string, shared_ptr<ValueType>> &argument : statementRawFunction->getArguments()) {
-        llvm::Type *funArgumentType = typeForValueType(argument.second);
-        if (funArgumentType == nullptr)
-            return;
-        funArgumentTypes.push_back(funArgumentType);
-    }
-
-    // build function declaration & body
-    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgumentTypes, false);
-    if(llvm::InlineAsm::verify(funType, statementRawFunction->getConstraints())) {
-        markInvalidConstraints(
-            statementRawFunction->getLocation(),
-            statementRawFunction->getName(),
-            statementRawFunction->getConstraints()
-        );
-        return;
-    }
-    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(
-        funType,
-        statementRawFunction->getRawSource(),
-        statementRawFunction->getConstraints(),
-        true,
-        false,
-        llvm::InlineAsm::AsmDialect::AD_Intel
-    );
-
-    scope->setInlineAsm(statementRawFunction->getName(), rawFun);
+    buildRawFunction(module->getName(), statementRawFunction);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRepeat> statementRepeat) {
@@ -490,7 +463,7 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
         symbolName = format("{}.{}", moduleName, name);
 
-    // register
+    // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
         internalName = symbolName;
@@ -520,6 +493,52 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     fun->setCallingConv(callingConvention);
 
     scope->setFunction(internalName, fun);
+}
+
+void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawFunction> statement) {
+    // symbol name
+    string symbolName = statement->getName();
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, statement->getName());
+
+    // internal name
+    string internalName = statement->getName();
+    if (moduleName.compare(module->getName()) != 0)
+        internalName = symbolName;
+
+    // function types
+    llvm::Type *funReturnType = typeForValueType(statement->getReturnValueType());
+    if (funReturnType == nullptr)
+        return;
+
+    vector<llvm::Type *> funArgumentTypes;
+    for (pair<string, shared_ptr<ValueType>> &argument : statement->getArguments()) {
+        llvm::Type *funArgumentType = typeForValueType(argument.second);
+        if (funArgumentType == nullptr)
+            return;
+        funArgumentTypes.push_back(funArgumentType);
+    }
+
+    // build function declaration & body
+    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgumentTypes, false);
+    if(llvm::InlineAsm::verify(funType, statement->getConstraints())) {
+        markInvalidConstraints(
+            statement->getLocation(),
+            statement->getName(),
+            statement->getConstraints()
+        );
+        return;
+    }
+    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(
+        funType,
+        statement->getRawSource(),
+        statement->getConstraints(),
+        true,
+        false,
+        llvm::InlineAsm::AsmDialect::AD_Intel
+    );
+
+    scope->setInlineAsm(internalName, rawFun);
 }
 
 void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType) {
