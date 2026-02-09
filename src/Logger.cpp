@@ -107,9 +107,9 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::SEMICOLON:
             return ";";
         case TokenKind::LEFT_ARROW:
-            return "←";
+            return "<-";
         case TokenKind::RIGHT_ARROW:
-            return "→";
+            return "->";
         case TokenKind::DOT:
             return ".";
 
@@ -832,13 +832,13 @@ string Logger::formattedLine(string line, vector<IndentKind> indents) {
                 text += "   ";
                 break;
             case IndentKind::NODE:
-                text += " ┣━";
+                text += " |-";
                 break;
             case IndentKind::NODE_LAST:
-                text += " ┗━";
+                text += " +-";
                 break;
             case IndentKind::BRANCH:
-                text += " ┃ ";
+                text += " | ";
                 break;
         }
     }
@@ -974,9 +974,9 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::SEMICOLON:
             return ";";
         case TokenKind::LEFT_ARROW:
-            return "←";
+            return "<-";
         case TokenKind::RIGHT_ARROW:
-            return "→";
+            return "->";
         case TokenKind::DOT:
             return ".";
 

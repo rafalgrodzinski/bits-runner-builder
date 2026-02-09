@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_COLOR_DIAGNOSTICS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(CMAKE_CXX_FLAGS "-Wno-parentheses")
+#set(CMAKE_CXX_FLAGS "-Wno-parentheses")
 
 set(VERSION_SUFFIX "$ENV{VERSION_SUFFIX}")
 set(VERSION_SUFFIX "-dev-current" CACHE STRING "Version Suffix")
@@ -37,4 +37,75 @@ add_executable(brb ${SOURCES})
 
 target_include_directories(brb PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-target_link_libraries(brb LLVM)
+llvm_map_components_to_libnames(
+	LLVM_LIBS
+	support
+	core
+	irreader
+	passes
+	scalaropts
+	transformutils
+	mc
+	target
+	targetparser
+	
+	aarch64asmparser
+	aarch64codegen
+	
+	amdgpuasmparser
+	amdgpucodegen
+	
+	armasmparser
+	armcodegen
+	
+	avrasmparser
+	avrcodegen
+	
+	bpfasmparser
+	bpfcodegen
+	
+	hexagonasmparser
+	hexagoncodegen
+	
+	lanaiasmparser
+	lanaicodegen
+	
+	loongarchasmparser
+	loongarchcodegen
+	
+	mipsasmparser
+	mipscodegen
+	
+	msp430asmparser
+	msp430codegen
+	
+	nvptxcodegen
+	
+	powerpcasmparser
+	powerpccodegen
+	
+	riscvasmparser
+	riscvcodegen
+	
+	sparcasmparser
+	sparccodegen
+	
+	spirvcodegen
+	
+	systemzasmparser
+	systemzcodegen
+	
+	veasmparser
+	vecodegen
+	
+	webassemblyasmparser
+	webassemblycodegen
+	
+	x86codegen
+	x86asmparser
+	
+	xcorecodegen 
+)
+
+#target_link_libraries(brb LLVM)
+target_link_libraries(brb ${LLVM_LIBS})
