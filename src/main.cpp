@@ -19,6 +19,8 @@
 
 #include "Logger.h"
 
+#include "win_support.h"
+
 using namespace std;
 
 #define DEFAULT_MODULE_NAME "main"
@@ -49,6 +51,8 @@ void versionPrinter(llvm::raw_ostream &os) {
 }
 
 int main(int argc, char **argv) {
+    win_support_init();
+
     llvm::cl::SetVersionPrinter(versionPrinter);
 
     // Main Options
