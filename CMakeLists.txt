@@ -13,6 +13,7 @@ set(CMAKE_COLOR_DIAGNOSTICS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(MSVC)
+	add_compile_options(/wd4624) # warning C4624 destructor was implicitly defined as deleted
 else()
 	set(CMAKE_CXX_FLAGS "-Wno-parentheses")
 endif()
