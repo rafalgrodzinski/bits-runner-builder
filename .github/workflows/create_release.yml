@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Read Version Information (Linux, macOS)
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' || runner.os == 'macOS'
         run: |
           BUILD_KIND="${{inputs.build_kind || 'dev'}}"
           VERSION_NUMBER="$(cat ${{github.workspace}}/version.txt)"
@@ -74,10 +74,10 @@ jobs:
           echo "VERSION_SUFFIX=${VERSION_SUFFIX}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
 
-      - name: Read Version Information (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          @echo off
+      #- name: Read Version Information (Windows)
+      #  if: runner.os == 'Windows'
+      #  run: |
+      #    @echo off
 
       - name: Output Version Info
         id: version-info
