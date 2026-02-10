@@ -74,7 +74,7 @@ jobs:
           echo "VERSION_SUFFIX=${VERSION_SUFFIX}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
 
-        - name: Read Version Information (Windows)
+      - name: Read Version Information (Windows)
         if: funner.os = "Windows"
         run: |
           @echo off
