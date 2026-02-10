@@ -3,10 +3,11 @@ Welcome to Bits Runner Builder! Compiler for the Bits Runner Code (BRC) language
 
 ## Quick links
 - [BRC Language Reference](docs/Reference.md)
+- [Casting Rules](docs/Casts.md)
 - [Extra Information](docs/Extra.md)
 
 ## Overview
-Bits Runner Builder is a compiler for the Bits Runner Code language, which has been designed for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system. It aims to be an opinionated, low-level language, a modernised C with revised syntax and a number of quality of life improvement. It aims to be simple, direct, and transparent. Altough it aims for a simple class-like functionality, class hierarchies, templates, or other unnecessary fluff.
+Bits Runner Builder is a compiler for the Bits Runner Code language, which has been designed for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system. It aims to be an opinionated, low-level language, a modernised C with revised syntax and a number of quality of life improvement. The functinality is simple, transparent, and explicit. Altough it has a simple class-like functionality, class hierarchies, templates, or other unnecessary fluff is not supported.
 
 It has been been built with LLVM so it should be fairly performant. Keep in mind that it is still work in progress so not everything is finished and there is still probably plenty of bugs and gremlins hiding around 🐝 If you find any, let me know, additional pair of eyes is always helpful.
 
@@ -16,14 +17,14 @@ BRC allows for low-level system programming, so one of the main features is a se
 The highlights of the languge are:
 - Modules without headers
 - Pointers use instance properties instead of operators
-- Casting also uses properties
+- Casting also uses member syntax
 - No curly braces for scope or semicollons
 - Functions inside of `blob` types for simple class-like funtionality
 - `if-else` statements are expressions
 - Explicit type sizes (integers, floats, etc)
-- `for`, `while`, `do-while` loops integrated into single `rep`
+- `for`, `while`, `do-while` loops integrated into single `rep` keyword
 - Directly supports decimal, hex, binary numbers with `_` separator between digits
-- Show tokens, AST, and build statistics for each phase `--verb=v2` or `v3`
+- Shows tokens, AST, and build statistics for each phase `--verb=v2` or `v3`
 
 ## Examples
 ```
@@ -115,7 +116,7 @@ Shows how code can be split into separat files and modules.
 Based on ["Software Drag Racing!" by Dave Plummer](https://github.com/PlummersSoftwareLLC/Primes/tree/drag-race). Runs as many iterrations as possible of calculating primes up to 1,000,000 in 5 seconds and reports the number or iterrations. I got a bit under 1200 on my Intel Core i7 14700.
 
 `strings`:
-This uses the basic library `@b` to manipulate strings.
+This uses the basic library `@B` to manipulate strings.
 
 ## Additional Stuff
 BRC language support for Visual Studio Code: [https://github.com/rafalgrodzinski/brc-vscode](https://github.com/rafalgrodzinski/brc-vscode).

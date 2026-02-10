@@ -20,6 +20,7 @@
 
 class Error;
 class Location;
+class Module;
 class ValueType;
 class WrappedValue;
 
@@ -62,40 +63,34 @@ using namespace std;
 class ModuleBuilder {
 private:
     vector<shared_ptr<Error>> errors;
-    string moduleName;
     string defaultModuleName;
 
-    vector<shared_ptr<Statement>> statements;
-    vector<shared_ptr<Statement>> headerStatements;
+    shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
 
     shared_ptr<Scope> scope;
 
     shared_ptr<llvm::LLVMContext> context;
-    shared_ptr<llvm::Module> module;
+    shared_ptr<llvm::Module> moduleLLVM;
     shared_ptr<llvm::IRBuilder<>> builder;
 
     llvm::CallingConv::ID callingConvention;
 
     llvm::Type *typeVoid;
     llvm::Type *typeBool;
-    
-    llvm::IntegerType *typeU8;
-    llvm::IntegerType *typeU32;
-    llvm::IntegerType *typeU64;
-    llvm::IntegerType *typeUInt;
 
-    llvm::IntegerType *typeS8;
-    llvm::IntegerType *typeS32;
-    llvm::IntegerType *typeS64;
-    llvm::IntegerType *typeSInt;
+    llvm::IntegerType *typeInt;
+    llvm::IntegerType *typeI8;
+    llvm::IntegerType *typeI16;
+    llvm::IntegerType *typeI32;
+    llvm::IntegerType *typeI64;
 
     llvm::Type *typeF32;
     llvm::Type *typeF64;
     llvm::Type *typeFloat;
 
     llvm::Type *typePtr;
-    llvm::IntegerType *typeIntPtr;
+    llvm::IntegerType *typeA;
 
     // Statements
     void buildStatement(shared_ptr<Statement> statement);
@@ -116,6 +111,7 @@ private:
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
+    void buildRawFunction(string moduleName, shared_ptr<StatementRawFunction> statement);
     void buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType);
     void buildBlobDeclaration(string moduleName, string name);
     void buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members);
@@ -136,7 +132,8 @@ private:
     shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary);
     shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue);
 
-    shared_ptr<WrappedValue> wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<ExpressionValue> parentExpression, shared_ptr<Expression> expression);
+    shared_ptr<WrappedValue> wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<Expression> parentExpression, shared_ptr<Expression> expression);
+    shared_ptr<WrappedValue> wrappedValueForCall(llvm::Value *callee, llvm::FunctionType *funType, vector<llvm::Value*> implicitArguments, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<ValueType> valueType);
     shared_ptr<WrappedValue> wrappedValueForCast(shared_ptr<WrappedValue> wrappedValue, shared_ptr<ValueType> targetValueType);
     shared_ptr<WrappedValue> wrappedValueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);
     shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
@@ -167,18 +164,18 @@ private:
     void markErrorNotDefined(shared_ptr<Location> location, string name);
     void markErrorNoTypeForPointer(shared_ptr<Location> location);
 
+    void debugPrint(vector<llvm::Value *> values);
+
 public:
     ModuleBuilder(
-        string moduleName,
         string defaultModuleName,
         int intSize,
         int pointerSize,
         llvm::CallingConv::ID callingConvention,
-        vector<shared_ptr<Statement>> statements,
-        vector<shared_ptr<Statement>> headerStatements,
+        shared_ptr<Module> module,
         map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
     );
-    shared_ptr<llvm::Module> getModule();
+    shared_ptr<llvm::Module> getModuleLLVM();
 };
 
 #endif

@@ -3,11 +3,14 @@
 
 #include "Expression.h"
 
+enum class TokenKind;
+
 enum class ExpressionBinaryOperation {
     OR,
     XOR,
     AND,
 
+    BIT_TEST,
     BIT_OR,
     BIT_XOR,
     BIT_AND,
@@ -36,8 +39,10 @@ private:
     shared_ptr<Expression> left;
     shared_ptr<Expression> right;
 
+    static bool doTokensMatchTokenKinds(vector<shared_ptr<Token>> tokens, vector<TokenKind> tokenKinds);
+
 public:
-    static shared_ptr<ExpressionBinary> expression(shared_ptr<Token> token, shared_ptr<Expression> left, shared_ptr<Expression> right);
+    static shared_ptr<ExpressionBinary> expression(vector<shared_ptr<Token>> tokens, shared_ptr<Expression> left, shared_ptr<Expression> right);
 
     ExpressionBinary(shared_ptr<Location> location);
 

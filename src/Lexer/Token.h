@@ -15,18 +15,16 @@ enum class TokenKind {
     AND,
     NOT,
 
+    BIT_TEST,
     BIT_OR,
     BIT_XOR,
     BIT_AND,
     BIT_NOT,
-    BIT_SHL,
-    BIT_SHR,
 
     EQUAL,
     NOT_EQUAL,
-    LESS,
+
     LESS_EQUAL,
-    GREATER,
     GREATER_EQUAL,
 
     PLUS,
@@ -41,6 +39,8 @@ enum class TokenKind {
     RIGHT_SQUARE_BRACKET,
     LEFT_CURLY_BRACKET,
     RIGHT_CURLY_BRACKET,
+    LEFT_ANGLE_BRACKET,
+    RIGHT_ANGLE_BRACKET,
     COMMA,
     COLON,
     SEMICOLON,
@@ -93,9 +93,11 @@ public:
     static vector<TokenKind> tokensEquality;
     static vector<TokenKind> tokensComparison;
 
-    static vector<TokenKind> tokensBitwiseAnd;
+    static vector<TokenKind> tokensBitwiseTest;
     static vector<TokenKind> tokensBitwiseOrXor;
-    static vector<TokenKind> tokensBitwiseShift;
+    static vector<TokenKind> tokensBitwiseAnd;
+    static vector<TokenKind> tokensBitwiseShiftLeft;
+    static vector<TokenKind> tokensBitwiseShiftRight;
     static vector<TokenKind> tokensBitwiseNot;
 
     static vector<TokenKind> tokensTerm;

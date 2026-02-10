@@ -1,4 +1,6 @@
-@extern putchar fun: character u64 -> u32
+main fun
+    add(2, 5)
+;
 
 @export print fun: text data<u64, 32>
     text[3] != 0

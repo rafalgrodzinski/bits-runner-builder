@@ -73,12 +73,13 @@ Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel l
     return parsee;
 }
 
-Parsee Parsee::statementParsee(ParseeLevel level, bool shouldReturn, int tag) {
+Parsee Parsee::statementKindsParsee(vector<StatementKind> statementKinds, ParseeLevel level, bool shouldReturn, int tag) {
     Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT;
-    parsee.tag = tag;
+    parsee.kind = ParseeKind::STATEMENT_KINDS;
+    parsee.statementKinds = statementKinds;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
+    parsee.tag = tag;
     return parsee;
 }
 
@@ -95,16 +96,6 @@ Parsee Parsee::statementBlockSingleLineParsee(ParseeLevel level, bool shouldRetu
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_BLOCK_SINGLE_LINE;
     parsee.tag = tag;
-    parsee.level = level;
-    parsee.shouldReturn = shouldReturn;
-    return parsee;
-}
-
-Parsee Parsee::statementInBlockParsee(bool shouldIncludeExpressionStatement, ParseeLevel level, bool shouldReturn, int tag) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::STATEMENT_IN_BLOCK;
-    parsee.tag = tag;
-    parsee.shouldIncludeExpressionStatement = shouldIncludeExpressionStatement;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
@@ -147,6 +138,10 @@ optional<vector<Parsee>> Parsee::getRepeatedParsees() {
 
 optional<vector<vector<Parsee>>> Parsee::getParsees() {
     return parsees;
+}
+
+optional<vector<StatementKind>> Parsee::getStatementKinds() {
+    return statementKinds;
 }
 
 TokenKind Parsee::getTokenKind() {

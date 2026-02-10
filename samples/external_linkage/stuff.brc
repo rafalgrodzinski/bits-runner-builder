@@ -4,5 +4,5 @@
 @export callback ptr<fun: u64>
 
 @export doStuff fun: arg u64
-    if callback.vAdr != 0: callback.val(arg * value)
+    if callback.vadr != 0: callback.val(arg * value)
 ;

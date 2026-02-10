@@ -6,6 +6,7 @@
 #include "Error.h"
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
+#include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
 #include "Parser/ValueType.h"
 
@@ -40,6 +41,8 @@
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
+/// Private ///
+
 string Logger::toString(shared_ptr<Token> token) {
     switch (token->getKind()) {
         case TokenKind::PLUS:
@@ -62,6 +65,8 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::NOT:
             return "NOT";
 
+        case TokenKind::BIT_TEST:
+            return "&?";
         case TokenKind::BIT_OR:
             return "|";
         case TokenKind::BIT_XOR:
@@ -70,21 +75,13 @@ string Logger::toString(shared_ptr<Token> token) {
             return "&";
         case TokenKind::BIT_NOT:
             return "~";
-        case TokenKind::BIT_SHL:
-            return "<<";
-        case TokenKind::BIT_SHR:
-            return ">>";
         
         case TokenKind::EQUAL:
             return "=";
         case TokenKind::NOT_EQUAL:
             return "≠";
-        case TokenKind::LESS:
-            return "<";
         case TokenKind::LESS_EQUAL:
             return "≤";
-        case TokenKind::GREATER:
-            return ">";
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
@@ -100,6 +97,10 @@ string Logger::toString(shared_ptr<Token> token) {
             return "{";
         case TokenKind::RIGHT_CURLY_BRACKET:
             return "}";
+        case TokenKind::LEFT_ANGLE_BRACKET:
+            return "<";
+        case TokenKind::RIGHT_ANGLE_BRACKET:
+            return ">";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -228,15 +229,35 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 
     // name
     line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
-    if (!statement->getMembers().empty())
+    if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
 
-    // members
     indents = adjustedLastIndent(indents);
-    for (pair<string, shared_ptr<ValueType>> &member : statement->getMembers()) {
-        line = format("`{}` {}", member.first, toString(member.second));
-        text += formattedLine(line, indents);
+
+    int variablestatementsCount = statement->getVariableStatements().size();
+    int functionStatementsCount = statement->getFunctionStatements().size();
+
+    // member variables
+    for (int i=0; i<variablestatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getVariableStatements().at(i), currentIndents);
+    }
+
+    // member functions
+    for (int i=0; i<functionStatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+        
+        text += toString(statement->getFunctionStatements().at(i), currentIndents);
     }
 
     return text;
@@ -356,40 +377,6 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     string line = format("MODULE `{}`:", statement->getName());
     text += formattedLine(line, indents);
 
-    indents = adjustedLastIndent(indents);
-    
-    // header
-    indents.push_back(IndentKind::NODE);
-    text += formattedLine("HEADER", indents);
-    indents.at(indents.size()-1) = IndentKind::BRANCH;
-
-    int headerStatementsCount = statement->getHeaderStatements().size();
-    for (int i=0; i<headerStatementsCount; i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < headerStatementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(statement->getHeaderStatements().at(i), currentIndents);
-    }
-
-    // body
-    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
-    text += formattedLine("BODY", indents);
-    indents.at(indents.size()-1) = IndentKind::EMPTY;
-
-    int statementsCount = statement->getStatements().size();
-    for (int i=0; i<statementsCount; i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < statementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(statement->getStatements().at(i), currentIndents);
-    }
-
     return text;
 }
 
@@ -440,10 +427,10 @@ string Logger::toString(shared_ptr<StatementRepeat> statement, vector<IndentKind
     // name
     line = "REP";
     if (
-        statement->getInitStatement() != nullptr ||
-        statement->getPreConditionExpression() != nullptr ||
-        statement->getPostConditionExpression() != nullptr ||
-        statement->getPostStatement() != nullptr) {
+        statement->getInitStatement() != nullptr
+        || statement->getPreConditionExpression() != nullptr
+        || statement->getPostConditionExpression() != nullptr
+        || statement->getPostStatement() != nullptr) {
         line += ":";
     }
     text += formattedLine(line, indents);
@@ -564,6 +551,9 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
         case ExpressionBinaryOperation::AND:
             op = "AND";
             break;
+        case ExpressionBinaryOperation::BIT_TEST:
+            op = "&?";
+            break;
         case ExpressionBinaryOperation::BIT_OR:
             op = "|";
             break;
@@ -638,7 +628,7 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
 
     if (indents.size() > 0) {
         string line;
-        line = format("CALL `{}`", expression->getName());
+        line = format("CALL `{}`｢{}｣", expression->getName(), toString(expression->getValueType()));
         if (!expression->getArgumentExpressions().empty())
             line += ":";
         text += formattedLine(line, indents);
@@ -656,6 +646,7 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
                 text += ", ";
         }
         text += ")";
+        text += format("｢{}｣", toString(expression->getValueType()));
     }
 
     return text;
@@ -759,8 +750,8 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
         case ExpressionLiteralKind::FLOAT:
             line = format("{}｢{}｣", expression->getFloatValue(), toString(expression->getValueType()));
             break;
-        case ExpressionLiteralKind::INT:
-            line = format("{}｢{}｣", expression->getSIntValue(), toString(expression->getValueType()));
+        case ExpressionLiteralKind::UINT:
+            line = format("{}｢{}｣", expression->getUIntValue(), toString(expression->getValueType()));
             break;
     }
 
@@ -887,10 +878,8 @@ string Logger::toString(Parsee parsee) {
             return toString(parsee.getTokenKind());
         case ParseeKind::VALUE_TYPE:
             return "Value Type";
-        case ParseeKind::STATEMENT:
-            return "Statement";
-        case ParseeKind::STATEMENT_IN_BLOCK:
-            return "Statement in Block";
+        case ParseeKind::STATEMENT_KINDS:
+            return "STATEMENT_KINDS";
         case ParseeKind::EXPRESSION:
             return "Expression";
         case ParseeKind::STATEMENT_BLOCK_SINGLE_LINE:
@@ -929,6 +918,8 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::NOT:
             return "NOT";
 
+        case TokenKind::BIT_TEST:
+            return "&?";
         case TokenKind::BIT_OR:
             return "|";
         case TokenKind::BIT_XOR:
@@ -937,21 +928,13 @@ string Logger::toString(TokenKind tokenKind) {
             return "&";
         case TokenKind::BIT_NOT:
             return "~";
-        case TokenKind::BIT_SHL:
-            return "<<";
-        case TokenKind::BIT_SHR:
-            return ">>";
         
         case TokenKind::EQUAL:
             return "=";
         case TokenKind::NOT_EQUAL:
             return "≠";
-        case TokenKind::LESS:
-            return "<";
         case TokenKind::LESS_EQUAL:
             return "≤";
-        case TokenKind::GREATER:
-            return ">";
         case TokenKind::GREATER_EQUAL:
             return "≥";
 
@@ -967,6 +950,10 @@ string Logger::toString(TokenKind tokenKind) {
             return "{";
         case TokenKind::RIGHT_CURLY_BRACKET:
             return "}";
+        case TokenKind::LEFT_ANGLE_BRACKET:
+            return "<";
+        case TokenKind::RIGHT_ANGLE_BRACKET:
+            return ">";
         case TokenKind::COMMA:
             return ",";
         case TokenKind::COLON:
@@ -1035,15 +1022,6 @@ string Logger::toString(TokenKind tokenKind) {
     }
 }
 
-void Logger::print(vector<shared_ptr<Token>> tokens) {
-        for (int i=0; i<tokens.size(); i++) {
-            cout << i << "|" << toString(tokens.at(i));
-            if (i < tokens.size() - 1)
-                cout << "  ";
-        }
-        cout << endl;
-}
-
 string Logger::toString(ExpressionUnaryOperation operationUnary) {
     switch (operationUnary) {
         case ExpressionUnaryOperation::NOT:
@@ -1057,14 +1035,21 @@ string Logger::toString(ExpressionUnaryOperation operationUnary) {
     }
 }
 
-//
-// Public
-//
+/// Public ///
 
-void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements) {
+void Logger::print(vector<shared_ptr<Token>> tokens) {
+        for (int i=0; i<tokens.size(); i++) {
+            cout << i << "|" << toString(tokens.at(i));
+            if (i < tokens.size() - 1)
+                cout << "  ";
+        }
+        cout << endl;
+}
+
+void Logger::print(shared_ptr<Module> module) {
     string text;
 
-    text += format("MODULE `{}`:\n", moduleName);
+    text += format("MODULE `{}`:\n", module->getName());
     vector<IndentKind> indents = {IndentKind::ROOT};
     
     // header
@@ -1072,7 +1057,7 @@ void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statemen
     text += formattedLine("HEADER", indents);
     indents.at(indents.size()-1) = IndentKind::BRANCH;
 
-
+    vector<shared_ptr<Statement>> headerStatements = module->getHeaderStatements();
     for (int i=0; i<headerStatements.size(); i++) {
         vector<IndentKind> currentIndents = indents;
         if (i < headerStatements.size() - 1)
@@ -1088,6 +1073,7 @@ void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statemen
     text += formattedLine("BODY", indents);
     indents.at(indents.size()-1) = IndentKind::EMPTY;
 
+    vector<shared_ptr<Statement>> bodyStatements = module->getBodyStatements();
     for (int i=0; i<bodyStatements.size(); i++) {
         vector<IndentKind> currentIndents = indents;
         if (i < bodyStatements.size() - 1)
@@ -1101,23 +1087,30 @@ void Logger::printModuleStatements(string moduleName, vector<shared_ptr<Statemen
     cout << text;
 }
 
-void Logger::printExportedStatements(string moduleName, vector<shared_ptr<Statement>> statments) {
-    string text;
+void Logger::printExportedHeaderStatements(map<string, vector<shared_ptr<Statement>>> statementsMap) {
+    // iterate over exported statements from each of the module
+    for (auto &statementsMapEntry : statementsMap) {
+        // skip over modules with no exported statements
+        if (statementsMapEntry.second.empty())
+            continue;
 
-    text += format("EXPORTED STATEMENTS `{}`:\n", moduleName);
+        string text;
 
-    int statementsCount = statments.size();
-    for (int i=0; i<statementsCount; i++) {
-        vector<IndentKind> currentIndents = {IndentKind::ROOT};
-        if (i < statementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
+        text += format("EXPORTED STATEMENTS `{}`:\n", statementsMapEntry.first);
 
-        text += toString(statments.at(i), currentIndents);
+        int statementsCount = statementsMapEntry.second.size();
+        for (int i=0; i<statementsCount; i++) {
+            vector<IndentKind> currentIndents = {IndentKind::ROOT};
+            if (i < statementsCount - 1)
+                currentIndents.push_back(IndentKind::NODE);
+            else
+                currentIndents.push_back(IndentKind::NODE_LAST);
+
+            text += toString(statementsMapEntry.second.at(i), currentIndents);
+        }
+
+        cout << text << endl;
     }
-
-    cout << text;
 }
 
 void Logger::print(shared_ptr<Error> error) {
@@ -1200,16 +1193,22 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "NONE";
         case ValueTypeKind::BOOL:
             return "BOOL";
-        case ValueTypeKind::INT:
-            return "INT";
+        case ValueTypeKind::UINT:
+            return "UINT";
         case ValueTypeKind::U8:
             return "U8";
+        case ValueTypeKind::U16:
+            return "U16";
         case ValueTypeKind::U32:
             return "U32";
         case ValueTypeKind::U64:
             return "U64";
+        case ValueTypeKind::SINT:
+            return "SINT";
         case ValueTypeKind::S8:
             return "S8";
+        case ValueTypeKind::S16:
+            return "S16";
         case ValueTypeKind::S32:
             return "S32";
         case ValueTypeKind::S64:
@@ -1220,6 +1219,10 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "F32";
         case ValueTypeKind::F64:
             return "F64";
+        case ValueTypeKind::A:
+            return "A";
+        case ValueTypeKind::PTR:
+            return format("PTR<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::DATA: {
             if (valueType->getCountExpression() != nullptr)
                 return format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));
@@ -1242,8 +1245,6 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
                 text += format(" -> {}", toString(valueType->getReturnType()));
             return text;
         }
-        case ValueTypeKind::PTR:
-            return format("PTR<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::COMPOSITE:
             return format("COMPOSITE");
     }
@@ -1258,6 +1259,8 @@ string Logger::toString(ExpressionBinaryOperation operationBinary) {
         case ExpressionBinaryOperation::AND:
             return "AND";
 
+        case ExpressionBinaryOperation::BIT_TEST:
+            return "BIT_TEST";
         case ExpressionBinaryOperation::BIT_OR:
             return "BIT_OR";
         case ExpressionBinaryOperation::BIT_XOR:

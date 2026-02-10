@@ -7,6 +7,7 @@
 #include <format>
 
 class AnalyzerScope;
+class Module;
 class Error;
 class Location;
 class ValueType;
@@ -52,8 +53,7 @@ class Analyzer {
 private:
     vector<shared_ptr<Error>> errors;
     shared_ptr<AnalyzerScope> scope;
-    vector<shared_ptr<Statement>> statements;
-    vector<shared_ptr<Statement>> headerStatements;
+    shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
     string importModulePrefix;
 
@@ -99,6 +99,8 @@ private:
     shared_ptr<Expression> checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType);
     bool canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
+    void checkValueType(shared_ptr<ValueType> valueType);
+
     void markErrorAlreadyDefined(shared_ptr<Location> location, string identifier);
     void markErrorInvalidArgumentsCount(shared_ptr<Location> location, int actulCount, int expectedCount);
     void markErrorInvalidBuiltIn(shared_ptr<Location> location, string builtInName, shared_ptr<ValueType> type);
@@ -110,11 +112,7 @@ private:
     void markErrorNotDefined(shared_ptr<Location> location, string name);
 
 public:
-    Analyzer(
-        vector<shared_ptr<Statement>> statements,
-        vector<shared_ptr<Statement>> headerStatements,
-        map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
-    );
+    Analyzer(shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap);
     void checkModule();
 };
 

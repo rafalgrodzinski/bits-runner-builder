@@ -9,10 +9,11 @@
 
 class Error;
 
-class Token;
 enum class TokenKind;
+class Token;
 class ValueType;
 
+enum class StatementKind;
 class Statement;
 class StatementModule;
 
@@ -27,13 +28,11 @@ using namespace std;
 
 class Parser {
 private:
-    string defaultModuleName;
     vector<shared_ptr<Error>> errors;
     vector<shared_ptr<Token>> tokens;
     int currentIndex = 0;
 
     // Statements
-    shared_ptr<Statement> nextStatement();
     shared_ptr<Statement> nextInBlockStatement();
 
     shared_ptr<Statement> matchStatementModule();
@@ -60,6 +59,7 @@ private:
     shared_ptr<Expression> matchEquality(); // =, !=
     shared_ptr<Expression> matchComparison(); // <, <=, >, >=
 
+    shared_ptr<Expression> matchBitwiseTest(); // &?
     shared_ptr<Expression> matchBitwiseOrXor(); // |, ^
     shared_ptr<Expression> matchBitwiseAnd(); // &
     shared_ptr<Expression> matchBitwiseShift(); // <<, >>
@@ -78,13 +78,11 @@ private:
     shared_ptr<Expression> matchExpressionCall();
     shared_ptr<Expression> matchExpressionVariable();
     shared_ptr<Expression> matchExpressionCast();
-
     shared_ptr<Expression> matchExpressionIfElse(optional<bool> isMultiLine);
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
 
     shared_ptr<ValueType> matchValueType();
-    shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName);
 
     // Parsee
     ParseeResultsGroup parseeResultsGroupForParsees(vector<Parsee> parsees);
@@ -93,8 +91,7 @@ private:
     optional<pair<vector<ParseeResult>, int>> oneOfParseeResults(vector<vector<Parsee>> parsees);
     optional<pair<vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     optional<pair<vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
-    optional<pair<vector<ParseeResult>, int>> statementParseeResults(int tag);
-    optional<pair<vector<ParseeResult>, int>> statementInBlockParseeResults(bool getShouldIncludeExpressionStatement, int tag);
+    optional<pair<vector<ParseeResult>, int>> statementKindsParseeResults(vector<StatementKind> statementKinds, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionParseeResults(bool isNumeric, int tag);
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
@@ -102,12 +99,12 @@ private:
     optional<pair<vector<ParseeResult>, int>> ifElseParseeResults(bool isMultiLine, int tag);
 
     // Support
-    bool tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
+    optional<vector<shared_ptr<Token>>> tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
     void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
 
 public:
-    Parser(string defaultModuleName, vector<shared_ptr<Token>> tokens);
-    shared_ptr<StatementModule> getStatementModule();
+    Parser(vector<shared_ptr<Token>> tokens);
+    vector<shared_ptr<Statement>> getStatements();
 };
 
 #endif

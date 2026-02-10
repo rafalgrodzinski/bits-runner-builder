@@ -7,6 +7,7 @@
 #include <vector>
 
 enum class TokenKind;
+enum class StatementKind;
 
 using namespace std;
 
@@ -20,10 +21,9 @@ enum class ParseeKind {
     IF_ELSE_SINGLE_LINE,
     ONE_OF,
     REPEATED_GROUP,
-    STATEMENT,
+    STATEMENT_KINDS,
     STATEMENT_BLOCK_MULTI_LINE,
     STATEMENT_BLOCK_SINGLE_LINE,
-    STATEMENT_IN_BLOCK,
     TOKEN,
     VALUE_TYPE
 };
@@ -41,6 +41,7 @@ private:
     optional<vector<Parsee>> groupParsees;
     optional<vector<Parsee>> repeatedParsees;
     optional<vector<vector<Parsee>>> parsees;
+    optional<vector<StatementKind>> statementKinds;
     TokenKind tokenKind;
     bool shouldIncludeExpressionStatement;
     bool isNumericExpression;
@@ -58,10 +59,9 @@ public:
     static Parsee ifElseParsee(bool isMultiLine, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn);
     static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel level, bool shouldReturn);
-    static Parsee statementParsee(ParseeLevel level, bool shouldReturn, int tag = -1); 
+    static Parsee statementKindsParsee(vector<StatementKind> statementKinds, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee statementBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee statementBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
-    static Parsee statementInBlockParsee(bool shouldIncludeExpressionStatement, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee tokenParsee(TokenKind tokenKind, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee valueTypeParsee(ParseeLevel level, bool shouldReturn, int tag = -1); 
 
@@ -70,6 +70,7 @@ public:
     optional<vector<Parsee>> getGroupParsees();
     optional<vector<Parsee>> getRepeatedParsees();
     optional<vector<vector<Parsee>>> getParsees();
+    optional<vector<StatementKind>> getStatementKinds();
     TokenKind getTokenKind();
     bool getShouldIncludeExpressionStatement();
     bool getIsNumericExpression();
