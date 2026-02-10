@@ -211,13 +211,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         return;
     }
 
-    // Check if function not yet defined
-    llvm::BasicBlock &entryBlock = fun->getEntryBlock();
-    if (entryBlock.getParent() != nullptr) {
-        markErrorAlreadyDefined(statementFunction->getLocation(), format("function \"{}\"", statementFunction->getName()));
-        return;
-    }
-
     // define function body
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statementFunction->getName(), fun);
     builder->SetInsertPoint(block);
