@@ -57,7 +57,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Read Version Information (Linux, macOS)
-        if: runner.os == 'Linux' || runner.os == 'macOS'
+      #  if: runner.os == 'Linux' || runner.os == 'macOS'
+        shell: bash
         run: |
           BUILD_KIND="${{inputs.build_kind || 'dev'}}"
           VERSION_NUMBER="$(cat ${{github.workspace}}/version.txt)"
@@ -74,31 +75,36 @@ jobs:
           echo "VERSION_SUFFIX=${VERSION_SUFFIX}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
 
-      - name: Read Version Information (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          set /p VERSION_NUMBER=<${{github.workspace}}\version.txt
-          echo %VERSION_NUMBER%
+      #- name: Read Version Information (Windows)
+      #  if: runner.os == 'Windows'
+      #  run: |
+      #    set /p VERSION_NUMBER =< ${{github.workspace}}\version.txt
+      #    echo %VERSION_NUMBER%
 
       - name: Output Version Info
         id: version-info
+        shell: bash
         run: |
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Output Tag Info
         id: tag-info
+        shell: bash
         run: |
           echo "TAG=${BUILD_KIND}/${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_OUTPUT
 
       - name: Configure Project
         env:
           VERSION_SUFFIX: ${{env.VERSION_SUFFIX}}
+        shell: bash
         run: cmake -B ${{github.workspace}}/build
       
       - name: Build Project
+        shell: bash
         run: cmake --build ${{github.workspace}}/build --config Release
 
       - name: Get Archive Name
+        shell: bash
         run: |
           case "${{matrix.os}}" in
             "macos-15-intel")
@@ -120,6 +126,7 @@ jobs:
           echo "ARCHIVE_NAME=brb-${VERSION}-${VARIANT}" >> $GITHUB_ENV
 
       - name: Create Archive
+        shell: bash
         run: |
           zip -j "${{github.workspace}}/${ARCHIVE_NAME}.zip" "${{github.workspace}}/build/brb"
 
