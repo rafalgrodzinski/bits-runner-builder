@@ -1,8 +1,15 @@
 name: Build Project & Create Release
 
+# Runners
+# https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+# https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
+# https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
+# https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-VS2026-Readme.md
+
 on:
   push:
     branches:
+      - "130-handle-build-install-on-windows"
       - "main"
   workflow_dispatch:
     inputs:
@@ -25,7 +32,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-15-intel, macos-15, ubuntu-24.04]
+        #os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
+        [windows-2025-vs2026]
 
     runs-on: ${{matrix.os}}
 
@@ -95,6 +103,9 @@ jobs:
             "ubuntu-24.04")
               VARIANT="linux-x86_64"
             ;;
+            "windows-2025-vs2026")
+              VARIANT="win-x86_64"
+            ;;
             *)
               exit 1
             ;;
@@ -112,31 +123,31 @@ jobs:
           path: "${{github.workspace}}/*.zip"
           if-no-files-found: error
 
-  create-release:
-    runs-on: macos-15
-
-    needs: build-project
-
-    steps:
-      - name: Checkout Project
-        uses: actions/checkout@v4
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v5
-        with:
-          path: "${{github.workspace}}/"
-          merge-multiple: true
-
-      - name: debug
-        run: |
-          ls -aF "${{github.workspace}}/"
-
-      - name: Create Release
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          VERSION: ${{needs.build-project.outputs.version}}
-          TAG: ${{needs.build-project.outputs.tag}}
-        run: |
-          gh release create "${TAG}" "${{github.workspace}}/*.zip" \
-            --title "${VERSION}" \
-            --notes-file "${{github.workspace}}/docs/Notes.md"
+  #create-release:
+  #  runs-on: macos-15
+#
+  #  needs: build-project
+#
+  #  steps:
+  #    - name: Checkout Project
+  #      uses: actions/checkout@v4
+#
+  #    - name: Download Artifacts
+  #      uses: actions/download-artifact@v5
+  #      with:
+  #        path: "${{github.workspace}}/"
+  #        merge-multiple: true
+#
+  #    - name: debug
+  #      run: |
+  #        ls -aF "${{github.workspace}}/"
+#
+  #    - name: Create Release
+  #      env:
+  #        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  #        VERSION: ${{needs.build-project.outputs.version}}
+  #        TAG: ${{needs.build-project.outputs.tag}}
+  #      run: |
+  #        gh release create "${TAG}" "${{github.workspace}}/*.zip" \
+  #          --title "${VERSION}" \
+  #          --notes-file "${{github.workspace}}/docs/Notes.md"
