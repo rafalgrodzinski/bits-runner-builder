@@ -75,3 +75,6 @@ BRC supports inline assembly, which is declared simillary to a function, but req
 ## LLVM IR
 * Generate IR from C source:
 `clang -S -emit-llvm <input-file>`
+
+## Linking with LLVM
+`llvm-config --components`
