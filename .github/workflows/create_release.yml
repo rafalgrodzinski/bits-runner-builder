@@ -77,9 +77,8 @@ jobs:
       - name: Read Version Information (Windows)
         if: runner.os == 'Windows'
         run: |
-          set /p VERSION_NUMBER=${{github.workspace}}\version.txt
+          set /p VERSION_NUMBER=<${{github.workspace}}\version.txt
           echo %VERSION_NUMBER%
-          systeminfo
 
       - name: Output Version Info
         id: version-info
