@@ -56,7 +56,8 @@ jobs:
       - name: Checkout Project
         uses: actions/checkout@v4
 
-      - name: Read Version Information
+      - name: Read Version Information (Linux, macOS)
+        if: runner.os == "Linux"
         run: |
           BUILD_KIND="${{inputs.build_kind || 'dev'}}"
           VERSION_NUMBER="$(cat ${{github.workspace}}/version.txt)"
@@ -72,6 +73,11 @@ jobs:
           echo "VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
           echo "VERSION_SUFFIX=${VERSION_SUFFIX}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
+
+        - name: Read Version Information (Windows)
+        if: funner.os = "Windows"
+        run: |
+          @echo off
 
       - name: Output Version Info
         id: version-info
