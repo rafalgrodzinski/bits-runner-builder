@@ -74,10 +74,12 @@ jobs:
           echo "VERSION_SUFFIX=${VERSION_SUFFIX}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
 
-      #- name: Read Version Information (Windows)
-      #  if: runner.os == 'Windows'
-      #  run: |
-      #    @echo off
+      - name: Read Version Information (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          set /p VERSION_NUMBER=${{github.workspace}}\version.txt
+          echo %VERSION_NUMBER%
+          systeminfo
 
       - name: Output Version Info
         id: version-info
