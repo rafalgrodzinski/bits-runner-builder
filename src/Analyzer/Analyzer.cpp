@@ -410,6 +410,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
     if (expression == nullptr)
         return nullptr;
 
+    if (expression->getValueType() != nullptr)
+        return expression->getValueType();
+
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
@@ -643,10 +646,6 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionChained> 
 }
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
-    // if the type is already figured out, we should skip the detection (it may already be promoted to data, blob, or ptr)
-    if (expressionCompositeLiteral->getValueType() != nullptr)
-        return expressionCompositeLiteral->getValueType();
-
     vector<shared_ptr<ValueType>> elementTypes;
     for (shared_ptr<Expression> expression : expressionCompositeLiteral->getExpressions()) {
         if (expression == nullptr)
