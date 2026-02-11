@@ -153,7 +153,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          7z a -tzip "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb"
+          7z a -tzip "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb.exe"
 
       - name: Upload Archive
         uses: actions/upload-artifact@v4
