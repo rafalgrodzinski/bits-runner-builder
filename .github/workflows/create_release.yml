@@ -116,7 +116,7 @@ jobs:
         env:
           VERSION_SUFFIX: ${{env.VERSION_SUFFIX}}
         shell: bash
-        run: cmake -B "${GITHUB_WORKSPACE}/build"
+        run: cmake -B "${GITHUB_WORKSPACE}/build" -DCMAKE_PREFIX_PATH=/d/llvm-20.1.8
       
       - name: Build Project
         shell: bash
