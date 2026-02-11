@@ -56,7 +56,7 @@ jobs:
       - name: Checkout Project
         uses: actions/checkout@v4
 
-      - name: Read Version Information (Linux, macOS)
+      - name: Read Version Information
         shell: bash
         run: |
           BUILD_KIND="${{inputs.build_kind || 'dev'}}"
@@ -74,12 +74,6 @@ jobs:
           echo "VERSION_SUFFIX=${VERSION_SUFFIX}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
 
-      #- name: Read Version Information (Windows)
-      #  if: runner.os == 'Windows'
-      #  run: |
-      #    set /p VERSION_NUMBER =< ${{github.workspace}}\version.txt
-      #    echo %VERSION_NUMBER%
-
       - name: Output Version Info
         id: version-info
         shell: bash
@@ -96,11 +90,11 @@ jobs:
         env:
           VERSION_SUFFIX: ${{env.VERSION_SUFFIX}}
         shell: bash
-        run: cmake -B ${{github.workspace}}/build
+        run: cmake -B "${GITHUB_WORKSPACE}/build"
       
       - name: Build Project
         shell: bash
-        run: cmake --build ${{github.workspace}}/build --config Release
+        run: cmake --build "${GITHUB_WORKSPACE}/build" --config Release
 
       - name: Get Archive Name
         shell: bash
@@ -127,7 +121,7 @@ jobs:
       - name: Create Archive
         shell: bash
         run: |
-          zip -j "${{github.workspace}}/${ARCHIVE_NAME}.zip" "${{github.workspace}}/build/brb"
+          zip -j "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/brb"
 
       - name: Upload Archive
         uses: actions/upload-artifact@v4
