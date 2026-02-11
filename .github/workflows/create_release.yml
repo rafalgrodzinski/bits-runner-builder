@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           echo "stufff stuff" > dummy.txt
-          7za a dummy.zip dummy.txt
+          7z a -tzip dummy.zip dummy.txt
           ls
 
       - name: Install LLVM (macOS)
@@ -153,7 +153,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          7za a "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb"
+          7z a -tzip "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb"
 
       - name: Upload Archive
         uses: actions/upload-artifact@v4
