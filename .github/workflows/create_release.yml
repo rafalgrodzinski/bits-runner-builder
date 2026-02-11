@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           echo "stufff stuff" > dummy.txt
-          7z a dummy.z dummy.txt
+          7za a dummy.zip dummy.txt
           ls
 
       - name: Install LLVM (macOS)
@@ -144,14 +144,16 @@ jobs:
           echo "ARCHIVE_NAME=brb-${VERSION}-${VARIANT}" >> $GITHUB_ENV
 
       - name: Create Archive (macOS & Linux)
+        if: runner.os == 'macOS' || runner.os == 'Linux'
         shell: bash
         run: |
           zip -j "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/brb"
 
       - name: Create Archive (Windows)
+        if: runner.os == 'Windows'
         shell: bash
         run: |
-          7z a "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb"
+          7za a "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb"
 
       - name: Upload Archive
         uses: actions/upload-artifact@v4
