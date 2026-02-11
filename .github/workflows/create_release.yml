@@ -65,18 +65,19 @@ jobs:
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          ls /d/
           git clone --depth 1 --branch llvmorg-20.1.8 https://github.com/llvm/llvm-project.git ~/llvm
           pwd
           ls ~/
           cd ~/llvm
           pwd
           ls
-          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=D:\llvm-20.1.8 -Thost=x64 -B build -S llvm
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
           ls
           cmake --build build --config Release
-          cmake --install build --prefix D:\llvm-20.1.8
-          ls D:\
-          ls D:\llvm-20.1.8
+          cmake --install build --prefix /d/llvm-20.1.8
+          ls /d/
+          ls /d/llvm-20.1.8
 
       - name: Checkout Project
         uses: actions/checkout@v4
