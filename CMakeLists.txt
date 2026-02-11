@@ -15,7 +15,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 if(MSVC)
 	add_compile_options(
 		/utf-8 # warning C4819: The file contains a character that cannot be represented in the current code page (932)
-		/wd4624 # warning C4624 destructor was implicitly defined as deleted
+		/wd4624 # warning C4624: destructor was implicitly defined as deleted
+		/wd4267 # warning C4267: 'argument': conversion from 'size_t' to 'int'
 	)
 else()
 	set(CMAKE_CXX_FLAGS "-Wno-parentheses")
