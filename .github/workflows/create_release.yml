@@ -38,6 +38,13 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
+      - name: test
+        shell: bash
+        run: |
+          echo "stufff stuff" > dummy.txt
+          7z a dummy.z dummy.txt
+          ls
+
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
         run: brew install llvm@20
@@ -65,19 +72,11 @@ jobs:
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          ls /d/
           git clone --depth 1 --branch llvmorg-20.1.8 https://github.com/llvm/llvm-project.git ~/llvm
-          pwd
-          ls ~/
           cd ~/llvm
-          pwd
-          ls
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
-          ls
           cmake --build build --config Release
           cmake --install build --prefix /d/llvm-20.1.8
-          ls /d/
-          ls /d/llvm-20.1.8
 
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -144,10 +143,15 @@ jobs:
           esac
           echo "ARCHIVE_NAME=brb-${VERSION}-${VARIANT}" >> $GITHUB_ENV
 
-      - name: Create Archive
+      - name: Create Archive (macOS & Linux)
         shell: bash
         run: |
           zip -j "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/brb"
+
+      - name: Create Archive (Windows)
+        shell: bash
+        run: |
+          7z a "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb"
 
       - name: Upload Archive
         uses: actions/upload-artifact@v4
