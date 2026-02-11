@@ -61,6 +61,8 @@ passes u64 <- 0
     rep duration < 5_000_000
         findPrimes(n)
         passes <- passes + 1
+        // necessary to for windows, clock() returns different resolution
+        //duration <- clock() * 1_000 - startTime
         duration <- clock() - startTime
     ;
     duration <- duration / 1_000
