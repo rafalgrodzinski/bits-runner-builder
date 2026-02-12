@@ -82,7 +82,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          ls /d/llvm-20.1.8/
+          ls /d/llvm-20.1.8/lib/
 
       - name: Checkout Project
         uses: actions/checkout@v4
