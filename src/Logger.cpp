@@ -170,6 +170,8 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::END:
             return "END";
     }
+
+    return "{INVALID}";
 }
 
 string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> indents) {
@@ -207,6 +209,8 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::EXPRESSION:
             return toString(dynamic_pointer_cast<StatementExpression>(statement), indents);
     }
+
+    return "{INVALID}";
 }
 
 string Logger::toString(shared_ptr<StatementAssignment> statement, vector<IndentKind> indents) {
@@ -536,6 +540,8 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
         case ExpressionKind::CAST:
             return toString(dynamic_pointer_cast<ExpressionCast>(expression), isInline ? vector<IndentKind>() : indents);
     }
+
+    return "{INVALID}";
 }
 
 string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKind> indents) {
@@ -894,6 +900,8 @@ string Logger::toString(Parsee parsee) {
         case ParseeKind::DEBUG:
             return "DEBUG";
     }
+
+    return "{INVALID}";
 }
 
 string Logger::toString(TokenKind tokenKind) {
@@ -1020,6 +1028,8 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::END:
             return "END";
     }
+
+    return "{INVALID}";
 }
 
 string Logger::toString(ExpressionUnaryOperation operationUnary) {
@@ -1033,6 +1043,8 @@ string Logger::toString(ExpressionUnaryOperation operationUnary) {
         case ExpressionUnaryOperation::MINUS:
             return "MINUS";
     }
+
+    return "{INVALID}";
 }
 
 /// Public ///
@@ -1248,6 +1260,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::COMPOSITE:
             return format("COMPOSITE");
     }
+
+    return "{INVALID}";
 }
 
 string Logger::toString(ExpressionBinaryOperation operationBinary) {
@@ -1296,4 +1310,6 @@ string Logger::toString(ExpressionBinaryOperation operationBinary) {
         case ExpressionBinaryOperation::MOD:
             return "%";
     }
+
+    return "{INVALID}";
 }

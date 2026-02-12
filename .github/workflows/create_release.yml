@@ -1,5 +1,11 @@
 name: Build Project & Create Release
 
+# Runners
+# https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+# https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
+# https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
+# https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-VS2026-Readme.md
+
 on:
   push:
     branches:
@@ -25,7 +31,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-15-intel, macos-15, ubuntu-24.04]
+        os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
 
     runs-on: ${{matrix.os}}
 
@@ -44,14 +50,33 @@ jobs:
           wget https://github.com/Kitware/CMake/releases/download/v4.2.1/cmake-4.2.1-linux-x86_64.tar.gz -O cmake.tar.gz
           mkdir ${HOME}/.local
           tar -xzf cmake.tar.gz -C ${HOME}/.local --strip-components=1
-  
+
+      - name: Cache LLVM (Windows)
+        if: runner.os == 'Windows'
+        id: cache-llvm
+        uses: actions/cache@v5
+        with:
+          path: D:\llvm-20.1.8
+          key: ${{ runner.os }}-llvm-20.1.8
+
+      - name: Build LLVM (Windows)
+        if: runner.os == 'Windows' && steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          git clone --depth 1 --branch llvmorg-20.1.8 https://github.com/llvm/llvm-project.git ~/llvm
+          cd ~/llvm
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
+          cmake --build build --config Release
+          cmake --install build --prefix /d/llvm-20.1.8
+
       - name: Checkout Project
         uses: actions/checkout@v4
 
       - name: Read Version Information
+        shell: bash
         run: |
           BUILD_KIND="${{inputs.build_kind || 'dev'}}"
-          VERSION_NUMBER="$(cat ${{github.workspace}}/version.txt)"
+          VERSION_NUMBER="$(cat ${GITHUB_WORKSPACE}/version.txt)"
           case "${BUILD_KIND}" in
             "release")
               VERSION_SUFFIX=""
@@ -67,23 +92,28 @@ jobs:
 
       - name: Output Version Info
         id: version-info
+        shell: bash
         run: |
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Output Tag Info
         id: tag-info
+        shell: bash
         run: |
           echo "TAG=${BUILD_KIND}/${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_OUTPUT
 
       - name: Configure Project
         env:
           VERSION_SUFFIX: ${{env.VERSION_SUFFIX}}
-        run: cmake -B ${{github.workspace}}/build
+        shell: bash
+        run: cmake -B "${GITHUB_WORKSPACE}/build" -DCMAKE_PREFIX_PATH=/d/llvm-20.1.8
       
       - name: Build Project
-        run: cmake --build ${{github.workspace}}/build --config Release
+        shell: bash
+        run: cmake --build "${GITHUB_WORKSPACE}/build" --config Release
 
       - name: Get Archive Name
+        shell: bash
         run: |
           case "${{matrix.os}}" in
             "macos-15-intel")
@@ -95,15 +125,26 @@ jobs:
             "ubuntu-24.04")
               VARIANT="linux-x86_64"
             ;;
+            "windows-2025-vs2026")
+              VARIANT="win-x86_64"
+            ;;
             *)
               exit 1
             ;;
           esac
           echo "ARCHIVE_NAME=brb-${VERSION}-${VARIANT}" >> $GITHUB_ENV
 
-      - name: Create Archive
+      - name: Create Archive (macOS & Linux)
+        if: runner.os == 'macOS' || runner.os == 'Linux'
+        shell: bash
         run: |
-          zip -j "${{github.workspace}}/${ARCHIVE_NAME}.zip" "${{github.workspace}}/build/brb"
+          zip -j "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/brb"
+
+      - name: Create Archive (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          7z a -tzip "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb.exe"
 
       - name: Upload Archive
         uses: actions/upload-artifact@v4
@@ -126,10 +167,6 @@ jobs:
         with:
           path: "${{github.workspace}}/"
           merge-multiple: true
-
-      - name: debug
-        run: |
-          ls -aF "${{github.workspace}}/"
 
       - name: Create Release
         env:

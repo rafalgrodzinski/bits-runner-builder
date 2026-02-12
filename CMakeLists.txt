@@ -12,7 +12,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_COLOR_DIAGNOSTICS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(CMAKE_CXX_FLAGS "-Wno-parentheses")
+if(MSVC)
+	add_compile_options(
+		/utf-8 # warning C4819: The file contains a character that cannot be represented in the current code page (932)
+		/wd4624 # warning C4624: destructor was implicitly defined as deleted
+		/wd4267 # warning C4267: 'argument': conversion from 'size_t' to 'int'
+	)
+else()
+	set(CMAKE_CXX_FLAGS "-Wno-parentheses")
+endif()
 
 set(VERSION_SUFFIX "$ENV{VERSION_SUFFIX}")
 set(VERSION_SUFFIX "-dev-current" CACHE STRING "Version Suffix")
@@ -37,4 +45,79 @@ add_executable(brb ${SOURCES})
 
 target_include_directories(brb PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-target_link_libraries(brb LLVM)
+if(WIN32)
+	llvm_map_components_to_libnames(
+		LLVM_LIBS
+
+		core
+		irreader
+		passes
+		mc
+		support
+		scalaropts
+		target
+		targetparser
+		transformutils
+		
+		aarch64asmparser
+		aarch64codegen
+		
+		amdgpuasmparser
+		amdgpucodegen
+		
+		armasmparser
+		armcodegen
+		
+		avrasmparser
+		avrcodegen
+		
+		bpfasmparser
+		bpfcodegen
+		
+		hexagonasmparser
+		hexagoncodegen
+		
+		lanaiasmparser
+		lanaicodegen
+		
+		loongarchasmparser
+		loongarchcodegen
+		
+		mipsasmparser
+		mipscodegen
+		
+		msp430asmparser
+		msp430codegen
+		
+		nvptxcodegen
+		
+		powerpcasmparser
+		powerpccodegen
+		
+		riscvasmparser
+		riscvcodegen
+		
+		sparcasmparser
+		sparccodegen
+		
+		spirvcodegen
+		
+		systemzasmparser
+		systemzcodegen
+		
+		veasmparser
+		vecodegen
+		
+		webassemblyasmparser
+		webassemblycodegen
+		
+		x86codegen
+		x86asmparser
+		
+		xcorecodegen 
+	)
+else()
+	set(LLVM_LIBS LLVM)
+endif()
+
+target_link_libraries(brb ${LLVM_LIBS})

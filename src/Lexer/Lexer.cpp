@@ -63,6 +63,10 @@ shared_ptr<Token> Lexer::nextToken() {
             // new line
             if (token = match(TokenKind::NEW_LINE, "\n", false))
                 return token;
+
+            // new line windows
+            if (token = match(TokenKind::NEW_LINE, "\r\n", false))
+                return token;
     
             // eof
             if (token = matchEnd())
@@ -81,6 +85,13 @@ shared_ptr<Token> Lexer::nextToken() {
         do {
             // new line
             token = match(TokenKind::NEW_LINE, "\n", false);
+            newLineToken = newLineToken ? newLineToken : token;
+            if (token) {
+                continue;
+            }
+
+            // new line windows
+            token = match(TokenKind::NEW_LINE, "\r\n", false);
             newLineToken = newLineToken ? newLineToken : token;
             if (token) {
                 continue;
@@ -305,6 +316,12 @@ shared_ptr<Token> Lexer::nextToken() {
 
     // new line
     if (token = match(TokenKind::NEW_LINE, "\n", false)) {
+        tryStartingRawSourceParsing();
+        return token;
+    }
+
+    // new line windows
+    if (token = match(TokenKind::NEW_LINE, "\r\n", false)) {
         tryStartingRawSourceParsing();
         return token;
     }
@@ -558,7 +575,8 @@ shared_ptr<Token> Lexer::matchRawSourceLine() {
         return nullptr;
     }
 
-    while (source.at(nextIndex) != '\n')
+    // skip until end of line
+    while (source.at(nextIndex) != '\n' && source.at(nextIndex) != '\r')
         nextIndex++;
 
     string lexme = source.substr(currentIndex, nextIndex - currentIndex);
@@ -633,6 +651,7 @@ bool Lexer::isSeparator(int index) {
         case '~':
         case ' ':
         case '\t':
+        case '\r':
         case '\n':
         case '.':
             return true;
