@@ -32,7 +32,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
+        #os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
+        os: [windows-2025-vs2026]
 
     runs-on: ${{matrix.os}}
 
@@ -76,6 +77,12 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
           cmake --build build --config Release
           cmake --install build --prefix /d/llvm-20.1.8
+
+      - name: Debug
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          ls /d/llvm-20.1.8/
 
       - name: Checkout Project
         uses: actions/checkout@v4
