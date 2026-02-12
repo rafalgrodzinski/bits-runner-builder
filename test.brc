@@ -1,5 +1,7 @@
-main fun
-    add(2, 5)
+@extern putchar fun: character u64 -> u32
+
+@export main fun
+    print("test hello\n")
 ;
 
 /*@export add raw<"=r,r,r">: arg1 u32, arg2 u32 -> u32
