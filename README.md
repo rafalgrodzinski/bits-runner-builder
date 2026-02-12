@@ -67,11 +67,11 @@ Tested on macOS 15 (Sequoia)
 ### Linux
 Tested on Ubuntu
 - LLVM: `sudo apt install llvm-20`
-- Get latest macOS build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-linux-x86_64.zip`
+- Get latest Linux build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-linux-x86_64.zip`
 
 ### Windows
 Tested on Windows 11, but should work fine for other 64 bit windows too. Windows version has statically linked LLVM, so no additional libraries are required.
-- Get latest macOS build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-win-x86_64.zip`
+- Get latest Windows build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-win-x86_64.zip`
 
 
 ## How to Build?
