@@ -74,7 +74,7 @@ jobs:
         run: |
           git clone --depth 1 --branch llvmorg-20.1.8 https://github.com/llvm/llvm-project.git ~/llvm
           cd ~/llvm
-          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
+          cmake -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
           cmake --build build --config Release
           cmake --install build --prefix /d/llvm-20.1.8
 
@@ -82,6 +82,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
+          ls /d/llvm-20.1.8/
           ls /d/llvm-20.1.8/lib/
 
       - name: Checkout Project

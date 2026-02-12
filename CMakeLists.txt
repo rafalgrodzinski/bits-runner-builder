@@ -45,79 +45,79 @@ add_executable(brb ${SOURCES})
 
 target_include_directories(brb PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-if(WIN32)
-	llvm_map_components_to_libnames(
-		LLVM_LIBS
-
-		core
-		irreader
-		passes
-		mc
-		support
-		scalaropts
-		target
-		targetparser
-		transformutils
-		
-		aarch64asmparser
-		aarch64codegen
-		
-		amdgpuasmparser
-		amdgpucodegen
-		
-		armasmparser
-		armcodegen
-		
-		avrasmparser
-		avrcodegen
-		
-		bpfasmparser
-		bpfcodegen
-		
-		hexagonasmparser
-		hexagoncodegen
-		
-		lanaiasmparser
-		lanaicodegen
-		
-		loongarchasmparser
-		loongarchcodegen
-		
-		mipsasmparser
-		mipscodegen
-		
-		msp430asmparser
-		msp430codegen
-		
-		nvptxcodegen
-		
-		powerpcasmparser
-		powerpccodegen
-		
-		riscvasmparser
-		riscvcodegen
-		
-		sparcasmparser
-		sparccodegen
-		
-		spirvcodegen
-		
-		systemzasmparser
-		systemzcodegen
-		
-		veasmparser
-		vecodegen
-		
-		webassemblyasmparser
-		webassemblycodegen
-		
-		x86codegen
-		x86asmparser
-		
-		xcorecodegen 
-	)
-else()
+#f(WIN32)
+#	llvm_map_components_to_libnames(
+#		LLVM_LIBS
+#
+#		core
+#		irreader
+#		passes
+#		mc
+#		support
+#		scalaropts
+#		target
+#		targetparser
+#		transformutils
+#		
+#		aarch64asmparser
+#		aarch64codegen
+#		
+#		amdgpuasmparser
+#		amdgpucodegen
+#		
+#		armasmparser
+#		armcodegen
+#		
+#		avrasmparser
+#		avrcodegen
+#		
+#		bpfasmparser
+#		bpfcodegen
+#		
+#		hexagonasmparser
+#		hexagoncodegen
+#		
+#		lanaiasmparser
+#		lanaicodegen
+#		
+#		loongarchasmparser
+#		loongarchcodegen
+#		
+#		mipsasmparser
+#		mipscodegen
+#		
+#		msp430asmparser
+#		msp430codegen
+#		
+#		nvptxcodegen
+#		
+#		powerpcasmparser
+#		powerpccodegen
+#		
+#		riscvasmparser
+#		riscvcodegen
+#		
+#		sparcasmparser
+#		sparccodegen
+#		
+#		spirvcodegen
+#		
+#		systemzasmparser
+#		systemzcodegen
+#		
+#		veasmparser
+#		vecodegen
+#		
+#		webassemblyasmparser
+#		webassemblycodegen
+#		
+#		x86codegen
+#		x86asmparser
+#		
+#		xcorecodegen 
+#	)
+#else()
 	set(LLVM_LIBS LLVM)
-endif()
+#endif()
 
 target_link_libraries(brb ${LLVM_LIBS})
