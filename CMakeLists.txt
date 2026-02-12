@@ -12,7 +12,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_COLOR_DIAGNOSTICS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-#set(CMAKE_CXX_FLAGS "-Wno-parentheses")
+if(MSVC)
+else()
+	set(CMAKE_CXX_FLAGS "-Wno-parentheses")
+endif()
 
 set(VERSION_SUFFIX "$ENV{VERSION_SUFFIX}")
 set(VERSION_SUFFIX "-dev-current" CACHE STRING "Version Suffix")
@@ -39,15 +42,16 @@ target_include_directories(brb PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 llvm_map_components_to_libnames(
 	LLVM_LIBS
-	support
+
 	core
 	irreader
 	passes
-	scalaropts
-	transformutils
 	mc
+	support
+	scalaropts
 	target
 	targetparser
+	transformutils
 	
 	aarch64asmparser
 	aarch64codegen
@@ -107,5 +111,4 @@ llvm_map_components_to_libnames(
 	xcorecodegen 
 )
 
-#target_link_libraries(brb LLVM)
 target_link_libraries(brb ${LLVM_LIBS})
