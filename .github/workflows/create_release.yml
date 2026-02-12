@@ -32,8 +32,7 @@ jobs:
 
     strategy:
       matrix:
-        #os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
-        os: [windows-2025-vs2026]
+        os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
 
     runs-on: ${{matrix.os}}
 
@@ -74,7 +73,7 @@ jobs:
         run: |
           git clone --depth 1 --branch llvmorg-20.1.8 https://github.com/llvm/llvm-project.git ~/llvm
           cd ~/llvm
-          cmake -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
           cmake --build build --config Release
           cmake --install build --prefix /d/llvm-20.1.8
 
@@ -184,12 +183,12 @@ jobs:
           path: "${{github.workspace}}/"
           merge-multiple: true
 
-  #    - name: Create Release
-  #      env:
-  #        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-  #        VERSION: ${{needs.build-project.outputs.version}}
-  #        TAG: ${{needs.build-project.outputs.tag}}
-  #      run: |
-  #        gh release create "${TAG}" "${{github.workspace}}/*.zip" \
-  #          --title "${VERSION}" \
-  #          --notes-file "${{github.workspace}}/docs/Notes.md"
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          VERSION: ${{needs.build-project.outputs.version}}
+          TAG: ${{needs.build-project.outputs.tag}}
+        run: |
+          gh release create "${TAG}" "${{github.workspace}}/*.zip" \
+            --title "${VERSION}" \
+            --notes-file "${{github.workspace}}/docs/Notes.md"
