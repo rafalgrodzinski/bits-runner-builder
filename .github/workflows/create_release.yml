@@ -9,7 +9,6 @@ name: Build Project & Create Release
 on:
   push:
     branches:
-      - "130-handle-build-install-on-windows"
       - "main"
   workflow_dispatch:
     inputs:
@@ -37,13 +36,6 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - name: test
-        shell: bash
-        run: |
-          echo "stufff stuff" > dummy.txt
-          7z a -tzip dummy.zip dummy.txt
-          ls
-
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
         run: brew install llvm@20
@@ -76,13 +68,6 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/d/llvm-20.1.8 -Thost=x64 -B build -S llvm
           cmake --build build --config Release
           cmake --install build --prefix /d/llvm-20.1.8
-
-      - name: Debug
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          ls /d/llvm-20.1.8/
-          ls /d/llvm-20.1.8/lib/
 
       - name: Checkout Project
         uses: actions/checkout@v4
