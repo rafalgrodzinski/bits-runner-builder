@@ -32,8 +32,7 @@ jobs:
 
     strategy:
       matrix:
-        #os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
-        os: [windows-2025-vs2026]
+        os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
 
     runs-on: ${{matrix.os}}
 
@@ -162,25 +161,21 @@ jobs:
           path: "${{github.workspace}}/*.zip"
           if-no-files-found: error
 
-  #create-release:
-  #  runs-on: macos-15
-#
-  #  needs: build-project
-#
-  #  steps:
-  #    - name: Checkout Project
-  #      uses: actions/checkout@v4
-#
-  #    - name: Download Artifacts
-  #      uses: actions/download-artifact@v5
-  #      with:
-  #        path: "${{github.workspace}}/"
-  #        merge-multiple: true
-#
-  #    - name: debug
-  #      run: |
-  #        ls -aF "${{github.workspace}}/"
-#
+  create-release:
+    runs-on: macos-15
+
+    needs: build-project
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: "${{github.workspace}}/"
+          merge-multiple: true
+
   #    - name: Create Release
   #      env:
   #        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
