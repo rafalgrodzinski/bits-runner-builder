@@ -8,6 +8,8 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
+- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/160](https://github.com/rafalgrodzinski/bits-runner-builder/pull/160)
+  - Sped up analysis
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/151](https://github.com/rafalgrodzinski/bits-runner-builder/pull/151)
   - Builds and runs on windows
   - Automatic relase with github actions
