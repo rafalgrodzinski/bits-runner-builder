@@ -10,6 +10,8 @@ Available for:
 Changelist:
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/160](https://github.com/rafalgrodzinski/bits-runner-builder/pull/160)
   - Sped up analysis
+  - Zero uninitialized local variables
+  - Restrict usage of `@export`, and intitializer on blob members
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/151](https://github.com/rafalgrodzinski/bits-runner-builder/pull/151)
   - Builds and runs on windows
   - Automatic relase with github actions
@@ -28,7 +30,7 @@ Changelist:
   - Specialized `a` type for handling addresses
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/148](https://github.com/rafalgrodzinski/bits-runner-builder/pull/148)
   - Use new pass manager for optimizations
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/147 ](https://github.com/rafalgrodzinski/bits-runner-builder/pull/147)
+- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/147](https://github.com/rafalgrodzinski/bits-runner-builder/pull/147)
   - Optimized builds
   - Using wrapped values all over the place
   - Bunch of various bug fixes
