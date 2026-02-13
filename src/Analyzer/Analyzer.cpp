@@ -143,10 +143,31 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     scope->pushLevel();
-    // check blob member variables only
-    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
+    // check and verify blob member variables
+    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+        // blob variable should not have a value expression
+        if (statementVariable->getExpression() != nullptr) {
+            markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
+            return;
+        }
+
+        // members should not have @export
+        if (statementVariable->getShouldExport()) {
+            markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
+            return;
+        }
         checkStatement(statementVariable);
+    }
     scope->popLevel();
+
+    // verify member functions
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+        // members should not have export
+        if (statementFunction->getShouldExport()) {
+            markErrorInvalidAttribute(statementFunction->getLocation(), "@export");
+            return;
+        }
+    }
 
     // register blob members in scope
     vector<pair<string, shared_ptr<ValueType>>> members;
@@ -1534,6 +1555,11 @@ void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, string ide
     errors.push_back(Error::error(location, message));
 }
 
+void Analyzer::markErrorInvalidAttribute(shared_ptr<Location> location, string name) {
+    string message = format("Invalid attribute {}", name);
+    errors.push_back(Error::error(location, message));
+}
+
 void Analyzer::markErrorInvalidArgumentsCount(shared_ptr<Location> location, int actualCount, int expectedCount) {
     string message = format("Invalid arguments count {}, expected {}", actualCount, expectedCount);
     errors.push_back(Error::error(location, message));
@@ -1575,6 +1601,11 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
 
 void Analyzer::markErrorNotDefined(shared_ptr<Location> location, string name) {
     string message = format("{} is not defined in scope", name);
+    errors.push_back(Error::error(location, message));
+}
+
+void Analyzer::markErrorUnexpectedExpression(shared_ptr<Location> location) {
+    string message = format("Unexpected expression");
     errors.push_back(Error::error(location, message));
 }
 

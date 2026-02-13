@@ -168,9 +168,6 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     // Disable usage of libc functions (memcpy, etc)
     llvm::Triple triple = llvm::Triple(targetTriple);
     llvm::TargetLibraryInfoImpl targetLibraryInfoImpl(triple);
-    targetLibraryInfoImpl.setUnavailable(llvm::LibFunc_memccpy);
-    targetLibraryInfoImpl.setUnavailable(llvm::LibFunc_memmove);
-    targetLibraryInfoImpl.setUnavailable(llvm::LibFunc_memset);
     functionAnalysisManager.registerPass([&targetLibraryInfoImpl]{ return llvm::TargetLibraryAnalysis(targetLibraryInfoImpl); });
 
     llvm::ModulePassManager passManager = passBuilder.buildPerModuleDefaultPipeline(passOptimizationLevel);

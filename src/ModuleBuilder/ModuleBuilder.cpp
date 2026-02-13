@@ -83,7 +83,7 @@ shared_ptr<llvm::Module> ModuleBuilder::getModuleLLVM() {
                 buildStatement(statementFunction);
             }
         }
-    } 
+    }
 
     // build body statements
     for (shared_ptr<Statement> statement : module->getBodyStatements()) {

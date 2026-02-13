@@ -1,7 +1,7 @@
 @import B
 
 Stuff blob
-    @export aa u32 <- 5
+    aa u32
     b data<u32, 8>
     c ptr<u32>
 ;
