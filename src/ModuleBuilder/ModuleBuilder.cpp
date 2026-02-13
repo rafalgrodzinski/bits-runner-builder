@@ -630,13 +630,15 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
         )
     );
 
-    if (statement->getExpression() == nullptr)
-        return;
-
-    buildAssignment(
-        WrappedValue::wrappedValue(moduleLLVM, builder, alloca, statement->getValueType()),
-        statement->getExpression()
-    );
+    if (shared_ptr<Expression> valueExpression = statement->getExpression()) {
+        buildAssignment(
+            WrappedValue::wrappedValue(moduleLLVM, builder, alloca, statement->getValueType()),
+            valueExpression
+        );
+    } else {
+        llvm::Constant *constantValue = llvm::Constant::getNullValue(type);
+        builder->CreateStore(constantValue, alloca);
+    }
 }
 
 void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {

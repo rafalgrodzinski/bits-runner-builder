@@ -1,10 +1,25 @@
-@extern putchar fun: character u64 -> u32
+@import B
 
-@export main fun
-    print("test hello\n")
+Stuff blob
+    aa u32
+    b data<u32, 8>
+    c ptr<u32>
 ;
 
-/*@export add raw<"=r,r,r">: arg1 u32, arg2 u32 -> u32
-    add $1, $2
-    mov $0, $1
-;*/
+@export main fun
+    v blob<Stuff>
+
+    text blob<@B.String>
+
+    text <- @B.StringForU32(v.aa)
+    text.println()
+
+    rep i u32 <- 0, i < 8, i <- i + 1
+        text <- @B.StringForU32(v.b[i])
+        text.println()
+    ;
+
+    text <- @B.StringForU32(v.c.vadr.u32)
+    text.println()
+;
+
