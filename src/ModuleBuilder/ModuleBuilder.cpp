@@ -729,21 +729,15 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 int sourceCount = sourceWrappedValue->getArrayType()->getArrayNumElements();
                 int targetCount = targetWrappedValue->getArrayType()->getNumElements();
                 int elementsCount = min(sourceCount, targetCount);
+                int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
-                for (int i=0; i<elementsCount; i++) {
-                    llvm::Value *index[] = {
-                        builder->getInt32(0),
-                        builder->getInt32(i)
-                    };
-
-                    // get pointers for both source and target
-                    llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getArrayType(), sourceWrappedValue->getPointerValue(), index);
-                    llvm::Value *targetMemberPtr = builder->CreateGEP(targetWrappedValue->getArrayType(), targetWrappedValue->getPointerValue(), index);
-                    // load value from source pointer
-                    llvm::Value *sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getArrayElementType(), sourceMemberPtr);
-                    // and then store it at the target pointer
-                    builder->CreateStore(sourceMemberValue, targetMemberPtr);
-                }
+                builder->CreateMemCpy(
+                    targetWrappedValue->getPointerValue(),
+                    llvm::MaybeAlign(1),
+                    sourceWrappedValue->getPointerValue(),
+                    llvm::MaybeAlign(1),
+                    elementsCount * elementSize
+                );
                 break;
             }
             default:
@@ -1797,24 +1791,19 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         llvm::AllocaInst *targetAlloca = builder->CreateAlloca(targetType);
 
         int elementsCount = min(sourceSize, targetSize);
+        int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
         bool areElementTypesSame = sourceWrappedValue->getValueType()->getSubType()->isEqual(targetValueType->getSubType());
+
         // Do we just adjust the count or do we need to cast each of the element
         if (areElementTypesSame) {
-            for (int i=0; i<elementsCount; i++) {
-                llvm::Value *index[] = {
-                    builder->getInt32(0),
-                    builder->getInt32(i)
-                };
-
-                // get pointers for both source and target
-                llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getArrayType(), sourceWrappedValue->getPointerValue(), index);
-                llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetAlloca, index);
-                // load value from source pointer
-                llvm::Value *sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getArrayElementType(), sourceMemberPtr);
-                // and then store it at the target pointer
-                builder->CreateStore(sourceMemberValue, targetMemberPtr);
-            }
+            builder->CreateMemCpy(
+                targetAlloca,
+                llvm::MaybeAlign(1),
+                sourceWrappedValue->getPointerValue(),
+                llvm::MaybeAlign(1),
+                elementsCount * elementSize
+            );
         } else {
             // iterate over each of the member
             for (int i=0; i<elementsCount; i++) {
