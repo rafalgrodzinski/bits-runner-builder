@@ -9,7 +9,6 @@
             //"args": ["--verb=v3", "--opt=o0", "--gen=obj", "${workspaceFolder}/test.brc"],
             "args": ["--verb=v3", "--gen=obj", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/B/String.brc", "${workspaceFolder}/lib/B/BSys.brc"],
             "cwd": "${workspaceFolder}",
-            "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": "Build Bits Runner Builder (Debug)"
         },
         {
@@ -20,7 +19,6 @@
             //"args": ["--verb=v3", "--opt=o0", "--gen=obj", "${workspaceFolder}/test.brc"],
             "args": ["--verb=v3", "--gen=obj", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/B/String.brc", "${workspaceFolder}/lib/B/BSys.brc"],
             "cwd": "${workspaceFolder}",
-            "externalConsole": false,
             "preLaunchTask": "Build Bits Runner Builder (Debug)"
         }
     ]
