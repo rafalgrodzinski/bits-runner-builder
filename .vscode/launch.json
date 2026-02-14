@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Bits Runner Builder",
+            "name": "Debug Bits Runner Builder (LLDB)",
             "type": "lldb-dap",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
@@ -10,6 +10,17 @@
             "args": ["--verb=v3", "--gen=obj", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/B/String.brc", "${workspaceFolder}/lib/B/BSys.brc"],
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
+        },
+        {
+            "name": "Debug Bits Runner Builder (MSVC)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}\\build\\RelWithDebInfo\\brb.exe",
+            //"program": "${command:cmake.launchTargetPath}",
+            "args": ["--verb=v3", "--opt=o0", "--gen=obj", "${workspaceFolder}/test.brc"],
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "preLaunchTask": "Build Bits Runner Builder (Debug)"
         }
     ]
 }
