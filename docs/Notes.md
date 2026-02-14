@@ -12,7 +12,8 @@ Changelist:
   - Sped up analysis
   - Zero uninitialized local variables
   - Restrict usage of `@export`, and intitializer on blob members
-  - Enaled usage of intrinsic functions `memset`, `memmove`, and `memcpy`, 
+  - Enaled usage of intrinsic functions `memset`, `memmove`, and `memcpy`
+  - Configured MSVC debugging on windows
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/151](https://github.com/rafalgrodzinski/bits-runner-builder/pull/151)
   - Builds and runs on windows
   - Automatic relase with github actions
