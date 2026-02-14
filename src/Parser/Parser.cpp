@@ -310,7 +310,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport;
+    bool shouldExport = false;
     string identifier;
     shared_ptr<ValueType> valueType;
     shared_ptr<Expression> expression;
