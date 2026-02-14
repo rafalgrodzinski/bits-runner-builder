@@ -83,7 +83,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     vector<shared_ptr<StatementVariable>> exportedVariableStatements;
                     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
                         shared_ptr<StatementVariable> exportedVariableStatement = make_shared<StatementVariable>(
-                            statementBlob->getShouldExport(),
+                            statementVariable->getShouldExport(),
                             statementVariable->getIdentifier(),
                             typeForExportedStatementFromType(statementVariable->getValueType(), moduleName),
                             statementVariable->getExpression(),

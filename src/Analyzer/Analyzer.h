@@ -102,6 +102,7 @@ private:
     void checkValueType(shared_ptr<ValueType> valueType);
 
     void markErrorAlreadyDefined(shared_ptr<Location> location, string identifier);
+    void markErrorInvalidAttribute(shared_ptr<Location> location, string name);
     void markErrorInvalidArgumentsCount(shared_ptr<Location> location, int actulCount, int expectedCount);
     void markErrorInvalidBuiltIn(shared_ptr<Location> location, string builtInName, shared_ptr<ValueType> type);
     void markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
@@ -110,6 +111,7 @@ private:
     void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markErrorInvalidType(shared_ptr<Location> location, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
     void markErrorNotDefined(shared_ptr<Location> location, string name);
+    void markErrorUnexpectedExpression(shared_ptr<Location> location);
 
 public:
     Analyzer(shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap);

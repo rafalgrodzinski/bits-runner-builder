@@ -65,7 +65,7 @@ Tested on macOS 15 (Sequoia)
 - Get latest macOS build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-macos-<arch>.zip`
 
 ### Linux
-Tested on Ubuntu
+Tested on Ubuntu 24
 - LLVM: `sudo apt install llvm-20`
 - Get latest Linux build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-linux-x86_64.zip`
 
@@ -98,12 +98,12 @@ Required dependencies
 Windows build is a little bit more involved because you need to setup the environment and build LLVM from sources. Available LLVM binaries don't contain the necessary libraries.
 - Instal `Visual Studio 2026` (any version) or just the `Build Tools for Visual Studio 2026` from (here)[https://visualstudio.microsoft.com/ja/downloads/]. Make sure that you install C++ and CMake components.
 - Setup `PATH` environment variable so it includes the `cmake.exe` location at
-- Download and unzip (LLVM 20.1.8 sources)[https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-20.1.8.zip] from release page and unzip them. Or run: ```git clone git@github.com:llvm/llvm-project.git --branch llvmorg-20.1.8 --depth 1```
-- Run Visual Studio console ``, go to the source folder and first configure the project: ```cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:\llvm-20.1.8 -Thost=x64 -B build -S llvm ```
-- Once that succeeded, build the project by running: ```cmake --build build --config Release```. This can take anything from 10 minutes to 2-3 hours, depending on your hardware.
-- And finally install by running: ```cmake --install build --prefix C:\llvm-20.1.8```
-- Now that LLVM is ready, go to brb source and configure: ```cmake -B build -DCMAKE_PREFIX_PATH=C:\llvm-20.1.8```
-- And finally build it: ```cmake --build build --config Release``` (or `--config Debug`)
+- Download and unzip (LLVM 20.1.8 sources)[https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-20.1.8.zip] from release page and unzip them. Or run: `git clone git@github.com:llvm/llvm-project.git --branch llvmorg-20.1.8 --depth 1`
+- Run Visual Studio console `x64 Native Tools Command Prompt for VS`, go to the source folder and first configure the project: `cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:\llvm-20.1.8 -Thost=x64 -B build -S llvm`
+- Once that succeeded, build the project by running: `cmake --build build --config Release`. This can take anything from 10 minutes to 2-3 hours, depending on your hardware.
+- And finally install by running: `cmake --install build --prefix C:\llvm-20.1.8`
+- Now that LLVM is ready, go to brb source and configure: `cmake -B build -DCMAKE_PREFIX_PATH=C:\llvm-20.1.8`
+- And finally build it: `cmake --build build --config Release` (or `--config Debug`)
 - You'll then be able to find the executable under `build/Release/brb`.
 
 ### Visual Studio Code

@@ -273,7 +273,6 @@ int main(int argc, char **argv) {
     // Specify code generator for desired target
     CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
-    //for (const auto &statementsEntry : statementsMap) {
     for (shared_ptr<Module> module : modulesStore.getModules()) {
         time_t timeStamp;
 

@@ -82,4 +82,5 @@ BRC supports inline assembly, which is declared simillary to a function, but req
 - More detaled description of each of the pass
 [The Complete Evolution of LLVM Pass Infrastructure](https://www.compilersutra.com/docs/llvm/llvm_pass_tracker/llvm_pass/)
 
+## Linking with LLVM
 `llvm-config --components`
