@@ -22,6 +22,7 @@
 #include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementProto.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -136,6 +137,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "DATA";
         case TokenKind::BLOB:
             return "BLOB";
+        case TokenKind::PROTO:
+            return "PROTO";
         case TokenKind::PTR:
             return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
@@ -198,7 +201,9 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
             return toString(dynamic_pointer_cast<StatementBlob>(statement), indents);
         case StatementKind::BLOB_DECLARATION:
             return toString(dynamic_pointer_cast<StatementBlobDeclaration>(statement), indents);
-        case StatementKind::BLOCK:
+            case StatementKind::PROTO:
+                return toString(dynamic_pointer_cast<StatementProto>(statement), indents);
+            case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
         case StatementKind::ASSIGNMENT:
             return toString(dynamic_pointer_cast<StatementAssignment>(statement), indents);
@@ -271,6 +276,46 @@ string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<I
     string line = format ("BLOB DECL `{}`", statement->getName());
     return formattedLine(line, indents);
 }
+
+ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
+    if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+
+    int variablestatementsCount = statement->getVariableStatements().size();
+    int functionStatementsCount = statement->getFunctionStatements().size();
+
+    // member variables
+    for (int i=0; i<variablestatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getVariableStatements().at(i), currentIndents);
+    }
+
+    // member functions
+    for (int i=0; i<functionStatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+        
+        text += toString(statement->getFunctionStatements().at(i), currentIndents);
+    }
+
+    return text;
+ }
 
 string Logger::toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents) {
     string text;
@@ -994,6 +1039,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "DATA";
         case TokenKind::BLOB:
             return "BLOB";
+        case TokenKind::PROTO:
+            return "PROTO";
         case TokenKind::PTR:
             return "PTR";
         case TokenKind::RAW_SOURCE_LINE:

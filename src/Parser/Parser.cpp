@@ -26,6 +26,7 @@
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlob.h"
+#include "Parser/Statement/StatementProto.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -58,7 +59,8 @@ vector<shared_ptr<Statement>> Parser::getStatements() {
                             StatementKind::VARIABLE,
                             StatementKind::META_EXTERN_FUNCTION,
                             StatementKind::META_EXTERN_VARIABLE,
-                            StatementKind::BLOB
+                            StatementKind::BLOB,
+                            StatementKind::PROTO
                         },
                         ParseeLevel::REQUIRED,
                         true
@@ -633,6 +635,84 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     }
 
     return make_shared<StatementBlob>(shouldExport, name, variableStatements, functionStatements, location);
+}
+
+shared_ptr<Statement> Parser::matchStatementProto() {
+    enum Tag {
+        TAG_SHOULD_EXPORT,
+        TAG_NAME,
+        TAG_STATEMENT_IN_PROTO
+    };
+
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
+        {
+            // exports
+            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+            // identifier
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+            Parsee::tokenParsee(TokenKind::PROTO, ParseeLevel::REQUIRED, false),
+            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+            // members
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::statementKindsParsee(
+                        {StatementKind::VARIABLE, StatementKind::FUNCTION},
+                        ParseeLevel::REQUIRED,
+                        true,
+                        TAG_STATEMENT_IN_PROTO
+                    ),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+        }
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    bool shouldExport = false;
+    string name;
+    vector<shared_ptr<StatementVariable>> variableStatements;
+    vector<shared_ptr<StatementFunction>> functionStatements;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_SHOULD_EXPORT: {
+                shouldExport = true;
+                break;
+            }
+            case TAG_NAME: {
+                name = parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_STATEMENT_IN_PROTO: {
+                switch (parseeResult.getStatement()->getKind()) {
+                    case StatementKind::VARIABLE: {
+                        variableStatements.push_back(dynamic_pointer_cast<StatementVariable>(parseeResult.getStatement()));
+                        break;
+                    }
+                    case StatementKind::FUNCTION: {
+                        shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(parseeResult.getStatement());
+                        /*// prefix function with name of the blob
+                        statementFunction->name = format("{}.{}", name, statementFunction->getName());
+                        // Insert an implicit "it" argument for the blob function
+                        pair<string, shared_ptr<ValueType>> itArgument = pair("it", ValueType::ptr(ValueType::blob(name)));
+                        statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);*/
+                        functionStatements.push_back(statementFunction);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+        }
+    }
+
+    return make_shared<StatementProto>(shouldExport, name, variableStatements, functionStatements, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
@@ -1915,6 +1995,9 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(ve
                 break;
             case StatementKind::BLOB:
                 statement = matchStatementBlob();
+                break;
+            case StatementKind::PROTO:
+                statement = matchStatementProto();
                 break;
             case StatementKind::EXPRESSION:
                 statement = matchStatementExpression();

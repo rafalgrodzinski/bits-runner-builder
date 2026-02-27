@@ -1,13 +1,20 @@
-@import B
+//@import B
 
-Stuff blob
+Thing proto
+    doStuff fun
+    num u32
+;
+
+Stuff blob//: Thing
     aa u32
     b data<u32, 8>
     c ptr<u32>
 ;
 
+
+
 @export main fun
-    v blob<Stuff>
+    /*v blob<Stuff>
 
     text blob<@B.String>
 
@@ -20,6 +27,6 @@ Stuff blob
     ;
 
     text <- @B.StringForU32(v.c.vadr.u32)
-    text.println()
+    text.println()*/
 ;
 
