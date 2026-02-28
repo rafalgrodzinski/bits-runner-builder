@@ -23,6 +23,7 @@
 #include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementProto.h"
+#include "Parser/Statement/StatementProtoDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -279,46 +280,6 @@ string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<I
     return formattedLine(line, indents);
 }
 
- string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind> indents) {
-    string text;
-    string line;
-
-    // name
-    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
-    if (!statement->getVariableStatements().empty() || !statement->getFunctionDeclarationStatements().empty())
-        line += ":";
-    text += formattedLine(line, indents);
-
-    indents = adjustedLastIndent(indents);
-
-    int variablestatementsCount = statement->getVariableStatements().size();
-    int functionStatementsCount = statement->getFunctionDeclarationStatements().size();
-
-    // member variables
-    for (int i=0; i<variablestatementsCount; i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(statement->getVariableStatements().at(i), currentIndents);
-    }
-
-    // member functions
-    for (int i=0; i<functionStatementsCount; i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < functionStatementsCount - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-        
-        text += toString(statement->getFunctionDeclarationStatements().at(i), currentIndents);
-    }
-
-    return text;
- }
-
 string Logger::toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents) {
     string text;
 
@@ -429,6 +390,51 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     text += formattedLine(line, indents);
 
     return text;
+}
+
+string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
+    if (!statement->getVariableStatements().empty() || !statement->getFunctionDeclarationStatements().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+
+    int variablestatementsCount = statement->getVariableStatements().size();
+    int functionStatementsCount = statement->getFunctionDeclarationStatements().size();
+
+    // member variables
+    for (int i=0; i<variablestatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getVariableStatements().at(i), currentIndents);
+    }
+
+    // member functions
+    for (int i=0; i<functionStatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+        
+        text += toString(statement->getFunctionDeclarationStatements().at(i), currentIndents);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementProtoDeclaration> statement, vector<IndentKind> indents) {
+    string line = format ("PROTO DECL `{}`", statement->getName());
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<StatementRawFunction> statement, vector<IndentKind> indents) {

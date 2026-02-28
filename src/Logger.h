@@ -27,6 +27,7 @@ class StatementMetaExternVariable;
 class StatementMetaImport;
 class StatementModule;
 class StatementProto;
+class StatementProtoDeclaration;
 class StatementRawFunction;
 class StatementRepeat;
 class StatementReturn;
@@ -79,6 +80,7 @@ private:
     static string toString(shared_ptr<StatementMetaImport> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementModule> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementProto> statement, vector<IndentKind> indents);
+    static string toString(shared_ptr<StatementProtoDeclaration> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementRawFunction> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementRepeat> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementReturn> statement, vector<IndentKind> indents);

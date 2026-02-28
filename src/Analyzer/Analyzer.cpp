@@ -31,6 +31,8 @@
 #include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementProto.h"
+#include "Parser/Statement/StatementProtoDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -104,6 +106,12 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
             break;
         case StatementKind::MODULE:
+            break;
+        case StatementKind::PROTO:
+            checkStatement(dynamic_pointer_cast<StatementProto>(statement));
+            break;
+        case StatementKind::PROTO_DECLARATION:
+            checkStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
             break;
         case StatementKind::REPEAT:
             checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
@@ -299,17 +307,25 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementM
         markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);
 }
 
-void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
-    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
+void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statement) {
+    auto it = importableHeaderStatementsMap.find(statement->getName());
     if (it == importableHeaderStatementsMap.end()) {
-        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
+        markErrorInvalidImport(statement->getLocation(), statement->getName());
         return;
     }
-    importModulePrefix = statementMetaImport->getName() + ".";
+    importModulePrefix = statement->getName() + ".";
     for (shared_ptr<Statement> &importStatement : it->second) {
         checkStatement(importStatement, nullptr);
     }
     importModulePrefix = "";
+}
+
+void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
+
+}
+
+void Analyzer::checkStatement(shared_ptr<StatementProtoDeclaration> statement) {
+    
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
