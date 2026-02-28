@@ -283,14 +283,14 @@ string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<I
 
     // name
     line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
-    if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
+    if (!statement->getVariableStatements().empty() || !statement->getFunctionDeclarationStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
 
     indents = adjustedLastIndent(indents);
 
     int variablestatementsCount = statement->getVariableStatements().size();
-    int functionStatementsCount = statement->getFunctionStatements().size();
+    int functionStatementsCount = statement->getFunctionDeclarationStatements().size();
 
     // member variables
     for (int i=0; i<variablestatementsCount; i++) {
@@ -311,7 +311,7 @@ string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<I
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
         
-        text += toString(statement->getFunctionStatements().at(i), currentIndents);
+        text += toString(statement->getFunctionDeclarationStatements().at(i), currentIndents);
     }
 
     return text;

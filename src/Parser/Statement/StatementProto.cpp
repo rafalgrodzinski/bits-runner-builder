@@ -4,10 +4,10 @@ StatementProto::StatementProto(
     bool shouldExport,
     string name,
     vector<shared_ptr<StatementVariable>> variableStatements,
-    vector<shared_ptr<StatementFunction>> functionStatements,
+    vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements,
     shared_ptr<Location> location
 ) :
-Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(name), variableStatements(variableStatements), functionStatements(functionStatements) { }
+Statement(StatementKind::PROTO, location), shouldExport(shouldExport), name(name), variableStatements(variableStatements), functionDeclarationStatements(functionDeclarationStatements) { }
 
 bool StatementProto::getShouldExport() {
     return shouldExport;
@@ -21,6 +21,6 @@ vector<shared_ptr<StatementVariable>> StatementProto::getVariableStatements() {
     return variableStatements;
 }
 
-vector<shared_ptr<StatementFunction>> StatementProto::getFunctionStatements() {
-    return functionStatements;
+vector<shared_ptr<StatementFunctionDeclaration>> StatementProto::getFunctionDeclarationStatements() {
+    return functionDeclarationStatements;
 }
