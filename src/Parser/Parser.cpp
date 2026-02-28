@@ -648,7 +648,8 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     enum Tag {
         TAG_SHOULD_EXPORT,
         TAG_NAME,
-        TAG_STATEMENT_IN_BLOB
+        TAG_STATEMENT_IN_BLOB,
+        TAG_PROTO_NAME
     };
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
@@ -660,6 +661,23 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, false),
+            // proto names
+            Parsee::groupParsee(
+                {
+                    // first name
+                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
+                    //repeated subsequent names
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
+                        }, ParseeLevel::OPTIONAL, true
+                    )
+                }, ParseeLevel::OPTIONAL, true
+            ),
             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
             // members
             Parsee::repeatedGroupParsee(
@@ -684,6 +702,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     string name;
     vector<shared_ptr<StatementVariable>> variableStatements;
     vector<shared_ptr<StatementFunction>> functionStatements;
+    vector<string> protoNames;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -693,6 +712,10 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             }
             case TAG_NAME: {
                 name = parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_PROTO_NAME: {
+                protoNames.push_back(parseeResult.getToken()->getLexme());
                 break;
             }
             case TAG_STATEMENT_IN_BLOB: {
@@ -719,7 +742,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         }
     }
 
-    return make_shared<StatementBlob>(shouldExport, name, variableStatements, functionStatements, location);
+    return make_shared<StatementBlob>(shouldExport, name, protoNames, variableStatements, functionStatements, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementProto() {

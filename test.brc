@@ -5,7 +5,7 @@ Thing proto
     num u32
 ;
 
-Stuff blob//: Thing
+Stuff blob: Thing, blo, thing
     aa u32
     b data<u32, 8>
     c ptr<u32>

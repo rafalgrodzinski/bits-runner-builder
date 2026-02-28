@@ -238,6 +238,8 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 
     // name
     line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
+    for (string &protoName : statement->getProtoNames())
+        line += format(", {}", protoName);
     if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
