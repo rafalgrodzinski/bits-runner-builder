@@ -177,19 +177,60 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
         }
     }
 
-    // register blob members in scope
+    // get members
     vector<pair<string, shared_ptr<ValueType>>> members;
-    for (auto &member : statementBlob->getMembers()) {
+    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+        pair<string, shared_ptr<ValueType>> member = pair(statementVariable->getIdentifier(), statementVariable->getValueType());
         checkValueType(member.second);
         if (member.second->isData() && member.second->getCountExpression() == nullptr) {
                 markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
                 return;
         }
-        members.push_back(pair(member.first, member.second));
+        members.push_back(member);
     }
 
-    shared_ptr<ValueType> valueType = ValueType::blob(statementBlob->getName());
+    // verify proto compliance
+    for (string &protoName : statementBlob->getProtoNames()) {
+        auto protoMembers = scope->getProtoMembers(protoName);
+        if (!protoMembers) {
+            markErrorNotDefined(statementBlob->getLocation(), format("proto {}", protoName));
+            return;
+        }
 
+        // for each proto member
+        for (auto protoMember : *protoMembers) {
+            bool isImplemented = false;
+
+            if (protoMember.second->isFunction()) {
+                for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+                    string name = format("{}.{}", statementBlob->getName(), protoMember.first);
+                    // TODO: Proper type check
+                    /*if (name.compare(statementFunction->getName()) == 0 && protoMember.second->isEqual(statementFunction->getValueType())) {
+                        isImplemented = true;
+                        break;
+                    }*/
+                   if (name.compare(statementFunction->getName()) == 0) {
+                        isImplemented = true;
+                        break;
+                    }
+                }
+            } else {
+                for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+                    if (protoMember.first.compare(statementVariable->getIdentifier()) == 0 && protoMember.second->isEqual(statementVariable->getValueType())) {
+                        isImplemented = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!isImplemented) {
+                markErrorNotImplemented(statementBlob->getLocation(), protoName, protoMember.first);
+                return;
+            }
+        }
+    }
+
+    // register blob members in scope
     string name = importModulePrefix + statementBlob->getName();
     if (!scope->setBlobMembers(name, members, true))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
@@ -321,11 +362,65 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statement) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
+    scope->pushLevel();
+    // check and verify proto member variables
+    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements()) {
+        // proto member variable should not have a value expression
+        if (statementVariable->getExpression() != nullptr) {
+            markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
+            return;
+        }
 
+        // members should not have @export
+        if (statementVariable->getShouldExport()) {
+            markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
+            return;
+        }
+
+        checkStatement(statementVariable);
+    }
+    scope->popLevel();
+
+    // verify member function declarations
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements()) {
+        // members should not have export
+        if (statementFunctionDeclaration->getShouldExport()) {
+            markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
+            return;
+        }
+
+        checkStatement(statementFunctionDeclaration);
+    }
+
+    // register proto members in scope
+    vector<pair<string, shared_ptr<ValueType>>> members;
+
+    // extract variable members
+    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements())
+        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+
+    // then function members
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements())
+        members.push_back(pair(statementFunctionDeclaration->getName(), statementFunctionDeclaration->getValueType()));
+
+    // check each of the extracted type
+    for (auto &member : members) {
+        checkValueType(member.second);
+        if (member.second->isData() && member.second->getCountExpression() == nullptr) {
+                markErrorNotDefined(statement->getLocation(), format("{}'s count expression", member.first));
+                return;
+        }
+    }
+
+    // and the register
+    string name = importModulePrefix + statement->getName();
+    if (!scope->setProtoMembers(name, members))
+        markErrorAlreadyDefined(statement->getLocation(), statement->getName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProtoDeclaration> statement) {
-    
+    string name = importModulePrefix + statement->getName();
+    scope->setProtoMembers(name, {});
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
@@ -1617,6 +1712,11 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
 
 void Analyzer::markErrorNotDefined(shared_ptr<Location> location, string name) {
     string message = format("{} is not defined in scope", name);
+    errors.push_back(Error::error(location, message));
+}
+
+void Analyzer::markErrorNotImplemented(shared_ptr<Location> location, string protoName, string memberName) {
+    string message = format("member `{}` of proto `{}` not implemented", memberName, protoName);
     errors.push_back(Error::error(location, message));
 }
 

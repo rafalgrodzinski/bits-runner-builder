@@ -14,6 +14,35 @@ void AnalyzerScope::popLevel() {
     scopeLevels.pop();
 }
 
+optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getProtoMembers(string name) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().protoMembersMap.find(name);
+        if (it != scopeLevels.top().protoMembersMap.end())
+            return scopeLevels.top().protoMembersMap[name];
+        scopeLevels.pop();
+    }
+
+    return {};
+}
+
+bool AnalyzerScope::setProtoMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
+    bool isDefinition = members.has_value();
+    bool isDefined = false;
+    if (scopeLevels.top().protoMembersMap.find(name) != scopeLevels.top().protoMembersMap.end())
+        isDefined = scopeLevels.top().protoMembersMap[name].has_value();
+
+    // defining already defined proto
+    if (isDefined && isDefinition)
+        return false;
+
+    if (!isDefined)
+        scopeLevels.top().protoMembersMap[name] = members;
+
+    return true;
+}
+
 shared_ptr<ValueType> AnalyzerScope::getVariableType(string identifier) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 

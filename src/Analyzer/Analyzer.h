@@ -115,6 +115,7 @@ private:
     void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markErrorInvalidType(shared_ptr<Location> location, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
     void markErrorNotDefined(shared_ptr<Location> location, string name);
+    void markErrorNotImplemented(shared_ptr<Location> location, string protoName, string memberName);
     void markErrorUnexpectedExpression(shared_ptr<Location> location);
 
 public:

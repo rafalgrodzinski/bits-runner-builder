@@ -5,10 +5,13 @@ Thing proto
     num u32
 ;
 
-Stuff blob: Thing, blo, thing
+Stuff blob: Thing
     aa u32
     b data<u32, 8>
     c ptr<u32>
+    num u32
+    doStuff fun
+    ;
 ;
 
 

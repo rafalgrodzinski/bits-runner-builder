@@ -202,9 +202,11 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
             return toString(dynamic_pointer_cast<StatementBlob>(statement), indents);
         case StatementKind::BLOB_DECLARATION:
             return toString(dynamic_pointer_cast<StatementBlobDeclaration>(statement), indents);
-            case StatementKind::PROTO:
-                return toString(dynamic_pointer_cast<StatementProto>(statement), indents);
-            case StatementKind::BLOCK:
+        case StatementKind::PROTO:
+            return toString(dynamic_pointer_cast<StatementProto>(statement), indents);
+        case StatementKind::PROTO_DECLARATION:
+            return toString(dynamic_pointer_cast<StatementProtoDeclaration>(statement), indents);
+        case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
         case StatementKind::ASSIGNMENT:
             return toString(dynamic_pointer_cast<StatementAssignment>(statement), indents);

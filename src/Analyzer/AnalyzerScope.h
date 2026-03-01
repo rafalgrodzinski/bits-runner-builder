@@ -15,6 +15,8 @@ using namespace std;
 class AnalyzerScope {
 private:
     typedef struct {
+        map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
+
         map<string, shared_ptr<ValueType>> variableTypes;
         map<string, bool> isVariableDefinedMap;
 
@@ -32,6 +34,9 @@ public:
 
     void pushLevel();
     void popLevel();
+
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(string name);
+    bool setProtoMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
 
     shared_ptr<ValueType> getVariableType(string identifier);
     bool setVariableType(string identifier, shared_ptr<ValueType> type, bool isDefinition);
