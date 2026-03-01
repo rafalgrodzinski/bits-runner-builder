@@ -232,13 +232,13 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 
     // register blob members in scope
     string name = importModulePrefix + statementBlob->getName();
-    if (!scope->setBlobMembers(name, members, true))
+    if (!scope->setBlobMembers(name, members))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
     string name = importModulePrefix + statementBlobDeclaration->getName();
-    scope->setBlobMembers(name, {}, false);
+    scope->setBlobMembers(name, {});
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {
