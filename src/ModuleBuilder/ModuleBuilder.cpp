@@ -597,7 +597,7 @@ void ModuleBuilder::buildProtoDeclaration(string moduleName, shared_ptr<Statemen
         internalName = symbolName;
 
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
-    scope->setProtoStruct(internalName, structType, {});
+    scope->setProtoStructType(internalName, structType, {});
 }
 
 void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<StatementProto> statement) {
@@ -611,7 +611,7 @@ void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<Statement
     if (moduleName.compare(module->getName()) != 0)
         internalName = symbolName;
 
-    llvm::StructType *structType = scope->getProtoStruct(internalName);
+    llvm::StructType *structType = scope->getProtoStructType(internalName);
     if (structType == nullptr) {
         markErrorNotDeclared(nullptr, format("proto \"{}\"", symbolName));
         return;
@@ -640,7 +640,7 @@ void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<Statement
     }
 
     structType->setBody(types, false);
-    scope->setProtoStruct(internalName, structType, memberNames);
+    scope->setProtoStructType(internalName, structType, memberNames);
 }
 
 void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
@@ -2045,6 +2045,12 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             llvm::StructType *structType = scope->getStructType(*(valueType->getBlobName()));
             if (structType == nullptr)
                 markErrorNotDefined(nullptr, format("blob \"{}\"", *(valueType->getBlobName())));
+            return structType;
+        }
+        case ValueTypeKind::PROTO: {
+            llvm::StructType *structType = scope->getProtoStructType(*(valueType->getProtoName()));
+            if (structType == nullptr)
+                markErrorNotDefined(nullptr, format("proto \"{}\"", *(valueType->getProtoName())));
             return structType;
         }
         case ValueTypeKind::FUN: {

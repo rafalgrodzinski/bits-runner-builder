@@ -91,6 +91,13 @@ shared_ptr<ValueType> ValueType::blob(string blobName) {
     return valueType;
 }
 
+shared_ptr<ValueType> ValueType::proto(string protoName) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::PROTO;
+    valueType->protoName = protoName;
+    return valueType;
+}
+
 shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
@@ -151,6 +158,10 @@ shared_ptr<ValueType> ValueType::getReturnType() {
 
 optional<string> ValueType::getBlobName() {
     return blobName;
+}
+
+optional<string> ValueType::getProtoName() {
+    return protoName;
 }
 
 optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() {

@@ -75,18 +75,18 @@ llvm::InlineAsm *Scope::getInlineAsm(string name) {
     return nullptr;
 }
 
-bool Scope::setProtoStruct(string name, llvm::StructType *protoStruct, vector<string> memberNames) {
-    scopeLevels.top().protoStructsMap[name] = protoStruct;
+bool Scope::setProtoStructType(string name, llvm::StructType *structType, vector<string> memberNames) {
+    scopeLevels.top().protoStructTypesMap[name] = structType;
     //scopeLevels.top().protoStructMembersMap[name] = memberNames;
 
     return true;
 }
 
-llvm::StructType *Scope::getProtoStruct(string name) {
+llvm::StructType *Scope::getProtoStructType(string name) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
-        llvm::StructType *protoStruct = scopeLevels.top().protoStructsMap[name];
+        llvm::StructType *protoStruct = scopeLevels.top().protoStructTypesMap[name];
         if (protoStruct != nullptr)
             return protoStruct;
         scopeLevels.pop();

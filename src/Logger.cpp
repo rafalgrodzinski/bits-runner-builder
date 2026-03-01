@@ -1300,6 +1300,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         }
         case ValueTypeKind::BLOB:
             return format("BLOB<`{}`>", *(valueType->getBlobName()));
+        case ValueTypeKind::PROTO:
+            return format("PROTO<`{}`>", *(valueType->getProtoName()));
         case ValueTypeKind::FUN: {
             string text = "FUN";
             // args

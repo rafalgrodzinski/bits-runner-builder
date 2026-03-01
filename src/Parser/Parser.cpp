@@ -1759,6 +1759,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     enum TAG {
         TAG_DATA,
         TAG_BLOB,
+        TAG_PROTO,
         TAG_PTR_FUN,
         TAG_PTR,
         TAG_ARGUMENT_TYPE,
@@ -1766,7 +1767,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_TYPE,
         TAG_SUBTYPE,
         TAG_SIZE_EXPRESSION,
-        TAG_BLOB_NAME
+        TAG_BLOB_NAME,
+        TAG_PROTO_NAME
     };
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
@@ -1843,6 +1845,22 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
                         Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
+                    // PROTO
+                    {
+                        Parsee::tokenParsee(TokenKind::PROTO, ParseeLevel::REQUIRED, true, TAG_PROTO),
+                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                        // identifier - module prefix
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
+                                Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
+                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                    },
                     // SIMPLE
                     {
                         Parsee::tokenParsee(TokenKind::TYPE, ParseeLevel::REQUIRED, true, TAG_TYPE)
@@ -1857,6 +1875,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     bool isData = false;
     bool isBlob = false;
+    bool isProto = false;
     bool isPtrFun = false;
     bool isPtr = false;
 
@@ -1867,6 +1886,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     shared_ptr<ValueType> subType;
     shared_ptr<Expression> countExpression;
     string blobName;
+    string protoName;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -1875,6 +1895,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 break;
             case TAG_BLOB:
                 isBlob = true;
+                break;
+            case TAG_PROTO:
+                isProto = true;
                 break;
             case TAG_PTR_FUN:
                 isPtrFun = true;
@@ -1900,6 +1923,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
             case TAG_BLOB_NAME:
                 blobName += parseeResult.getToken()->getLexme();
                 break;
+            case TAG_PROTO_NAME:
+                protoName += parseeResult.getToken()->getLexme();
+                break;
         }
     }
 
@@ -1907,6 +1933,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::data(subType, countExpression);
     else if (isBlob)
         return ValueType::blob(blobName);
+    else if (isProto)
+        return ValueType::proto(protoName);
     else if (isPtrFun)
         return ValueType::ptr(ValueType::fun(argTypes, retType));
     else if (isPtr)

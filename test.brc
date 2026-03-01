@@ -17,9 +17,12 @@ Stuff blob: Thing
 
 
 @export main fun
-    /*v blob<Stuff>
+    stuff blob<Stuff>
 
-    text blob<@B.String>
+    thing proto<Thing>
+    //thing <- { {stuff.a} }
+
+    /*text blob<@B.String>
 
     text <- @B.StringForU32(v.aa)
     text.println()
