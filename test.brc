@@ -18,8 +18,10 @@ Stuff blob: Thing
 
 @export main fun
     stuff blob<Stuff>
+    stuff.adr
+    //pStuff ptr<blob<Stuff>> <- { stuff.a }
 
-    thing proto<Thing>
+    //thing proto<Thing>
     //thing <- { {stuff.a} }
 
     /*text blob<@B.String>

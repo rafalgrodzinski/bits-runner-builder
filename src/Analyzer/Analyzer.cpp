@@ -542,7 +542,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
     if (expression == nullptr)
         return nullptr;
 
-    if (expression->getValueType() != nullptr)
+    if (expression->getValueType() != nullptr && expression->getKind() != ExpressionKind::CAST)
         return expression->getValueType();
 
     switch (expression->getKind()) {

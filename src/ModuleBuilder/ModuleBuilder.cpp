@@ -866,7 +866,10 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     break;
                 }
-                llvm::Value *adrValue = wrappedValueForExpression(valueExpressions.at(0))->getValue();
+                shared_ptr<WrappedValue> adrWrappedValue = wrappedValueForExpression(valueExpressions.at(0));
+                if (adrWrappedValue == nullptr)
+                    break;
+                llvm::Value *adrValue = adrWrappedValue->getValue();
                 if (adrValue == nullptr) {
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     break;
