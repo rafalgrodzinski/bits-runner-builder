@@ -6,33 +6,35 @@
 #include "WrappedValue.h"
 #include "Parser/ValueType.h"
 
-#include "Parser/Expression/ExpressionGrouping.h"
-#include "Parser/Expression/ExpressionLiteral.h"
-#include "Parser/Expression/ExpressionCompositeLiteral.h"
-#include "Parser/Expression/ExpressionValue.h"
-#include "Parser/Expression/ExpressionCall.h"
-#include "Parser/Expression/ExpressionIfElse.h"
-#include "Parser/Expression/ExpressionBinary.h"
-#include "Parser/Expression/ExpressionUnary.h"
-#include "Parser/Expression/ExpressionBlock.h"
-#include "Parser/Expression/ExpressionChained.h"
-#include "Parser/Expression/ExpressionCast.h"
-
-#include "Parser/Statement/StatementMetaImport.h"
-#include "Parser/Statement/StatementFunctionDeclaration.h"
-#include "Parser/Statement/StatementFunction.h"
-#include "Parser/Statement/StatementRawFunction.h"
-#include "Parser/Statement/StatementBlobDeclaration.h"
-#include "Parser/Statement/StatementBlob.h"
-#include "Parser/Statement/StatementVariableDeclaration.h"
-#include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
-#include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementBlob.h"
+#include "Parser/Statement/StatementBlobDeclaration.h"
+#include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementExpression.h"
-#include "Parser/Statement/StatementRepeat.h"
+#include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementMetaExternVariable.h"
-#include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementMetaImport.h"
+#include "Parser/Statement/StatementProto.h"
+#include "Parser/Statement/StatementProtoDeclaration.h"
+#include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementRepeat.h"
+#include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementVariableDeclaration.h"
+
+#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionCast.h"
+#include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
+#include "Parser/Expression/ExpressionGrouping.h"
+#include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionUnary.h"
+#include "Parser/Expression/ExpressionValue.h"
 
 ModuleBuilder::ModuleBuilder(
     string defaultModuleName,
@@ -144,6 +146,12 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             break;
         case StatementKind::META_IMPORT:
             buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
+            break;
+        case StatementKind::PROTO:
+            buildStatement(dynamic_pointer_cast<StatementProto>(statement));
+            break;
+        case StatementKind::PROTO_DECLARATION:
+            buildStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
             break;
         case StatementKind::RAW_FUNCTION:
             buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
@@ -346,6 +354,14 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 markErrorUnexpected(importedStatement->getLocation(), "imported statement");
         }
     }
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statement) {
+    buildProtoDefinition(module->getName(), statement);
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementProtoDeclaration> statement) {
+    buildProtoDeclaration(module->getName(), statement);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
@@ -567,6 +583,64 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
             valueType
         )
     );
+}
+
+void ModuleBuilder::buildProtoDeclaration(string moduleName, shared_ptr<StatementProtoDeclaration> statement) {
+    // symbol name
+    string symbolName = statement->getName();
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, symbolName);
+
+    // internal name
+    string internalName = statement->getName();
+    if (moduleName.compare(module->getName()) != 0)
+        internalName = symbolName;
+
+    llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
+    scope->setProtoStructType(internalName, structType, {});
+}
+
+void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<StatementProto> statement) {
+    // symbol name
+    string symbolName = statement->getName();
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, symbolName);
+
+    // internal name
+    string internalName = statement->getName();
+    if (moduleName.compare(module->getName()) != 0)
+        internalName = symbolName;
+
+    llvm::StructType *structType = scope->getProtoStructType(internalName);
+    if (structType == nullptr) {
+        markErrorNotDeclared(nullptr, format("proto \"{}\"", symbolName));
+        return;
+    }
+
+    // Generate types for body (and convert them to pointers)
+    vector<string> memberNames;
+    vector<llvm::Type *> types;
+
+    // first all the variables
+    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements()) {
+        memberNames.push_back(statementVariable->getIdentifier());
+        llvm::Type *type = typeForValueType(ValueType::ptr(statementVariable->getValueType()));
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+
+    // then the functions
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements()) {
+        memberNames.push_back(statementFunctionDeclaration->getName());
+        llvm::Type *type = typeForValueType(ValueType::ptr(statementFunctionDeclaration->getValueType()));
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+
+    structType->setBody(types, false);
+    scope->setProtoStructType(internalName, structType, memberNames);
 }
 
 void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
@@ -792,7 +866,10 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     break;
                 }
-                llvm::Value *adrValue = wrappedValueForExpression(valueExpressions.at(0))->getValue();
+                shared_ptr<WrappedValue> adrWrappedValue = wrappedValueForExpression(valueExpressions.at(0));
+                if (adrWrappedValue == nullptr)
+                    break;
+                llvm::Value *adrValue = adrWrappedValue->getValue();
                 if (adrValue == nullptr) {
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     break;
@@ -1973,6 +2050,12 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
                 markErrorNotDefined(nullptr, format("blob \"{}\"", *(valueType->getBlobName())));
             return structType;
         }
+        case ValueTypeKind::PROTO: {
+            llvm::StructType *structType = scope->getProtoStructType(*(valueType->getProtoName()));
+            if (structType == nullptr)
+                markErrorNotDefined(nullptr, format("proto \"{}\"", *(valueType->getProtoName())));
+            return structType;
+        }
         case ValueTypeKind::FUN: {
             // returnType
             llvm::Type *functionReturnType = typeForValueType(valueType->getReturnType());
@@ -2152,6 +2235,17 @@ void ModuleBuilder::debugPrint(vector<llvm::Value *> values) {
         llvm::outs() << "\ntype: ";
         if (value != nullptr)
             value->getType()->print(llvm::outs());
+        else
+            llvm::outs() << "<null>";
+        llvm::outs() << "\n\n";
+    }
+}
+
+void ModuleBuilder::debugPrint(vector<llvm::Type *> types) {
+    for (llvm::Type *type : types) {
+        llvm::outs() << "type: ";
+        if (type != nullptr)
+            type->print(llvm::outs());
         else
             llvm::outs() << "<null>";
         llvm::outs() << "\n\n";

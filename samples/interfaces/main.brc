@@ -1,0 +1,51 @@
+Shape proto
+    getArea fun -> f32
+;
+
+blob Square: Shape
+    width f32
+
+    getArea fun -> f32
+        ret width * width
+    ;
+;
+
+blob Triangle: Shape
+    width f32
+    height f32
+
+    getArea fun -> f32
+        ret width * height / 2
+    ;
+;
+
+CollectionItem proto
+
+;
+
+blob Array<T>
+    values data<value<T>>
+
+    at fun: index u32 -> T
+        values[index].val
+    ;
+;
+
+@export main
+    square blob<Square> <- { 7.34 }
+    tri blob<Triangle> <- { 3.22, 8.44 }
+
+    sh1 proto<Shape> <- { {square.adr} }
+    sh2 proto<Shape> <- { {tri.adr} }
+
+    shapes blob<Array, ptr<proto<Shape>>>
+    shapes.append()
+
+    shapes[1].getArea()
+
+    squares blob<Array, blob<Square>>
+
+    value<u8>
+    value<proto<DeviceVideo>>
+    value<ptr<blob<VgaDevice>>>
+;

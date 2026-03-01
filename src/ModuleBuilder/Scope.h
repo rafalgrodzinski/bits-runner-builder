@@ -19,6 +19,7 @@ private:
         map<string, shared_ptr<WrappedValue>> wrappedValueMap;
         map<string, llvm::Function*> funMap;
         map<string, llvm::InlineAsm*> rawFunMap;
+        map<string, llvm::StructType*> protoStructTypesMap;
         map<string, llvm::StructType*> structTypeMap;
         map<string, vector<string>> structMembersMap;
     } ScopeLevel;
@@ -39,6 +40,9 @@ public:
 
     bool setInlineAsm(string name, llvm::InlineAsm *inlineAsm);
     llvm::InlineAsm *getInlineAsm(string name);
+
+    bool setProtoStructType(string name, llvm::StructType *structType, vector<string> memberNames);
+    llvm::StructType *getProtoStructType(string name);
 
     bool setStruct(string structName, llvm::StructType *type, vector<string> memberNames);
     llvm::StructType *getStructType(string memberName);

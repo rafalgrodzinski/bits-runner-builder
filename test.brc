@@ -1,15 +1,29 @@
-@import B
+//@import B
 
-Stuff blob
+Thing proto
+    doStuff fun
+    num u32
+;
+
+Stuff blob: Thing
     aa u32
     b data<u32, 8>
     c ptr<u32>
+    num u32
+    doStuff fun
+    ;
 ;
 
-@export main fun
-    v blob<Stuff>
 
-    text blob<@B.String>
+
+@export main fun
+    stuff blob<Stuff>
+    pStuff ptr<blob<Stuff>> <- { stuff.adr }
+
+    thing proto<Thing>
+    thing <- { pStuff }
+
+    /*text blob<@B.String>
 
     text <- @B.StringForU32(v.aa)
     text.println()
@@ -20,6 +34,6 @@ Stuff blob
     ;
 
     text <- @B.StringForU32(v.c.vadr.u32)
-    text.println()
+    text.println()*/
 ;
 

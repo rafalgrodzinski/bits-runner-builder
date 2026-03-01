@@ -22,6 +22,8 @@ enum class StatementKind {
     META_EXTERN_VARIABLE,
     META_IMPORT,
     MODULE,
+    PROTO,
+    PROTO_DECLARATION,
     RAW_FUNCTION,
     REPEAT,
     RETURN,

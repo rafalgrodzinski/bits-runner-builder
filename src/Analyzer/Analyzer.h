@@ -24,6 +24,8 @@ class StatementMetaExternFunction;
 class StatementMetaExternVariable;
 class StatementMetaImport;
 class StatementModule;
+class StatementProto;
+class StatementProtoDeclaration;
 class StatementRawFunction;
 class StatementRepeat;
 class StatementReturn;
@@ -67,7 +69,9 @@ private:
     void checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void checkStatement(shared_ptr<StatementMetaImport> StatementMetaImport);
+    void checkStatement(shared_ptr<StatementMetaImport> statement);
+    void checkStatement(shared_ptr<StatementProto> statement);
+    void checkStatement(shared_ptr<StatementProtoDeclaration> statement);
     void checkStatement(shared_ptr<StatementRawFunction> statementRawFunction);
     void checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
@@ -111,6 +115,7 @@ private:
     void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markErrorInvalidType(shared_ptr<Location> location, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
     void markErrorNotDefined(shared_ptr<Location> location, string name);
+    void markErrorNotImplemented(shared_ptr<Location> location, string protoName, string memberName);
     void markErrorUnexpectedExpression(shared_ptr<Location> location);
 
 public:

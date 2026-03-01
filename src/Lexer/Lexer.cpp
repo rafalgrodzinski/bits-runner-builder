@@ -250,6 +250,9 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token = match(TokenKind::BLOB, "blob", true))
         return token;
 
+    if (token = match(TokenKind::PROTO, "proto", true))
+        return token;
+
     if (token = match(TokenKind::PTR, "ptr", true))
         return token;
 

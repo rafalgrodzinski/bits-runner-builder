@@ -22,6 +22,8 @@
 #include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementProto.h"
+#include "Parser/Statement/StatementProtoDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -136,6 +138,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "DATA";
         case TokenKind::BLOB:
             return "BLOB";
+        case TokenKind::PROTO:
+            return "PROTO";
         case TokenKind::PTR:
             return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
@@ -198,6 +202,10 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
             return toString(dynamic_pointer_cast<StatementBlob>(statement), indents);
         case StatementKind::BLOB_DECLARATION:
             return toString(dynamic_pointer_cast<StatementBlobDeclaration>(statement), indents);
+        case StatementKind::PROTO:
+            return toString(dynamic_pointer_cast<StatementProto>(statement), indents);
+        case StatementKind::PROTO_DECLARATION:
+            return toString(dynamic_pointer_cast<StatementProtoDeclaration>(statement), indents);
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
         case StatementKind::ASSIGNMENT:
@@ -233,6 +241,8 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 
     // name
     line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
+    for (string &protoName : statement->getProtoNames())
+        line += format(", {}", protoName);
     if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -382,6 +392,51 @@ string Logger::toString(shared_ptr<StatementModule> statement, vector<IndentKind
     text += formattedLine(line, indents);
 
     return text;
+}
+
+string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
+    if (!statement->getVariableStatements().empty() || !statement->getFunctionDeclarationStatements().empty())
+        line += ":";
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+
+    int variablestatementsCount = statement->getVariableStatements().size();
+    int functionStatementsCount = statement->getFunctionDeclarationStatements().size();
+
+    // member variables
+    for (int i=0; i<variablestatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getVariableStatements().at(i), currentIndents);
+    }
+
+    // member functions
+    for (int i=0; i<functionStatementsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < functionStatementsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+        
+        text += toString(statement->getFunctionDeclarationStatements().at(i), currentIndents);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementProtoDeclaration> statement, vector<IndentKind> indents) {
+    string line = format ("PROTO DECL `{}`", statement->getName());
+    return formattedLine(line, indents);
 }
 
 string Logger::toString(shared_ptr<StatementRawFunction> statement, vector<IndentKind> indents) {
@@ -994,6 +1049,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "DATA";
         case TokenKind::BLOB:
             return "BLOB";
+        case TokenKind::PROTO:
+            return "PROTO";
         case TokenKind::PTR:
             return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
@@ -1243,6 +1300,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         }
         case ValueTypeKind::BLOB:
             return format("BLOB<`{}`>", *(valueType->getBlobName()));
+        case ValueTypeKind::PROTO:
+            return format("PROTO<`{}`>", *(valueType->getProtoName()));
         case ValueTypeKind::FUN: {
             string text = "FUN";
             // args

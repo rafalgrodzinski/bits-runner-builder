@@ -35,6 +35,8 @@ class StatementFunctionDeclaration;
 class StatementMetaExternFunction;
 class StatementMetaExternVariable;
 class StatementMetaImport;
+class StatementProto;
+class StatementProtoDeclaration;
 class StatementRawFunction;
 class StatementRepeat;
 class StatementReturn;
@@ -104,6 +106,8 @@ private:
     void buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
     void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport);
+    void buildStatement(shared_ptr<StatementProto> statement);
+    void buildStatement(shared_ptr<StatementProtoDeclaration> statement);
     void buildStatement(shared_ptr<StatementRawFunction> statementRawFunction);
     void buildStatement(shared_ptr<StatementRepeat> statementRepeat);
     void buildStatement(shared_ptr<StatementReturn> statementReturn);
@@ -113,6 +117,10 @@ private:
     void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildRawFunction(string moduleName, shared_ptr<StatementRawFunction> statement);
     void buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType);
+
+    void buildProtoDeclaration(string moduleName, shared_ptr<StatementProtoDeclaration> statement);
+    void buildProtoDefinition(string moduleName, shared_ptr<StatementProto> statement);
+
     void buildBlobDeclaration(string moduleName, string name);
     void buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
@@ -165,6 +173,7 @@ private:
     void markErrorNoTypeForPointer(shared_ptr<Location> location);
 
     void debugPrint(vector<llvm::Value *> values);
+    void debugPrint(vector<llvm::Type *> types);
 
 public:
     ModuleBuilder(

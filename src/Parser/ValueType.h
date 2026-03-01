@@ -36,6 +36,7 @@ enum class ValueTypeKind {
 
     DATA,
     BLOB,
+    PROTO,
     FUN,
     COMPOSITE
 };
@@ -48,6 +49,7 @@ private:
     optional<vector<shared_ptr<ValueType>>> argumentTypes;
     shared_ptr<ValueType> returnType;
     optional<string> blobName;
+    optional<string> protoName;
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes;
 
 public:
@@ -71,6 +73,7 @@ public:
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
     static shared_ptr<ValueType> blob(string blobName);
+    static shared_ptr<ValueType> proto(string protoName);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression);
@@ -89,6 +92,8 @@ public:
     shared_ptr<ValueType> getReturnType();
     // blob
     optional<string> getBlobName();
+    // proto
+    optional<string> getProtoName();
     // composite
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
 
@@ -106,6 +111,7 @@ public:
     bool isPointer();
     bool isFunction();
     bool isBlob();
+    bool isProto();
 };
 
 #endif

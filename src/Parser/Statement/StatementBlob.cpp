@@ -7,11 +7,12 @@
 StatementBlob::StatementBlob(
     bool shouldExport,
     string name,
+    vector<string> protoNames,
     vector<shared_ptr<StatementVariable>> variableStatements,
     vector<shared_ptr<StatementFunction>> functionStatements,
     shared_ptr<Location> location
 ) :
-Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(name), variableStatements(variableStatements), functionStatements(functionStatements) { }
+Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(name), protoNames(protoNames), variableStatements(variableStatements), functionStatements(functionStatements) { }
 
 bool StatementBlob::getShouldExport() {
     return shouldExport;
@@ -19,6 +20,10 @@ bool StatementBlob::getShouldExport() {
 
 string StatementBlob::getName() {
     return name;
+}
+
+vector<string> StatementBlob::getProtoNames() {
+    return protoNames;
 }
 
 vector<shared_ptr<StatementVariable>> StatementBlob::getVariableStatements() {
