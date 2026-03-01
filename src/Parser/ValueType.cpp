@@ -391,3 +391,7 @@ bool ValueType::isFunction() {
 bool ValueType::isBlob() {
     return kind == ValueTypeKind::BLOB;
 }
+
+bool ValueType::isProto() {
+    return kind == ValueTypeKind::PROTO;
+}

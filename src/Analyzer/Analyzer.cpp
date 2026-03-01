@@ -234,6 +234,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     string name = importModulePrefix + statementBlob->getName();
     if (!scope->setBlobMembers(name, members))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
+    scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
@@ -1247,6 +1248,10 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             sourceMemberExpression = checkAndTryCasting(sourceMemberExpression, blobMembers.at(i).second, returnType);
         }
         return sourceExpression;
+    // composite to proto
+    } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isProto()) {
+        sourceExpression->valueType = targetType;
+        return sourceExpression;
     // composite to data
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isData()) {
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
@@ -1624,6 +1629,31 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                             return false;
                     }
                     return true;
+                }
+
+                // to proto
+                case ValueTypeKind::PROTO: {
+                    string targetProtoName = *(targetType->getProtoName());
+
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPointer())
+                        return false;
+
+                    shared_ptr<ValueType> subType = sourceElementTypes.at(0)->getSubType();
+                    if (subType == nullptr || !subType->isBlob())
+                        return false;
+
+                    string blobName = *(subType->getBlobName());
+                    optional<vector<string>> protoNames = scope->getBlobProtoNames(blobName);
+                    if (!protoNames)
+                        return false;
+                    
+                    for (string &protoName : *protoNames) {
+                        if (targetProtoName.compare(protoName) == 0)
+                            return true;
+                    }
+
+                    return false;
                 }
 
                 default:

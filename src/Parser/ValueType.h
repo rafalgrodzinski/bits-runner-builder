@@ -111,7 +111,7 @@ public:
     bool isPointer();
     bool isFunction();
     bool isBlob();
-    bool isProto;
+    bool isProto();
 };
 
 #endif

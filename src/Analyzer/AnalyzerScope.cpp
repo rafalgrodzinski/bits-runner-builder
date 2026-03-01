@@ -72,6 +72,25 @@ bool AnalyzerScope::setBlobMembers(string name, optional<vector<pair<string, sha
     return true;
 }
 
+optional<vector<string>> AnalyzerScope::getBlobProtoNames(string name) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().blobProtosmMap.find(name);
+        if (it != scopeLevels.top().blobProtosmMap.end())
+            return scopeLevels.top().blobProtosmMap[name];
+        scopeLevels.pop();
+    }
+
+    return {};
+}
+
+bool AnalyzerScope::setBlobProtoNames(string name, vector<string> protoNames) {
+    scopeLevels.top().blobProtosmMap[name] = protoNames;
+
+    return true;
+}
+
 shared_ptr<ValueType> AnalyzerScope::getVariableType(string identifier) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 

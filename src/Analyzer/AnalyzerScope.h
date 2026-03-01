@@ -16,6 +16,7 @@ class AnalyzerScope {
 private:
     typedef struct {
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
+        map<string, vector<string>> blobProtosmMap;
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> blobMembersMap;
 
         map<string, shared_ptr<ValueType>> variableTypes;
@@ -38,6 +39,9 @@ public:
     
     optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(string name);
     bool setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
+
+    optional<vector<string>> getBlobProtoNames(string name);
+    bool setBlobProtoNames(string name, vector<string> protoNames);
 
     shared_ptr<ValueType> getVariableType(string identifier);
     bool setVariableType(string identifier, shared_ptr<ValueType> type, bool isDefinition);
