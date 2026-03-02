@@ -23,6 +23,8 @@ Stuff blob: Thing
     thing proto<Thing>
     thing <- { pStuff }
 
+    thing2 proto<Thing> <- { pStuff }
+
     /*text blob<@B.String>
 
     text <- @B.StringForU32(v.aa)

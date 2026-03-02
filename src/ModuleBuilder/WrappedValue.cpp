@@ -143,6 +143,10 @@ bool WrappedValue::isPointer() {
     return valueType->isPointer();
 }
 
-bool WrappedValue::isStruct() {
+bool WrappedValue::isBlobStruct() {
     return valueType->isBlob();
+}
+
+bool WrappedValue::isProtoStruct() {
+    return valueType->isProto();
 }

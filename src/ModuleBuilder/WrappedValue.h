@@ -40,7 +40,8 @@ public:
 
     bool isArray();
     bool isPointer();
-    bool isStruct();
+    bool isBlobStruct();
+    bool isProtoStruct();
 };
 
 #endif
