@@ -1295,6 +1295,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
             string functionName = format("{}.{}", parentBlobName, expressionCall->getName());
             llvm::Function *fun = scope->getFunction(functionName);
+            if (fun == nullptr) {
+                markErrorNotDefined(expressionCall->getLocation(), format("function \"{}\"", expressionCall->getName()));
+                return nullptr;
+            }
             currentWrappedValue = wrappedValueForCall(
                 fun,
                 fun->getFunctionType(),

@@ -658,6 +658,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
     if (parentExpression != nullptr) {
         bool isParentPointer = parentExpression->getValueType()->isPointer();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
+        bool isParentProto = parentExpression->getValueType()->isProto();
         bool isVal = expressionCall->getName().compare("val") == 0;
 
         if (isParentPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
@@ -666,6 +667,14 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             string functionName = format("{}.{}", *(parentExpression->getValueType()->getBlobName()), expressionCall->getName());
             valueType = scope->getFunctionType(functionName);
             extraArguments = 1; // for the implicit "it"
+        } else if (isParentProto) {
+            string protoName = *(parentExpression->getValueType()->getProtoName());
+            auto members = *(scope->getProtoMembers(protoName));
+            for (pair<string, shared_ptr<ValueType>> &member : members) {
+                if (expressionCall->getName().compare(member.first) == 0) {
+                    valueType = member.second;
+                }
+            }
         } else {
             markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->getSubType(), nullptr);
             return nullptr;
@@ -909,13 +918,13 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isParentData = parentExpression->getValueType()->isData();
         bool isParentPointer = parentExpression->getValueType()->isPointer();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
+        bool isParentProto = parentExpression->getValueType()->isProto();
 
         bool isCount = expressionValue->getIdentifier().compare("count") == 0;
         bool isVal = expressionValue->getIdentifier().compare("val") == 0;
         bool isVadr = expressionValue->getIdentifier().compare("vadr") == 0;
         bool isAdr = expressionValue->getIdentifier().compare("adr") == 0;
         bool isSize = expressionValue->getIdentifier().compare("size") == 0;
-
 
         if (isParentData && isCount) {
             expressionValue->valueType = ValueType::UINT;
@@ -944,7 +953,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                     break;
             }
             return expressionValue->getValueType();
-        } else if (isParentPointer && isVadr) {
+        } else if ((isParentPointer || isParentProto) && isVadr) {
             expressionValue->valueType = ValueType::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
@@ -986,6 +995,31 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             markErrorNotDefined(
                 expressionValue->getLocation(),
                 format("{}.{}", blobName, expressionValue->getIdentifier())
+            );
+            return nullptr;
+        // check proto member
+        } else if (isParentProto) {
+            string protoName = *(parentExpression->getValueType()->getProtoName());
+            auto members = *(scope->getProtoMembers(protoName));
+            for (pair<string, shared_ptr<ValueType>> &member : members) {
+                if (expressionValue->getIdentifier().compare(member.first) == 0) {
+                    // found corresponding member, decide if it's a simple or data access
+                    switch (expressionValue->getValueKind()) {
+                        case ExpressionValueKind::SIMPLE:
+                            expressionValue->valueType = member.second;
+                            return expressionValue->getValueType();
+                        case ExpressionValueKind::DATA:
+                            expressionValue->valueType = member.second->getSubType();
+                            expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
+                            return expressionValue->getValueType();
+                        default:
+                            break;
+                    }
+                }
+            }
+            markErrorNotDefined(
+                expressionValue->getLocation(),
+                format("{}.{}", protoName, expressionValue->getIdentifier())
             );
             return nullptr;
         }
