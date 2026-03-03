@@ -18,7 +18,7 @@ Stuff blob: Thing
 
     thing proto<Thing>
     thing <- { pStuff }
-    thing.num
+    thing.vadr
     //thing.doStuff()
 ;
 

@@ -1636,6 +1636,22 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             builder->CreatePtrToInt(pointeeLoad, typeA),
             ValueType::A
         );
+    } else if (parentWrappedValue->isProtoStruct() && isVadr) {
+        string protoName = *(parentWrappedValue->getValueType()->getProtoName());
+        llvm::StructType *structType = scope->getProtoStructType(protoName);
+        // pointer to implementing blob is at index 0
+        llvm::Value *index[] = {
+            builder->getInt32(0),
+            builder->getInt32(0)
+        };
+        llvm::Value *memberPtr = builder->CreateGEP(structType, parentWrappedValue->getPointerValue(), index);
+        llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, memberPtr);
+        return WrappedValue::wrappedValue(
+            moduleLLVM,
+            builder,
+            builder->CreatePtrToInt(pointeeLoad, typeA),
+            ValueType::A
+        );
     } else if (isAdr) {
         return WrappedValue::wrappedValue(
             moduleLLVM,
