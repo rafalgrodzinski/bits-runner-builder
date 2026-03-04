@@ -7,10 +7,13 @@ Thing proto
 
 Stuff blob: Thing
     aa u32
-    //b data<u32, 8>
-    //c ptr<u32>
+    b data<u32, 8>
+    c ptr<u32>
     num u32
     doStuff fun
+        text blob<@B.String> <- @B.String("in doStuff")
+        text.println()
+
         it.val.num <- 13
     ;
 ;
@@ -40,7 +43,7 @@ Stuff blob: Thing
     //text <- @B.StringForU32(thing.vadr.u32)
     //text.println()
 
-    text <- @B.String("---")
+    /*text <- @B.String("---")
     text.println()
 
     pp ptr<data<u64>> <- { thing.adr }
@@ -52,7 +55,7 @@ Stuff blob: Thing
     text.println()
 
     text <- @B.StringForU64(pp.val[2].u64)
-    text.println()
+    text.println()*/
 
     /*text <- @B.StringForU64(pp.val[3].u64)
     text.println()
@@ -72,8 +75,22 @@ Stuff blob: Thing
     text <- @B.StringForU32(thing.num)
     text.println()
 
+    text <- @B.String("---")
+    text.println()
+
+    //text <- @B.StringForU64(stuff.doStuff.adr.u64)
+    //text.println()
+
+    /*text <- @B.StringForU64(thing.doStuff.adr.u64)
+    text.println()*/
+
     //stuff.doStuff()
     thing.doStuff()
+    pStuff.val.doStuff()
+    stuff.doStuff()
+
+    text <- @B.StringForU32(pStuff.val.num)
+    text.println()
 
     text <- @B.StringForU32(thing.num)
     text.println()

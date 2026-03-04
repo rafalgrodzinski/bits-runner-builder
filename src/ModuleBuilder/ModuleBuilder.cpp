@@ -1335,10 +1335,42 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
             // call expression?
             if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
-                // TODO: add call
-                /*currentWrappedValue = wrappedValueForCall(
-                    
-                );*/
+                auto members = *scope->getProtoStructMembers(parentProtoName);
+                for (int i=0; i<members.size(); i++) {
+                    pair<string, shared_ptr<ValueType>> member = members.at(i);
+                    if (expressionCall->getName().compare(member.first) == 0) {
+                        llvm::StructType *structType = scope->getProtoStructType(parentProtoName);
+
+                        shared_ptr<ValueType> funValueType = member.second->getSubType();
+                        llvm::Type *type = typeForValueType(funValueType);
+                        llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(type);
+
+                        // fun value
+                        llvm::Value *funIndexMember[] = {
+                            builder->getInt32(0),
+                            builder->getInt32(i+1)
+                        };
+                        llvm::Value *funMemberPtr = builder->CreateGEP(structType, currentWrappedValue->getPointerValue(), funIndexMember);
+                        llvm::LoadInst *funPointerLoad = builder->CreateLoad(typePtr, funMemberPtr);
+
+                        // it value
+                        llvm::Value *itIndexMember[] = {
+                            builder->getInt32(0),
+                            builder->getInt32(0)
+                        };
+
+                        llvm::Value *itMemberPtr = builder->CreateGEP(structType, currentWrappedValue->getPointerValue(), itIndexMember);
+                        llvm::LoadInst *itPointerLoad = builder->CreateLoad(typePtr, itMemberPtr);
+
+                        currentWrappedValue = wrappedValueForCall(
+                            funPointerLoad,
+                            funType,
+                            {itPointerLoad},
+                            expressionCall->getArgumentExpressions(),
+                            expressionCall->getValueType()
+                        );
+                    }
+                }
             // value expression ?
             } else if (shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression)) {
                 auto members = *scope->getProtoStructMembers(parentProtoName);
@@ -1714,7 +1746,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
     return WrappedValue::wrappedValue(
         moduleLLVM,
         builder,
-        //builder->CreateCall(fun->getFunctionType(), fun, llvm::ArrayRef(argValues)),
         builder->CreateCall(funType, callee, llvm::ArrayRef(argValues)),
         valueType
     );

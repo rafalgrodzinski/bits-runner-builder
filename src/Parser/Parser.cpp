@@ -801,7 +801,11 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                         break;
                     }
                     case StatementKind::FUNCTION_DECLARATION: {
-                        functionDeclarationStatements.push_back(dynamic_pointer_cast<StatementFunctionDeclaration>(parseeResult.getStatement()));
+                        shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(parseeResult.getStatement());
+                        // Insert an implicit "it" argument at the beging
+                        pair<string, shared_ptr<ValueType>> itArgument = pair("it", ValueType::ptr(ValueType::NONE));
+                        statementFunctionDeclaration->arguments.insert(statementFunctionDeclaration->arguments.begin(), itArgument);
+                        functionDeclarationStatements.push_back(statementFunctionDeclaration);
                         break;
                     }
                     default:

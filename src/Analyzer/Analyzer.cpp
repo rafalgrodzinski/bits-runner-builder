@@ -675,6 +675,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                     valueType = member.second;
                 }
             }
+            extraArguments = 1; // for the implicit "it"
         } else {
             markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->getSubType(), nullptr);
             return nullptr;
