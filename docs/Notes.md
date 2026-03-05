@@ -8,6 +8,10 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
+- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/162](https://github.com/rafalgrodzinski/bits-runner-builder/pull/162)
+  - Added `proto` interfaces
+  - Can get `adr` from function of a `blob` and `proto`
+  - Fixed importing of an empty module
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/160](https://github.com/rafalgrodzinski/bits-runner-builder/pull/160)
   - Sped up analysis
   - Zero uninitialized local variables

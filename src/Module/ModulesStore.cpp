@@ -407,6 +407,9 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
     // - function declarations
     map<string, vector<shared_ptr<Statement>>> statementsMap;
     for (string &moduleName : moduleNames) {
+        // first initialize it with an empty array (in case there are no exported statements)
+        statementsMap[moduleName] = {};
+
         // exported proto declarations
         for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
