@@ -190,15 +190,34 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
             bool isImplemented = false;
 
             if (protoMember.second->isFunction()) {
+                string name = format("{}.{}", statementBlob->getName(), protoMember.first);
                 for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
-                    string name = format("{}.{}", statementBlob->getName(), protoMember.first);
-                    // TODO: Proper type check
-                    /*if (name.compare(statementFunction->getName()) == 0 && protoMember.second->isEqual(statementFunction->getValueType())) {
-                        isImplemented = true;
+                    // check name
+                    if (name.compare(statementFunction->getName()) != 0) 
+                        continue;
+
+                    isImplemented = true;
+
+                    // check arguments
+                    int argsCount = (*protoMember.second->getArgumentTypes()).size();
+                    if (argsCount != statementFunction->getArguments().size()) {
+                        isImplemented = false;
                         break;
-                    }*/
-                   if (name.compare(statementFunction->getName()) == 0) {
-                        isImplemented = true;
+                    }
+
+                    for (int i=1; i<argsCount; i++) {
+                        if (!(*protoMember.second->getArgumentTypes()).at(i)->isEqual(statementFunction->getArguments().at(i).second)) {
+                            isImplemented = false;
+                            break;
+                        }
+                    }
+
+                    if (!isImplemented)
+                        break;
+
+                    // check return type
+                    if (!protoMember.second->getReturnType()->isEqual(statementFunction->getReturnValueType())) {
+                        isImplemented = false;
                         break;
                     }
                 }
