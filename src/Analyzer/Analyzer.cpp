@@ -177,18 +177,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
         }
     }
 
-    // get members
-    vector<pair<string, shared_ptr<ValueType>>> members;
-    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
-        pair<string, shared_ptr<ValueType>> member = pair(statementVariable->getIdentifier(), statementVariable->getValueType());
-        checkValueType(member.second);
-        if (member.second->isData() && member.second->getCountExpression() == nullptr) {
-                markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
-                return;
-        }
-        members.push_back(member);
-    }
-
     // verify proto compliance
     for (string &protoName : statementBlob->getProtoNames()) {
         auto protoMembers = scope->getProtoMembers(protoName);
@@ -231,6 +219,26 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     }
 
     // register blob members in scope
+    vector<pair<string, shared_ptr<ValueType>>> members;
+
+    // extract variable members
+    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
+        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+
+    // then function members
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
+        members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
+
+    // check each of the extracted member's type
+    for (auto &member : members) {
+        checkValueType(member.second);
+        if (member.second->isData() && member.second->getCountExpression() == nullptr) {
+                markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
+                return;
+        }
+    }
+
+    // and the register
     string name = importModulePrefix + statementBlob->getName();
     if (!scope->setBlobMembers(name, members))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
@@ -976,8 +984,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             string blobName = *(parentExpression->getValueType()->getBlobName());
             optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(blobName);
             if (blobMembers) {
+                string nameVariable = expressionValue->getIdentifier();
+                string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
                 for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
-                    if (expressionValue->getIdentifier().compare(blobMember.first) == 0) {
+                    if (nameVariable.compare(blobMember.first) == 0 || nameFunction.compare(blobMember.first) == 0) {
                         // found corresponding blob, decide if it's a simple or data access
                         switch (expressionValue->getValueKind()) {
                             case ExpressionValueKind::SIMPLE:

@@ -1281,7 +1281,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         } else if (parentExpression->getValueType()->isBlob()) {
             string parentBlobName = *parentExpression->getValueType()->getBlobName();
 
-            // Call expression?
+            // call expression?
             if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
                 string functionName = format("{}.{}", parentBlobName, expressionCall->getName());
                 llvm::Function *fun = scope->getFunction(functionName);
@@ -1296,39 +1296,40 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     expressionCall->getArgumentExpressions(),
                     expressionCall->getValueType()
                 );
-                continue;
-            }
+            // value expression ?
+            } else  if (shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression)) {
+                llvm::Value *sourceValue;
+                llvm::Type *sourceType;
 
+                // try member variable
+                if (optional<int> memberIndex = scope->getStructMemberIndex(parentBlobName, expressionValue->getIdentifier())) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(*memberIndex)
+                    };
 
-            // Check chained expression type 
-            shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression);
-            if (expressionValue == nullptr) {
+                    sourceValue = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
+                    sourceType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
+                // try member function
+                } else {
+                    string functionName = format("{}.{}", parentBlobName, expressionValue->getIdentifier());
+                    if (llvm::Function *fun = scope->getFunction(functionName)) {
+                        sourceValue = fun;
+                        sourceType = fun->getType();
+                    }
+                }
+
+                if (sourceValue == nullptr || sourceType == nullptr) {
+                    markErrorInvalidMember(expressionValue->getLocation(), parentBlobName, expressionValue->getIdentifier());
+                    return nullptr;   
+                }
+
+                currentWrappedValue = wrappedValueForSourceValue(sourceValue, sourceType, expressionValue);
+                parentExpression = chainExpression;
+            } else {
                 markErrorInvalidType(expressionValue->getLocation());
                 return nullptr;
             }
-
-            // Variable expression?
-            if (!currentWrappedValue->isBlobStruct()) {
-                markErrorInvalidType(expressionValue->getLocation());
-                return nullptr;
-            }
-
-            optional<int> memberIndex = scope->getStructMemberIndex(parentBlobName, expressionValue->getIdentifier());
-            if (!memberIndex) {
-                markErrorInvalidMember(expressionValue->getLocation(), parentBlobName, expressionValue->getIdentifier());
-                return nullptr;
-            }
-
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                builder->getInt32(*memberIndex)
-            };
-
-            llvm::Value *elementPtr = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
-            llvm::Type *elementType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
-
-            currentWrappedValue = wrappedValueForSourceValue(elementPtr, elementType, expressionValue);
-            parentExpression = chainExpression;
         // Proto expression?
         } else if (parentExpression->getValueType()->isProto()) {
             string parentProtoName = *parentExpression->getValueType()->getProtoName();
@@ -1369,6 +1370,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                             expressionCall->getArgumentExpressions(),
                             expressionCall->getValueType()
                         );
+                        parentExpression = chainExpression;
                     }
                 }
             // value expression ?
@@ -1381,10 +1383,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                             builder->getInt32(0),
                             builder->getInt32(i+1)
                         };
-                        llvm::Type *pointeeType = typeForValueType(member.second->getSubType());
+                        // function type has to be treated as a pointer (we cannot load a function)
+                        llvm::Type *pointeeType = typePtr;
+                        if (!member.second->getSubType()->isFunction())
+                            pointeeType = typeForValueType(member.second->getSubType());
                         llvm::Value *elementPtr = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
                         llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, elementPtr);
                         currentWrappedValue = wrappedValueForSourceValue(pointerLoad, pointeeType, expressionValue);
+                        parentExpression = chainExpression;
                     }
                 }
             } else {

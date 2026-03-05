@@ -28,71 +28,13 @@ Stuff blob: Thing
 
     text blob<@B.String>
 
-    text <- @B.StringForU64(stuff.adr.u64)
+    text <- @B.StringForU64(stuff.doStuff.adr.u64)
     text.println()
 
-    text <- @B.StringForU64(stuff.aa.adr.u64)
+    text <- @B.StringForU64(thing.doStuff.adr.u64)
     text.println()
 
-    text <- @B.StringForU64(stuff.num.adr.u64)
-    text.println()
-
-    /*text <- @B.StringForU64(stuff.doStuff.adr.u64)
-    text.println()*/
-
-    //text <- @B.StringForU32(thing.vadr.u32)
+    //text <- @B.StringForU64(Stuff.doStuff.adr.u64)
     //text.println()
-
-    /*text <- @B.String("---")
-    text.println()
-
-    pp ptr<data<u64>> <- { thing.adr }
-
-    text <- @B.StringForU64(pp.val[0].u64)
-    text.println()
-
-    text <- @B.StringForU64(pp.val[1].u64)
-    text.println()
-
-    text <- @B.StringForU64(pp.val[2].u64)
-    text.println()*/
-
-    /*text <- @B.StringForU64(pp.val[3].u64)
-    text.println()
-
-    text <- @B.StringForU64(pp.val[4].u64)
-    text.println()*/
-    
-    /*text <- @B.StringForU32(pStuff.vadr.u32)
-    text.println()
-
-    text <- @B.StringForU32(stuff.adr.u32)
-    text.println()*/
-
-    text <- @B.StringForU32(pStuff.val.num)
-    text.println()
-
-    text <- @B.StringForU32(thing.num)
-    text.println()
-
-    text <- @B.String("---")
-    text.println()
-
-    //text <- @B.StringForU64(stuff.doStuff.adr.u64)
-    //text.println()
-
-    /*text <- @B.StringForU64(thing.doStuff.adr.u64)
-    text.println()*/
-
-    //stuff.doStuff()
-    thing.doStuff()
-    pStuff.val.doStuff()
-    stuff.doStuff()
-
-    text <- @B.StringForU32(pStuff.val.num)
-    text.println()
-
-    text <- @B.StringForU32(thing.num)
-    text.println()
 ;
 
