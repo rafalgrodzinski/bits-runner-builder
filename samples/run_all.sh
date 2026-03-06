@@ -22,6 +22,7 @@ samples=(
     primes
     strings
     date
+    interfaces
 )
 
 for sample in "${samples[@]}"; do

@@ -10,6 +10,32 @@ Square blob: @Lib.Shape
     ;
 ;
 
-@export main fun
+Triangle blob: @Lib.Shape
+    name blob<@B.String>
+    width u32
+    height u32
+    getArea fun -> u32
+        ret it.val.width * it.val.height / 2
+    ;
+;
 
+@export main fun
+    shape proto<@Lib.Shape>
+
+    square blob<Square>
+    pSquare ptr<blob<Square>> <- { square.adr }
+    square.name <- @B.String("square")
+    square.length <- 3
+
+    triangle blob<Triangle>
+    pTriangle ptr<blob<Triangle>> <- { triangle.adr }
+    triangle.name <- @B.String("triangle")
+    triangle.width <- 5
+    triangle.height <- 7
+
+    shape <- { pSquare }
+    @Lib.printShape(shape)
+
+    shape <- { pTriangle }
+    @Lib.printShape(shape)
 ;

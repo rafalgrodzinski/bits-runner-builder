@@ -7,5 +7,17 @@
     getArea fun -> u32
 ;
 
-@export printShare fun: shape proto<Shape>
+@export printShape fun: shape proto<Shape>
+    text blob<@B.String>
+
+    text <- @B.String("Area of ")
+    text.print()
+
+    shape.name.print()
+
+    text <- @B.String(" is ")
+    text.print()
+
+    text <- @B.StringForU32(shape.getArea())
+    text.println()
 ;
