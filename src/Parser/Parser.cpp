@@ -733,7 +733,11 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             }
             case TAG_PROTO_NAME: {
                 string protoName;
-                if ((i < resultsGroup.getResults().size() -1) && (resultsGroup.getResults().at(i+1).getToken()->getLexme().compare(".") == 0)) {
+                if (
+                    (i < resultsGroup.getResults().size() - 2) &&
+                    (resultsGroup.getResults().at(i+1).getKind() == ParseeResultKind::TOKEN) &&
+                    (resultsGroup.getResults().at(i+1).getToken()->getLexme().compare(".") == 0)
+                ) {
                     protoName = format("{}.{}", parseeResult.getToken()->getLexme(), resultsGroup.getResults().at(i+2).getToken()->getLexme());
                     i += 2;
                 } else {
