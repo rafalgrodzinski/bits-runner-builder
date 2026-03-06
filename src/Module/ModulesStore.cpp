@@ -79,10 +79,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     statementBlob->getShouldExport(),
                     statementBlob->getName(),
                     statementBlob->getLocation()
-                );                        
+                );
+
                 // local header
                 moduleBlobStatements.push_back(statementBlob);
                 moduleBlobDeclarationStatements.push_back(statementBlobDeclaration);
+
                 // exported header
                 if (statementBlob->getShouldExport()) {
                     // update member variable statements for exported statement
@@ -206,6 +208,54 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleProtoDeclarationStatements.push_back(statementProtoDeclaration);
 
                 // exported header
+                if (statementProto->getShouldExport()) {
+                    // update member variable statements for exported statement
+                    vector<shared_ptr<StatementVariable>> exportedVariableStatements;
+                    for (shared_ptr<StatementVariable> statementVariable : statementProto->getVariableStatements()) {
+                        shared_ptr<StatementVariable> exportedVariableStatement = make_shared<StatementVariable>(
+                            statementVariable->getShouldExport(),
+                            statementVariable->getIdentifier(),
+                            typeForExportedStatementFromType(statementVariable->getValueType(), moduleName),
+                            statementVariable->getExpression(),
+                            statementVariable->getLocation()
+                        );
+                        exportedVariableStatements.push_back(exportedVariableStatement);
+                    }
+
+                    // update member function declaration statements for exported statement
+                    vector<shared_ptr<StatementFunctionDeclaration>> exportedFunctionDeclarationStatements;
+                    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
+                        // convert earch argument into na exportable version
+                        vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
+                        for (pair<string, shared_ptr<ValueType>> &argument : statementFunctionDeclaration->getArguments()) {
+                            shared_ptr<ValueType> exportedType = typeForExportedStatementFromType(argument.second, moduleName);
+                            exportedArguments.push_back(pair(argument.first, exportedType));
+                        }
+
+                        shared_ptr<StatementFunctionDeclaration> exportedFunctionDeclarationStatement = make_shared<StatementFunctionDeclaration>(
+                            statementFunctionDeclaration->getShouldExport(),
+                            statementFunctionDeclaration->getName(),
+                            exportedArguments,
+                            typeForExportedStatementFromType(statementFunctionDeclaration->getReturnValueType(), moduleName),
+                            statementFunctionDeclaration->getLocation()
+                        );
+                        exportedFunctionDeclarationStatements.push_back(exportedFunctionDeclarationStatement);
+                    }
+
+                    // use the modified members to create an exportable proto
+                    shared_ptr<StatementProto> exportedStatementProto = make_shared<StatementProto>(
+                        statementProto->getShouldExport(),
+                        statementProto->getName(),
+                        exportedVariableStatements,
+                        exportedFunctionDeclarationStatements,
+                        statementProto->getLocation()
+                    );
+
+                    // append updated statement
+                    moduleExportedProtoStatements.push_back(exportedStatementProto);
+                    // declaration doesn't contain any types, so it's fine like this
+                    moduleExportedProtoDeclarationStatements.push_back(statementProtoDeclaration);
+                }
                 break;
             }
             case StatementKind::RAW_FUNCTION: {

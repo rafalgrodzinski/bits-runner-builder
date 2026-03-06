@@ -1,5 +1,12 @@
 @import Lib
 
+Square blob: @Lib.Shape
+    length u32
+    getArea fun -> u32
+        ret it.val.length * it.val.length
+    ;
+;
+
 @export main fun
 
 ;

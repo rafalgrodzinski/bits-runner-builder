@@ -665,12 +665,30 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                     // first name
                     Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                    // identifier - module prefix
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
+                            Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier
                     Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
                     //repeated subsequent names
                     Parsee::repeatedGroupParsee(
                         {
                             Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
                             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                            // identifier - module prefix
+                            Parsee::groupParsee(
+                                {
+                                    Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
+                                    Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
+                                }, ParseeLevel::OPTIONAL, true
+                            ),
+                            // identifier
                             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
                         }, ParseeLevel::OPTIONAL, true
                     )
@@ -702,7 +720,8 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     vector<shared_ptr<StatementFunction>> functionStatements;
     vector<string> protoNames;
 
-    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+    for (int i=0; i<resultsGroup.getResults().size(); i++) {
+        ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
             case TAG_SHOULD_EXPORT: {
                 shouldExport = true;
@@ -713,7 +732,14 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                 break;
             }
             case TAG_PROTO_NAME: {
-                protoNames.push_back(parseeResult.getToken()->getLexme());
+                string protoName;
+                if ((i < resultsGroup.getResults().size() -1) && (resultsGroup.getResults().at(i+1).getToken()->getLexme().compare(".") == 0)) {
+                    protoName = format("{}.{}", parseeResult.getToken()->getLexme(), resultsGroup.getResults().at(i+2).getToken()->getLexme());
+                    i += 2;
+                } else {
+                    protoName = parseeResult.getToken()->getLexme();
+                }
+                protoNames.push_back(protoName);
                 break;
             }
             case TAG_STATEMENT_IN_BLOB: {

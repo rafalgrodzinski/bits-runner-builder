@@ -307,6 +307,23 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
 
     for (shared_ptr<Statement> &importedStatement : it->second) {
         switch (importedStatement->getKind()) {
+            case StatementKind::BLOB: {
+                shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(importedStatement);
+                buildBlobDefinition(
+                    statementMetaImport->getName(),
+                    statementBlob->getName(),
+                    statementBlob->getMembers()
+                );
+                break;
+            }
+            case StatementKind::BLOB_DECLARATION: {
+                shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
+                buildBlobDeclaration(
+                    statementMetaImport->getName(),
+                    statementDeclaration->getName()
+                );
+                break;
+            }
             case StatementKind::FUNCTION_DECLARATION: {
                 shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(importedStatement);
                 buildFunctionDeclaration(
@@ -316,6 +333,21 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                     statementDeclaration->getArguments(),
                     statementDeclaration->getReturnValueType()
                 );
+                break;
+            }
+            case StatementKind::PROTO: {
+                shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(importedStatement);
+                buildProtoDefinition(statementMetaImport->getName(), statementProto);
+                break;
+            }
+            case StatementKind::PROTO_DECLARATION: {
+                shared_ptr<StatementProtoDeclaration> statementProtoDeclaration = dynamic_pointer_cast<StatementProtoDeclaration>(importedStatement);
+                buildProtoDeclaration(statementMetaImport->getName(), statementProtoDeclaration);
+                break;
+            }
+            case StatementKind::RAW_FUNCTION: {
+                shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
+                buildRawFunction(statementMetaImport->getName(), statementRawFunction);
                 break;
             }
             case StatementKind::VARIABLE_DECLARATION: {
@@ -328,30 +360,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 );
                 break;
             }
-            case StatementKind::RAW_FUNCTION: {
-                shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
-                buildRawFunction(statementMetaImport->getName(), statementRawFunction);
-                break;
-            }
-            case StatementKind::BLOB_DECLARATION: {
-                shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
-                buildBlobDeclaration(
-                    statementMetaImport->getName(),
-                    statementDeclaration->getName()
-                );
-                break;
-            }
-            case StatementKind::BLOB: {
-                shared_ptr<StatementBlob> statementBlobDefinition = dynamic_pointer_cast<StatementBlob>(importedStatement);
-                buildBlobDefinition(
-                    statementMetaImport->getName(),
-                    statementBlobDefinition->getName(),
-                    statementBlobDefinition->getMembers()
-                );
-                break;
-            }
-            default:
+            default: {
                 markErrorUnexpected(importedStatement->getLocation(), "imported statement");
+            }
         }
     }
 }

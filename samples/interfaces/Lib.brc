@@ -1,1 +1,11 @@
 @module Lib
+
+@import B
+
+@export Shape proto
+    name blob<@B.String>
+    getArea fun -> u32
+;
+
+@export printShare fun: shape proto<Shape>
+;
