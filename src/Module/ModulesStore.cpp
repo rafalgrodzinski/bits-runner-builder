@@ -22,7 +22,7 @@ defaultModuleName(defaultModuleName) { }
 shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
     switch (valueType->getKind()) {
         case ValueTypeKind::BLOB: {
-            string name = *(valueType->getBlobName());
+            string name = *valueType->getBlobName();
             if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
                 name = moduleName + "." + name;
             }
@@ -30,8 +30,6 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
         }
         case ValueTypeKind::DATA:
             return ValueType::data(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getCountExpression());
-        case ValueTypeKind::PTR:
-            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
         case ValueTypeKind::FUN: {
             // first convert each of the argument types
             vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
@@ -43,8 +41,19 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
             // and finally return a new function type
             return ValueType::fun(exportedArgumentTypes, exportedReturnType);
         }
-        default:
+        case ValueTypeKind::PTR: {
+            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
+        }
+        case ValueTypeKind::PROTO: {
+            string name = *valueType->getProtoName();
+            if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
+                name = moduleName + "." + name;
+            }
+            return ValueType::proto(name);
+        }
+        default: {
             return valueType;
+        }
     }
 }
 

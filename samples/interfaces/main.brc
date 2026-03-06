@@ -1,6 +1,9 @@
+@import B
 @import Lib
 
+
 Square blob: @Lib.Shape
+    name blob<@B.String>
     length u32
     getArea fun -> u32
         ret it.val.length * it.val.length
