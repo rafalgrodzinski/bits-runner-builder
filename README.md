@@ -145,3 +145,6 @@ Based on ["Software Drag Racing!" by Dave Plummer](https://github.com/PlummersSo
 
 `strings`:
 This uses the basic library `@B` to manipulate strings.
+
+`interfaces`:
+Shows how `proto` can be used for indirect useage of `blob`.
