@@ -31,6 +31,8 @@
 #include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
+#include "Parser/Statement/StatementProto.h"
+#include "Parser/Statement/StatementProtoDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementRepeat.h"
 #include "Parser/Statement/StatementReturn.h"
@@ -105,6 +107,12 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             break;
         case StatementKind::MODULE:
             break;
+        case StatementKind::PROTO:
+            checkStatement(dynamic_pointer_cast<StatementProto>(statement));
+            break;
+        case StatementKind::PROTO_DECLARATION:
+            checkStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
+            break;
         case StatementKind::REPEAT:
             checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
             break;
@@ -169,27 +177,96 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
         }
     }
 
+    // verify proto compliance
+    for (string &protoName : statementBlob->getProtoNames()) {
+        auto protoMembers = scope->getProtoMembers(protoName);
+        if (!protoMembers) {
+            markErrorNotDefined(statementBlob->getLocation(), format("proto {}", protoName));
+            return;
+        }
+
+        // for each proto member
+        for (auto protoMember : *protoMembers) {
+            bool isImplemented = false;
+
+            if (protoMember.second->isFunction()) {
+                string name = format("{}.{}", statementBlob->getName(), protoMember.first);
+                for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+                    // check name
+                    if (name.compare(statementFunction->getName()) != 0) 
+                        continue;
+
+                    isImplemented = true;
+
+                    // check arguments
+                    int argsCount = (*protoMember.second->getArgumentTypes()).size();
+                    if (argsCount != statementFunction->getArguments().size()) {
+                        isImplemented = false;
+                        break;
+                    }
+
+                    for (int i=1; i<argsCount; i++) {
+                        if (!(*protoMember.second->getArgumentTypes()).at(i)->isEqual(statementFunction->getArguments().at(i).second)) {
+                            isImplemented = false;
+                            break;
+                        }
+                    }
+
+                    if (!isImplemented)
+                        break;
+
+                    // check return type
+                    if (!protoMember.second->getReturnType()->isEqual(statementFunction->getReturnValueType())) {
+                        isImplemented = false;
+                        break;
+                    }
+                }
+            } else {
+                for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+                    if (protoMember.first.compare(statementVariable->getIdentifier()) == 0 && protoMember.second->isEqual(statementVariable->getValueType())) {
+                        isImplemented = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!isImplemented) {
+                markErrorNotImplemented(statementBlob->getLocation(), protoName, protoMember.first);
+                return;
+            }
+        }
+    }
+
     // register blob members in scope
     vector<pair<string, shared_ptr<ValueType>>> members;
-    for (auto &member : statementBlob->getMembers()) {
+
+    // extract variable members
+    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
+        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+
+    // then function members
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
+        members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
+
+    // check each of the extracted member's type
+    for (auto &member : members) {
         checkValueType(member.second);
         if (member.second->isData() && member.second->getCountExpression() == nullptr) {
                 markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
                 return;
         }
-        members.push_back(pair(member.first, member.second));
     }
 
-    shared_ptr<ValueType> valueType = ValueType::blob(statementBlob->getName());
-
+    // and the register
     string name = importModulePrefix + statementBlob->getName();
-    if (!scope->setBlobMembers(name, members, true))
+    if (!scope->setBlobMembers(name, members))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
+    scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
     string name = importModulePrefix + statementBlobDeclaration->getName();
-    scope->setBlobMembers(name, {}, false);
+    scope->setBlobMembers(name, {});
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {
@@ -299,17 +376,79 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementM
         markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);
 }
 
-void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
-    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
+void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statement) {
+    auto it = importableHeaderStatementsMap.find(statement->getName());
     if (it == importableHeaderStatementsMap.end()) {
-        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
+        markErrorInvalidImport(statement->getLocation(), statement->getName());
         return;
     }
-    importModulePrefix = statementMetaImport->getName() + ".";
+    importModulePrefix = statement->getName() + ".";
     for (shared_ptr<Statement> &importStatement : it->second) {
         checkStatement(importStatement, nullptr);
     }
     importModulePrefix = "";
+}
+
+void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
+    scope->pushLevel();
+    // check and verify proto member variables
+    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements()) {
+        // proto member variable should not have a value expression
+        if (statementVariable->getExpression() != nullptr) {
+            markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
+            return;
+        }
+
+        // members should not have @export
+        if (statementVariable->getShouldExport()) {
+            markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
+            return;
+        }
+
+        checkStatement(statementVariable);
+    }
+    scope->popLevel();
+
+    // verify member function declarations
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements()) {
+        // members should not have export
+        if (statementFunctionDeclaration->getShouldExport()) {
+            markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
+            return;
+        }
+
+        checkStatement(statementFunctionDeclaration);
+    }
+
+    // register proto members in scope
+    vector<pair<string, shared_ptr<ValueType>>> members;
+
+    // extract variable members
+    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements())
+        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+
+    // then function members
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements())
+        members.push_back(pair(statementFunctionDeclaration->getName(), statementFunctionDeclaration->getValueType()));
+
+    // check each of the extracted type
+    for (auto &member : members) {
+        checkValueType(member.second);
+        if (member.second->isData() && member.second->getCountExpression() == nullptr) {
+                markErrorNotDefined(statement->getLocation(), format("{}'s count expression", member.first));
+                return;
+        }
+    }
+
+    // and the register
+    string name = importModulePrefix + statement->getName();
+    if (!scope->setProtoMembers(name, members))
+        markErrorAlreadyDefined(statement->getLocation(), statement->getName());
+}
+
+void Analyzer::checkStatement(shared_ptr<StatementProtoDeclaration> statement) {
+    string name = importModulePrefix + statement->getName();
+    scope->setProtoMembers(name, {});
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
@@ -431,7 +570,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
     if (expression == nullptr)
         return nullptr;
 
-    if (expression->getValueType() != nullptr)
+    if (expression->getValueType() != nullptr && expression->getKind() != ExpressionKind::CAST)
         return expression->getValueType();
 
     switch (expression->getKind()) {
@@ -546,6 +685,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
     if (parentExpression != nullptr) {
         bool isParentPointer = parentExpression->getValueType()->isPointer();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
+        bool isParentProto = parentExpression->getValueType()->isProto();
         bool isVal = expressionCall->getName().compare("val") == 0;
 
         if (isParentPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
@@ -553,6 +693,15 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         } else if (isParentBlob) {
             string functionName = format("{}.{}", *(parentExpression->getValueType()->getBlobName()), expressionCall->getName());
             valueType = scope->getFunctionType(functionName);
+            extraArguments = 1; // for the implicit "it"
+        } else if (isParentProto) {
+            string protoName = *(parentExpression->getValueType()->getProtoName());
+            auto members = *(scope->getProtoMembers(protoName));
+            for (pair<string, shared_ptr<ValueType>> &member : members) {
+                if (expressionCall->getName().compare(member.first) == 0) {
+                    valueType = member.second;
+                }
+            }
             extraArguments = 1; // for the implicit "it"
         } else {
             markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->getSubType(), nullptr);
@@ -797,13 +946,13 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isParentData = parentExpression->getValueType()->isData();
         bool isParentPointer = parentExpression->getValueType()->isPointer();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
+        bool isParentProto = parentExpression->getValueType()->isProto();
 
         bool isCount = expressionValue->getIdentifier().compare("count") == 0;
         bool isVal = expressionValue->getIdentifier().compare("val") == 0;
         bool isVadr = expressionValue->getIdentifier().compare("vadr") == 0;
         bool isAdr = expressionValue->getIdentifier().compare("adr") == 0;
         bool isSize = expressionValue->getIdentifier().compare("size") == 0;
-
 
         if (isParentData && isCount) {
             expressionValue->valueType = ValueType::UINT;
@@ -832,7 +981,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                     break;
             }
             return expressionValue->getValueType();
-        } else if (isParentPointer && isVadr) {
+        } else if ((isParentPointer || isParentProto) && isVadr) {
             expressionValue->valueType = ValueType::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
@@ -854,8 +1003,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             string blobName = *(parentExpression->getValueType()->getBlobName());
             optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(blobName);
             if (blobMembers) {
+                string nameVariable = expressionValue->getIdentifier();
+                string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
                 for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
-                    if (expressionValue->getIdentifier().compare(blobMember.first) == 0) {
+                    if (nameVariable.compare(blobMember.first) == 0 || nameFunction.compare(blobMember.first) == 0) {
                         // found corresponding blob, decide if it's a simple or data access
                         switch (expressionValue->getValueKind()) {
                             case ExpressionValueKind::SIMPLE:
@@ -874,6 +1025,31 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             markErrorNotDefined(
                 expressionValue->getLocation(),
                 format("{}.{}", blobName, expressionValue->getIdentifier())
+            );
+            return nullptr;
+        // check proto member
+        } else if (isParentProto) {
+            string protoName = *(parentExpression->getValueType()->getProtoName());
+            auto members = *(scope->getProtoMembers(protoName));
+            for (pair<string, shared_ptr<ValueType>> &member : members) {
+                if (expressionValue->getIdentifier().compare(member.first) == 0) {
+                    // found corresponding member, decide if it's a simple or data access
+                    switch (expressionValue->getValueKind()) {
+                        case ExpressionValueKind::SIMPLE:
+                            expressionValue->valueType = member.second;
+                            return expressionValue->getValueType();
+                        case ExpressionValueKind::DATA:
+                            expressionValue->valueType = member.second->getSubType();
+                            expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
+                            return expressionValue->getValueType();
+                        default:
+                            break;
+                    }
+                }
+            }
+            markErrorNotDefined(
+                expressionValue->getLocation(),
+                format("{}.{}", protoName, expressionValue->getIdentifier())
             );
             return nullptr;
         }
@@ -1135,6 +1311,10 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             shared_ptr<Expression> sourceMemberExpression = expressionCompositeLiteral->getExpressions().at(i);
             sourceMemberExpression = checkAndTryCasting(sourceMemberExpression, blobMembers.at(i).second, returnType);
         }
+        return sourceExpression;
+    // composite to proto
+    } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isProto()) {
+        sourceExpression->valueType = targetType;
         return sourceExpression;
     // composite to data
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isData()) {
@@ -1515,6 +1695,31 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
                 }
 
+                // to proto
+                case ValueTypeKind::PROTO: {
+                    string targetProtoName = *(targetType->getProtoName());
+
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPointer())
+                        return false;
+
+                    shared_ptr<ValueType> subType = sourceElementTypes.at(0)->getSubType();
+                    if (subType == nullptr || !subType->isBlob())
+                        return false;
+
+                    string blobName = *(subType->getBlobName());
+                    optional<vector<string>> protoNames = scope->getBlobProtoNames(blobName);
+                    if (!protoNames)
+                        return false;
+                    
+                    for (string &protoName : *protoNames) {
+                        if (targetProtoName.compare(protoName) == 0)
+                            return true;
+                    }
+
+                    return false;
+                }
+
                 default:
                     return false;
             }
@@ -1601,6 +1806,11 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
 
 void Analyzer::markErrorNotDefined(shared_ptr<Location> location, string name) {
     string message = format("{} is not defined in scope", name);
+    errors.push_back(Error::error(location, message));
+}
+
+void Analyzer::markErrorNotImplemented(shared_ptr<Location> location, string protoName, string memberName) {
+    string message = format("member `{}` of proto `{}` not implemented", memberName, protoName);
     errors.push_back(Error::error(location, message));
 }
 

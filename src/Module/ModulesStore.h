@@ -20,6 +20,8 @@ private:
 
     // header
     map<string, vector<shared_ptr<Statement>>> importStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> protoDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> protoStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
     map<string, vector<shared_ptr<Statement>>> variableDeclarationStatementsMap;
@@ -28,8 +30,10 @@ private:
     // body
     map<string, vector<shared_ptr<Statement>>> bodyStatementsMap;
     // exported
-    map<string, vector<shared_ptr<Statement>>> exportedBlobStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedProtoDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedProtoStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedBlobStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedVariableDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedFunctionDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedRawFunctionStatementsMap;

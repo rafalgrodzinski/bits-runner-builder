@@ -6,33 +6,35 @@
 #include "WrappedValue.h"
 #include "Parser/ValueType.h"
 
-#include "Parser/Expression/ExpressionGrouping.h"
-#include "Parser/Expression/ExpressionLiteral.h"
-#include "Parser/Expression/ExpressionCompositeLiteral.h"
-#include "Parser/Expression/ExpressionValue.h"
-#include "Parser/Expression/ExpressionCall.h"
-#include "Parser/Expression/ExpressionIfElse.h"
-#include "Parser/Expression/ExpressionBinary.h"
-#include "Parser/Expression/ExpressionUnary.h"
-#include "Parser/Expression/ExpressionBlock.h"
-#include "Parser/Expression/ExpressionChained.h"
-#include "Parser/Expression/ExpressionCast.h"
-
-#include "Parser/Statement/StatementMetaImport.h"
-#include "Parser/Statement/StatementFunctionDeclaration.h"
-#include "Parser/Statement/StatementFunction.h"
-#include "Parser/Statement/StatementRawFunction.h"
-#include "Parser/Statement/StatementBlobDeclaration.h"
-#include "Parser/Statement/StatementBlob.h"
-#include "Parser/Statement/StatementVariableDeclaration.h"
-#include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementAssignment.h"
-#include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementBlob.h"
+#include "Parser/Statement/StatementBlobDeclaration.h"
+#include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementExpression.h"
-#include "Parser/Statement/StatementRepeat.h"
+#include "Parser/Statement/StatementFunction.h"
+#include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementMetaExternVariable.h"
-#include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementMetaImport.h"
+#include "Parser/Statement/StatementProto.h"
+#include "Parser/Statement/StatementProtoDeclaration.h"
+#include "Parser/Statement/StatementRawFunction.h"
+#include "Parser/Statement/StatementRepeat.h"
+#include "Parser/Statement/StatementReturn.h"
+#include "Parser/Statement/StatementVariable.h"
+#include "Parser/Statement/StatementVariableDeclaration.h"
+
+#include "Parser/Expression/ExpressionBinary.h"
+#include "Parser/Expression/ExpressionBlock.h"
+#include "Parser/Expression/ExpressionCall.h"
+#include "Parser/Expression/ExpressionCast.h"
+#include "Parser/Expression/ExpressionChained.h"
+#include "Parser/Expression/ExpressionCompositeLiteral.h"
+#include "Parser/Expression/ExpressionGrouping.h"
+#include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionUnary.h"
+#include "Parser/Expression/ExpressionValue.h"
 
 ModuleBuilder::ModuleBuilder(
     string defaultModuleName,
@@ -144,6 +146,12 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             break;
         case StatementKind::META_IMPORT:
             buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
+            break;
+        case StatementKind::PROTO:
+            buildStatement(dynamic_pointer_cast<StatementProto>(statement));
+            break;
+        case StatementKind::PROTO_DECLARATION:
+            buildStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
             break;
         case StatementKind::RAW_FUNCTION:
             buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
@@ -299,6 +307,23 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
 
     for (shared_ptr<Statement> &importedStatement : it->second) {
         switch (importedStatement->getKind()) {
+            case StatementKind::BLOB: {
+                shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(importedStatement);
+                buildBlobDefinition(
+                    statementMetaImport->getName(),
+                    statementBlob->getName(),
+                    statementBlob->getMembers()
+                );
+                break;
+            }
+            case StatementKind::BLOB_DECLARATION: {
+                shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
+                buildBlobDeclaration(
+                    statementMetaImport->getName(),
+                    statementDeclaration->getName()
+                );
+                break;
+            }
             case StatementKind::FUNCTION_DECLARATION: {
                 shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(importedStatement);
                 buildFunctionDeclaration(
@@ -308,6 +333,21 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                     statementDeclaration->getArguments(),
                     statementDeclaration->getReturnValueType()
                 );
+                break;
+            }
+            case StatementKind::PROTO: {
+                shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(importedStatement);
+                buildProtoDefinition(statementMetaImport->getName(), statementProto);
+                break;
+            }
+            case StatementKind::PROTO_DECLARATION: {
+                shared_ptr<StatementProtoDeclaration> statementProtoDeclaration = dynamic_pointer_cast<StatementProtoDeclaration>(importedStatement);
+                buildProtoDeclaration(statementMetaImport->getName(), statementProtoDeclaration);
+                break;
+            }
+            case StatementKind::RAW_FUNCTION: {
+                shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
+                buildRawFunction(statementMetaImport->getName(), statementRawFunction);
                 break;
             }
             case StatementKind::VARIABLE_DECLARATION: {
@@ -320,32 +360,19 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 );
                 break;
             }
-            case StatementKind::RAW_FUNCTION: {
-                shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
-                buildRawFunction(statementMetaImport->getName(), statementRawFunction);
-                break;
-            }
-            case StatementKind::BLOB_DECLARATION: {
-                shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
-                buildBlobDeclaration(
-                    statementMetaImport->getName(),
-                    statementDeclaration->getName()
-                );
-                break;
-            }
-            case StatementKind::BLOB: {
-                shared_ptr<StatementBlob> statementBlobDefinition = dynamic_pointer_cast<StatementBlob>(importedStatement);
-                buildBlobDefinition(
-                    statementMetaImport->getName(),
-                    statementBlobDefinition->getName(),
-                    statementBlobDefinition->getMembers()
-                );
-                break;
-            }
-            default:
+            default: {
                 markErrorUnexpected(importedStatement->getLocation(), "imported statement");
+            }
         }
     }
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statement) {
+    buildProtoDefinition(module->getName(), statement);
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementProtoDeclaration> statement) {
+    buildProtoDeclaration(module->getName(), statement);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
@@ -569,6 +596,69 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
     );
 }
 
+void ModuleBuilder::buildProtoDeclaration(string moduleName, shared_ptr<StatementProtoDeclaration> statement) {
+    // symbol name
+    string symbolName = statement->getName();
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, symbolName);
+
+    // internal name
+    string internalName = statement->getName();
+    if (moduleName.compare(module->getName()) != 0)
+        internalName = symbolName;
+
+    llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
+    scope->setProtoStructType(internalName, structType, {});
+}
+
+void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<StatementProto> statement) {
+    // symbol name
+    string symbolName = statement->getName();
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+        symbolName = format("{}.{}", moduleName, symbolName);
+
+    // internal name
+    string internalName = statement->getName();
+    if (moduleName.compare(module->getName()) != 0)
+        internalName = symbolName;
+
+    llvm::StructType *structType = scope->getProtoStructType(internalName);
+    if (structType == nullptr) {
+        markErrorNotDeclared(nullptr, format("proto \"{}\"", symbolName));
+        return;
+    }
+
+    // Generate types for body (and convert them to pointers) and keep each member type
+    vector<pair<string, shared_ptr<ValueType>>> members;
+    vector<llvm::Type *> types;
+
+    // first add pointer to the implementation
+    types.push_back(typePtr);
+
+    // then pointers to all the variables
+    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements()) {
+        shared_ptr<ValueType> valueType = ValueType::ptr(statementVariable->getValueType());
+        members.push_back(pair(statementVariable->getIdentifier(), valueType));
+        llvm::Type *type = typeForValueType(valueType);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+
+    // and then pointers to the functions
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements()) {
+        shared_ptr<ValueType> valueType = ValueType::ptr(statementFunctionDeclaration->getValueType());
+        members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
+        llvm::Type *type = typeForValueType(valueType);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+
+    structType->setBody(types, false);
+    scope->setProtoStructType(internalName, structType, members);
+}
+
 void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
     // symbol name
     string symbolName = name;
@@ -675,6 +765,9 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
 }
 
 void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression) {
+    if (targetWrappedValue == nullptr)
+        return;
+
     // data
     if (targetWrappedValue->isArray()) {
         switch (valueExpression->getKind()) {
@@ -698,13 +791,12 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 }
                 break;
             }
-            // data <- data
+            // data <- ?
             // copy each value from one allocated array to another allocated array
-            case ExpressionKind::VALUE:
-            // data <- function()
-            case ExpressionKind::CALL: 
-            // data <- .var
-            case ExpressionKind::CHAINED: {
+            case ExpressionKind::VALUE: // data <- data
+            case ExpressionKind::CHAINED: // data <- .val
+            case ExpressionKind::IF_ELSE: // data <- if else
+            case ExpressionKind::CALL: { // data <- function()
                 shared_ptr<WrappedValue> sourceWrappedValue;
 
                 if (valueExpression->getKind() == ExpressionKind::VALUE) {
@@ -740,12 +832,13 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 );
                 break;
             }
-            default:
+            default: {
                 markErrorInvalidAssignment(valueExpression->getLocation());
                 return;
+            }
         }
     // blob
-    } else if (targetWrappedValue->isStruct()) {
+    } else if (targetWrappedValue->isBlobStruct()) {
         switch (valueExpression->getKind()) {
             // blob <- { }
             case ExpressionKind::COMPOSITE_LITERAL: {
@@ -762,25 +855,98 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 }
                 break;
             }
-            // blob <- blob
-            case ExpressionKind::VALUE:
-            case ExpressionKind::CHAINED:
-            // blob <- if else
-            case ExpressionKind::IF_ELSE:
-            // blob <- function()
-            case ExpressionKind::CALL: {
-                shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpression);
-                if (wrappedSourceValue == nullptr)
+            // blob <- ?
+            case ExpressionKind::VALUE: // blob <- blob
+            case ExpressionKind::CHAINED: // blob <- .val
+            case ExpressionKind::IF_ELSE: // blob <- if else
+            case ExpressionKind::CALL: { // blob <- function()
+                shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
+                if (sourceWrappedValue == nullptr)
                     return;
-                llvm::Value *sourceValue = wrappedSourceValue->getValue();
+                llvm::Value *sourceValue = sourceWrappedValue->getValue();
                 if (sourceValue == nullptr)
                     return;
-                builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
+                llvm::Value *targetValue = targetWrappedValue->getPointerValue();
+                if (targetValue == nullptr)
+                    return;
+                builder->CreateStore(sourceValue, targetValue);
                 break;
             }
-            default:
+            default: {
                 markErrorInvalidAssignment(valueExpression->getLocation());
                 break;
+            }
+        }
+    // proto
+    } else if (targetWrappedValue->isProtoStruct()) {
+        switch (valueExpression->getKind()) {
+            // proto <- { }
+            case ExpressionKind::COMPOSITE_LITERAL: {
+                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
+                shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpressions.at(0));
+                string sourceBlobName = *(sourceWrappedValue->getValueType()->getSubType()->getBlobName());
+                llvm::StructType *sourceStructType = scope->getStructType(sourceBlobName);
+                llvm::Value *sourcePointerValue = sourceWrappedValue->getValue();
+                if (sourcePointerValue == nullptr)
+                    return;
+
+                string targetProtoName = *(targetWrappedValue->getValueType()->getProtoName());
+                auto targetProtoMembers = *scope->getProtoStructMembers(targetProtoName);
+
+                int targetMembersCount = targetWrappedValue->getStructType()->getStructNumElements();
+                for (int i=0; i<targetMembersCount; i++) {
+                    llvm::Value *sourceValue;
+                    if (i == 0) {
+                        // first index should be pointer to the implementing blob
+                        sourceValue = sourcePointerValue;
+                    } else {
+                        pair<string, shared_ptr<ValueType>> targetMember = targetProtoMembers.at(i - 1);
+                        // if subsequent member is a function, retrieve function from the registered ones
+                        if (targetMember.second->getSubType()->isFunction()) {
+                            string sourceFunctionName = format("{}.{}", sourceBlobName, targetMember.first);
+                            sourceValue = scope->getFunction(sourceFunctionName);
+                        // otherwise figure out index and copy value from the source struct
+                        } else {
+                            int sourceMemberIndex = *scope->getStructMemberIndex(sourceBlobName, targetMember.first);
+                            llvm::Value *sourceIndex[] = {
+                                builder->getInt32(0),
+                                builder->getInt32(sourceMemberIndex)
+                            };
+                            sourceValue = builder->CreateGEP(sourceStructType, sourcePointerValue, sourceIndex);
+                        }
+                    }
+
+                    llvm::Value *targetIndex[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(i)
+                    };
+                    llvm::StructType *targetStructType = targetWrappedValue->getStructType();
+                    llvm::Value *targetMember = builder->CreateGEP(targetStructType, targetWrappedValue->getPointerValue(), targetIndex);
+                    builder->CreateStore(sourceValue, targetMember);
+                }
+                break;
+            }
+            // proto <- ?
+            case ExpressionKind::VALUE: // proto <- proto
+            case ExpressionKind::CHAINED: // proto <- .val
+            case ExpressionKind::IF_ELSE: // proto <- if else
+            case ExpressionKind::CALL: { // proto <- function()
+                shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
+                if (sourceWrappedValue == nullptr)
+                    return;
+                llvm::Value *sourceValue = sourceWrappedValue->getValue();
+                if (sourceValue == nullptr)
+                    return;
+                llvm::Value *targetValue = targetWrappedValue->getPointerValue();
+                if (targetValue == nullptr)
+                    return;
+                builder->CreateStore(sourceValue, targetValue);
+                break;
+            }
+            default: {
+                markErrorInvalidAssignment(valueExpression->getLocation());
+                break;
+            }
         }
     // pointer
     } else if (targetWrappedValue->isPointer()) {
@@ -792,7 +958,10 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     break;
                 }
-                llvm::Value *adrValue = wrappedValueForExpression(valueExpressions.at(0))->getValue();
+                shared_ptr<WrappedValue> adrWrappedValue = wrappedValueForExpression(valueExpressions.at(0));
+                if (adrWrappedValue == nullptr)
+                    break;
+                llvm::Value *adrValue = adrWrappedValue->getValue();
                 if (adrValue == nullptr) {
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     break;
@@ -801,52 +970,49 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
                 break;
             }
-            // ptr <- ptr
-            case ExpressionKind::VALUE:
-            case ExpressionKind::CHAINED:
-            // ptr <- function()
-            case ExpressionKind::CALL: {
+            // ptr <- ?
+            case ExpressionKind::VALUE: // ptr <- ptr
+            case ExpressionKind::CHAINED: // ptr <- .val
+            case ExpressionKind::IF_ELSE: // ptr <- if else
+            case ExpressionKind::CALL: { // ptr <- function()
                 llvm::Value *sourceValue = wrappedValueForExpression(valueExpression)->getValue();
                 if (sourceValue == nullptr)
                     return;
                 builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
                 break;
             }
-            default:
+            default: {
                 markErrorInvalidAssignment(valueExpression->getLocation());
                 break;
+            }
         }
     // simple
     } else {
         switch (valueExpression->getKind()) {
-            // simple <- literal
-            case ExpressionKind::LITERAL:
-            // simple <- binary expression
-            case ExpressionKind::BINARY:
-            // simple <- ( expression )
-            case ExpressionKind::GROUPING:
-            case ExpressionKind::UNARY:
-            // simple <- if else
-            case ExpressionKind::IF_ELSE:
-            // simple <- function call
-            case ExpressionKind::CALL:
-            // simple <- var
-            case ExpressionKind::VALUE:
-            case ExpressionKind::CHAINED: {
+            case ExpressionKind::VALUE: // simple <- var
+            case ExpressionKind::CHAINED: // simple <- .val
+            case ExpressionKind::IF_ELSE: // simple <- if else
+            case ExpressionKind::CALL: // simple <- function()
+            case ExpressionKind::LITERAL: // simple <- literal
+            case ExpressionKind::BINARY: // simple <- binary expression
+            case ExpressionKind::UNARY: // simple <- unary expression
+            case ExpressionKind::GROUPING: { // simple <- ( expression )
                 shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
-                if (sourceWrappedValue == nullptr || targetWrappedValue == nullptr)
+                if (sourceWrappedValue == nullptr)
                     return;
                 llvm::Value *sourceValue = sourceWrappedValue->getValue();
+                if (sourceValue == nullptr)
+                    return;
                 llvm::Value *targetValue = targetWrappedValue->getPointerValue();
-                if (sourceValue == nullptr || targetValue == nullptr)
+                if (targetValue == nullptr)
                     return;
                 builder->CreateStore(sourceValue, targetValue);
                 break;
             }
-            // other
-            default:
+            default: {
                 markErrorInvalidAssignment(valueExpression->getLocation());
                 return;
+            }
         }
     }
 }
@@ -1106,81 +1272,146 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             shared_ptr<ExpressionValue> childExpressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
             currentWrappedValue = wrappedValueForTypeBuiltIn(type, childExpressionValue);
             parentExpression = chainExpression;
-            continue;
-        }
-
         // First in chain is treated as a single variable
-        if (currentWrappedValue == nullptr) {
+        } else if (currentWrappedValue == nullptr) {
             currentWrappedValue = wrappedValueForExpression(chainExpression);
             parentExpression = chainExpression;
             if (currentWrappedValue == nullptr)
                 return nullptr;
-            continue;
-        }
-
         // Cast expression?
-        if (shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression)) {
+        } else if (shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression)) {
             currentWrappedValue = wrappedValueForCast(currentWrappedValue, expressionCast->getValueType());
             parentExpression = chainExpression;
             if (currentWrappedValue == nullptr)
                 return nullptr;
-            continue;
-        }
-
         // Built-in expression?
-        if(shared_ptr<WrappedValue> builtInValue = wrappedValueForBuiltIn(currentWrappedValue, parentExpression, chainExpression)) {
+        } else if(shared_ptr<WrappedValue> builtInValue = wrappedValueForBuiltIn(currentWrappedValue, parentExpression, chainExpression)) {
             currentWrappedValue = builtInValue;
             parentExpression = chainExpression;
-            continue;
-        }
+        // Blob expression?
+        } else if (parentExpression->getValueType()->isBlob()) {
+            string parentBlobName = *parentExpression->getValueType()->getBlobName();
 
-        // For remaining the parent should be a blob
-        string parentBlobName = *parentExpression->getValueType()->getBlobName();
+            // call expression?
+            if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
+                string functionName = format("{}.{}", parentBlobName, expressionCall->getName());
+                llvm::Function *fun = scope->getFunction(functionName);
+                if (fun == nullptr) {
+                    markErrorNotDefined(expressionCall->getLocation(), format("function \"{}\"", expressionCall->getName()));
+                    return nullptr;
+                }
+                currentWrappedValue = wrappedValueForCall(
+                    fun,
+                    fun->getFunctionType(),
+                    {currentWrappedValue->getPointerValue()},
+                    expressionCall->getArgumentExpressions(),
+                    expressionCall->getValueType()
+                );
+            // value expression ?
+            } else  if (shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression)) {
+                llvm::Value *sourceValue;
+                llvm::Type *sourceType;
 
-        // Call expression?
-        if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
-            string functionName = format("{}.{}", parentBlobName, expressionCall->getName());
-            llvm::Function *fun = scope->getFunction(functionName);
-            currentWrappedValue = wrappedValueForCall(
-                fun,
-                fun->getFunctionType(),
-                {currentWrappedValue->getPointerValue()},
-                expressionCall->getArgumentExpressions(),
-                expressionCall->getValueType()
-            );
-            continue;
-        }
+                // try member variable
+                if (optional<int> memberIndex = scope->getStructMemberIndex(parentBlobName, expressionValue->getIdentifier())) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(*memberIndex)
+                    };
 
+                    sourceValue = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
+                    sourceType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
+                // try member function
+                } else {
+                    string functionName = format("{}.{}", parentBlobName, expressionValue->getIdentifier());
+                    if (llvm::Function *fun = scope->getFunction(functionName)) {
+                        sourceValue = fun;
+                        sourceType = fun->getType();
+                    }
+                }
 
-        // Check chained expression type 
-        shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression);
-        if (expressionValue == nullptr) {
-            markErrorInvalidType(expressionValue->getLocation());
+                if (sourceValue == nullptr || sourceType == nullptr) {
+                    markErrorInvalidMember(expressionValue->getLocation(), parentBlobName, expressionValue->getIdentifier());
+                    return nullptr;   
+                }
+
+                currentWrappedValue = wrappedValueForSourceValue(sourceValue, sourceType, expressionValue);
+                parentExpression = chainExpression;
+            } else {
+                markErrorInvalidType(expressionValue->getLocation());
+                return nullptr;
+            }
+        // Proto expression?
+        } else if (parentExpression->getValueType()->isProto()) {
+            string parentProtoName = *parentExpression->getValueType()->getProtoName();
+
+            // call expression?
+            if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
+                auto members = *scope->getProtoStructMembers(parentProtoName);
+                for (int i=0; i<members.size(); i++) {
+                    pair<string, shared_ptr<ValueType>> member = members.at(i);
+                    if (expressionCall->getName().compare(member.first) == 0) {
+                        llvm::StructType *structType = scope->getProtoStructType(parentProtoName);
+
+                        shared_ptr<ValueType> funValueType = member.second->getSubType();
+                        llvm::Type *type = typeForValueType(funValueType);
+                        llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(type);
+
+                        // fun value
+                        llvm::Value *funIndexMember[] = {
+                            builder->getInt32(0),
+                            builder->getInt32(i+1)
+                        };
+                        llvm::Value *funMemberPtr = builder->CreateGEP(structType, currentWrappedValue->getPointerValue(), funIndexMember);
+                        llvm::LoadInst *funPointerLoad = builder->CreateLoad(typePtr, funMemberPtr);
+
+                        // it value
+                        llvm::Value *itIndexMember[] = {
+                            builder->getInt32(0),
+                            builder->getInt32(0)
+                        };
+
+                        llvm::Value *itMemberPtr = builder->CreateGEP(structType, currentWrappedValue->getPointerValue(), itIndexMember);
+                        llvm::LoadInst *itPointerLoad = builder->CreateLoad(typePtr, itMemberPtr);
+
+                        currentWrappedValue = wrappedValueForCall(
+                            funPointerLoad,
+                            funType,
+                            {itPointerLoad},
+                            expressionCall->getArgumentExpressions(),
+                            expressionCall->getValueType()
+                        );
+                        parentExpression = chainExpression;
+                    }
+                }
+            // value expression ?
+            } else if (shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression)) {
+                auto members = *scope->getProtoStructMembers(parentProtoName);
+                for (int i=0; i<members.size(); i++) {
+                    pair<string, shared_ptr<ValueType>> member = members.at(i);
+                    if (expressionValue->getIdentifier().compare(member.first) == 0) {
+                        llvm::Value *index[] = {
+                            builder->getInt32(0),
+                            builder->getInt32(i+1)
+                        };
+                        // function type has to be treated as a pointer (we cannot load a function)
+                        llvm::Type *pointeeType = typePtr;
+                        if (!member.second->getSubType()->isFunction())
+                            pointeeType = typeForValueType(member.second->getSubType());
+                        llvm::Value *elementPtr = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
+                        llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, elementPtr);
+                        currentWrappedValue = wrappedValueForSourceValue(pointerLoad, pointeeType, expressionValue);
+                        parentExpression = chainExpression;
+                    }
+                }
+            } else {
+                markErrorInvalidType(chainExpression->getLocation());
+                return nullptr;
+            }
+        } else {
+            markErrorInvalidType(parentExpression->getLocation());
             return nullptr;
         }
-
-        // Variable expression?
-        if (!currentWrappedValue->isStruct()) {
-            markErrorInvalidType(expressionValue->getLocation());
-            return nullptr;
-        }
-
-        optional<int> memberIndex = scope->getStructMemberIndex(parentBlobName, expressionValue->getIdentifier());
-        if (!memberIndex) {
-            markErrorInvalidMember(expressionValue->getLocation(), parentBlobName, expressionValue->getIdentifier());
-            return nullptr;
-        }
-
-        llvm::Value *index[] = {
-            builder->getInt32(0),
-            builder->getInt32(*memberIndex)
-        };
-
-        llvm::Value *elementPtr = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
-        llvm::Type *elementType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
-
-        currentWrappedValue = wrappedValueForSourceValue(elementPtr, elementType, expressionValue);
-        parentExpression = chainExpression;
     }
 
     return currentWrappedValue;
@@ -1478,6 +1709,24 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             builder->CreatePtrToInt(pointeeLoad, typeA),
             ValueType::A
         );
+    } else if (parentWrappedValue->isProtoStruct() && isVadr) {
+        string protoName = *(parentWrappedValue->getValueType()->getProtoName());
+        llvm::StructType *structType = scope->getProtoStructType(protoName);
+        // pointer to implementing blob is at index 0
+        llvm::Value *index[] = {
+            builder->getInt32(0),
+            builder->getInt32(0)
+        };
+        llvm::Value *memberPtr = builder->CreateGEP(structType, parentWrappedValue->getPointerValue(), index);
+        llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, memberPtr);
+        llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, pointerLoad);
+        pointeeLoad->setVolatile(true);
+        return WrappedValue::wrappedValue(
+            moduleLLVM,
+            builder,
+            builder->CreatePtrToInt(pointeeLoad, typeA),
+            ValueType::A
+        );
     } else if (isAdr) {
         return WrappedValue::wrappedValue(
             moduleLLVM,
@@ -1514,7 +1763,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
     return WrappedValue::wrappedValue(
         moduleLLVM,
         builder,
-        //builder->CreateCall(fun->getFunctionType(), fun, llvm::ArrayRef(argValues)),
         builder->CreateCall(funType, callee, llvm::ArrayRef(argValues)),
         valueType
     );
@@ -1973,6 +2221,12 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
                 markErrorNotDefined(nullptr, format("blob \"{}\"", *(valueType->getBlobName())));
             return structType;
         }
+        case ValueTypeKind::PROTO: {
+            llvm::StructType *structType = scope->getProtoStructType(*(valueType->getProtoName()));
+            if (structType == nullptr)
+                markErrorNotDefined(nullptr, format("proto \"{}\"", *(valueType->getProtoName())));
+            return structType;
+        }
         case ValueTypeKind::FUN: {
             // returnType
             llvm::Type *functionReturnType = typeForValueType(valueType->getReturnType());
@@ -2143,6 +2397,7 @@ void ModuleBuilder::markErrorNoTypeForPointer(shared_ptr<Location> location) {
 }
 
 void ModuleBuilder::debugPrint(vector<llvm::Value *> values) {
+    llvm::outs() << ">--\n";
     for (llvm::Value *value : values) {
         llvm::outs() << "value: ";
         if (value != nullptr)
@@ -2154,6 +2409,20 @@ void ModuleBuilder::debugPrint(vector<llvm::Value *> values) {
             value->getType()->print(llvm::outs());
         else
             llvm::outs() << "<null>";
-        llvm::outs() << "\n\n";
+        llvm::outs() << "\n";
     }
+    llvm::outs() << "--<\n";
+}
+
+void ModuleBuilder::debugPrint(vector<llvm::Type *> types) {
+    llvm::outs() << ">--\n";
+    for (llvm::Type *type : types) {
+        llvm::outs() << "type: ";
+        if (type != nullptr)
+            type->print(llvm::outs());
+        else
+            llvm::outs() << "<null>";
+        llvm::outs() << "\n";
+    }
+    llvm::outs() << "--<\n";
 }

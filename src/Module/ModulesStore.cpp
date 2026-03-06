@@ -7,6 +7,8 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
+#include "Parser/Statement/StatementProto.h"
+#include "Parser/Statement/StatementProtoDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
@@ -20,7 +22,7 @@ defaultModuleName(defaultModuleName) { }
 shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
     switch (valueType->getKind()) {
         case ValueTypeKind::BLOB: {
-            string name = *(valueType->getBlobName());
+            string name = *valueType->getBlobName();
             if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
                 name = moduleName + "." + name;
             }
@@ -28,8 +30,6 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
         }
         case ValueTypeKind::DATA:
             return ValueType::data(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getCountExpression());
-        case ValueTypeKind::PTR:
-            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
         case ValueTypeKind::FUN: {
             // first convert each of the argument types
             vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
@@ -41,8 +41,19 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
             // and finally return a new function type
             return ValueType::fun(exportedArgumentTypes, exportedReturnType);
         }
-        default:
+        case ValueTypeKind::PTR: {
+            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
+        }
+        case ValueTypeKind::PROTO: {
+            string name = *valueType->getProtoName();
+            if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
+                name = moduleName + "." + name;
+            }
+            return ValueType::proto(name);
+        }
+        default: {
             return valueType;
+        }
     }
 }
 
@@ -52,6 +63,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;
 
     vector<shared_ptr<Statement>> moduleImportStatements;
+    vector<shared_ptr<Statement>> moduleProtoDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleProtoStatements;
     vector<shared_ptr<Statement>> moduleBlobStatements;
     vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
     vector<shared_ptr<Statement>> moduleVariableDeclarationStatements;
@@ -59,6 +72,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     vector<shared_ptr<Statement>> moduleRawFunctionStatements;
     vector<shared_ptr<Statement>> moduleBodyStatements;
 
+    vector<shared_ptr<Statement>> moduleExportedProtoDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleExportedProtoStatements;
     vector<shared_ptr<Statement>> moduleExportedBlobStatements;
     vector<shared_ptr<Statement>> moduleExportedBlobDeclarationStatements;
     vector<shared_ptr<Statement>> moduleExportedVariableDeclarationStatements;
@@ -73,10 +88,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     statementBlob->getShouldExport(),
                     statementBlob->getName(),
                     statementBlob->getLocation()
-                );                        
+                );
+
                 // local header
                 moduleBlobStatements.push_back(statementBlob);
                 moduleBlobDeclarationStatements.push_back(statementBlobDeclaration);
+
                 // exported header
                 if (statementBlob->getShouldExport()) {
                     // update member variable statements for exported statement
@@ -95,6 +112,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
                         statementBlob->getName(),
+                        statementBlob->getProtoNames(),
                         exportedVariableStatements,
                         vector<shared_ptr<StatementFunction>>(), // don't include function definitions
                         statementBlob->getLocation()
@@ -186,6 +204,69 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleName = statementModule->getName();
                 break;
             }
+            case StatementKind::PROTO: {
+                shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
+                shared_ptr<StatementProtoDeclaration> statementProtoDeclaration = make_shared<StatementProtoDeclaration>(
+                    statementProto->getShouldExport(),
+                    statementProto->getName(),
+                    statementProto->getLocation()
+                );
+
+                // local header
+                moduleProtoStatements.push_back(statementProto);
+                moduleProtoDeclarationStatements.push_back(statementProtoDeclaration);
+
+                // exported header
+                if (statementProto->getShouldExport()) {
+                    // update member variable statements for exported statement
+                    vector<shared_ptr<StatementVariable>> exportedVariableStatements;
+                    for (shared_ptr<StatementVariable> statementVariable : statementProto->getVariableStatements()) {
+                        shared_ptr<StatementVariable> exportedVariableStatement = make_shared<StatementVariable>(
+                            statementVariable->getShouldExport(),
+                            statementVariable->getIdentifier(),
+                            typeForExportedStatementFromType(statementVariable->getValueType(), moduleName),
+                            statementVariable->getExpression(),
+                            statementVariable->getLocation()
+                        );
+                        exportedVariableStatements.push_back(exportedVariableStatement);
+                    }
+
+                    // update member function declaration statements for exported statement
+                    vector<shared_ptr<StatementFunctionDeclaration>> exportedFunctionDeclarationStatements;
+                    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
+                        // convert earch argument into na exportable version
+                        vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
+                        for (pair<string, shared_ptr<ValueType>> &argument : statementFunctionDeclaration->getArguments()) {
+                            shared_ptr<ValueType> exportedType = typeForExportedStatementFromType(argument.second, moduleName);
+                            exportedArguments.push_back(pair(argument.first, exportedType));
+                        }
+
+                        shared_ptr<StatementFunctionDeclaration> exportedFunctionDeclarationStatement = make_shared<StatementFunctionDeclaration>(
+                            statementFunctionDeclaration->getShouldExport(),
+                            statementFunctionDeclaration->getName(),
+                            exportedArguments,
+                            typeForExportedStatementFromType(statementFunctionDeclaration->getReturnValueType(), moduleName),
+                            statementFunctionDeclaration->getLocation()
+                        );
+                        exportedFunctionDeclarationStatements.push_back(exportedFunctionDeclarationStatement);
+                    }
+
+                    // use the modified members to create an exportable proto
+                    shared_ptr<StatementProto> exportedStatementProto = make_shared<StatementProto>(
+                        statementProto->getShouldExport(),
+                        statementProto->getName(),
+                        exportedVariableStatements,
+                        exportedFunctionDeclarationStatements,
+                        statementProto->getLocation()
+                    );
+
+                    // append updated statement
+                    moduleExportedProtoStatements.push_back(exportedStatementProto);
+                    // declaration doesn't contain any types, so it's fine like this
+                    moduleExportedProtoDeclarationStatements.push_back(statementProtoDeclaration);
+                }
+                break;
+            }
             case StatementKind::RAW_FUNCTION: {
                 shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(statement);
                 moduleRawFunctionStatements.push_back(statementRawFunction);
@@ -237,9 +318,13 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
         // imports
         importStatementsMap[moduleName] = moduleImportStatements;
+        // proto declarations
+        protoDeclarationStatementsMap[moduleName] = moduleProtoDeclarationStatements;
+        // proto definitions
+        protoStatementsMap[moduleName] = moduleProtoStatements;
         // blob declarations
         blobDeclarationStatementsMap[moduleName] = moduleBlobDeclarationStatements;
-        // blob defintions
+        // blob definitons
         blobStatementsMap[moduleName] = moduleBlobStatements;
         // variable declarations
         variableDeclarationStatementsMap[moduleName] = moduleVariableDeclarationStatements;
@@ -251,6 +336,10 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // body statements
         bodyStatementsMap[moduleName] = moduleBodyStatements;
 
+        // exported proto declarations
+        exportedProtoDeclarationStatementsMap[moduleName] = moduleExportedProtoDeclarationStatements;
+        // exported proto definitions
+        exportedProtoStatementsMap[moduleName] = moduleExportedProtoStatements;
         // exported blob declarations
         exportedBlobDeclarationStatementsMap[moduleName] = moduleExportedBlobDeclarationStatements;
         // exported blob definitions
@@ -266,6 +355,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // imports
         for (shared_ptr<Statement> statement : moduleImportStatements)
             importStatementsMap[moduleName].push_back(statement);
+        // proto declarations
+        for (shared_ptr<Statement> statement : moduleProtoDeclarationStatements)
+            protoDeclarationStatementsMap[moduleName].push_back(statement);
+        // proto defintions
+        for (shared_ptr<Statement> statement : moduleProtoStatements)
+            protoStatementsMap[moduleName].push_back(statement);
         // blob declarations
         for (shared_ptr<Statement> statement : moduleBlobDeclarationStatements)
             blobDeclarationStatementsMap[moduleName].push_back(statement);
@@ -286,6 +381,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         for (shared_ptr<Statement> statement : moduleBodyStatements)
             bodyStatementsMap[moduleName].push_back(statement);
 
+        // exported proto declarations
+        for (shared_ptr<Statement> statement : moduleExportedProtoDeclarationStatements)
+            exportedBlobDeclarationStatementsMap[moduleName].push_back(statement);
+        // exported proto definitions
+        for (shared_ptr<Statement> statement : moduleExportedProtoStatements)
+            exportedBlobStatementsMap[moduleName].push_back(statement);
         // exported blob declarations
         for (shared_ptr<Statement> statement : moduleExportedBlobDeclarationStatements)
             exportedBlobDeclarationStatementsMap[moduleName].push_back(statement);
@@ -320,6 +421,12 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // imports
         for (shared_ptr<Statement> Statement : importStatementsMap[moduleName])
             headerStatements.push_back(Statement);
+        // proto declarations
+        for (shared_ptr<Statement> statement : protoDeclarationStatementsMap[moduleName])
+            headerStatements.push_back(statement);
+        // proto definitions
+        for (shared_ptr<Statement> statement : protoStatementsMap[moduleName])
+            headerStatements.push_back(statement);
         // blob declarations
         for (shared_ptr<Statement> statement : blobDeclarationStatementsMap[moduleName])
             headerStatements.push_back(statement);
@@ -359,6 +466,15 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
     // - function declarations
     map<string, vector<shared_ptr<Statement>>> statementsMap;
     for (string &moduleName : moduleNames) {
+        // first initialize it with an empty array (in case there are no exported statements)
+        statementsMap[moduleName] = {};
+
+        // exported proto declarations
+        for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported proto definitions
+        for (shared_ptr<Statement> statement : exportedProtoStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
         // exported blob declarations
         for (shared_ptr<Statement> statement : exportedBlobDeclarationStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);

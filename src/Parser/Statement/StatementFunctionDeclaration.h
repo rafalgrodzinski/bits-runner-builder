@@ -6,6 +6,8 @@
 class ValueType;
 
 class StatementFunctionDeclaration: public Statement {
+friend class Parser;
+
 private:
     bool shouldExport;
     string name;

@@ -75,6 +75,38 @@ llvm::InlineAsm *Scope::getInlineAsm(string name) {
     return nullptr;
 }
 
+bool Scope::setProtoStructType(string name, llvm::StructType *structType, vector<pair<string, shared_ptr<ValueType>>> members) {
+    scopeLevels.top().protoStructTypesMap[name] = structType;
+    scopeLevels.top().protoStructMembersMap[name] = members;
+
+    return true;
+}
+
+llvm::StructType *Scope::getProtoStructType(string name) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        llvm::StructType *protoStruct = scopeLevels.top().protoStructTypesMap[name];
+        if (protoStruct != nullptr)
+            return protoStruct;
+        scopeLevels.pop();
+    }
+
+    return nullptr;
+}
+
+optional<vector<pair<string, shared_ptr<ValueType>>>> Scope::getProtoStructMembers(string protoName) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        if (scopeLevels.top().protoStructMembersMap.contains(protoName))
+            return scopeLevels.top().protoStructMembersMap[protoName];
+        scopeLevels.pop();
+    }
+
+    return {};
+}
+
 bool Scope::setStruct(string structName, llvm::StructType *structType, vector<string> memberNames) {
     scopeLevels.top().structTypeMap[structName] = structType;
     scopeLevels.top().structMembersMap[structName] = memberNames;

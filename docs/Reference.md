@@ -18,6 +18,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Simple Variables](Reference.md#simple-variables) (`u8`, `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `a`, `ptr`, `data`, `blob`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
+- [Proto](Reference.md#proto) (`proto<>`)
 - [Pointers](Reference.md#pointers) (`ptr<>`)
 - [Functions](Reference.md#functions) (`fun`)
 - [Raw Functions](Reference.md#raw-functions) (`raw`)
@@ -173,6 +174,20 @@ u1 blob<user> <- {34, "Bob"}
 u2 blob<user> <- u1
 u2.name <- "Alice"
 u2.id <- 35
+```
+
+## Proto
+Protos allow for interface (or protocol) functionality. The idea is that a proto defines a contract (memeber variables and functions), which then can be fulfilled by a blob. A pointer to that blob can be then used as an initializer to a proto.
+```
+Shape proto
+  area fun -> u32
+;
+
+Square blob: Shape
+  area fun -> u32
+    ret [...]
+  ;
+;
 ```
 
 ## Pointers

@@ -8,6 +8,10 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
+            },
+            "presentation": {
+                "close": true,
+                "focus": true
             }
         },
         {

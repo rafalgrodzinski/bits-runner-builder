@@ -15,11 +15,12 @@ using namespace std;
 class AnalyzerScope {
 private:
     typedef struct {
+        map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
+        map<string, vector<string>> blobProtosmMap;
+        map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> blobMembersMap;
+
         map<string, shared_ptr<ValueType>> variableTypes;
         map<string, bool> isVariableDefinedMap;
-
-        map<string, vector<pair<string, shared_ptr<ValueType>>>> blobMembersMap;
-        map<string, bool> isBlobDefinedMap;
 
         map<string, shared_ptr<ValueType>> functionTypeMap;
         map<string, bool> isFunctionDefinedMap;
@@ -33,11 +34,17 @@ public:
     void pushLevel();
     void popLevel();
 
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(string name);
+    bool setProtoMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
+    
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(string name);
+    bool setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
+
+    optional<vector<string>> getBlobProtoNames(string name);
+    bool setBlobProtoNames(string name, vector<string> protoNames);
+
     shared_ptr<ValueType> getVariableType(string identifier);
     bool setVariableType(string identifier, shared_ptr<ValueType> type, bool isDefinition);
-
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(string name);
-    bool setBlobMembers(string name, vector<pair<string, shared_ptr<ValueType>>> members, bool isDefinition);
 
     shared_ptr<ValueType> getFunctionType(string name);
     bool setFunctionType(string name, shared_ptr<ValueType> type, bool isDefinition);

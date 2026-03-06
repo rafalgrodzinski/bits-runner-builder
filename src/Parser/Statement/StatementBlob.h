@@ -14,17 +14,20 @@ private:
     string name;
     vector<shared_ptr<StatementVariable>> variableStatements;
     vector<shared_ptr<StatementFunction>> functionStatements;
+    vector<string> protoNames;
 
 public:
     StatementBlob(
         bool shouldExport,
         string name,
+        vector<string> protoNames,
         vector<shared_ptr<StatementVariable>> variableStatements,
         vector<shared_ptr<StatementFunction>> functionStatements,
         shared_ptr<Location> location
     );
     bool getShouldExport();
     string getName();
+    vector<string> getProtoNames();
     vector<shared_ptr<StatementVariable>> getVariableStatements();
     vector<shared_ptr<StatementFunction>> getFunctionStatements();
     vector<pair<string, shared_ptr<ValueType>>> getMembers();

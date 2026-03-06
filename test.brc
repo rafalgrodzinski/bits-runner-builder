@@ -1,25 +1,43 @@
 @import B
 
-Stuff blob
+Thing proto
+    doStuff fun: newValue u64
+    num u32
+;
+
+Stuff blob: Thing
     aa u32
     b data<u32, 8>
     c ptr<u32>
+    num u32
+    doStuff fun: newValue u32
+        text blob<@B.String> <- @B.String("in doStuff")
+        text.println()
+
+        it.val.num <- newValue
+    ;
 ;
 
 @export main fun
-    v blob<Stuff>
+    stuff blob<Stuff>
+    stuff.num <- 7
+    pStuff ptr<blob<Stuff>> <- { stuff.adr }
+
+    thing proto<Thing>
+    thing <- { pStuff }
 
     text blob<@B.String>
 
-    text <- @B.StringForU32(v.aa)
+    /*text <- @B.StringForU64(stuff.doStuff.adr.u64)
     text.println()
 
-    rep i u32 <- 0, i < 8, i <- i + 1
-        text <- @B.StringForU32(v.b[i])
-        text.println()
-    ;
+    text <- @B.StringForU64(thing.doStuff.adr.u64)
+    text.println()*/
 
-    text <- @B.StringForU32(v.c.vadr.u32)
+    //stuff.doStuff(42)
+    thing.doStuff(66)
+
+    text <- @B.StringForU32(stuff.num)
     text.println()
 ;
 

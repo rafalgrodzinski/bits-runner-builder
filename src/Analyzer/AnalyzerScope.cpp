@@ -14,6 +14,83 @@ void AnalyzerScope::popLevel() {
     scopeLevels.pop();
 }
 
+optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getProtoMembers(string name) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().protoMembersMap.find(name);
+        if (it != scopeLevels.top().protoMembersMap.end())
+            return scopeLevels.top().protoMembersMap[name];
+        scopeLevels.pop();
+    }
+
+    return {};
+}
+
+bool AnalyzerScope::setProtoMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
+    bool isDefinition = members.has_value();
+    bool isDefined = false;
+    if (scopeLevels.top().protoMembersMap.find(name) != scopeLevels.top().protoMembersMap.end())
+        isDefined = scopeLevels.top().protoMembersMap[name].has_value();
+
+    // defining already defined proto
+    if (isDefined && isDefinition)
+        return false;
+
+    if (!isDefined)
+        scopeLevels.top().protoMembersMap[name] = members;
+
+    return true;
+}
+
+optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(string name) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().blobMembersMap.find(name);
+        if (it != scopeLevels.top().blobMembersMap.end())
+            return scopeLevels.top().blobMembersMap[name];
+        scopeLevels.pop();
+    }
+
+    return {};
+}
+
+bool AnalyzerScope::setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
+    bool isDefinition = members.has_value();
+    bool isDefined = false;
+    if (scopeLevels.top().blobMembersMap.find(name) != scopeLevels.top().blobMembersMap.end())
+        isDefined = scopeLevels.top().blobMembersMap[name].has_value();
+
+    // defining already defined blob
+    if (isDefined && isDefinition)
+        return false;
+
+    if (!isDefined)
+        scopeLevels.top().blobMembersMap[name] = members;
+
+    return true;
+}
+
+optional<vector<string>> AnalyzerScope::getBlobProtoNames(string name) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().blobProtosmMap.find(name);
+        if (it != scopeLevels.top().blobProtosmMap.end())
+            return scopeLevels.top().blobProtosmMap[name];
+        scopeLevels.pop();
+    }
+
+    return {};
+}
+
+bool AnalyzerScope::setBlobProtoNames(string name, vector<string> protoNames) {
+    scopeLevels.top().blobProtosmMap[name] = protoNames;
+
+    return true;
+}
+
 shared_ptr<ValueType> AnalyzerScope::getVariableType(string identifier) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
@@ -47,35 +124,6 @@ bool AnalyzerScope::setVariableType(string identifier, shared_ptr<ValueType> typ
     scopeLevels.top().variableTypes[identifier] = type;
     if (isDefinition)
         scopeLevels.top().isVariableDefinedMap[identifier] = true;
-
-    return true;
-}
-
-optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(string name) {
-    stack<ScopeLevel> scopeLevels = this->scopeLevels;
-
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().blobMembersMap.find(name);
-        if (it != scopeLevels.top().blobMembersMap.end())
-            return scopeLevels.top().blobMembersMap[name];
-        scopeLevels.pop();
-    }
-
-    return {};
-}
-
-bool AnalyzerScope::setBlobMembers(string name, vector<pair<string, shared_ptr<ValueType>>> members, bool isDefinition) {
-    bool isDefined = scopeLevels.top().isBlobDefinedMap[name];
-
-    // defining already defined blob
-    if (isDefined && isDefinition)
-        return false;
-
-    if (!isDefined)
-        scopeLevels.top().blobMembersMap[name] = members;
-
-    if (isDefinition)
-        scopeLevels.top().isBlobDefinedMap[name] = true;
 
     return true;
 }

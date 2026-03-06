@@ -140,6 +140,33 @@
     ret String(string)
 ;
 
+
+@export StringForU64 fun: value u64 -> blob<String>
+    string data<u8, 64>
+
+    length u32 <- 0
+    // first get digits in reversed order
+    rep true, value > 0, length <- length + 1
+        digit u8 <- (value % 10).u8
+        string[length] <- digit + '0'
+        value <- value / 10
+    ;
+    // add the terminating 0
+    string[length] <- 0
+    
+    // if nothing to swap, just return
+    if length <= 1: ret String(string)
+
+    // and then swap them
+    rep i u32 <- 0, i < length / 2, i <- i + 1
+        tmp u8 <- string[i]
+        string[i] <- string[length - i - 1]
+        string[length - i - 1] <- tmp
+    ;
+
+    ret String(string)
+;
+
 @export StringForS32 fun: value s32 -> blob<String>
     string data<u8, 64>
     currentIndex u32 <- 0

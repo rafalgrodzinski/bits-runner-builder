@@ -53,6 +53,7 @@ enum class TokenKind {
     RAW_SOURCE_LINE,
     DATA,
     BLOB,
+    PROTO,
     PTR,
     RETURN,
     REPEAT,
