@@ -1510,7 +1510,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         scope->pushLevel();
         fun->insert(fun->end(), elseBlock);
         builder->SetInsertPoint(elseBlock);
-        elseValue = wrappedValueForExpression(expressionIfElse->getElseExpression())->getValue();
+        shared_ptr<WrappedValue> wrappedElseValue = wrappedValueForExpression(expressionIfElse->getElseExpression());
+        if (wrappedElseValue == nullptr)
+            return nullptr;
+        elseValue = wrappedElseValue->getValue();
         builder->CreateBr(mergeBlock);
         elseBlock = builder->GetInsertBlock();
         scope->popLevel();
