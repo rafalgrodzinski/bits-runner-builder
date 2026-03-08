@@ -61,12 +61,16 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token) {
         do {
             // new line
-            if (token = match(TokenKind::NEW_LINE, "\n", false))
+            if (token = match(TokenKind::NEW_LINE, "\n", false)) {
+                tryStartingRawSourceParsing();
                 return token;
+            }
 
             // new line windows
-            if (token = match(TokenKind::NEW_LINE, "\r\n", false))
+            if (token = match(TokenKind::NEW_LINE, "\r\n", false)) {
+                tryStartingRawSourceParsing();
                 return token;
+            }
     
             // eof
             if (token = matchEnd())
