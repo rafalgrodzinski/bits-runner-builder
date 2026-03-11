@@ -192,6 +192,10 @@ int CodeGenerator::getPointerSize() {
     return dataLayout.getPointerSizeInBits();
 }
 
+llvm::Triple::ArchType CodeGenerator::getArchType() {
+    return targetMachine->getTargetTriple().getArch();
+}
+
 llvm::CallingConv::ID CodeGenerator::getCallingConvetion() {
     return callingConvention;
 }

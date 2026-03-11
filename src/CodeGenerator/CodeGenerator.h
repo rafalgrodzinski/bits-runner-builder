@@ -76,6 +76,7 @@ public:
     void generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose);
     int getIntSize();
     int getPointerSize();
+    llvm::Triple::ArchType getArchType();
     llvm::CallingConv::ID getCallingConvetion();
 };
 

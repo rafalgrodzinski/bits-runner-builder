@@ -284,6 +284,7 @@ int main(int argc, char **argv) {
             DEFAULT_MODULE_NAME,
             codeGenerator.getIntSize(),
             codeGenerator.getPointerSize(),
+            codeGenerator.getArchType(),
             codeGenerator.getCallingConvetion(),
             module,
             modulesStore.getExportedHeaderStatementsMap()
