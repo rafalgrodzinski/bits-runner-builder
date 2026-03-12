@@ -1,13 +1,6 @@
-resumeKernelProcessRaw raw<"r,r,r,~{eax}">: esp0 u32, cr3 u32 //, eip0 u32
-    xchg bx, bx
-
-    mov eax, $1
-    mov cr3, eax
-
-    mov eax, $0
-    mov esp, eax
-;
+@import B
 
 @export main fun
+    {"Hello instant"}.blob<@B.String>.println()
 ;
 

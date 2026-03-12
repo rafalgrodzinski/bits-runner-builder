@@ -395,3 +395,7 @@ bool ValueType::isBlob() {
 bool ValueType::isProto() {
     return kind == ValueTypeKind::PROTO;
 }
+
+bool ValueType::isComposite() {
+    return kind == ValueTypeKind::COMPOSITE;
+}

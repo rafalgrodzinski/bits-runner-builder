@@ -863,9 +863,13 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Value *sourceValue = wrappedValueForExpression(valueExpressions.at(i))->getValue();
+                    shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpressions.at(i));
+                    if (wrappedSourceValue == nullptr) {
+                        markErrorInvalidType(valueExpression->getLocation());
+                        return;
+                    }
                     llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
-                    builder->CreateStore(sourceValue, targetMember);
+                    builder->CreateStore(wrappedSourceValue->getValue(), targetMember);
                 }
                 break;
             }
@@ -989,10 +993,12 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             case ExpressionKind::CHAINED: // ptr <- .val
             case ExpressionKind::IF_ELSE: // ptr <- if else
             case ExpressionKind::CALL: { // ptr <- function()
-                llvm::Value *sourceValue = wrappedValueForExpression(valueExpression)->getValue();
-                if (sourceValue == nullptr)
+                shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpression);
+                if (wrappedSourceValue == nullptr) {
+                    markErrorInvalidAssignment(valueExpression->getLocation());
                     return;
-                builder->CreateStore(sourceValue, targetWrappedValue->getPointerValue());
+                }
+                builder->CreateStore(wrappedSourceValue->getValue(), targetWrappedValue->getPointerValue());
                 break;
             }
             default: {
@@ -1286,7 +1292,27 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             shared_ptr<ExpressionValue> childExpressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
             currentWrappedValue = wrappedValueForTypeBuiltIn(type, childExpressionValue);
             parentExpression = chainExpression;
-        // First in chain is treated as a single variable
+        // If first in chain is a composite, then next should be a cast
+        } else if (
+            currentWrappedValue == nullptr &&
+            chainExpressions.size() >= 2 &&
+            chainExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL &&
+            chainExpressions.at(i+1)->getKind() == ExpressionKind::CAST
+        ) {
+            shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(chainExpression);
+            shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpressions.at(i+1));
+
+            // create an anonymous variable
+            llvm::Type *type = typeForValueType(expressionCast->getValueType());
+            llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
+            shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(moduleLLVM, builder, alloca, expressionCast->getValueType());
+            buildAssignment(wrappedValue, expressionCompositeLiteral);
+            currentWrappedValue = wrappedValue;
+            parentExpression = expressionCast;
+
+            // skip one chain
+            i++;
+        // Otherwise first in chain is treated as a single variable
         } else if (currentWrappedValue == nullptr) {
             currentWrappedValue = wrappedValueForExpression(chainExpression);
             parentExpression = chainExpression;

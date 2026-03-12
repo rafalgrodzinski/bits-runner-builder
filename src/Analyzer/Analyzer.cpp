@@ -785,8 +785,14 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     bool areDataBool = parentExpression->getValueType()->isDataBool() && expressionCast->getValueType()->isDataBool();
     bool isAddressToPointer = parentExpression->getValueType()->isAddress() && expressionCast->getValueType()->isPointer();
 
+    bool isSourceComposite = parentExpression->getValueType()->isComposite();
+    bool isTargetBlob = expressionCast->getValueType()->isBlob();
+    bool isTargetData = expressionCast->getValueType()->isData();
+    bool isTargetPointer = expressionCast->getValueType()->isPointer();
+    bool isTargetProto = expressionCast->getValueType()->isProto();
+
     if (areNumeric || areBool || areDataNumeric || areDataBool | isAddressToPointer) {
-        // if cast has not count expression, use one from the parent expression
+        // if cast does not have a count expression, use one from the parent expression
         if (expressionCast->getValueType()->isData() && expressionCast->getValueType()->getCountExpression() == nullptr) {
             expressionCast->valueType = ValueType::data(
                 expressionCast->getValueType()->getSubType(),
@@ -794,10 +800,18 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
             );
         }
         return expressionCast->getValueType();
-    } else {
-        markErrorInvalidCast(expressionCast->getLocation(), parentExpression->getValueType(), expressionCast->getValueType());
-        return nullptr;
+    // cast composite to complex type
+    } else if (isSourceComposite && (isTargetBlob || isTargetData || isTargetPointer || isTargetProto)) {
+        if (canCast(parentExpression->getValueType(), expressionCast->getValueType())) {
+            // we don't want to cast the whole composite, just the individual expression
+            // so we ignore the result (we don't replace the composite expression itself)
+            checkAndTryCasting(parentExpression, expressionCast->getValueType(), nullptr);
+            return expressionCast->getValueType();
+        }
     }
+
+    markErrorInvalidCast(expressionCast->getLocation(), parentExpression->getValueType(), expressionCast->getValueType());
+    return nullptr;
 }
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionChained> expressionChained) {
