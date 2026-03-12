@@ -40,11 +40,13 @@ ModuleBuilder::ModuleBuilder(
     string defaultModuleName,
     int intSize,
     int pointerSize,
+    llvm::Triple::ArchType archType,
     llvm::CallingConv::ID callingConvention,
     shared_ptr<Module> module,
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
 ):
 defaultModuleName(defaultModuleName),
+archType(archType),
 callingConvention(callingConvention),
 module(module),
 importableHeaderStatementsMap(importableHeaderStatementsMap) {
@@ -549,14 +551,26 @@ void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawF
         );
         return;
     }
-    llvm::InlineAsm *rawFun = llvm::InlineAsm::get(
-        funType,
-        statement->getRawSource(),
-        statement->getConstraints(),
-        true,
-        false,
-        llvm::InlineAsm::AsmDialect::AD_Intel
-    );
+    llvm::InlineAsm *rawFun;
+
+    if (archType == llvm::Triple::ArchType::x86 || archType == llvm::Triple::ArchType::x86_64) {
+        rawFun = llvm::InlineAsm::get(
+            funType,
+            statement->getRawSource(),
+            statement->getConstraints(),
+            true,
+            false,
+            llvm::InlineAsm::AsmDialect::AD_Intel
+        );
+    } else {
+        rawFun = llvm::InlineAsm::get(
+            funType,
+            statement->getRawSource(),
+            statement->getConstraints(),
+            true,
+            false
+        );
+    }
 
     scope->setInlineAsm(internalName, rawFun);
 }
@@ -1510,7 +1524,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         scope->pushLevel();
         fun->insert(fun->end(), elseBlock);
         builder->SetInsertPoint(elseBlock);
-        elseValue = wrappedValueForExpression(expressionIfElse->getElseExpression())->getValue();
+        shared_ptr<WrappedValue> wrappedElseValue = wrappedValueForExpression(expressionIfElse->getElseExpression());
+        if (wrappedElseValue == nullptr)
+            return nullptr;
+        elseValue = wrappedElseValue->getValue();
         builder->CreateBr(mergeBlock);
         elseBlock = builder->GetInsertBlock();
         scope->popLevel();

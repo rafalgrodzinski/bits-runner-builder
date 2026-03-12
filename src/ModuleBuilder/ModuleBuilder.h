@@ -3,18 +3,19 @@
 
 #include <format>
 #include <map>
-#include <stack>
 #include <ranges>
+#include <stack>
 
-#include <llvm/IR/Module.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Constants.h>
-#include <llvm/Support/raw_ostream.h>
+#include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
-#include <llvm/IR/InlineAsm.h>
-#include <llvm/Support/NVPTXAddrSpace.h>
+#include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/Error.h>
+#include <llvm/Support/NVPTXAddrSpace.h>
+#include <llvm/Target/TargetMachine.h>
 
 #include "Scope.h"
 
@@ -76,6 +77,7 @@ private:
     shared_ptr<llvm::Module> moduleLLVM;
     shared_ptr<llvm::IRBuilder<>> builder;
 
+    llvm::Triple::ArchType archType;
     llvm::CallingConv::ID callingConvention;
 
     llvm::Type *typeVoid;
@@ -180,6 +182,7 @@ public:
         string defaultModuleName,
         int intSize,
         int pointerSize,
+        llvm::Triple::ArchType archType,
         llvm::CallingConv::ID callingConvention,
         shared_ptr<Module> module,
         map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
