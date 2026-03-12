@@ -1,9 +1,6 @@
-thing blob
-    first u32
-    second u64
-;
+@import B
 
-@export main fun -> u32
-    ret { 4, 7 }.blob<thing>.first
+@export main fun
+    {"Hello instant"}.blob<@B.String>.println()
 ;
 

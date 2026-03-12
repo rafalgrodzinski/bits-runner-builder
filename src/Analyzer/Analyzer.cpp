@@ -802,8 +802,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
         return expressionCast->getValueType();
     // cast composite to complex type
     } else if (isSourceComposite && (isTargetBlob || isTargetData || isTargetPointer || isTargetProto)) {
-        if (canCast(parentExpression->getValueType(), expressionCast->getValueType()))
+        if (canCast(parentExpression->getValueType(), expressionCast->getValueType())) {
+            // we don't want to cast the whole composite, just the individual expression
+            // so we ignore the result (we don't replace the composite expression itself)
+            checkAndTryCasting(parentExpression, expressionCast->getValueType(), nullptr);
             return expressionCast->getValueType();
+        }
     }
 
     markErrorInvalidCast(expressionCast->getLocation(), parentExpression->getValueType(), expressionCast->getValueType());
