@@ -98,20 +98,24 @@ public:
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
 
     bool isEqual(shared_ptr<ValueType> other);
+
     bool isNumeric();
     bool isInteger();
     bool isUnsignedInteger();
     bool isSignedInteger();
     bool isFloat();
     bool isBool();
+
     bool isData();
     bool isDataBool();
     bool isDataNumeric();
+
     bool isAddress();
     bool isPointer();
     bool isFunction();
     bool isBlob();
     bool isProto();
+    bool isComposite();
 };
 
 #endif
