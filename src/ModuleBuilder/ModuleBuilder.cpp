@@ -863,9 +863,13 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Value *sourceValue = wrappedValueForExpression(valueExpressions.at(i))->getValue();
+                    shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpressions.at(i));
+                    if (wrappedSourceValue == nullptr) {
+                        markErrorInvalidType(valueExpression->getLocation());
+                        return;
+                    }
                     llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
-                    builder->CreateStore(sourceValue, targetMember);
+                    builder->CreateStore(wrappedSourceValue->getValue(), targetMember);
                 }
                 break;
             }
