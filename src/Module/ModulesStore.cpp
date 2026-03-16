@@ -7,6 +7,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
+#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementProto.h"
 #include "Parser/Statement/StatementProtoDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
@@ -353,8 +354,20 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     // or merge with existing ones
     } else {
         // imports
-        for (shared_ptr<Statement> statement : moduleImportStatements)
-            importStatementsMap[moduleName].push_back(statement);
+        for (shared_ptr<Statement> statement : moduleImportStatements) {
+            // Filter out dumplicated import statements
+            bool isAlreadyImported = false;
+            string newImportName = dynamic_pointer_cast<StatementMetaImport>(statement)->getName();
+            for (shared_ptr<Statement> importStatement : importStatementsMap[moduleName]) {
+                string importName = dynamic_pointer_cast<StatementMetaImport>(importStatement)->getName();
+                if (newImportName.compare(importName) == 0) {
+                    isAlreadyImported = true;
+                    break;
+                }
+            }
+            if (!isAlreadyImported)
+                importStatementsMap[moduleName].push_back(statement);
+        }
         // proto declarations
         for (shared_ptr<Statement> statement : moduleProtoDeclarationStatements)
             protoDeclarationStatementsMap[moduleName].push_back(statement);

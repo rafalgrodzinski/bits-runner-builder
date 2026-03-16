@@ -35,9 +35,6 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
         }
     } while (token == nullptr || token->getKind() != TokenKind::END);
 
-    if (tokens.size() <= 1)
-        markError();
-
     if (!errors.empty()) {
         for (shared_ptr<Error> &error : errors)
             Logger::print(error);
