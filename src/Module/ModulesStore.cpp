@@ -299,7 +299,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         valueType,
                         statementVariableDeclaration->getLocation()
                     );
-                    moduleExportedVariableDeclarationStatements.push_back(statementVariableDeclaration);
+                    moduleExportedVariableDeclarationStatements.push_back(exportedStatementVariableDeclaration);
                 }
                 break;
             }
