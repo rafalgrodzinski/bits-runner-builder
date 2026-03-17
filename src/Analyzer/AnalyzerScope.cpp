@@ -56,6 +56,20 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMemb
     return {};
 }
 
+optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(string name) {
+    optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = getBlobMembers(name);
+        if (!blobMembers)
+            return { };
+
+    vector<shared_ptr<ValueType>> targetMemberTypes;
+    for (pair<string, shared_ptr<ValueType>> &member : *blobMembers) {
+        if (!member.second->isFunction())
+            targetMemberTypes.push_back(member.second);
+    }
+
+    return targetMemberTypes;
+}
+
 bool AnalyzerScope::setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
     bool isDefinition = members.has_value();
     bool isDefined = false;
