@@ -8,8 +8,9 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
-- []()
-  - Handle dumplicated imports
+- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/169](https://github.com/rafalgrodzinski/bits-runner-builder/pull/169)
+  - Handle duplicated imports
+  - Can cast composite literals to blob types with functions
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/167](https://github.com/rafalgrodzinski/bits-runner-builder/pull/167)
   - Composite literals can now be case directly into complex types
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/162](https://github.com/rafalgrodzinski/bits-runner-builder/pull/162)
