@@ -9,5 +9,6 @@
 void win_support_init() {
 #ifdef WIN32
     SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 #endif
 }
