@@ -70,7 +70,7 @@ jobs:
           cmake --install build --prefix /d/llvm-20.1.8
 
       - name: Checkout Project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Read Version Information
         shell: bash
@@ -160,7 +160,7 @@ jobs:
 
     steps:
       - name: Checkout Project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download Artifacts
         uses: actions/download-artifact@v5

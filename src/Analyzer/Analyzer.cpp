@@ -73,13 +73,13 @@ void Analyzer::checkModule() {
 //
 // Statements
 //
-void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType) {
+void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported) {
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT:
             checkStatement(dynamic_pointer_cast<StatementAssignment>(statement));
             break;
         case StatementKind::BLOB:
-            checkStatement(dynamic_pointer_cast<StatementBlob>(statement));
+            checkStatement(dynamic_pointer_cast<StatementBlob>(statement), isImported);
             break;
         case StatementKind::BLOB_DECLARATION:
             checkStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
@@ -149,7 +149,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     }
 }
 
-void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
+void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported) {
     scope->pushLevel();
     // check and verify blob member variables
     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
@@ -177,62 +177,64 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
         }
     }
 
-    // verify proto compliance
-    for (string &protoName : statementBlob->getProtoNames()) {
-        auto protoMembers = scope->getProtoMembers(protoName);
-        if (!protoMembers) {
-            markErrorNotDefined(statementBlob->getLocation(), format("proto {}", protoName));
-            return;
-        }
+    // verify proto compliance (but only if it's not an import statement)
+    if (!isImported) {
+        for (string &protoName : statementBlob->getProtoNames()) {
+            auto protoMembers = scope->getProtoMembers(protoName);
+            if (!protoMembers) {
+                markErrorNotDefined(statementBlob->getLocation(), format("proto {}", protoName));
+                return;
+            }
 
-        // for each proto member
-        for (auto protoMember : *protoMembers) {
-            bool isImplemented = false;
+            // for each proto member
+            for (auto protoMember : *protoMembers) {
+                bool isImplemented = false;
 
-            if (protoMember.second->isFunction()) {
-                string name = format("{}.{}", statementBlob->getName(), protoMember.first);
-                for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
-                    // check name
-                    if (name.compare(statementFunction->getName()) != 0) 
-                        continue;
+                if (protoMember.second->isFunction()) {
+                    string name = format("{}.{}", statementBlob->getName(), protoMember.first);
+                    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+                        // check name
+                        if (name.compare(statementFunction->getName()) != 0) 
+                            continue;
 
-                    isImplemented = true;
+                        isImplemented = true;
 
-                    // check arguments
-                    int argsCount = (*protoMember.second->getArgumentTypes()).size();
-                    if (argsCount != statementFunction->getArguments().size()) {
-                        isImplemented = false;
-                        break;
-                    }
+                        // check arguments
+                        int argsCount = (*protoMember.second->getArgumentTypes()).size();
+                        if (argsCount != statementFunction->getArguments().size()) {
+                            isImplemented = false;
+                            break;
+                        }
 
-                    for (int i=1; i<argsCount; i++) {
-                        if (!(*protoMember.second->getArgumentTypes()).at(i)->isEqual(statementFunction->getArguments().at(i).second)) {
+                        for (int i=1; i<argsCount; i++) {
+                            if (!(*protoMember.second->getArgumentTypes()).at(i)->isEqual(statementFunction->getArguments().at(i).second)) {
+                                isImplemented = false;
+                                break;
+                            }
+                        }
+
+                        if (!isImplemented)
+                            break;
+
+                        // check return type
+                        if (!protoMember.second->getReturnType()->isEqual(statementFunction->getReturnValueType())) {
                             isImplemented = false;
                             break;
                         }
                     }
-
-                    if (!isImplemented)
-                        break;
-
-                    // check return type
-                    if (!protoMember.second->getReturnType()->isEqual(statementFunction->getReturnValueType())) {
-                        isImplemented = false;
-                        break;
+                } else {
+                    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+                        if (protoMember.first.compare(statementVariable->getIdentifier()) == 0 && protoMember.second->isEqual(statementVariable->getValueType())) {
+                            isImplemented = true;
+                            break;
+                        }
                     }
                 }
-            } else {
-                for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
-                    if (protoMember.first.compare(statementVariable->getIdentifier()) == 0 && protoMember.second->isEqual(statementVariable->getValueType())) {
-                        isImplemented = true;
-                        break;
-                    }
-                }
-            }
 
-            if (!isImplemented) {
-                markErrorNotImplemented(statementBlob->getLocation(), protoName, protoMember.first);
-                return;
+                if (!isImplemented) {
+                    markErrorNotImplemented(statementBlob->getLocation(), protoName, protoMember.first);
+                    return;
+                }
             }
         }
     }
@@ -384,7 +386,7 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statement) {
     }
     importModulePrefix = statement->getName() + ".";
     for (shared_ptr<Statement> &importStatement : it->second) {
-        checkStatement(importStatement, nullptr);
+        checkStatement(importStatement, nullptr, true);
     }
     importModulePrefix = "";
 }
@@ -1319,11 +1321,11 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     // composite to blob
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isBlob()) {
         sourceExpression->valueType = targetType;
-        vector<pair<string, shared_ptr<ValueType>>> blobMembers = *(scope->getBlobMembers(*(targetType->getBlobName())));
+        vector<shared_ptr<ValueType>> blobMemberTypes = *scope->getNonFunctionBlobMemberTypes(*targetType->getBlobName());
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
-        for (int i=0; i<blobMembers.size(); i++) {
+        for (int i=0; i<blobMemberTypes.size(); i++) {
             shared_ptr<Expression> sourceMemberExpression = expressionCompositeLiteral->getExpressions().at(i);
-            sourceMemberExpression = checkAndTryCasting(sourceMemberExpression, blobMembers.at(i).second, returnType);
+            sourceMemberExpression = checkAndTryCasting(sourceMemberExpression, blobMemberTypes.at(i), returnType);
         }
         return sourceExpression;
     // composite to proto
@@ -1689,21 +1691,24 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
                 // to blob
                 case ValueTypeKind::BLOB: {
+                    // get target non-function types
                     optional<string> blobName = targetType->getBlobName();
                     if (!targetType->getBlobName())
                         return false;
-                    optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(*blobName);
-                    if (!blobMembers)
+                    optional<vector<shared_ptr<ValueType>>> targetMemberTypes = scope->getNonFunctionBlobMemberTypes(*blobName);
+                    if (!targetMemberTypes)
                         return false;
-                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+
+                    // get source types
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *sourceType->getCompositeElementTypes();
 
                     // check that number of memebrs match
-                    if (sourceElementTypes.size() !=  (*blobMembers).size())
+                    if (sourceElementTypes.size() != (*targetMemberTypes).size())
                         return false;
-                    
+
                     // check that each entry in composite can be cast to member in blob
-                    for (int i=0; i<((*blobMembers).size()); i++) {
-                        if (!canCast(sourceElementTypes.at(i), (*blobMembers).at(i).second))
+                    for (int i=0; i<(*targetMemberTypes).size(); i++) {
+                        if (!canCast(sourceElementTypes.at(i), (*targetMemberTypes).at(i)))
                             return false;
                     }
                     return true;

@@ -2255,8 +2255,11 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             int elementsCount = 0;
             if (dynamic_pointer_cast<ExpressionLiteral>(valueType->getCountExpression()) != nullptr)
                 elementsCount = dynamic_pointer_cast<ExpressionLiteral>(valueType->getCountExpression())->getUIntValue();
+            llvm::Type *subType = typeForValueType(valueType->getSubType());
+            if (subType == nullptr)
+                return nullptr;
 
-            return llvm::ArrayType::get(typeForValueType(valueType->getSubType()), elementsCount);
+            return llvm::ArrayType::get(subType, elementsCount);
         }
         case ValueTypeKind::BLOB: {
             llvm::StructType *structType = scope->getStructType(*(valueType->getBlobName()));
