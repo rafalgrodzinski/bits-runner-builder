@@ -6,7 +6,7 @@ Square blob: @Lib.Shape
     name blob<@B.String>
     length u32
     getArea fun -> u32
-        ret it.val.length * it.val.length
+        ret it.length * it.length
     ;
 ;
 
@@ -15,7 +15,7 @@ Triangle blob: @Lib.Shape
     width u32
     height u32
     getArea fun -> u32
-        ret it.val.width * it.val.height / 2
+        ret it.width * it.height / 2
     ;
 ;
 
