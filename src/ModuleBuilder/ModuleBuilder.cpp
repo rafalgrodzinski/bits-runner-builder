@@ -176,12 +176,12 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssignment) {
-    llvm::Value *targetValue = wrappedValueForExpression(statementAssignment->getExpressionChained())->getValue();
-    if (targetValue == nullptr)
+    shared_ptr<WrappedValue> targetWrappedValue = wrappedValueForExpression(statementAssignment->getExpressionChained());
+    if (targetWrappedValue == nullptr)
         return;
 
     buildAssignment(
-        WrappedValue::wrappedValue(moduleLLVM, builder, targetValue, statementAssignment->getValueExpression()->getValueType()),
+        WrappedValue::wrappedValue(moduleLLVM, builder, targetWrappedValue->getValue(), statementAssignment->getValueExpression()->getValueType()),
         statementAssignment->getValueExpression()
     );
 }
@@ -1683,12 +1683,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     llvm::Type *type = nullptr;
 
     bool isIt = expressionValue->getIdentifier().compare("it") == 0;
+    shared_ptr<WrappedValue> wrappedPitValue = scope->getWrappedValue(".pit");
     shared_ptr<WrappedValue> wrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
     llvm::Value *fun = scope->getFunction(expressionValue->getIdentifier());
     // is it reference to blob's implicit `it`?
-    if (isIt) {
-        // if so, extract value from the passed in `.pit` pointer
-        shared_ptr<WrappedValue> wrappedPitValue = scope->getWrappedValue(".pit");
+    if (isIt && wrappedPitValue != nullptr) {
+        // extract value from the passed in `.pit` pointer
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, wrappedPitValue->getPointerValue());
         pointeeLoad->setVolatile(true);
 
