@@ -610,6 +610,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
     shared_ptr<ValueType> originalLeftValueType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
     shared_ptr<ValueType> originalRightValueType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
 
+    if (originalLeftValueType == nullptr || originalRightValueType == nullptr)
+        return nullptr;
+
     // first try casting right
     // first figure out target type for right expression
     shared_ptr<ValueType> rightTargetType;
@@ -1013,7 +1016,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         } else if (isCount || isVal || isVadr) {
             markErrorInvalidBuiltIn(expressionValue->getLocation(), expressionValue->getIdentifier(), parentExpression->getValueType());
             expressionValue->valueType = nullptr;
-            return expressionValue->getValueType();
+            return nullptr;
         // check blob member
         } else if (isParentBlob) {
             string blobName = *(parentExpression->getValueType()->getBlobName());
