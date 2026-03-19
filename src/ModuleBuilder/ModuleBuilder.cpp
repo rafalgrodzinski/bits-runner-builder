@@ -1682,9 +1682,19 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     llvm::Value *value = nullptr;
     llvm::Type *type = nullptr;
 
+    bool isIt = expressionValue->getIdentifier().compare("it") == 0;
     shared_ptr<WrappedValue> wrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
     llvm::Value *fun = scope->getFunction(expressionValue->getIdentifier());
-    if (wrappedValue != nullptr) {
+    // is it reference to blob's implicit `it`?
+    if (isIt) {
+        // if so, extract value from the passed in `.pit` pointer
+        shared_ptr<WrappedValue> wrappedPitValue = scope->getWrappedValue(".pit");
+        llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, wrappedPitValue->getPointerValue());
+        pointeeLoad->setVolatile(true);
+
+        llvm::Type *pointeeType = typeForValueType(expressionValue->getValueType());
+        return wrappedValueForSourceValue(pointeeLoad, pointeeType, expressionValue);
+    } else if (wrappedValue != nullptr) {
         value = wrappedValue->getPointerValue();
         type = wrappedValue->getType();
     } else if (fun != nullptr) {
