@@ -757,7 +757,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                         // prefix function with name of the blob
                         statementFunction->name = format("{}.{}", name, statementFunction->getName());
                         // Insert an implicit "it" argument for the blob function
-                        pair<string, shared_ptr<ValueType>> itArgument = pair("it", ValueType::ptr(ValueType::blob(name)));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::blob(name)));
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
                         break;
@@ -833,7 +833,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                     case StatementKind::FUNCTION_DECLARATION: {
                         shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(parseeResult.getStatement());
                         // Insert an implicit "it" argument at the beging
-                        pair<string, shared_ptr<ValueType>> itArgument = pair("it", ValueType::ptr(ValueType::NONE));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::NONE));
                         statementFunctionDeclaration->arguments.insert(statementFunctionDeclaration->arguments.begin(), itArgument);
                         functionDeclarationStatements.push_back(statementFunctionDeclaration);
                         break;

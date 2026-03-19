@@ -1,6 +1,15 @@
 @import B
 
+Test blob
+    num u32
+
+    doStuff fun
+        @B.StringForU64(it.adr.u64).println()
+    ;
+;
+
 @export main fun
-    {"Hello instant"}.blob<@B.String>.println()
+    test blob<Test> <- {7}
+    test.doStuff()
 ;
 

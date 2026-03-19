@@ -38,7 +38,9 @@ jobs:
     steps:
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
-        run: brew install llvm@20
+        run: |
+          brew install llvm@20
+          brew link llvm@20
 
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
@@ -147,7 +149,7 @@ jobs:
           7z a -tzip "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}.zip" "${GITHUB_WORKSPACE}/build/Release/brb.exe"
 
       - name: Upload Archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: "brb-${{matrix.os}}"
           path: "${{github.workspace}}/*.zip"
@@ -163,7 +165,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           path: "${{github.workspace}}/"
           merge-multiple: true
