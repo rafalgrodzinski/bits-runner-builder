@@ -7,28 +7,28 @@
 
     length fun -> u32
         i u32 <- 0
-        rep it.val.string[i] != '\0' and i < it.val.string.count: i <- i + 1
+        rep it.string[i] != '\0' and i < it.string.count: i <- i + 1
         ret i
     ;
 
     isEqual fun: other blob<String> -> bool
-        if it.val.length() != other.length(): ret false
+        if it.length() != other.length(): ret false
 
-        rep i u32 <- 0, i < it.val.length(), i <- i + 1
-            if it.val.string[i] != other.string[i]: ret false
+        rep i u32 <- 0, i < it.length(), i <- i + 1
+            if it.string[i] != other.string[i]: ret false
         ;
 
         ret true
     ;
 
     print fun
-        rep i u32 <- 0, it.val.string[i] != '\0' and i < it.val.string.count, i <- i+1
-            @BSys.printChar(it.val.string[i])
+        rep i u32 <- 0, it.string[i] != '\0' and i < it.string.count, i <- i+1
+            @BSys.printChar(it.string[i])
         ;
     ;
 
     println fun
-        it.val.print()
+        it.print()
         @BSys.printChar('\n')
     ;
 
@@ -46,7 +46,7 @@
         ;
 
         // copy data
-        rep i u32 <- 0, i < length, i <- i + 1: string[i] <- it.val.string[from + i]
+        rep i u32 <- 0, i < length, i <- i + 1: string[i] <- it.string[from + i]
 
         // make sure it's 0 terminated
         if string[length - 1] != 0 and length < string.count - 1: string[length] <- 0
@@ -56,22 +56,22 @@
     ;
 
     subStringFrom fun: from u32 -> blob<String>
-        ret it.val.subString(from, it.val.length())
+        ret it.subString(from, it.length())
     ;
 
     subStringTo fun: to u32 -> blob<String>
-        ret it.val.subString(0, to)
+        ret it.subString(0, to)
     ;
 
     find fun: other blob<String> -> u32
-        length u32 <- it.val.length()
+        length u32 <- it.length()
         otherLength u32 <- other.length()
 
         // doesn't fit in
         if otherLength > length: ret 0
 
         rep i u32 <- 0, i <= length - otherLength, i <- i + 1
-            subString blob<String> <- it.val.subString(i, i + otherLength)
+            subString blob<String> <- it.subString(i, i + otherLength)
             if subString.isEqual(other): ret i
         ;
 
@@ -79,19 +79,19 @@
     ;
 
     clear fun
-        it.val.string[0] <- '\0'
+        it.string[0] <- '\0'
     ;
 
     removeLast fun
-        length u32 <- it.val.length()
-        if length > 0: it.val.string[length - 1] <- 0
+        length u32 <- it.length()
+        if length > 0: it.string[length - 1] <- 0
     ;
 
     append fun: char u8
-        length u32 <- it.val.length()
-        if length < it.val.string.count - 1
-            it.val.string[length] <- char
-            it.val.string[length + 1] <- '\0'
+        length u32 <- it.length()
+        if length < it.string.count - 1
+            it.string[length] <- char
+            it.string[length + 1] <- '\0'
         ;
     ;
 ;
