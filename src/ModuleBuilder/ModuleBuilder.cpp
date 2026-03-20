@@ -1290,6 +1290,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         if (currentWrappedValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
             llvm::Type *type = typeForValueType(chainExpression->getValueType());
             shared_ptr<ExpressionValue> childExpressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
+            if (childExpressionValue == nullptr)
+                return nullptr;
             currentWrappedValue = wrappedValueForTypeBuiltIn(type, childExpressionValue);
             parentExpression = chainExpression;
         // If first in chain is a composite, then next should be a cast
@@ -1690,7 +1692,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (isIt && wrappedPitValue != nullptr) {
         // extract value from the passed in `.pit` pointer
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, wrappedPitValue->getPointerValue());
-        pointeeLoad->setVolatile(true);
+        //pointeeLoad->setVolatile(true);
 
         llvm::Type *pointeeType = typeForValueType(expressionValue->getValueType());
         return wrappedValueForSourceValue(pointeeLoad, pointeeType, expressionValue);
@@ -1739,7 +1741,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
-        pointeeLoad->setVolatile(true);
+        //pointeeLoad->setVolatile(true);
 
         shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
         if (pointeeValueType == nullptr) {
@@ -1755,7 +1757,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return wrappedValueForSourceValue(pointeeLoad, pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
-        pointeeLoad->setVolatile(true);
+        //pointeeLoad->setVolatile(true);
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
@@ -1773,7 +1775,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         llvm::Value *memberPtr = builder->CreateGEP(structType, parentWrappedValue->getPointerValue(), index);
         llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, memberPtr);
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, pointerLoad);
-        pointeeLoad->setVolatile(true);
+        //pointeeLoad->setVolatile(true);
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
@@ -2165,7 +2167,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
             case ExpressionValueKind::SIMPLE:
             case ExpressionValueKind::BUILT_IN_VAL_SIMPLE: {
                 llvm::LoadInst *loadInst = builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier());
-                loadInst->setVolatile(true);
+                //loadInst->setVolatile(true);
                 return WrappedValue::wrappedValue(
                     moduleLLVM,
                     builder,
