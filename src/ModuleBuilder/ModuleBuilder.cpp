@@ -67,7 +67,7 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
     typeF64 = llvm::Type::getDoubleTy(*context);
     typeFloat = llvm::Type::getFloatTy(*context);
 
-    typePtr = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
+    typePtr = llvm::PointerType::get(*context, 0);
     typeA = llvm::Type::getIntNTy(*context, pointerSize);
 }
 
@@ -400,7 +400,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementRepeat> statementRepeat) 
         buildStatement(statementRepeat->getInitStatement());
     
     // Store the current stack location, stack shouldn't change accross the runs, for example because of allocas
-    llvm::Type *ptrType = llvm::PointerType::get(*context, llvm::NVPTXAS::ADDRESS_SPACE_GENERIC);
+    llvm::Type *ptrType = llvm::PointerType::get(*context, 0);
     llvm::Function *stackSaveIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(moduleLLVM.get(), llvm::Intrinsic::stacksave, {ptrType});
     llvm::Value *stackValue = builder->CreateCall(stackSaveIntrinscic);
 
@@ -1442,6 +1442,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                             pointeeType = typeForValueType(member.second->getSubType());
                         llvm::Value *elementPtr = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
                         llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, elementPtr);
+                        pointerLoad->setAlignment(llvm::Align(1));
                         currentWrappedValue = wrappedValueForSourceValue(pointerLoad, pointeeType, expressionValue);
                         parentExpression = chainExpression;
                     }
@@ -1692,6 +1693,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (isIt && wrappedPitValue != nullptr) {
         // extract value from the passed in `.pit` pointer
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, wrappedPitValue->getPointerValue());
+        pointeeLoad->setAlignment(llvm::Align(1));
         //pointeeLoad->setVolatile(true);
 
         llvm::Type *pointeeType = typeForValueType(expressionValue->getValueType());
@@ -1741,6 +1743,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
+        pointeeLoad->setAlignment(llvm::Align(1));
         //pointeeLoad->setVolatile(true);
 
         shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
@@ -1757,6 +1760,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return wrappedValueForSourceValue(pointeeLoad, pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentWrappedValue->getPointerValue());
+        pointeeLoad->setAlignment(llvm::Align(1));
         //pointeeLoad->setVolatile(true);
         return WrappedValue::wrappedValue(
             moduleLLVM,
@@ -1774,7 +1778,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         };
         llvm::Value *memberPtr = builder->CreateGEP(structType, parentWrappedValue->getPointerValue(), index);
         llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, memberPtr);
+        pointerLoad->setAlignment(llvm::Align(1));
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, pointerLoad);
+        pointeeLoad->setAlignment(llvm::Align(1));
         //pointeeLoad->setVolatile(true);
         return WrappedValue::wrappedValue(
             moduleLLVM,
@@ -2122,6 +2128,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                 } else {
                     llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getArrayType(), sourceWrappedValue->getPointerValue(), index);
                     sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getArrayElementType(), sourceMemberPtr);
+                    ((llvm::LoadInst*)sourceMemberValue)->setAlignment(llvm::Align(1));
                 }
 
                 // cast the individual source member to target type
@@ -2167,6 +2174,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
             case ExpressionValueKind::SIMPLE:
             case ExpressionValueKind::BUILT_IN_VAL_SIMPLE: {
                 llvm::LoadInst *loadInst = builder->CreateLoad(sourceType, sourceValue, expressionValue->getIdentifier());
+                loadInst->setAlignment(llvm::Align(1));
                 //loadInst->setVolatile(true);
                 return WrappedValue::wrappedValue(
                     moduleLLVM,

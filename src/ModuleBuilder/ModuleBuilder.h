@@ -14,7 +14,6 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/Error.h>
-#include <llvm/Support/NVPTXAddrSpace.h>
 #include <llvm/Target/TargetMachine.h>
 
 #include "Scope.h"
