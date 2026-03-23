@@ -1,15 +1,36 @@
-@import B
+@extern putchar fun: character u64 -> u32
 
-Test blob
-    num u32
-
-    doStuff fun
-        @B.StringForU64(it.adr.u64).println()
+print fun: text data<u64, 16>
+    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
+        putchar(text[i])
     ;
 ;
 
-@export main fun
-    test blob<Test> <- {7}
-    test.doStuff()
+printNum fun: number u64
+    biggest u64 <- 10
+    rep biggest <= number: biggest <- biggest * 10
+    biggest <- biggest / 10
+
+    rep biggest > 0, biggest <- biggest / 10
+        digit u64 <- number / biggest
+        putchar(digit + '0')
+        number <- number % biggest
+    ;
 ;
 
+@export main fun -> u64
+    rep i u64 <- 1, i <= 30, i <- i + 1
+        if i % 3 = 0 and i % 5 = 0
+            print("fizzbuzz\n")
+        else if i % 3 = 0
+            print("fizz\n")
+        else if i % 5 = 0
+            print("buzz\n")
+        else
+            printNum(i)
+            print("\n")
+        ;
+    ;
+
+    ret 0
+;

@@ -1,7 +1,9 @@
 #ifndef WRAPPED_VALUE_H
 #define WRAPPED_VALUE_H
 
+#include <format>
 #include <memory>
+#include <string>
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Constants.h>
