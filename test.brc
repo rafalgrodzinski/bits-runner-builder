@@ -1,85 +1,12 @@
-//@extern putchar fun: character u64 -> u32
-@extern malloc fun: size u64 -> a
-//@extern clock fun -> u64
+String blob
+    string data<u8, 64>
 
-/*@export printNum fun: number u64
-    biggest u64 <- 10
-    rep biggest <= number: biggest <- biggest * 10
-    biggest <- biggest / 10
-
-    rep biggest > 0, biggest <- biggest / 10
-        digit u64 <- number / biggest
-        putchar(digit + '0')
-        number <- number % biggest
-    ;
-;
-
-@export print fun: text data<u64, 64>
-    rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
-        putchar(text[i])
-    ;
-;*/
-
-pPrimeFlags ptr<data<bool>>
-/*
-pPrimes ptr<data<u64>>
-primesCount u64
-
-findPrimes fun: n u64
-    primesCount <- 0
-
-    rep i u64 <- 0, i < n, i <- i + 1
-        pPrimeFlags.val[i] <- if i < 2: false else: true
-    ;
-
-    /*rep p u64 <- 2, p * p < n, p <- p + 1
-        if pPrimeFlags.val[p] = true
-            rep i u64 <- p * p, i < n, i <- i + p
-                pPrimeFlags.val[i] <- false
-            ;
-        ;
-    ;
-
-    rep i u64 <- 0, i < n, i <- i + 1
-        if pPrimeFlags.val[i] = true
-            pPrimes.val[primesCount] <- 0
-            primesCount <- primesCount + 1
-        ;
-    ;*/
-;
-
-passes u64 <- 0
-*/
-
-
-@export main fun -> u64
-    n u64 <- 1_000_000
-
-    pPrimeFlags <- malloc(bool.size * n).ptr<data<bool>>
-    pPrimeFlags.val[500_000] <- true
-    /*rep i u64 <- 0, i < n, i <- i + 1
-        pPrimeFlags.val[i] <- if i < 2: false else: true
-    ;*/
-    /*pPrimes <- malloc(u64.size * n).ptr<data<u64>>
-
-    duration u64 <- 0
-    startTime u64 <- clock()
-
-    rep duration < 5_000_000
-        findPrimes(n)
-        passes <- passes + 1
-        // necessary to for windows, clock() returns different resolution
-        //duration <- clock() * 1_000 - startTime
-        duration <- clock() - startTime
-    ;
-    duration <- duration / 1_000
     
-    print("Passes: ")
-    printNum(passes)
-    putchar('\n')
-    print("Taken ms: ")
-    printNum(duration)
-    putchar('\n')*/
 
-    ret 0
+    length fun -> u32
+        //ret it.string[0]
+        i u32 <- 0
+        rep it.string[i] != '\0' and i < it.string.count: i <- i + 1
+        ret i
+    ;
 ;

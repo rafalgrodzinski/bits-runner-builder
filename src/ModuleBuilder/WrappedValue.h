@@ -23,7 +23,7 @@ private:
 public:
     WrappedValue();
 
-    static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType);
+    static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *type, llvm::Value *value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, uint64_t value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
 

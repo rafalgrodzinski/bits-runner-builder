@@ -243,6 +243,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
             WrappedValue::wrappedValue(
                 moduleLLVM,
                 builder,
+                funArgumentType,
                 alloca,
                 argument.second
             )
@@ -601,6 +602,7 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
         WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            type,
             global,
             valueType
         )
@@ -720,10 +722,10 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
     llvm::Type *type = typeForValueType(statement->getValueType());
     llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, format("a_{}", statement->getIdentifier()));
 
-    shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue
-    (
+    shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(
         moduleLLVM,
         builder,
+        type,
         alloca,
         statement->getValueType()
     );
@@ -1245,7 +1247,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         return nullptr;  
     }
 
-    return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue, expressionBinary->getValueType());
+    return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue->getType(), resultValue, expressionBinary->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBlock> expressionBlock) {
@@ -1264,8 +1266,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             llvm::Value *argValue = wrappedValueForExpression(argumentExpression)->getValue();
             argValues.push_back(argValue);
         }
-        llvm::Value *resultValue = builder->CreateCall(rawFun, llvm::ArrayRef(argValues));
-        return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue, expressionCall->getValueType());
+        llvm::CallInst *resultValue = builder->CreateCall(rawFun, llvm::ArrayRef(argValues));
+        return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue->getFunctionType()->getReturnType(), resultValue, expressionCall->getValueType());
     }
 
     markErrorNotDefined(expressionCall->getLocation(), format("function \"{}\"", expressionCall->getName()));
@@ -1301,7 +1303,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             // create an anonymous variable
             llvm::Type *type = typeForValueType(expressionCast->getValueType());
             llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, format("ch_{}", i));
-            shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(moduleLLVM, builder, alloca, expressionCast->getValueType());
+            shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(moduleLLVM, builder, type, alloca, expressionCast->getValueType());
             buildAssignment(wrappedValue, expressionCompositeLiteral);
             currentWrappedValue = wrappedValue;
             parentExpression = expressionCast;
@@ -1355,8 +1357,19 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         builder->getInt32(*memberIndex)
                     };
 
-                    sourceValue = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
+                    llvm::Type *sourceStructTyp = currentWrappedValue->getStructType();
+                    //llvm::Type *tt = currentWrappedValue->getType();
+                    llvm::Value *sourceStructValue = currentWrappedValue->getPointerValue();
+
+                    //debugPrint({ct, tt});
+                    //debugPrint({cv});
+
+                    //llvm::Value *memberPtr = builder->CreateGEP(sourceStructTyp, sourceStructValue, index, format("gep-{}", string(sourceStructValue->getName())));
+                    //llvm::Type *memberType = typeForValueType(expressionValue->getValueType());
+
                     sourceType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
+                    //sourceValue = builder->CreateLoad(sourceType, memberPtr, format("ld_mbr-{}", string(memberPtr->getName())));
+                    sourceValue = builder->CreateGEP(sourceStructTyp, sourceStructValue, index, format("gep-{}", string(sourceStructValue->getName())));
                 // try member function
                 } else {
                     string functionName = format("{}.{}", parentBlobName, expressionValue->getIdentifier());
@@ -1371,6 +1384,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     return nullptr;   
                 }
 
+                debugPrint({sourceValue});
+                debugPrint({sourceType});
                 currentWrappedValue = wrappedValueForSourceValue(sourceValue, sourceType, expressionValue);
                 parentExpression = chainExpression;
             } else {
@@ -1473,7 +1488,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         }
         llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(type);
         llvm::Constant *constantArray = llvm::ConstantArray::get(arrayType, constantValues);
-        return WrappedValue::wrappedValue(moduleLLVM, builder, constantArray, expressionCompositeLiteral->getValueType());
+        return WrappedValue::wrappedValue(moduleLLVM, builder, arrayType, constantArray, expressionCompositeLiteral->getValueType());
     } else if (expressionCompositeLiteral->getValueType()->isBlob()) {
         vector<llvm::Constant*> constantValues;
         for (shared_ptr<Expression> memberExpression : expressionCompositeLiteral->getExpressions()) {
@@ -1485,7 +1500,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         }
         llvm::StructType *structType = llvm::dyn_cast<llvm::StructType>(type);
         llvm::Constant *constantStruct = llvm::ConstantStruct::get(structType, constantValues);
-        return WrappedValue::wrappedValue(moduleLLVM, builder, constantStruct, expressionCompositeLiteral->getValueType());
+        return WrappedValue::wrappedValue(moduleLLVM, builder, structType, constantStruct, expressionCompositeLiteral->getValueType());
     } else if (expressionCompositeLiteral->getValueType()->isPointer()) {
         return wrappedValueForExpression(expressionCompositeLiteral->getExpressions().at(0));
     }
@@ -1499,10 +1514,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
     llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
     buildAssignment(
-        WrappedValue::wrappedValue(moduleLLVM, builder, alloca, expressionCompositeLiteral->getValueType()),
+        WrappedValue::wrappedValue(moduleLLVM, builder, type, alloca, expressionCompositeLiteral->getValueType()),
         expressionCompositeLiteral
     );
-    return WrappedValue::wrappedValue(moduleLLVM, builder, alloca, expressionCompositeLiteral->getValueType());
+    return WrappedValue::wrappedValue(moduleLLVM, builder, type, alloca, expressionCompositeLiteral->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
@@ -1563,7 +1578,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         phi->addIncoming(thenValue, thenBlock);
         phi->addIncoming(elseValue, elseBlock);
 
-        return WrappedValue::wrappedValue(moduleLLVM, builder, phi, expressionIfElse->getValueType());
+        return WrappedValue::wrappedValue(moduleLLVM, builder, thenValue->getType(), phi, expressionIfElse->getValueType());
     }
 }
 
@@ -1632,7 +1647,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         return nullptr;
     }
 
-    return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue, expressionLiteral->getValueType());
+    llvm::Type *type = typeForValueType(expressionLiteral->getValueType());
+    return WrappedValue::wrappedValue(moduleLLVM, builder, type, resultValue, expressionLiteral->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
@@ -1669,7 +1685,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         return nullptr;
     }
 
-    return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue, expressionUnary->getValueType());
+    return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue->getType(), resultValue, expressionUnary->getValueType());
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue) {
@@ -1683,11 +1699,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     // is it reference to blob's implicit `it`?
     if (isIt && wrappedPitValue != nullptr) {
         // extract value from the passed in `.pit` pointer
-        llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, wrappedPitValue->getPointerValue());
-        pointeeLoad->setAlignment(llvm::Align(1));
+        llvm::Type *pointeeType = typeForValueType(expressionValue->getValueType());
+        llvm::LoadInst *pointeeLoad = builder->CreateLoad(pointeeType, wrappedPitValue->getValue(), format("ld_it_{}", *expressionValue->getValueType()->getBlobName()));
+        //pointeeLoad->setAlignment(llvm::Align(1));
         //pointeeLoad->setVolatile(true);
 
-        llvm::Type *pointeeType = typeForValueType(expressionValue->getValueType());
+        debugPrint({pointeeLoad});
+        debugPrint({pointeeType});
         return wrappedValueForSourceValue(pointeeLoad, pointeeType, expressionValue);
     } else if (wrappedValue != nullptr) {
         if (expressionValue->getValueKind() == ExpressionValueKind::SIMPLE && expressionValue->getValueType()->isPointer()) {
@@ -1735,6 +1753,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
 
     // Do the appropriate built-in operation
     if (parentWrappedValue->isArray() && isCount) {
+        debugPrint({parentWrappedValue->getType(), parentWrappedValue->getArrayType()});
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
         shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
@@ -1766,6 +1785,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            typePtr,
             pointeeLoad,
             ValueType::A
         );
@@ -1804,6 +1824,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
     return WrappedValue::wrappedValue(
         moduleLLVM,
         builder,
+        funType->getReturnType(),
         builder->CreateCall(funType, callee, llvm::ArrayRef(argValues)),
         valueType
     );
@@ -1969,6 +1990,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateZExt(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -1977,6 +1999,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateTrunc(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -1985,6 +2008,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateSExt(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -1993,6 +2017,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateTrunc(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -2005,6 +2030,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateZExt(clampedValue, targetType),
             targetValueType
         );
@@ -2017,6 +2043,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateTrunc(clampedValue, targetType),
             targetValueType
         );
@@ -2025,6 +2052,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateUIToFP(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -2033,6 +2061,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateSIToFP(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -2041,6 +2070,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateFPExt(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -2049,6 +2079,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateFPTrunc(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -2057,6 +2088,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateFPToUI(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -2065,6 +2097,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateFPToSI(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
@@ -2074,6 +2107,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             builder->CreateIntToPtr(sourceValue, typePtr, format("int_to_ptr-{}", string(sourceValue->getName()))),
             targetValueType
         );
@@ -2110,7 +2144,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                 } else {
                     llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getArrayType(), sourceWrappedValue->getPointerValue(), index);
                     sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getArrayElementType(), sourceMemberPtr);
-                    ((llvm::LoadInst*)sourceMemberValue)->setAlignment(llvm::Align(1));
+                    //((llvm::LoadInst*)sourceMemberValue)->setAlignment(llvm::Align(1));
                 }
 
                 // cast the individual source member to target type
@@ -2118,6 +2152,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                     WrappedValue::wrappedValue(
                         moduleLLVM,
                         builder,
+                        sourceMemberValue->getType(),
                         sourceMemberValue,
                         sourceWrappedValue->getValueType()->getSubType()
                     ),
@@ -2137,6 +2172,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
+            targetType,
             targetAlloca,
             targetValueType
         );
@@ -2158,6 +2194,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 return WrappedValue::wrappedValue(
                     moduleLLVM,
                     builder,
+                    sourceType,
                     sourceValue,
                     expression->getValueType()
                 );
@@ -2174,10 +2211,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 llvm::Type *expType = llvm::ArrayType::get(typeForValueType(expression->getValueType()), 0); // TODO: this is hack and should be fixed
                 llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(expType);
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("gep-{}", string(sourceValue->getName())));
+                debugPrint({sourceArrayType, sourceArrayType->getArrayElementType(), sourceArrayType->getElementType()});
+                debugPrint({elementPtr});
                 return WrappedValue::wrappedValue(
                     moduleLLVM,
                     builder,
-                    builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr, format("ld-{}", string(elementPtr->getName()))),
+                    sourceArrayType->getArrayElementType(),
+                    elementPtr,
+                    //builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr, format("ld-{}", string(elementPtr->getName()))),
                     expression->getValueType()
                 );
             }
@@ -2240,6 +2281,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             return typeI32;
         case ValueTypeKind::S64:
             return typeI64;
+        case ValueTypeKind::FLOAT:
+            return typeFloat;
         case ValueTypeKind::F32:
             return typeF32;
         case ValueTypeKind::F64:
