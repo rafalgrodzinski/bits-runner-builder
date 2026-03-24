@@ -1487,12 +1487,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         llvm::Constant *constantStruct = llvm::ConstantStruct::get(structType, constantValues);
         return WrappedValue::wrappedValue(moduleLLVM, builder, constantStruct, expressionCompositeLiteral->getValueType());
     } else if (expressionCompositeLiteral->getValueType()->isPointer()) {
-        llvm::Value *value = wrappedValueForExpression(expressionCompositeLiteral->getExpressions().at(0))->getValue();
-        llvm::Constant *constantValue = llvm::dyn_cast<llvm::Constant>(value);
-        if (constantValue == nullptr)
-            goto not_constant;
-        llvm::Constant *constant = llvm::ConstantExpr::getIntToPtr(constantValue, typePtr);
-        return WrappedValue::wrappedValue(moduleLLVM, builder, constant, expressionCompositeLiteral->getValueType());
+        return wrappedValueForExpression(expressionCompositeLiteral->getExpressions().at(0));
     }
 
     // Otherwise try normal dynamic alloca
