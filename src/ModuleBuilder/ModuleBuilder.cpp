@@ -1752,12 +1752,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr; 
         }
-
-        llvm::Value *sourceValue =parentWrappedValue->getPointerValue();
-        llvm::LoadInst *pointeeLoad = builder->CreateLoad(pointeeType, sourceValue, format("ld_val-{}", string(sourceValue->getName())));
-        pointeeLoad->setAlignment(llvm::Align(1));
-
-        return wrappedValueForSourceValue(pointeeLoad, pointeeType, expression);
+        return wrappedValueForSourceValue(parentWrappedValue->getValue(), pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         return parentWrappedValue;
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {

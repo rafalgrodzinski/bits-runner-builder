@@ -40,7 +40,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 return callInst;
             };
             wrappedValue->pointerValueLambda = [builder, retType, callInst]() {
-                llvm::AllocaInst *alloca = builder->CreateAlloca(retType, nullptr);
+                llvm::AllocaInst *alloca = builder->CreateAlloca(retType, nullptr, "a_wrp");
                 builder->CreateStore(callInst, alloca);
                 return alloca;
             };
@@ -58,10 +58,10 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             };
         wrappedValue->type = type;
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
-        wrappedValue->valueLambda = [global]() {
-            return global;
+        wrappedValue->valueLambda = [builder, global]() {
+            return builder->CreateLoad(global->getValueType(), global, format("ld_wrp-{}", string(global->getName())));
         };
-        wrappedValue->pointerValueLambda = [global]() {
+        wrappedValue->pointerValueLambda = [builder, global]() {
             return global;
         };
         wrappedValue->type = global->getValueType();
@@ -87,7 +87,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             return value;
         };
         wrappedValue->pointerValueLambda = [builder, value]() {
-            llvm::AllocaInst *allocaInst = builder->CreateAlloca(value->getType());
+            llvm::AllocaInst *allocaInst = builder->CreateAlloca(value->getType(), nullptr, "a_wrp");
             builder->CreateStore(value, allocaInst);
             return allocaInst;
         };
@@ -130,15 +130,11 @@ shared_ptr<WrappedValue> WrappedValue::wrappedNone(llvm::Type *type, shared_ptr<
 }
 
 llvm::Value *WrappedValue::getValue() {
-    if (value == nullptr)
-        value = valueLambda();
-    return value;
+    return valueLambda();
 }
 
 llvm::Value *WrappedValue::getPointerValue() {
-    if (pointerValue == nullptr)
-        pointerValue = pointerValueLambda();
-    return pointerValue;
+    return pointerValueLambda();
 }
 
 llvm::Constant *WrappedValue::getConstantValue() {
@@ -146,7 +142,7 @@ llvm::Constant *WrappedValue::getConstantValue() {
 }
 
 llvm::GlobalVariable *WrappedValue::getGlobalValue() {
-    return llvm::dyn_cast<llvm::GlobalVariable>(getValue());
+    return llvm::dyn_cast<llvm::GlobalVariable>(getPointerValue());
 }
 
 llvm::Type *WrappedValue::getType() {

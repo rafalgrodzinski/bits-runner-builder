@@ -17,9 +17,6 @@ private:
     llvm::Type *type;
     shared_ptr<ValueType> valueType;
 
-    llvm::Value *value = nullptr;
-    llvm::Value *pointerValue = nullptr;
-
     function<llvm::Value *()> valueLambda;
     function<llvm::Value *()> pointerValueLambda;
 
