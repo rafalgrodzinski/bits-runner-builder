@@ -979,7 +979,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 if (adrWrappedValue == nullptr)
                     break;
 
-                llvm::Value *sourceValue = adrWrappedValue->getPointerValue();
+                llvm::Value *sourceValue = adrWrappedValue->getValue();
                 llvm::Value *targetValue = targetWrappedValue->getPointerValue();
                 builder->CreateStore(sourceValue, targetValue);
                     break;
