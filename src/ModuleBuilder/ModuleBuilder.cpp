@@ -1358,17 +1358,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     };
 
                     llvm::Type *sourceStructTyp = currentWrappedValue->getStructType();
-                    //llvm::Type *tt = currentWrappedValue->getType();
                     llvm::Value *sourceStructValue = currentWrappedValue->getPointerValue();
 
-                    //debugPrint({ct, tt});
-                    //debugPrint({cv});
-
-                    //llvm::Value *memberPtr = builder->CreateGEP(sourceStructTyp, sourceStructValue, index, format("gep-{}", string(sourceStructValue->getName())));
-                    //llvm::Type *memberType = typeForValueType(expressionValue->getValueType());
-
                     sourceType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
-                    //sourceValue = builder->CreateLoad(sourceType, memberPtr, format("ld_mbr-{}", string(memberPtr->getName())));
                     sourceValue = builder->CreateGEP(sourceStructTyp, sourceStructValue, index, format("gep-{}", string(sourceStructValue->getName())));
                 // try member function
                 } else {
@@ -1384,8 +1376,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     return nullptr;   
                 }
 
-                debugPrint({sourceValue});
-                debugPrint({sourceType});
                 currentWrappedValue = wrappedValueForSourceValue(sourceValue, sourceType, expressionValue);
                 parentExpression = chainExpression;
             } else {
@@ -1513,11 +1503,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     }
 
     llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
-    buildAssignment(
-        WrappedValue::wrappedValue(moduleLLVM, builder, type, alloca, expressionCompositeLiteral->getValueType()),
-        expressionCompositeLiteral
-    );
-    return WrappedValue::wrappedValue(moduleLLVM, builder, type, alloca, expressionCompositeLiteral->getValueType());
+    shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(moduleLLVM, builder, type, alloca, expressionCompositeLiteral->getValueType());
+    buildAssignment(wrappedValue, expressionCompositeLiteral);
+    return wrappedValue;
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionGrouping> expressionGrouping) {
@@ -1701,11 +1689,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         // extract value from the passed in `.pit` pointer
         llvm::Type *pointeeType = typeForValueType(expressionValue->getValueType());
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(pointeeType, wrappedPitValue->getValue(), format("ld_it_{}", *expressionValue->getValueType()->getBlobName()));
-        //pointeeLoad->setAlignment(llvm::Align(1));
-        //pointeeLoad->setVolatile(true);
 
-        debugPrint({pointeeLoad});
-        debugPrint({pointeeType});
         return wrappedValueForSourceValue(pointeeLoad, pointeeType, expressionValue);
     } else if (wrappedValue != nullptr) {
         if (expressionValue->getValueKind() == ExpressionValueKind::SIMPLE && expressionValue->getValueType()->isPointer()) {
@@ -1753,7 +1737,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
 
     // Do the appropriate built-in operation
     if (parentWrappedValue->isArray() && isCount) {
-        debugPrint({parentWrappedValue->getType(), parentWrappedValue->getArrayType()});
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
         shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
@@ -1779,9 +1762,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         };
         llvm::Value *memberPtr = builder->CreateGEP(structType, parentWrappedValue->getPointerValue(), index);
         llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, memberPtr);
-        pointerLoad->setAlignment(llvm::Align(1));
         llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, pointerLoad);
-        pointeeLoad->setAlignment(llvm::Align(1));
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
@@ -2144,7 +2125,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                 } else {
                     llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getArrayType(), sourceWrappedValue->getPointerValue(), index);
                     sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getArrayElementType(), sourceMemberPtr);
-                    //((llvm::LoadInst*)sourceMemberValue)->setAlignment(llvm::Align(1));
                 }
 
                 // cast the individual source member to target type
@@ -2211,14 +2191,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 llvm::Type *expType = llvm::ArrayType::get(typeForValueType(expression->getValueType()), 0); // TODO: this is hack and should be fixed
                 llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(expType);
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("gep-{}", string(sourceValue->getName())));
-                debugPrint({sourceArrayType, sourceArrayType->getArrayElementType(), sourceArrayType->getElementType()});
-                debugPrint({elementPtr});
                 return WrappedValue::wrappedValue(
                     moduleLLVM,
                     builder,
                     sourceArrayType->getArrayElementType(),
                     elementPtr,
-                    //builder->CreateLoad(sourceArrayType->getArrayElementType(), elementPtr, format("ld-{}", string(elementPtr->getName()))),
                     expression->getValueType()
                 );
             }

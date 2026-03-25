@@ -10,6 +10,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
     wrappedValue->type = type;
     wrappedValue->valueType = valueType;
 
+    // Load
     if (llvm::LoadInst *loadInst = llvm::dyn_cast<llvm::LoadInst>(value)) {
         wrappedValue->valueLambda = [loadInst]() {
             return loadInst;
@@ -17,6 +18,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [loadInst]() {
             return loadInst->getPointerOperand();
         };
+    // Alloca
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
         wrappedValue->valueLambda = [builder, allocaInst]() {
             return builder->CreateLoad(allocaInst->getAllocatedType(), allocaInst, format("ld_wrp-{}", string(allocaInst->getName())));
@@ -24,6 +26,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [allocaInst]() { 
             return allocaInst;
         };
+    // Call
     } else if (llvm::CallInst *callInst = llvm::dyn_cast<llvm::CallInst>(value)) {
         llvm::FunctionType *funType = callInst->getFunctionType();
         llvm::Type *retType = funType->getReturnType();
@@ -44,6 +47,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 return alloca;
             };
         }
+    // Function argument
     } else if (llvm::Argument *argument = llvm::dyn_cast<llvm::Argument>(value)) {
         llvm::Type *type = value->getType();
         wrappedValue->valueLambda = [argument]() {
@@ -54,6 +58,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 builder->CreateStore(argument, alloca);
                 return alloca;
             };
+    // Global
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
         wrappedValue->valueLambda = [builder, global]() {
             return builder->CreateLoad(global->getValueType(), global, format("ld_wrp-{}", string(global->getName())));
@@ -61,6 +66,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [builder, global]() {
             return global;
         };
+    // Constant
     } else if (llvm::Constant *constant = llvm::dyn_cast<llvm::Constant>(value)) {
         if (value->getType()->isVoidTy()) {
             return WrappedValue::wrappedNone(value->getType(), valueType);
@@ -77,6 +83,15 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 constant
             );
         };
+    // GEP
+    } else if (value->getType()->isPointerTy() && !valueType->isPointer()) {
+        wrappedValue->valueLambda = [builder, type, value]() {
+            return builder->CreateLoad(type, value, format("ld_wrp-{}", string(value->getName())));
+        };
+        wrappedValue->pointerValueLambda = [value]() {
+            return value;
+        };
+    // Value
     } else {
         wrappedValue->valueLambda = [value]() {
             return value;
