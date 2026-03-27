@@ -1750,8 +1750,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             return nullptr; 
         }
 
-        llvm::Value *pointeePointerValue = parentWrappedValue->getPointerValue();
-        llvm::LoadInst *pointeeLoad = builder->CreateLoad(pointeeType, pointeePointerValue, format("ld_val-{}", string(pointeePointerValue->getName())));
+        llvm::Value *pointerValue = parentWrappedValue->getValue();
+        llvm::LoadInst *pointeeLoad = builder->CreateLoad(pointeeType, pointerValue, format("ld_val-{}", string(pointerValue->getName())));
 
         debugPrint({pointeeLoad});
         debugPrint({pointeeType});
@@ -1759,12 +1759,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         //return wrappedValueForSourceValue(parentWrappedValue->getValue(), pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         //return parentWrappedValue;
-        llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentWrappedValue->getValue());
+        //llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentWrappedValue->getValue());
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
             typePtr,
-            pointeeLoad,
+            //pointeeLoad,
+            parentWrappedValue->getValue(),
             ValueType::A
         );
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {
@@ -2105,7 +2106,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // a to ptr
     } else if (isSourceAddress && isTargetPointer) {
-        llvm::Value *sourceValue = sourceWrappedValue->getPointerValue();
+        llvm::Value *sourceValue = sourceWrappedValue->getValue();
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
@@ -2115,7 +2116,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // a to uint
     } else if (isSourceAddress && isTargetUInt) {
-        llvm::Value *sourceValue = sourceWrappedValue->getPointerValue();
+        llvm::Value *sourceValue = sourceWrappedValue->getValue();
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
@@ -2222,6 +2223,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForSourceValue(llvm::Value *
                 llvm::Type *expType = llvm::ArrayType::get(typeForValueType(expression->getValueType()), 0); // TODO: this is hack and should be fixed
                 llvm::ArrayType *sourceArrayType = llvm::dyn_cast<llvm::ArrayType>(expType);
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("gep-{}", string(sourceValue->getName())));
+                debugPrint({sourceArrayType});
+                debugPrint({elementPtr});
                 return WrappedValue::wrappedValue(
                     moduleLLVM,
                     builder,

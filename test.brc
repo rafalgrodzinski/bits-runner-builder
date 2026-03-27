@@ -1,6 +1,20 @@
 @export main fun -> u32
-    num u32 <- 9
-    pNum ptr<u32> <- {num.adr}
-    //ppNum ptr<ptr<u32>> <- {pNum.adr}
-    ret pNum.vadr.u32
+    nums data<u32> <- {1,2,3,5,8,13,21,34,55}
+    pNums ptr<data<u32>> <- {nums.adr}
+
+    ret pNums.val[3]
 ;
+
+/*gpNum ptr<u32>
+
+@export main fun -> u32
+    num u32 <- 19
+    gpNum <- {num.adr}
+    ret gpNum.val
+;*/
+
+/*@export main fun -> u32
+     num u32 <- 22
+     pNum ptr<u32> <- {num.adr}
+     ret pNum.val
+ ;*/
