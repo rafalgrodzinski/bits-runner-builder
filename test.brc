@@ -1,9 +1,16 @@
-@export main fun -> u32
+@extern malloc fun: size u64 -> a
+
+/*@export main fun -> u32
+    pNums ptr<data<u32>> <- { malloc(u32.size * 1_000_000) }
+    ret pNums.val[500_000]
+;*/
+
+/*@export main fun -> u32
     nums data<u32> <- {1,2,3,5,8,13,21,34,55}
     pNums ptr<data<u32>> <- {nums.adr}
 
     ret pNums.val[3]
-;
+;*/
 
 /*gpNum ptr<u32>
 
@@ -13,8 +20,8 @@
     ret gpNum.val
 ;*/
 
-/*@export main fun -> u32
+@export main fun -> u32
      num u32 <- 22
      pNum ptr<u32> <- {num.adr}
      ret pNum.val
- ;*/
+;
