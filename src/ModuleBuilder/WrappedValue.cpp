@@ -84,7 +84,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             );
         };
     // GEP
-    } else if (value->getType()->isPointerTy() && !valueType->isPointer()) {
+    } else if ((value->getType()->isPointerTy() && !valueType->isPointer()) || string(value->getName()).starts_with("gep-")) {
         wrappedValue->valueLambda = [builder, type, value]() {
             return builder->CreateLoad(type, value, format("ld_wrp-{}", string(value->getName())));
         };

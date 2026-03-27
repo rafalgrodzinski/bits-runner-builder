@@ -1,42 +1,6 @@
-/*@extern putchar fun: character u64 -> u32
-
-@export printChar fun: character u64
-    putchar(character)
-;
-
-@export printNum fun: number s64
-    if number < 0
-        number <- -number
-        putchar('-')
-    ;
-
-    biggest s64 <- 10
-    rep biggest <= number: biggest <- biggest * 10
-    biggest <- biggest / 10
-
-    rep biggest > 0, biggest <- biggest / 10
-        digit s64 <- number / biggest
-        putchar((digit + '0').u64)
-        number <- number % biggest
-    ;
-;*/
-
-//@export value u64 <- 3
-@export callback ptr<fun: u64>
-
-/*@export doStuff fun: arg u64
-    if callback.vadr != 0: callback.val(arg * value)
-;*/
-
-stuffCallback fun: result u64
-    //printNum(result)
-    //printChar('\n')
-;
-
-@export main fun -> u64
-    //value <- 4
-    callback <- { stuffCallback.adr }
-    callback.val(7)
-    //doStuff(7)
-    ret 0
+@export main fun -> u32
+    num u32 <- 9
+    pNum ptr<u32> <- {num.adr}
+    //ppNum ptr<ptr<u32>> <- {pNum.adr}
+    ret pNum.vadr.u32
 ;

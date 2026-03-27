@@ -979,7 +979,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 if (adrWrappedValue == nullptr)
                     break;
 
-                llvm::Value *sourceValue = adrWrappedValue->getValue();
+                llvm::Value *sourceValue = adrWrappedValue->getPointerValue();
                 llvm::Value *targetValue = targetWrappedValue->getPointerValue();
                 builder->CreateStore(sourceValue, targetValue);
                     break;
@@ -1749,9 +1749,24 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr; 
         }
-        return wrappedValueForSourceValue(parentWrappedValue->getValue(), pointeeType, expression);
+
+        llvm::Value *pointeePointerValue = parentWrappedValue->getPointerValue();
+        llvm::LoadInst *pointeeLoad = builder->CreateLoad(pointeeType, pointeePointerValue, format("ld_val-{}", string(pointeePointerValue->getName())));
+
+        debugPrint({pointeeLoad});
+        debugPrint({pointeeType});
+        return wrappedValueForSourceValue(pointeeLoad, pointeeType, expression);
+        //return wrappedValueForSourceValue(parentWrappedValue->getValue(), pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
-        return parentWrappedValue;
+        //return parentWrappedValue;
+        llvm::LoadInst *pointeeLoad = (llvm::LoadInst*)builder->CreateLoad(typePtr, parentWrappedValue->getValue());
+        return WrappedValue::wrappedValue(
+            moduleLLVM,
+            builder,
+            typePtr,
+            pointeeLoad,
+            ValueType::A
+        );
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {
         string protoName = *(parentWrappedValue->getValueType()->getProtoName());
         llvm::StructType *structType = scope->getProtoStructType(protoName);
@@ -1771,7 +1786,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             ValueType::A
         );
     } else if (isAdr) {
-        return parentWrappedValue;
+        return WrappedValue::wrappedValue(
+            moduleLLVM,
+            builder,
+            typePtr,
+            parentWrappedValue->getPointerValue(),
+            ValueType::A
+        );
     } else if (isSize) {
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
         if (sizeInBytes <= 0)
@@ -1873,7 +1894,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             sourceSize = 64;
             break;
         case ValueTypeKind::A:
-            isSourceUInt = true;
+            //isSourceUInt = true;
             isSourceAddress = true;
             sourceSize = typePtrInt->getBitWidth();
             break;
@@ -2090,6 +2111,16 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             builder,
             targetType,
             builder->CreateIntToPtr(sourceValue, typePtr, format("int_to_ptr-{}", string(sourceValue->getName()))),
+            targetValueType
+        );
+    // a to uint
+    } else if (isSourceAddress && isTargetUInt) {
+        llvm::Value *sourceValue = sourceWrappedValue->getPointerValue();
+        return WrappedValue::wrappedValue(
+            moduleLLVM,
+            builder,
+            targetType,
+            builder->CreatePtrToInt(sourceValue, targetType, format("a_to_uint-{}", string(sourceValue->getName()))),
             targetValueType
         );
     // data to data
