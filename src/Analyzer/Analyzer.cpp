@@ -1365,6 +1365,10 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     // composite to pointer
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
         sourceExpression->valueType = targetType;
+        // make sure the composite element expression is of type a
+        shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
+        shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(0);
+        sourceElementExpression = checkAndTryCasting(sourceElementExpression, ValueType::A, nullptr);
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {

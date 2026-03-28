@@ -58,6 +58,15 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 builder->CreateStore(argument, alloca);
                 return alloca;
             };
+    // Function
+    } else if (llvm::Function *fun = llvm::dyn_cast<llvm::Function>(value)) {
+        // it doesn't make sense to return a value to function
+        wrappedValue->valueLambda = []() {
+            return nullptr;
+        };
+        wrappedValue->pointerValueLambda = [fun]() {
+            return fun;
+        };
     // Global
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
         wrappedValue->valueLambda = [builder, global]() {
@@ -83,14 +92,6 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 constant
             );
         };
-    // GEP
-    } else if ((value->getType()->isPointerTy() && !valueType->isPointer()) || string(value->getName()).starts_with("gep-")) {
-        wrappedValue->valueLambda = [builder, type, value]() {
-            return builder->CreateLoad(type, value, format("ld_wrp-{}", string(value->getName())));
-        };
-        wrappedValue->pointerValueLambda = [value]() {
-            return value;
-        };
     // Value
     } else {
         wrappedValue->valueLambda = [value]() {
@@ -102,6 +103,22 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             return allocaInst;
         };
     }
+
+    return wrappedValue;
+}
+
+shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *pointeeType, llvm::Value *pointerValue, shared_ptr<ValueType> valueType) {
+    shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
+
+    wrappedValue->type = pointeeType;
+    wrappedValue->valueType = valueType;
+
+    wrappedValue->valueLambda = [builder, pointeeType, pointerValue]() {
+        return builder->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
+    };
+    wrappedValue->pointerValueLambda = [pointerValue]() {
+        return pointerValue;
+    };
 
     return wrappedValue;
 }

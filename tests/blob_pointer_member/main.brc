@@ -1,0 +1,9 @@
+stuff blob
+    pNum ptr<u32>
+;
+
+@export main fun -> u32
+    num u32 <- 19
+    stuff blob<stuff> <- {{num.adr}}
+    ret stuff.pNum.val
+;
