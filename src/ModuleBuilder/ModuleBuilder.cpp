@@ -1813,11 +1813,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
         shared_ptr<WrappedValue> wrappedvalue = wrappedValueForExpression(argumentExpression);
         if (wrappedvalue == nullptr)
             return nullptr;
-        if (wrappedvalue->getValueType()->isPointer()) {
-            argValues.push_back(wrappedvalue->getPointerValue());
-        } else {
-            argValues.push_back(wrappedvalue->getValue());
-        }
+        argValues.push_back(wrappedvalue->getValue());
     }
 
     return WrappedValue::wrappedValue(

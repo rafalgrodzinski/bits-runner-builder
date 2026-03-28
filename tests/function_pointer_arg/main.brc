@@ -1,0 +1,8 @@
+doStuff fun: value u32 -> u32
+    ret value
+;
+
+@export main fun -> u32
+    callback ptr<fun: u32 -> u32> <- { doStuff.adr }
+    ret callback.val(7)
+;
