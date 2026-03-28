@@ -86,7 +86,7 @@ Required dependencies
 - Then install LLVM: `brew install llvm@20`
 - In addition also install cmake `brew install cmake`
 - In the sources folder, first configure the project: `cmake -B build`
-- Then build `cmake --build build --config Relese` (or `--config Debug`)
+- Then build `cmake --build build --config Relese` (or `--config RelWithDebInfo`)
 - Binary should be under `build/brb`
 
 ### Linux
@@ -148,3 +148,6 @@ This uses the basic library `@B` to manipulate strings.
 
 `interfaces`:
 Shows how `proto` can be used for indirect useage of `blob`.
+
+## Tests
+There is a bunch of small tests that are used to check correctness of the generated code. They can be run individually or together by running `tests/run_all.sh`. It can also be useful to see additional usage examples.

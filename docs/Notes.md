@@ -8,6 +8,9 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
+- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/176](https://github.com/rafalgrodzinski/bits-runner-builder/pull/176)
+  - Big perfomance and correctness improvements
+  - Added tests
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/169](https://github.com/rafalgrodzinski/bits-runner-builder/pull/169)
   - Handle duplicated imports
   - Can cast composite literals to blob types with functions
