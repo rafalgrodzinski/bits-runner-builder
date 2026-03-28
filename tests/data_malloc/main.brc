@@ -1,0 +1,7 @@
+@extern malloc fun: size u64 -> a
+
+@export main fun -> u32
+    pNums ptr<data<u32>> <- { malloc(u32.size * 1_000_000) }
+    pNums.val[500_000] <- 123
+    ret pNums.val[500_000]
+;
