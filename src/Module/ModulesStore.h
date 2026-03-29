@@ -19,6 +19,7 @@ private:
     vector<string> moduleNames;
 
     // header
+    map<string, vector<shared_ptr<Statement>>> externStatementsMap;
     map<string, vector<shared_ptr<Statement>>> importStatementsMap;
     map<string, vector<shared_ptr<Statement>>> protoDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> protoStatementsMap;

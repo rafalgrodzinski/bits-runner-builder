@@ -64,6 +64,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;
 
     vector<shared_ptr<Statement>> moduleImportStatements;
+    vector<shared_ptr<Statement>> moduleExternStatements;
     vector<shared_ptr<Statement>> moduleProtoDeclarationStatements;
     vector<shared_ptr<Statement>> moduleProtoStatements;
     vector<shared_ptr<Statement>> moduleBlobStatements;
@@ -208,6 +209,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 }
                 break;
             }
+            case StatementKind::META_EXTERN_FUNCTION:
+            case StatementKind::META_EXTERN_VARIABLE: {
+                moduleExternStatements.push_back(statement);
+                break;
+            }
             case StatementKind::META_IMPORT: {
                 moduleImportStatements.push_back(statement);
                 break;
@@ -331,6 +337,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
         // imports
         importStatementsMap[moduleName] = moduleImportStatements;
+        // externs
+        externStatementsMap[moduleName] = moduleExternStatements;
         // proto declarations
         protoDeclarationStatementsMap[moduleName] = moduleProtoDeclarationStatements;
         // proto definitions
@@ -380,6 +388,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
             if (!isAlreadyImported)
                 importStatementsMap[moduleName].push_back(statement);
         }
+        // externs
+        for (shared_ptr<Statement> statement : moduleExternStatements)
+            externStatementsMap[moduleName].push_back(statement);
         // proto declarations
         for (shared_ptr<Statement> statement : moduleProtoDeclarationStatements)
             protoDeclarationStatementsMap[moduleName].push_back(statement);
@@ -444,8 +455,11 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
 
         vector<shared_ptr<Statement>> headerStatements;
         // imports
-        for (shared_ptr<Statement> Statement : importStatementsMap[moduleName])
-            headerStatements.push_back(Statement);
+        for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
+            headerStatements.push_back(statement);
+        // externs
+        for (shared_ptr<Statement> statement : externStatementsMap[moduleName])
+            headerStatements.push_back(statement);
         // proto declarations
         for (shared_ptr<Statement> statement : protoDeclarationStatementsMap[moduleName])
             headerStatements.push_back(statement);
