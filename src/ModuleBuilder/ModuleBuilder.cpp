@@ -1691,7 +1691,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (isIt && wrappedPitValue != nullptr) {
         // extract value from the passed in `.pit` pointer
         sourceValue = nullptr;
-        sourcePointerValue = wrappedPitValue->getPointerValue();
+        sourcePointerValue = wrappedPitValue->getValue();
         sourceType = typeForValueType(expressionValue->getValueType());
     } else if (wrappedValue != nullptr) {
         sourceValue = nullptr;
