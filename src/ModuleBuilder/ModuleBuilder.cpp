@@ -1416,13 +1416,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                             builder->getInt32(0)
                         };
 
-                        llvm::Value *itMemberPtr = builder->CreateGEP(structType, currentWrappedValue->getPointerValue(), itIndexMember);
-                        llvm::LoadInst *itPointerLoad = builder->CreateLoad(typePtr, itMemberPtr);
+                        llvm::Value *sourcePointer = currentWrappedValue->getPointerValue();
+                        llvm::Value *protoMemberPointer = builder->CreateGEP(structType, sourcePointer, itIndexMember, format("gep-proto-{}", string(sourcePointer->getName())));
+                        llvm::LoadInst *blobMemberPointer = builder->CreateLoad(typePtr, protoMemberPointer, format("ld_proto-{}", string(protoMemberPointer->getName())));
 
                         currentWrappedValue = wrappedValueForCall(
                             funPointerLoad,
                             funType,
-                            {itPointerLoad},
+                            {blobMemberPointer},
                             expressionCall->getArgumentExpressions(),
                             expressionCall->getValueType()
                         );
@@ -1443,8 +1444,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         llvm::Type *pointeeType = typePtr;
                         if (!member.second->getSubType()->isFunction())
                             pointeeType = typeForValueType(member.second->getSubType());
-                        llvm::Value *pointeePointerValue = builder->CreateGEP(currentWrappedValue->getStructType(), currentWrappedValue->getPointerValue(), index);
-                        currentWrappedValue = wrappedValueForValue(nullptr, pointeePointerValue, pointeeType, expressionValue);
+
+                        llvm::Value *sourcePointer = currentWrappedValue->getPointerValue();
+                        llvm::Value *protoMemberPointer = builder->CreateGEP(currentWrappedValue->getStructType(), sourcePointer, index, format("gep-proto-{}", string(sourcePointer->getName())));
+                        llvm::Value *blobMemberPointer = builder->CreateLoad(typePtr, protoMemberPointer, format("ld_proto-{}", string(protoMemberPointer->getName())));
+
+                        currentWrappedValue = wrappedValueForValue(nullptr, blobMemberPointer, pointeeType, expressionValue);
                         parentExpression = chainExpression;
                     }
                 }
