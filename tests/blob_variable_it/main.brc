@@ -7,6 +7,6 @@ stuff blob
 ;
 
 @export main fun -> u32
-    stuff blob<stuff> <- {1234}
+    stuff blob<stuff> <- {255}
     ret stuff.dummy()
 ;

@@ -9,5 +9,5 @@ cc -o ${TEST_NAME} main.o
 check
 
 ./${TEST_NAME}
-[ ${?} = 1234 ]
+[ ${?} = 255 ]
 check_test ${TEST_NAME} ${?}

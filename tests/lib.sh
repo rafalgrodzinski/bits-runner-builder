@@ -15,4 +15,6 @@ function check_test {
     else
         echo "⛔️ Test \"${1}\" Failed"
     fi
+
+    return ${2}
 }
