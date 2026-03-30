@@ -1078,6 +1078,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (leftValue == nullptr || rightValue == nullptr)
         return nullptr;
 
+    // Convert pointers to int for pointer arithmetic
+    if (leftValue->getType()->isPointerTy())
+        leftValue = builder->CreatePtrToInt(leftValue, typePtrInt);
+    if (rightValue->getType()->isPointerTy())
+        rightValue = builder->CreatePtrToInt(rightValue, typePtrInt);
+
     // types will match in cases when it's important
     shared_ptr<ValueType> valueType = expressionBinary->getLeft()->getValueType();
 
@@ -1246,6 +1252,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         );
         return nullptr;  
     }
+
+    // convert back int to ptr if we did pointer arithmetic
+    if (expressionBinary->getValueType()->isAddress())
+        resultValue = builder->CreateIntToPtr(resultValue, typePtr);
 
     return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue->getType(), resultValue, expressionBinary->getValueType());
 }
@@ -1835,8 +1845,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isSourceUInt = false;
     bool isSourceSInt = false;
     bool isSourceFloat = false;
-    bool isSourceData = false;
     bool isSourceAddress = false;
+    bool isSourceData = false;
     int sourceSize = 0;
     switch (sourceWrappedValue->getValueType()->getKind()) {
         case ValueTypeKind::UINT:
@@ -1892,7 +1902,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             sourceSize = 64;
             break;
         case ValueTypeKind::A:
-            //isSourceUInt = true;
             isSourceAddress = true;
             sourceSize = typePtrInt->getBitWidth();
             break;
@@ -1912,6 +1921,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isTargetUInt = false;
     bool isTargetSInt = false;
     bool isTargetFloat = false;
+    bool isTargetAddress = false;
     bool isTargetPointer = false;
     bool isTargetData = false;
     int targetSize = 0;
@@ -1965,7 +1975,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             targetSize = 64;
             break;
         case ValueTypeKind::A:
-            isTargetUInt = true;
+            isTargetAddress = true;
             targetSize = typePtrInt->getBitWidth();
             break;
         case ValueTypeKind::PTR:
@@ -2101,16 +2111,19 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             builder->CreateFPToSI(sourceWrappedValue->getValue(), targetType),
             targetValueType
         );
-    // a to ptr
-    } else if (isSourceAddress && isTargetPointer) {
+    // uint to a
+    } else if (isSourceUInt && isTargetAddress) {
         llvm::Value *sourceValue = sourceWrappedValue->getValue();
         return WrappedValue::wrappedValue(
             moduleLLVM,
             builder,
             targetType,
-            builder->CreateIntToPtr(sourceValue, typePtr, format("int_to_ptr-{}", string(sourceValue->getName()))),
+            builder->CreateIntToPtr(sourceValue, typePtr, format("uint_to_ptr-{}", string(sourceValue->getName()))),
             targetValueType
         );
+    // a to ptr
+    } else if (isSourceAddress && isTargetPointer) {
+        return sourceWrappedValue;
     // a to uint
     } else if (isSourceAddress && isTargetUInt) {
         llvm::Value *sourceValue = sourceWrappedValue->getValue();
