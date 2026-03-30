@@ -11,6 +11,7 @@ Changelist:
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/176](https://github.com/rafalgrodzinski/bits-runner-builder/pull/176)
   - Big perfomance and correctness improvements
   - Added tests
+  - Check if variable of type data has specified count
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/169](https://github.com/rafalgrodzinski/bits-runner-builder/pull/169)
   - Handle duplicated imports
   - Can cast composite literals to blob types with functions
