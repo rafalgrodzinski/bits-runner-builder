@@ -1034,7 +1034,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
 // Expressions
 //
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Expression> expression) {
-    switch ( expression->getKind()) {
+    switch (expression->getKind()) {
         case ExpressionKind::BINARY:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
         case ExpressionKind::BLOCK:
@@ -1382,7 +1382,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     }
                 }
 
-                if (sourceValue == nullptr && sourcePointerValue == nullptr) {
+                if ((sourceValue == nullptr && sourcePointerValue == nullptr) || sourceType == nullptr) {
                     markErrorInvalidMember(expressionValue->getLocation(), parentBlobName, expressionValue->getIdentifier());
                     return nullptr;   
                 }
