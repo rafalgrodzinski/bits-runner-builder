@@ -543,8 +543,16 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
             markErrorInvalidType(statementVariable->getExpression()->getLocation(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
     }
 
-    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType(), true))
+    // data types should have count expression
+    if (statementVariable->getValueType()->isData() && statementVariable->getValueType()->getCountExpression() == nullptr) {
+        markErrorInvalidType(statementVariable->getLocation(), statementVariable->getValueType(), nullptr);
+        return;
+    }
+
+    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType(), true)) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
+        return;
+    }
 
     // updated corresponding variable declaration
     for (shared_ptr<Statement> headerStatement : this->module->getHeaderStatements()) {
