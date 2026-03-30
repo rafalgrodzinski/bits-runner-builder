@@ -67,19 +67,20 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     vector<shared_ptr<Statement>> moduleExternStatements;
     vector<shared_ptr<Statement>> moduleProtoDeclarationStatements;
     vector<shared_ptr<Statement>> moduleProtoStatements;
-    vector<shared_ptr<Statement>> moduleBlobStatements;
     vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleBlobStatements;
     vector<shared_ptr<Statement>> moduleVariableDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleVariableStatements;
     vector<shared_ptr<Statement>> moduleFunctionDeclarationStatements;
     vector<shared_ptr<Statement>> moduleRawFunctionStatements;
     vector<shared_ptr<Statement>> moduleBodyStatements;
 
     vector<shared_ptr<Statement>> moduleExportedProtoDeclarationStatements;
     vector<shared_ptr<Statement>> moduleExportedProtoStatements;
-    vector<shared_ptr<Statement>> moduleExportedBlobStatements;
     vector<shared_ptr<Statement>> moduleExportedBlobDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleExportedVariableDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleExportedBlobStatements;
     vector<shared_ptr<Statement>> moduleExportedFunctionDeclarationStatements;
+    vector<shared_ptr<Statement>> moduleExportedVariableDeclarationStatements;
     vector<shared_ptr<Statement>> moduleExportedRawFunctionStatements;
 
     for (shared_ptr<Statement> statement : statements) {
@@ -93,8 +94,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 );
 
                 // local header
-                moduleBlobStatements.push_back(statementBlob);
                 moduleBlobDeclarationStatements.push_back(statementBlobDeclaration);
+                moduleBlobStatements.push_back(statementBlob);
 
                 // exported header
                 if (statementBlob->getShouldExport()) {
@@ -182,10 +183,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     statementFunction->getReturnValueType(),
                     statementFunction->getLocation()
                 );
-                // body
-                moduleBodyStatements.push_back(statementFunction);
                 // local header
                 moduleFunctionDeclarationStatements.push_back(statementFunctionDeclaration);
+                // body
+                moduleBodyStatements.push_back(statementFunction);
+
                 // exported header
                 if (statementFunction->getShouldExport()) {
                     // update argument types for exported statement
@@ -232,8 +234,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 );
 
                 // local header
-                moduleProtoStatements.push_back(statementProto);
                 moduleProtoDeclarationStatements.push_back(statementProtoDeclaration);
+                moduleProtoStatements.push_back(statementProto);
 
                 // exported header
                 if (statementProto->getShouldExport()) {
@@ -302,10 +304,10 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     statementVariable->getValueType(),
                     statementVariable->getLocation()
                 );
-                // body
-                moduleBodyStatements.push_back(statementVariable);
+
                 // local header
-                moduleVariableDeclarationStatements.push_back(statementVariableDeclaration);
+                moduleVariableStatements.push_back(statementVariable);
+
                 // exported header
                 if (statementVariable->getShouldExport()) {
                     // updated variable type for exported statement
@@ -347,10 +349,10 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         blobDeclarationStatementsMap[moduleName] = moduleBlobDeclarationStatements;
         // blob definitons
         blobStatementsMap[moduleName] = moduleBlobStatements;
-        // variable declarations
-        variableDeclarationStatementsMap[moduleName] = moduleVariableDeclarationStatements;
         // function declarations
         functionDeclarationStatementsMap[moduleName] = moduleFunctionDeclarationStatements;
+        // variable definitions
+        variableStatementsMap[moduleName] = moduleVariableStatements;
         // raw functions
         rawFunctionStatementsMap[moduleName] = moduleRawFunctionStatements;
     
@@ -365,10 +367,10 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         exportedBlobDeclarationStatementsMap[moduleName] = moduleExportedBlobDeclarationStatements;
         // exported blob definitions
         exportedBlobStatementsMap[moduleName] = moduleExportedBlobStatements;
-        // exported variable declarations
-        exportedVariableDeclarationStatementsMap[moduleName] = moduleExportedVariableDeclarationStatements;
         // exported function declarations
         exportedFunctionDeclarationStatementsMap[moduleName] = moduleExportedFunctionDeclarationStatements;
+        // exported variable declarations
+        exportedVariableDeclarationStatementsMap[moduleName] = moduleExportedVariableDeclarationStatements;
         // exported raw functions
         exportedRawFunctionStatementsMap[moduleName] = moduleExportedRawFunctionStatements;
     // or merge with existing ones
@@ -403,12 +405,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // blob defintions
         for (shared_ptr<Statement> statement : moduleBlobStatements)
             blobStatementsMap[moduleName].push_back(statement);
-        // variable declarations
-        for (shared_ptr<Statement> statement : moduleVariableDeclarationStatements)
-            variableDeclarationStatementsMap[moduleName].push_back(statement);
         // function declarations
         for (shared_ptr<Statement> statement : moduleFunctionDeclarationStatements)
             functionDeclarationStatementsMap[moduleName].push_back(statement);
+        // variable definitions
+        for (shared_ptr<Statement> statement : moduleVariableStatements)
+            variableStatementsMap[moduleName].push_back(statement);
         // raw functions
         for (shared_ptr<Statement> statement : moduleRawFunctionStatements)
             rawFunctionStatementsMap[moduleName].push_back(statement);
@@ -429,12 +431,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // exported blob defintions
         for (shared_ptr<Statement> statement : moduleExportedBlobStatements)
             exportedBlobStatementsMap[moduleName].push_back(statement);
-        // exported variable declarations
-        for (shared_ptr<Statement> statement : moduleExportedVariableDeclarationStatements)
-            exportedVariableDeclarationStatementsMap[moduleName].push_back(statement);
         // exported function declarations
         for (shared_ptr<Statement> statement : moduleExportedFunctionDeclarationStatements)
             exportedFunctionDeclarationStatementsMap[moduleName].push_back(statement);
+        // exported variable declarations
+        for (shared_ptr<Statement> statement : moduleExportedVariableDeclarationStatements)
+            exportedVariableDeclarationStatementsMap[moduleName].push_back(statement);
         // exported raw functions
         for (shared_ptr<Statement> statement : moduleExportedRawFunctionStatements)
             exportedRawFunctionStatementsMap[moduleName].push_back(statement);
@@ -472,11 +474,11 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // blob definitions
         for (shared_ptr<Statement> statement : blobStatementsMap[moduleName])
             headerStatements.push_back(statement);
-        // variable declarations
-        for (shared_ptr<Statement> statement : variableDeclarationStatementsMap[moduleName])
-            headerStatements.push_back(statement);
         // function declarations
         for (shared_ptr<Statement> statement : functionDeclarationStatementsMap[moduleName])
+            headerStatements.push_back(statement);
+        // variable definitions
+        for (shared_ptr<Statement> statement : variableStatementsMap[moduleName])
             headerStatements.push_back(statement);
         // raw functions
         for (shared_ptr<Statement> statement : rawFunctionStatementsMap[moduleName])
@@ -520,11 +522,11 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
         // exported blob definitions
         for (shared_ptr<Statement> statement : exportedBlobStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
-        // exported variable declarations
-        for (shared_ptr<Statement> statement : exportedVariableDeclarationStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
         // exported function declarations
         for (shared_ptr<Statement> statement : exportedFunctionDeclarationStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported variable declarations
+        for (shared_ptr<Statement> statement : exportedVariableDeclarationStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
         // exported raw functions
         for (shared_ptr<Statement> statement : exportedRawFunctionStatementsMap[moduleName])

@@ -19,13 +19,13 @@ private:
     vector<string> moduleNames;
 
     // header
-    map<string, vector<shared_ptr<Statement>>> externStatementsMap;
     map<string, vector<shared_ptr<Statement>>> importStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> externStatementsMap;
     map<string, vector<shared_ptr<Statement>>> protoDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> protoStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> variableDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> variableStatementsMap;
     map<string, vector<shared_ptr<Statement>>> functionDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> rawFunctionStatementsMap;
     // body
