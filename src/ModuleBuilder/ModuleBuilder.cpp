@@ -1037,7 +1037,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
 // Expressions
 //
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Expression> expression) {
-    switch (expression->getKind()) {
+    switch ( expression->getKind()) {
         case ExpressionKind::BINARY:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
         case ExpressionKind::BLOCK:
@@ -2123,7 +2123,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // a to ptr
     } else if (isSourceAddress && isTargetPointer) {
-        return sourceWrappedValue;
+        llvm::Value *sourceValue = sourceWrappedValue->getValue();
+        return WrappedValue::wrappedValue(
+            moduleLLVM,
+            builder,
+            targetType,
+            sourceValue,
+            targetValueType
+        );
     // a to uint
     } else if (isSourceAddress && isTargetUInt) {
         llvm::Value *sourceValue = sourceWrappedValue->getValue();
