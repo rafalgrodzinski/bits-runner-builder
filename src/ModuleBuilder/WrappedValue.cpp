@@ -4,10 +4,9 @@
 
 WrappedValue::WrappedValue() { }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *type, llvm::Value *value, shared_ptr<ValueType> valueType) {
+shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    wrappedValue->type = type;
     wrappedValue->valueType = valueType;
 
     // Load
@@ -18,6 +17,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [loadInst]() {
             return loadInst->getPointerOperand();
         };
+        wrappedValue->type = loadInst->getType();
     // Alloca
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
         wrappedValue->valueLambda = [builder, allocaInst]() {
@@ -26,6 +26,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [allocaInst]() { 
             return allocaInst;
         };
+        wrappedValue->type = allocaInst->getAllocatedType();
     // Call
     } else if (llvm::CallInst *callInst = llvm::dyn_cast<llvm::CallInst>(value)) {
         llvm::FunctionType *funType = callInst->getFunctionType();
@@ -47,6 +48,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 return alloca;
             };
         }
+        wrappedValue->type = retType;
     // Function argument
     } else if (llvm::Argument *argument = llvm::dyn_cast<llvm::Argument>(value)) {
         llvm::Type *type = value->getType();
@@ -54,10 +56,11 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             return argument;
         };
         wrappedValue->pointerValueLambda = [builder, type, argument]() {
-                llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
-                builder->CreateStore(argument, alloca);
-                return alloca;
-            };
+            llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
+            builder->CreateStore(argument, alloca);
+            return alloca;
+        };
+        wrappedValue->type = type;
     // Function
     } else if (llvm::Function *fun = llvm::dyn_cast<llvm::Function>(value)) {
         // it doesn't make sense to return a value to function
@@ -67,6 +70,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [fun]() {
             return fun;
         };
+        wrappedValue->type = fun->getFunctionType()->getReturnType();
     // Global
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
         wrappedValue->valueLambda = [builder, global]() {
@@ -75,6 +79,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [builder, global]() {
             return global;
         };
+        wrappedValue->type = global->getValueType();
     // Constant
     } else if (llvm::Constant *constant = llvm::dyn_cast<llvm::Constant>(value)) {
         if (value->getType()->isVoidTy()) {
@@ -92,6 +97,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
                 constant
             );
         };
+        wrappedValue->type = value->getType();
     // Value
     } else {
         wrappedValue->valueLambda = [value]() {
@@ -102,12 +108,13 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             builder->CreateStore(value, allocaInst);
             return allocaInst;
         };
+        wrappedValue->type = value->getType();
     }
 
     return wrappedValue;
 }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *pointeeType, llvm::Value *pointerValue, shared_ptr<ValueType> valueType) {
+shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue( shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *pointeeType, llvm::Value *pointerValue, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
     wrappedValue->type = pointeeType;
