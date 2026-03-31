@@ -20,8 +20,10 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->type = loadInst->getType();
     // Alloca
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
-        wrappedValue->valueLambda = [builder, allocaInst]() {
-            return builder->CreateLoad(allocaInst->getAllocatedType(), allocaInst, format("ld_wrp-{}", string(allocaInst->getName())));
+        wrappedValue->valueLambda = [builder, allocaInst, valueType]() {
+            llvm::LoadInst *load = builder->CreateLoad(allocaInst->getAllocatedType(), allocaInst, format("ld_wrp-{}", string(allocaInst->getName())));
+            load->setVolatile(true);
+            return load;
         };
         wrappedValue->pointerValueLambda = [allocaInst]() { 
             return allocaInst;
@@ -120,8 +122,10 @@ shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue( shared_ptr<llvm::IRB
     wrappedValue->type = pointeeType;
     wrappedValue->valueType = valueType;
 
-    wrappedValue->valueLambda = [builder, pointeeType, pointerValue]() {
-        return builder->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
+    wrappedValue->valueLambda = [builder, pointeeType, pointerValue, valueType]() {
+        llvm::LoadInst *load = builder->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
+        load->setVolatile(true);
+        return load;
     };
     wrappedValue->pointerValueLambda = [pointerValue]() {
         return pointerValue;

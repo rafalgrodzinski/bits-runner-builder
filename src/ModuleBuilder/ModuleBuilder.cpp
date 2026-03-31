@@ -1776,7 +1776,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return wrappedValueForValue(nullptr, parentWrappedValue->getValue(), pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         llvm::Value *pointerValue = parentWrappedValue->getValue();
-        llvm::Value *alloca = builder->CreateAlloca(typePtr, nullptr, format("a_avdr-{}", string(pointerValue->getName())));
+        llvm::Value *alloca = builder->CreateAlloca(typePtr, nullptr, format("a_vadr-{}", string(pointerValue->getName())));
         builder->CreateStore(pointerValue, alloca);
         return WrappedValue::wrappedValue(
             moduleLLVM,
