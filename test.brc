@@ -1,14 +1,5 @@
-Stuff blob: IStuff
-    num u32
-;
-
-IStuff proto
-    num u32
-;
-
 @export main fun -> u32
-    stuff blob<Stuff> <- {33}
-    iStuff proto<IStuff> <- {stuff.adr.ptr<blob<Stuff>>}
-
-    ret iStuff.num
+    nums data<u32> <- {1,2,3,5,8,13,21,34,55}
+    pNums ptr<data<u32>> <- {nums.adr}
+    ret pNums.val[3]
 ;

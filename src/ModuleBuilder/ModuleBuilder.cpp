@@ -804,7 +804,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                         builder->getInt32(0),
                         builder->getInt32(i)
                     };
-                    llvm::Value *targetPtr = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
+                    llvm::Value *targetPointerValue = targetWrappedValue->getPointerValue();
+                    llvm::Value *targetPtr = builder->CreateGEP(targetWrappedValue->getType(), targetPointerValue, index, format("gep_data-{}", string(targetPointerValue->getName())));
                     llvm::Value *sourceValue = wrappedValueForExpression(valueExpressions.at(i))->getValue();
                     if (sourceValue == nullptr)
                         return;
@@ -875,7 +876,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                         markErrorInvalidType(valueExpression->getLocation());
                         return;
                     }
-                    llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetWrappedValue->getPointerValue(), index);
+                    llvm::Value *targetPointerValue = targetWrappedValue->getPointerValue();
+                    llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetPointerValue, index, format("gep_blob-{}", string(targetPointerValue->getName())));
                     builder->CreateStore(wrappedSourceValue->getValue(), targetMember);
                 }
                 break;
@@ -1364,7 +1366,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     expressionCall->getValueType()
                 );
             // value expression ?
-            } else  if (shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression)) {
+            } else if (shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression)) {
                 llvm::Value *sourceValue;
                 llvm::Value *sourcePointerValue;
                 llvm::Type *sourceType;
@@ -1378,7 +1380,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
                     llvm::Type *sourceStructTyp = currentWrappedValue->getStructType();
                     llvm::Value *sourceStructValue = currentWrappedValue->getPointerValue();
-                    llvm::Value *memberPtr = builder->CreateGEP(sourceStructTyp, sourceStructValue, index, format("gep-{}", string(sourceStructValue->getName())));
+                    llvm::Value *memberPtr = builder->CreateGEP(sourceStructTyp, sourceStructValue, index, format("gep_blob-{}", string(sourceStructValue->getName())));
 
                     sourceType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
                     sourceValue = nullptr;
@@ -1435,7 +1437,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         };
 
                         llvm::Value *sourcePointer = currentWrappedValue->getPointerValue();
-                        llvm::Value *protoMemberPointer = builder->CreateGEP(structType, sourcePointer, itIndexMember, format("gep-proto-{}", string(sourcePointer->getName())));
+                        llvm::Value *protoMemberPointer = builder->CreateGEP(structType, sourcePointer, itIndexMember, format("gep_proto-{}", string(sourcePointer->getName())));
                         llvm::LoadInst *blobMemberPointer = builder->CreateLoad(typePtr, protoMemberPointer, format("ld_proto-{}", string(protoMemberPointer->getName())));
 
                         currentWrappedValue = wrappedValueForCall(
@@ -2236,7 +2238,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForValue(llvm::Value *value,
                 llvm::Value *sourceValue = value;
                 if (sourceValue == nullptr)
                     sourceValue = pointerValue;
-                llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("gep-{}", string(sourceValue->getName())));
+                llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("gep_data-{}", string(sourceValue->getName())));
                 return WrappedValue::wrappedPointerValue(
                     builder,
                     sourceArrayType->getArrayElementType(),
