@@ -9,7 +9,7 @@ Available for:
 
 Changelist:
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/176](https://github.com/rafalgrodzinski/bits-runner-builder/pull/176)
-  - Big perfomance and correctness improvements
+  - Correctness improvements
   - Added tests
   - Check if variable of type data has specified count
   - Fixed logging of inlined if-else
