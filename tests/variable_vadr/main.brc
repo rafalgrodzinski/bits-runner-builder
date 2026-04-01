@@ -1,0 +1,5 @@
+@export main fun -> u32
+    num u32 <- 7
+    pNum ptr<u32> <- {num.adr}
+    ret pNum.vadr.u32
+;

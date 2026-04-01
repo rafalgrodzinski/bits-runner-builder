@@ -1,7 +1,9 @@
 #ifndef WRAPPED_VALUE_H
 #define WRAPPED_VALUE_H
 
+#include <format>
 #include <memory>
+#include <string>
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Constants.h>
@@ -15,9 +17,6 @@ private:
     llvm::Type *type;
     shared_ptr<ValueType> valueType;
 
-    llvm::Value *value = nullptr;
-    llvm::Value *pointerValue = nullptr;
-
     function<llvm::Value *()> valueLambda;
     function<llvm::Value *()> pointerValueLambda;
 
@@ -25,6 +24,7 @@ public:
     WrappedValue();
 
     static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType);
+    static shared_ptr<WrappedValue> wrappedPointerValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *type, llvm::Value *value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, uint64_t value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
 

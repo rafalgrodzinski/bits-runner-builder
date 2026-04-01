@@ -14,7 +14,6 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/Error.h>
-#include <llvm/Support/NVPTXAddrSpace.h>
 #include <llvm/Target/TargetMachine.h>
 
 #include "Scope.h"
@@ -94,7 +93,7 @@ private:
     llvm::Type *typeFloat;
 
     llvm::Type *typePtr;
-    llvm::IntegerType *typeA;
+    llvm::IntegerType *typePtrInt;
 
     // Statements
     void buildStatement(shared_ptr<Statement> statement);
@@ -145,7 +144,7 @@ private:
     shared_ptr<WrappedValue> wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<Expression> parentExpression, shared_ptr<Expression> expression);
     shared_ptr<WrappedValue> wrappedValueForCall(llvm::Value *callee, llvm::FunctionType *funType, vector<llvm::Value*> implicitArguments, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<ValueType> valueType);
     shared_ptr<WrappedValue> wrappedValueForCast(shared_ptr<WrappedValue> wrappedValue, shared_ptr<ValueType> targetValueType);
-    shared_ptr<WrappedValue> wrappedValueForSourceValue(llvm::Value *sourceValue, llvm::Type *sourceType,  shared_ptr<Expression> expression);
+    shared_ptr<WrappedValue> wrappedValueForValue(llvm::Value *value, llvm::Value *pointerValue, llvm::Type *type, shared_ptr<Expression> expression);
     shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
 
     // Support

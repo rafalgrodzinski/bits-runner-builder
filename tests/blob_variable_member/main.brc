@@ -1,0 +1,8 @@
+stuff blob
+    num u32
+;
+
+@export main fun -> u32
+    stuff blob<stuff> <- {13}
+    ret stuff.num
+;

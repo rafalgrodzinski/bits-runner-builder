@@ -1,6 +1,6 @@
 @import io
 
-@extern malloc fun: size u64 -> u64
+@extern malloc fun: size u64 -> a
 
 user blob
     name data<u64, 16>

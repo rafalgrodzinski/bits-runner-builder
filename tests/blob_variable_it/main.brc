@@ -1,0 +1,12 @@
+stuff blob
+    num u32
+
+    dummy fun -> u32
+        ret it.num
+    ;
+;
+
+@export main fun -> u32
+    stuff blob<stuff> <- {255}
+    ret stuff.dummy()
+;

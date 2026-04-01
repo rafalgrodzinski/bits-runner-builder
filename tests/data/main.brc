@@ -1,0 +1,5 @@
+@export main fun -> u32
+    nums data<u8, 64>
+    nums[10] <-123
+    ret nums[10]
+;

@@ -38,9 +38,7 @@ jobs:
     steps:
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
-        run: |
-          brew install llvm@20
-          brew link llvm@20
+        run: brew install llvm@20 --overwrite
 
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'

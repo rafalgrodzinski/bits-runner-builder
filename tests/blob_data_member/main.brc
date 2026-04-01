@@ -1,0 +1,9 @@
+stuff blob
+    nums data<u8, 64>
+;
+
+@export main fun -> u32
+    stuff blob<stuff>
+    stuff.nums[10] <- 123
+    ret stuff.nums[10]
+;

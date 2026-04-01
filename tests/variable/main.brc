@@ -1,0 +1,4 @@
+@export main fun -> u32
+    num u32 <- 7
+    ret num * num
+;

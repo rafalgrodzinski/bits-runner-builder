@@ -93,7 +93,7 @@ private:
     static string toString(shared_ptr<ExpressionBlock> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents);
+    static string toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents, bool isInline);
     static string toString(shared_ptr<ExpressionCompositeLiteral> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKind> indents, bool isInline);

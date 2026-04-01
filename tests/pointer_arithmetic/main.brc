@@ -1,0 +1,7 @@
+@export main fun -> u32
+    things data<u32> <- {1,2,4,8,16}
+    off u32 <- 4
+    pThing ptr<u32> <- {things.adr + 4}
+
+    ret pThing.val
+;

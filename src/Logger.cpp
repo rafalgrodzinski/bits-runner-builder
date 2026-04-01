@@ -591,7 +591,7 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
         case ExpressionKind::BLOCK:
             return toString(dynamic_pointer_cast<ExpressionBlock>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::CHAINED:
-            return toString(dynamic_pointer_cast<ExpressionChained>(expression), isInline ? vector<IndentKind>() : indents);
+            return toString(dynamic_pointer_cast<ExpressionChained>(expression), indents, isInline);
         case ExpressionKind::CAST:
             return toString(dynamic_pointer_cast<ExpressionCast>(expression), isInline ? vector<IndentKind>() : indents);
     }
@@ -718,7 +718,7 @@ string Logger::toString(shared_ptr<ExpressionCast> expression, vector<IndentKind
     return formattedLine(line, indents);
 }
 
-string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents) {
+string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents, bool isInline) {
     string line;
 
     int expressionsCount = expression->getChainExpressions().size();
@@ -733,7 +733,7 @@ string Logger::toString(shared_ptr<ExpressionChained> expression, vector<IndentK
             line += ".";
     }
 
-    return formattedLine(line, indents);
+    return formattedLine(line, isInline ? vector<IndentKind>() : indents);
 }
 
 string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression, vector<IndentKind> indents) {

@@ -8,6 +8,11 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
+- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/176](https://github.com/rafalgrodzinski/bits-runner-builder/pull/176)
+  - Correctness improvements
+  - Added tests
+  - Check if variable of type data has specified count
+  - Fixed logging of inlined if-else
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/169](https://github.com/rafalgrodzinski/bits-runner-builder/pull/169)
   - Handle duplicated imports
   - Can cast composite literals to blob types with functions

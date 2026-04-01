@@ -543,8 +543,16 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
             markErrorInvalidType(statementVariable->getExpression()->getLocation(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
     }
 
-    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType(), true))
+    // data types should have count expression
+    if (statementVariable->getValueType()->isData() && statementVariable->getValueType()->getCountExpression() == nullptr) {
+        markErrorInvalidType(statementVariable->getLocation(), statementVariable->getValueType(), nullptr);
+        return;
+    }
+
+    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType(), true)) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
+        return;
+    }
 
     // updated corresponding variable declaration
     for (shared_ptr<Statement> headerStatement : this->module->getHeaderStatements()) {
@@ -1096,6 +1104,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     // check if it's blob's `it`
     } else if (type == nullptr && (expressionValue->getIdentifier().compare("it") == 0)) {
         shared_ptr<ValueType> blobPtrType = scope->getVariableType(".pit");
+        if (blobPtrType == nullptr)
+            return nullptr;
         type = blobPtrType->getSubType();
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
     // check if it's a function
@@ -1363,6 +1373,10 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     // composite to pointer
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
         sourceExpression->valueType = targetType;
+        // make sure the composite element expression is of type a
+        shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
+        shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(0);
+        sourceElementExpression = checkAndTryCasting(sourceElementExpression, ValueType::A, nullptr);
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {
