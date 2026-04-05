@@ -8,6 +8,8 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
+- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/178](https://github.com/rafalgrodzinski/bits-runner-builder/pull/178)
+  - Installable through Homebrew
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/176](https://github.com/rafalgrodzinski/bits-runner-builder/pull/176)
   - Correctness improvements
   - Added tests

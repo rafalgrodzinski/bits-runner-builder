@@ -121,3 +121,13 @@ else()
 endif()
 
 target_link_libraries(brb ${LLVM_LIBS})
+
+install(
+	TARGETS brb
+	DESTINATION bin
+)
+
+install(
+	DIRECTORY lib/
+	DESTINATION lib/brc
+)
