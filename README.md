@@ -83,11 +83,13 @@ Required dependencies
 
 ### macOS
 - Just as for installation, first get [Homebrew](https://brew.sh/) installed
-- Then install LLVM: `brew install llvm@20`
-- In addition also install cmake `brew install cmake`
-- In the sources folder, first configure the project: `cmake -B build`
-- Then build `cmake --build build --config Relese` (or `--config RelWithDebInfo`)
+- `brew install llvm@20` Install LLVM
+- `brew install cmake` Install cmake
+- `cmake -B build` Configure the project
+- `cmake --build build --config Relese` (or `--config RelWithDebInfo`) Build the poject
 - Binary should be under `build/brb`
+- `cmake --build build --target install` Install in system
+- `bin/brb` will be the executables, `lib/brc/` will contain the standard libraries
 
 ### Linux
 - CMake: Version 4 wasn't available with apt-get, so it had to be installed manually from [cmake.org](https://cmake.org/download/)
