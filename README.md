@@ -61,8 +61,9 @@ To try out BRC download an appropriate build of brb from [releases](https://gith
 ### macOS
 Tested on macOS 15 (Sequoia)
 - Make sure you have [Homebrew](https://brew.sh/) installed
-- Install LLVM: `brew install llvm@20`
-- Get latest macOS build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-macos-<arch>.zip`
+- Install using homebrew through my personal tap `brew install rafalgrodzinski/tap/brb`
+- Or install manually by first nstalling LLVM: `brew install llvm@20`
+- Then get the latest macOS build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-macos-<arch>.zip`
 
 ### Linux
 Tested on Ubuntu 24
