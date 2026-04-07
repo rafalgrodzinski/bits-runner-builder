@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - "main"
+      - "179-use-version-passed-as-an-argument"
   workflow_dispatch:
     inputs:
       build_kind:
@@ -31,7 +32,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
+        #os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
+        os: [macos-15]
 
     runs-on: ${{matrix.os}}
 
@@ -44,7 +46,8 @@ jobs:
 
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt install llvm-20
+        run: |
+          sudo apt install llvm-20
 
       - name: Install CMake (Linux)
         if: runner.os == 'Linux'
@@ -87,10 +90,8 @@ jobs:
               VERSION_SUFFIX="-${BUILD_KIND}-${{github.run_number}}"
             ;;
           esac
-          echo "BUILD_KIND=${BUILD_KIND}" >> $GITHUB_ENV
-          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
-          echo "VERSION_SUFFIX=${VERSION_SUFFIX}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
+          echo "TAG=${BUILD_KIND}/${VERSION_NUMBER}${VERSION_SUFFIX}" >> $TAG
 
       - name: Output Version Info
         id: version-info
@@ -102,13 +103,14 @@ jobs:
         id: tag-info
         shell: bash
         run: |
-          echo "TAG=${BUILD_KIND}/${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_OUTPUT
+          echo "TAG=${TAG}" >> $GITHUB_OUTPUT
 
       - name: Configure Project
         env:
-          VERSION_SUFFIX: ${{env.VERSION_SUFFIX}}
+          VERSION: ${{env.VERSION}}
         shell: bash
-        run: cmake -B "${GITHUB_WORKSPACE}/build" -DCMAKE_PREFIX_PATH=/d/llvm-20.1.8
+        run: |
+          cmake -B "${GITHUB_WORKSPACE}/build" -DCMAKE_PREFIX_PATH=/d/llvm-20.1.8
       
       - name: Build Project
         shell: bash
@@ -155,27 +157,27 @@ jobs:
           path: "${{github.workspace}}/*.zip"
           if-no-files-found: error
 
-  create-release:
-    runs-on: macos-15
-
-    needs: build-project
-
-    steps:
-      - name: Checkout Project
-        uses: actions/checkout@v6
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: "${{github.workspace}}/"
-          merge-multiple: true
-
-      - name: Create Release
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          VERSION: ${{needs.build-project.outputs.version}}
-          TAG: ${{needs.build-project.outputs.tag}}
-        run: |
-          gh release create "${TAG}" "${{github.workspace}}/*.zip" \
-            --title "${VERSION}" \
-            --notes-file "${{github.workspace}}/docs/Notes.md"
+  #create-release:
+  #  runs-on: macos-15
+#
+  #  needs: build-project
+#
+  #  steps:
+  #    - name: Checkout Project
+  #      uses: actions/checkout@v6
+#
+  #    - name: Download Artifacts
+  #      uses: actions/download-artifact@v8
+  #      with:
+  #        path: "${{github.workspace}}/"
+  #        merge-multiple: true
+#
+  #    - name: Create Release
+  #      env:
+  #        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  #        VERSION: ${{needs.build-project.outputs.version}}
+  #        TAG: ${{needs.build-project.outputs.tag}}
+  #      run: |
+  #        gh release create "${TAG}" "${{github.workspace}}/*.zip" \
+  #          --title "${VERSION}" \
+  #          --notes-file "${{github.workspace}}/docs/Notes.md"
