@@ -10,7 +10,6 @@ on:
   push:
     branches:
       - "main"
-      - "179-use-version-passed-as-an-argument"
   workflow_dispatch:
     inputs:
       build_kind:
@@ -32,8 +31,7 @@ jobs:
 
     strategy:
       matrix:
-        #os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
-        os: [macos-15]
+        os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
 
     runs-on: ${{matrix.os}}
 
@@ -157,27 +155,27 @@ jobs:
           path: "${{github.workspace}}/*.zip"
           if-no-files-found: error
 
-  #create-release:
-  #  runs-on: macos-15
-#
-  #  needs: build-project
-#
-  #  steps:
-  #    - name: Checkout Project
-  #      uses: actions/checkout@v6
-#
-  #    - name: Download Artifacts
-  #      uses: actions/download-artifact@v8
-  #      with:
-  #        path: "${{github.workspace}}/"
-  #        merge-multiple: true
-#
-  #    - name: Create Release
-  #      env:
-  #        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-  #        VERSION: ${{needs.build-project.outputs.version}}
-  #        TAG: ${{needs.build-project.outputs.tag}}
-  #      run: |
-  #        gh release create "${TAG}" "${{github.workspace}}/*.zip" \
-  #          --title "${VERSION}" \
-  #          --notes-file "${{github.workspace}}/docs/Notes.md"
+  create-release:
+    runs-on: macos-15
+
+    needs: build-project
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v6
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: "${{github.workspace}}/"
+          merge-multiple: true
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          VERSION: ${{needs.build-project.outputs.version}}
+          TAG: ${{needs.build-project.outputs.tag}}
+        run: |
+          gh release create "${TAG}" "${{github.workspace}}/*.zip" \
+            --title "${VERSION}" \
+            --notes-file "${{github.workspace}}/docs/Notes.md"
