@@ -22,10 +22,12 @@ else()
 	set(CMAKE_CXX_FLAGS "-Wno-parentheses")
 endif()
 
-set(VERSION_SUFFIX "$ENV{VERSION_SUFFIX}")
-set(VERSION_SUFFIX "-dev-current" CACHE STRING "Version Suffix")
+# Use version if passed as an argument
+if(DEFINED ENV{VERSION})
+	set(VERSION "$ENV{VERSION}")
+endif()
 
-add_compile_definitions(VERSION=\"${VERSION}${VERSION_SUFFIX}\")
+add_compile_definitions(VERSION=\"${VERSION}\")
 
 execute_process(
     COMMAND brew --prefix llvm@20
