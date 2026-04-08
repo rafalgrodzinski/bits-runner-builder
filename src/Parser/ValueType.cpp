@@ -98,6 +98,13 @@ shared_ptr<ValueType> ValueType::proto(string protoName) {
     return valueType;
 }
 
+shared_ptr<ValueType> ValueType::boxed(shared_ptr<ValueType> subType) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::BOXED;
+    valueType->subType = subType;
+    return valueType;
+}
+
 shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
@@ -394,6 +401,10 @@ bool ValueType::isBlob() {
 
 bool ValueType::isProto() {
     return kind == ValueTypeKind::PROTO;
+}
+
+bool ValueType::isBoxed() {
+    return kind == ValueTypeKind::BOXED;
 }
 
 bool ValueType::isComposite() {

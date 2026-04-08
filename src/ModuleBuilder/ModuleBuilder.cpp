@@ -718,6 +718,8 @@ void ModuleBuilder::buildBlobDefinition(string moduleName, string name, vector<p
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
     llvm::Type *type = typeForValueType(statement->getValueType());
+    if (type == nullptr)
+        return;
     llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, format("a_{}", statement->getIdentifier()));
 
     shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(

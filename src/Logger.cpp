@@ -140,6 +140,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "BLOB";
         case TokenKind::PROTO:
             return "PROTO";
+        case TokenKind::BOXED:
+            return "BOXED";
         case TokenKind::PTR:
             return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
@@ -1051,6 +1053,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "BLOB";
         case TokenKind::PROTO:
             return "PROTO";
+        case TokenKind::BOXED:
+            return "BOXED";
         case TokenKind::PTR:
             return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
@@ -1302,6 +1306,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return format("BLOB<`{}`>", *(valueType->getBlobName()));
         case ValueTypeKind::PROTO:
             return format("PROTO<`{}`>", *(valueType->getProtoName()));
+        case ValueTypeKind::BOXED:
+            return format("BOXED<{}>", toString(valueType->getSubType()));
         case ValueTypeKind::FUN: {
             string text = "FUN";
             // args

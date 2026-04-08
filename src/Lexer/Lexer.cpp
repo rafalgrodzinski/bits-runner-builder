@@ -254,6 +254,9 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token = match(TokenKind::PROTO, "proto", true))
         return token;
 
+    if (token = match(TokenKind::BOXED, "boxed", true))
+        return token;
+
     if (token = match(TokenKind::PTR, "ptr", true))
         return token;
 
@@ -546,7 +549,7 @@ shared_ptr<Token> Lexer::matchIdentifier() {
         || lexme.compare("s8") == 0 || lexme.compare("s16") == 0 || lexme.compare("s32") == 0 || lexme.compare("s64") == 0
         || lexme.compare("f32") == 0 || lexme.compare("f64") == 0
         || lexme.compare("a") == 0 || lexme.compare("ptr") == 0
-        || lexme.compare("data") == 0 || lexme.compare("blob") == 0
+        || lexme.compare("data") == 0 || lexme.compare("blob") == 0 || lexme.compare("proto") == 0 || lexme.compare("boxed") == 0
     ){
         shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
         advanceWithToken(token);

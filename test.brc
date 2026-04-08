@@ -1,5 +1,30 @@
+/*Array<T> blob
+    pValues ptr<data<boxed<T>>>
+
+    push fun: value T
+    ;
+
+    at fun: index u32 -> T
+    ;
+;
+
+Thing proto
+    doStuff fun
+;
+
 @export main fun -> u32
-    nums data<u32> <- {1,2,3,5,8,13,21,34,55}
-    pNums ptr<data<u32>> <- {nums.adr}
-    ret pNums.val[3]
+    nums blob<Array, u32>
+    nums.push(4)
+    nums.push(3)
+
+    things blob<Array, ptr<proto<Thing>>>
+    things.push(devVga)
+    things.push(devSvga)
+    rep i u32, i < things.count, i <- i + 1
+        things.at(i).doStuff()
+    ;
+;*/
+
+@export main fun
+    num boxed<u32>
 ;
