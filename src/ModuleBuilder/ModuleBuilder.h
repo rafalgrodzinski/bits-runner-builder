@@ -94,6 +94,7 @@ private:
 
     llvm::Type *typePtr;
     llvm::IntegerType *typePtrInt;
+    llvm::Type *typeBoxed;
 
     // Statements
     void buildStatement(shared_ptr<Statement> statement);

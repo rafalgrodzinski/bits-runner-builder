@@ -69,6 +69,14 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
 
     typePtr = llvm::PointerType::get(*context, 0);
     typePtrInt = llvm::Type::getIntNTy(*context, pointerSize);
+
+    // Boxed type shold be big enough to store native pointer or integer
+    int boxedBytes;
+    if (pointerSize > intSize)
+        boxedBytes = pointerSize / 8;
+    else
+        boxedBytes = intSize / 8;
+    typeBoxed = llvm::ArrayType::get(typeI8, boxedBytes);
 }
 
 /// Public ///
@@ -2315,6 +2323,8 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             return typeF64;
         case ValueTypeKind::A:
             return typePtr;
+        case ValueTypeKind::BOXED:
+            return typeBoxed;
         case ValueTypeKind::DATA: {
             if (valueType->getSubType() == nullptr)
                 return nullptr;

@@ -1332,6 +1332,13 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     if (!canCast(sourceType, targetType))
         return sourceExpression;
 
+    // Unbox types if required
+    if (sourceType->isBoxed())
+        sourceType = sourceType->getSubType();
+
+    if (targetType->isBoxed())
+        targetType = targetType->getSubType();
+
     // single literal just needs to set the type
     if (sourceExpression->getKind() == ExpressionKind::LITERAL) {
         sourceExpression->valueType = targetType;
@@ -1410,6 +1417,13 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 }
 
 bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
+    // Unbox types if required
+    if (sourceType->isBoxed())
+        sourceType = sourceType->getSubType();
+    
+    if (targetType->isBoxed())
+        targetType = targetType->getSubType();
+
     switch (sourceType->getKind()) {
         // from literal types
         case ValueTypeKind::UINT: {
