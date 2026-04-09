@@ -1189,6 +1189,13 @@ bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, 
 }
 
 bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) {
+    // Unbox types if required
+    if (firstType->isBoxed())
+        firstType = firstType->getSubType();
+
+    if (secondType->isBoxed())
+        secondType = secondType->getSubType();
+
     switch (firstType->getKind()) {
         // Valid operations for boolean types
         case ValueTypeKind::BOOL: {

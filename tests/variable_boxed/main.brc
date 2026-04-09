@@ -1,0 +1,4 @@
+@export main fun -> u32
+    num boxed<u32> <- 7
+    ret num * num
+;
