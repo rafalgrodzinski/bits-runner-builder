@@ -25,8 +25,10 @@ Thing proto
     ;
 ;*/
 
+doStuff fun: value boxed<u32> -> u32
+    ret value * 2
+;
+
 @export main fun -> u32
-    num boxed<s32> <- -5
-    num2 u32 <- num.u32
-    ret num2
+    ret doStuff(5)
 ;

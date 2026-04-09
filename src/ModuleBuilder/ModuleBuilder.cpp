@@ -71,12 +71,12 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
     typePtrInt = llvm::Type::getIntNTy(*context, pointerSize);
 
     // Boxed type shold be big enough to store native pointer or integer
-    int boxedBytes;
+    int boxedSize;
     if (pointerSize > intSize)
-        boxedBytes = pointerSize / 8;
+        boxedSize = pointerSize;
     else
-        boxedBytes = intSize / 8;
-    typeBoxed = llvm::ArrayType::get(typeI8, boxedBytes);
+        boxedSize = intSize;
+    typeBoxed = llvm::Type::getIntNTy(*context, boxedSize);
 
     // callback for wrapped value
     WrappedValue::typeForValueType = [this](shared_ptr<ValueType> valueType, bool shouldUnbox) {
@@ -1849,12 +1849,21 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
     for (llvm::Value *implicitArgValue : implicitArguments)
         argValues.push_back(implicitArgValue);
 
+    int implicitArgumentsCount = implicitArguments.size();
+
     // add explicit arguments
-    for (shared_ptr<Expression> argumentExpression : argumentExpressions) {
+    for (int i=implicitArgumentsCount; i < funType->getNumParams(); i++) {
+        shared_ptr<Expression> argumentExpression = argumentExpressions.at(i - implicitArgumentsCount);
         shared_ptr<WrappedValue> wrappedvalue = wrappedValueForExpression(argumentExpression);
         if (wrappedvalue == nullptr)
             return nullptr;
-        argValues.push_back(wrappedvalue->getValue());
+        // In case the argument is boxed type, we want to cast to it first
+        llvm::Value *argValue;
+        if (funType->getParamType(i)->isIntOrPtrTy())
+            argValue = builder->CreateZExtOrBitCast(wrappedvalue->getValue(), funType->getParamType(i));
+        else
+            argValue = wrappedvalue->getValue();
+        argValues.push_back(argValue);
     }
 
     return WrappedValue::wrappedValue(
