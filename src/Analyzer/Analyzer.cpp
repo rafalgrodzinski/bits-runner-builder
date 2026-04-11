@@ -252,11 +252,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
     // check each of the extracted member's type
     for (auto &member : members) {
-        checkValueType(member.second);
-        if (member.second->isData() && member.second->getCountExpression() == nullptr) {
-                markErrorNotDefined(statementBlob->getLocation(), format("{}'s count expression", member.first));
-                return;
-        }
+        if (!checkValueType(member.second, true, statementBlob->getLocation()))
+            return;
     }
 
     // and the register
@@ -282,25 +279,15 @@ void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpressio
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
-    // updated types for count expressions
+    // check argument types
     for (auto &argument : statementFunction->getArguments()) {
-        if (shared_ptr<Expression> countExpression = argument.second->getCountExpression())
-            countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
+        if (!checkValueType(argument.second, true, statementFunction->getLocation()))
+            return;
     }
 
-    // update return's type for count expression
-    if (statementFunction->getReturnValueType()->isData()) {
-        // returned data type should have specified size
-        if (statementFunction->getReturnValueType()->getCountExpression() == nullptr) {
-            markErrorInvalidType(statementFunction->getLocation(), statementFunction->getReturnValueType(), nullptr);
-            return;
-        }
-        statementFunction->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
-            statementFunction->getReturnValueType()->getCountExpression(),
-            nullptr,
-            nullptr
-        );
-    }
+    // update return type
+    if (!checkValueType(statementFunction->getReturnValueType(), true, statementFunction->getLocation()))
+        return;
 
     // check if function is not yet defined and register it
     if (!scope->setFunctionType(statementFunction->getName(), statementFunction->getValueType(), true))
@@ -316,29 +303,15 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
-    // updated types for count expressions
+    // check argument types
     for (auto &argument : statementFunctionDeclaration->getArguments()) {
-        if (shared_ptr<Expression> countExpression = argument.second->getCountExpression()) {
-            argument.second = ValueType::data(
-                argument.second->getSubType(),
-                checkAndTryCasting(argument.second->getCountExpression(), ValueType::UINT, nullptr)
-            );
-        }
+        if (!checkValueType(argument.second, true, statementFunctionDeclaration->getLocation()))
+            return;
     }
 
-    // update return's type for count expression
-    if (statementFunctionDeclaration->getReturnValueType()->isData()) {
-        // returned data type should have specified size
-        if (statementFunctionDeclaration->getReturnValueType()->getCountExpression() == nullptr) {
-            markErrorInvalidType(statementFunctionDeclaration->getLocation(), statementFunctionDeclaration->getReturnValueType(), nullptr);
-            return;
-        }
-        statementFunctionDeclaration->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
-            statementFunctionDeclaration->getReturnValueType()->getCountExpression(),
-            nullptr,
-            nullptr
-        );
-    }
+    // check return type
+    if (!checkValueType(statementFunctionDeclaration->getReturnValueType(), true, statementFunctionDeclaration->getLocation()))
+        return;
 
     string name = importModulePrefix + statementFunctionDeclaration->getName();
 
@@ -352,20 +325,15 @@ void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statement
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
-    // updated types for count expressions
+    // check argument types
     for (auto &argument : statementMetaExternFunction->getArguments()) {
-        if (shared_ptr<Expression> countExpression = argument.second->getCountExpression())
-            countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
+        if (!checkValueType(argument.second, true, statementMetaExternFunction->getLocation()))
+            return;
     }
 
-    // update return's type for count expression
-    if (statementMetaExternFunction->getReturnValueType()->isData()) {
-        statementMetaExternFunction->getReturnValueType()->getCountExpression()->valueType = typeForExpression(
-            statementMetaExternFunction->getReturnValueType()->getCountExpression(),
-            nullptr,
-            nullptr
-        );
-    }
+    // check return type
+    if (!checkValueType(statementMetaExternFunction->getReturnValueType(), true, statementMetaExternFunction->getLocation()))
+        return;
 
     if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType(), false))
         markErrorAlreadyDefined(statementMetaExternFunction->getLocation(), statementMetaExternFunction->getName());
@@ -435,11 +403,8 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
 
     // check each of the extracted type
     for (auto &member : members) {
-        checkValueType(member.second);
-        if (member.second->isData() && member.second->getCountExpression() == nullptr) {
-                markErrorNotDefined(statement->getLocation(), format("{}'s count expression", member.first));
-                return;
-        }
+        if (!checkValueType(member.second, true, statement->getLocation()))
+            return;
     }
 
     // and the register
@@ -510,17 +475,10 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
-    // Update count expression
-    if (statementVariable->getValueType()->getCountExpression() != nullptr)
-        statementVariable->getValueType()->getCountExpression()->valueType = typeForExpression(statementVariable->getValueType()->getCountExpression(), nullptr, nullptr);
+    if (!checkValueType(statementVariable->getValueType(), false, statementVariable->getLocation()))
+        return;
 
-    // check if specified blob type is valid
-    if (statementVariable->getValueType()->isBlob()) {
-        if(!scope->getBlobMembers(*(statementVariable->getValueType()->getBlobName()))) {
-            markErrorInvalidType(statementVariable->getLocation(), statementVariable->getValueType(), nullptr);
-        }
-    }
-
+    // check initial value expression
     if (statementVariable->getExpression() != nullptr) {
         // cast expression into target
         statementVariable->expression = checkAndTryCasting(
@@ -567,7 +525,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     string identifier = importModulePrefix + statementVariableDeclaration->getIdentifier();
 
-    checkValueType(statementVariableDeclaration->getValueType());
+    if (!checkValueType(statementVariableDeclaration->getValueType(), true, statementVariableDeclaration->getLocation()))
+        return;
 
     if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
         markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);
@@ -1793,28 +1752,47 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
     }
 }
 
-void Analyzer::checkValueType(shared_ptr<ValueType> valueType) {
+bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location) {
     switch (valueType->getKind()) {
         case ValueTypeKind::PTR: {
-            checkValueType(valueType->getSubType());
+            checkValueType(valueType->getSubType(), false, location);
+            break;
+        }
+        case ValueTypeKind::BOXED: {
+            if (!valueType->getSubType()->isNumeric() && !valueType->getSubType()->isPointer()) {
+                markErrorInvalidType(location, valueType, nullptr);
+                return false;
+            }
+            break;
+        }
+        case ValueTypeKind::BLOB: {
+            if (!scope->isBlobDeclared(*valueType->getBlobName())) {
+                markErrorInvalidType(location, valueType, nullptr);
+                return false;
+            }
             break;
         }
         case ValueTypeKind::DATA: {
             if (valueType->getCountExpression() != nullptr) {
                 valueType->getCountExpression()->valueType = typeForExpression(valueType->getCountExpression(), nullptr, nullptr);
+            } else if (isCountExperssionRequired) {
+                markErrorInvalidType(location, valueType, nullptr);
+                return false;
             }
             break;
         }
         case ValueTypeKind::FUN: {
             vector<shared_ptr<ValueType>> argValueTypes = *valueType->getArgumentTypes();
             for (shared_ptr<ValueType> argValueType : argValueTypes)
-                checkValueType(argValueType);
-            checkValueType(valueType->getReturnType());
+                checkValueType(argValueType, true, location);
+            checkValueType(valueType->getReturnType(), true, location);
             break;
         }
         default:
             break;
     }
+
+    return true;
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, string identifier) {

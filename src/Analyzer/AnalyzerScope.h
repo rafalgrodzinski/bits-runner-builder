@@ -39,6 +39,7 @@ public:
     
     optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(string name);
     optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(string name);
+    bool isBlobDeclared(string name);
     bool setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
 
     optional<vector<string>> getBlobProtoNames(string name);
