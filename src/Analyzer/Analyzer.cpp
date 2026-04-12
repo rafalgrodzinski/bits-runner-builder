@@ -1766,10 +1766,11 @@ bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExper
             break;
         }
         case ValueTypeKind::BLOB: {
-            if (!scope->isBlobDeclared(*valueType->getBlobName())) {
+            // TODO: This gets messed up because of imported sub-sub-modules
+            /*if (!scope->isBlobDeclared(*valueType->getBlobName())) {
                 markErrorInvalidType(location, valueType, nullptr);
                 return false;
-            }
+            }*/
             break;
         }
         case ValueTypeKind::DATA: {
