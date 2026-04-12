@@ -94,6 +94,7 @@ private:
 
     llvm::Type *typePtr;
     llvm::IntegerType *typePtrInt;
+    llvm::Type *typeBoxed;
 
     // Statements
     void buildStatement(shared_ptr<Statement> statement);
@@ -148,7 +149,7 @@ private:
     shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
 
     // Support
-    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, shared_ptr<Location> location = nullptr);
+    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox = false, shared_ptr<Location> location = nullptr);
     int sizeInBitsForType(llvm::Type *type);
 
     // Error Handling    

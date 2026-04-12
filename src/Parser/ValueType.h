@@ -37,6 +37,7 @@ enum class ValueTypeKind {
     DATA,
     BLOB,
     PROTO,
+    BOXED,
     FUN,
     COMPOSITE
 };
@@ -74,6 +75,7 @@ public:
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
     static shared_ptr<ValueType> blob(string blobName);
     static shared_ptr<ValueType> proto(string protoName);
+    static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression);
@@ -115,6 +117,7 @@ public:
     bool isFunction();
     bool isBlob();
     bool isProto();
+    bool isBoxed();
     bool isComposite();
 };
 

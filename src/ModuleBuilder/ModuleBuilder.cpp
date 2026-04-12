@@ -69,6 +69,19 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
 
     typePtr = llvm::PointerType::get(*context, 0);
     typePtrInt = llvm::Type::getIntNTy(*context, pointerSize);
+
+    // Boxed type shold be big enough to store native pointer or integer
+    int boxedSize;
+    if (pointerSize > intSize)
+        boxedSize = pointerSize;
+    else
+        boxedSize = intSize;
+    typeBoxed = llvm::Type::getIntNTy(*context, boxedSize);
+
+    // callback for wrapped value
+    WrappedValue::typeForValueType = [this](shared_ptr<ValueType> valueType, bool shouldUnbox) {
+        return typeForValueType(valueType, shouldUnbox, nullptr);
+    };
 }
 
 /// Public ///
@@ -232,7 +245,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         funArgument->setName(format("arg_{}", argument.first));
 
         // allocate argument
-        llvm::Type *funArgumentType = typeForValueType(argument.second);
+        llvm::Type *funArgumentType = typeForValueType(argument.second, false);
         if (funArgumentType == nullptr)
             return;
         llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, format("a_arg_{}", argument.first));
@@ -717,7 +730,9 @@ void ModuleBuilder::buildBlobDefinition(string moduleName, string name, vector<p
 }
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
-    llvm::Type *type = typeForValueType(statement->getValueType());
+    llvm::Type *type = typeForValueType(statement->getValueType(), false);
+    if (type == nullptr)
+        return;
     llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, format("a_{}", statement->getIdentifier()));
 
     shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(
@@ -1287,7 +1302,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             argValues.push_back(argValue);
         }
         llvm::CallInst *resultValue = builder->CreateCall(rawFun, llvm::ArrayRef(argValues));
-        return WrappedValue::wrappedValue(moduleLLVM, builder, resultValue, expressionCall->getValueType());
+        return WrappedValue::wrappedValue(
+            moduleLLVM,
+            builder,
+            resultValue,
+            expressionCall->getValueType()
+        );
     }
 
     markErrorNotDefined(expressionCall->getLocation(), format("function \"{}\"", expressionCall->getName()));
@@ -1321,7 +1341,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpressions.at(i+1));
 
             // create an anonymous variable
-            llvm::Type *type = typeForValueType(expressionCast->getValueType());
+            llvm::Type *type = typeForValueType(expressionCast->getValueType(), false);
             llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, format("ch_{}", i));
             shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(moduleLLVM, builder, alloca, expressionCast->getValueType());
             buildAssignment(wrappedValue, expressionCompositeLiteral);
@@ -1487,7 +1507,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral) {
-    llvm::Type *type = typeForValueType(expressionCompositeLiteral->getValueType());
+    llvm::Type *type = typeForValueType(expressionCompositeLiteral->getValueType(), false);
     if (type == nullptr)
         return nullptr;
 
@@ -1829,12 +1849,21 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
     for (llvm::Value *implicitArgValue : implicitArguments)
         argValues.push_back(implicitArgValue);
 
+    int implicitArgumentsCount = implicitArguments.size();
+
     // add explicit arguments
-    for (shared_ptr<Expression> argumentExpression : argumentExpressions) {
+    for (int i=implicitArgumentsCount; i < funType->getNumParams(); i++) {
+        shared_ptr<Expression> argumentExpression = argumentExpressions.at(i - implicitArgumentsCount);
         shared_ptr<WrappedValue> wrappedvalue = wrappedValueForExpression(argumentExpression);
         if (wrappedvalue == nullptr)
             return nullptr;
-        argValues.push_back(wrappedvalue->getValue());
+        // In case the argument is boxed type, we want to cast to it first
+        llvm::Value *argValue;
+        if (funType->getParamType(i)->isIntOrPtrTy())
+            argValue = builder->CreateZExtOrBitCast(wrappedvalue->getValue(), funType->getParamType(i));
+        else
+            argValue = wrappedvalue->getValue();
+        argValues.push_back(argValue);
     }
 
     return WrappedValue::wrappedValue(
@@ -1853,7 +1882,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isSourceAddress = false;
     bool isSourceData = false;
     int sourceSize = 0;
-    switch (sourceWrappedValue->getValueType()->getKind()) {
+
+    // Unbox source type if required
+    ValueTypeKind sourceValueTypeKind;
+    if (sourceWrappedValue->getValueType()->isBoxed())
+        sourceValueTypeKind = sourceWrappedValue->getValueType()->getSubType()->getKind();
+    else
+        sourceValueTypeKind = sourceWrappedValue->getValueType()->getKind();
+    switch (sourceValueTypeKind) {
         case ValueTypeKind::UINT:
             isSourceUInt = true;
             sourceSize = typeInt->getBitWidth();
@@ -1930,7 +1966,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isTargetPointer = false;
     bool isTargetData = false;
     int targetSize = 0;
-    switch (targetValueType->getKind()) {
+
+    // Unwrap target type if required
+    ValueTypeKind targetValueTypeKind;
+    if (targetValueType->isBoxed())
+        targetValueTypeKind = targetValueType->getSubType()->getKind();
+    else
+        targetValueTypeKind = targetValueType->getKind();
+    switch (targetValueTypeKind) {
         case ValueTypeKind::UINT:
             isTargetUInt = true;
             targetSize = typeInt->getBitWidth();
@@ -2218,8 +2261,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForValue(llvm::Value *value,
                 } else {
                     return WrappedValue::wrappedPointerValue(
                         builder,
-                        type,
                         pointerValue,
+                        type,
                         expression->getValueType()
                     );
                 }
@@ -2241,8 +2284,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForValue(llvm::Value *value,
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("gep_data-{}", string(sourceValue->getName())));
                 return WrappedValue::wrappedPointerValue(
                     builder,
-                    sourceArrayType->getArrayElementType(),
                     elementPtr,
+                    sourceArrayType->getArrayElementType(),
                     expression->getValueType()
                 );
             }
@@ -2274,7 +2317,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForTypeBuiltIn(llvm::Type *t
 //
 // Support
 //
-llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, shared_ptr<Location> location) {
+llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox, shared_ptr<Location> location) {
     if (valueType == nullptr) {
         markErrorInvalidType(location);
         return nullptr;
@@ -2313,6 +2356,11 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, sha
             return typeF64;
         case ValueTypeKind::A:
             return typePtr;
+        case ValueTypeKind::BOXED:
+            if (shouldUnbox)
+                return typeForValueType(valueType->getSubType());
+            else
+                return typeBoxed;
         case ValueTypeKind::DATA: {
             if (valueType->getSubType() == nullptr)
                 return nullptr;

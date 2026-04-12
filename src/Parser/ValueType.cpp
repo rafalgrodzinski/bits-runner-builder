@@ -98,6 +98,13 @@ shared_ptr<ValueType> ValueType::proto(string protoName) {
     return valueType;
 }
 
+shared_ptr<ValueType> ValueType::boxed(shared_ptr<ValueType> subType) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::BOXED;
+    valueType->subType = subType;
+    return valueType;
+}
+
 shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
@@ -210,6 +217,9 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
             string obn = *other->getBlobName();
             return (*blobName).compare(*other->getBlobName()) == 0;
         }
+        case ValueTypeKind::BOXED: {
+            return subType->isEqual(other);
+        }
         case ValueTypeKind::FUN: {
             // are both function types?
             if (!other->isFunction())
@@ -234,7 +244,11 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
         default:
             break;
     }
-    return kind == other->getKind();
+
+    if (other->isBoxed())
+        return this->isEqual(other->getSubType());
+    else
+        return kind == other->getKind();
 }
 
 bool ValueType::isNumeric() {
@@ -257,6 +271,9 @@ bool ValueType::isNumeric() {
 
         case ValueTypeKind::A:
             return true;
+
+        case ValueTypeKind::BOXED:
+            return getSubType()->isNumeric();
 
         default:
             break;
@@ -282,6 +299,9 @@ bool ValueType::isInteger() {
         case ValueTypeKind::A:
             return true;
 
+        case ValueTypeKind::BOXED:
+            return subType->isInteger();
+
         default:
             break;
     }
@@ -299,6 +319,9 @@ bool ValueType::isUnsignedInteger() {
         case ValueTypeKind::A:
             return true;
 
+        case ValueTypeKind::BOXED:
+            return subType->isUnsignedInteger();
+
         default:
             break;
     }
@@ -315,6 +338,9 @@ bool ValueType::isSignedInteger() {
         case ValueTypeKind::S64:
             return true;
 
+        case ValueTypeKind::BOXED:
+            return subType->isSignedInteger();
+
         default:
             break;
     }
@@ -329,6 +355,9 @@ bool ValueType::isFloat() {
         case ValueTypeKind::F64:
             return true;
 
+        case ValueTypeKind::BOXED:
+            return subType->isFloat();
+
         default:
             break;
     }
@@ -337,7 +366,10 @@ bool ValueType::isFloat() {
 }
 
 bool ValueType::isBool() {
-    return kind == ValueTypeKind::BOOL;
+    if (kind == ValueTypeKind::BOXED)
+        return subType->isBool();
+    else
+        return kind == ValueTypeKind::BOOL;
 }
 
 bool ValueType::isData() {
@@ -377,11 +409,17 @@ bool ValueType::isDataNumeric() {
 }
 
 bool ValueType::isAddress() {
-    return kind == ValueTypeKind::A;
+    if (kind == ValueTypeKind::BOXED)
+        return subType->isAddress();
+    else
+        return kind == ValueTypeKind::A;
 }
 
 bool ValueType::isPointer() {
-    return kind == ValueTypeKind::PTR;
+    if (kind == ValueTypeKind::BOXED)
+        return subType->isPointer();
+    else
+        return kind == ValueTypeKind::PTR;
 }
 
 bool ValueType::isFunction() {
@@ -394,6 +432,10 @@ bool ValueType::isBlob() {
 
 bool ValueType::isProto() {
     return kind == ValueTypeKind::PROTO;
+}
+
+bool ValueType::isBoxed() {
+    return kind == ValueTypeKind::BOXED;
 }
 
 bool ValueType::isComposite() {

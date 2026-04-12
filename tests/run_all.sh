@@ -13,6 +13,8 @@ echo
 echo "🤖 Running tests"
 echo
 
+export PATH="${SCRIPT_DIR}/../build/:${PATH}"
+
 cd "${SCRIPT_DIR}" > /dev/null
 TESTS=`ls -d */ | cut -f1 -d'/'`
 cd - > /dev/null

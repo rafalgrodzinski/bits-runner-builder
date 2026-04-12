@@ -1794,6 +1794,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_DATA,
         TAG_BLOB,
         TAG_PROTO,
+        TAG_BOXED,
         TAG_PTR_FUN,
         TAG_PTR,
         TAG_ARGUMENT_TYPE,
@@ -1895,6 +1896,13 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
                         Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
+                    // BOXED
+                    {
+                        Parsee::tokenParsee(TokenKind::BOXED, ParseeLevel::REQUIRED, true, TAG_BOXED),
+                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                        Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_SUBTYPE),
+                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                    },
                     // SIMPLE
                     {
                         Parsee::tokenParsee(TokenKind::TYPE, ParseeLevel::REQUIRED, true, TAG_TYPE)
@@ -1910,6 +1918,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     bool isData = false;
     bool isBlob = false;
     bool isProto = false;
+    bool isBoxed = false;
     bool isPtrFun = false;
     bool isPtr = false;
 
@@ -1932,6 +1941,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 break;
             case TAG_PROTO:
                 isProto = true;
+                break;
+            case TAG_BOXED:
+                isBoxed = true;
                 break;
             case TAG_PTR_FUN:
                 isPtrFun = true;
@@ -1969,6 +1981,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::blob(blobName);
     else if (isProto)
         return ValueType::proto(protoName);
+    else if (isBoxed)
+        return ValueType::boxed(subType);
     else if (isPtrFun)
         return ValueType::ptr(ValueType::fun(argTypes, retType));
     else if (isPtr)

@@ -54,6 +54,7 @@ enum class TokenKind {
     DATA,
     BLOB,
     PROTO,
+    BOXED,
     PTR,
     RETURN,
     REPEAT,

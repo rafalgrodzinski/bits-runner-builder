@@ -70,6 +70,19 @@ optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberT
     return targetMemberTypes;
 }
 
+bool AnalyzerScope::isBlobDeclared(string name) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().blobMembersMap.find(name);
+        if (it != scopeLevels.top().blobMembersMap.end())
+            return true;
+        scopeLevels.pop();
+    }
+
+    return false;
+}
+
 bool AnalyzerScope::setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
     bool isDefinition = members.has_value();
     bool isDefined = false;
