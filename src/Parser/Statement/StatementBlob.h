@@ -12,6 +12,7 @@ class StatementBlob: public Statement {
 private:
     bool shouldExport;
     string name;
+    vector<string> typeArgumentNames;
     vector<shared_ptr<StatementVariable>> variableStatements;
     vector<shared_ptr<StatementFunction>> functionStatements;
     vector<string> protoNames;
@@ -20,6 +21,7 @@ public:
     StatementBlob(
         bool shouldExport,
         string name,
+        vector<string> typeArgumentNames,
         vector<string> protoNames,
         vector<shared_ptr<StatementVariable>> variableStatements,
         vector<shared_ptr<StatementFunction>> functionStatements,
@@ -27,6 +29,7 @@ public:
     );
     bool getShouldExport();
     string getName();
+    vector<string> getNamedTypes();
     vector<string> getProtoNames();
     vector<shared_ptr<StatementVariable>> getVariableStatements();
     vector<shared_ptr<StatementFunction>> getFunctionStatements();

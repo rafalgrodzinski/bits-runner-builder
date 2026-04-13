@@ -39,7 +39,9 @@ enum class ValueTypeKind {
     PROTO,
     BOXED,
     FUN,
-    COMPOSITE
+    COMPOSITE,
+
+    NAMED_TYPE
 };
 
 class ValueType {
@@ -52,6 +54,7 @@ private:
     optional<string> blobName;
     optional<string> protoName;
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes;
+    optional<string> typeName;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -79,12 +82,13 @@ public:
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression);
+    static shared_ptr<ValueType> namedType(string typeName);
 
     ValueType();
     ValueType(ValueTypeKind kind);
 
     ValueTypeKind getKind();
-    // data, pointer
+    // data, pointer, boxed
     shared_ptr<ValueType> getSubType();
     // data
     int getValueArg(); // TODO: remove
@@ -98,6 +102,8 @@ public:
     optional<string> getProtoName();
     // composite
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
+    // boxed
+    optional<string> getTypeName();
 
     bool isEqual(shared_ptr<ValueType> other);
 
@@ -119,6 +125,7 @@ public:
     bool isProto();
     bool isBoxed();
     bool isComposite();
+    bool isNamedType();
 };
 
 #endif

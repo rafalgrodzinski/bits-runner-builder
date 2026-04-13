@@ -127,6 +127,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
                         statementBlob->getName(),
+                        statementBlob->getNamedTypes(),
                         exportedProtoNames,
                         exportedVariableStatements,
                         vector<shared_ptr<StatementFunction>>(), // don't include function definitions

@@ -1,14 +1,15 @@
-/*Array<T> blob
-    pValues ptr<data<boxed<T>>>
+Array<T> blob
+    //pValues ptr<data<boxed<T>>>
+    num boxed<T>
 
-    push fun: value T
+    /*push fun: value T
     ;
 
     at fun: index u32 -> T
-    ;
+    ;*/
 ;
 
-Thing proto
+/*Thing proto
     doStuff fun
 ;
 
@@ -24,11 +25,3 @@ Thing proto
         things.at(i).doStuff()
     ;
 ;*/
-
-doStuff fun: value boxed<u32> -> u32
-    ret value * 2
-;
-
-@export main fun -> u32
-    ret doStuff(5)
-;

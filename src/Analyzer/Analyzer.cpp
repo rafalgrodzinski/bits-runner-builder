@@ -151,6 +151,9 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported) {
     scope->pushLevel();
+
+    scope->setNamedTypes(statementBlob->getNamedTypes());
+
     // check and verify blob member variables
     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
         // blob variable should not have a value expression
@@ -166,7 +169,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
         }
         checkStatement(statementVariable);
     }
-    scope->popLevel();
 
     // verify member functions
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
@@ -255,6 +257,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
         if (!checkValueType(member.second, true, statementBlob->getLocation()))
             return;
     }
+
+    scope->popLevel();
 
     // and the register
     string name = importModulePrefix + statementBlob->getName();
@@ -1759,7 +1763,12 @@ bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExper
             break;
         }
         case ValueTypeKind::BOXED: {
-            if (!valueType->getSubType()->isNumeric() && !valueType->getSubType()->isPointer()) {
+            if (valueType->getSubType()->isNamedType()) {
+                if (!scope->isNamedTypeDeclared(*valueType->getSubType()->getTypeName())) {
+                    markErrorInvalidType(location, valueType, nullptr);
+                    return false;
+                }
+            } else if (!valueType->getSubType()->isNumeric() && !valueType->getSubType()->isPointer()) {
                 markErrorInvalidType(location, valueType, nullptr);
                 return false;
             }

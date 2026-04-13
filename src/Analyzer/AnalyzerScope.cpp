@@ -99,13 +99,39 @@ bool AnalyzerScope::setBlobMembers(string name, optional<vector<pair<string, sha
     return true;
 }
 
+bool AnalyzerScope::isNamedTypeDeclared(string namedType) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        for (string &declaredNamedType : scopeLevels.top().namedTypes) {
+            if (declaredNamedType.compare(namedType) == 0)
+                return true;
+        }
+        scopeLevels.pop();
+    }
+
+    return false;
+}
+
+bool AnalyzerScope::setNamedTypes(vector<string> namedTypes) {
+    for (string &namedType : namedTypes) {
+        // first check if each of the named types is not yet declared
+        for (string &declaredNamedType : scopeLevels.top().namedTypes) {
+            if (declaredNamedType.compare(namedType) == 0)
+                return false;
+        }
+        scopeLevels.top().namedTypes.push_back(namedType);
+    }
+    return true;
+}
+
 optional<vector<string>> AnalyzerScope::getBlobProtoNames(string name) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().blobProtosmMap.find(name);
-        if (it != scopeLevels.top().blobProtosmMap.end())
-            return scopeLevels.top().blobProtosmMap[name];
+        auto it = scopeLevels.top().blobProtosMap.find(name);
+        if (it != scopeLevels.top().blobProtosMap.end())
+            return scopeLevels.top().blobProtosMap[name];
         scopeLevels.pop();
     }
 
@@ -113,7 +139,7 @@ optional<vector<string>> AnalyzerScope::getBlobProtoNames(string name) {
 }
 
 bool AnalyzerScope::setBlobProtoNames(string name, vector<string> protoNames) {
-    scopeLevels.top().blobProtosmMap[name] = protoNames;
+    scopeLevels.top().blobProtosMap[name] = protoNames;
 
     return true;
 }

@@ -646,6 +646,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     enum Tag {
         TAG_SHOULD_EXPORT,
         TAG_NAME,
+        TAG_TYPE_ARGUMENT_NAME,
         TAG_STATEMENT_IN_BLOB,
         TAG_PROTO_NAME
     };
@@ -658,6 +659,24 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
             // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+            // type argument names
+            Parsee::groupParsee(
+                {
+                    // <
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                    // first name
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_TYPE_ARGUMENT_NAME),
+                    // subsequent names
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_TYPE_ARGUMENT_NAME)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // >
+                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                }, ParseeLevel::OPTIONAL, true
+            ),
             Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, false),
             // proto names
             Parsee::groupParsee(
@@ -716,6 +735,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
 
     bool shouldExport = false;
     string name;
+    vector<string> typeArgumentNames;
     vector<shared_ptr<StatementVariable>> variableStatements;
     vector<shared_ptr<StatementFunction>> functionStatements;
     vector<string> protoNames;
@@ -729,6 +749,10 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             }
             case TAG_NAME: {
                 name = parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_TYPE_ARGUMENT_NAME: {
+                typeArgumentNames.push_back(parseeResult.getToken()->getLexme());
                 break;
             }
             case TAG_PROTO_NAME: {
@@ -770,7 +794,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         }
     }
 
-    return make_shared<StatementBlob>(shouldExport, name, protoNames, variableStatements, functionStatements, location);
+    return make_shared<StatementBlob>(shouldExport, name, typeArgumentNames, protoNames, variableStatements, functionStatements, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementProto() {
@@ -1803,7 +1827,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_SUBTYPE,
         TAG_SIZE_EXPRESSION,
         TAG_BLOB_NAME,
-        TAG_PROTO_NAME
+        TAG_PROTO_NAME,
+        TAG_TYPE_NAME
     };
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
@@ -1900,7 +1925,16 @@ shared_ptr<ValueType> Parser::matchValueType() {
                     {
                         Parsee::tokenParsee(TokenKind::BOXED, ParseeLevel::REQUIRED, true, TAG_BOXED),
                         Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
-                        Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_SUBTYPE),
+                        Parsee::oneOfParsee(
+                            {
+                                {
+                                    Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_SUBTYPE),
+                                },
+                                {
+                                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_TYPE_NAME)
+                                }
+                            }, ParseeLevel::CRITICAL, true
+                        ),
                         Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
                     // SIMPLE
@@ -1971,6 +2005,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 break;
             case TAG_PROTO_NAME:
                 protoName += parseeResult.getToken()->getLexme();
+                break;
+            case TAG_TYPE_NAME:
+                subType = ValueType::namedType(parseeResult.getToken()->getLexme());
                 break;
         }
     }

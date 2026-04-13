@@ -16,8 +16,10 @@ class AnalyzerScope {
 private:
     typedef struct {
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
-        map<string, vector<string>> blobProtosmMap;
+        map<string, vector<string>> blobProtosMap;
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> blobMembersMap;
+
+        vector<string> namedTypes;
 
         map<string, shared_ptr<ValueType>> variableTypes;
         map<string, bool> isVariableDefinedMap;
@@ -41,6 +43,9 @@ public:
     optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(string name);
     bool isBlobDeclared(string name);
     bool setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
+
+    bool isNamedTypeDeclared(string namedType);
+    bool setNamedTypes(vector<string> namedTypes);
 
     optional<vector<string>> getBlobProtoNames(string name);
     bool setBlobProtoNames(string name, vector<string> protoNames);

@@ -243,6 +243,17 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 
     // name
     line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
+    // type argument name
+    if (!statement->getNamedTypes().empty()) {
+        line += "<";
+        for (int i=0; i<statement->getNamedTypes().size(); i++) {
+            if (i > 0)
+                line += ", ";
+            line += format("`{}`", statement->getNamedTypes().at(i));
+        }
+        line += ">";
+    }
+    // proto
     for (string &protoName : statement->getProtoNames())
         line += format(", {}", protoName);
     if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
@@ -1324,6 +1335,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         }
         case ValueTypeKind::COMPOSITE:
             return format("COMPOSITE");
+        case ValueTypeKind::NAMED_TYPE:
+            return format("`{}`", *valueType->getTypeName());
     }
 
     return "{INVALID}";
