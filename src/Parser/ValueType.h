@@ -76,7 +76,7 @@ public:
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> blob(string blobName);
+    static shared_ptr<ValueType> blob(string blobName, vector<shared_ptr<ValueType>> argumentTypes);
     static shared_ptr<ValueType> proto(string protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);

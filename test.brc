@@ -11,11 +11,11 @@ Array<T> blob
 
 /*Thing proto
     doStuff fun
-;
+;*/
 
 @export main fun -> u32
     nums blob<Array, u32>
-    nums.push(4)
+    /*nums.push(4)
     nums.push(3)
 
     things blob<Array, ptr<proto<Thing>>>
@@ -23,5 +23,6 @@ Array<T> blob
     things.push(devSvga)
     rep i u32, i < things.count, i <- i + 1
         things.at(i).doStuff()
-    ;
-;*/
+    ;*/
+    ret 0
+;

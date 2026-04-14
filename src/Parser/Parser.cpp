@@ -781,7 +781,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                         // prefix function with name of the blob
                         statementFunction->name = format("{}.{}", name, statementFunction->getName());
                         // Insert an implicit "it" argument for the blob function
-                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::blob(name)));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::blob(name, {})));
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
                         break;
@@ -1903,6 +1903,13 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         ),
                         // identifier
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
+                        // argument types
+                        Parsee::repeatedGroupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
                         Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
                     // PROTO
@@ -2015,7 +2022,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     if (isData)
         return ValueType::data(subType, countExpression);
     else if (isBlob)
-        return ValueType::blob(blobName);
+        return ValueType::blob(blobName, argTypes);
     else if (isProto)
         return ValueType::proto(protoName);
     else if (isBoxed)
