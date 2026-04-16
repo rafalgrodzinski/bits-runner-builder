@@ -244,12 +244,12 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     // name
     line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
     // type argument name
-    if (!statement->getNamedTypes().empty()) {
+    if (!statement->getNamedTypeKeys().empty()) {
         line += "<";
-        for (int i=0; i<statement->getNamedTypes().size(); i++) {
+        for (int i=0; i<statement->getNamedTypeKeys().size(); i++) {
             if (i > 0)
                 line += ", ";
-            line += format("`{}`", statement->getNamedTypes().at(i));
+            line += format("`{}`", statement->getNamedTypeKeys().at(i));
         }
         line += ">";
     }
@@ -1313,8 +1313,18 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             else
                 return format("DATA<{}>", toString(valueType->getSubType()));
         }
-        case ValueTypeKind::BLOB:
-            return format("BLOB<`{}`>", *(valueType->getBlobName()));
+        case ValueTypeKind::BLOB: {
+            string text;
+            text += format("BLOB<`{}`", *valueType->getBlobName());
+            if (valueType->getArgumentTypes()) {
+                for (int i=0; i<(*valueType->getArgumentTypes()).size(); i++) {
+                    text += ", ";
+                    text += toString((*valueType->getArgumentTypes()).at(i));
+                }
+            }
+            text += ">";
+            return text;
+        }
         case ValueTypeKind::PROTO:
             return format("PROTO<`{}`>", *(valueType->getProtoName()));
         case ValueTypeKind::BOXED:
@@ -1336,7 +1346,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::COMPOSITE:
             return format("COMPOSITE");
         case ValueTypeKind::NAMED_TYPE:
-            return format("`{}`", *valueType->getTypeName());
+            return format("`{}`", *valueType->getNamedTypeKey());
     }
 
     return "{INVALID}";

@@ -15,6 +15,7 @@ using namespace std;
 class AnalyzerScope {
 private:
     typedef struct {
+        map<string, optional<vector<string>>> blobNamedTypeKeysMap;
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
         map<string, vector<string>> blobProtosMap;
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> blobMembersMap;
@@ -46,6 +47,9 @@ public:
 
     bool isNamedTypeDeclared(string namedType);
     bool setNamedTypes(vector<string> namedTypes);
+
+    optional<vector<string>> getBlobNamedTypeKeys(string blobName);
+    bool setBlobNamedTypeKeys(string blobName, vector<string> namedTypeKeys);
 
     optional<vector<string>> getBlobProtoNames(string name);
     bool setBlobProtoNames(string name, vector<string> protoNames);

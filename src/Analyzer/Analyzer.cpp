@@ -152,7 +152,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported) {
     scope->pushLevel();
 
-    scope->setNamedTypes(statementBlob->getNamedTypes());
+    scope->setNamedTypes(statementBlob->getNamedTypeKeys());
 
     // check and verify blob member variables
     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
@@ -264,6 +264,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     string name = importModulePrefix + statementBlob->getName();
     if (!scope->setBlobMembers(name, members))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
+    scope->setBlobNamedTypeKeys(name, statementBlob->getNamedTypeKeys());
     scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
 
@@ -999,13 +1000,20 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                     if (nameVariable.compare(blobMember.first) == 0 || nameFunction.compare(blobMember.first) == 0) {
                         // found corresponding blob, decide if it's a simple or data access
                         switch (expressionValue->getValueKind()) {
-                            case ExpressionValueKind::SIMPLE:
-                                expressionValue->valueType = blobMember.second;
+                            case ExpressionValueKind::SIMPLE: {
+                                // resolve type of named type if required
+                                if (blobMember.second->isBoxedNamedType()) {
+                                    expressionValue->valueType = parentExpression->getValueType()->valueTypeForNamedTypeKey(*blobMember.second->getSubType()->getNamedTypeKey());
+                                } else {
+                                    expressionValue->valueType = blobMember.second;
+                                }
                                 return expressionValue->getValueType();
-                            case ExpressionValueKind::DATA:
+                            }
+                            case ExpressionValueKind::DATA: {
                                 expressionValue->valueType = blobMember.second->getSubType();
                                 expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
                                 return expressionValue->getValueType();
+                            }
                             default:
                                 break;
                         }
@@ -1714,7 +1722,12 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
                     // check that each entry in composite can be cast to member in blob
                     for (int i=0; i<(*targetMemberTypes).size(); i++) {
-                        if (!canCast(sourceElementTypes.at(i), (*targetMemberTypes).at(i)))
+                        shared_ptr<ValueType> targetMemberType = (*targetMemberTypes).at(i);
+                        // extract named type if required
+                        if (targetMemberType->isBoxedNamedType()) {
+                            targetMemberType = targetType->valueTypeForNamedTypeKey(*targetMemberType->getSubType()->getNamedTypeKey());
+                        }
+                        if (!canCast(sourceElementTypes.at(i), targetMemberType))
                             return false;
                     }
                     return true;
@@ -1764,7 +1777,7 @@ bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExper
         }
         case ValueTypeKind::BOXED: {
             if (valueType->getSubType()->isNamedType()) {
-                if (!scope->isNamedTypeDeclared(*valueType->getSubType()->getTypeName())) {
+                if (!scope->isNamedTypeDeclared(*valueType->getSubType()->getNamedTypeKey())) {
                     markErrorInvalidType(location, valueType, nullptr);
                     return false;
                 }
@@ -1779,8 +1792,14 @@ bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExper
             if (!scope->isBlobDeclared(*valueType->getBlobName())) {
                 //markErrorInvalidType(location, valueType, nullptr);
                 //return false;
+            // check named type keys
             } else {
-                
+                optional<vector<string>> namedTypeKeys = scope->getBlobNamedTypeKeys(*valueType->getBlobName());
+                if (namedTypeKeys && (*valueType->getArgumentTypes()).size() != (*namedTypeKeys).size()) {
+                    markErrorInvalidType(location, valueType, nullptr);
+                    return false;
+                }
+                valueType->namedTypeKeys = namedTypeKeys;
             }
             break;
         }

@@ -132,10 +132,10 @@ shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> element
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::namedType(string typeName) {
+shared_ptr<ValueType> ValueType::namedType(string namedTypeKey) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::NAMED_TYPE;
-    valueType->typeName = typeName;
+    valueType->namedTypeKey = namedTypeKey;
     return valueType;
 }
 
@@ -183,8 +183,22 @@ optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() {
     return compositeElementTypes;
 }
 
-optional<string> ValueType::getTypeName() {
-    return typeName;
+optional<string> ValueType::getNamedTypeKey() {
+    return namedTypeKey;
+}
+
+shared_ptr<ValueType> ValueType::valueTypeForNamedTypeKey(string namedTypeKey) {
+    // first check if the virtual dictionary of namedTypes:argumentTypes exists and is valid
+    if (!argumentTypes || !namedTypeKeys || (*argumentTypes).size() != (*namedTypeKeys).size())
+        return {};
+
+    // then try finding appropriate entry
+    for (int i=0; i<(*namedTypeKeys).size(); i+=1) {
+        if ((*namedTypeKeys).at(i).compare(namedTypeKey) == 0)
+            return (*argumentTypes).at(i);
+    }
+
+    return {};
 }
 
 bool ValueType::isEqual(shared_ptr<ValueType> other) {
@@ -456,4 +470,8 @@ bool ValueType::isComposite() {
 
 bool ValueType::isNamedType() {
     return kind == ValueTypeKind::NAMED_TYPE;
+}
+
+bool ValueType::isBoxedNamedType() {
+    return kind == ValueTypeKind::BOXED && subType->isNamedType();
 }

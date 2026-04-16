@@ -125,6 +125,29 @@ bool AnalyzerScope::setNamedTypes(vector<string> namedTypes) {
     return true;
 }
 
+optional<vector<string>> AnalyzerScope::getBlobNamedTypeKeys(string blobName) {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().blobNamedTypeKeysMap.find(blobName);
+        if (it != scopeLevels.top().blobNamedTypeKeysMap.end())
+            return scopeLevels.top().blobNamedTypeKeysMap[blobName];
+        scopeLevels.pop();
+    }
+
+    return {};
+}
+
+bool AnalyzerScope::setBlobNamedTypeKeys(string blobName, vector<string> namedTypeKeys) {
+    // check if named types are already defined
+    if (scopeLevels.top().blobNamedTypeKeysMap.find(blobName) != scopeLevels.top().blobNamedTypeKeysMap.end())
+        return false;
+
+    scopeLevels.top().blobNamedTypeKeysMap[blobName] = namedTypeKeys;
+
+    return true;
+}
+
 optional<vector<string>> AnalyzerScope::getBlobProtoNames(string name) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 

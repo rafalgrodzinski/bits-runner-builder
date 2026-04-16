@@ -7,13 +7,13 @@
 StatementBlob::StatementBlob(
     bool shouldExport,
     string name,
-    vector<string> typeArgumentNames,
+    vector<string> namedTypeKeys,
     vector<string> protoNames,
     vector<shared_ptr<StatementVariable>> variableStatements,
     vector<shared_ptr<StatementFunction>> functionStatements,
     shared_ptr<Location> location
 ) :
-Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(name), typeArgumentNames(typeArgumentNames), protoNames(protoNames), variableStatements(variableStatements), functionStatements(functionStatements) { }
+Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(name), namedTypeKeys(namedTypeKeys), protoNames(protoNames), variableStatements(variableStatements), functionStatements(functionStatements) { }
 
 bool StatementBlob::getShouldExport() {
     return shouldExport;
@@ -23,8 +23,8 @@ string StatementBlob::getName() {
     return name;
 }
 
- vector<string> StatementBlob::getNamedTypes() {
-    return typeArgumentNames;
+ vector<string> StatementBlob::getNamedTypeKeys() {
+    return namedTypeKeys;
  }
 
 vector<string> StatementBlob::getProtoNames() {

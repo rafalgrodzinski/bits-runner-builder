@@ -45,6 +45,8 @@ enum class ValueTypeKind {
 };
 
 class ValueType {
+friend class Analyzer;
+
 private:
     ValueTypeKind kind;
     shared_ptr<ValueType> subType;
@@ -54,7 +56,8 @@ private:
     optional<string> blobName;
     optional<string> protoName;
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes;
-    optional<string> typeName;
+    optional<string> namedTypeKey;
+    optional<vector<string>> namedTypeKeys;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -82,7 +85,7 @@ public:
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> namedType(string typeName);
+    static shared_ptr<ValueType> namedType(string namedTypeKey);
 
     ValueType();
     ValueType(ValueTypeKind kind);
@@ -103,7 +106,9 @@ public:
     // composite
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
     // boxed
-    optional<string> getTypeName();
+    optional<string> getNamedTypeKey();
+
+    shared_ptr<ValueType> valueTypeForNamedTypeKey(string namedTypeKey);
 
     bool isEqual(shared_ptr<ValueType> other);
 
@@ -126,6 +131,7 @@ public:
     bool isBoxed();
     bool isComposite();
     bool isNamedType();
+    bool isBoxedNamedType();
 };
 
 #endif
