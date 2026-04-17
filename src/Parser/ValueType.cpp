@@ -187,18 +187,36 @@ optional<string> ValueType::getNamedTypeKey() {
     return namedTypeKey;
 }
 
-shared_ptr<ValueType> ValueType::valueTypeForNamedTypeKey(string namedTypeKey) {
-    // first check if the virtual dictionary of namedTypes:argumentTypes exists and is valid
-    if (!argumentTypes || !namedTypeKeys || (*argumentTypes).size() != (*namedTypeKeys).size())
-        return {};
+shared_ptr<ValueType> ValueType::unboxedValueTypeForValueType(shared_ptr<ValueType> valueType) {
+    // skip for parent types other than blobs or for boxed types from withing of blob's function
+    if (kind != ValueTypeKind::BLOB || !namedTypeKeys)
+        return valueType;
 
-    // then try finding appropriate entry
-    for (int i=0; i<(*namedTypeKeys).size(); i+=1) {
-        if ((*namedTypeKeys).at(i).compare(namedTypeKey) == 0)
-            return (*argumentTypes).at(i);
+    switch (valueType->getKind()) {
+        case ValueTypeKind::BOXED: {
+            return unboxedValueTypeForValueType(valueType->getSubType());
+        }
+        case ValueTypeKind::DATA: {
+            return ValueType::data(unboxedValueTypeForValueType(valueType->getSubType()), valueType->getCountExpression());
+        }
+        case ValueTypeKind::PTR: {
+            return ValueType::ptr(unboxedValueTypeForValueType(valueType->getSubType()));
+        }
+        case ValueTypeKind::NAMED_TYPE: {
+            // first check if the virtual dictionary of namedTypes:argumentTypes exists and is valid
+            if (!argumentTypes || !namedTypeKeys || (*argumentTypes).size() != (*namedTypeKeys).size())
+                return {};
+
+            // then try finding appropriate entry
+            for (int i=0; i<(*namedTypeKeys).size(); i+=1) {
+                if ((*namedTypeKeys).at(i).compare(*valueType->getNamedTypeKey()) == 0)
+                    return (*argumentTypes).at(i);
+            }
+        }
+        default: {
+            return valueType;
+        }
     }
-
-    return {};
 }
 
 bool ValueType::isEqual(shared_ptr<ValueType> other) {

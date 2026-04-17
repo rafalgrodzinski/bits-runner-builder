@@ -254,7 +254,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
     // check each of the extracted member's type
     for (auto &member : members) {
-        if (!checkValueType(member.second, true, statementBlob->getLocation()))
+        if (!checkValueType(member.second, true, true, statementBlob->getLocation()))
             return;
     }
 
@@ -286,12 +286,12 @@ void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpressio
 void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
     // check argument types
     for (auto &argument : statementFunction->getArguments()) {
-        if (!checkValueType(argument.second, true, statementFunction->getLocation()))
+        if (!checkValueType(argument.second, true, false, statementFunction->getLocation()))
             return;
     }
 
     // update return type
-    if (!checkValueType(statementFunction->getReturnValueType(), true, statementFunction->getLocation()))
+    if (!checkValueType(statementFunction->getReturnValueType(), true, false, statementFunction->getLocation()))
         return;
 
     // check if function is not yet defined and register it
@@ -310,12 +310,12 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
     // check argument types
     for (auto &argument : statementFunctionDeclaration->getArguments()) {
-        if (!checkValueType(argument.second, true, statementFunctionDeclaration->getLocation()))
+        if (!checkValueType(argument.second, true, false, statementFunctionDeclaration->getLocation()))
             return;
     }
 
     // check return type
-    if (!checkValueType(statementFunctionDeclaration->getReturnValueType(), true, statementFunctionDeclaration->getLocation()))
+    if (!checkValueType(statementFunctionDeclaration->getReturnValueType(), true, false, statementFunctionDeclaration->getLocation()))
         return;
 
     string name = importModulePrefix + statementFunctionDeclaration->getName();
@@ -332,12 +332,12 @@ void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statement
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
     // check argument types
     for (auto &argument : statementMetaExternFunction->getArguments()) {
-        if (!checkValueType(argument.second, true, statementMetaExternFunction->getLocation()))
+        if (!checkValueType(argument.second, true, false, statementMetaExternFunction->getLocation()))
             return;
     }
 
     // check return type
-    if (!checkValueType(statementMetaExternFunction->getReturnValueType(), true, statementMetaExternFunction->getLocation()))
+    if (!checkValueType(statementMetaExternFunction->getReturnValueType(), true, false, statementMetaExternFunction->getLocation()))
         return;
 
     if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType(), false))
@@ -408,7 +408,7 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
 
     // check each of the extracted type
     for (auto &member : members) {
-        if (!checkValueType(member.second, true, statement->getLocation()))
+        if (!checkValueType(member.second, true, true, statement->getLocation()))
             return;
     }
 
@@ -480,7 +480,7 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
-    if (!checkValueType(statementVariable->getValueType(), false, statementVariable->getLocation()))
+    if (!checkValueType(statementVariable->getValueType(), false, true, statementVariable->getLocation()))
         return;
 
     // check initial value expression
@@ -530,7 +530,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     string identifier = importModulePrefix + statementVariableDeclaration->getIdentifier();
 
-    if (!checkValueType(statementVariableDeclaration->getValueType(), true, statementVariableDeclaration->getLocation()))
+    if (!checkValueType(statementVariableDeclaration->getValueType(), true, false, statementVariableDeclaration->getLocation()))
         return;
 
     if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
@@ -709,6 +709,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         for (int i=extraArguments; i<argumentTypes.size(); i++) {
             shared_ptr<ValueType> targetType = argumentTypes.at(i);
 
+            // unbox argument
+            if (parentExpression != nullptr)
+                targetType = parentExpression->getValueType()->unboxedValueTypeForValueType(targetType);
+
             // ignore the implicit arguments
             int argumentExpressionIndex = i - extraArguments;
 
@@ -723,6 +727,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
             if (sourceType == nullptr)
                 return nullptr;
+
+            // unbox return type
+            if (parentExpression != nullptr)
+                valueType->returnType = parentExpression->getValueType()->unboxedValueTypeForValueType(valueType->getReturnType());
 
             if (!sourceType->isEqual(targetType)) {
                 markErrorInvalidType(
@@ -1002,11 +1010,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                         switch (expressionValue->getValueKind()) {
                             case ExpressionValueKind::SIMPLE: {
                                 // resolve type of named type if required
-                                if (blobMember.second->isBoxedNamedType()) {
-                                    expressionValue->valueType = parentExpression->getValueType()->valueTypeForNamedTypeKey(*blobMember.second->getSubType()->getNamedTypeKey());
-                                } else {
-                                    expressionValue->valueType = blobMember.second;
-                                }
+                                expressionValue->valueType = parentExpression->getValueType()->unboxedValueTypeForValueType(blobMember.second);
                                 return expressionValue->getValueType();
                             }
                             case ExpressionValueKind::DATA: {
@@ -1722,11 +1726,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
                     // check that each entry in composite can be cast to member in blob
                     for (int i=0; i<(*targetMemberTypes).size(); i++) {
-                        shared_ptr<ValueType> targetMemberType = (*targetMemberTypes).at(i);
-                        // extract named type if required
-                        if (targetMemberType->isBoxedNamedType()) {
-                            targetMemberType = targetType->valueTypeForNamedTypeKey(*targetMemberType->getSubType()->getNamedTypeKey());
-                        }
+                       shared_ptr<ValueType> targetMemberType = targetType->unboxedValueTypeForValueType((*targetMemberTypes).at(i));
                         if (!canCast(sourceElementTypes.at(i), targetMemberType))
                             return false;
                     }
@@ -1769,21 +1769,23 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
     }
 }
 
-bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location) {
+bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, bool shouldUnbox, shared_ptr<Location> location) {
     switch (valueType->getKind()) {
         case ValueTypeKind::PTR: {
-            checkValueType(valueType->getSubType(), false, location);
+            checkValueType(valueType->getSubType(), false, shouldUnbox, location);
             break;
         }
         case ValueTypeKind::BOXED: {
-            if (valueType->getSubType()->isNamedType()) {
-                if (!scope->isNamedTypeDeclared(*valueType->getSubType()->getNamedTypeKey())) {
+            if (shouldUnbox) {
+                if (valueType->getSubType()->isNamedType()) {
+                    if (!scope->isNamedTypeDeclared(*valueType->getSubType()->getNamedTypeKey())) {
+                        markErrorInvalidType(location, valueType, nullptr);
+                        return false;
+                    }
+                } else if (!valueType->getSubType()->isNumeric() && !valueType->getSubType()->isPointer()) {
                     markErrorInvalidType(location, valueType, nullptr);
                     return false;
                 }
-            } else if (!valueType->getSubType()->isNumeric() && !valueType->getSubType()->isPointer()) {
-                markErrorInvalidType(location, valueType, nullptr);
-                return false;
             }
             break;
         }
@@ -1792,8 +1794,8 @@ bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExper
             if (!scope->isBlobDeclared(*valueType->getBlobName())) {
                 //markErrorInvalidType(location, valueType, nullptr);
                 //return false;
-            // check named type keys
-            } else {
+            // check and update named type keys if required
+            } else if (shouldUnbox) {
                 optional<vector<string>> namedTypeKeys = scope->getBlobNamedTypeKeys(*valueType->getBlobName());
                 if (namedTypeKeys && (*valueType->getArgumentTypes()).size() != (*namedTypeKeys).size()) {
                     markErrorInvalidType(location, valueType, nullptr);
@@ -1815,8 +1817,8 @@ bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExper
         case ValueTypeKind::FUN: {
             vector<shared_ptr<ValueType>> argValueTypes = *valueType->getArgumentTypes();
             for (shared_ptr<ValueType> argValueType : argValueTypes)
-                checkValueType(argValueType, true, location);
-            checkValueType(valueType->getReturnType(), true, location);
+                checkValueType(argValueType, true, shouldUnbox, location);
+            checkValueType(valueType->getReturnType(), true, shouldUnbox, location);
             break;
         }
         default:

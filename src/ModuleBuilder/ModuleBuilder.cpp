@@ -461,7 +461,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) 
         shared_ptr<WrappedValue> returnWrappedValue = wrappedValueForExpression(statementReturn->getExpression());
         if (returnWrappedValue == nullptr)
             return;
-        builder->CreateRet(returnWrappedValue->getValue());
+        // in case of boxed values, they may have to be transformed first
+        llvm::Value *returnValue = builder->CreateTruncOrBitCast(returnWrappedValue->getValue(), typeForValueType(statementReturn->getExpression()->getValueType(), true));
+        builder->CreateRet(returnValue);
     } else {
         builder->CreateRetVoid();
     }
@@ -2357,7 +2359,7 @@ llvm::Type *ModuleBuilder::typeForValueType(shared_ptr<ValueType> valueType, boo
         case ValueTypeKind::A:
             return typePtr;
         case ValueTypeKind::BOXED:
-            if (shouldUnbox)
+            if (shouldUnbox && !valueType->isBoxedNamedType())
                 return typeForValueType(valueType->getSubType());
             else
                 return typeBoxed;

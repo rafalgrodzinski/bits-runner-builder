@@ -108,7 +108,7 @@ public:
     // boxed
     optional<string> getNamedTypeKey();
 
-    shared_ptr<ValueType> valueTypeForNamedTypeKey(string namedTypeKey);
+    shared_ptr<ValueType> unboxedValueTypeForValueType(shared_ptr<ValueType> valueType);
 
     bool isEqual(shared_ptr<ValueType> other);
 

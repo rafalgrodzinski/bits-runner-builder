@@ -1,12 +1,30 @@
-Array<T> blob
-    //pValues ptr<data<boxed<T>>>
-    num boxed<T>
+@import BSys
 
-    /*push fun: value T
+ARRAY_INIT_CAPACITY u32 <- 8
+
+Array<T> blob
+    pValues ptr<data<boxed<T>>>
+    capacity u32
+    valuesCount u32
+
+    push fun: value boxed<T>
+        // Do we nedd to allocate more space?
+        if it.capacity <= it.valuesCount
+            // Figure out new capacity
+            it.capacity <- if it.capacity = 0: ARRAY_INIT_CAPACITY else: it.capacity * 2
+            // Move existing data to new storage and get rid of the old one
+            pNewValues ptr<data<boxed<T>>> <- @BSys.memAlloc(boxed<T>.size * it.capacity).ptr<data<boxed<T>>>
+            rep i u32 <- 0, i < it.valuesCount, i <- i + 1: pNewValues.val[i] <- it.pValues.val[i]
+            @BSys.memFree(it.pValues.vadr)
+            it.pValues <- pNewValues
+        ;
+        it.pValues.val[it.valuesCount] <- value
+        it.valuesCount <- it.valuesCount + 1
     ;
 
-    at fun: index u32 -> T
-    ;*/
+    at fun: index u32 -> boxed<T>
+        ret it.pValues.val[index]
+    ;
 ;
 
 /*Thing proto
@@ -14,7 +32,11 @@ Array<T> blob
 ;*/
 
 @export main fun -> u32
+    /*storage data<f32, 32> <- {2, 4.78, 8, 16}*/
     nums blob<Array, u32>
+    nums.push(7)
+    nums.push(13)
+    //nums.pValues <- storage.adr.ptr<data<f32>>
     /*nums.push(4)
     nums.push(3)
 
@@ -24,5 +46,5 @@ Array<T> blob
     rep i u32, i < things.count, i <- i + 1
         things.at(i).doStuff()
     ;*/
-    ret 0
+    ret nums.at(1)
 ;
