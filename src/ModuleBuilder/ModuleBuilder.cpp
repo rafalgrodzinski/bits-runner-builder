@@ -462,7 +462,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) 
         if (returnWrappedValue == nullptr)
             return;
         // in case of boxed values, they may have to be transformed first
-        llvm::Value *returnValue = builder->CreateTruncOrBitCast(returnWrappedValue->getValue(), typeForValueType(statementReturn->getExpression()->getValueType(), true));
+        llvm::Value *returnValue = returnWrappedValue->getBitcastValue(builder, typeForValueType(statementReturn->getExpression()->getValueType(), true));
         builder->CreateRet(returnValue);
     } else {
         builder->CreateRetVoid();
@@ -1860,11 +1860,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
         if (wrappedvalue == nullptr)
             return nullptr;
         // In case the argument is boxed type, we want to cast to it first
-        llvm::Value *argValue;
-        if (funType->getParamType(i)->isIntOrPtrTy())
-            argValue = builder->CreateZExtOrBitCast(wrappedvalue->getValue(), funType->getParamType(i));
-        else
-            argValue = wrappedvalue->getValue();
+        llvm::Value *argValue = wrappedvalue->getBitcastValue(builder, funType->getParamType(i));
         argValues.push_back(argValue);
     }
 

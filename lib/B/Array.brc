@@ -1,9 +1,10 @@
-@import B
-/*@import BSys
+@module B
+
+@import BSys
 
 ARRAY_INIT_CAPACITY u32 <- 8
 
-Array<T> blob
+@export Array<T> blob
     pValues ptr<data<boxed<T>>>
     capacity u32
     valuesCount u32
@@ -26,40 +27,4 @@ Array<T> blob
     at fun: index u32 -> boxed<T>
         ret it.pValues.val[index]
     ;
-;*/
-
-/*Thing proto
-    doStuff fun
-;*/
-
-@export main fun
-    /*storage data<f32, 32> <- {2, 4.78, 8, 16}*/
-    nums blob<@B.Array, u32>
-    nums.push(7)
-    nums.push(13)
-    nums.push(1)
-    nums.push(22)
-    nums.push(17)
-    nums.push(9)
-    nums.push((-4).u32)
-    nums.push(3.3.u32)
-    nums.push(67)
-    //nums.pValues <- storage.adr.ptr<data<f32>>
-    /*nums.push(4)
-    nums.push(3)
-
-    things blob<Array, ptr<proto<Thing>>>
-    things.push(devVga)
-    things.push(devSvga)
-    rep i u32, i < things.count, i <- i + 1
-        things.at(i).doStuff()
-    ;*/
-
-    @B.StringForU32(nums.capacity).println()
-    @B.StringForU32(nums.valuesCount).println()
-    rep i u32, i < nums.valuesCount, i <- i + 1
-        @B.StringForU32(nums.at(i)).print()
-        @B.String(" ").print()
-    ;
-    @B.String("").println()
 ;

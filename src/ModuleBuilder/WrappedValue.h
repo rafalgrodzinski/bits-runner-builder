@@ -31,6 +31,7 @@ public:
     static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
 
     llvm::Value *getValue();
+    llvm::Value *getBitcastValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *targetType);
     llvm::Value *getPointerValue();
     llvm::Constant *getConstantValue();
     llvm::GlobalVariable *getGlobalValue();
