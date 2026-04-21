@@ -711,7 +711,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
             // unbox argument
             if (parentExpression != nullptr)
-                targetType = parentExpression->getValueType()->unboxedValueTypeForValueType(targetType);
+                targetType = parentExpression->getValueType()->unboxedValueTypeForValueType(targetType, true);
 
             // ignore the implicit arguments
             int argumentExpressionIndex = i - extraArguments;
@@ -728,10 +728,6 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             if (sourceType == nullptr)
                 return nullptr;
 
-            // unbox return type
-            if (parentExpression != nullptr)
-                valueType->returnType = parentExpression->getValueType()->unboxedValueTypeForValueType(valueType->getReturnType());
-
             if (!sourceType->isEqual(targetType)) {
                 markErrorInvalidType(
                     expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getLocation(),
@@ -742,9 +738,20 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                 return nullptr;
             }
         }
+
+        // unbox return type
+        if (parentExpression != nullptr)
+            valueType->returnType = parentExpression->getValueType()->unboxedValueTypeForValueType(valueType->getReturnType(), false);
+
+        // resolve return type
+        if (!checkValueType(valueType->getReturnType(), true, true, expressionCall->getLocation()))
+            return nullptr;
+
     }
 
-    expressionCall->valueType = valueType->getReturnType();
+    shared_ptr<ValueType> returnValueType = valueType->getReturnType();
+    checkValueType(returnValueType, false, true, expressionCall->getLocation());
+    expressionCall->valueType = returnValueType;
     return expressionCall->getValueType();
 }
 
@@ -961,7 +968,13 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             switch (expressionValue->getValueKind()) {
                 case ExpressionValueKind::SIMPLE:
                 case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
-                    expressionValue->valueType = parentExpression->getValueType()->getSubType();
+
+                    //expressionValue->valueType = parentExpression->getValueType()->getSubType();
+                    if (parentExpression->getValueType()->isBoxed()) {
+                        expressionValue->valueType = parentExpression->getValueType()->getSubType()->getSubType();
+                    } else {
+                        expressionValue->valueType = parentExpression->getValueType()->getSubType();
+                    }
                     expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_SIMPLE;
                     break;
                 case ExpressionValueKind::DATA:
@@ -1010,7 +1023,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                         switch (expressionValue->getValueKind()) {
                             case ExpressionValueKind::SIMPLE: {
                                 // resolve type of named type if required
-                                expressionValue->valueType = parentExpression->getValueType()->unboxedValueTypeForValueType(blobMember.second);
+                                expressionValue->valueType = parentExpression->getValueType()->unboxedValueTypeForValueType(blobMember.second, false);
                                 return expressionValue->getValueType();
                             }
                             case ExpressionValueKind::DATA: {
@@ -1059,8 +1072,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 
     // first assume it's just simple
     shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
-    if (type != nullptr)
+    if (type != nullptr) {
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
+        if (!checkValueType(type, false, false, expressionValue->getLocation()))
+            return nullptr;
+    }
 
     // then check if it's data
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
@@ -1726,7 +1742,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
                     // check that each entry in composite can be cast to member in blob
                     for (int i=0; i<(*targetMemberTypes).size(); i++) {
-                       shared_ptr<ValueType> targetMemberType = targetType->unboxedValueTypeForValueType((*targetMemberTypes).at(i));
+                       shared_ptr<ValueType> targetMemberType = targetType->unboxedValueTypeForValueType((*targetMemberTypes).at(i), true);
                         if (!canCast(sourceElementTypes.at(i), targetMemberType))
                             return false;
                     }
@@ -1786,6 +1802,7 @@ bool Analyzer::checkValueType(shared_ptr<ValueType> valueType, bool isCountExper
                     markErrorInvalidType(location, valueType, nullptr);
                     return false;
                 }
+                checkValueType(valueType->getSubType(), isCountExperssionRequired, shouldUnbox, location);
             }
             break;
         }

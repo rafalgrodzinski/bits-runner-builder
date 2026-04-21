@@ -187,20 +187,24 @@ optional<string> ValueType::getNamedTypeKey() {
     return namedTypeKey;
 }
 
-shared_ptr<ValueType> ValueType::unboxedValueTypeForValueType(shared_ptr<ValueType> valueType) {
+shared_ptr<ValueType> ValueType::unboxedValueTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox) {
     // skip for parent types other than blobs or for boxed types from withing of blob's function
     if (kind != ValueTypeKind::BLOB || !namedTypeKeys)
         return valueType;
 
     switch (valueType->getKind()) {
         case ValueTypeKind::BOXED: {
-            return unboxedValueTypeForValueType(valueType->getSubType());
+            if (shouldUnbox) {
+                return unboxedValueTypeForValueType(valueType->getSubType(), true);
+            } else {
+                return ValueType::boxed(unboxedValueTypeForValueType(valueType->getSubType(), true));
+            }
         }
         case ValueTypeKind::DATA: {
-            return ValueType::data(unboxedValueTypeForValueType(valueType->getSubType()), valueType->getCountExpression());
+            return ValueType::data(unboxedValueTypeForValueType(valueType->getSubType(), true), valueType->getCountExpression());
         }
         case ValueTypeKind::PTR: {
-            return ValueType::ptr(unboxedValueTypeForValueType(valueType->getSubType()));
+            return ValueType::ptr(unboxedValueTypeForValueType(valueType->getSubType(), true));
         }
         case ValueTypeKind::NAMED_TYPE: {
             // first check if the virtual dictionary of namedTypes:argumentTypes exists and is valid

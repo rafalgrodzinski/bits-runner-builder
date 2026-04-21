@@ -167,16 +167,20 @@ llvm::Value *WrappedValue::getValue() {
 
 llvm::Value *WrappedValue::getBitcastValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *targetType) {
     llvm::Value *sourceValue = getValue();
-    if (!targetType->isIntOrPtrTy())
+
+    if (!targetType->isIntOrPtrTy() && !targetType->isFloatingPointTy())
         return sourceValue;
 
-    if (targetType->isPointerTy() || sourceValue->getType()->getIntegerBitWidth() < targetType->getIntegerBitWidth()) {
+    if (targetType->isFloatingPointTy()) {
+        return builder->CreateBitCast(sourceValue, targetType);
+    } if (targetType->isPointerTy() || sourceValue->getType()->getIntegerBitWidth() < targetType->getIntegerBitWidth()) {
         return builder->CreateZExtOrBitCast(sourceValue, targetType);
     } else if (sourceValue->getType()->getIntegerBitWidth() > targetType->getIntegerBitWidth()) {
         return builder->CreateTruncOrBitCast(sourceValue, targetType);
     }
-
-    return sourceValue;
+   
+   return sourceValue;
+   //return builder->CreateLoad(targetType, getPointerValue());
 }
 
 llvm::Value *WrappedValue::getPointerValue() {

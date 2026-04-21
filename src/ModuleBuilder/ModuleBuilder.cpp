@@ -1387,11 +1387,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     expressionCall->getArgumentExpressions(),
                     expressionCall->getValueType()
                 );
+                parentExpression = chainExpression;
             // value expression ?
             } else if (shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpression)) {
-                llvm::Value *sourceValue;
-                llvm::Value *sourcePointerValue;
-                llvm::Type *sourceType;
+                llvm::Value *sourceValue = nullptr;
+                llvm::Value *sourcePointerValue = nullptr;
+                llvm::Type *sourceType = nullptr;
 
                 // try member variable
                 if (optional<int> memberIndex = scope->getStructMemberIndex(parentBlobName, expressionValue->getIdentifier())) {
@@ -1400,9 +1401,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         builder->getInt32(*memberIndex)
                     };
 
-                    llvm::Type *sourceStructTyp = currentWrappedValue->getStructType();
+                    llvm::Type *sourceStructType = currentWrappedValue->getStructType();
                     llvm::Value *sourceStructValue = currentWrappedValue->getPointerValue();
-                    llvm::Value *memberPtr = builder->CreateGEP(sourceStructTyp, sourceStructValue, index, format("gep_blob-{}", string(sourceStructValue->getName())));
+                    llvm::Value *memberPtr = builder->CreateGEP(sourceStructType, sourceStructValue, index, format("gep_blob-{}", string(sourceStructValue->getName())));
+
+                    debugPrint({sourceStructType});
+                    debugPrint({sourceStructValue, memberPtr});
 
                     sourceType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
                     sourceValue = nullptr;
@@ -1785,7 +1789,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     if (parentWrappedValue->isArray() && isCount) {
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
-        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
+        shared_ptr<ValueType> pointeeValueType = nullptr;
+        if (parentExpression->getValueType()->isBoxed()) {
+            pointeeValueType = parentExpression->getValueType()->getSubType()->getSubType();
+        } else {
+            pointeeValueType = parentExpression->getValueType()->getSubType();
+        }
         if (pointeeValueType == nullptr) {
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr;
@@ -1795,7 +1804,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr; 
         }
-        return wrappedValueForValue(nullptr, parentWrappedValue->getValue(), pointeeType, expression);
+        //llvm::Value *v = parentWrappedValue->getValue();
+        llvm::Value *v = parentWrappedValue->getBitcastValue(builder, pointeeType);
+        debugPrint({v});
+        debugPrint({pointeeType});
+        return wrappedValueForValue(nullptr, v, pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         llvm::Value *pointerValue = parentWrappedValue->getValue();
         llvm::Value *alloca = builder->CreateAlloca(typePtr, nullptr, format("a_vadr-{}", string(pointerValue->getName())));
@@ -2011,6 +2024,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::S64:
             isTargetSInt = true;
             targetSize = 64;
+            break;
+        case ValueTypeKind::FLOAT:
+            isTargetFloat = true;
+            targetSize = 32;
             break;
         case ValueTypeKind::F32:
             isTargetFloat = true;
