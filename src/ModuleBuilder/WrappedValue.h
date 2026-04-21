@@ -18,7 +18,9 @@ private:
     shared_ptr<ValueType> valueType;
 
     function<llvm::Value *()> valueLambda;
+    function<llvm::Value *()> unboxedValueLambda;
     function<llvm::Value *()> pointerValueLambda;
+    function<llvm::Value *()> unboxedPointerValueLambda;
 
 public:
     static function<llvm::Type *(shared_ptr<ValueType>, bool)> typeForValueType;
@@ -31,8 +33,13 @@ public:
     static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
 
     llvm::Value *getValue();
-    llvm::Value *getBitcastValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *targetType);
+    llvm::Value *getUnboxedValue();
+
     llvm::Value *getPointerValue();
+    llvm::Value *getUnboxedPointerValue();
+
+    llvm::Value *getBitcastValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *targetType);
+
     llvm::Constant *getConstantValue();
     llvm::GlobalVariable *getGlobalValue();
 

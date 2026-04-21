@@ -19,8 +19,17 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->valueLambda = [loadInst]() {
             return loadInst;
         };
+
+        wrappedValue->unboxedValueLambda = [loadInst]() {
+
+        };
+
         wrappedValue->pointerValueLambda = [loadInst]() {
             return loadInst->getPointerOperand();
+        };
+
+        wrappedValue->unboxedPointerValueLambda = []() {
+
         };
     // Alloca
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
@@ -105,6 +114,24 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             builder->CreateStore(value, allocaInst);
             return allocaInst;
         };
+
+        wrappedValue->unboxedValueLambda = [builder, value, valueType]() {
+            llvm::Type *unboxedType = WrappedValue::typeForValueType(valueType, valueType->isBoxed());
+            if (valueType->isBoxed()) {
+                switch (valueType->getKind()) {
+                    case ValueTypeKind::BOOL:
+                    case ValueTypeKind::U8:
+                    case ValueTypeKind::U16:
+                    case ValueTypeKind::U32:
+                    case ValueTypeKind::S8:
+                    case ValueTypeKind::S16:
+                    case ValueTypeKind::S32:
+                        return builder->CreateTruncOrBitCast(value, unboxedType);
+                }
+            } else {
+                return value;
+            }
+        };
     }
 
     return wrappedValue;
@@ -165,6 +192,18 @@ llvm::Value *WrappedValue::getValue() {
     return valueLambda();
 }
 
+llvm::Value *WrappedValue::getUnboxedValue() {
+    return unboxedValueLambda(valueType);
+}
+
+llvm::Value *WrappedValue::getPointerValue() {
+    return pointerValueLambda();
+}
+
+llvm::Value *WrappedValue::getUnboxedPointerValue() {
+
+}
+
 llvm::Value *WrappedValue::getBitcastValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *targetType) {
     llvm::Value *sourceValue = getValue();
 
@@ -181,10 +220,6 @@ llvm::Value *WrappedValue::getBitcastValue(shared_ptr<llvm::IRBuilder<>> builder
    
    return sourceValue;
    //return builder->CreateLoad(targetType, getPointerValue());
-}
-
-llvm::Value *WrappedValue::getPointerValue() {
-    return pointerValueLambda();
 }
 
 llvm::Constant *WrappedValue::getConstantValue() {
