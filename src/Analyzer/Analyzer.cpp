@@ -703,55 +703,53 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             argumentTypes.size() - extraArguments
         );
         return nullptr;
+    }
     // check argument types
-    } else {
-        // we want to skip the implicit argumnets hence startring from "extraArguments"
-        for (int i=extraArguments; i<argumentTypes.size(); i++) {
-            shared_ptr<ValueType> targetType = argumentTypes.at(i);
+    // we want to skip the implicit argumnets hence startring from "extraArguments"
+    for (int i=extraArguments; i<argumentTypes.size(); i++) {
+        shared_ptr<ValueType> targetType = argumentTypes.at(i);
 
-            // unbox argument
-            if (parentExpression != nullptr)
-                targetType = parentExpression->getValueType()->unboxedValueTypeForValueType(targetType, true);
-
-            // ignore the implicit arguments
-            int argumentExpressionIndex = i - extraArguments;
-
-            expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
-                expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
-                targetType,
-                valueType->getReturnType()
-            );
-            if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
-                return nullptr;
-
-            shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
-            if (sourceType == nullptr)
-                return nullptr;
-
-            if (!sourceType->isEqual(targetType)) {
-                markErrorInvalidType(
-                    expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getLocation(),
-                    sourceType,
-                    targetType
-                );
-                expressionCall->valueType = nullptr;
-                return nullptr;
-            }
-        }
-
-        // unbox return type
+        // unbox argument
         if (parentExpression != nullptr)
-            valueType->returnType = parentExpression->getValueType()->unboxedValueTypeForValueType(valueType->getReturnType(), false);
+            targetType = parentExpression->getValueType()->unboxedValueTypeForValueType(targetType, true);
 
-        // resolve return type
-        if (!checkValueType(valueType->getReturnType(), true, true, expressionCall->getLocation()))
+        // ignore the implicit arguments
+        int argumentExpressionIndex = i - extraArguments;
+
+        expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
+            expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
+            targetType,
+            valueType->getReturnType()
+        );
+        if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
             return nullptr;
 
+        shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
+        if (sourceType == nullptr)
+            return nullptr;
+
+        if (!sourceType->isEqual(targetType)) {
+            markErrorInvalidType(
+                expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getLocation(),
+                sourceType,
+                targetType
+            );
+            expressionCall->valueType = nullptr;
+            return nullptr;
+        }
     }
 
-    shared_ptr<ValueType> returnValueType = valueType->getReturnType();
-    checkValueType(returnValueType, false, true, expressionCall->getLocation());
-    expressionCall->valueType = returnValueType;
+    // unbox return type
+    if (parentExpression != nullptr) {
+        expressionCall->valueType = parentExpression->getValueType()->unboxedValueTypeForValueType(valueType->getReturnType(), false);
+    } else {
+        expressionCall->valueType = valueType->getReturnType();
+    }
+
+    // resolve return type
+    if (!checkValueType(expressionCall->getValueType(), true, true, expressionCall->getLocation()))
+        return nullptr;
+
     return expressionCall->getValueType();
 }
 
@@ -950,7 +948,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     if (parentExpression != nullptr) {
         // check built-in
         bool isParentData = parentExpression->getValueType()->isData();
-        bool isParentPointer = parentExpression->getValueType()->isPointer();
+        bool isParentPointer = parentExpression->getValueType()->getUnboxedPointeeValueType() != nullptr;
         bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isParentProto = parentExpression->getValueType()->isProto();
 

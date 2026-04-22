@@ -7,7 +7,7 @@ Thing<T> blob
 
 @export main fun
     // Integers
-    /*@B.String("ints").println()
+    @B.String("ints").println()
     ints blob<@B.Array, u32>
     rep i u32, i < 22, i <- i + 1: ints.push(i * i)
     rep i u32, i < ints.valuesCount, i <- i + 1
@@ -19,25 +19,24 @@ Thing<T> blob
     // Floats
     @B.String("floats").println()
     floats blob<@B.Array, f32>
-    rep i u32, i < 10, i <- i + 1: floats.push(i)
+    rep i u32, i < 10, i <- i + 1: floats.push(i * 1.33)
     rep i u32, i < floats.valuesCount, i <- i + 1
         @B.StringForF32(floats.at(i)).print()
         @B.String(" ").print()
     ;
-    @B.String("\n").println()*/
+    @B.String("\n").println()
 
     // Blobs
-    //@B.String("blobs").println()
+    @B.String("blobs").println()
     blobs blob<@B.Array, ptr<blob<Thing, s32>>>
-    /*rep i u32, i < 15, i <- i + 1
+    rep i u32, i < 15, i <- i + 1
         pThing ptr<blob<Thing, s32>> <- @BSys.memAlloc(blob<Thing, s32>.size).ptr<blob<Thing, s32>>
         pThing.val.value <- i * -3
         blobs.push(pThing)
-    ;*/
-    /*rep i u32, i < blobs.valuesCount, i <- i + 1
+    ;
+    rep i u32, i < blobs.valuesCount, i <- i + 1
         @B.StringForS32(blobs.at(i).val.value).print()
-        //@B.String(" ").print()
-    ;*/
-    //@B.String("\n").println()
-    blobs.at(0).val.value
+        @B.String(" ").print()
+    ;
+    @B.String("\n").println()
 ;

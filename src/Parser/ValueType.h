@@ -107,6 +107,8 @@ public:
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
     // boxed
     optional<string> getNamedTypeKey();
+    shared_ptr<ValueType> getUnboxedPointeeValueType();
+
 
     shared_ptr<ValueType> unboxedValueTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox);
 

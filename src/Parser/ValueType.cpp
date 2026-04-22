@@ -187,6 +187,16 @@ optional<string> ValueType::getNamedTypeKey() {
     return namedTypeKey;
 }
 
+shared_ptr<ValueType> ValueType::getUnboxedPointeeValueType() {
+    if (kind == ValueTypeKind::BOXED && subType->kind == ValueTypeKind::PTR) {
+        return subType->getSubType();
+    } else if (kind == ValueTypeKind::PTR) {
+        return subType;
+    }
+
+    return nullptr;
+}
+
 shared_ptr<ValueType> ValueType::unboxedValueTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox) {
     // skip for parent types other than blobs or for boxed types from withing of blob's function
     if (kind != ValueTypeKind::BLOB || !namedTypeKeys)

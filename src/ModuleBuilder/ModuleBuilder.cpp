@@ -1405,9 +1405,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     llvm::Value *sourceStructValue = currentWrappedValue->getPointerValue();
                     llvm::Value *memberPtr = builder->CreateGEP(sourceStructType, sourceStructValue, index, format("gep_blob-{}", string(sourceStructValue->getName())));
 
-                    debugPrint({sourceStructType});
-                    debugPrint({sourceStructValue, memberPtr});
-
                     sourceType = currentWrappedValue->getStructType()->getElementType(*memberIndex);
                     sourceValue = nullptr;
                     sourcePointerValue = memberPtr;
@@ -1789,26 +1786,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     if (parentWrappedValue->isArray() && isCount) {
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
-        shared_ptr<ValueType> pointeeValueType = nullptr;
-        if (parentExpression->getValueType()->isBoxed()) {
-            pointeeValueType = parentExpression->getValueType()->getSubType()->getSubType();
-        } else {
-            pointeeValueType = parentExpression->getValueType()->getSubType();
-        }
-        if (pointeeValueType == nullptr) {
-            markErrorNoTypeForPointer(parentExpression->getLocation());
-            return nullptr;
-        }
-        llvm::Type *pointeeType = typeForValueType(pointeeValueType);
+        llvm::Type *pointeeType = typeForValueType(expression->getValueType());
         if (pointeeType == nullptr) {
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr; 
         }
-        //llvm::Value *v = parentWrappedValue->getValue();
-        llvm::Value *v = parentWrappedValue->getBitcastValue(builder, pointeeType);
-        debugPrint({v});
-        debugPrint({pointeeType});
-        return wrappedValueForValue(nullptr, v, pointeeType, expression);
+        return wrappedValueForValue(nullptr, parentWrappedValue->getUnboxedValue(), pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         llvm::Value *pointerValue = parentWrappedValue->getValue();
         llvm::Value *alloca = builder->CreateAlloca(typePtr, nullptr, format("a_vadr-{}", string(pointerValue->getName())));
