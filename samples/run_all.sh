@@ -23,6 +23,7 @@ samples=(
     strings
     date
     interfaces
+    dyn_array
 )
 
 for sample in "${samples[@]}"; do

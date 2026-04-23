@@ -1786,7 +1786,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     if (parentWrappedValue->isArray() && isCount) {
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
-        llvm::Type *pointeeType = typeForValueType(expression->getValueType());
+        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getUnboxedPointeeValueType();
+        if (pointeeValueType == nullptr) {
+            markErrorNoTypeForPointer(parentExpression->getLocation());
+            return nullptr;
+        }
+        llvm::Type *pointeeType = typeForValueType(pointeeValueType);
         if (pointeeType == nullptr) {
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr; 
