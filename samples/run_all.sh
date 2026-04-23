@@ -12,18 +12,18 @@ function check {
 samples=(
     callback
     casts
+    date
+    dyn_array
     external_linkage
     fib
     fizz_buzz
     hello
+    interfaces
     linked_list
     merge_sort
     multi_module
     primes
     strings
-    date
-    interfaces
-    dyn_array
 )
 
 for sample in "${samples[@]}"; do

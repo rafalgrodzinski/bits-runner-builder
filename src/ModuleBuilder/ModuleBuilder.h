@@ -73,7 +73,7 @@ private:
     shared_ptr<Scope> scope;
 
     shared_ptr<llvm::LLVMContext> context;
-    shared_ptr<llvm::Module> moduleLLVM;
+    shared_ptr<llvm::Module> llvmModule;
     shared_ptr<llvm::IRBuilder<>> builder;
 
     llvm::Triple::ArchType archType;
@@ -108,8 +108,8 @@ private:
     void buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
     void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport);
-    void buildStatement(shared_ptr<StatementProto> statement);
-    void buildStatement(shared_ptr<StatementProtoDeclaration> statement);
+    void buildStatement(shared_ptr<StatementProto> statementProto);
+    void buildStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration);
     void buildStatement(shared_ptr<StatementRawFunction> statementRawFunction);
     void buildStatement(shared_ptr<StatementRepeat> statementRepeat);
     void buildStatement(shared_ptr<StatementReturn> statementReturn);
@@ -149,7 +149,7 @@ private:
     shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
 
     // Support
-    llvm::Type *typeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox = false, shared_ptr<Location> location = nullptr);
+    llvm::Type *llvmTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox = false, shared_ptr<Location> location = nullptr);
     int sizeInBitsForType(llvm::Type *type);
 
     // Error Handling    
@@ -187,7 +187,7 @@ public:
         shared_ptr<Module> module,
         map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
     );
-    shared_ptr<llvm::Module> getModuleLLVM();
+    shared_ptr<llvm::Module> getLlvmModule();
 };
 
 #endif

@@ -2,15 +2,23 @@
 
 #include "Parser/ValueType.h"
 
-function<llvm::Type *(shared_ptr<ValueType>, bool)> WrappedValue::typeForValueType;
+weak_ptr<llvm::Module> WrappedValue::llvmModule;
+weak_ptr<llvm::IRBuilder<>> WrappedValue::builder;
+function<llvm::Type *(shared_ptr<ValueType>, bool)> WrappedValue::llvmTypeForValueType;
 
 WrappedValue::WrappedValue() { }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType) {
+void WrappedValue::setup(weak_ptr<llvm::Module> llvmModule, weak_ptr<llvm::IRBuilder<>> builder, function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType) {
+    WrappedValue::llvmModule = llvmModule;
+    WrappedValue::builder = builder;
+    WrappedValue::llvmTypeForValueType = llvmTypeForValueType;
+}
+
+shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    llvm::Type *type = WrappedValue::typeForValueType(valueType, true);
-    llvm::Type *allocaType = WrappedValue::typeForValueType(valueType, false);
+    llvm::Type *type = WrappedValue::llvmTypeForValueType(valueType, true);
+    llvm::Type *allocaType = WrappedValue::llvmTypeForValueType(valueType, false);
     wrappedValue->valueType = valueType;
     wrappedValue->type = type;
 
@@ -22,21 +30,15 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [loadInst]() {
             return loadInst->getPointerOperand();
         };
-        wrappedValue->unboxedValueLambda = []() {
-            return nullptr;
-        };
     // Alloca
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
-        wrappedValue->valueLambda = [builder, type, allocaInst, valueType]() {
-            llvm::LoadInst *load = builder->CreateLoad(type, allocaInst, format("ld_wrp-{}", string(allocaInst->getName())));
+        wrappedValue->valueLambda = [type, allocaInst, valueType]() {
+            llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(type, allocaInst, format("ld_wrp-{}", string(allocaInst->getName())));
             load->setVolatile(true);
             return load;
         };
         wrappedValue->pointerValueLambda = [allocaInst]() { 
             return allocaInst;
-        };
-        wrappedValue->unboxedValueLambda = []() {
-            return nullptr;
         };
     // Call
     } else if (llvm::CallInst *callInst = llvm::dyn_cast<llvm::CallInst>(value)) {
@@ -47,42 +49,14 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
             wrappedValue->pointerValueLambda = [type]() {
                 return llvm::UndefValue::get(type);
             };
-            wrappedValue->unboxedValueLambda = [type]() {
-                return llvm::UndefValue::get(type);
-            };
         } else {
             wrappedValue->valueLambda = [callInst]() {
                 return callInst;
             };
-            wrappedValue->pointerValueLambda = [builder, allocaType, callInst]() {
-                llvm::AllocaInst *alloca = builder->CreateAlloca(allocaType, nullptr, "a_wrp");
-                builder->CreateStore(callInst, alloca);
+            wrappedValue->pointerValueLambda = [allocaType, callInst]() {
+                llvm::AllocaInst *alloca = WrappedValue::builder.lock()->CreateAlloca(allocaType, nullptr, "a_wrp");
+                WrappedValue::builder.lock()->CreateStore(callInst, alloca);
                 return alloca;
-            };
-            wrappedValue->unboxedValueLambda = [builder, value, valueType]() {
-                llvm::Type *unboxedType = WrappedValue::typeForValueType(valueType, valueType->isBoxed());
-                if (valueType->isBoxed()) {
-                    switch (valueType->getSubType()->getKind()) {
-                        case ValueTypeKind::BOOL:
-                        case ValueTypeKind::U8:
-                        case ValueTypeKind::U16:
-                        case ValueTypeKind::U32:
-                        case ValueTypeKind::S8:
-                        case ValueTypeKind::S16:
-                        case ValueTypeKind::S32:
-                            return builder->CreateTruncOrBitCast(value, unboxedType);
-                        case ValueTypeKind::F32:
-                        case ValueTypeKind::F64:
-                            return builder->CreateFPCast(value, unboxedType);
-                        case ValueTypeKind::A:
-                        case ValueTypeKind::PTR:
-                            return builder->CreateBitOrPointerCast(value, unboxedType);
-                        default:
-                            return (llvm::Value*)nullptr;
-                    }
-                } else {
-                    return value;
-                }
             };
         }
     // Function argument
@@ -90,13 +64,10 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->valueLambda = [argument]() {
             return argument;
         };
-        wrappedValue->pointerValueLambda = [builder, allocaType, argument]() {
-            llvm::AllocaInst *alloca = builder->CreateAlloca(allocaType, nullptr);
-            builder->CreateStore(argument, alloca);
+        wrappedValue->pointerValueLambda = [allocaType, argument]() {
+            llvm::AllocaInst *alloca = WrappedValue::builder.lock()->CreateAlloca(allocaType, nullptr);
+            WrappedValue::builder.lock()->CreateStore(argument, alloca);
             return alloca;
-        };
-        wrappedValue->unboxedValueLambda = []() {
-            return nullptr;
         };
     // Function
     } else if (llvm::Function *fun = llvm::dyn_cast<llvm::Function>(value)) {
@@ -107,19 +78,13 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->pointerValueLambda = [fun]() {
             return fun;
         };
-        wrappedValue->unboxedValueLambda = []() {
-            return nullptr;
-        };
     // Global
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
-        wrappedValue->valueLambda = [builder, global]() {
-            return builder->CreateLoad(global->getValueType(), global, format("ld_wrp-{}", string(global->getName())));
+        wrappedValue->valueLambda = [global]() {
+            return WrappedValue::builder.lock()->CreateLoad(global->getValueType(), global, format("ld_wrp-{}", string(global->getName())));
         };
-        wrappedValue->pointerValueLambda = [builder, global]() {
+        wrappedValue->pointerValueLambda = [global]() {
             return global;
-        };
-        wrappedValue->unboxedValueLambda = []() {
-            return nullptr;
         };
     // Constant
     } else if (llvm::Constant *constant = llvm::dyn_cast<llvm::Constant>(value)) {
@@ -129,81 +94,45 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(shared_ptr<llvm::Module> mod
         wrappedValue->valueLambda = [constant]() {
             return constant;
         };
-        wrappedValue->pointerValueLambda = [module, constant]() {
+        wrappedValue->pointerValueLambda = [constant]() {
             return new llvm::GlobalVariable(
-                *module,
+                *WrappedValue::llvmModule.lock(),
                 constant->getType(),
                 true,
                 llvm::GlobalValue::LinkageTypes::PrivateLinkage,
                 constant
             );
         };
-        wrappedValue->unboxedValueLambda = []() {
-            return nullptr;
-        };
     // Value
     } else {
         wrappedValue->valueLambda = [value]() {
             return value;
         };
-        wrappedValue->pointerValueLambda = [builder, value]() {
-            llvm::AllocaInst *allocaInst = builder->CreateAlloca(value->getType(), nullptr, "a_wrp");
-            builder->CreateStore(value, allocaInst);
+        wrappedValue->pointerValueLambda = [value]() {
+            llvm::AllocaInst *allocaInst = WrappedValue::builder.lock()->CreateAlloca(value->getType(), nullptr, "a_wrp");
+            WrappedValue::builder.lock()->CreateStore(value, allocaInst);
             return allocaInst;
-        };
-        wrappedValue->unboxedValueLambda = [builder, value, valueType]() {
-            llvm::Type *unboxedType = WrappedValue::typeForValueType(valueType, valueType->isBoxed());
-            if (valueType->isBoxed()) {
-                switch (valueType->getKind()) {
-                    case ValueTypeKind::BOOL:
-                    case ValueTypeKind::U8:
-                    case ValueTypeKind::U16:
-                    case ValueTypeKind::U32:
-                    case ValueTypeKind::S8:
-                    case ValueTypeKind::S16:
-                    case ValueTypeKind::S32:
-                        return builder->CreateTruncOrBitCast(value, unboxedType);
-                    case ValueTypeKind::F32:
-                    case ValueTypeKind::F64:
-                        return builder->CreateFPCast(value, unboxedType);
-                    case ValueTypeKind::A:
-                    case ValueTypeKind::PTR:
-                        return builder->CreateBitOrPointerCast(value, unboxedType);
-                    default:
-                        return (llvm::Value*)nullptr;
-                }
-            } else {
-                return value;
-            }
         };
     }
 
     return wrappedValue;
 }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *pointerValue, llvm::Type *type, shared_ptr<ValueType> valueType) {
+shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(llvm::Value *pointerValue, llvm::Type *type, shared_ptr<ValueType> valueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    llvm::Type *pointeeType = WrappedValue::typeForValueType(valueType, true);
+    llvm::Type *pointeeType = WrappedValue::llvmTypeForValueType(valueType, true);
     wrappedValue->type = pointeeType;
     wrappedValue->valueType = valueType;
 
-    wrappedValue->valueLambda = [builder, pointeeType, pointerValue, valueType]() {
-        llvm::LoadInst *load = builder->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
+    wrappedValue->valueLambda = [pointeeType, pointerValue, valueType]() {
+        llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
         load->setVolatile(true);
         return load;
     };
     wrappedValue->pointerValueLambda = [pointerValue]() {
         return pointerValue;
     };
-    wrappedValue->unboxedValueLambda = [builder, pointerValue, valueType]() {
-        llvm::Type *pointeeType = WrappedValue::typeForValueType(valueType, valueType->isBoxed());
-
-        llvm::LoadInst *load = builder->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
-        load->setVolatile(true);
-        return load;
-    };
-
     return wrappedValue;
 }
 
@@ -248,30 +177,31 @@ llvm::Value *WrappedValue::getPointerValue() {
 }
 
 llvm::Value *WrappedValue::getUnboxedValue() {
-    return unboxedValueLambda();
-}
-
-llvm::Value *WrappedValue::getBitcastValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Type *targetType) {
-    /*llvm::Value *sourceValue = getValue();
-
-    sourceValue->print(llvm::outs());
-    llvm::outs() << "\n";
-    targetType->print(llvm::outs());
-    llvm::outs() << "\n";
-
-    if (!targetType->isIntOrPtrTy() && !targetType->isFloatingPointTy())
-        return sourceValue;
-
-    if (targetType->isFloatingPointTy()) {
-        return builder->CreateBitCast(sourceValue, targetType);
-    } if (targetType->isPointerTy() || sourceValue->getType()->getIntegerBitWidth() < targetType->getIntegerBitWidth()) {
-        return builder->CreateZExtOrBitCast(sourceValue, targetType);
-    } else if (sourceValue->getType()->getIntegerBitWidth() > targetType->getIntegerBitWidth()) {
-        return builder->CreateTruncOrBitCast(sourceValue, targetType);
+    llvm::Value *value = getValue();
+    if (value == nullptr)
+        return nullptr;
+    llvm::Type *unboxedLlvmType = WrappedValue::llvmTypeForValueType(valueType, valueType->isBoxed());
+    if (valueType->isBoxed()) {
+        switch (valueType->getSubType()->getKind()) {
+            case ValueTypeKind::BOOL:
+            case ValueTypeKind::U8:
+            case ValueTypeKind::U16:
+            case ValueTypeKind::U32:
+            case ValueTypeKind::S8:
+            case ValueTypeKind::S16:
+            case ValueTypeKind::S32:
+                return WrappedValue::builder.lock()->CreateTruncOrBitCast(value, unboxedLlvmType);
+            case ValueTypeKind::F32:
+            case ValueTypeKind::F64:
+                return WrappedValue::builder.lock()->CreateFPCast(value, unboxedLlvmType);
+            case ValueTypeKind::A:
+            case ValueTypeKind::PTR:
+                return WrappedValue::builder.lock()->CreateBitOrPointerCast(value, unboxedLlvmType);
+            default:
+                return (llvm::Value*)nullptr;
+        }
     }
-   
-   return sourceValue;*/
-   return builder->CreateLoad(targetType, getPointerValue());
+    return value;
 }
 
 llvm::Constant *WrappedValue::getConstantValue() {

@@ -36,6 +36,9 @@ From composites:
 - `data<>`: If each element can be cast implicitly to specified subtype
 - `blob<>`: If elements match and each in order can be cast implicitly
 
+From/To boxed:
+`boxed` types are implicitly cast to their specified type. For example `boxed<u32>` and `u32` are effectively equivalent.
+
 ## Explicit Casts
 Any numeric type can be cast to any other numeric type. Negative number cast to unsigned will be set to 0. Exceeding values will be capped to minimum/maximum values.
 

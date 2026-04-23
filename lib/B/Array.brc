@@ -24,6 +24,15 @@ ARRAY_INIT_CAPACITY u32 <- 8
         it.valuesCount <- it.valuesCount + 1
     ;
 
+    /*pop fun -> boxed<T>
+        if it.valuesCount = 0
+            empty boxed<T>
+            ret empty
+        ;
+        it.valuesCount <- it.valuesCount - 1
+        ret it.at(it.valuesCount)
+    ;*/
+
     at fun: index u32 -> boxed<T>
         ret it.pValues.val[index]
     ;
