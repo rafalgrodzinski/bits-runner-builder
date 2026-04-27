@@ -8,5 +8,5 @@ brb "${SCRIPT_DIR}/main.brc" &&
 cc -o ${TEST_NAME} main.o &&
 ./${TEST_NAME}
 
-[ ${?} = 123 ]
+[ ${?} = 2 ]
 check_test ${TEST_NAME} ${?}

@@ -1,0 +1,7 @@
+doStuff fun: values data<u32, 8> -> u32
+    ret values[1]
+;
+
+@export main fun -> u32
+    ret doStuff({2, 10, 7, 5})
+;

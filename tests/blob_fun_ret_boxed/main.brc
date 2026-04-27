@@ -1,0 +1,12 @@
+stuff<T> blob
+    num boxed<T>
+
+    doStuff fun -> boxed<T>
+        ret it.num
+    ;
+;
+
+@export main fun -> u32
+    stuff blob<stuff, u32> <- {14}
+    ret stuff.doStuff()
+;
