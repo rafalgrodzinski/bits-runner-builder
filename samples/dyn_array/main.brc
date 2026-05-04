@@ -18,7 +18,7 @@ Thing<T> blob
     value boxed<T>
 ;
 
-@export main fun
+@export main fun -> u32
     // Integers
     @B.String("ints").println()
     ints blob<@B.Array, u32>
@@ -52,4 +52,6 @@ Thing<T> blob
         @B.String(" ").print()
     ;
     @B.String("\n").println()
+
+    ret 0
 ;
