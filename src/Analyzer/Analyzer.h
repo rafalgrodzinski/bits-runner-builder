@@ -101,7 +101,7 @@ private:
     shared_ptr<ValueType> typeForBinaryOperation(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
 
     shared_ptr<Expression> checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType);
-    bool canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
+    bool canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
     bool checkValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location);
     shared_ptr<ValueType> resolvedValueType(shared_ptr<ValueType> valueType);

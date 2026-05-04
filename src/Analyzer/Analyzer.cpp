@@ -791,7 +791,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
         return expressionCast->getValueType();
     // cast composite to complex type
     } else if (isSourceComposite && (isTargetBlob || isTargetData || isTargetPointer || isTargetProto)) {
-        if (canCast(parentExpression->getValueType(), expressionCast->getValueType())) {
+        if (canImplicitCast(parentExpression->getValueType(), expressionCast->getValueType())) {
             // we don't want to cast the whole composite, just the individual expression
             // so we ignore the result (we don't replace the composite expression itself)
             checkAndTryCasting(parentExpression, expressionCast->getValueType(), nullptr);
@@ -1322,7 +1322,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     if (sourceType->isEqual(targetType))
         return sourceExpression;
 
-    if (!canCast(sourceType, targetType))
+    if (!canImplicitCast(sourceType, targetType))
         return sourceExpression;
 
     // single literal just needs to set the type
@@ -1429,7 +1429,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     return targetExpression;
 }
 
-bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
+bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     switch (sourceType->getKind()) {
         // from literal types
         case ValueTypeKind::UINT: {
@@ -1454,13 +1454,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1482,13 +1482,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1505,13 +1505,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1543,13 +1543,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1577,13 +1577,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1609,13 +1609,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
                 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1639,13 +1639,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1669,13 +1669,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1696,13 +1696,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1722,13 +1722,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1747,13 +1747,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1771,13 +1771,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1792,13 +1792,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1814,13 +1814,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
 
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
 
                 default:
@@ -1836,13 +1836,13 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                     return sourceType->getSubType()->isEqual(targetType->getSubType());
                 }
                 case ValueTypeKind::BOXED: {
-                    return canCast(sourceType, targetType->getSubType());
+                    return canImplicitCast(sourceType, targetType->getSubType());
                 }
                 case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedValueType(targetType);
                     if (resolvedNamedValueType->isNamedType())
                         return false;
-                    return canCast(sourceType, resolvedNamedValueType);
+                    return canImplicitCast(sourceType, resolvedNamedValueType);
                 }
                 default:
                     return false;
@@ -1854,7 +1854,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
         case ValueTypeKind::DATA: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::DATA:
-                    return canCast(sourceType->getSubType(), targetType->getSubType());
+                    return canImplicitCast(sourceType->getSubType(), targetType->getSubType());
 
                 default:
                     return false;
@@ -1886,7 +1886,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
                 case ValueTypeKind::DATA: {
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
                     for (shared_ptr<ValueType> sourceElementType : sourceElementTypes) {
-                        if (!canCast(sourceElementType, targetType->getSubType()))
+                        if (!canImplicitCast(sourceElementType, targetType->getSubType()))
                             return false;
                     }
                     return true;
@@ -1908,7 +1908,7 @@ bool Analyzer::canCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> t
 
                     // check that each entry in composite can be cast to member in blob
                     for (int i=0; i<(*targetMemberTypes).size(); i++) {
-                        if (!canCast(sourceElementTypes.at(i), (*targetMemberTypes).at(i)))
+                        if (!canImplicitCast(sourceElementTypes.at(i), (*targetMemberTypes).at(i)))
                             return false;
                     }
                     return true;
