@@ -176,34 +176,6 @@ llvm::Value *WrappedValue::getPointerValue() {
     return pointerValueLambda();
 }
 
-llvm::Value *WrappedValue::getUnboxedValue() {
-    llvm::Value *value = getValue();
-    if (value == nullptr)
-        return nullptr;
-    llvm::Type *unboxedLlvmType = WrappedValue::llvmTypeForValueType(valueType, valueType->isBoxed());
-    if (valueType->isBoxed()) {
-        switch (valueType->getSubType()->getKind()) {
-            case ValueTypeKind::BOOL:
-            case ValueTypeKind::U8:
-            case ValueTypeKind::U16:
-            case ValueTypeKind::U32:
-            case ValueTypeKind::S8:
-            case ValueTypeKind::S16:
-            case ValueTypeKind::S32:
-                return WrappedValue::builder.lock()->CreateTruncOrBitCast(value, unboxedLlvmType);
-            case ValueTypeKind::F32:
-            case ValueTypeKind::F64:
-                return WrappedValue::builder.lock()->CreateFPCast(value, unboxedLlvmType);
-            case ValueTypeKind::A:
-            case ValueTypeKind::PTR:
-                return WrappedValue::builder.lock()->CreateBitOrPointerCast(value, unboxedLlvmType);
-            default:
-                return (llvm::Value*)nullptr;
-        }
-    }
-    return value;
-}
-
 llvm::Constant *WrappedValue::getConstantValue() {
     return llvm::dyn_cast<llvm::Constant>(getValue());
 }

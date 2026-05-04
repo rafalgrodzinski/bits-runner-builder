@@ -1,3 +1,16 @@
+/*stuff<T> blob
+    num boxed<T>
+
+    doStuff fun -> boxed<T>
+        ret it.num
+    ;
+;
+
+@export main fun -> u32
+    stuff blob<stuff, f32> <- {14}
+    ret stuff.doStuff().f32.u32
+;*/
+
 @import B
 @import BSys
 
@@ -11,7 +24,7 @@ Thing<T> blob
     ints blob<@B.Array, u32>
     rep i u32, i < 22, i <- i + 1: ints.push(i * i)
     rep i u32, i < ints.valuesCount, i <- i + 1
-        @B.StringForU32(ints.at(i)).print()
+        @B.StringForU32(ints.at(i).u32).print()
         @B.String(" ").print()
     ;
     @B.String("\n").println()
@@ -21,7 +34,7 @@ Thing<T> blob
     floats blob<@B.Array, f32>
     rep i u32, i < 10, i <- i + 1: floats.push(i * 1.33)
     rep i u32, i < floats.valuesCount, i <- i + 1
-        @B.StringForF32(floats.at(i)).print()
+        @B.StringForF32(floats.at(i).f32).print()
         @B.String(" ").print()
     ;
     @B.String("\n").println()
@@ -35,7 +48,7 @@ Thing<T> blob
         blobs.push(pThing)
     ;
     rep i u32, i < blobs.valuesCount, i <- i + 1
-        @B.StringForS32(blobs.at(i).val.value).print()
+        @B.StringForS32(blobs.at(i).ptr<blob<Thing, s32>>.val.value.s32).print()
         @B.String(" ").print()
     ;
     @B.String("\n").println()

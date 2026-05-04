@@ -40,8 +40,8 @@ public:
     optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(string name);
     bool setProtoMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
     
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(string name);
-    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(string name);
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(shared_ptr<ValueType> blobValueType);
+    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType);
     bool isBlobDeclared(string name);
     bool setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
 

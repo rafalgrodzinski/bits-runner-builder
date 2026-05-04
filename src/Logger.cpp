@@ -243,7 +243,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 
     // name
     line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
-    // type argument name
+    // named type keys
     if (!statement->getNamedTypeKeys().empty()) {
         line += "<";
         for (int i=0; i<statement->getNamedTypeKeys().size(); i++) {
@@ -1316,10 +1316,10 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::BLOB: {
             string text;
             text += format("BLOB<`{}`", *valueType->getBlobName());
-            if (valueType->getArgumentTypes()) {
-                for (int i=0; i<(*valueType->getArgumentTypes()).size(); i++) {
+            if (valueType->getNamedTypeValues()) {
+                for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
                     text += ", ";
-                    text += toString((*valueType->getArgumentTypes()).at(i));
+                    text += toString((*valueType->getNamedTypeValues()).at(i));
                 }
             }
             text += ">";

@@ -46,6 +46,7 @@ enum class ValueTypeKind {
 
 class ValueType {
 friend class Analyzer;
+friend class AnalyzerScope;
 
 private:
     ValueTypeKind kind;
@@ -58,6 +59,7 @@ private:
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes;
     optional<string> namedTypeKey;
     optional<vector<string>> namedTypeKeys;
+    optional<vector<shared_ptr<ValueType>>> namedTypeValues;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -79,7 +81,7 @@ public:
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> blob(string blobName, vector<shared_ptr<ValueType>> argumentTypes);
+    static shared_ptr<ValueType> blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
     static shared_ptr<ValueType> proto(string protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
@@ -107,10 +109,8 @@ public:
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
     // boxed
     optional<string> getNamedTypeKey();
-    shared_ptr<ValueType> getUnboxedPointeeValueType();
-
-
-    shared_ptr<ValueType> unboxedValueTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox);
+    optional<vector<string>> getNamedTypeKeys();
+    optional<vector<shared_ptr<ValueType>>> getNamedTypeValues();
 
     bool isEqual(shared_ptr<ValueType> other);
 

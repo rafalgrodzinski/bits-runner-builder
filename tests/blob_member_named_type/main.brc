@@ -4,5 +4,5 @@ stuff<T> blob
 
 @export main fun -> u32
     stuff blob<stuff, u32> <- {14}
-    ret stuff.num
+    ret stuff.num.u32
 ;

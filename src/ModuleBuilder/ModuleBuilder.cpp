@@ -460,9 +460,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) 
         shared_ptr<WrappedValue> returnWrappedValue = wrappedValueForExpression(statementReturn->getExpression());
         if (returnWrappedValue == nullptr)
             return;
-        // in case of boxed values, they may have to be transformed first
-        llvm::Value *returnValue = returnWrappedValue->getUnboxedValue();
-        builder->CreateRet(returnValue);
+        builder->CreateRet(returnWrappedValue->getValue());
     } else {
         builder->CreateRetVoid();
     }
@@ -1765,7 +1763,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     if (parentWrappedValue->isArray() && isCount) {
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
-        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getUnboxedPointeeValueType();
+        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
         if (pointeeValueType == nullptr) {
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr;
@@ -1775,7 +1773,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr; 
         }
-        return wrappedValueForValue(nullptr, parentWrappedValue->getUnboxedValue(), pointeeType, expression);
+        return wrappedValueForValue(nullptr, parentWrappedValue->getValue(), pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         llvm::Value *pointerValue = parentWrappedValue->getValue();
         llvm::Value *alloca = builder->CreateAlloca(typePtr, nullptr, format("a_vadr-{}", string(pointerValue->getName())));
@@ -1824,9 +1822,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
         shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(argumentExpression);
         if (wrappedValue == nullptr)
             return nullptr;
-        // In case the argument is boxed type, we want to cast to it first
-        llvm::Value *argValue = builder->CreateBitCast(wrappedValue->getValue(), funType->getParamType(i));
-        argValues.push_back(argValue);
+        argValues.push_back(wrappedValue->getValue());
     }
 
     return WrappedValue::wrappedValue(
@@ -1841,15 +1837,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isSourceSInt = false;
     bool isSourceFloat = false;
     bool isSourceAddress = false;
+    bool isSourcePointer = false;
     bool isSourceData = false;
+    bool isSourceBoxed = false;
     int sourceSize = 0;
 
     // Unbox source type if required
-    ValueTypeKind sourceValueTypeKind;
-    if (sourceWrappedValue->getValueType()->isBoxed())
-        sourceValueTypeKind = sourceWrappedValue->getValueType()->getSubType()->getKind();
-    else
-        sourceValueTypeKind = sourceWrappedValue->getValueType()->getKind();
+    ValueTypeKind sourceValueTypeKind = sourceWrappedValue->getValueType()->getKind();
     switch (sourceValueTypeKind) {
         case ValueTypeKind::UINT:
             isSourceUInt = true;
@@ -1907,11 +1901,20 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             isSourceAddress = true;
             sourceSize = typePtrInt->getBitWidth();
             break;
+        case ValueTypeKind::PTR:
+            isSourcePointer = true;
+            sourceSize = typePtrInt->getBitWidth();
+            break;
         case ValueTypeKind::DATA: {
             isSourceData = true;
             if (shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(sourceWrappedValue->getValueType()->getCountExpression())) {
                 sourceSize = expressionLiteral->getUIntValue();
             }
+            break;
+        }
+        case ValueTypeKind::BOXED: {
+            isSourceBoxed = true;
+            sourceSize = typeBoxed->getIntegerBitWidth();
             break;
         }
         default:
@@ -1926,14 +1929,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isTargetAddress = false;
     bool isTargetPointer = false;
     bool isTargetData = false;
+    bool isTargetBoxed = false;
     int targetSize = 0;
 
     // Unwrap target type if required
-    ValueTypeKind targetValueTypeKind;
-    if (targetValueType->isBoxed())
-        targetValueTypeKind = targetValueType->getSubType()->getKind();
-    else
-        targetValueTypeKind = targetValueType->getKind();
+    ValueTypeKind targetValueTypeKind = targetValueType->getKind();
     switch (targetValueTypeKind) {
         case ValueTypeKind::UINT:
             isTargetUInt = true;
@@ -2000,6 +2000,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             if (shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(targetValueType->getCountExpression())) {
                 targetSize = expressionLiteral->getUIntValue();
             }
+            break;
+        }
+        case ValueTypeKind::BOXED: {
+            isTargetBoxed = true;
+            targetSize = typeBoxed->getIntegerBitWidth();
             break;
         }
         default:
@@ -2161,6 +2166,27 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         }
 
         return WrappedValue::wrappedValue(targetAlloca, targetValueType);
+    } else if (isTargetBoxed) {
+        llvm::Value *bitcastValue;
+        if (targetSize > sourceSize) {
+            bitcastValue = builder->CreateBitOrPointerCast(sourceWrappedValue->getValue(), llvm::Type::getIntNTy(*context, sourceSize), "a00_");
+            bitcastValue = builder->CreateZExt(bitcastValue, typeBoxed, "b00_");
+        } else {
+            bitcastValue = builder->CreateBitOrPointerCast(sourceWrappedValue->getValue(), typeBoxed, "c00_");
+        }
+        return WrappedValue::wrappedValue(
+            bitcastValue,
+            targetValueType
+        );
+    } else if (isSourceBoxed) {
+        llvm::Value *bitcastValue = sourceWrappedValue->getValue();
+        if (targetSize < sourceSize)
+            bitcastValue = builder->CreateTrunc(bitcastValue, llvm::Type::getIntNTy(*context, targetSize), "a01_");
+        bitcastValue = builder->CreateBitOrPointerCast(bitcastValue, targetType, "b11_");
+        return WrappedValue::wrappedValue(
+            bitcastValue,
+            targetValueType
+        );
     } else {
         markErrorInvalidCast(nullptr);
         return nullptr;

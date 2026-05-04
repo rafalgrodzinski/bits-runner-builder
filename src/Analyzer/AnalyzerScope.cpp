@@ -43,21 +43,32 @@ bool AnalyzerScope::setProtoMembers(string name, optional<vector<pair<string, sh
     return true;
 }
 
-optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(string name) {
+optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueType> blobValueType) {
+    optional<string> blobName = blobValueType->getBlobName();
+    if (!blobName)
+        return {};
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().blobMembersMap.find(name);
-        if (it != scopeLevels.top().blobMembersMap.end())
-            return scopeLevels.top().blobMembersMap[name];
+        auto it = scopeLevels.top().blobMembersMap.find(*blobName);
+        // check if found members
+        if (it != scopeLevels.top().blobMembersMap.end()) {
+            vector<pair<string, shared_ptr<ValueType>>> blobMembers = *scopeLevels.top().blobMembersMap[*blobName];
+            // update named value types
+            for (pair<string, shared_ptr<ValueType>> &blobMember : blobMembers) {
+                blobMember.second->namedTypeKeys = blobValueType->getNamedTypeKeys();
+                blobMember.second->namedTypeValues = blobValueType->getNamedTypeValues();
+            }
+            return blobMembers;
+        }
         scopeLevels.pop();
     }
 
     return {};
 }
 
-optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(string name) {
-    optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = getBlobMembers(name);
+optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType) {
+    optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = getBlobMembers(blobValueType);
         if (!blobMembers)
             return { };
 

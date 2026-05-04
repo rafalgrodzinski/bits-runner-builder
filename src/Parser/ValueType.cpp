@@ -84,11 +84,11 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::blob(string blobName, vector<shared_ptr<ValueType>> argumentTypes) {
+shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::BLOB;
     valueType->blobName = blobName;
-    valueType->argumentTypes = argumentTypes;
+    valueType->namedTypeValues = namedTypeValues;
     return valueType;
 }
 
@@ -148,6 +148,13 @@ ValueTypeKind ValueType::getKind() {
 }
 
 shared_ptr<ValueType> ValueType::getSubType() {
+    if (subType == nullptr)
+        return nullptr;
+
+    if (namedTypeKeys && namedTypeValues) {
+        subType->namedTypeKeys = namedTypeKeys;
+        subType->namedTypeValues = namedTypeValues;
+    }
     return subType;
 }
 
@@ -168,6 +175,8 @@ optional<vector<shared_ptr<ValueType>>> ValueType::getArgumentTypes() {
 }
 
 shared_ptr<ValueType> ValueType::getReturnType() {
+    returnType->namedTypeKeys = namedTypeKeys;
+    returnType->namedTypeValues = namedTypeValues;
     return returnType;
 }
 
@@ -187,50 +196,12 @@ optional<string> ValueType::getNamedTypeKey() {
     return namedTypeKey;
 }
 
-shared_ptr<ValueType> ValueType::getUnboxedPointeeValueType() {
-    if (kind == ValueTypeKind::BOXED && subType->kind == ValueTypeKind::PTR) {
-        return subType->getSubType();
-    } else if (kind == ValueTypeKind::PTR) {
-        return subType;
-    }
-
-    return nullptr;
+optional<vector<string>> ValueType::getNamedTypeKeys() {
+    return namedTypeKeys;
 }
 
-shared_ptr<ValueType> ValueType::unboxedValueTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox) {
-    // skip for parent types other than blobs or for boxed types from withing of blob's function
-    if (kind != ValueTypeKind::BLOB || !namedTypeKeys)
-        return valueType;
-
-    switch (valueType->getKind()) {
-        case ValueTypeKind::BOXED: {
-            if (shouldUnbox) {
-                return unboxedValueTypeForValueType(valueType->getSubType(), true);
-            } else {
-                return ValueType::boxed(unboxedValueTypeForValueType(valueType->getSubType(), true));
-            }
-        }
-        case ValueTypeKind::DATA: {
-            return ValueType::data(unboxedValueTypeForValueType(valueType->getSubType(), true), valueType->getCountExpression());
-        }
-        case ValueTypeKind::PTR: {
-            return ValueType::ptr(unboxedValueTypeForValueType(valueType->getSubType(), true));
-        }
-        case ValueTypeKind::NAMED_TYPE: {
-            // first check if the virtual dictionary of namedTypes:argumentTypes exists and is valid
-            if (!argumentTypes || !namedTypeKeys || (*argumentTypes).size() != (*namedTypeKeys).size())
-                return {};
-
-            // then try finding appropriate entry
-            for (int i=0; i<(*namedTypeKeys).size(); i+=1) {
-                if ((*namedTypeKeys).at(i).compare(*valueType->getNamedTypeKey()) == 0)
-                    return (*argumentTypes).at(i);
-            }
-        }
-        default: {
-            return valueType;
-        }
-    }
+optional<vector<shared_ptr<ValueType>>> ValueType::getNamedTypeValues() {
+    return namedTypeValues;
 }
 
 bool ValueType::isEqual(shared_ptr<ValueType> other) {
@@ -276,7 +247,7 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
             return (*blobName).compare(*other->getBlobName()) == 0;
         }
         case ValueTypeKind::BOXED: {
-            return subType->isEqual(other);
+            return other->isBoxed() && subType->isEqual(other->getSubType());
         }
         case ValueTypeKind::FUN: {
             // are both function types?
@@ -303,10 +274,7 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
             break;
     }
 
-    if (other->isBoxed())
-        return this->isEqual(other->getSubType());
-    else
-        return kind == other->getKind();
+    return kind == other->getKind();
 }
 
 bool ValueType::isNumeric() {
@@ -329,9 +297,6 @@ bool ValueType::isNumeric() {
 
         case ValueTypeKind::A:
             return true;
-
-        case ValueTypeKind::BOXED:
-            return getSubType()->isNumeric();
 
         default:
             break;
@@ -357,9 +322,6 @@ bool ValueType::isInteger() {
         case ValueTypeKind::A:
             return true;
 
-        case ValueTypeKind::BOXED:
-            return subType->isInteger();
-
         default:
             break;
     }
@@ -377,9 +339,6 @@ bool ValueType::isUnsignedInteger() {
         case ValueTypeKind::A:
             return true;
 
-        case ValueTypeKind::BOXED:
-            return subType->isUnsignedInteger();
-
         default:
             break;
     }
@@ -396,9 +355,6 @@ bool ValueType::isSignedInteger() {
         case ValueTypeKind::S64:
             return true;
 
-        case ValueTypeKind::BOXED:
-            return subType->isSignedInteger();
-
         default:
             break;
     }
@@ -413,9 +369,6 @@ bool ValueType::isFloat() {
         case ValueTypeKind::F64:
             return true;
 
-        case ValueTypeKind::BOXED:
-            return subType->isFloat();
-
         default:
             break;
     }
@@ -424,10 +377,7 @@ bool ValueType::isFloat() {
 }
 
 bool ValueType::isBool() {
-    if (kind == ValueTypeKind::BOXED)
-        return subType->isBool();
-    else
-        return kind == ValueTypeKind::BOOL;
+    return kind == ValueTypeKind::BOOL;
 }
 
 bool ValueType::isData() {
@@ -467,17 +417,11 @@ bool ValueType::isDataNumeric() {
 }
 
 bool ValueType::isAddress() {
-    if (kind == ValueTypeKind::BOXED)
-        return subType->isAddress();
-    else
-        return kind == ValueTypeKind::A;
+    return kind == ValueTypeKind::A;
 }
 
 bool ValueType::isPointer() {
-    if (kind == ValueTypeKind::BOXED)
-        return subType->isPointer();
-    else
-        return kind == ValueTypeKind::PTR;
+    return kind == ValueTypeKind::PTR;
 }
 
 bool ValueType::isFunction() {

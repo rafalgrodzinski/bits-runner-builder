@@ -36,7 +36,6 @@ public:
 
     llvm::Value *getValue();
     llvm::Value *getPointerValue();
-    llvm::Value *getUnboxedValue();
 
     llvm::Constant *getConstantValue();
     llvm::GlobalVariable *getGlobalValue();

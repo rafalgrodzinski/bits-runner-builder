@@ -1,5 +1,5 @@
 doStuff fun: value boxed<u32> -> u32
-    ret value * 2
+    ret value.u32 * 2
 ;
 
 @export main fun -> u32

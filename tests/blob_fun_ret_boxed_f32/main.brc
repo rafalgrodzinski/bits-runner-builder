@@ -8,5 +8,5 @@ stuff<T> blob
 
 @export main fun -> u32
     stuff blob<stuff, f32> <- {14}
-    ret stuff.doStuff().u32
+    ret stuff.doStuff().f32.u32
 ;
