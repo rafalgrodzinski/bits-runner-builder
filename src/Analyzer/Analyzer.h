@@ -103,8 +103,7 @@ private:
     shared_ptr<Expression> checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType);
     bool canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
-    bool checkValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location);
-    shared_ptr<ValueType> resolvedValueType(shared_ptr<ValueType> valueType);
+    shared_ptr<ValueType> resolvedAndCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location);
 
     void markErrorAlreadyDefined(shared_ptr<Location> location, string identifier);
     void markErrorInvalidAttribute(shared_ptr<Location> location, string name);
