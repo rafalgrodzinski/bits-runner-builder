@@ -289,7 +289,7 @@ int main(int argc, char **argv) {
             module,
             modulesStore.getExportedHeaderStatementsMap()
         );
-        shared_ptr<llvm::Module> moduleLLVM = moduleBuilder.getModuleLLVM();
+        shared_ptr<llvm::Module> llvmModule = moduleBuilder.getLlvmModule();
         timeStamp = clock() - timeStamp;
         totalModuleBuildTime += timeStamp;
 
@@ -298,7 +298,7 @@ int main(int argc, char **argv) {
 
         // Generate native machine code
         timeStamp = clock();
-        codeGenerator.generateObjectFile(moduleLLVM, outputKind, verbosity >= Verbosity::V1);
+        codeGenerator.generateObjectFile(llvmModule, outputKind, verbosity >= Verbosity::V1);
         timeStamp = clock() - timeStamp;
         totalCodeGnerationTime += timeStamp;
 

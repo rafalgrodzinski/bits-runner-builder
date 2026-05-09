@@ -14,6 +14,10 @@ using namespace std;
 
 class WrappedValue {
 private:
+    static weak_ptr<llvm::Module> llvmModule;
+    static weak_ptr<llvm::IRBuilder<>> builder;
+    static function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType;
+
     llvm::Type *type;
     shared_ptr<ValueType> valueType;
 
@@ -21,17 +25,18 @@ private:
     function<llvm::Value *()> pointerValueLambda;
 
 public:
-    static function<llvm::Type *(shared_ptr<ValueType>, bool)> typeForValueType;
-
     WrappedValue();
 
-    static shared_ptr<WrappedValue> wrappedValue(shared_ptr<llvm::Module> module, shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *value, shared_ptr<ValueType> valueType);
-    static shared_ptr<WrappedValue> wrappedPointerValue(shared_ptr<llvm::IRBuilder<>> builder, llvm::Value *pointerValue, llvm::Type *pointeeType, shared_ptr<ValueType> valueType);
+    static void setup(weak_ptr<llvm::Module> llvmModule, weak_ptr<llvm::IRBuilder<>> builder, function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType);
+
+    static shared_ptr<WrappedValue> wrappedValue(llvm::Value *value, shared_ptr<ValueType> valueType);
+    static shared_ptr<WrappedValue> wrappedPointerValue(llvm::Value *pointerValue, llvm::Type *pointeeType, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, uint64_t value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
 
     llvm::Value *getValue();
     llvm::Value *getPointerValue();
+
     llvm::Constant *getConstantValue();
     llvm::GlobalVariable *getGlobalValue();
 

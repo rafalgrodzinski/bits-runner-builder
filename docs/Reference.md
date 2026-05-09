@@ -16,6 +16,7 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
 - [Bitwise Operators](Reference.md#bitwise-operators) (`&?`, `|`, `^`, `&`, `<<`, `>>`, `~`)
 - [Simple Variables](Reference.md#simple-variables) (`u8`, `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `a`, `ptr`, `data`, `blob`)
+- [Boxed](Reference.md#boxed) (`boxed<T>`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
 - [Proto](Reference.md#proto) (`proto<>`)
@@ -150,6 +151,16 @@ bool // true or false
 a // memory address, size depends on target architecture (hence no following number)
 ```
 
+## Boxed
+BRC supports generics-like compile-time types through `boxed`. It is effectively equivalent to a C's union, but it is compile-time type checked. Boxed types can store either a simple variable or a pointer. They can be either direclty specialized, for example through `boxed<u32>` or `boxed<ptr<data<u8>>`, or through named type passed through a blob. Refer to samples/dyn_array for an example.
+```
+Storage<T> blob
+  value blob<T>
+;
+
+store blob<Storage, u32> <- {77}
+```
+
 ## Data
 Data is a composite of identical members and constant size, also known as arrays. It has a built-in member `.count`, which is equivalent to the number of elements of the array. An array can be assigned to another array of the same type, which will create a shallow copy. If their sizes don't mach, only number of elements equivalent to the smaller array will be copied. If size is not specified, it will be inferred either from composite literal, other data variable, or a function call.
 ```
@@ -164,6 +175,8 @@ copiedNumbers <u32, 8> <- numbers // Only 8 values will be copied
 
 ## Blob
 Blobs are composites of different member types, also known as structs. Before use they need to be specified using the `blob` keyword. They can be instantiated using the composite literal `{ }` or by assigning each member `.member` individually. Assigning one blob to another will create its copy. There is no casting between different blob types. Blobs can contain other blobs, but only if they have been already beforehand defined. This helps prevent a blobacalypse where `blob1` would contain `blob2` and `blob2` would contain `blob1` which would end up with infinite blobs. Using pointers is fine though.
+
+Blobs can implement a proto, which is indicated through `: proto1, proto` syntax. They can also define a named type through `BlobName<named1, named2>`, which then can be passed to a `boxed`.
 ```
 user blob
   id u64

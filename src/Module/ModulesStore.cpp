@@ -27,7 +27,7 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
             if (name.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
                 name = moduleName + "." + name;
             }
-            return ValueType::blob(name);
+            return ValueType::blob(name, {});
         }
         case ValueTypeKind::DATA:
             return ValueType::data(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getCountExpression());
@@ -127,6 +127,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
                         statementBlob->getName(),
+                        statementBlob->getNamedTypeKeys(),
                         exportedProtoNames,
                         exportedVariableStatements,
                         vector<shared_ptr<StatementFunction>>(), // don't include function definitions

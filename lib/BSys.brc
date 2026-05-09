@@ -1,0 +1,17 @@
+@module BSys
+
+@extern putchar fun: character u32 -> u32
+@extern malloc fun: bytesCount u64 -> a
+@extern free fun: address a
+
+@export printChar fun: character u8
+    putchar(character)
+;
+
+@export memAlloc fun: bytesCount u64 -> a
+    ret malloc(bytesCount)
+;
+
+@export memFree fun: address a
+    free(address)
+;

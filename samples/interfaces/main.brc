@@ -19,7 +19,7 @@ Triangle blob: @Lib.Shape
     ;
 ;
 
-@export main fun
+@export main fun -> u32
     shape proto<@Lib.Shape>
 
     square blob<Square>
@@ -38,4 +38,6 @@ Triangle blob: @Lib.Shape
 
     shape <- { pTriangle }
     @Lib.printShape(shape)
+
+    ret 0
 ;

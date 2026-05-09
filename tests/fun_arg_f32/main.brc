@@ -1,0 +1,7 @@
+doStuff fun: value f32 -> f32
+    ret value * 2
+;
+
+@export main fun -> u32
+    ret doStuff(3.13).u32
+;

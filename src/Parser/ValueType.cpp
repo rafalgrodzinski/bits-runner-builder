@@ -84,10 +84,11 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::blob(string blobName) {
+shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::BLOB;
     valueType->blobName = blobName;
+    valueType->namedTypeValues = namedTypeValues;
     return valueType;
 }
 
@@ -131,6 +132,13 @@ shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> element
     return valueType;
 }
 
+shared_ptr<ValueType> ValueType::namedType(string namedTypeKey) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>();
+    valueType->kind = ValueTypeKind::NAMED_TYPE;
+    valueType->namedTypeKey = namedTypeKey;
+    return valueType;
+}
+
 ValueType::ValueType() { }
 ValueType::ValueType(ValueTypeKind kind):
 kind(kind) { }
@@ -140,6 +148,13 @@ ValueTypeKind ValueType::getKind() {
 }
 
 shared_ptr<ValueType> ValueType::getSubType() {
+    if (subType == nullptr)
+        return nullptr;
+
+    if (namedTypeKeys && namedTypeValues) {
+        subType->namedTypeKeys = namedTypeKeys;
+        subType->namedTypeValues = namedTypeValues;
+    }
     return subType;
 }
 
@@ -160,6 +175,8 @@ optional<vector<shared_ptr<ValueType>>> ValueType::getArgumentTypes() {
 }
 
 shared_ptr<ValueType> ValueType::getReturnType() {
+    returnType->namedTypeKeys = namedTypeKeys;
+    returnType->namedTypeValues = namedTypeValues;
     return returnType;
 }
 
@@ -173,6 +190,18 @@ optional<string> ValueType::getProtoName() {
 
 optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() {
     return compositeElementTypes;
+}
+
+optional<string> ValueType::getNamedTypeKey() {
+    return namedTypeKey;
+}
+
+optional<vector<string>> ValueType::getNamedTypeKeys() {
+    return namedTypeKeys;
+}
+
+optional<vector<shared_ptr<ValueType>>> ValueType::getNamedTypeValues() {
+    return namedTypeValues;
 }
 
 bool ValueType::isEqual(shared_ptr<ValueType> other) {
@@ -218,7 +247,7 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
             return (*blobName).compare(*other->getBlobName()) == 0;
         }
         case ValueTypeKind::BOXED: {
-            return subType->isEqual(other);
+            return other->isBoxed() && subType->isEqual(other->getSubType());
         }
         case ValueTypeKind::FUN: {
             // are both function types?
@@ -245,10 +274,7 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
             break;
     }
 
-    if (other->isBoxed())
-        return this->isEqual(other->getSubType());
-    else
-        return kind == other->getKind();
+    return kind == other->getKind();
 }
 
 bool ValueType::isNumeric() {
@@ -271,9 +297,6 @@ bool ValueType::isNumeric() {
 
         case ValueTypeKind::A:
             return true;
-
-        case ValueTypeKind::BOXED:
-            return getSubType()->isNumeric();
 
         default:
             break;
@@ -299,9 +322,6 @@ bool ValueType::isInteger() {
         case ValueTypeKind::A:
             return true;
 
-        case ValueTypeKind::BOXED:
-            return subType->isInteger();
-
         default:
             break;
     }
@@ -319,9 +339,6 @@ bool ValueType::isUnsignedInteger() {
         case ValueTypeKind::A:
             return true;
 
-        case ValueTypeKind::BOXED:
-            return subType->isUnsignedInteger();
-
         default:
             break;
     }
@@ -338,9 +355,6 @@ bool ValueType::isSignedInteger() {
         case ValueTypeKind::S64:
             return true;
 
-        case ValueTypeKind::BOXED:
-            return subType->isSignedInteger();
-
         default:
             break;
     }
@@ -355,9 +369,6 @@ bool ValueType::isFloat() {
         case ValueTypeKind::F64:
             return true;
 
-        case ValueTypeKind::BOXED:
-            return subType->isFloat();
-
         default:
             break;
     }
@@ -366,10 +377,7 @@ bool ValueType::isFloat() {
 }
 
 bool ValueType::isBool() {
-    if (kind == ValueTypeKind::BOXED)
-        return subType->isBool();
-    else
-        return kind == ValueTypeKind::BOOL;
+    return kind == ValueTypeKind::BOOL;
 }
 
 bool ValueType::isData() {
@@ -409,17 +417,11 @@ bool ValueType::isDataNumeric() {
 }
 
 bool ValueType::isAddress() {
-    if (kind == ValueTypeKind::BOXED)
-        return subType->isAddress();
-    else
-        return kind == ValueTypeKind::A;
+    return kind == ValueTypeKind::A;
 }
 
 bool ValueType::isPointer() {
-    if (kind == ValueTypeKind::BOXED)
-        return subType->isPointer();
-    else
-        return kind == ValueTypeKind::PTR;
+    return kind == ValueTypeKind::PTR;
 }
 
 bool ValueType::isFunction() {
@@ -440,4 +442,12 @@ bool ValueType::isBoxed() {
 
 bool ValueType::isComposite() {
     return kind == ValueTypeKind::COMPOSITE;
+}
+
+bool ValueType::isNamedType() {
+    return kind == ValueTypeKind::NAMED_TYPE;
+}
+
+bool ValueType::isBoxedNamedType() {
+    return kind == ValueTypeKind::BOXED && subType->isNamedType();
 }

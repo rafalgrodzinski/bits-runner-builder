@@ -1,0 +1,4 @@
+@export main fun -> u32
+    num f32 <- 13.55
+    ret num.u32
+;
