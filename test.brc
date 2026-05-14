@@ -1,12 +1,14 @@
-stuff<T> blob
-    num boxed<T>
-
-    doStuff fun -> boxed<T>
-        ret it.num
-    ;
-;
+@import BSys
+@import B
 
 @export main fun -> u32
-    stuff blob<stuff, f32> <- {14}
-    ret stuff.doStuff().f32.u32
+    ints blob<@B.Array, u32>
+    rep i u32, i < 7, i <- i + 1
+        ints.push(i * i)
+    ;
+    rep ints.count > 0
+        @B.StringForU32(ints.pop().u32).print()
+        @B.String(" ").print()
+    ;
+    ret 0
 ;

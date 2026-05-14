@@ -1803,7 +1803,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return WrappedValue::wrappedUIntValue(typeInt, sizeInBytes, ValueType::UINT);
     }
 
-    markErrorInvalidBuiltIn(expression->getLocation(), expressionValue->getIdentifier());
     return nullptr;
 }
 
