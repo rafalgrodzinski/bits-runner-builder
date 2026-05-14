@@ -135,6 +135,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     shared_ptr<ValueType> targetType = typeForExpression(statementAssignment->getExpressionChained());
     if (targetType == nullptr)
         return;
+    targetType = resolvedAndCheckedValueType(targetType, false, statementAssignment->getLocation());
     statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType, nullptr);
     if (statementAssignment->getValueExpression() == nullptr)
         return;
@@ -156,6 +157,12 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
     // check and verify blob member variables
     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+        // check for invalid member names
+        if (statementVariable->getIdentifier().compare("adr") == 0) {
+            markErrorInvalidBuiltIn(statementVariable->getLocation(), statementVariable->getIdentifier(), statementVariable->getValueType());
+            return;
+        }
+
         // blob variable should not have a value expression
         if (statementVariable->getExpression() != nullptr) {
             markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
@@ -800,6 +807,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     // from boxed
     } else if (isSourceBoxed) {
         if (parentExpression->getValueType()->getSubType()->isEqual(expressionCast->getValueType())) {
+            if (parentExpression->getValueType()->getSubType()->isPointer()) {
+                expressionCast->getValueType()->getSubType()->namedTypeKeys = parentExpression->getValueType()->getSubType()->getSubType()->getNamedTypeKeys();
+                expressionCast->getValueType()->getSubType()->namedTypeValues = parentExpression->getValueType()->getSubType()->getSubType()->getNamedTypeValues();
+            }
             return expressionCast->getValueType();
         }
     }
@@ -1001,11 +1012,6 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             expressionValue->valueType = ValueType::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_SIZE;
             return expressionValue->getValueType();
-        // Invalid built-in call
-        } else if (isCount || isVal || isVadr) {
-            markErrorInvalidBuiltIn(expressionValue->getLocation(), expressionValue->getIdentifier(), parentExpression->getValueType());
-            expressionValue->valueType = nullptr;
-            return nullptr;
         // check blob member
         } else if (isParentBlob) {
             shared_ptr<ValueType> blobValueType = parentExpression->getValueType();
@@ -2020,7 +2026,7 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
         }
         case ValueTypeKind::NAMED_TYPE: {
             // maybe it doesn't have to be resolved?
-            if (!valueType->getNamedTypeKeys() && !valueType->getNamedTypeValues())
+            if (!valueType->getNamedTypeKeys() || !valueType->getNamedTypeValues())
                 return valueType;
 
             // check all the keys and values have been set correctly

@@ -1,0 +1,8 @@
+Dummy blob
+    count u32
+;
+
+@export main fun -> u32
+    dummy blob<Dummy> <- {7}
+    ret dummy.count
+;

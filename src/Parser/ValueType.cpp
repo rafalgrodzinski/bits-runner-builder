@@ -151,10 +151,11 @@ shared_ptr<ValueType> ValueType::getSubType() {
     if (subType == nullptr)
         return nullptr;
 
-    if (namedTypeKeys && namedTypeValues) {
+    if (kind == ValueTypeKind::BOXED) {
         subType->namedTypeKeys = namedTypeKeys;
         subType->namedTypeValues = namedTypeValues;
     }
+
     return subType;
 }
 
@@ -175,6 +176,8 @@ optional<vector<shared_ptr<ValueType>>> ValueType::getArgumentTypes() {
 }
 
 shared_ptr<ValueType> ValueType::getReturnType() {
+    if (returnType == nullptr)
+        return nullptr;
     returnType->namedTypeKeys = namedTypeKeys;
     returnType->namedTypeValues = namedTypeValues;
     return returnType;
@@ -242,8 +245,6 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
         case ValueTypeKind::BLOB: {
             if (!other->isBlob())
                 return false;
-            string tbn = *blobName;
-            string obn = *other->getBlobName();
             return (*blobName).compare(*other->getBlobName()) == 0;
         }
         case ValueTypeKind::BOXED: {
