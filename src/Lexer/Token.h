@@ -56,6 +56,7 @@ enum class TokenKind {
     PROTO,
     BOXED,
     PTR,
+    PTR_VOLATILE,
     RETURN,
     REPEAT,
     IF,

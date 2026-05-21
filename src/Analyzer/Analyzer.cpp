@@ -2049,7 +2049,7 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             return nullptr;
         }
         case ValueTypeKind::PTR: {
-            return ValueType::ptr(resolvedAndCheckedValueType(valueType->getSubType(), false, location));
+            return ValueType::ptr(resolvedAndCheckedValueType(valueType->getSubType(), false, location), valueType->getIsVolatile());
         }
         default: {
             return valueType;

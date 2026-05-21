@@ -1,7 +1,5 @@
-dummy fun -> boxed<u32>
-    ret 7
-;
-
 @export main fun -> u32
-    ret dummy().u32
+    num u32 <- 7
+    pNum ptr<u32> <- {num.adr}
+    ret pNum.val
 ;

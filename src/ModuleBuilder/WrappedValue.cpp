@@ -34,7 +34,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
         wrappedValue->valueLambda = [type, allocaInst, valueType]() {
             llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(type, allocaInst, format("ld_wrp-{}", string(allocaInst->getName())));
-            load->setVolatile(true);
+            load->setVolatile(valueType->getIsVolatile());
             return load;
         };
         wrappedValue->pointerValueLambda = [allocaInst]() { 
@@ -80,8 +80,10 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
         };
     // Global
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
-        wrappedValue->valueLambda = [global]() {
-            return WrappedValue::builder.lock()->CreateLoad(global->getValueType(), global, format("ld_wrp-{}", string(global->getName())));
+        wrappedValue->valueLambda = [global, valueType]() {
+            llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(global->getValueType(), global, format("ld_wrp-{}", string(global->getName())));
+            load->setVolatile(valueType->getIsVolatile());
+            return load;
         };
         wrappedValue->pointerValueLambda = [global]() {
             return global;
@@ -127,7 +129,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(llvm::Value *pointerV
 
     wrappedValue->valueLambda = [pointeeType, pointerValue, valueType]() {
         llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
-        load->setVolatile(true);
+        load->setVolatile(valueType->getIsVolatile());
         return load;
     };
     wrappedValue->pointerValueLambda = [pointerValue]() {

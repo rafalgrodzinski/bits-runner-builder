@@ -144,6 +144,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "BOXED";
         case TokenKind::PTR:
             return "PTR";
+        case TokenKind::PTR_VOLATILE:
+            return "PTR_VOLATILE";
         case TokenKind::RAW_SOURCE_LINE:
             return format("RAW_SOURCE_LINE({})", token->getLexme());
 
@@ -1068,6 +1070,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "BOXED";
         case TokenKind::PTR:
             return "PTR";
+        case TokenKind::PTR_VOLATILE:
+            return "PTR_VOLATILE";
         case TokenKind::RAW_SOURCE_LINE:
             return "RAW_SOURCE_LINE";
 
@@ -1305,8 +1309,13 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             return "F64";
         case ValueTypeKind::A:
             return "A";
-        case ValueTypeKind::PTR:
-            return format("PTR<{}>", toString(valueType->getSubType()));
+        case ValueTypeKind::PTR: {
+            if (valueType->getIsVolatile())
+                return format("PTR_VOLATILE<{}>", toString(valueType->getSubType()));
+            else
+                return format("PTR<{}>", toString(valueType->getSubType()));
+        }
+
         case ValueTypeKind::DATA: {
             if (valueType->getCountExpression() != nullptr)
                 return format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));

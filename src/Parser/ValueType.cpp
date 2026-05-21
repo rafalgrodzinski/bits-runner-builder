@@ -117,10 +117,11 @@ shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType) {
+shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType, bool isVolatile) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::PTR;
     valueType->subType = subType;
+    valueType->isVolatile = isVolatile;
     return valueType;
 }
 
@@ -145,6 +146,10 @@ kind(kind) { }
 
 ValueTypeKind ValueType::getKind() {
     return kind;
+}
+
+bool ValueType::getIsVolatile() {
+    return isVolatile;
 }
 
 shared_ptr<ValueType> ValueType::getSubType() {
