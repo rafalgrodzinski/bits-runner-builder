@@ -2363,34 +2363,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
 }
 
 int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
-    if (type->isIntegerTy()) {
-        llvm::IntegerType *integerType = llvm::dyn_cast<llvm::IntegerType>(type);
-        return max((int)integerType->getIntegerBitWidth(), 8);
-    } else if (type->isFloatTy()) {
-        return 32;
-    } else if (type->isDoubleTy()) {
-        return 64;
-    } else if (type->isPointerTy()) {
-        return typePtrInt->getBitWidth();
-    } else if (type->isArrayTy()) {
-        llvm::ArrayType *arrayType = llvm::dyn_cast<llvm::ArrayType>(type);
-        int elementsCount = arrayType->getNumElements();
-        llvm::Type *elementType = arrayType->getElementType();
-        int elementSize = sizeInBitsForType(elementType);
-        return elementSize * elementsCount;
-    } else if (type->isStructTy()) {
-        int size = 0;
-        llvm::StructType *structType = llvm::dyn_cast<llvm::StructType>(type);
-        int elementsCount = structType->getNumElements();
-        for (int i=0; i<elementsCount; i++) {
-            llvm::Type *elementType = structType->getElementType(i);
-            int elementSize = sizeInBitsForType(elementType);
-            size += elementSize;
-        }
-        return size;
-    }
-
-    return 0;
+    return llvmModule->getDataLayout().getTypeAllocSizeInBits(type);
 }
 
 //
