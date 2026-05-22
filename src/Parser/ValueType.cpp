@@ -156,6 +156,8 @@ shared_ptr<ValueType> ValueType::getSubType() {
     if (subType == nullptr)
         return nullptr;
 
+    subType->isVolatile = isVolatile;
+
     if (kind == ValueTypeKind::BOXED) {
         subType->namedTypeKeys = namedTypeKeys;
         subType->namedTypeValues = namedTypeValues;

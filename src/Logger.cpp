@@ -143,9 +143,8 @@ string Logger::toString(shared_ptr<Token> token) {
         case TokenKind::BOXED:
             return "BOXED";
         case TokenKind::PTR:
-            return "PTR";
         case TokenKind::PTR_VOLATILE:
-            return "PTR_VOLATILE";
+            return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
             return format("RAW_SOURCE_LINE({})", token->getLexme());
 
@@ -1069,9 +1068,8 @@ string Logger::toString(TokenKind tokenKind) {
         case TokenKind::BOXED:
             return "BOXED";
         case TokenKind::PTR:
-            return "PTR";
         case TokenKind::PTR_VOLATILE:
-            return "PTR_VOLATILE";
+            return "PTR";
         case TokenKind::RAW_SOURCE_LINE:
             return "RAW_SOURCE_LINE";
 
@@ -1273,57 +1271,73 @@ string Logger::toString(shared_ptr<Location> location) {
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {
+    string text = "{INVALID}";
+
     if (valueType == nullptr)
-        return "{INVALID}";
+        return text;
 
     switch (valueType->getKind()) {
         case ValueTypeKind::NONE:
-            return "NONE";
+            text = "NONE";
+            break;
         case ValueTypeKind::BOOL:
-            return "BOOL";
+            text = "BOOL";
+            break;
         case ValueTypeKind::UINT:
-            return "UINT";
+            text = "UINT";
+            break;
         case ValueTypeKind::U8:
-            return "U8";
+            text = "U8";
+            break;
         case ValueTypeKind::U16:
-            return "U16";
+            text = "U16";
+            break;
         case ValueTypeKind::U32:
-            return "U32";
+            text = "U32";
+            break;
         case ValueTypeKind::U64:
-            return "U64";
+            text = "U64";
+            break;
         case ValueTypeKind::SINT:
-            return "SINT";
+            text = "SINT";
+            break;
         case ValueTypeKind::S8:
-            return "S8";
+            text = "S8";
+            break;
         case ValueTypeKind::S16:
-            return "S16";
+            text = "S16";
+            break;
         case ValueTypeKind::S32:
-            return "S32";
+            text = "S32";
+            break;
         case ValueTypeKind::S64:
-            return "S64";
+            text = "S64";
+            break;
         case ValueTypeKind::FLOAT:
-            return "FLOAT";
+            text = "FLOAT";
+            break;
         case ValueTypeKind::F32:
-            return "F32";
+            text = "F32";
+            break;
         case ValueTypeKind::F64:
-            return "F64";
+            text = "F64";
+            break;
         case ValueTypeKind::A:
-            return "A";
-        case ValueTypeKind::PTR: {
-            if (valueType->getIsVolatile())
-                return format("PTR_VOLATILE<{}>", toString(valueType->getSubType()));
-            else
-                return format("PTR<{}>", toString(valueType->getSubType()));
-        }
-
+            text = "A";
+            break;
+        case ValueTypeKind::PTR:
+            text = format("PTR<{}>", toString(valueType->getSubType()));
+            break;
         case ValueTypeKind::DATA: {
-            if (valueType->getCountExpression() != nullptr)
-                return format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));
-            else
-                return format("DATA<{}>", toString(valueType->getSubType()));
+            if (valueType->getCountExpression() != nullptr) {
+                text = format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));
+            } else {
+                text = format("DATA<{}>", toString(valueType->getSubType()));
+            }
+            break;
         }
         case ValueTypeKind::BLOB: {
-            string text;
+            text = "";
             text += format("BLOB<`{}`", *valueType->getBlobName());
             if (valueType->getNamedTypeValues()) {
                 for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
@@ -1332,14 +1346,16 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
                 }
             }
             text += ">";
-            return text;
+            break;
         }
         case ValueTypeKind::PROTO:
-            return format("PROTO<`{}`>", *(valueType->getProtoName()));
+            text = format("PROTO<`{}`>", *(valueType->getProtoName()));
+            break;
         case ValueTypeKind::BOXED:
-            return format("BOXED<{}>", toString(valueType->getSubType()));
+            text = format("BOXED<{}>", toString(valueType->getSubType()));
+            break;
         case ValueTypeKind::FUN: {
-            string text = "FUN";
+            text = "FUN";
             // args
             vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
             for (int i=0; i<argumentTypes.size(); i++) {
@@ -1348,17 +1364,23 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
                 text += format(" {}", toString(argumentTypes.at(i)));
             }
             // return
-            if (valueType->getReturnType() != nullptr)
+            if (valueType->getReturnType() != nullptr) {
                 text += format(" -> {}", toString(valueType->getReturnType()));
-            return text;
+            }
+            break;
         }
         case ValueTypeKind::COMPOSITE:
-            return format("COMPOSITE");
+            text = format("COMPOSITE");
+            break;
         case ValueTypeKind::NAMED_TYPE:
-            return format("`{}`", *valueType->getNamedTypeKey());
+            text = format("`{}`", *valueType->getNamedTypeKey());
+            break;
     }
 
-    return "{INVALID}";
+    if (valueType->getIsVolatile())
+        text = format("v_{}", text);
+
+    return text;
 }
 
 string Logger::toString(ExpressionBinaryOperation operationBinary) {

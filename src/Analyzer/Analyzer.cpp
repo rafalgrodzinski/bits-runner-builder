@@ -986,6 +986,16 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                     break;
                 case ExpressionValueKind::DATA:
                 case ExpressionValueKind::BUILT_IN_VAL_DATA:
+                    // make sure we're referencing a pointer to data
+                    if (!parentExpression->getValueType()->getSubType()->isData()) {
+                        expressionValue->valueType = nullptr;
+                        markErrorInvalidBuiltIn(
+                            expressionValue->getLocation(),
+                            expressionValue->getIdentifier(),
+                            parentExpression->getValueType()
+                        );
+                        break;
+                    }
                     expressionValue->valueType = parentExpression->getValueType()->getSubType()->getSubType();
                     expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_DATA;
                     expressionValue->indexExpression = checkAndTryCasting(expressionValue->getIndexExpression(), ValueType::UINT, nullptr);
