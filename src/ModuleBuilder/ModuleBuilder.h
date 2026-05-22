@@ -180,9 +180,8 @@ private:
 public:
     ModuleBuilder(
         string defaultModuleName,
-        int intSize,
-        int pointerSize,
         llvm::Triple::ArchType archType,
+        llvm::DataLayout dataLayout,
         llvm::CallingConv::ID callingConvention,
         shared_ptr<Module> module,
         map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap

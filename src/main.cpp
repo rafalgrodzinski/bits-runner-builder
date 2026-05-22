@@ -282,9 +282,8 @@ int main(int argc, char **argv) {
         timeStamp = clock();
         ModuleBuilder moduleBuilder(
             DEFAULT_MODULE_NAME,
-            codeGenerator.getIntSize(),
-            codeGenerator.getPointerSize(),
             codeGenerator.getArchType(),
+            codeGenerator.getDataLayout(),
             codeGenerator.getCallingConvetion(),
             module,
             modulesStore.getExportedHeaderStatementsMap()

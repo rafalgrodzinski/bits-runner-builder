@@ -38,9 +38,8 @@
 
 ModuleBuilder::ModuleBuilder(
     string defaultModuleName,
-    int intSize,
-    int pointerSize,
     llvm::Triple::ArchType archType,
+    llvm::DataLayout dataLayout,
     llvm::CallingConv::ID callingConvention,
     shared_ptr<Module> module,
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
@@ -50,8 +49,12 @@ archType(archType),
 callingConvention(callingConvention),
 module(module),
 importableHeaderStatementsMap(importableHeaderStatementsMap) {
+    int intSize = dataLayout.getLargestLegalIntTypeSizeInBits();
+    int pointerSize = dataLayout.getPointerSizeInBits();
+
     context = make_shared<llvm::LLVMContext>();
     llvmModule = make_shared<llvm::Module>(module->getName(), *context);
+    llvmModule->setDataLayout(dataLayout);
     builder = make_shared<llvm::IRBuilder<>>(*context);
 
     typeVoid = llvm::Type::getVoidTy(*context);
