@@ -553,13 +553,17 @@ void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawF
         funArgumentTypes.push_back(funArgumentType);
     }
 
+    // remove spaces from constraints since LLVM doesn't like time (sometimes)
+    string constraints = statement->getConstraints();
+    erase(constraints, ' ');
+
     // build function declaration & body
     llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgumentTypes, false);
-    if(llvm::InlineAsm::verify(funType, statement->getConstraints())) {
+    if(llvm::InlineAsm::verify(funType, constraints)) {
         markInvalidConstraints(
             statement->getLocation(),
             statement->getName(),
-            statement->getConstraints()
+            constraints
         );
         return;
     }
@@ -569,7 +573,7 @@ void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawF
         rawFun = llvm::InlineAsm::get(
             funType,
             statement->getRawSource(),
-            statement->getConstraints(),
+            constraints,
             true,
             false,
             llvm::InlineAsm::AsmDialect::AD_Intel
@@ -578,7 +582,7 @@ void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawF
         rawFun = llvm::InlineAsm::get(
             funType,
             statement->getRawSource(),
-            statement->getConstraints(),
+            constraints,
             true,
             false
         );
