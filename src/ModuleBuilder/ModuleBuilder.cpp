@@ -1010,7 +1010,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     return;
                 }
-                builder->CreateStore(wrappedSourceValue->getValue(), targetWrappedValue->getPointerValue());
+                builder->CreateStore(wrappedSourceValue->getValue(), targetWrappedValue->getPointerValue())->setVolatile(wrappedSourceValue->getValueType()->getIsVolatile());
                 break;
             }
             default: {
