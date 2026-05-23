@@ -8,6 +8,11 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
+- [1.0.0-dev-99](https://github.com/rafalgrodzinski/bits-runner-builder/pull/185)
+  - Added `ptr_volatile` type
+  - LLVM allocas are declared at top of functions
+  - Properly initialize data layout
+  - Changed how size of data types is calculated
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/182](https://github.com/rafalgrodzinski/bits-runner-builder/pull/182)
   - Blobs can have named types that are passed down to `boxed`
 - [https://github.com/rafalgrodzinski/bits-runner-builder/pull/178](https://github.com/rafalgrodzinski/bits-runner-builder/pull/178)
