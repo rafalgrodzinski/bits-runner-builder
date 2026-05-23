@@ -1056,6 +1056,9 @@ llvm::AllocaInst *ModuleBuilder::buildAlloca(llvm::Type *type, string identifier
     if (this->currentInitBlock != nullptr)
         builder->SetInsertPoint(currentInsertPoint);
 
+    llvm::Constant *constantValue = llvm::Constant::getNullValue(type);
+    builder->CreateStore(constantValue, alloca);
+
     return alloca;
 }
 
