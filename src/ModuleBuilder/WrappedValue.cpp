@@ -5,13 +5,20 @@
 weak_ptr<llvm::Module> WrappedValue::llvmModule;
 weak_ptr<llvm::IRBuilder<>> WrappedValue::builder;
 function<llvm::Type *(shared_ptr<ValueType>, bool)> WrappedValue::llvmTypeForValueType;
+function<llvm::AllocaInst *(llvm::Type*, string)> WrappedValue::buildAlloca;
 
 WrappedValue::WrappedValue() { }
 
-void WrappedValue::setup(weak_ptr<llvm::Module> llvmModule, weak_ptr<llvm::IRBuilder<>> builder, function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType) {
+void WrappedValue::setup(
+    weak_ptr<llvm::Module> llvmModule,
+    weak_ptr<llvm::IRBuilder<>> builder,
+    function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType,
+    function<llvm::AllocaInst *(llvm::Type*, string)> buildAlloca
+) {
     WrappedValue::llvmModule = llvmModule;
     WrappedValue::builder = builder;
     WrappedValue::llvmTypeForValueType = llvmTypeForValueType;
+    WrappedValue::buildAlloca = buildAlloca;
 }
 
 shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_ptr<ValueType> valueType) {
@@ -54,7 +61,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
                 return callInst;
             };
             wrappedValue->pointerValueLambda = [allocaType, callInst]() {
-                llvm::AllocaInst *alloca = WrappedValue::builder.lock()->CreateAlloca(allocaType, nullptr, "a_wrp");
+                llvm::AllocaInst *alloca = WrappedValue::buildAlloca(allocaType, "a_wrp");
                 WrappedValue::builder.lock()->CreateStore(callInst, alloca);
                 return alloca;
             };
@@ -65,7 +72,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
             return argument;
         };
         wrappedValue->pointerValueLambda = [allocaType, argument]() {
-            llvm::AllocaInst *alloca = WrappedValue::builder.lock()->CreateAlloca(allocaType, nullptr);
+            llvm::AllocaInst *alloca = WrappedValue::buildAlloca(allocaType, "");
             WrappedValue::builder.lock()->CreateStore(argument, alloca);
             return alloca;
         };
@@ -111,7 +118,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
             return value;
         };
         wrappedValue->pointerValueLambda = [value]() {
-            llvm::AllocaInst *allocaInst = WrappedValue::builder.lock()->CreateAlloca(value->getType(), nullptr, "a_wrp");
+            llvm::AllocaInst *allocaInst = WrappedValue::buildAlloca(value->getType(), "a_wrp");
             WrappedValue::builder.lock()->CreateStore(value, allocaInst);
             return allocaInst;
         };

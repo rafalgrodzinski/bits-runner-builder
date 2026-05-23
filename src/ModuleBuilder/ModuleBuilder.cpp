@@ -87,6 +87,9 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
         builder,
         [this](shared_ptr<ValueType> valueType, bool shouldUnbox) {
             return llvmTypeForValueType(valueType, shouldUnbox, nullptr);
+        },
+        [this](llvm::Type* type, string identifier) {
+            return buildAlloca(type, identifier);
         }
     );
 }
@@ -239,9 +242,10 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
     }
 
     // define function body
-    llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, statementFunction->getName(), fun);
-    builder->SetInsertPoint(block);
+    this->currentInitBlock = llvm::BasicBlock::Create(*context, format("{}_init_block", statementFunction->getName()), fun);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, format("{}_body_block", statementFunction->getName()), fun);
 
+    builder->SetInsertPoint(bodyBlock);
     scope->pushLevel();
 
     // build arguments
@@ -255,7 +259,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         llvm::Type *funArgumentType = llvmTypeForValueType(argument.second, false);
         if (funArgumentType == nullptr)
             return;
-        llvm::AllocaInst *alloca = builder->CreateAlloca(funArgumentType, nullptr, format("a_arg_{}", argument.first));
+        llvm::AllocaInst *alloca = buildAlloca(funArgumentType, format("a_arg_{}", argument.first));
         builder->CreateStore(funArgument, alloca)->setVolatile(argument.second->getIsVolatile());
 
         scope->setWrappedValue(
@@ -271,7 +275,12 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
 
     scope->popLevel();
 
+    // join init block with the body block
+    builder->SetInsertPoint(this->currentInitBlock);
+    builder->CreateBr(bodyBlock);
+
     builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
+    this->currentInitBlock = nullptr;
 
     // verify function
     string errorMessage;
@@ -426,16 +435,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementRepeat> statementRepeat) 
     fun->insert(fun->end(), bodyBlock);
     builder->SetInsertPoint(bodyBlock);
 
-    // Store the current stack location, stack shouldn't change accross the runs, for example because of allocas
-    llvm::Type *ptrType = llvm::PointerType::get(*context, 0);
-    llvm::Function *stackSaveIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(llvmModule.get(), llvm::Intrinsic::stacksave, {ptrType});
-    llvm::Value *stackValue = builder->CreateCall(stackSaveIntrinscic, {}, "stack");
-
     buildStatement(bodyStatement);
-
-    // Restore stack to expected location
-    llvm::Function *stackRestoreIntrinscic = llvm::Intrinsic::getOrInsertDeclaration(llvmModule.get(), llvm::Intrinsic::stackrestore, {ptrType});
-    builder->CreateCall(stackRestoreIntrinscic, llvm::ArrayRef({stackValue}));
 
     // post statement
     if (postStatement != nullptr)
@@ -730,7 +730,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
     llvm::Type *type = llvmTypeForValueType(statement->getValueType(), false);
     if (type == nullptr)
         return;
-    llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, format("a_{}", statement->getIdentifier()));
+    llvm::AllocaInst *alloca = buildAlloca(type, format("a_{}", statement->getIdentifier()));
 
     shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(alloca, statement->getValueType());
 
@@ -1045,6 +1045,20 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
     }
 }
 
+llvm::AllocaInst *ModuleBuilder::buildAlloca(llvm::Type *type, string identifier) {
+    llvm::BasicBlock *currentInsertPoint = builder->GetInsertBlock();
+
+    if (this->currentInitBlock != nullptr)
+        builder->SetInsertPoint(this->currentInitBlock);
+
+    llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, identifier);
+
+    if (this->currentInitBlock != nullptr)
+        builder->SetInsertPoint(currentInsertPoint);
+
+    return alloca;
+}
+
 //
 // Expressions
 //
@@ -1324,7 +1338,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
             // create an anonymous variable
             llvm::Type *type = llvmTypeForValueType(expressionCast->getValueType(), false);
-            llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr, format("ch_{}", i));
+            llvm::AllocaInst *alloca = buildAlloca(type, format("ch_{}", i));
             shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(alloca, expressionCast->getValueType());
             buildAssignment(wrappedValue, expressionCompositeLiteral);
             currentWrappedValue = wrappedValue;
@@ -1535,7 +1549,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         return nullptr;
     }
 
-    llvm::AllocaInst *alloca = builder->CreateAlloca(type, nullptr);
+    llvm::AllocaInst *alloca = buildAlloca(type);
     shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(alloca, expressionCompositeLiteral->getValueType());
     buildAssignment(wrappedValue, expressionCompositeLiteral);
     return wrappedValue;
@@ -1782,7 +1796,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return wrappedValueForValue(nullptr, parentWrappedValue->getValue(), pointeeType, expression);
     } else if (parentWrappedValue->isPointer() && isVadr) {
         llvm::Value *pointerValue = parentWrappedValue->getValue();
-        llvm::Value *alloca = builder->CreateAlloca(typePtr, nullptr, format("a_vadr-{}", string(pointerValue->getName())));
+        llvm::Value *alloca = buildAlloca(typePtr, format("a_vadr-{}", string(pointerValue->getName())));
         builder->CreateStore(pointerValue, alloca)->setVolatile(parentWrappedValue->getValueType()->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueType::A);
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {
@@ -1801,7 +1815,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return WrappedValue::wrappedValue(pointeeLoad, ValueType::A);
     } else if (isAdr) {
         llvm::Value *pointerValue = parentWrappedValue->getPointerValue();
-        llvm::Value *alloca = builder->CreateAlloca(typePtr, nullptr, format("a_adr-{}", string(pointerValue->getName())));
+        llvm::Value *alloca = buildAlloca(typePtr, format("a_adr-{}", string(pointerValue->getName())));
         builder->CreateStore(pointerValue, alloca)->setVolatile(parentWrappedValue->getValueType()->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueType::A);
     } else if (isSize) {
@@ -2120,7 +2134,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // data to data
     } else if (isSourceData && isTargetData) {
-        llvm::AllocaInst *targetAlloca = builder->CreateAlloca(targetType);
+        llvm::AllocaInst *targetAlloca = buildAlloca(targetType);
 
         int elementsCount = min(sourceSize, targetSize);
         int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;

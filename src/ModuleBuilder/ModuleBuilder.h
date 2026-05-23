@@ -75,6 +75,7 @@ private:
     shared_ptr<llvm::LLVMContext> context;
     shared_ptr<llvm::Module> llvmModule;
     shared_ptr<llvm::IRBuilder<>> builder;
+    llvm::BasicBlock *currentInitBlock = nullptr;
 
     llvm::Triple::ArchType archType;
     llvm::CallingConv::ID callingConvention;
@@ -128,6 +129,7 @@ private:
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);
+    llvm::AllocaInst *buildAlloca(llvm::Type *type, string identifier = "");
 
     // Expressions
     shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<Expression> expression);
