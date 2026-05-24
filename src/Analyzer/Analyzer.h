@@ -54,6 +54,8 @@ using namespace std;
 class Analyzer {
 private:
     vector<shared_ptr<Error>> errors;
+    string defaultModuleName;
+
     shared_ptr<AnalyzerScope> scope;
     shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
@@ -119,7 +121,7 @@ private:
     void markErrorUnexpectedExpression(shared_ptr<Location> location);
 
 public:
-    Analyzer(shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap);
+    Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap);
     void checkModule();
 };
 

@@ -1,8 +1,5 @@
-@export main fun
-    //num data<u32, 8>
-    //pNum ptr_volatile<data<u32>> <- {num.adr}
-    //ret pNum.val[3]
-    num u32
-    pNum ptr_volatile<u32> <- {num.adr}
-    pNum.val <- 7
+value u32 <- 7
+
+@export main fun -> u32
+    ret @main.value
 ;

@@ -39,8 +39,8 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
-Analyzer::Analyzer(shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap) :
-module(module), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
+Analyzer::Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap) :
+defaultModuleName(defaultModuleName), module(module), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
 
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
