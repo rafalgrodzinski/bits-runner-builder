@@ -51,15 +51,16 @@ friend class AnalyzerScope;
 private:
     ValueTypeKind kind;
     shared_ptr<ValueType> subType;
-    shared_ptr<Expression> countExpression;
-    optional<vector<shared_ptr<ValueType>>> argumentTypes;
-    shared_ptr<ValueType> returnType;
-    optional<string> blobName;
-    optional<string> protoName;
-    optional<vector<shared_ptr<ValueType>>> compositeElementTypes;
-    optional<string> namedTypeKey;
-    optional<vector<string>> namedTypeKeys;
-    optional<vector<shared_ptr<ValueType>>> namedTypeValues;
+    shared_ptr<Expression> countExpression = nullptr;
+    optional<vector<shared_ptr<ValueType>>> argumentTypes = {};
+    shared_ptr<ValueType> returnType = nullptr;
+    optional<string> blobName = {};
+    optional<string> protoName = {};
+    optional<vector<shared_ptr<ValueType>>> compositeElementTypes = {};
+    optional<string> namedTypeKey = {};
+    optional<vector<string>> namedTypeKeys = {};
+    optional<vector<shared_ptr<ValueType>>> namedTypeValues = {};
+    bool isVolatile = false;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -85,7 +86,7 @@ public:
     static shared_ptr<ValueType> proto(string protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
-    static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType);
+    static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType, bool isVolatile);
     static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression);
     static shared_ptr<ValueType> namedType(string namedTypeKey);
 
@@ -93,6 +94,7 @@ public:
     ValueType(ValueTypeKind kind);
 
     ValueTypeKind getKind();
+    bool getIsVolatile();
     // data, pointer, boxed
     shared_ptr<ValueType> getSubType();
     // data

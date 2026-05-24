@@ -781,7 +781,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                         // prefix function with name of the blob
                         statementFunction->name = format("{}.{}", name, statementFunction->getName());
                         // Insert an implicit "it" argument for the blob function
-                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::blob(name, {})));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::blob(name, {}), false));
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
                         break;
@@ -857,7 +857,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                     case StatementKind::FUNCTION_DECLARATION: {
                         shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(parseeResult.getStatement());
                         // Insert an implicit "it" argument at the beging
-                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::NONE));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::NONE, false));
                         statementFunctionDeclaration->arguments.insert(statementFunctionDeclaration->arguments.begin(), itArgument);
                         functionDeclarationStatements.push_back(statementFunctionDeclaration);
                         break;
@@ -1821,6 +1821,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_BOXED,
         TAG_PTR_FUN,
         TAG_PTR,
+        TAG_PTR_VOLATILE,
         TAG_ARGUMENT_TYPE,
         TAG_RETURN_TYPE,
         TAG_TYPE,
@@ -1837,7 +1838,16 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 {
                     // PTR
                     {
-                        Parsee::tokenParsee(TokenKind::PTR, ParseeLevel::REQUIRED, true, TAG_PTR),
+                        Parsee::oneOfParsee(
+                            {
+                                {
+                                    Parsee::tokenParsee(TokenKind::PTR, ParseeLevel::REQUIRED, true, TAG_PTR),
+                                },
+                                {
+                                    Parsee::tokenParsee(TokenKind::PTR_VOLATILE, ParseeLevel::REQUIRED, true, TAG_PTR_VOLATILE),
+                                }
+                            }, ParseeLevel::REQUIRED, true
+                        ),
                         Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
                         Parsee::oneOfParsee(
                             {
@@ -1967,6 +1977,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     shared_ptr<ValueType> retType;
 
     shared_ptr<Token> typeToken;
+    bool isVolatile = false;
     shared_ptr<ValueType> subType;
     shared_ptr<Expression> countExpression;
     string blobName;
@@ -1991,6 +2002,10 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 break;
             case TAG_PTR:
                 isPtr = true;
+                break;
+            case TAG_PTR_VOLATILE:
+                isPtr = true;
+                isVolatile = true;
                 break;
             case TAG_ARGUMENT_TYPE:
                 argTypes.push_back(parseeResult.getValueType());
@@ -2028,9 +2043,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
     else if (isBoxed)
         return ValueType::boxed(subType);
     else if (isPtrFun)
-        return ValueType::ptr(ValueType::fun(argTypes, retType));
+        return ValueType::ptr(ValueType::fun(argTypes, retType), isVolatile);
     else if (isPtr)
-        return ValueType::ptr(subType);
+        return ValueType::ptr(subType, isVolatile);
     else
         return ValueType::simpleForToken(typeToken);
 }

@@ -5,13 +5,20 @@
 weak_ptr<llvm::Module> WrappedValue::llvmModule;
 weak_ptr<llvm::IRBuilder<>> WrappedValue::builder;
 function<llvm::Type *(shared_ptr<ValueType>, bool)> WrappedValue::llvmTypeForValueType;
+function<llvm::AllocaInst *(llvm::Type*, string)> WrappedValue::buildAlloca;
 
 WrappedValue::WrappedValue() { }
 
-void WrappedValue::setup(weak_ptr<llvm::Module> llvmModule, weak_ptr<llvm::IRBuilder<>> builder, function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType) {
+void WrappedValue::setup(
+    weak_ptr<llvm::Module> llvmModule,
+    weak_ptr<llvm::IRBuilder<>> builder,
+    function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType,
+    function<llvm::AllocaInst *(llvm::Type*, string)> buildAlloca
+) {
     WrappedValue::llvmModule = llvmModule;
     WrappedValue::builder = builder;
     WrappedValue::llvmTypeForValueType = llvmTypeForValueType;
+    WrappedValue::buildAlloca = buildAlloca;
 }
 
 shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_ptr<ValueType> valueType) {
@@ -34,7 +41,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
     } else if (llvm::AllocaInst *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(value)) {
         wrappedValue->valueLambda = [type, allocaInst, valueType]() {
             llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(type, allocaInst, format("ld_wrp-{}", string(allocaInst->getName())));
-            load->setVolatile(true);
+            load->setVolatile(valueType->getIsVolatile());
             return load;
         };
         wrappedValue->pointerValueLambda = [allocaInst]() { 
@@ -53,9 +60,9 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
             wrappedValue->valueLambda = [callInst]() {
                 return callInst;
             };
-            wrappedValue->pointerValueLambda = [allocaType, callInst]() {
-                llvm::AllocaInst *alloca = WrappedValue::builder.lock()->CreateAlloca(allocaType, nullptr, "a_wrp");
-                WrappedValue::builder.lock()->CreateStore(callInst, alloca);
+            wrappedValue->pointerValueLambda = [allocaType, callInst, valueType]() {
+                llvm::AllocaInst *alloca = WrappedValue::buildAlloca(allocaType, "a_wrp");
+                WrappedValue::builder.lock()->CreateStore(callInst, alloca)->setVolatile(valueType->getIsVolatile());
                 return alloca;
             };
         }
@@ -64,9 +71,9 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
         wrappedValue->valueLambda = [argument]() {
             return argument;
         };
-        wrappedValue->pointerValueLambda = [allocaType, argument]() {
-            llvm::AllocaInst *alloca = WrappedValue::builder.lock()->CreateAlloca(allocaType, nullptr);
-            WrappedValue::builder.lock()->CreateStore(argument, alloca);
+        wrappedValue->pointerValueLambda = [allocaType, argument, valueType]() {
+            llvm::AllocaInst *alloca = WrappedValue::buildAlloca(allocaType, "");
+            WrappedValue::builder.lock()->CreateStore(argument, alloca)->setVolatile(valueType->getIsVolatile());
             return alloca;
         };
     // Function
@@ -80,8 +87,10 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
         };
     // Global
     } else if (llvm::GlobalVariable *global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
-        wrappedValue->valueLambda = [global]() {
-            return WrappedValue::builder.lock()->CreateLoad(global->getValueType(), global, format("ld_wrp-{}", string(global->getName())));
+        wrappedValue->valueLambda = [global, valueType]() {
+            llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(global->getValueType(), global, format("ld_wrp-{}", string(global->getName())));
+            load->setVolatile(valueType->getIsVolatile());
+            return load;
         };
         wrappedValue->pointerValueLambda = [global]() {
             return global;
@@ -108,9 +117,9 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
         wrappedValue->valueLambda = [value]() {
             return value;
         };
-        wrappedValue->pointerValueLambda = [value]() {
-            llvm::AllocaInst *allocaInst = WrappedValue::builder.lock()->CreateAlloca(value->getType(), nullptr, "a_wrp");
-            WrappedValue::builder.lock()->CreateStore(value, allocaInst);
+        wrappedValue->pointerValueLambda = [value, valueType]() {
+            llvm::AllocaInst *allocaInst = WrappedValue::buildAlloca(value->getType(), "a_wrp");
+            WrappedValue::builder.lock()->CreateStore(value, allocaInst)->setVolatile(valueType->getIsVolatile());
             return allocaInst;
         };
     }
@@ -127,7 +136,7 @@ shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(llvm::Value *pointerV
 
     wrappedValue->valueLambda = [pointeeType, pointerValue, valueType]() {
         llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
-        load->setVolatile(true);
+        load->setVolatile(valueType->getIsVolatile());
         return load;
     };
     wrappedValue->pointerValueLambda = [pointerValue]() {

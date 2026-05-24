@@ -43,7 +43,7 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
             return ValueType::fun(exportedArgumentTypes, exportedReturnType);
         }
         case ValueTypeKind::PTR: {
-            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName));
+            return ValueType::ptr(typeForExportedStatementFromType(valueType->getSubType(), moduleName), valueType->getIsVolatile());
         }
         case ValueTypeKind::PROTO: {
             string name = *valueType->getProtoName();

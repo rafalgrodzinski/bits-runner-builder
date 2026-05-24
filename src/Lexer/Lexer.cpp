@@ -260,6 +260,9 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token = match(TokenKind::PTR, "ptr", true))
         return token;
 
+    if (token = match(TokenKind::PTR_VOLATILE, "ptr_volatile", true))
+        return token;
+
     if (token = match(TokenKind::RETURN, "ret", true))
         return token;
 
@@ -544,12 +547,12 @@ shared_ptr<Token> Lexer::matchIdentifier() {
 
     // Special case for misplaced type tokens
     if (
-        lexme.compare("bool") == 0
-        || lexme.compare("u8") == 0 || lexme.compare("u16") == 0 || lexme.compare("u32") == 0 || lexme.compare("u64") == 0
-        || lexme.compare("s8") == 0 || lexme.compare("s16") == 0 || lexme.compare("s32") == 0 || lexme.compare("s64") == 0
-        || lexme.compare("f32") == 0 || lexme.compare("f64") == 0
-        || lexme.compare("a") == 0 || lexme.compare("ptr") == 0
-        || lexme.compare("data") == 0 || lexme.compare("blob") == 0 || lexme.compare("proto") == 0 || lexme.compare("boxed") == 0
+        lexme.compare("bool") == 0 ||
+        lexme.compare("u8") == 0 || lexme.compare("u16") == 0 || lexme.compare("u32") == 0 || lexme.compare("u64") == 0 ||
+        lexme.compare("s8") == 0 || lexme.compare("s16") == 0 || lexme.compare("s32") == 0 || lexme.compare("s64") == 0 ||
+        lexme.compare("f32") == 0 || lexme.compare("f64") == 0 ||
+        lexme.compare("a") == 0 || lexme.compare("ptr") == 0 || lexme.compare("ptr_volatile") == 0 ||
+        lexme.compare("data") == 0 || lexme.compare("blob") == 0 || lexme.compare("proto") == 0 || lexme.compare("boxed") == 0
     ){
         shared_ptr<Token> token = make_shared<Token>(TokenKind::TYPE, lexme, make_shared<Location>(currentFileName, currentLine, currentColumn));
         advanceWithToken(token);

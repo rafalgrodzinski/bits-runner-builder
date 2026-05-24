@@ -17,6 +17,7 @@ private:
     static weak_ptr<llvm::Module> llvmModule;
     static weak_ptr<llvm::IRBuilder<>> builder;
     static function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType;
+    static function<llvm::AllocaInst *(llvm::Type*, string)> buildAlloca;
 
     llvm::Type *type;
     shared_ptr<ValueType> valueType;
@@ -27,7 +28,12 @@ private:
 public:
     WrappedValue();
 
-    static void setup(weak_ptr<llvm::Module> llvmModule, weak_ptr<llvm::IRBuilder<>> builder, function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType);
+    static void setup(
+        weak_ptr<llvm::Module> llvmModule,
+        weak_ptr<llvm::IRBuilder<>> builder,
+        function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType,
+        function<llvm::AllocaInst *(llvm::Type*, string)> buildAlloca
+    );
 
     static shared_ptr<WrappedValue> wrappedValue(llvm::Value *value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedPointerValue(llvm::Value *pointerValue, llvm::Type *pointeeType, shared_ptr<ValueType> valueType);
