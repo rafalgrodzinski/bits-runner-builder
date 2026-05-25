@@ -269,7 +269,12 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
     }
 
     // build function body
+    int errorsCount = this->errors.size();
     buildStatement(statementFunction->getStatementBlock());
+    // if any additional errors have been generated, bail out
+    if (this->errors.size() > errorsCount)
+        return;
+
     // Remove extranouse block after the last return statement
     builder->GetInsertBlock()->eraseFromParent();
 
@@ -1727,9 +1732,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue) {
-    llvm::Value *sourceValue;
-    llvm::Value *sourcePointerValue;
-    llvm::Type *sourceType;
+    llvm::Value *sourceValue = nullptr;
+    llvm::Value *sourcePointerValue = nullptr;
+    llvm::Type *sourceType = nullptr;
 
     bool isIt = expressionValue->getIdentifier().compare("it") == 0;
     shared_ptr<WrappedValue> wrappedPitValue = scope->getWrappedValue(".pit");
