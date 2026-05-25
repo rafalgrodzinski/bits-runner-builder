@@ -117,9 +117,9 @@ private:
     void buildStatement(shared_ptr<StatementVariable> statementVariable);
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    void buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
+    void buildFunctionDeclaration(string moduleName, string name, bool shouldExport, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
     void buildRawFunction(string moduleName, shared_ptr<StatementRawFunction> statement);
-    void buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType);
+    void buildVariableDeclaration(string moduleName, string name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType);
 
     void buildProtoDeclaration(string moduleName, shared_ptr<StatementProtoDeclaration> statement);
     void buildProtoDefinition(string moduleName, shared_ptr<StatementProto> statement);
