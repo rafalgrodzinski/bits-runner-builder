@@ -505,7 +505,7 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, name);
 
     // arguments
     vector<llvm::Type *> funArgTypes;
@@ -543,7 +543,7 @@ void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawF
     // internal name
     string internalName = statement->getName();
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, statement->getName());
 
     // function types
     llvm::Type *funReturnType = llvmTypeForValueType(statement->getReturnValueType());
@@ -605,7 +605,7 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
     // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, symbolName);
 
     // type
     llvm::Type *type = llvmTypeForValueType(valueType);
@@ -635,7 +635,7 @@ void ModuleBuilder::buildProtoDeclaration(string moduleName, shared_ptr<Statemen
     // internal name
     string internalName = statement->getName();
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, symbolName);
 
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
     scope->setProtoStructType(internalName, structType, {});
@@ -650,7 +650,7 @@ void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<Statement
     // internal name
     string internalName = statement->getName();
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, symbolName);
 
     llvm::StructType *structType = scope->getProtoStructType(internalName);
     if (structType == nullptr) {
@@ -698,7 +698,7 @@ void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
     // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, symbolName);
 
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
     scope->setStruct(internalName, structType, {});
@@ -713,7 +713,7 @@ void ModuleBuilder::buildBlobDefinition(string moduleName, string name, vector<p
     // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, symbolName);
 
     llvm::StructType *structType = scope->getStructType(internalName);
     if (structType == nullptr) {
