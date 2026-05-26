@@ -1596,7 +1596,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     // Then
     scope->pushLevel();
     builder->SetInsertPoint(thenBlock);
-    llvm::Value *thenValue = wrappedValueForExpression(expressionIfElse->getThenExpression())->getValue();
+    shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(expressionIfElse->getThenExpression());
+    if (wrappedValue == nullptr)
+        return nullptr;
+    llvm::Value *thenValue = wrappedValue->getValue();
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
     scope->popLevel();

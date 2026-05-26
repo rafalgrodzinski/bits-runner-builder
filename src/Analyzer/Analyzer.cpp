@@ -1394,6 +1394,17 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
         if (targetType->getCountExpression() == nullptr)
             return sourceExpression;
+    } else if (sourceExpression->getKind() == ExpressionKind::IF_ELSE) {
+        sourceExpression->valueType = targetType;
+        shared_ptr<ExpressionIfElse> expressionIfElse = dynamic_pointer_cast<ExpressionIfElse>(sourceExpression);
+        expressionIfElse->thenExpression = checkAndTryCasting(expressionIfElse->getThenExpression(), targetType, returnType);
+        expressionIfElse->elseExpression = checkAndTryCasting(expressionIfElse->getElseExpression(), targetType, returnType);
+        return sourceExpression;
+    } else if (sourceExpression->getKind() == ExpressionKind::BLOCK) {
+        sourceExpression->valueType = targetType;
+        shared_ptr<ExpressionBlock> expressionBlock = dynamic_pointer_cast<ExpressionBlock>(sourceExpression);
+        expressionBlock->getResultStatementExpression()->expression = checkAndTryCasting(expressionBlock->getResultStatementExpression()->getExpression(), targetType, returnType);
+        return expressionBlock;
     }
 
     // if target has no count expression defined, use the one from source

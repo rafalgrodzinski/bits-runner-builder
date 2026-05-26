@@ -9,7 +9,8 @@ Available for:
 
 Changelist:
 - [1.0.0-dev-100]()
-  - Module reference to `@main.`
+  - `@import main` now works correctly
+  - Fixed implicit casting of if-else expression
 - [1.0.0-dev-99](https://github.com/rafalgrodzinski/bits-runner-builder/pull/185)
   - Added `ptr_volatile` type
   - LLVM allocas are declared at top of functions
