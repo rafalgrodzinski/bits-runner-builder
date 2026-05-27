@@ -2036,6 +2036,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     if (isData)
         return ValueType::data(subType, countExpression);
+    else if (isBlob && argTypes.empty())
+        return ValueType::blob(blobName, {});
     else if (isBlob)
         return ValueType::blob(blobName, argTypes);
     else if (isProto)

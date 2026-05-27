@@ -11,6 +11,7 @@ Changelist:
 - [1.0.0-dev-100]()
   - `@import main` now works correctly
   - Fixed implicit casting of if-else expression
+  - Fixed blob-type blob members with boxed types
 - [1.0.0-dev-99](https://github.com/rafalgrodzinski/bits-runner-builder/pull/185)
   - Added `ptr_volatile` type
   - LLVM allocas are declared at top of functions

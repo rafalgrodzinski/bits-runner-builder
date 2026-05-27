@@ -56,8 +56,10 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMemb
             vector<pair<string, shared_ptr<ValueType>>> blobMembers = *scopeLevels.top().blobMembersMap[*blobName];
             // update named value types
             for (pair<string, shared_ptr<ValueType>> &blobMember : blobMembers) {
-                blobMember.second->namedTypeKeys = blobValueType->getNamedTypeKeys();
-                blobMember.second->namedTypeValues = blobValueType->getNamedTypeValues();
+                if (blobMember.second->isBoxed()) {
+                    blobMember.second->namedTypeKeys = blobValueType->getNamedTypeKeys();
+                    blobMember.second->namedTypeValues = blobValueType->getNamedTypeValues();
+                }
             }
             return blobMembers;
         }

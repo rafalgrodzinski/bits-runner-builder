@@ -1,5 +1,13 @@
+BoxedDummy<T> blob
+    boxedValue boxed<T>
+;
+
+Dummy blob
+    value blob<BoxedDummy, u32>
+;
+
 @export main fun -> u32
-    num u32 <- 7
-    pNum ptr<u32> <- if true: {num.adr} else: {0x00}
-    ret pNum.val
+    dummy blob<Dummy>
+    dummy.value.boxedValue <- 14
+    ret dummy.value.boxedValue.u32
 ;
