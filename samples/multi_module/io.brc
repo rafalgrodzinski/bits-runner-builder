@@ -24,6 +24,6 @@
 
 @export printFromStuff fun
     print("Printing stuff from io\nIs: ")
-    printNum(@stuff.value.u64)
+    printNum(@stuff::value.u64)
     print("\n")
 ;

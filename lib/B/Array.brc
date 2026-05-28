@@ -15,9 +15,9 @@ ARRAY_INIT_CAPACITY u32 <- 8
             // Figure out new capacity
             it.capacity <- if it.capacity = 0: ARRAY_INIT_CAPACITY else: it.capacity * 2
             // Move existing data to new storage and get rid of the old one
-            pNewValues ptr<data<boxed<T>>> <- @BSys.memAlloc(boxed<T>.size * it.capacity).ptr<data<boxed<T>>>
+            pNewValues ptr<data<boxed<T>>> <- @BSys::memAlloc(boxed<T>.size * it.capacity).ptr<data<boxed<T>>>
             rep i u32 <- 0, i < it.count, i <- i + 1: pNewValues.val[i] <- it.pValues.val[i]
-            @BSys.memFree(it.pValues.vadr)
+            @BSys::memFree(it.pValues.vadr)
             it.pValues <- pNewValues
         ;
         it.pValues.val[it.count] <- value

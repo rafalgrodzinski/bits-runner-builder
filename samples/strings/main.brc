@@ -1,88 +1,88 @@
 @import B
 
 @export main fun -> u32
-    msg blob<@B.String>
+    msg blob<@B::String>
 
     // Printing
-    msg <- @B.String("T1: Printing")
+    msg <- @B::String("T1: Printing")
     msg.println()
-    msg <- @B.String("Hello, World!")
-    msg.println()
-
-    msg <- @B.StringForBool(false)
+    msg <- @B::String("Hello, World!")
     msg.println()
 
-    msg <- @B.StringForChar('?')
+    msg <- @B::StringForBool(false)
     msg.println()
 
-    msg <- @B.StringForU32(1024)
+    msg <- @B::StringForChar('?')
     msg.println()
 
-    msg <- @B.StringForS32(-33)
+    msg <- @B::StringForU32(1024)
     msg.println()
 
-    msg <- @B.StringForF32(3.14)
+    msg <- @B::StringForS32(-33)
     msg.println()
 
-    msg <- @B.StringHexForU32(0xdeadbeef)
+    msg <- @B::StringForF32(3.14)
     msg.println()
 
-    msg <- @B.String("\n")
+    msg <- @B::StringHexForU32(0xdeadbeef)
+    msg.println()
+
+    msg <- @B::String("\n")
     msg.print()
 
     // Substring
-    msg <- @B.String("T2: Substring")
+    msg <- @B::String("T2: Substring")
     msg.println()
 
-    greeting blob<@B.String> <- @B.String("Hello, World!")
+    greeting blob<@B::String> <- @B::String("Hello, World!")
     greeting.println()
 
-    msg <- @B.StringForU32(greeting.length())
+    msg <- @B::StringForU32(greeting.length())
     msg.println()
 
-    subGreeting blob<@B.String> <- greeting.subString(2, 10)
+    subGreeting blob<@B::String> <- greeting.subString(2, 10)
     subGreeting.println()
 
-    msg <- @B.StringForU32(subGreeting.length())
+    msg <- @B::StringForU32(subGreeting.length())
     msg.println()
 
-    msg <- @B.String("\n")
+    msg <- @B::String("\n")
     msg.print()
 
     // Comparison
-    comparison blob<@B.String> <- @B.String("T3: Comparison")
+    comparison blob<@B::String> <- @B::String("T3: Comparison")
     comparison.println()
 
-    stringA blob<@B.String> <- @B.String("Apple")
-    stringB blob<@B.String> <- @B.String("Banana and Apple")
+    stringA blob<@B::String> <- @B::String("Apple")
+    stringB blob<@B::String> <- @B::String("Banana and Apple")
 
-    compA blob<@B.String> <- @B.StringForBool(stringA.isEqual(stringB))
+    compA blob<@B::String> <- @B::StringForBool(stringA.isEqual(stringB))
     compA.println()
 
     stringB <- stringB.subStringFrom(11)
-    compB blob<@B.String> <- @B.StringForBool(stringA.isEqual(stringB))
+    compB blob<@B::String> <- @B::StringForBool(stringA.isEqual(stringB))
     compB.println()
 
-    msg <- @B.String("\n")
+    msg <- @B::String("\n")
     msg.print()
 
     // Find
-    find blob<@B.String> <- @B.String("T4: Find")
+    find blob<@B::String> <- @B::String("T4: Find")
     find.println()
 
-    longer blob<@B.String> <- @B.String("This is a longer string with a dog")
-    shorterA blob<@B.String> <- @B.String("cat")
-    shorterB blob<@B.String> <- @B.String("long")
-    shorterC blob<@B.String> <- @B.String("dog")
+    longer blob<@B::String> <- @B::String("This is a longer string with a dog")
+    shorterA blob<@B::String> <- @B::String("cat")
+    shorterB blob<@B::String> <- @B::String("long")
+    shorterC blob<@B::String> <- @B::String("dog")
 
-    findResA blob<@B.String> <- @B.StringForU32(longer.find(shorterA))
+    findResA blob<@B::String> <- @B::StringForU32(longer.find(shorterA))
     findResA.println()
 
-    findResB blob<@B.String> <- @B.StringForU32(longer.find(shorterB))
+    findResB blob<@B::String> <- @B::StringForU32(longer.find(shorterB))
     findResB.println()
 
 
-    findResC blob<@B.String> <- @B.StringForU32(longer.find(shorterC))
+    findResC blob<@B::String> <- @B::StringForU32(longer.find(shorterC))
     findResC.println()
 
     ret 0

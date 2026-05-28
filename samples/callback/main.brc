@@ -2,11 +2,11 @@
 @import utils
 
 callback fun: result u64
-    @io.printNum(result)
-    @io.printChar('\n')
+    @io::printNum(result)
+    @io::printChar('\n')
 ;
 
 @export main fun -> u64
-    @utils.calculateThings(4, 3, { callback.adr })
+    @utils::calculateThings(4, 3, { callback.adr })
     ret 0
 ;

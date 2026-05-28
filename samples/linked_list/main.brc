@@ -25,12 +25,12 @@ newUser fun: userPtrPtr ptr<ptr<blob<user>>>, name data<u64, 16>, id u64
 
 printUsers fun: userPtr ptr<blob<user>>
     rep userPtr.vadr != 0x00, userPtr <- userPtr.val.next
-        @io.print("id: ")
-        @io.printNum(userPtr.val.id)
-        @io.print("\n")
-        @io.print("name: ")
-        @io.print(userPtr.val.name)
-        @io.print("\n")
+        @io::print("id: ")
+        @io::printNum(userPtr.val.id)
+        @io::print("\n")
+        @io::print("name: ")
+        @io::print(userPtr.val.name)
+        @io::print("\n")
     ;
 ;
 
