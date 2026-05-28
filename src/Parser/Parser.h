@@ -39,7 +39,7 @@ private:
     shared_ptr<Statement> matchStatementImport();
     shared_ptr<Statement> matchStatementMetaExternVariable();
     shared_ptr<Statement> matchStatementMetaExternFunction();
-    shared_ptr<Statement> matchStatementVariable();
+    shared_ptr<Statement> matchStatementVariable(bool isRootStatement);
     shared_ptr<Statement> matchStatementFunction();
     shared_ptr<Statement> matchStatementFunctionDeclaration();
     shared_ptr<Statement> matchStatementRawFunction();
