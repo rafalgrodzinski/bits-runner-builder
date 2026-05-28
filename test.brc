@@ -1,8 +1,13 @@
-@export main fun
-    //num data<u32, 8>
-    //pNum ptr_volatile<data<u32>> <- {num.adr}
-    //ret pNum.val[3]
-    num u32
-    pNum ptr_volatile<u32> <- {num.adr}
-    pNum.val <- 7
+BoxedDummy<T> blob
+    boxedValue boxed<T>
+;
+
+Dummy blob
+    value blob<BoxedDummy, u32>
+;
+
+@export main fun -> u32
+    dummy blob<Dummy>
+    dummy.value.boxedValue <- 14
+    ret dummy.value.boxedValue.u32
 ;

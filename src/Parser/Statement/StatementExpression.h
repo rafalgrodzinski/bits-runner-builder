@@ -6,6 +6,8 @@
 class Expression;
 
 class StatementExpression: public Statement {
+friend class Analyzer;
+
 private:
     shared_ptr<Expression> expression;
 

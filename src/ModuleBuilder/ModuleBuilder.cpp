@@ -269,7 +269,12 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
     }
 
     // build function body
+    int errorsCount = this->errors.size();
     buildStatement(statementFunction->getStatementBlock());
+    // if any additional errors have been generated, bail out
+    if (this->errors.size() > errorsCount)
+        return;
+
     // Remove extranouse block after the last return statement
     builder->GetInsertBlock()->eraseFromParent();
 
@@ -297,6 +302,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> stat
         module->getName(),
         statementFunctionDeclaration->getName(),
         statementFunctionDeclaration->getShouldExport(),
+        false,
         statementFunctionDeclaration->getArguments(),
         statementFunctionDeclaration->getReturnValueType()
     );
@@ -304,8 +310,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> stat
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
     buildFunctionDeclaration(
-        "",
+        module->getName(),
         statementMetaExternFunction->getName(),
+        false,
         true,
         statementMetaExternFunction->getArguments(),
         statementMetaExternFunction->getReturnValueType()
@@ -314,8 +321,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternFunction> state
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
     buildVariableDeclaration(
-        "",
+        module->getName(),
         statementMetaExternVariable->getIdentifier(),
+        false,
         true,
         statementMetaExternVariable->getValueType()
     );
@@ -353,6 +361,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                     statementMetaImport->getName(),
                     statementDeclaration->getName(),
                     true,
+                    false,
                     statementDeclaration->getArguments(),
                     statementDeclaration->getReturnValueType()
                 );
@@ -379,6 +388,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                     statementMetaImport->getName(),
                     statementDeclaration->getIdentifier(),
                     true,
+                    false,
                     statementDeclaration->getValueType()
                 );
                 break;
@@ -487,20 +497,21 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> stat
         module->getName(),
         statementVariableDeclaration->getIdentifier(),
         statementVariableDeclaration->getShouldExport(),
+        false,
         statementVariableDeclaration->getValueType()
     );
 }
 
-void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
+void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool shouldExport, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
     // symbol name
     string symbolName = name;
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0 && !isExtern)
         symbolName = format("{}.{}", moduleName, name);
 
     // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, name);
 
     // arguments
     vector<llvm::Type *> funArgTypes;
@@ -515,11 +526,11 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     llvm::Type *funReturnType = llvmTypeForValueType(returnType);
     if (funReturnType == nullptr)
         return;
-    
+
     // linkage
-    llvm::GlobalValue::LinkageTypes funLinkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
-    if (isExtern)
-        funLinkage = llvm::GlobalValue::ExternalLinkage;
+    llvm::GlobalValue::LinkageTypes funLinkage = (shouldExport || isExtern) ?
+        llvm::GlobalValue::LinkageTypes::ExternalLinkage :
+        llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
     // build function declaration
     llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgTypes, false);
@@ -538,7 +549,7 @@ void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawF
     // internal name
     string internalName = statement->getName();
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, statement->getName());
 
     // function types
     llvm::Type *funReturnType = llvmTypeForValueType(statement->getReturnValueType());
@@ -591,16 +602,16 @@ void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawF
     scope->setInlineAsm(internalName, rawFun);
 }
 
-void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, bool isExtern, shared_ptr<ValueType> valueType) {
+void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType) {
     // symbol name
     string symbolName = name;
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, symbolName);
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0 && !isExtern)
+        symbolName = format("{}.{}", moduleName, name);
 
     // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, name);
 
     // type
     llvm::Type *type = llvmTypeForValueType(valueType);
@@ -608,8 +619,8 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes linkage = isExtern ?
-        linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage :
+    llvm::GlobalValue::LinkageTypes linkage = (shouldExport || isExtern) ?
+        llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
     llvm::GlobalVariable *global = new llvm::GlobalVariable(*llvmModule, type, false, linkage, nullptr, symbolName);
@@ -625,12 +636,12 @@ void ModuleBuilder::buildProtoDeclaration(string moduleName, shared_ptr<Statemen
     // symbol name
     string symbolName = statement->getName();
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, symbolName);
+        symbolName = format("{}.{}", moduleName, statement->getName());
 
     // internal name
     string internalName = statement->getName();
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, statement->getName());
 
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
     scope->setProtoStructType(internalName, structType, {});
@@ -640,12 +651,12 @@ void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<Statement
     // symbol name
     string symbolName = statement->getName();
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, symbolName);
+        symbolName = format("{}.{}", moduleName, statement->getName());
 
     // internal name
     string internalName = statement->getName();
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, statement->getName());
 
     llvm::StructType *structType = scope->getProtoStructType(internalName);
     if (structType == nullptr) {
@@ -688,12 +699,12 @@ void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, symbolName);
+        symbolName = format("{}.{}", moduleName, name);
 
     // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, name);
 
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
     scope->setStruct(internalName, structType, {});
@@ -703,12 +714,12 @@ void ModuleBuilder::buildBlobDefinition(string moduleName, string name, vector<p
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, symbolName);
+        symbolName = format("{}.{}", moduleName, name);
 
     // internal name
     string internalName = name;
     if (moduleName.compare(module->getName()) != 0)
-        internalName = symbolName;
+        internalName = format("{}.{}", moduleName, name);
 
     llvm::StructType *structType = scope->getStructType(internalName);
     if (structType == nullptr) {
@@ -757,7 +768,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
     string moduleName = module->getName();
     string symbolName = statement->getIdentifier();
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, symbolName);
+        symbolName = format("{}.{}", moduleName, statement->getIdentifier());
 
     // internal name
     string internalName = statement->getIdentifier();
@@ -1585,7 +1596,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     // Then
     scope->pushLevel();
     builder->SetInsertPoint(thenBlock);
-    llvm::Value *thenValue = wrappedValueForExpression(expressionIfElse->getThenExpression())->getValue();
+    shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(expressionIfElse->getThenExpression());
+    if (wrappedValue == nullptr)
+        return nullptr;
+    llvm::Value *thenValue = wrappedValue->getValue();
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
     scope->popLevel();
@@ -1727,9 +1741,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue) {
-    llvm::Value *sourceValue;
-    llvm::Value *sourcePointerValue;
-    llvm::Type *sourceType;
+    llvm::Value *sourceValue = nullptr;
+    llvm::Value *sourcePointerValue = nullptr;
+    llvm::Type *sourceType = nullptr;
 
     bool isIt = expressionValue->getIdentifier().compare("it") == 0;
     shared_ptr<WrappedValue> wrappedPitValue = scope->getWrappedValue(".pit");

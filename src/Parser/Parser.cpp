@@ -900,7 +900,10 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
         TAG_IDENTIFIER,
         TAG_INDEX_EXPRESSION,
         TAG_CAST,
-        TAG_VALUE_EXPRESSION
+        TAG_VALUE_EXPRESSION,
+        TAG_CALL_START,
+        TAG_CALL_END,
+        TAG_ARGUMENT_EXPRESSION
     };
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
@@ -918,12 +921,36 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
             ),
             // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
-            // index expression
-            Parsee::groupParsee(
+            Parsee::oneOfParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
-                    Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
-                    Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                    // index expression
+                    {
+                        Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
+                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
+                        Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                    },
+                    // call expression
+                    {
+                        // arguments
+                        Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, ParseeLevel::REQUIRED, true, TAG_CALL_START),
+                        Parsee::groupParsee(
+                            {
+                                // first argument
+                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
+                                // additional arguments
+                                Parsee::repeatedGroupParsee(
+                                    {
+                                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
+                                    }, ParseeLevel::OPTIONAL, true
+                                ),
+                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, ParseeLevel::CRITICAL, true, TAG_CALL_END),
+                    }
                 }, ParseeLevel::OPTIONAL, true
             ),
             // additional chains
@@ -936,14 +963,38 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                             {
                                 // identifier - name
                                 Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
-                                // index expression
-                                Parsee::groupParsee(
+                                Parsee::oneOfParsee(
                                     {
-                                        Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
-                                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
-                                        Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                                        // index expression
+                                        {
+                                            Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
+                                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
+                                            Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                                        },
+                                        // call expression
+                                        {
+                                            // arguments
+                                            Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, ParseeLevel::REQUIRED, true, TAG_CALL_START),
+                                            Parsee::groupParsee(
+                                                {
+                                                    // first argument
+                                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                                    Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
+                                                    // additional arguments
+                                                    Parsee::repeatedGroupParsee(
+                                                        {
+                                                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
+                                                        }, ParseeLevel::OPTIONAL, true
+                                                    ),
+                                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
+                                                }, ParseeLevel::OPTIONAL, true
+                                            ),
+                                            Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, ParseeLevel::CRITICAL, true, TAG_CALL_END),
+                                        }
                                     }, ParseeLevel::OPTIONAL, true
-                                )
+                                ),
                             },
                             {
                                 // cast expression
@@ -964,10 +1015,11 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
 
     vector<shared_ptr<Expression>> chainExpressions;
     shared_ptr<Expression> valueExpression;
+    vector<shared_ptr<Expression>> argumentExpressions;
+    string identifier = "";
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
-        string identifier = "";
         switch (parseeResult.getTag()) {
             case TAG_IDENTIFIER_PREFIX: {
                 identifier += resultsGroup.getResults().at(i++).getToken()->getLexme(); // module
@@ -980,10 +1032,16 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                     shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(++i).getExpression();
                     shared_ptr<ExpressionValue> expression = ExpressionValue::data(identifier, indexExpression, location);
                     chainExpressions.push_back(expression);
+                    identifier = "";
+                // call
+                } else if (i < resultsGroup.getResults().size() - 1 && resultsGroup.getResults().at(i+1).getTag() == TAG_CALL_START) {
+                    argumentExpressions.clear();
+                    i++;
                 // simple
                 } else {
                     shared_ptr<ExpressionValue> expression = ExpressionValue::simple(identifier, location);
                     chainExpressions.push_back(expression);
+                    identifier = "";
                 }
                 break;
             }
@@ -993,9 +1051,21 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
                 chainExpressions.push_back(expression);
                 break;
             }
-            case TAG_VALUE_EXPRESSION:
+            case TAG_VALUE_EXPRESSION: {
                 valueExpression = parseeResult.getExpression();
                 break;
+            }
+            case TAG_ARGUMENT_EXPRESSION: {
+                argumentExpressions.push_back(parseeResult.getExpression());
+                break;
+            }
+            case TAG_CALL_END: {
+                shared_ptr<ExpressionCall> expressionCall = make_shared<ExpressionCall>(identifier, argumentExpressions, location);
+                chainExpressions.push_back(expressionCall);
+                argumentExpressions.clear();
+                identifier = "";
+                break;
+            }
         }
     }
 
@@ -1551,7 +1621,7 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
                 name += parseeResult.getToken()->getLexme();
                 break;
             case TAG_ARGUMENT_EXPRESSION:
-            argumentExpressions.push_back(parseeResult.getExpression());
+                argumentExpressions.push_back(parseeResult.getExpression());
                 break;
         }
     }
@@ -2036,6 +2106,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     if (isData)
         return ValueType::data(subType, countExpression);
+    else if (isBlob && argTypes.empty())
+        return ValueType::blob(blobName, {});
     else if (isBlob)
         return ValueType::blob(blobName, argTypes);
     else if (isProto)

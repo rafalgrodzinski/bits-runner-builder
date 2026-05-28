@@ -39,8 +39,8 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
-Analyzer::Analyzer(shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap) :
-module(module), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
+Analyzer::Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap) :
+defaultModuleName(defaultModuleName), module(module), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
 
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
@@ -678,6 +678,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         } else if (isParentBlob) {
             string functionName = format("{}.{}", *(parentExpression->getValueType()->getBlobName()), expressionCall->getName());
             valueType = scope->getFunctionType(functionName);
+            if (valueType == nullptr)
+                return nullptr;
             valueType->namedTypeKeys = parentExpression->getValueType()->getNamedTypeKeys();
             valueType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
             extraArguments = 1; // for the implicit "it"
@@ -1394,6 +1396,17 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
         if (targetType->getCountExpression() == nullptr)
             return sourceExpression;
+    } else if (sourceExpression->getKind() == ExpressionKind::IF_ELSE) {
+        sourceExpression->valueType = targetType;
+        shared_ptr<ExpressionIfElse> expressionIfElse = dynamic_pointer_cast<ExpressionIfElse>(sourceExpression);
+        expressionIfElse->thenExpression = checkAndTryCasting(expressionIfElse->getThenExpression(), targetType, returnType);
+        expressionIfElse->elseExpression = checkAndTryCasting(expressionIfElse->getElseExpression(), targetType, returnType);
+        return sourceExpression;
+    } else if (sourceExpression->getKind() == ExpressionKind::BLOCK) {
+        sourceExpression->valueType = targetType;
+        shared_ptr<ExpressionBlock> expressionBlock = dynamic_pointer_cast<ExpressionBlock>(sourceExpression);
+        expressionBlock->getResultStatementExpression()->expression = checkAndTryCasting(expressionBlock->getResultStatementExpression()->getExpression(), targetType, returnType);
+        return expressionBlock;
     }
 
     // if target has no count expression defined, use the one from source

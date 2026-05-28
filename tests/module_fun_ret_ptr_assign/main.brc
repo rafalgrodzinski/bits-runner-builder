@@ -1,0 +1,6 @@
+@import Dummy
+
+@export main fun -> u32
+    @Dummy.getter().val <- 3
+    ret @Dummy.getter().val
+;
