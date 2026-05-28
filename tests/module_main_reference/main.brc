@@ -3,5 +3,5 @@
 @export value u32
 
 @export main fun -> u32
-    ret @dummy.doStuff()
+    ret @dummy::doStuff()
 ;
