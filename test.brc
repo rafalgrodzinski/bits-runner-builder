@@ -1,13 +1,5 @@
-BoxedDummy<T> blob
-    boxedValue boxed<T>
-;
-
-Dummy blob
-    value blob<BoxedDummy, u32>
-;
+Dummy::value u32 <- 5
 
 @export main fun -> u32
-    dummy blob<Dummy>
-    dummy.value.boxedValue <- 14
-    ret dummy.value.boxedValue.u32
+    ret 0
 ;

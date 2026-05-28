@@ -107,6 +107,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return ",";
         case TokenKind::COLON:
             return ":";
+        case TokenKind::DOUBLE_COLON:
+            return "::";
         case TokenKind::SEMICOLON:
             return ";";
         case TokenKind::LEFT_ARROW:
@@ -1035,6 +1037,8 @@ string Logger::toString(TokenKind tokenKind) {
             return ",";
         case TokenKind::COLON:
             return ":";
+        case TokenKind::DOUBLE_COLON:
+            return "::";
         case TokenKind::SEMICOLON:
             return ";";
         case TokenKind::LEFT_ARROW:
