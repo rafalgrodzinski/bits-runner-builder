@@ -678,6 +678,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         } else if (isParentBlob) {
             string functionName = format("{}.{}", *(parentExpression->getValueType()->getBlobName()), expressionCall->getName());
             valueType = scope->getFunctionType(functionName);
+            if (valueType == nullptr)
+                return nullptr;
             valueType->namedTypeKeys = parentExpression->getValueType()->getNamedTypeKeys();
             valueType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
             extraArguments = 1; // for the implicit "it"

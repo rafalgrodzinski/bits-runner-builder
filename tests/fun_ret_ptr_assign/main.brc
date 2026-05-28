@@ -1,7 +1,7 @@
 value u32
 
 getter fun -> ptr<u32>
-    ret {u32.adr}
+    ret {value.adr}
 ;
 
 @export main fun -> u32
