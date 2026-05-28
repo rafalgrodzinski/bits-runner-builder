@@ -1,4 +1,8 @@
-Dummy::value u32 <- 5
+Bleh::stuff raw<"">
+;
+
+Bleh::doStuff fun
+;
 
 @export main fun -> u32
     ret 0

@@ -387,6 +387,7 @@ shared_ptr<Statement> Parser::matchStatementVariable(bool isRootStatement) {
 shared_ptr<Statement> Parser::matchStatementFunction() {
     enum {
         TAG_SHOULD_EXPORT,
+        TAG_NAMESPACE,
         TAG_NAME,
         TAG_ARGUMENT_IDENTIFIER,
         TAG_ARGUMENT_TYPE,
@@ -399,7 +400,14 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         {
             // export
             Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
             // arguments
@@ -450,8 +458,13 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
                 shouldExport = true;
                 break;
             }
+            case TAG_NAMESPACE: {
+                name += parseeResult.getToken()->getLexme();
+                name += "::";
+                break;
+            }
             case TAG_NAME: {
-                name = parseeResult.getToken()->getLexme();
+                name += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_ARGUMENT_IDENTIFIER: {
@@ -570,6 +583,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
     enum {
         TAG_SHOULD_EXPORT,
+        TAG_NAMESPACE,
         TAG_NAME,
         TAG_CONSTRAINTS,
         TAG_ARGUMENT_IDENTIFIER,
@@ -583,7 +597,14 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         {
             // export
             Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::RAW_FUNCTION, ParseeLevel::REQUIRED, false),
             // constraints
@@ -638,16 +659,24 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             for (int i=0; i<resultsGroup.getResults().size(); i++) {
                 ParseeResult parseeResult = resultsGroup.getResults().at(i);
                 switch (parseeResult.getTag()) {
-                    case TAG_SHOULD_EXPORT:
+                    case TAG_SHOULD_EXPORT: {
                         shouldExport = true;
                         break;
-                    case TAG_NAME:
-                        name = parseeResult.getToken()->getLexme();
+                    }
+                    case TAG_NAMESPACE: {
+                        name += parseeResult.getToken()->getLexme();
+                        name += "::";
                         break;
-                    case TAG_CONSTRAINTS:
+                    }
+                    case TAG_NAME: {
+                        name += parseeResult.getToken()->getLexme();
+                        break;
+                    }
+                    case TAG_CONSTRAINTS: {
                         constraints = parseeResult.getToken()->getLexme();
                         constraints = constraints.substr(1, constraints.length()-2);
                         break;
+                    }
                     case TAG_ARGUMENT_IDENTIFIER: {
                         pair<string, shared_ptr<ValueType>> argument;
                         argument.first = parseeResult.getToken()->getLexme();
@@ -655,9 +684,10 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                         arguments.push_back(argument);
                         break;
                     }
-                    case TAG_RETURN_TYPE:
+                    case TAG_RETURN_TYPE: {
                         returnType = parseeResult.getValueType();
                         break;
+                    }
                 }
             }
             break;
