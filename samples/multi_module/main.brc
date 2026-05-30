@@ -2,14 +2,14 @@
 @import stuff
 
 @export main fun -> u64
-    @io.print("Modyfying stuff from main\nWas: ")
-    @io.printNum(@stuff.value.u64)
-    @io.print("\n")
+    @io::print("Modyfying stuff from main\nWas: ")
+    @io::printNum(@stuff::value.u64)
+    @io::print("\n")
 
-    @stuff.value <- 42.u32
-    @stuff.multiply(3.u32)
+    @stuff::value <- 42.u32
+    @stuff::multiply(3.u32)
 
-    @io.printFromStuff()
+    @io::printFromStuff()
 
     ret 0
 ;

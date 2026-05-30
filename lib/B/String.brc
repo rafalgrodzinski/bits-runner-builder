@@ -23,13 +23,13 @@
 
     print fun
         rep i u32 <- 0, it.string[i] != '\0' and i < it.string.count, i <- i+1
-            @BSys.printChar(it.string[i])
+            @BSys::printChar(it.string[i])
         ;
     ;
 
     println fun
         it.print()
-        @BSys.printChar('\n')
+        @BSys::printChar('\n')
     ;
 
     subString fun: from u32, to u32 -> blob<String>

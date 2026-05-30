@@ -156,6 +156,9 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token = match(TokenKind::COMMA, ",", false))
         return token;
 
+    if (token = match(TokenKind::DOUBLE_COLON, "::", false))
+        return token;
+
     if (token = match(TokenKind::COLON, ":", false))
         return token;
 

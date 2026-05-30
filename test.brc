@@ -1,13 +1,9 @@
-BoxedDummy<T> blob
-    boxedValue boxed<T>
+Bleh::stuff raw<"">
 ;
 
-Dummy blob
-    value blob<BoxedDummy, u32>
+Bleh::doStuff fun
 ;
 
 @export main fun -> u32
-    dummy blob<Dummy>
-    dummy.value.boxedValue <- 14
-    ret dummy.value.boxedValue.u32
+    ret 0
 ;

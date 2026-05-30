@@ -92,7 +92,7 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
     shared_ptr<Statement> statement;
     int errorsCount = errors.size();
 
-    if ((statement = matchStatementVariable()) || errors.size() > errorsCount)
+    if ((statement = matchStatementVariable(false)) || errors.size() > errorsCount)
         return statement;
 
     if ((statement = matchStatementAssignment()) || errors.size() > errorsCount)
@@ -150,6 +150,8 @@ shared_ptr<Statement> Parser::matchStatementImport() {
 
 shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
     enum {
+        TAG_MODULE_PREFIX,
+        TAG_NAMESPACE,
         TAG_IDENTIFIER,
         TAG_VALUE_TYPE
     };
@@ -164,11 +166,18 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
             Parsee::groupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_IDENTIFIER),
-                    Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_IDENTIFIER)
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
-            // identifier
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
             Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE)
         }
@@ -182,14 +191,20 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_IDENTIFIER: {
+            case TAG_MODULE_PREFIX:
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += ".";
+                break;
+            case TAG_NAMESPACE:
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += "::";
+                break;
+            case TAG_IDENTIFIER:
                 identifier += parseeResult.getToken()->getLexme();
                 break;
-            }
-            case TAG_VALUE_TYPE: {
+            case TAG_VALUE_TYPE:
                 valueType = parseeResult.getValueType();
                 break;
-            }
         }
     }
 
@@ -198,6 +213,8 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     enum {
+        TAG_MODULE_PREFIX,
+        TAG_NAMESPACE,
         TAG_NAME,
         TAG_ARGUMENT_IDENTIFIER,
         TAG_ARGUMENT_TYPE,
@@ -214,11 +231,18 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
             Parsee::groupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
-                    Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_NAME)
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
-            // identifier
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
             // arguments
@@ -261,6 +285,14 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
+            case TAG_MODULE_PREFIX:
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += ".";
+                break;
+            case TAG_NAMESPACE:
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += "::";
+                break;
             case TAG_NAME:
                 identifier += parseeResult.getToken()->getLexme();
                 break;
@@ -280,9 +312,10 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     return make_shared<StatementMetaExternFunction>(identifier, arguments, returnType, location);
 }
 
-shared_ptr<Statement> Parser::matchStatementVariable() {
+shared_ptr<Statement> Parser::matchStatementVariable(bool isRootStatement) {
     enum Tag {
         TAG_SHOULD_EXPORT,
+        TAG_NAMESPACE,
         TAG_IDENTIFIER,
         TAG_VALUE_TYPE,
         TAG_EXPRESSION
@@ -294,7 +327,14 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         {
             // export
             Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
             Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE),
             // initializer
@@ -321,8 +361,13 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
                 shouldExport =  true;
                 break;
             }
+            case TAG_NAMESPACE: {
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += "::";
+                break;
+            }
             case TAG_IDENTIFIER: {
-                identifier = parseeResult.getToken()->getLexme();
+                identifier += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_VALUE_TYPE: {
@@ -342,6 +387,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
 shared_ptr<Statement> Parser::matchStatementFunction() {
     enum {
         TAG_SHOULD_EXPORT,
+        TAG_NAMESPACE,
         TAG_NAME,
         TAG_ARGUMENT_IDENTIFIER,
         TAG_ARGUMENT_TYPE,
@@ -354,7 +400,14 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         {
             // export
             Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
             // arguments
@@ -405,8 +458,13 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
                 shouldExport = true;
                 break;
             }
+            case TAG_NAMESPACE: {
+                name += parseeResult.getToken()->getLexme();
+                name += "::";
+                break;
+            }
             case TAG_NAME: {
-                name = parseeResult.getToken()->getLexme();
+                name += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_ARGUMENT_IDENTIFIER: {
@@ -525,6 +583,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
     enum {
         TAG_SHOULD_EXPORT,
+        TAG_NAMESPACE,
         TAG_NAME,
         TAG_CONSTRAINTS,
         TAG_ARGUMENT_IDENTIFIER,
@@ -538,7 +597,14 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         {
             // export
             Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             Parsee::tokenParsee(TokenKind::RAW_FUNCTION, ParseeLevel::REQUIRED, false),
             // constraints
@@ -593,16 +659,24 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             for (int i=0; i<resultsGroup.getResults().size(); i++) {
                 ParseeResult parseeResult = resultsGroup.getResults().at(i);
                 switch (parseeResult.getTag()) {
-                    case TAG_SHOULD_EXPORT:
+                    case TAG_SHOULD_EXPORT: {
                         shouldExport = true;
                         break;
-                    case TAG_NAME:
-                        name = parseeResult.getToken()->getLexme();
+                    }
+                    case TAG_NAMESPACE: {
+                        name += parseeResult.getToken()->getLexme();
+                        name += "::";
                         break;
-                    case TAG_CONSTRAINTS:
+                    }
+                    case TAG_NAME: {
+                        name += parseeResult.getToken()->getLexme();
+                        break;
+                    }
+                    case TAG_CONSTRAINTS: {
                         constraints = parseeResult.getToken()->getLexme();
                         constraints = constraints.substr(1, constraints.length()-2);
                         break;
+                    }
                     case TAG_ARGUMENT_IDENTIFIER: {
                         pair<string, shared_ptr<ValueType>> argument;
                         argument.first = parseeResult.getToken()->getLexme();
@@ -610,9 +684,10 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
                         arguments.push_back(argument);
                         break;
                     }
-                    case TAG_RETURN_TYPE:
+                    case TAG_RETURN_TYPE: {
                         returnType = parseeResult.getValueType();
                         break;
+                    }
                 }
             }
             break;
@@ -648,6 +723,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         TAG_NAME,
         TAG_TYPE_ARGUMENT_NAME,
         TAG_STATEMENT_IN_BLOB,
+        TAG_PROTO_MODULE_PREFIX,
         TAG_PROTO_NAME
     };
 
@@ -688,8 +764,8 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                     Parsee::groupParsee(
                         {
                             Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
-                            Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_MODULE_PREFIX),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                         }, ParseeLevel::OPTIONAL, true
                     ),
                     // identifier
@@ -757,13 +833,8 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             }
             case TAG_PROTO_NAME: {
                 string protoName;
-                if (
-                    (i < resultsGroup.getResults().size() - 2) &&
-                    (resultsGroup.getResults().at(i+1).getKind() == ParseeResultKind::TOKEN) &&
-                    (resultsGroup.getResults().at(i+1).getToken()->getLexme().compare(".") == 0)
-                ) {
-                    protoName = format("{}.{}", parseeResult.getToken()->getLexme(), resultsGroup.getResults().at(i+2).getToken()->getLexme());
-                    i += 2;
+                if ((i > 0) && (resultsGroup.getResults().at(i-1).getTag() == TAG_PROTO_MODULE_PREFIX)) {
+                    protoName = format("{}.{}", resultsGroup.getResults().at(i-1).getToken()->getLexme(), parseeResult.getToken()->getLexme());
                 } else {
                     protoName = parseeResult.getToken()->getLexme();
                 }
@@ -896,7 +967,8 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 
 shared_ptr<Statement> Parser::matchStatementAssignment() {
     enum {
-        TAG_IDENTIFIER_PREFIX,
+        TAG_MODULE_PREFIX,
+        TAG_NAMESPACE,
         TAG_IDENTIFIER,
         TAG_INDEX_EXPRESSION,
         TAG_CAST,
@@ -915,8 +987,15 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
             Parsee::groupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_IDENTIFIER_PREFIX),
-                    Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_IDENTIFIER_PREFIX)
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
             // identifier - name
@@ -1021,12 +1100,18 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
-            case TAG_IDENTIFIER_PREFIX: {
-                identifier += resultsGroup.getResults().at(i++).getToken()->getLexme(); // module
-                identifier += resultsGroup.getResults().at(i++).getToken()->getLexme(); // dot
+            case TAG_MODULE_PREFIX: {
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += ".";
+                break;
+            }
+            case TAG_NAMESPACE: {
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += "::";
+                break;
             }
             case TAG_IDENTIFIER: {
-                identifier += resultsGroup.getResults().at(i).getToken()->getLexme(); // name
+                identifier += parseeResult.getToken()->getLexme();
                 // data
                 if (i < resultsGroup.getResults().size() - 1 && resultsGroup.getResults().at(i+1).getTag() == TAG_INDEX_EXPRESSION) {
                     shared_ptr<Expression> indexExpression = resultsGroup.getResults().at(++i).getExpression();
@@ -1569,6 +1654,8 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 
 shared_ptr<Expression> Parser::matchExpressionCall() {
     enum {
+        TAG_MODULE_PREFIX,
+        TAG_NAMESPACE,
         TAG_NAME,
         TAG_ARGUMENT_EXPRESSION
     };
@@ -1581,8 +1668,15 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
             Parsee::groupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
-                    Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_NAME)
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
             // identifier - name
@@ -1617,6 +1711,14 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
+            case TAG_MODULE_PREFIX:
+                name += parseeResult.getToken()->getLexme();
+                name += ".";
+                break;
+            case TAG_NAMESPACE:
+                name += parseeResult.getToken()->getLexme();
+                name += "::";
+                break;
             case TAG_NAME:
                 name += parseeResult.getToken()->getLexme();
                 break;
@@ -1631,6 +1733,8 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
 
 shared_ptr<Expression> Parser::matchExpressionVariable() {
     enum {
+        TAG_MODULE_PREFIX,
+        TAG_NAMESPACE,
         TAG_IDENTIFIER,
         TAG_INDEX_EXPRESSION
     };
@@ -1643,8 +1747,15 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
             Parsee::groupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_IDENTIFIER),
-                    Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_IDENTIFIER)
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
             // identifier - name
@@ -1668,6 +1779,16 @@ shared_ptr<Expression> Parser::matchExpressionVariable() {
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
+            case TAG_MODULE_PREFIX: {
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += ".";
+                break;
+            }
+            case TAG_NAMESPACE: {
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += "::";
+                break;
+            }
             case TAG_IDENTIFIER:
                 identifier += parseeResult.getToken()->getLexme();
                 break;
@@ -1886,7 +2007,9 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
 shared_ptr<ValueType> Parser::matchValueType() {
     enum TAG {
         TAG_DATA,
+        TAG_BLOB_MODULE_PREFIX,
         TAG_BLOB,
+        TAG_PROTO_MODULE_PREFIX,
         TAG_PROTO,
         TAG_BOXED,
         TAG_PTR_FUN,
@@ -1977,8 +2100,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         Parsee::groupParsee(
                             {
                                 Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
-                                Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME)
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_MODULE_PREFIX),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
                         // identifier
@@ -2000,8 +2123,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         Parsee::groupParsee(
                             {
                                 Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
-                                Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_MODULE_PREFIX),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
                         // identifier
@@ -2092,8 +2215,16 @@ shared_ptr<ValueType> Parser::matchValueType() {
             case TAG_SIZE_EXPRESSION:
                 countExpression = parseeResult.getExpression();
                 break;
+            case TAG_BLOB_MODULE_PREFIX:
+                blobName += parseeResult.getToken()->getLexme();
+                blobName += ".";
+                break;
             case TAG_BLOB_NAME:
                 blobName += parseeResult.getToken()->getLexme();
+                break;
+            case TAG_PROTO_MODULE_PREFIX:
+                protoName += parseeResult.getToken()->getLexme();
+                protoName += ".";
                 break;
             case TAG_PROTO_NAME:
                 protoName += parseeResult.getToken()->getLexme();
@@ -2337,7 +2468,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(ve
                 statement = matchStatementReturn();
                 break;
             case StatementKind::VARIABLE:
-                statement = matchStatementVariable();
+                statement = matchStatementVariable(true);
                 break;
             default:
                 markError({}, {}, {});

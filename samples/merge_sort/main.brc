@@ -48,23 +48,23 @@ mergeSort fun: numbers data<u64, 32>, low u64, high u64 -> data<u64, 32>
     srand(time(0))
 
     // generate random numbers
-    @io.print("Before")
+    @io::print("Before")
     numbers data<u64, 32>
     rep i u64 <- 0, i < 32, i <- i + 1
         num u64 <- rand() % 10_000
         numbers[i] <- num
-        @io.printNum(num)
-        @io.printChar('\n')
+        @io::printNum(num)
+        @io::printChar('\n')
     ;
 
     numbers <- mergeSort(numbers, 0, 32)
-    @io.printChar('\n')
+    @io::printChar('\n')
 
     // print out result
-    @io.print("After\n")
+    @io::print("After\n")
     rep i u64 <- 0, i <32, i <- i + 1
-        @io.printNum(numbers[i])
-        @io.printChar('\n')
+        @io::printNum(numbers[i])
+        @io::printChar('\n')
     ;
 
     ret 0

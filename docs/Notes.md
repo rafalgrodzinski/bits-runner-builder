@@ -8,7 +8,9 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
-- [1.0.0-dev-100]()
+- [1.0.0-dev-101](https://github.com/rafalgrodzinski/bits-runner-builder/pull/195)
+  - Module and statics namespace resolution with `::`
+- [1.0.0-dev-100](https://github.com/rafalgrodzinski/bits-runner-builder/pull/194)
   - `@import main` now works correctly
   - Fixed implicit casting of if-else expression
   - Fixed blob-type blob members with boxed types

@@ -3,21 +3,21 @@
 @import B
 
 @export Shape proto
-    name blob<@B.String>
+    name blob<@B::String>
     getArea fun -> u32
 ;
 
 @export printShape fun: shape proto<Shape>
-    text blob<@B.String>
+    text blob<@B::String>
 
-    text <- @B.String("Area of ")
+    text <- @B::String("Area of ")
     text.print()
 
     shape.name.print()
 
-    text <- @B.String(" is ")
+    text <- @B::String(" is ")
     text.print()
 
-    text <- @B.StringForU32(shape.getArea())
+    text <- @B::StringForU32(shape.getArea())
     text.println()
 ;
