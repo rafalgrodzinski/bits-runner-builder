@@ -992,8 +992,8 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 break;
             }
         }
-    // pointer
-    } else if (targetWrappedValue->isPointer()) {
+    // ptr
+    } else if (targetWrappedValue->getValueType()->getKind() == ValueTypeKind::PTR) {
         switch (valueExpression->getKind()) {
             // ptr <- { }
             case ExpressionKind::COMPOSITE_LITERAL: {
