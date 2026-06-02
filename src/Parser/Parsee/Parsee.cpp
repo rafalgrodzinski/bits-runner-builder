@@ -46,9 +46,13 @@ Parsee Parsee::groupParsee(vector<Parsee> groupParsees, ParseeLevel level, bool 
     return parsee;
 }
 
-Parsee Parsee::ifElseParsee(bool isMultiLine, ParseeLevel level, bool shouldReturn, int tag) {
+Parsee Parsee::ifElseParsee(optional<bool> isMultiLine, ParseeLevel level, bool shouldReturn, int tag) {
     Parsee parsee;
-    parsee.kind = isMultiLine ? ParseeKind::IF_ELSE_MULTI_LINE : ParseeKind::IF_ELSE_SINGLE_LINE;
+    if (isMultiLine) {
+        parsee.kind = *isMultiLine ? ParseeKind::IF_ELSE_MULTI_LINE : ParseeKind::IF_ELSE_SINGLE_LINE;
+    } else {
+        parsee.kind = ParseeKind::IF_ELSE;
+    }
     parsee.tag = tag;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;

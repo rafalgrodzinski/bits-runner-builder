@@ -17,6 +17,7 @@ enum class ParseeKind {
     EXPRESSION_BLOCK_SINGLE_LINE,
     DEBUG,
     GROUP,
+    IF_ELSE,
     IF_ELSE_MULTI_LINE,
     IF_ELSE_SINGLE_LINE,
     ONE_OF,
@@ -56,7 +57,7 @@ public:
     static Parsee expressionBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee debug(string debugMessage);
     static Parsee groupParsee(vector<Parsee> groupParsees, ParseeLevel level, bool shouldReturn);
-    static Parsee ifElseParsee(bool isMultiLine, ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee ifElseParsee(optional<bool> isMultiLine, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn);
     static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel level, bool shouldReturn);
     static Parsee statementKindsParsee(vector<StatementKind> statementKinds, ParseeLevel level, bool shouldReturn, int tag = -1);

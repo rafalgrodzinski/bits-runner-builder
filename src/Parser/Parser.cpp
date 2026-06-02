@@ -1835,18 +1835,26 @@ shared_ptr<Expression> Parser::matchExpressionIfElse(optional<bool> isMultiLine)
         Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_THEN),
         Parsee::oneOfParsee(
             {
-                // single line else-if
+                // else-if
                 {
                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                    Parsee::ifElseParsee(false, ParseeLevel::REQUIRED, true, TAG_ELSE)
+                    Parsee::ifElseParsee(isMultiLine, ParseeLevel::REQUIRED, true, TAG_ELSE)
                 },
-                // single line else
+                // single-line else
                 {
                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                     Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
+                },
+                // multi-line else
+                {
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                    Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE),
+                    Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
                 }
             }, ParseeLevel::OPTIONAL, true
         )
@@ -1863,20 +1871,25 @@ shared_ptr<Expression> Parser::matchExpressionIfElse(optional<bool> isMultiLine)
                         {
                             // else if
                             {
-                                Parsee::ifElseParsee(true, ParseeLevel::REQUIRED, true, TAG_ELSE)
+                                Parsee::ifElseParsee(isMultiLine, ParseeLevel::REQUIRED, true, TAG_ELSE)
                             },
-                            // multi-line else
+                            // single line else
                             {
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false),
+                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE)
+                            },
+                            // multi line else
+                            {
+                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
                                 Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE),
                                 Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
                             }
-                        }, ParseeLevel::CRITICAL, true
+                        }, ParseeLevel::REQUIRED, true
                     )
                 },
                 // no else
                 {
-                    Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+                    Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
                 }
             }, ParseeLevel::CRITICAL, true
         )                            
@@ -2297,6 +2310,9 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
             case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
                 subResults = expressionBlockMultiLineParseeResults(parsee.getTag());
                 break;
+            case ParseeKind::IF_ELSE:
+                subResults = ifElseParseeResults({}, parsee.getTag());
+                break;
             case ParseeKind::IF_ELSE_SINGLE_LINE:
                 subResults = ifElseParseeResults(false, parsee.getTag());
                 break;
@@ -2550,7 +2566,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::expressionBlockMultiLineParsee
     return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount, tag)}), tokensCount);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::ifElseParseeResults(bool isMultiLine, int tag) {
+optional<pair<vector<ParseeResult>, int>> Parser::ifElseParseeResults(optional<bool> isMultiLine, int tag) {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
     shared_ptr<Expression> expression = matchExpressionIfElse(isMultiLine);
