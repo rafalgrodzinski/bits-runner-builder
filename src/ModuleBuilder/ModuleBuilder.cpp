@@ -287,6 +287,13 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
     builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
     this->currentInitBlock = nullptr;
 
+    // Set attributes
+    fun->addFnAttr(llvm::Attribute::NoUnwind);
+    fun->addFnAttr(llvm::Attribute::MustProgress);
+
+    if (!statementFunction->getShouldExport())
+        fun->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Local);
+
     // verify function
     string errorMessage;
     llvm::raw_string_ostream llvmErrorMessage(errorMessage);

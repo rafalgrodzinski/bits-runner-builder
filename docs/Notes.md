@@ -11,6 +11,8 @@ Changelist:
 - [1.0.0-dev-102]()
   - Any `if-else` syntax combination now works correctly
   - Fixed `a` arithmetics
+  - Added function attributes
+  - Sprinkled source with const references
 - [1.0.0-dev-101](https://github.com/rafalgrodzinski/bits-runner-builder/pull/195)
   - Module and statics namespace resolution with `::`
 - [1.0.0-dev-100](https://github.com/rafalgrodzinski/bits-runner-builder/pull/194)
