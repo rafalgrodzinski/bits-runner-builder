@@ -3,7 +3,7 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType.h"
 
-ExpressionUnary::ExpressionUnary(shared_ptr<Location> location) :
+ExpressionUnary::ExpressionUnary(shared_ptr<Location> location):
 Expression(ExpressionKind::UNARY, nullptr, location) { }
 
 shared_ptr<ExpressionUnary> ExpressionUnary::expression(shared_ptr<Token> token, shared_ptr<Expression> subExpression) {
@@ -33,10 +33,10 @@ shared_ptr<ExpressionUnary> ExpressionUnary::expression(shared_ptr<Token> token,
     return expression;
 }
 
-ExpressionUnaryOperation ExpressionUnary::getOperation() {
+ExpressionUnaryOperation ExpressionUnary::getOperation() const {
     return operation;
 }
 
-shared_ptr<Expression> ExpressionUnary::getSubExpression() {
+shared_ptr<Expression> ExpressionUnary::getSubExpression() const {
     return subExpression;
 }

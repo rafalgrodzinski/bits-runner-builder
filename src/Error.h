@@ -47,36 +47,36 @@ private:
     optional<string> message;
 
 public:
-    static shared_ptr<Error> error(shared_ptr<Location> location, string message); 
+    static shared_ptr<Error> error(shared_ptr<Location> location, const string &message); 
 
-    static shared_ptr<Error> lexerError(shared_ptr<Location> location, string lexme);
-    static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
+    static shared_ptr<Error> lexerError(shared_ptr<Location> location, const string &lexme);
+    static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, const optional<Parsee> &expectedParsee, const optional<string> &message);
 
-    static shared_ptr<Error> builderFunctionError(string funtionName, string message);
-    static shared_ptr<Error> builderModuleError(string moduleName, string message);
+    static shared_ptr<Error> builderFunctionError(const string &funtionName, const string &message);
+    static shared_ptr<Error> builderModuleError(const string &moduleName, const string &message);
 
     Error();
 
-    ErrorKind getKind();
-    shared_ptr<Location> getLocation();
-    optional<string> getLexme();
+    ErrorKind getKind() const;
+    shared_ptr<Location> getLocation() const;
+    optional<string> getLexme() const;
 
-    shared_ptr<Token> getActualToken();
-    optional<TokenKind> getExpectedTokenKind();
-    optional<Parsee> getExpectedParsee();
+    shared_ptr<Token> getActualToken() const;
+    optional<TokenKind> getExpectedTokenKind() const;
+    optional<Parsee> getExpectedParsee() const;
 
-    shared_ptr<ValueType> getActualType();
-    shared_ptr<ValueType> getExpectedType();
+    shared_ptr<ValueType> getActualType() const;
+    shared_ptr<ValueType> getExpectedType() const;
 
-    shared_ptr<ValueType> getFirstType();
-    shared_ptr<ValueType> getSecondType();
-    optional<ExpressionUnaryOperation> getUnaryOperation();
-    optional<ExpressionBinaryOperation> getBinaryOperation();
-    optional<string> getIdentifier();
+    shared_ptr<ValueType> getFirstType() const;
+    shared_ptr<ValueType> getSecondType() const;
+    optional<ExpressionUnaryOperation> getUnaryOperation() const;
+    optional<ExpressionBinaryOperation> getBinaryOperation() const ;
+    optional<string> getIdentifier()const;
 
-    optional<string> getFunctionName();
-    optional<string> getModuleName();
-    optional<string> getMessage();
+    optional<string> getFunctionName() const;
+    optional<string> getModuleName() const;
+    optional<string> getMessage() const;
 };
 
 #endif

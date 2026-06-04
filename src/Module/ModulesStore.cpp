@@ -15,7 +15,7 @@
 #include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/ValueType.h"
 
-ModulesStore::ModulesStore(string defaultModuleName) :
+ModulesStore::ModulesStore(string defaultModuleName):
 defaultModuleName(defaultModuleName) { }
 
 /// Private ///

@@ -2,10 +2,10 @@
 
 #include "ParseeResult.h"
 
-ParseeResultsGroup ParseeResultsGroup::success(vector<ParseeResult> results) {
+ParseeResultsGroup ParseeResultsGroup::success(const vector<ParseeResult> &results) {
     ParseeResultsGroup resultsGroup;
     resultsGroup.kind = ParseeResultsGroupKind::SUCCESS;
-    resultsGroup.results = results;
+    resultsGroup.results = std::move(results);
     return resultsGroup;
 }
 
@@ -21,10 +21,10 @@ ParseeResultsGroup ParseeResultsGroup::failure() {
     return resultsGroup;
 }
 
-ParseeResultsGroupKind ParseeResultsGroup::getKind() {
+ParseeResultsGroupKind ParseeResultsGroup::getKind() const {
     return kind;
 }
 
-vector<ParseeResult> ParseeResultsGroup::getResults() {
+vector<ParseeResult> ParseeResultsGroup::getResults() const {
     return results;
 }

@@ -3,10 +3,10 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType.h"
 
-ExpressionBinary::ExpressionBinary(shared_ptr<Location> location) :
+ExpressionBinary::ExpressionBinary(shared_ptr<Location> location):
 Expression(ExpressionKind::BINARY, nullptr, location) { }
 
-shared_ptr<ExpressionBinary> ExpressionBinary::expression(vector<shared_ptr<Token>> tokens, shared_ptr<Expression> left, shared_ptr<Expression> right) {
+shared_ptr<ExpressionBinary> ExpressionBinary::expression(const vector<shared_ptr<Token>> &tokens, shared_ptr<Expression> left, shared_ptr<Expression> right) {
     if (left == nullptr || right == nullptr)
         return nullptr;
 
@@ -61,19 +61,19 @@ shared_ptr<ExpressionBinary> ExpressionBinary::expression(vector<shared_ptr<Toke
     return expression;
 }
 
-ExpressionBinaryOperation ExpressionBinary::getOperation() {
+ExpressionBinaryOperation ExpressionBinary::getOperation() const {
     return operation;
 }
 
-shared_ptr<Expression> ExpressionBinary::getLeft() {
+shared_ptr<Expression> ExpressionBinary::getLeft() const {
     return left;
 }
 
-shared_ptr<Expression> ExpressionBinary::getRight() {
+shared_ptr<Expression> ExpressionBinary::getRight() const {
     return right;
 }
 
-bool ExpressionBinary::doTokensMatchTokenKinds(vector<shared_ptr<Token>> tokens, vector<TokenKind> tokenKinds) {
+bool ExpressionBinary::doTokensMatchTokenKinds(const vector<shared_ptr<Token>> &tokens, const vector<TokenKind> &tokenKinds) {
     // check if not empty and if sizes match
     if (tokens.empty() || tokens.size() != tokenKinds.size())
         return false;

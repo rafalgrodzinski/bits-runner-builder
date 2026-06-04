@@ -82,60 +82,60 @@ public:
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
-    static shared_ptr<ValueType> proto(string protoName);
+    static shared_ptr<ValueType> blob(const string &blobName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues);
+    static shared_ptr<ValueType> proto(const string &protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
-    static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
+    static shared_ptr<ValueType> fun(const vector<shared_ptr<ValueType>> &argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType, bool isVolatile);
-    static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> namedType(string namedTypeKey);
+    static shared_ptr<ValueType> composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression);
+    static shared_ptr<ValueType> namedType(const string &namedTypeKey);
 
     ValueType();
     ValueType(ValueTypeKind kind);
 
-    ValueTypeKind getKind();
-    bool getIsVolatile();
+    ValueTypeKind getKind() const;
+    bool getIsVolatile() const;
     // data, pointer, boxed
-    shared_ptr<ValueType> getSubType();
+    shared_ptr<ValueType> getSubType() const;
     // data
     int getValueArg(); // TODO: remove
-    shared_ptr<Expression> getCountExpression();
+    shared_ptr<Expression> getCountExpression() const;
     // function
-    optional<vector<shared_ptr<ValueType>>> getArgumentTypes();
-    shared_ptr<ValueType> getReturnType();
+    optional<vector<shared_ptr<ValueType>>> getArgumentTypes() const;
+    shared_ptr<ValueType> getReturnType() const;
     // blob
-    optional<string> getBlobName();
+    optional<string> getBlobName() const;
     // proto
-    optional<string> getProtoName();
+    optional<string> getProtoName() const;
     // composite
-    optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes();
+    optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes() const;
     // boxed
-    optional<string> getNamedTypeKey();
-    optional<vector<string>> getNamedTypeKeys();
-    optional<vector<shared_ptr<ValueType>>> getNamedTypeValues();
+    optional<string> getNamedTypeKey() const;
+    optional<vector<string>> getNamedTypeKeys() const;
+    optional<vector<shared_ptr<ValueType>>> getNamedTypeValues() const;
 
-    bool isEqual(shared_ptr<ValueType> other);
+    bool isEqual(shared_ptr<ValueType> other) const;
 
-    bool isNumeric();
-    bool isInteger();
-    bool isUnsignedInteger();
-    bool isSignedInteger();
-    bool isFloat();
-    bool isBool();
+    bool isNumeric() const;
+    bool isInteger() const;
+    bool isUnsignedInteger() const;
+    bool isSignedInteger() const;
+    bool isFloat() const;
+    bool isBool() const;
 
-    bool isData();
-    bool isDataBool();
-    bool isDataNumeric();
+    bool isData() const;
+    bool isDataBool() const;
+    bool isDataNumeric() const;
 
-    bool isAddress();
-    bool isPointer();
-    bool isFunction();
-    bool isBlob();
-    bool isProto();
-    bool isBoxed();
-    bool isComposite();
-    bool isNamedType();
-    bool isBoxedNamedType();
+    bool isAddress() const;
+    bool isPointer() const;
+    bool isFunction() const;
+    bool isBlob() const;
+    bool isProto() const;
+    bool isBoxed() const;
+    bool isComposite() const;
+    bool isNamedType() const;
+    bool isBoxedNamedType() const;
 };
 
 #endif

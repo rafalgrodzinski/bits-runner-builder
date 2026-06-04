@@ -1,12 +1,12 @@
 #include "StatementProtoDeclaration.h"
 
-StatementProtoDeclaration::StatementProtoDeclaration(bool shouldExport, string name, shared_ptr<Location> location):
-Statement(StatementKind::PROTO_DECLARATION, location), shouldExport(shouldExport), name(name) { }
+StatementProtoDeclaration::StatementProtoDeclaration(bool shouldExport, const string &name, shared_ptr<Location> location):
+Statement(StatementKind::PROTO_DECLARATION, location), shouldExport(shouldExport), name(std::move(name)) { }
 
-bool StatementProtoDeclaration::getShouldExport() {
+bool StatementProtoDeclaration::getShouldExport() const {
     return shouldExport;
 }
 
-string StatementProtoDeclaration::getName() {
+string StatementProtoDeclaration::getName() const {
     return name;
 }

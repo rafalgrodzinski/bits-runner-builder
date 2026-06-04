@@ -80,22 +80,22 @@ vector<TokenKind> Token::tokensLiteral = {
     TokenKind::STRING
 };
 
-Token::Token(TokenKind kind, string lexme, shared_ptr<Location> location):
-kind(kind), lexme(lexme), location(location) { }
+Token::Token(TokenKind kind, const string &lexme, shared_ptr<Location> location):
+kind(kind), lexme(std::move(lexme)), location(location) { }
 
-TokenKind Token::getKind() {
+TokenKind Token::getKind() const {
     return kind;
 }
 
-string Token::getLexme() {
+string Token::getLexme() const {
     return lexme;
 }
 
-shared_ptr<Location> Token::getLocation() {
+shared_ptr<Location> Token::getLocation() const {
     return location;
 }
 
-bool Token::isOfKind(vector<TokenKind> kinds) {
+bool Token::isOfKind(vector<TokenKind> kinds) const {
     for (TokenKind &kind : kinds) {
         if (kind == this->kind)
             return true;

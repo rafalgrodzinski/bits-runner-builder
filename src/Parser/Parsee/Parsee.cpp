@@ -2,6 +2,13 @@
 
 Parsee::Parsee() { }
 
+Parsee Parsee::debug(const string &debugMessage) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::DEBUG;
+    parsee.debugMessage = std::move(debugMessage);
+    return parsee;
+}
+
 Parsee Parsee::expressionParsee(ParseeLevel level, bool shouldReturn, bool isNumericExpression, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::EXPRESSION;
@@ -30,13 +37,6 @@ Parsee Parsee::expressionBlockSingleLineParsee(ParseeLevel level, bool shouldRet
     return parsee;
 }
 
-Parsee Parsee::debug(string debugMessage) {
-    Parsee parsee;
-    parsee.kind = ParseeKind::DEBUG;
-    parsee.debugMessage = debugMessage;
-    return parsee;
-}
-
 Parsee Parsee::groupParsee(vector<Parsee> groupParsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::GROUP;
@@ -59,28 +59,28 @@ Parsee Parsee::ifElseParsee(optional<bool> isMultiLine, ParseeLevel level, bool 
     return parsee;
 }
 
-Parsee Parsee::oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn) {
+Parsee Parsee::oneOfParsee(const vector<vector<Parsee>> &parsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::ONE_OF;
-    parsee.parsees = parsees;
+    parsee.parsees = std::move(parsees);
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
 }
 
-Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel level, bool shouldReturn) {
+Parsee Parsee::repeatedGroupParsee(const vector<Parsee> &repeatedParsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::REPEATED_GROUP;
-    parsee.repeatedParsees = repeatedParsees;
+    parsee.repeatedParsees = std::move(repeatedParsees);
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
 }
 
-Parsee Parsee::statementKindsParsee(vector<StatementKind> statementKinds, ParseeLevel level, bool shouldReturn, int tag) {
+Parsee Parsee::statementKindsParsee(const vector<StatementKind> &statementKinds, ParseeLevel level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_KINDS;
-    parsee.statementKinds = statementKinds;
+    parsee.statementKinds = std::move(statementKinds);
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     parsee.tag = tag;
@@ -124,50 +124,50 @@ Parsee Parsee::valueTypeParsee(ParseeLevel level, bool shouldReturn, int tag) {
     return parsee;
 }
 
-ParseeKind Parsee::getKind() {
+ParseeKind Parsee::getKind() const {
     return kind;
 }
 
-int Parsee::getTag() {
+int Parsee::getTag() const {
     return tag;
 }
 
-optional<vector<Parsee>> Parsee::getGroupParsees() {
+optional<vector<Parsee>> Parsee::getGroupParsees() const {
     return groupParsees;
 }
 
-optional<vector<Parsee>> Parsee::getRepeatedParsees() {
+optional<vector<Parsee>> Parsee::getRepeatedParsees() const {
     return repeatedParsees;
 }
 
-optional<vector<vector<Parsee>>> Parsee::getParsees() {
+optional<vector<vector<Parsee>>> Parsee::getParsees() const {
     return parsees;
 }
 
-optional<vector<StatementKind>> Parsee::getStatementKinds() {
+optional<vector<StatementKind>> Parsee::getStatementKinds() const {
     return statementKinds;
 }
 
-TokenKind Parsee::getTokenKind() {
+TokenKind Parsee::getTokenKind() const {
     return tokenKind;
 }
 
-bool Parsee::getShouldIncludeExpressionStatement() {
+bool Parsee::getShouldIncludeExpressionStatement() const {
     return shouldIncludeExpressionStatement;
 }
 
-bool Parsee::getIsNumericExpression() {
+bool Parsee::getIsNumericExpression() const {
     return isNumericExpression;
 }
 
-ParseeLevel Parsee::getLevel() {
+ParseeLevel Parsee::getLevel() const {
     return level;
 }
 
-bool Parsee::getShouldReturn() {
+bool Parsee::getShouldReturn() const {
     return shouldReturn;
 }
 
-string Parsee::getDebugMessage() {
+string Parsee::getDebugMessage() const {
     return debugMessage;
 }

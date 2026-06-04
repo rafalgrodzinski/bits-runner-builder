@@ -18,14 +18,14 @@ shared_ptr<ExpressionValue> ExpressionValue::data(string identifier, shared_ptr<
 ExpressionValue::ExpressionValue(shared_ptr<Location> location):
 Expression(ExpressionKind::VALUE, nullptr, location) { }
 
-ExpressionValueKind ExpressionValue::getValueKind() {
+ExpressionValueKind ExpressionValue::getValueKind() const {
     return valueKind;
 }
 
-string ExpressionValue::getIdentifier() {
+string ExpressionValue::getIdentifier() const {
     return identifier;
 }
 
-shared_ptr<Expression> ExpressionValue::getIndexExpression() {
+shared_ptr<Expression> ExpressionValue::getIndexExpression() const {
     return indexExpression;
 }

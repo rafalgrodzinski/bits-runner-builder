@@ -21,12 +21,13 @@ private:
 public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
     static shared_ptr<ExpressionLiteral> expressionLiteralForUInt(uint64_t value, shared_ptr<Location> location);
+
     ExpressionLiteral(shared_ptr<Location> location);
     
-    ExpressionLiteralKind getLiteralKind();
-    bool getBoolValue();
-    uint64_t getUIntValue();
-    double getFloatValue();
+    ExpressionLiteralKind getLiteralKind() const;
+    bool getBoolValue() const;
+    uint64_t getUIntValue() const;
+    double getFloatValue() const;
 };
 
 #endif

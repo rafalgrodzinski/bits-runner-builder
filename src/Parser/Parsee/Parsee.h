@@ -52,32 +52,32 @@ private:
     Parsee();
 
 public:
+    static Parsee debug(const string &debugMessage);
     static Parsee expressionParsee(ParseeLevel level, bool shouldReturn, bool isNumeric, int tag = -1);
     static Parsee expressionBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee expressionBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
-    static Parsee debug(string debugMessage);
     static Parsee groupParsee(vector<Parsee> groupParsees, ParseeLevel level, bool shouldReturn);
     static Parsee ifElseParsee(optional<bool> isMultiLine, ParseeLevel level, bool shouldReturn, int tag = -1);
-    static Parsee oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn);
-    static Parsee repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel level, bool shouldReturn);
-    static Parsee statementKindsParsee(vector<StatementKind> statementKinds, ParseeLevel level, bool shouldReturn, int tag = -1);
+    static Parsee oneOfParsee(const vector<vector<Parsee>> &parsees, ParseeLevel level, bool shouldReturn);
+    static Parsee repeatedGroupParsee(const vector<Parsee> &repeatedParsees, ParseeLevel level, bool shouldReturn);
+    static Parsee statementKindsParsee(const vector<StatementKind> &statementKinds, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee statementBlockMultiLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee statementBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee tokenParsee(TokenKind tokenKind, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee valueTypeParsee(ParseeLevel level, bool shouldReturn, int tag = -1); 
 
-    ParseeKind getKind();
-    int getTag();
-    optional<vector<Parsee>> getGroupParsees();
-    optional<vector<Parsee>> getRepeatedParsees();
-    optional<vector<vector<Parsee>>> getParsees();
-    optional<vector<StatementKind>> getStatementKinds();
-    TokenKind getTokenKind();
-    bool getShouldIncludeExpressionStatement();
-    bool getIsNumericExpression();
-    ParseeLevel getLevel();
-    bool getShouldReturn();
-    string getDebugMessage();
+    ParseeKind getKind() const;
+    int getTag() const;
+    optional<vector<Parsee>> getGroupParsees() const;
+    optional<vector<Parsee>> getRepeatedParsees() const;
+    optional<vector<vector<Parsee>>> getParsees() const;
+    optional<vector<StatementKind>> getStatementKinds() const;
+    TokenKind getTokenKind() const;
+    bool getShouldIncludeExpressionStatement() const;
+    bool getIsNumericExpression() const;
+    ParseeLevel getLevel() const;
+    bool getShouldReturn() const;
+    string getDebugMessage() const;
 };
 
 #endif

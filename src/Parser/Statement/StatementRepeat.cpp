@@ -18,22 +18,22 @@ preConditionExpression(preConditionExpression),
 postConditionExpression(postConditionExpression),
 bodyBlockStatement(bodyBlockStatement) { }
 
-shared_ptr<Statement> StatementRepeat::getInitStatement() {
+shared_ptr<Statement> StatementRepeat::getInitStatement() const {
     return initStatement;
 }
 
-shared_ptr<Statement> StatementRepeat::getPostStatement() {
+shared_ptr<Statement> StatementRepeat::getPostStatement() const {
     return postStatement;
 }
 
-shared_ptr<Expression> StatementRepeat::getPreConditionExpression() {
+shared_ptr<Expression> StatementRepeat::getPreConditionExpression() const {
     return preConditionExpression;
 }
 
-shared_ptr<Expression> StatementRepeat::getPostConditionExpression() {
+shared_ptr<Expression> StatementRepeat::getPostConditionExpression() const {
     return postConditionExpression;
 }
 
-shared_ptr<StatementBlock> StatementRepeat::getBodyBlockStatement() {
+shared_ptr<StatementBlock> StatementRepeat::getBodyBlockStatement() const {
     return bodyBlockStatement;
 }

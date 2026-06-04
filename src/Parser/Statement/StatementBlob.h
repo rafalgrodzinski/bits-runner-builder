@@ -20,20 +20,20 @@ private:
 public:
     StatementBlob(
         bool shouldExport,
-        string name,
-        vector<string> namedTypeKeys,
-        vector<string> protoNames,
-        vector<shared_ptr<StatementVariable>> variableStatements,
-        vector<shared_ptr<StatementFunction>> functionStatements,
+        const string &name,
+        const vector<string> &namedTypeKeys,
+        const vector<string> &protoNames,
+        const vector<shared_ptr<StatementVariable>> &variableStatements,
+        const vector<shared_ptr<StatementFunction>> &functionStatements,
         shared_ptr<Location> location
     );
-    bool getShouldExport();
-    string getName();
-    vector<string> getNamedTypeKeys();
-    vector<string> getProtoNames();
-    vector<shared_ptr<StatementVariable>> getVariableStatements();
-    vector<shared_ptr<StatementFunction>> getFunctionStatements();
-    vector<pair<string, shared_ptr<ValueType>>> getMembers();
+    bool getShouldExport() const;
+    string getName() const;
+    vector<string> getNamedTypeKeys() const;
+    vector<string> getProtoNames() const;
+    vector<shared_ptr<StatementVariable>> getVariableStatements() const;
+    vector<shared_ptr<StatementFunction>> getFunctionStatements() const;
+    vector<pair<string, shared_ptr<ValueType>>> getMembers() const;
 };
 
 #endif

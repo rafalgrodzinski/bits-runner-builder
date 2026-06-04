@@ -9,7 +9,8 @@ private:
 
 public:
     ExpressionGrouping(shared_ptr<Expression> subExpression, shared_ptr<Location> location);
-    shared_ptr<Expression> getSubExpression();
+
+    shared_ptr<Expression> getSubExpression() const;
 };
 
 #endif

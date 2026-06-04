@@ -5,8 +5,8 @@
 #include "Location.h"
 #include "Token.h"
 
-Lexer::Lexer(string fileName, string source):
-currentFileName(fileName), source(source) { }
+Lexer::Lexer(const string &fileName, const string &source):
+currentFileName(std::move(fileName)), source(std::move(source)) { }
 
 vector<shared_ptr<Token>> Lexer::getTokens() {
     currentIndex = 0;
@@ -347,7 +347,7 @@ shared_ptr<Token> Lexer::nextToken() {
     return nullptr;
 }
 
-shared_ptr<Token> Lexer::match(TokenKind kind, string lexme, bool needsSeparator) {
+shared_ptr<Token> Lexer::match(TokenKind kind, const string &lexme, bool needsSeparator) {
     if (currentIndex + lexme.length() > source.length())
         return nullptr;
 
@@ -606,27 +606,27 @@ shared_ptr<Token> Lexer::matchEnd() {
     return nullptr;
 }
 
-bool Lexer::isWhiteSpace(int index) {
+bool Lexer::isWhiteSpace(int index) const {
     char character = source.at(index);
     return character == ' ' || character == '\t';
 }
 
-bool Lexer::isDecDigit(int index) {
+bool Lexer::isDecDigit(int index) const {
     char character = source.at(index);
     return character >= '0' && character <= '9';
 }
 
-bool Lexer::isHexDigit(int index) {
+bool Lexer::isHexDigit(int index) const {
     char character = source.at(index);
     return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f');
 }
 
-bool Lexer::isBinDigit(int index) {
+bool Lexer::isBinDigit(int index) const {
     char character = source.at(index);
     return character == '0' || character == '1';
 }
 
-bool Lexer::isIdentifier(int index) {
+bool Lexer::isIdentifier(int index) const {
     char character = source.at(index);
     bool isDigit = character >= '0' && character <= '9';
     bool isAlpha = character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z';
@@ -635,7 +635,7 @@ bool Lexer::isIdentifier(int index) {
     return isDigit || isAlpha || isAlowedSymbol;
 }
 
-bool Lexer::isSeparator(int index) {
+bool Lexer::isSeparator(int index) const {
     if (index >= source.length())
         return true;
 

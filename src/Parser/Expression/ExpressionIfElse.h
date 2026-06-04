@@ -13,9 +13,10 @@ private:
 
 public:
     ExpressionIfElse(shared_ptr<Expression> conditionExpression, shared_ptr<Expression> thenExpression, shared_ptr<Expression> elseExpression, shared_ptr<Location> location);
-    shared_ptr<Expression> getConditionExpression();
-    shared_ptr<Expression> getThenExpression();
-    shared_ptr<Expression> getElseExpression();
+
+    shared_ptr<Expression> getConditionExpression() const;
+    shared_ptr<Expression> getThenExpression() const;
+    shared_ptr<Expression> getElseExpression() const;
 };
 
 #endif

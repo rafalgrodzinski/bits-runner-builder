@@ -6,40 +6,40 @@
 
 StatementBlob::StatementBlob(
     bool shouldExport,
-    string name,
-    vector<string> namedTypeKeys,
-    vector<string> protoNames,
-    vector<shared_ptr<StatementVariable>> variableStatements,
-    vector<shared_ptr<StatementFunction>> functionStatements,
+    const string &name,
+    const vector<string> &namedTypeKeys,
+    const vector<string> &protoNames,
+    const vector<shared_ptr<StatementVariable>> &variableStatements,
+    const vector<shared_ptr<StatementFunction>> &functionStatements,
     shared_ptr<Location> location
-) :
-Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(name), namedTypeKeys(namedTypeKeys), protoNames(protoNames), variableStatements(variableStatements), functionStatements(functionStatements) { }
+):
+Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(std::move(name)), namedTypeKeys(std::move(namedTypeKeys)), protoNames(std::move(protoNames)), variableStatements(std::move(variableStatements)), functionStatements(std::move(functionStatements)) { }
 
-bool StatementBlob::getShouldExport() {
+bool StatementBlob::getShouldExport() const {
     return shouldExport;
 }
 
-string StatementBlob::getName() {
+string StatementBlob::getName() const {
     return name;
 }
 
- vector<string> StatementBlob::getNamedTypeKeys() {
+ vector<string> StatementBlob::getNamedTypeKeys() const {
     return namedTypeKeys;
  }
 
-vector<string> StatementBlob::getProtoNames() {
+vector<string> StatementBlob::getProtoNames() const {
     return protoNames;
 }
 
-vector<shared_ptr<StatementVariable>> StatementBlob::getVariableStatements() {
+vector<shared_ptr<StatementVariable>> StatementBlob::getVariableStatements() const {
     return variableStatements;
 }
 
-vector<shared_ptr<StatementFunction>> StatementBlob::getFunctionStatements() {
+vector<shared_ptr<StatementFunction>> StatementBlob::getFunctionStatements() const {
     return functionStatements;
 }
 
-vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getMembers() {
+vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getMembers() const {
     vector<pair<string, shared_ptr<ValueType>>> members;
 
     for (shared_ptr<StatementVariable> statement : variableStatements)

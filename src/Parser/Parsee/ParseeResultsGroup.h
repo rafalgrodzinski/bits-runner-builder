@@ -19,12 +19,12 @@ private:
     vector<ParseeResult> results;
 
 public:
-    static ParseeResultsGroup success(vector<ParseeResult> results);
+    static ParseeResultsGroup success(const vector<ParseeResult> &results);
     static ParseeResultsGroup noMatch();
     static ParseeResultsGroup failure();
 
-    ParseeResultsGroupKind getKind();
-    vector<ParseeResult> getResults();
+    ParseeResultsGroupKind getKind() const;
+    vector<ParseeResult> getResults() const;
 };
 
 #endif

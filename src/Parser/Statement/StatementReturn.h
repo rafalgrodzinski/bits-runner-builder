@@ -13,7 +13,7 @@ private:
 
 public:
     StatementReturn(shared_ptr<Expression> expression, shared_ptr<Location> location);
-    shared_ptr<Expression> getExpression();
+    shared_ptr<Expression> getExpression() const;
 };
 
 #endif
