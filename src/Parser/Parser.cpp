@@ -1519,8 +1519,9 @@ shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChain
 
     do {
         shared_ptr<Expression> expression = matchPrimary();
-        if (expression != nullptr)
-            chainExpressions.push_back(expression);
+        if (expression == nullptr)
+            return nullptr;
+        chainExpressions.push_back(expression);
     } while (tryMatchingTokenKinds({TokenKind::DOT}, false, true));
 
     switch (chainExpressions.size()) {
