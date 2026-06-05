@@ -35,22 +35,22 @@ public:
     void pushLevel();
     void popLevel();
 
-    bool setWrappedValue(string identifier, shared_ptr<WrappedValue> wrappedvalue);
-    shared_ptr<WrappedValue> getWrappedValue(string identifier);
+    bool setWrappedValue(const string &identifier, shared_ptr<WrappedValue> wrappedvalue);
+    shared_ptr<WrappedValue> getWrappedValue(const string &identifier);
 
-    bool setFunction(string name, llvm::Function *fun);
-    llvm::Function *getFunction(string name);
+    bool setFunction(const string &name, llvm::Function *fun);
+    llvm::Function *getFunction(const string &name) const;
 
-    bool setInlineAsm(string name, llvm::InlineAsm *inlineAsm);
-    llvm::InlineAsm *getInlineAsm(string name);
+    bool setInlineAsm(const string &name, llvm::InlineAsm *inlineAsm);
+    llvm::InlineAsm *getInlineAsm(const string &name) const;
 
-    bool setProtoStructType(string name, llvm::StructType *structType, vector<pair<string, shared_ptr<ValueType>>> members);
-    llvm::StructType *getProtoStructType(string name);
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoStructMembers(string protoName);
+    bool setProtoStructType(const string &name, llvm::StructType *structType, const vector<pair<string, shared_ptr<ValueType>>> &members);
+    llvm::StructType *getProtoStructType(const string &name) const;
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoStructMembers(const string &protoName) const;
 
-    bool setStruct(string structName, llvm::StructType *type, vector<string> memberNames);
-    llvm::StructType *getStructType(string memberName);
-    optional<int> getStructMemberIndex(string structName, string memberName);
+    bool setStruct(const string &structName, llvm::StructType *type, const vector<string> &memberNames);
+    llvm::StructType *getStructType(const string &memberName) const;
+    optional<int> getStructMemberIndex(const string &structName, const string &memberName) const;
 };
 
 #endif

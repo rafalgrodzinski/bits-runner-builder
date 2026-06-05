@@ -37,12 +37,12 @@
 #include "Parser/Expression/ExpressionValue.h"
 
 ModuleBuilder::ModuleBuilder(
-    string defaultModuleName,
+    const string &defaultModuleName,
     llvm::Triple::ArchType archType,
     llvm::DataLayout dataLayout,
     llvm::CallingConv::ID callingConvention,
     shared_ptr<Module> module,
-    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
+    const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
 ):
 defaultModuleName(defaultModuleName),
 archType(archType),
@@ -509,7 +509,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> stat
     );
 }
 
-void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, bool shouldExport, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType) {    
+void ModuleBuilder::buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType) {    
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0 && !isExtern)
@@ -522,7 +522,7 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
 
     // arguments
     vector<llvm::Type *> funArgTypes;
-    for (pair<string, shared_ptr<ValueType>> &argument : arguments) {
+    for (const pair<string, shared_ptr<ValueType>> &argument : arguments) {
         llvm::Type *funArgType = llvmTypeForValueType(argument.second);
         if (funArgType == nullptr)
             return;
@@ -547,7 +547,7 @@ void ModuleBuilder::buildFunctionDeclaration(string moduleName, string name, boo
     scope->setFunction(internalName, fun);
 }
 
-void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawFunction> statement) {
+void ModuleBuilder::buildRawFunction(const string &moduleName, shared_ptr<StatementRawFunction> statement) {
     // symbol name
     string symbolName = statement->getName();
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
@@ -609,7 +609,7 @@ void ModuleBuilder::buildRawFunction(string moduleName, shared_ptr<StatementRawF
     scope->setInlineAsm(internalName, rawFun);
 }
 
-void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType) {
+void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType) {
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0 && !isExtern)
@@ -639,7 +639,7 @@ void ModuleBuilder::buildVariableDeclaration(string moduleName, string name, boo
     );
 }
 
-void ModuleBuilder::buildProtoDeclaration(string moduleName, shared_ptr<StatementProtoDeclaration> statement) {
+void ModuleBuilder::buildProtoDeclaration(const string &moduleName, shared_ptr<StatementProtoDeclaration> statement) {
     // symbol name
     string symbolName = statement->getName();
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
@@ -654,7 +654,7 @@ void ModuleBuilder::buildProtoDeclaration(string moduleName, shared_ptr<Statemen
     scope->setProtoStructType(internalName, structType, {});
 }
 
-void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<StatementProto> statement) {
+void ModuleBuilder::buildProtoDefinition(const string &moduleName, shared_ptr<StatementProto> statement) {
     // symbol name
     string symbolName = statement->getName();
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
@@ -702,7 +702,7 @@ void ModuleBuilder::buildProtoDefinition(string moduleName, shared_ptr<Statement
     scope->setProtoStructType(internalName, structType, members);
 }
 
-void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
+void ModuleBuilder::buildBlobDeclaration(const string &moduleName, const string &name) {
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
@@ -717,7 +717,7 @@ void ModuleBuilder::buildBlobDeclaration(string moduleName, string name) {
     scope->setStruct(internalName, structType, {});
 }
 
-void ModuleBuilder::buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members) {
+void ModuleBuilder::buildBlobDefinition(const string &moduleName, const string &name, const vector<pair<string, shared_ptr<ValueType>>> &members) {
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
@@ -737,7 +737,7 @@ void ModuleBuilder::buildBlobDefinition(string moduleName, string name, vector<p
     // Generate types for body
     vector<string> memberNames;
     vector<llvm::Type *> types;
-    for (pair<string, shared_ptr<ValueType>> &member: members) {
+    for (const pair<string, shared_ptr<ValueType>> &member: members) {
         memberNames.push_back(member.first);
         llvm::Type *type = llvmTypeForValueType(member.second);
         if (type == nullptr)
@@ -1067,7 +1067,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
     }
 }
 
-llvm::AllocaInst *ModuleBuilder::buildAlloca(llvm::Type *type, string identifier) {
+llvm::AllocaInst *ModuleBuilder::buildAlloca(llvm::Type *type, const string &identifier) {
     llvm::BasicBlock *currentInsertPoint = builder->GetInsertBlock();
 
     if (this->currentInitBlock != nullptr)
@@ -1853,7 +1853,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     return nullptr;
 }
 
-shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee, llvm::FunctionType *funType, vector<llvm::Value*> implicitArguments, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<ValueType> valueType) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee, llvm::FunctionType *funType, const vector<llvm::Value*> &implicitArguments, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<ValueType> valueType) {
     vector<llvm::Value*> argValues;
 
     // add implicit arguments
@@ -2418,20 +2418,20 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
 // Error Handling
 //
 
-void ModuleBuilder::markFunctionError(string functionName, string message) {
+void ModuleBuilder::markFunctionError(const string &functionName, const string &message) {
     errors.push_back(Error::builderFunctionError(functionName, message));
 }
 
-void ModuleBuilder::markModuleError(string message) {
+void ModuleBuilder::markModuleError(const string &message) {
     errors.push_back(Error::builderModuleError(module->getName(), message));
 }
 
-void ModuleBuilder::markErrorAlreadyDefined(shared_ptr<Location> location, string name) {
+void ModuleBuilder::markErrorAlreadyDefined(shared_ptr<Location> location, const string &name) {
     string message = format("{} has been already defined in scope", name);
     errors.push_back(Error::error(location, message));
 }
 
-void ModuleBuilder::markInvalidConstraints(shared_ptr<Location> location, string functionName, string constraints) {
+void ModuleBuilder::markInvalidConstraints(shared_ptr<Location> location, const string &functionName, const string &constraints) {
     string message = format("Constraints \"{}\" for function \"{}\" are invalid", constraints, functionName);
     errors.push_back(Error::error(location, message));
 }
@@ -2441,7 +2441,7 @@ void ModuleBuilder::markErrorInvalidAssignment(shared_ptr<Location> location) {
     errors.push_back(Error::error(location, message));
 }
 
-void ModuleBuilder::markErrorInvalidBuiltIn(shared_ptr<Location> location, string name) {
+void ModuleBuilder::markErrorInvalidBuiltIn(shared_ptr<Location> location, const string &name) {
     string message = format("Invalid built-in operation\"{}\"", name);
     errors.push_back(Error::error(location, message));
 }
@@ -2461,7 +2461,7 @@ void ModuleBuilder::markErrorInvalidGlobal(shared_ptr<Location> location) {
     errors.push_back(Error::error(location, message));   
 }
 
-void ModuleBuilder::markErrorInvalidImport(shared_ptr<Location> location, string moduleName) {
+void ModuleBuilder::markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName) {
     string message = format("Invalid import, llvmModule \"{}\" doesn't exist", moduleName);
     errors.push_back(Error::error(location, message));
 }
@@ -2471,7 +2471,7 @@ void ModuleBuilder::markErrorInvalidLiteral(shared_ptr<Location> location, share
     errors.push_back(Error::error(location, message));
 }
 
-void ModuleBuilder::markErrorInvalidMember(shared_ptr<Location> location, string blobName, string memberName) {
+void ModuleBuilder::markErrorInvalidMember(shared_ptr<Location> location, const string &blobName, const string &memberName) {
     string message = format("Invalid member \"{}\" for \"blob<{}>\"", memberName, blobName);
     errors.push_back(Error::error(location, message));
 }
@@ -2500,17 +2500,17 @@ void ModuleBuilder::markErrorInvalidType(shared_ptr<Location> location) {
     errors.push_back(Error::error(location, message));   
 }
 
-void ModuleBuilder::markErrorUnexpected(shared_ptr<Location> location, string name) {
+void ModuleBuilder::markErrorUnexpected(shared_ptr<Location> location, const string &name) {
     string message = format("Unexpected {}", name);
     errors.push_back(Error::error(location, message));
 }
 
-void ModuleBuilder::markErrorNotDeclared(shared_ptr<Location> location, string name) {
+void ModuleBuilder::markErrorNotDeclared(shared_ptr<Location> location, const string &name) {
     string message = format("{} is not declared in scope", name);
     errors.push_back(Error::error(location, message));
 }
 
-void ModuleBuilder::markErrorNotDefined(shared_ptr<Location> location, string name) {
+void ModuleBuilder::markErrorNotDefined(shared_ptr<Location> location, const string &name) {
     string message = format("{} is not defined in scope", name);
     errors.push_back(Error::error(location, message));
 }
@@ -2520,7 +2520,7 @@ void ModuleBuilder::markErrorNoTypeForPointer(shared_ptr<Location> location) {
     errors.push_back(Error::error(location, message));
 }
 
-void ModuleBuilder::debugPrint(vector<llvm::Value *> values) {
+void ModuleBuilder::debugPrint(const vector<llvm::Value *> &values) {
     llvm::outs() << ">--\n";
     for (llvm::Value *value : values) {
         llvm::outs() << "value: ";
@@ -2538,7 +2538,7 @@ void ModuleBuilder::debugPrint(vector<llvm::Value *> values) {
     llvm::outs() << "--<\n";
 }
 
-void ModuleBuilder::debugPrint(vector<llvm::Type *> types) {
+void ModuleBuilder::debugPrint(const vector<llvm::Type *> &types) {
     llvm::outs() << ">--\n";
     for (llvm::Type *type : types) {
         llvm::outs() << "type: ";

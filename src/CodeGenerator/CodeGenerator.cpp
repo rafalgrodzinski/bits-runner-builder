@@ -3,8 +3,8 @@
 using namespace std;
 
 CodeGenerator::CodeGenerator(
-    string targetTripleOption,
-    string architectureOption,
+    const string &targetTripleOption,
+    const string &architectureOption,
     RelocationModel relocationModelOption,
     CodeModel codeModelOption,
     OptimizationLevel optimizationLevelOption,
@@ -20,7 +20,7 @@ CodeGenerator::CodeGenerator(
     // target triple
     targetTriple = llvm::sys::getDefaultTargetTriple();
     if (!targetTripleOption.empty())
-        targetTriple = targetTripleOption;
+        targetTriple = std::move(targetTripleOption);
     string errorString;
     const llvm::Target *target = llvm::TargetRegistry::lookupTarget(targetTriple, errorString);
     if (!target) {
@@ -31,7 +31,7 @@ CodeGenerator::CodeGenerator(
     // architecture
     architecture = "generic";
     if (!architectureOption.empty())
-        architecture = architectureOption;
+        architecture = std::move(architectureOption);
     string features = "";
 
     // relocation model

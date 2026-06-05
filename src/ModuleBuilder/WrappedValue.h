@@ -40,21 +40,21 @@ public:
     static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, uint64_t value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
 
-    llvm::Value *getValue();
-    llvm::Value *getPointerValue();
+    llvm::Value *getValue() const;
+    llvm::Value *getPointerValue() const;
 
-    llvm::Constant *getConstantValue();
-    llvm::GlobalVariable *getGlobalValue();
+    llvm::Constant *getConstantValue() const;
+    llvm::GlobalVariable *getGlobalValue() const;
 
-    llvm::Type *getType();
-    llvm::ArrayType *getArrayType();
-    llvm::StructType *getStructType();
-    shared_ptr<ValueType> getValueType();
+    llvm::Type *getType() const;
+    llvm::ArrayType *getArrayType() const;
+    llvm::StructType *getStructType() const;
+    shared_ptr<ValueType> getValueType() const;
 
-    bool isArray();
-    bool isPointer();
-    bool isBlobStruct();
-    bool isProtoStruct();
+    bool isArray() const;
+    bool isPointer() const;
+    bool isBlobStruct() const;
+    bool isProtoStruct() const;
 };
 
 #endif
