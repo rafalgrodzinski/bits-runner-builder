@@ -1042,8 +1042,20 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                 return expressionValue->getValueType();
                             }
                             case ExpressionValueKind::DATA: {
+                                // make sure that the indexed value is an array
+                                shared_ptr<ValueType> valueType = blobMember.second;
+                                if (valueType->getKind() != ValueTypeKind::DATA) {
+                                    markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
+                                    return nullptr;
+                                }
                                 expressionValue->valueType = blobMember.second->getSubType();
                                 expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
+                                // make sure that the index expression evaluates to an uint
+                                shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
+                                if (!indexExpression->getValueType()->isUnsignedInteger()) {
+                                    markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+                                    return nullptr;
+                                }
                                 return expressionValue->getValueType();
                             }
                             default:
@@ -1068,10 +1080,23 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                         case ExpressionValueKind::SIMPLE:
                             expressionValue->valueType = member.second;
                             return expressionValue->getValueType();
-                        case ExpressionValueKind::DATA:
+                        case ExpressionValueKind::DATA: {
+                            // make sure that the indexed value is an array
+                            shared_ptr<ValueType> valueType = member.second;
+                            if (valueType->getKind() != ValueTypeKind::DATA) {
+                                markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
+                                return nullptr;
+                            }
                             expressionValue->valueType = member.second->getSubType();
                             expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
+                            // make sure that the index expression evaluates to an uint
+                            shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
+                            if (!indexExpression->getValueType()->isUnsignedInteger()) {
+                                markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+                                return nullptr;
+                            }
                             return expressionValue->getValueType();
+                        }
                         default:
                             break;
                     }
@@ -1093,12 +1118,18 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 
     // then check if it's data
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
+        // make sure that the indexed value is an array
+        if (type->getKind() != ValueTypeKind::DATA) {
+            markErrorInvalidType(expressionValue->getLocation(), type, nullptr);
+            return nullptr;
+        }
         expressionValue->indexExpression = checkAndTryCasting(
             expressionValue->getIndexExpression(),
             ValueType::UINT,
             nullptr
         );
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
+        // make sure that the index expression evaluates to an uint
         if (!indexExpression->getValueType()->isUnsignedInteger()) {
             markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
             return nullptr;
@@ -2125,7 +2156,7 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
     if (expectedType != nullptr)
         message = format("Invalid type {}, expected {}", Logger::toString(actualType), Logger::toString(expectedType));
     else
-        message = format("Invalid type {}", Logger::toString(actualType));
+        message = format(         "Invalid type {}", Logger::toString(actualType));
     errors.push_back(Error::error(location, message));
 }
 
