@@ -17,13 +17,14 @@ private:
 public:
     StatementRawFunction(
         bool shouldExport,
-        const string &name,
-        const string &constraints,
-        const vector<pair<string, shared_ptr<ValueType>>> &arguments,
+        string name,
+        string constraints,
+        vector<pair<string, shared_ptr<ValueType>>> arguments,
         shared_ptr<ValueType> returnValueType,
-        const string &rawSource,
+        string rawSource,
         shared_ptr<Location> location
     );
+
     bool getShouldExport() const;
     string getName() const;
     string getConstraints() const;

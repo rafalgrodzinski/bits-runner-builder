@@ -3,14 +3,14 @@
 shared_ptr<ExpressionValue> ExpressionValue::simple(string identifier, shared_ptr<Location> location) {
     shared_ptr<ExpressionValue> expression = make_shared<ExpressionValue>(location);
     expression->valueKind = ExpressionValueKind::SIMPLE;
-    expression->identifier = identifier;
+    expression->identifier = std::move(identifier);
     return expression;
 }
 
 shared_ptr<ExpressionValue> ExpressionValue::data(string identifier, shared_ptr<Expression> indexExpression, shared_ptr<Location> location) {
     shared_ptr<ExpressionValue> expression = make_shared<ExpressionValue>(location);
     expression->valueKind = ExpressionValueKind::DATA;
-    expression->identifier = identifier;
+    expression->identifier = std::move(identifier);
     expression->indexExpression = indexExpression;
     return expression;
 }

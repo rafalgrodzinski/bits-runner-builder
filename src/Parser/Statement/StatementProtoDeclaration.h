@@ -9,7 +9,8 @@ private:
     string name;
 
 public:
-    StatementProtoDeclaration(bool shouldExport, const string &name, shared_ptr<Location> location);
+    StatementProtoDeclaration(bool shouldExport, string name, shared_ptr<Location> location);
+
     bool getShouldExport() const;
     string getName() const;
 };

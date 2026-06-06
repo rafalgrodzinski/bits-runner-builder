@@ -48,7 +48,8 @@ private:
     void markError();
 
 public:
-    Lexer(const string &fileName, const string &source);
+    Lexer(string fileName, string source);
+
     vector<shared_ptr<Token>> getTokens();
 };
 

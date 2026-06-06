@@ -181,12 +181,12 @@ private:
 
 public:
     ModuleBuilder(
-        const string &defaultModuleName,
+        string defaultModuleName,
         llvm::Triple::ArchType archType,
         llvm::DataLayout dataLayout,
         llvm::CallingConv::ID callingConvention,
         shared_ptr<Module> module,
-        const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
+        map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
     );
     shared_ptr<llvm::Module> getLlvmModule();
 };

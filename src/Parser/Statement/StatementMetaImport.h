@@ -8,7 +8,8 @@ private:
     string name;
 
 public:
-    StatementMetaImport(const string &name, shared_ptr<Location> location);
+    StatementMetaImport(string name, shared_ptr<Location> location);
+
     string getName() const;
 };
 

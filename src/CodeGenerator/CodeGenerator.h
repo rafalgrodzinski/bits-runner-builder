@@ -65,18 +65,19 @@ private:
 
 public:
     CodeGenerator(
-        const string &targetTripleOption,
-        const string &architectureOption,
+        string targetTripleOption,
+        string architectureOption,
         RelocationModel relocationModelOption,
         CodeModel codeModelOption,
         OptimizationLevel optimizationLevelOption,
         CallingConvention callingConventionOption,
         unsigned int optionBits
     );
+
     void generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose);
-    llvm::Triple::ArchType getArchType();
-    llvm::DataLayout getDataLayout();
-    llvm::CallingConv::ID getCallingConvetion();
+    llvm::Triple::ArchType getArchType() const;
+    llvm::DataLayout getDataLayout() const;
+    llvm::CallingConv::ID getCallingConvetion() const;
 };
 
 #endif

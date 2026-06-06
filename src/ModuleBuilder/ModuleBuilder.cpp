@@ -37,18 +37,18 @@
 #include "Parser/Expression/ExpressionValue.h"
 
 ModuleBuilder::ModuleBuilder(
-    const string &defaultModuleName,
+    string defaultModuleName,
     llvm::Triple::ArchType archType,
     llvm::DataLayout dataLayout,
     llvm::CallingConv::ID callingConvention,
     shared_ptr<Module> module,
-    const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
+    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
 ):
-defaultModuleName(defaultModuleName),
+defaultModuleName(std::move(defaultModuleName)),
 archType(archType),
 callingConvention(callingConvention),
 module(module),
-importableHeaderStatementsMap(importableHeaderStatementsMap) {
+importableHeaderStatementsMap(std::move(importableHeaderStatementsMap)) {
     int intSize = dataLayout.getLargestLegalIntTypeSizeInBits();
     int pointerSize = dataLayout.getPointerSizeInBits();
 

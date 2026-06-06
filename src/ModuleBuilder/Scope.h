@@ -44,11 +44,11 @@ public:
     bool setInlineAsm(const string &name, llvm::InlineAsm *inlineAsm);
     llvm::InlineAsm *getInlineAsm(const string &name) const;
 
-    bool setProtoStructType(const string &name, llvm::StructType *structType, const vector<pair<string, shared_ptr<ValueType>>> &members);
+    bool setProtoStructType(const string &name, llvm::StructType *structType, vector<pair<string, shared_ptr<ValueType>>> members);
     llvm::StructType *getProtoStructType(const string &name) const;
     optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoStructMembers(const string &protoName) const;
 
-    bool setStruct(const string &structName, llvm::StructType *type, const vector<string> &memberNames);
+    bool setStruct(const string &structName, llvm::StructType *type, vector<string> memberNames);
     llvm::StructType *getStructType(const string &memberName) const;
     optional<int> getStructMemberIndex(const string &structName, const string &memberName) const;
 };

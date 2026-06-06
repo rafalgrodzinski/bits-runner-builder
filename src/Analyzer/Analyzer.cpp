@@ -39,7 +39,7 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
-Analyzer::Analyzer(const string &defaultModuleName, shared_ptr<Module> module, const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap):
+Analyzer::Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap):
 defaultModuleName(std::move(defaultModuleName)), module(module), importableHeaderStatementsMap(std::move(importableHeaderStatementsMap)) { }
 
 void Analyzer::checkModule() {

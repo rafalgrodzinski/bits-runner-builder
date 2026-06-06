@@ -17,11 +17,12 @@ private:
 public:
     StatementProto(
         bool shouldExport,
-        const string &name,
-        const vector<shared_ptr<StatementVariable>> &variableStatements,
-        const vector<shared_ptr<StatementFunctionDeclaration>> &functionDeclarationStatements,
+        string name,
+        vector<shared_ptr<StatementVariable>> variableStatements,
+        vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements,
         shared_ptr<Location> location
     );
+
     bool getShouldExport() const;
     string getName() const;
     vector<shared_ptr<StatementVariable>> getVariableStatements() const;

@@ -1,6 +1,6 @@
 #include "ExpressionCall.h"
 
-ExpressionCall::ExpressionCall(const string &name, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<Location> location):
+ExpressionCall::ExpressionCall(string name, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<Location> location):
 Expression(ExpressionKind::CALL, nullptr, location), name(std::move(name)), argumentExpressions(std::move(argumentExpressions)) { }
 
 string ExpressionCall::getName() const {

@@ -7,8 +7,8 @@
 
 StatementFunction::StatementFunction(
     bool shouldExport,
-    const string &name,
-    const vector<pair<string, shared_ptr<ValueType>>> &arguments,
+    string name,
+    vector<pair<string, shared_ptr<ValueType>>> arguments,
     shared_ptr<ValueType> returnValueType,
     shared_ptr<StatementBlock> statementBlock,
     shared_ptr<Location> location

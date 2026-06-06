@@ -2,7 +2,7 @@
 
 Parsee::Parsee() { }
 
-Parsee Parsee::debug(const string &debugMessage) {
+Parsee Parsee::debug(string debugMessage) {
     Parsee parsee;
     parsee.kind = ParseeKind::DEBUG;
     parsee.debugMessage = std::move(debugMessage);
@@ -59,7 +59,7 @@ Parsee Parsee::ifElseParsee(optional<bool> isMultiLine, ParseeLevel level, bool 
     return parsee;
 }
 
-Parsee Parsee::oneOfParsee(const vector<vector<Parsee>> &parsees, ParseeLevel level, bool shouldReturn) {
+Parsee Parsee::oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::ONE_OF;
     parsee.parsees = std::move(parsees);
@@ -68,7 +68,7 @@ Parsee Parsee::oneOfParsee(const vector<vector<Parsee>> &parsees, ParseeLevel le
     return parsee;
 }
 
-Parsee Parsee::repeatedGroupParsee(const vector<Parsee> &repeatedParsees, ParseeLevel level, bool shouldReturn) {
+Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::REPEATED_GROUP;
     parsee.repeatedParsees = std::move(repeatedParsees);
@@ -77,7 +77,7 @@ Parsee Parsee::repeatedGroupParsee(const vector<Parsee> &repeatedParsees, Parsee
     return parsee;
 }
 
-Parsee Parsee::statementKindsParsee(const vector<StatementKind> &statementKinds, ParseeLevel level, bool shouldReturn, int tag) {
+Parsee Parsee::statementKindsParsee(vector<StatementKind> statementKinds, ParseeLevel level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_KINDS;
     parsee.statementKinds = std::move(statementKinds);

@@ -6,11 +6,11 @@
 
 StatementBlob::StatementBlob(
     bool shouldExport,
-    const string &name,
-    const vector<string> &namedTypeKeys,
-    const vector<string> &protoNames,
-    const vector<shared_ptr<StatementVariable>> &variableStatements,
-    const vector<shared_ptr<StatementFunction>> &functionStatements,
+    string name,
+    vector<string> namedTypeKeys,
+    vector<string> protoNames,
+    vector<shared_ptr<StatementVariable>> variableStatements,
+    vector<shared_ptr<StatementFunction>> functionStatements,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::BLOB, location), shouldExport(shouldExport), name(std::move(name)), namedTypeKeys(std::move(namedTypeKeys)), protoNames(std::move(protoNames)), variableStatements(std::move(variableStatements)), functionStatements(std::move(functionStatements)) { }

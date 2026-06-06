@@ -10,7 +10,7 @@ private:
     vector<shared_ptr<Expression>> expressions;
     
 public:
-    static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForExpressions(const vector<shared_ptr<Expression>> &expressions, shared_ptr<Location> location);
+    static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForExpressions(vector<shared_ptr<Expression>> expressions, shared_ptr<Location> location);
     static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForTokenString(shared_ptr<Token> tokenString);
 
     ExpressionCompositeLiteral(shared_ptr<Location> location);

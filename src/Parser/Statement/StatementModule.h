@@ -8,7 +8,8 @@ private:
     string name;
 
 public:
-    StatementModule(const string & name, shared_ptr<Location> location);
+    StatementModule(string name, shared_ptr<Location> location);
+
     string getName() const;
 };
 

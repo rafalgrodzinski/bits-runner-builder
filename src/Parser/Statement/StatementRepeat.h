@@ -23,6 +23,7 @@ public:
         shared_ptr<StatementBlock> bodyBlockStatement,
         shared_ptr<Location> location
     );
+
     shared_ptr<Statement> getInitStatement() const;
     shared_ptr<Statement> getPostStatement() const;
     shared_ptr<Expression> getPreConditionExpression() const;

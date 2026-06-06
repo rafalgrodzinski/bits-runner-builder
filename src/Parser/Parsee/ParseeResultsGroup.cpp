@@ -2,7 +2,7 @@
 
 #include "ParseeResult.h"
 
-ParseeResultsGroup ParseeResultsGroup::success(const vector<ParseeResult> &results) {
+ParseeResultsGroup ParseeResultsGroup::success(vector<ParseeResult> results) {
     ParseeResultsGroup resultsGroup;
     resultsGroup.kind = ParseeResultsGroupKind::SUCCESS;
     resultsGroup.results = std::move(results);

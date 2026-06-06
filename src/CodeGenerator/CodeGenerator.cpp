@@ -3,8 +3,8 @@
 using namespace std;
 
 CodeGenerator::CodeGenerator(
-    const string &targetTripleOption,
-    const string &architectureOption,
+    string targetTripleOption,
+    string architectureOption,
     RelocationModel relocationModelOption,
     CodeModel codeModelOption,
     OptimizationLevel optimizationLevelOption,
@@ -184,14 +184,14 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     legacyPassManager.run(*module);
 }
 
-llvm::Triple::ArchType CodeGenerator::getArchType() {
+llvm::Triple::ArchType CodeGenerator::getArchType() const {
     return targetMachine->getTargetTriple().getArch();
 }
 
-llvm::DataLayout CodeGenerator::getDataLayout() {
+llvm::DataLayout CodeGenerator::getDataLayout() const {
     return dataLayout;
 }
 
-llvm::CallingConv::ID CodeGenerator::getCallingConvetion() {
+llvm::CallingConv::ID CodeGenerator::getCallingConvetion() const {
     return callingConvention;
 }

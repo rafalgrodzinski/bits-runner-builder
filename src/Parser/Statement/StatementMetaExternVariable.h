@@ -11,7 +11,8 @@ private:
     shared_ptr<ValueType> valueType;
 
 public:
-    StatementMetaExternVariable(const string &identifier, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
+    StatementMetaExternVariable(string identifier, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
+
     string getIdentifier() const;
     shared_ptr<ValueType> getValueType() const;
 };

@@ -16,11 +16,11 @@
 #include "Parser/ValueType.h"
 
 ModulesStore::ModulesStore(string defaultModuleName):
-defaultModuleName(defaultModuleName) { }
+defaultModuleName(std::move(defaultModuleName)) { }
 
 /// Private ///
 
-shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName) {
+shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, const string &moduleName) {
     switch (valueType->getKind()) {
         case ValueTypeKind::BLOB: {
             string name = *valueType->getBlobName();
@@ -447,7 +447,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 vector<shared_ptr<Module>> ModulesStore::getModules() {
     vector<shared_ptr<Module>> modules;
 
-    for (string &moduleName : moduleNames) {
+    for (const string &moduleName : moduleNames) {
         // construct the local header
         // order for local header statements is:
         // - import statements
@@ -507,7 +507,7 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
     // - variable declarations
     // - function declarations
     map<string, vector<shared_ptr<Statement>>> statementsMap;
-    for (string &moduleName : moduleNames) {
+    for (const string &moduleName : moduleNames) {
         // first initialize it with an empty array (in case there are no exported statements)
         statementsMap[moduleName] = {};
 

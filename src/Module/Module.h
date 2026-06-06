@@ -17,9 +17,10 @@ private:
 
 public:
     Module(string name, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements);
-    string getName();
-    vector<shared_ptr<Statement>> getHeaderStatements();
-    vector<shared_ptr<Statement>> getBodyStatements();
+
+    string getName() const;
+    vector<shared_ptr<Statement>> getHeaderStatements() const;
+    vector<shared_ptr<Statement>> getBodyStatements() const;
 };
 
 #endif

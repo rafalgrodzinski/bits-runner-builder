@@ -84,7 +84,7 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::blob(const string &blobName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues) {
+shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::BLOB;
     valueType->blobName = std::move(blobName);
@@ -92,7 +92,7 @@ shared_ptr<ValueType> ValueType::blob(const string &blobName, const optional<vec
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::proto(const string &protoName) {
+shared_ptr<ValueType> ValueType::proto(string protoName) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::PROTO;
     valueType->protoName = std::move(protoName);
@@ -106,7 +106,7 @@ shared_ptr<ValueType> ValueType::boxed(shared_ptr<ValueType> subType) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::fun(const vector<shared_ptr<ValueType>> &argumentTypes, shared_ptr<ValueType> returnType) {
+shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
     valueType->argumentTypes = std::move(argumentTypes);
@@ -125,7 +125,7 @@ shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType, bool isVolat
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression) {
+shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::COMPOSITE;
     valueType->compositeElementTypes = std::move(elementTypes);
@@ -133,7 +133,7 @@ shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::namedType(const string &namedTypeKey) {
+shared_ptr<ValueType> ValueType::namedType(string namedTypeKey) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::NAMED_TYPE;
     valueType->namedTypeKey = std::move(namedTypeKey);

@@ -9,7 +9,8 @@ private:
     string name;
 
 public:
-    StatementBlobDeclaration(bool shouldExport, const string &name, shared_ptr<Location> location);
+    StatementBlobDeclaration(bool shouldExport, string name, shared_ptr<Location> location);
+
     bool getShouldExport() const;
     string getName() const;
 };

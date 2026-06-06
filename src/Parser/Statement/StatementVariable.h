@@ -17,6 +17,7 @@ private:
 
 public:
     StatementVariable(bool shouldExport, const string &identifier, shared_ptr<ValueType> valueType, shared_ptr<Expression> expression, shared_ptr<Location> location);
+
     bool getShouldExport() const;
     string getIdentifier() const;
     shared_ptr<ValueType> getValueType() const;
