@@ -42,9 +42,10 @@ public:
 
     Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
     virtual ~Expression() { }
-    ExpressionKind getKind();
-    shared_ptr<Location> getLocation();
-    shared_ptr<ValueType> getValueType();
+
+    ExpressionKind getKind() const;
+    shared_ptr<Location> getLocation() const;
+    shared_ptr<ValueType> getValueType() const;
 };
 
 #endif

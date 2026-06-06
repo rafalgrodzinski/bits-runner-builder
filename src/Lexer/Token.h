@@ -111,10 +111,11 @@ public:
     static vector<TokenKind> tokensLiteral;
 
     Token(TokenKind kind, string lexme, shared_ptr<Location> location);
-    TokenKind getKind();
-    string getLexme();
-    shared_ptr<Location> getLocation();
-    bool isOfKind(vector<TokenKind> kinds);
+
+    TokenKind getKind() const;
+    string getLexme() const;
+    shared_ptr<Location> getLocation() const;
+    bool isOfKind(vector<TokenKind> kinds) const;
 };
 
 #endif

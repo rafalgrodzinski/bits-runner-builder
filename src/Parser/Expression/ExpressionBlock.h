@@ -14,8 +14,9 @@ private:
 
 public:
     ExpressionBlock(vector<shared_ptr<Statement>> statements, shared_ptr<Location> location);
-    shared_ptr<StatementBlock> getStatementBlock();
-    shared_ptr<StatementExpression> getResultStatementExpression();
+
+    shared_ptr<StatementBlock> getStatementBlock() const;
+    shared_ptr<StatementExpression> getResultStatementExpression() const;
 };
 
 #endif

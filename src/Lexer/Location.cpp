@@ -1,16 +1,16 @@
 #include "Location.h"
 
 Location::Location(string fileName, int line, int column):
-fileName(fileName), line(line), column(column) { }
+fileName(std::move(fileName)), line(line), column(column) { }
 
-string Location::getFileName() {
+string Location::getFileName() const {
     return fileName;
 }
 
-int Location::getLine() {
+int Location::getLine() const {
     return line;
 }
 
-int Location::getColumn() {
+int Location::getColumn() const {
     return column;
 }

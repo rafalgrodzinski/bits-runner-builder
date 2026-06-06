@@ -14,7 +14,7 @@ void AnalyzerScope::popLevel() {
     scopeLevels.pop();
 }
 
-optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getProtoMembers(string name) {
+optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getProtoMembers(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -27,7 +27,7 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getProtoMem
     return {};
 }
 
-bool AnalyzerScope::setProtoMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
+bool AnalyzerScope::setProtoMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
     bool isDefinition = members.has_value();
     bool isDefined = false;
     if (scopeLevels.top().protoMembersMap.find(name) != scopeLevels.top().protoMembersMap.end())
@@ -38,12 +38,12 @@ bool AnalyzerScope::setProtoMembers(string name, optional<vector<pair<string, sh
         return false;
 
     if (!isDefined)
-        scopeLevels.top().protoMembersMap[name] = members;
+        scopeLevels.top().protoMembersMap[name] = std::move(members);
 
     return true;
 }
 
-optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueType> blobValueType) {
+optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueType> blobValueType) const {
     optional<string> blobName = blobValueType->getBlobName();
     if (!blobName)
         return {};
@@ -69,7 +69,7 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMemb
     return {};
 }
 
-optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType) {
+optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType) const {
     optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = getBlobMembers(blobValueType);
         if (!blobMembers)
             return { };
@@ -83,7 +83,7 @@ optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberT
     return targetMemberTypes;
 }
 
-bool AnalyzerScope::isBlobDeclared(string name) {
+bool AnalyzerScope::isBlobDeclared(const string &name) const{
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -96,7 +96,7 @@ bool AnalyzerScope::isBlobDeclared(string name) {
     return false;
 }
 
-bool AnalyzerScope::setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
+bool AnalyzerScope::setBlobMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
     bool isDefinition = members.has_value();
     bool isDefined = false;
     if (scopeLevels.top().blobMembersMap.find(name) != scopeLevels.top().blobMembersMap.end())
@@ -107,12 +107,12 @@ bool AnalyzerScope::setBlobMembers(string name, optional<vector<pair<string, sha
         return false;
 
     if (!isDefined)
-        scopeLevels.top().blobMembersMap[name] = members;
+        scopeLevels.top().blobMembersMap[name] = std::move(members);
 
     return true;
 }
 
-bool AnalyzerScope::isNamedTypeDeclared(string namedType) {
+bool AnalyzerScope::isNamedTypeDeclared(const string &namedType) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -126,8 +126,8 @@ bool AnalyzerScope::isNamedTypeDeclared(string namedType) {
     return false;
 }
 
-bool AnalyzerScope::setNamedTypes(vector<string> namedTypes) {
-    for (string &namedType : namedTypes) {
+bool AnalyzerScope::setNamedTypes(const vector<string> &namedTypes) {
+    for (const string &namedType : namedTypes) {
         // first check if each of the named types is not yet declared
         for (string &declaredNamedType : scopeLevels.top().namedTypes) {
             if (declaredNamedType.compare(namedType) == 0)
@@ -138,7 +138,7 @@ bool AnalyzerScope::setNamedTypes(vector<string> namedTypes) {
     return true;
 }
 
-optional<vector<string>> AnalyzerScope::getBlobNamedTypeKeys(string blobName) {
+optional<vector<string>> AnalyzerScope::getBlobNamedTypeKeys(const string &blobName) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -151,17 +151,17 @@ optional<vector<string>> AnalyzerScope::getBlobNamedTypeKeys(string blobName) {
     return {};
 }
 
-bool AnalyzerScope::setBlobNamedTypeKeys(string blobName, vector<string> namedTypeKeys) {
+bool AnalyzerScope::setBlobNamedTypeKeys(const string &blobName, vector<string> namedTypeKeys) {
     // check if named types are already defined
     if (scopeLevels.top().blobNamedTypeKeysMap.find(blobName) != scopeLevels.top().blobNamedTypeKeysMap.end())
         return false;
 
-    scopeLevels.top().blobNamedTypeKeysMap[blobName] = namedTypeKeys;
+    scopeLevels.top().blobNamedTypeKeysMap[blobName] = std::move(namedTypeKeys);
 
     return true;
 }
 
-optional<vector<string>> AnalyzerScope::getBlobProtoNames(string name) {
+optional<vector<string>> AnalyzerScope::getBlobProtoNames(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -174,13 +174,13 @@ optional<vector<string>> AnalyzerScope::getBlobProtoNames(string name) {
     return {};
 }
 
-bool AnalyzerScope::setBlobProtoNames(string name, vector<string> protoNames) {
-    scopeLevels.top().blobProtosMap[name] = protoNames;
+bool AnalyzerScope::setBlobProtoNames(const string &name, vector<string> protoNames) {
+    scopeLevels.top().blobProtosMap[name] = std::move(protoNames);
 
     return true;
 }
 
-shared_ptr<ValueType> AnalyzerScope::getVariableType(string identifier) {
+shared_ptr<ValueType> AnalyzerScope::getVariableType(const string &identifier) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -193,7 +193,7 @@ shared_ptr<ValueType> AnalyzerScope::getVariableType(string identifier) {
     return nullptr;
 }
 
-bool AnalyzerScope::setVariableType(string identifier, shared_ptr<ValueType> type, bool isDefinition) {
+bool AnalyzerScope::setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition) {
     shared_ptr<ValueType> existingType = scopeLevels.top().variableTypes[identifier];
     if (existingType != nullptr) {
         // defining already defined variable
@@ -217,7 +217,7 @@ bool AnalyzerScope::setVariableType(string identifier, shared_ptr<ValueType> typ
     return true;
 }
 
-shared_ptr<ValueType> AnalyzerScope::getFunctionType(string name) {
+shared_ptr<ValueType> AnalyzerScope::getFunctionType(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -230,7 +230,7 @@ shared_ptr<ValueType> AnalyzerScope::getFunctionType(string name) {
     return nullptr;
 }
 
-bool AnalyzerScope::setFunctionType(string name, shared_ptr<ValueType> type, bool isDefinition) {
+bool AnalyzerScope::setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition) {
     shared_ptr<ValueType> existingType = scopeLevels.top().functionTypeMap[name];
     if (existingType != nullptr) {
         // defining already defined function

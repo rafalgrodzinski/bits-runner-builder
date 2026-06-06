@@ -37,28 +37,28 @@ public:
     void pushLevel();
     void popLevel();
 
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(string name);
-    bool setProtoMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(const string &name) const;
+    bool setProtoMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
     
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(shared_ptr<ValueType> blobValueType);
-    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType);
-    bool isBlobDeclared(string name);
-    bool setBlobMembers(string name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(shared_ptr<ValueType> blobValueType) const;
+    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType) const;
+    bool isBlobDeclared(const string &name) const;
+    bool setBlobMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
 
-    bool isNamedTypeDeclared(string namedType);
-    bool setNamedTypes(vector<string> namedTypes);
+    bool isNamedTypeDeclared(const string &namedType) const;
+    bool setNamedTypes(const vector<string> &namedTypes);
 
-    optional<vector<string>> getBlobNamedTypeKeys(string blobName);
-    bool setBlobNamedTypeKeys(string blobName, vector<string> namedTypeKeys);
+    optional<vector<string>> getBlobNamedTypeKeys(const string &blobName) const;
+    bool setBlobNamedTypeKeys(const string &blobName, vector<string> namedTypeKeys);
 
-    optional<vector<string>> getBlobProtoNames(string name);
-    bool setBlobProtoNames(string name, vector<string> protoNames);
+    optional<vector<string>> getBlobProtoNames(const string &name) const;
+    bool setBlobProtoNames(const string &name, vector<string> protoNames);
 
-    shared_ptr<ValueType> getVariableType(string identifier);
-    bool setVariableType(string identifier, shared_ptr<ValueType> type, bool isDefinition);
+    shared_ptr<ValueType> getVariableType(const string &identifier) const;
+    bool setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition);
 
-    shared_ptr<ValueType> getFunctionType(string name);
-    bool setFunctionType(string name, shared_ptr<ValueType> type, bool isDefinition);
+    shared_ptr<ValueType> getFunctionType(const string &name) const;
+    bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
 };
 
 #endif

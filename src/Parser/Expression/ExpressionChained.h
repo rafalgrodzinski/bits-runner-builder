@@ -9,7 +9,8 @@ private:
 
 public:
     ExpressionChained(vector<shared_ptr<Expression>> chainExpressions, shared_ptr<Location> location);
-    vector<shared_ptr<Expression>> getChainExpressions();
+
+    vector<shared_ptr<Expression>> getChainExpressions() const;
 };
 
 #endif

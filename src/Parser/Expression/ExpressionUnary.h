@@ -20,8 +20,8 @@ public:
 
     ExpressionUnary(shared_ptr<Location> location);
 
-    ExpressionUnaryOperation getOperation();
-    shared_ptr<Expression> getSubExpression();
+    ExpressionUnaryOperation getOperation() const;
+    shared_ptr<Expression> getSubExpression() const;
 };
 
 #endif

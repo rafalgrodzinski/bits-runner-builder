@@ -23,8 +23,8 @@ public:
     static ParseeResultsGroup noMatch();
     static ParseeResultsGroup failure();
 
-    ParseeResultsGroupKind getKind();
-    vector<ParseeResult> getResults();
+    ParseeResultsGroupKind getKind() const;
+    vector<ParseeResult> getResults() const;
 };
 
 #endif

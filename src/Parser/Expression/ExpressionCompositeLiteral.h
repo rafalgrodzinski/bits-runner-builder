@@ -14,7 +14,8 @@ public:
     static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForTokenString(shared_ptr<Token> tokenString);
 
     ExpressionCompositeLiteral(shared_ptr<Location> location);
-    vector<shared_ptr<Expression>> getExpressions();
+
+    vector<shared_ptr<Expression>> getExpressions() const;
 };
 
 #endif

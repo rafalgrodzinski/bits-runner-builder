@@ -22,11 +22,12 @@ public:
         shared_ptr<ValueType> returnValueType,
         shared_ptr<Location> location
     );
-    bool getShouldExport();
-    string getName();
-    vector<pair<string, shared_ptr<ValueType>>> getArguments();
-    shared_ptr<ValueType> getReturnValueType();
-    shared_ptr<ValueType> getValueType();
+
+    bool getShouldExport() const;
+    string getName() const;
+    vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
+    shared_ptr<ValueType> getReturnValueType() const;
+    shared_ptr<ValueType> getValueType() const;
 };
 
 #endif

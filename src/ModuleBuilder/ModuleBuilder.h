@@ -117,19 +117,19 @@ private:
     void buildStatement(shared_ptr<StatementVariable> statementVariable);
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    void buildFunctionDeclaration(string moduleName, string name, bool shouldExport, bool isExtern, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnType);
-    void buildRawFunction(string moduleName, shared_ptr<StatementRawFunction> statement);
-    void buildVariableDeclaration(string moduleName, string name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType);
+    void buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType);
+    void buildRawFunction(const string &moduleName, shared_ptr<StatementRawFunction> statement);
+    void buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType);
 
-    void buildProtoDeclaration(string moduleName, shared_ptr<StatementProtoDeclaration> statement);
-    void buildProtoDefinition(string moduleName, shared_ptr<StatementProto> statement);
+    void buildProtoDeclaration(const string &moduleName, shared_ptr<StatementProtoDeclaration> statement);
+    void buildProtoDefinition(const string &moduleName, shared_ptr<StatementProto> statement);
 
-    void buildBlobDeclaration(string moduleName, string name);
-    void buildBlobDefinition(string moduleName, string name, vector<pair<string, shared_ptr<ValueType>>> members);
+    void buildBlobDeclaration(const string &moduleName, const string &name);
+    void buildBlobDefinition(const string &moduleName, const string &name, const vector<pair<string, shared_ptr<ValueType>>> &members);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);
-    llvm::AllocaInst *buildAlloca(llvm::Type *type, string identifier = "");
+    llvm::AllocaInst *buildAlloca(llvm::Type *type, const string &identifier = "");
 
     // Expressions
     shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<Expression> expression);
@@ -145,7 +145,7 @@ private:
     shared_ptr<WrappedValue> wrappedValueForExpression(shared_ptr<ExpressionValue> expressionValue);
 
     shared_ptr<WrappedValue> wrappedValueForBuiltIn(shared_ptr<WrappedValue> parentWrappedValue, shared_ptr<Expression> parentExpression, shared_ptr<Expression> expression);
-    shared_ptr<WrappedValue> wrappedValueForCall(llvm::Value *callee, llvm::FunctionType *funType, vector<llvm::Value*> implicitArguments, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<ValueType> valueType);
+    shared_ptr<WrappedValue> wrappedValueForCall(llvm::Value *callee, llvm::FunctionType *funType, const vector<llvm::Value*> &implicitArguments, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<ValueType> valueType);
     shared_ptr<WrappedValue> wrappedValueForCast(shared_ptr<WrappedValue> wrappedValue, shared_ptr<ValueType> targetValueType);
     shared_ptr<WrappedValue> wrappedValueForValue(llvm::Value *value, llvm::Value *pointerValue, llvm::Type *type, shared_ptr<Expression> expression);
     shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
@@ -155,29 +155,29 @@ private:
     int sizeInBitsForType(llvm::Type *type);
 
     // Error Handling    
-    void markFunctionError(string name, string message);
-    void markModuleError(string message);
+    void markFunctionError(const string &name, const string &message);
+    void markModuleError(const string &message);
     
-    void markErrorAlreadyDefined(shared_ptr<Location> location, string name);
-    void markInvalidConstraints(shared_ptr<Location> location, string functionName, string constraints);
+    void markErrorAlreadyDefined(shared_ptr<Location> location, const string &name);
+    void markInvalidConstraints(shared_ptr<Location> location, const string &functionName, const string &constraints);
     void markErrorInvalidAssignment(shared_ptr<Location> location);
-    void markErrorInvalidBuiltIn(shared_ptr<Location> location, string name);
+    void markErrorInvalidBuiltIn(shared_ptr<Location> location, const string &name);
     void markErrorInvalidCast(shared_ptr<Location> location);
     void markErrorInvalidConstant(shared_ptr<Location> location);
     void markErrorInvalidGlobal(shared_ptr<Location> location);
-    void markErrorInvalidImport(shared_ptr<Location> location, string moduleName);
+    void markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName);
     void markErrorInvalidLiteral(shared_ptr<Location> location, shared_ptr<ValueType> type);
-    void markErrorInvalidMember(shared_ptr<Location> location, string blobName, string memberName);
+    void markErrorInvalidMember(shared_ptr<Location> location, const string &blobName, const string &memberName);
     void markErrorInvalidOperationBinary(shared_ptr<Location> location, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markErrorInvalidType(shared_ptr<Location> location);
-    void markErrorUnexpected(shared_ptr<Location> location, string name);
-    void markErrorNotDeclared(shared_ptr<Location> location, string name);
-    void markErrorNotDefined(shared_ptr<Location> location, string name);
+    void markErrorUnexpected(shared_ptr<Location> location, const string &name);
+    void markErrorNotDeclared(shared_ptr<Location> location, const string &name);
+    void markErrorNotDefined(shared_ptr<Location> location, const string &name);
     void markErrorNoTypeForPointer(shared_ptr<Location> location);
 
-    void debugPrint(vector<llvm::Value *> values);
-    void debugPrint(vector<llvm::Type *> types);
+    void debugPrint(const vector<llvm::Value *> &values);
+    void debugPrint(const vector<llvm::Type *> &types);
 
 public:
     ModuleBuilder(

@@ -9,7 +9,8 @@ private:
 
 public:
     StatementModule(string name, shared_ptr<Location> location);
-    string getName();
+
+    string getName() const;
 };
 
 #endif

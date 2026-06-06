@@ -177,50 +177,50 @@ shared_ptr<WrappedValue> WrappedValue::wrappedNone(llvm::Type *type, shared_ptr<
     return wrappedValue;
 }
 
-llvm::Value *WrappedValue::getValue() {
+llvm::Value *WrappedValue::getValue() const {
     return valueLambda();
 }
 
-llvm::Value *WrappedValue::getPointerValue() {
+llvm::Value *WrappedValue::getPointerValue() const {
     return pointerValueLambda();
 }
 
-llvm::Constant *WrappedValue::getConstantValue() {
+llvm::Constant *WrappedValue::getConstantValue() const {
     return llvm::dyn_cast<llvm::Constant>(getValue());
 }
 
-llvm::GlobalVariable *WrappedValue::getGlobalValue() {
+llvm::GlobalVariable *WrappedValue::getGlobalValue() const {
     return llvm::dyn_cast<llvm::GlobalVariable>(getPointerValue());
 }
 
-llvm::Type *WrappedValue::getType() {
+llvm::Type *WrappedValue::getType() const {
     return type;
 }
 
-llvm::ArrayType *WrappedValue::getArrayType() {
+llvm::ArrayType *WrappedValue::getArrayType() const {
     return llvm::dyn_cast<llvm::ArrayType>(type);
 }
 
-llvm::StructType *WrappedValue::getStructType() {
+llvm::StructType *WrappedValue::getStructType() const {
     return llvm::dyn_cast<llvm::StructType>(type);
 }
 
-shared_ptr<ValueType> WrappedValue::getValueType() {
+shared_ptr<ValueType> WrappedValue::getValueType() const {
     return valueType;
 }
 
-bool WrappedValue::isArray() {
+bool WrappedValue::isArray() const {
     return valueType->isData();
 }
 
-bool WrappedValue::isPointer() {
+bool WrappedValue::isPointer() const {
     return valueType->isPointer() || valueType->getKind() == ValueTypeKind::A;
 }
 
-bool WrappedValue::isBlobStruct() {
+bool WrappedValue::isBlobStruct() const {
     return valueType->isBlob();
 }
 
-bool WrappedValue::isProtoStruct() {
+bool WrappedValue::isProtoStruct() const {
     return valueType->isProto();
 }

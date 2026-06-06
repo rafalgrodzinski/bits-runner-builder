@@ -10,25 +10,25 @@ StatementFunctionDeclaration::StatementFunctionDeclaration(
     shared_ptr<ValueType> returnValueType,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION_DECLARATION, location), shouldExport(shouldExport), name(name), arguments(arguments), returnValueType(returnValueType) { }
+Statement(StatementKind::FUNCTION_DECLARATION, location), shouldExport(shouldExport), name(std::move(name)), arguments(std::move(arguments)), returnValueType(returnValueType) { }
 
-bool StatementFunctionDeclaration::getShouldExport() {
+bool StatementFunctionDeclaration::getShouldExport() const {
     return shouldExport;
 }
 
-string StatementFunctionDeclaration::getName() {
+string StatementFunctionDeclaration::getName() const {
     return name;
 }
 
-vector<pair<string, shared_ptr<ValueType>>> StatementFunctionDeclaration::getArguments() {
+vector<pair<string, shared_ptr<ValueType>>> StatementFunctionDeclaration::getArguments() const {
     return arguments;
 }
 
-shared_ptr<ValueType> StatementFunctionDeclaration::getReturnValueType() {
+shared_ptr<ValueType> StatementFunctionDeclaration::getReturnValueType() const {
     return returnValueType;
 }
 
-shared_ptr<ValueType> StatementFunctionDeclaration::getValueType() {
+shared_ptr<ValueType> StatementFunctionDeclaration::getValueType() const {
     vector<shared_ptr<ValueType>> argumentTypes;
     for (auto &argument : arguments)
         argumentTypes.push_back(argument.second);

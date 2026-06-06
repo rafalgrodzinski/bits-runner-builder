@@ -39,10 +39,11 @@ private:
     map<string, vector<shared_ptr<Statement>>> exportedFunctionDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
 
-    shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, string moduleName);
+    shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, const string &moduleName);
 
 public:
     ModulesStore(string defaultModuleName);
+
     void appendStatements(vector<shared_ptr<Statement>> statements);
     vector<shared_ptr<Module>> getModules();
     map<string, vector<shared_ptr<Statement>>> getExportedHeaderStatementsMap();

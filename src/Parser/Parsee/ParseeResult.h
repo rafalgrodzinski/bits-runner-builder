@@ -36,13 +36,13 @@ public:
     static ParseeResult statementInBlockResult(shared_ptr<Statement> statement, int tokensCount, int tag = -1);
     static ParseeResult expressionResult(shared_ptr<Expression> expression, int tokensCount, int tag = -1);
 
-    ParseeResultKind getKind();
-    int getTag();
-    shared_ptr<Token> getToken();
-    shared_ptr<ValueType> getValueType();
-    shared_ptr<Statement> getStatement();
-    shared_ptr<Expression> getExpression();
-    int getTokensCount();
+    ParseeResultKind getKind() const;
+    int getTag() const;
+    shared_ptr<Token> getToken() const;
+    shared_ptr<ValueType> getValueType() const;
+    shared_ptr<Statement> getStatement() const;
+    shared_ptr<Expression> getExpression() const;
+    int getTokensCount() const;
 };
 
 #endif

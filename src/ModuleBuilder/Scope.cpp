@@ -12,7 +12,7 @@ void Scope::popLevel() {
     scopeLevels.pop();
 }
 
-bool Scope::setWrappedValue(string identifier, shared_ptr<WrappedValue> wrappedValue) {
+bool Scope::setWrappedValue(const string &identifier, shared_ptr<WrappedValue> wrappedValue) {
     if (scopeLevels.top().wrappedValueMap[identifier] != nullptr)
         return false;
 
@@ -20,7 +20,7 @@ bool Scope::setWrappedValue(string identifier, shared_ptr<WrappedValue> wrappedV
     return true;
 }
 
-shared_ptr<WrappedValue> Scope::getWrappedValue(string identifier) {
+shared_ptr<WrappedValue> Scope::getWrappedValue(const string &identifier) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -33,7 +33,7 @@ shared_ptr<WrappedValue> Scope::getWrappedValue(string identifier) {
     return nullptr;
 }
 
-bool Scope::setFunction(string name, llvm::Function *function) {
+bool Scope::setFunction(const string &name, llvm::Function *function) {
     if (scopeLevels.top().funMap[name] != nullptr)
         return false;
 
@@ -41,7 +41,7 @@ bool Scope::setFunction(string name, llvm::Function *function) {
     return true;
 }
 
-llvm::Function* Scope::getFunction(string name) {
+llvm::Function* Scope::getFunction(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -54,15 +54,15 @@ llvm::Function* Scope::getFunction(string name) {
     return nullptr;
 }
 
-bool Scope::setInlineAsm(string name, llvm::InlineAsm *inlineAsm) {
+bool Scope::setInlineAsm(const string &name, llvm::InlineAsm *inlineAsm) {
     if (scopeLevels.top().rawFunMap[name] != nullptr)
         return false;
     
-    scopeLevels.top().rawFunMap[name] = inlineAsm;
+    scopeLevels.top().rawFunMap[name] = std::move(inlineAsm);
     return true;
 }
 
-llvm::InlineAsm *Scope::getInlineAsm(string name) {
+llvm::InlineAsm *Scope::getInlineAsm(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -75,14 +75,14 @@ llvm::InlineAsm *Scope::getInlineAsm(string name) {
     return nullptr;
 }
 
-bool Scope::setProtoStructType(string name, llvm::StructType *structType, vector<pair<string, shared_ptr<ValueType>>> members) {
+bool Scope::setProtoStructType(const string &name, llvm::StructType *structType, vector<pair<string, shared_ptr<ValueType>>> members) {
     scopeLevels.top().protoStructTypesMap[name] = structType;
-    scopeLevels.top().protoStructMembersMap[name] = members;
+    scopeLevels.top().protoStructMembersMap[name] = std::move(members);
 
     return true;
 }
 
-llvm::StructType *Scope::getProtoStructType(string name) {
+llvm::StructType *Scope::getProtoStructType(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -95,7 +95,7 @@ llvm::StructType *Scope::getProtoStructType(string name) {
     return nullptr;
 }
 
-optional<vector<pair<string, shared_ptr<ValueType>>>> Scope::getProtoStructMembers(string protoName) {
+optional<vector<pair<string, shared_ptr<ValueType>>>> Scope::getProtoStructMembers(const string &protoName) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -107,14 +107,14 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> Scope::getProtoStructMembe
     return {};
 }
 
-bool Scope::setStruct(string structName, llvm::StructType *structType, vector<string> memberNames) {
+bool Scope::setStruct(const string &structName, llvm::StructType *structType, vector<string> memberNames) {
     scopeLevels.top().structTypeMap[structName] = structType;
-    scopeLevels.top().structMembersMap[structName] = memberNames;
+    scopeLevels.top().structMembersMap[structName] = std::move(memberNames);
 
     return true;
 }
 
-llvm::StructType *Scope::getStructType(string structName) {
+llvm::StructType *Scope::getStructType(const string &structName) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -127,7 +127,7 @@ llvm::StructType *Scope::getStructType(string structName) {
     return nullptr;
 }
 
-optional<int> Scope::getStructMemberIndex(string structName, string memberName) {
+optional<int> Scope::getStructMemberIndex(const string &structName, const string &memberName) const {
         stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {

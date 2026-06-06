@@ -27,13 +27,14 @@ public:
         vector<shared_ptr<StatementFunction>> functionStatements,
         shared_ptr<Location> location
     );
-    bool getShouldExport();
-    string getName();
-    vector<string> getNamedTypeKeys();
-    vector<string> getProtoNames();
-    vector<shared_ptr<StatementVariable>> getVariableStatements();
-    vector<shared_ptr<StatementFunction>> getFunctionStatements();
-    vector<pair<string, shared_ptr<ValueType>>> getMembers();
+
+    bool getShouldExport() const;
+    string getName() const;
+    vector<string> getNamedTypeKeys() const;
+    vector<string> getProtoNames() const;
+    vector<shared_ptr<StatementVariable>> getVariableStatements() const;
+    vector<shared_ptr<StatementFunction>> getFunctionStatements() const;
+    vector<pair<string, shared_ptr<ValueType>>> getMembers() const;
 };
 
 #endif

@@ -22,10 +22,11 @@ public:
         vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements,
         shared_ptr<Location> location
     );
-    bool getShouldExport();
-    string getName();
-    vector<shared_ptr<StatementVariable>> getVariableStatements();
-    vector<shared_ptr<StatementFunctionDeclaration>> getFunctionDeclarationStatements();
+
+    bool getShouldExport() const;
+    string getName() const;
+    vector<shared_ptr<StatementVariable>> getVariableStatements() const;
+    vector<shared_ptr<StatementFunctionDeclaration>> getFunctionDeclarationStatements() const;
 };
 
 #endif

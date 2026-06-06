@@ -20,7 +20,7 @@ CodeGenerator::CodeGenerator(
     // target triple
     targetTriple = llvm::sys::getDefaultTargetTriple();
     if (!targetTripleOption.empty())
-        targetTriple = targetTripleOption;
+        targetTriple = std::move(targetTripleOption);
     string errorString;
     const llvm::Target *target = llvm::TargetRegistry::lookupTarget(targetTriple, errorString);
     if (!target) {
@@ -31,7 +31,7 @@ CodeGenerator::CodeGenerator(
     // architecture
     architecture = "generic";
     if (!architectureOption.empty())
-        architecture = architectureOption;
+        architecture = std::move(architectureOption);
     string features = "";
 
     // relocation model
@@ -184,14 +184,14 @@ void CodeGenerator::generateObjectFile(shared_ptr<llvm::Module> module, OutputKi
     legacyPassManager.run(*module);
 }
 
-llvm::Triple::ArchType CodeGenerator::getArchType() {
+llvm::Triple::ArchType CodeGenerator::getArchType() const {
     return targetMachine->getTargetTriple().getArch();
 }
 
-llvm::DataLayout CodeGenerator::getDataLayout() {
+llvm::DataLayout CodeGenerator::getDataLayout() const {
     return dataLayout;
 }
 
-llvm::CallingConv::ID CodeGenerator::getCallingConvetion() {
+llvm::CallingConv::ID CodeGenerator::getCallingConvetion() const {
     return callingConvention;
 }

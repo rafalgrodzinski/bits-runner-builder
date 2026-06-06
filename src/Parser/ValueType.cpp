@@ -87,15 +87,15 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
 shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::BLOB;
-    valueType->blobName = blobName;
-    valueType->namedTypeValues = namedTypeValues;
+    valueType->blobName = std::move(blobName);
+    valueType->namedTypeValues = std::move(namedTypeValues);
     return valueType;
 }
 
 shared_ptr<ValueType> ValueType::proto(string protoName) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::PROTO;
-    valueType->protoName = protoName;
+    valueType->protoName = std::move(protoName);
     return valueType;
 }
 
@@ -109,7 +109,7 @@ shared_ptr<ValueType> ValueType::boxed(shared_ptr<ValueType> subType) {
 shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
-    valueType->argumentTypes = argumentTypes;
+    valueType->argumentTypes = std::move(argumentTypes);
     if (returnType != nullptr)
         valueType->returnType = returnType;
     else
@@ -128,7 +128,7 @@ shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType, bool isVolat
 shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::COMPOSITE;
-    valueType->compositeElementTypes = elementTypes;
+    valueType->compositeElementTypes = std::move(elementTypes);
     valueType->countExpression = countExpression;
     return valueType;
 }
@@ -136,23 +136,24 @@ shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> element
 shared_ptr<ValueType> ValueType::namedType(string namedTypeKey) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::NAMED_TYPE;
-    valueType->namedTypeKey = namedTypeKey;
+    valueType->namedTypeKey = std::move(namedTypeKey);
     return valueType;
 }
 
 ValueType::ValueType() { }
+
 ValueType::ValueType(ValueTypeKind kind):
 kind(kind) { }
 
-ValueTypeKind ValueType::getKind() {
+ValueTypeKind ValueType::getKind() const {
     return kind;
 }
 
-bool ValueType::getIsVolatile() {
+bool ValueType::getIsVolatile() const {
     return isVolatile;
 }
 
-shared_ptr<ValueType> ValueType::getSubType() {
+shared_ptr<ValueType> ValueType::getSubType() const {
     if (subType == nullptr)
         return nullptr;
 
@@ -174,15 +175,15 @@ int ValueType::getValueArg() {
         return 0;
 }
 
-shared_ptr<Expression> ValueType::getCountExpression() {
+shared_ptr<Expression> ValueType::getCountExpression() const {
     return countExpression;
 }
 
-optional<vector<shared_ptr<ValueType>>> ValueType::getArgumentTypes() {
+optional<vector<shared_ptr<ValueType>>> ValueType::getArgumentTypes() const {
     return argumentTypes;
 }
 
-shared_ptr<ValueType> ValueType::getReturnType() {
+shared_ptr<ValueType> ValueType::getReturnType() const {
     if (returnType == nullptr)
         return nullptr;
     returnType->namedTypeKeys = namedTypeKeys;
@@ -190,31 +191,31 @@ shared_ptr<ValueType> ValueType::getReturnType() {
     return returnType;
 }
 
-optional<string> ValueType::getBlobName() {
+optional<string> ValueType::getBlobName() const {
     return blobName;
 }
 
-optional<string> ValueType::getProtoName() {
+optional<string> ValueType::getProtoName() const {
     return protoName;
 }
 
-optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() {
+optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() const {
     return compositeElementTypes;
 }
 
-optional<string> ValueType::getNamedTypeKey() {
+optional<string> ValueType::getNamedTypeKey() const {
     return namedTypeKey;
 }
 
-optional<vector<string>> ValueType::getNamedTypeKeys() {
+optional<vector<string>> ValueType::getNamedTypeKeys() const {
     return namedTypeKeys;
 }
 
-optional<vector<shared_ptr<ValueType>>> ValueType::getNamedTypeValues() {
+optional<vector<shared_ptr<ValueType>>> ValueType::getNamedTypeValues() const {
     return namedTypeValues;
 }
 
-bool ValueType::isEqual(shared_ptr<ValueType> other) {
+bool ValueType::isEqual(shared_ptr<ValueType> other) const {
     if (other == nullptr)
         return false;
 
@@ -285,7 +286,7 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) {
     return kind == other->getKind();
 }
 
-bool ValueType::isNumeric() {
+bool ValueType::isNumeric() const {
     switch (kind) {
         case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
@@ -313,7 +314,7 @@ bool ValueType::isNumeric() {
     return false;
 }
 
-bool ValueType::isInteger() {
+bool ValueType::isInteger() const {
     switch (kind) {
         case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
@@ -337,7 +338,7 @@ bool ValueType::isInteger() {
     return false;
 }
 
-bool ValueType::isUnsignedInteger() {
+bool ValueType::isUnsignedInteger() const {
     switch (kind) {
         case ValueTypeKind::UINT:
         case ValueTypeKind::U8:
@@ -354,7 +355,7 @@ bool ValueType::isUnsignedInteger() {
     return false;
 }
 
-bool ValueType::isSignedInteger() {
+bool ValueType::isSignedInteger() const {
     switch (kind) {
         case ValueTypeKind::SINT:
         case ValueTypeKind::S8:
@@ -370,7 +371,7 @@ bool ValueType::isSignedInteger() {
     return false;
 }
 
-bool ValueType::isFloat() {
+bool ValueType::isFloat() const {
     switch (kind) {
         case ValueTypeKind::FLOAT:
         case ValueTypeKind::F32:
@@ -384,15 +385,15 @@ bool ValueType::isFloat() {
     return false;
 }
 
-bool ValueType::isBool() {
+bool ValueType::isBool() const {
     return kind == ValueTypeKind::BOOL;
 }
 
-bool ValueType::isData() {
+bool ValueType::isData() const {
     return kind == ValueTypeKind::DATA;
 }
 
-bool ValueType::isDataBool() {
+bool ValueType::isDataBool() const {
     if (isData() && getSubType()->isBool())
         return true;
 
@@ -408,7 +409,7 @@ bool ValueType::isDataBool() {
     return false;
 }
 
-bool ValueType::isDataNumeric() {
+bool ValueType::isDataNumeric() const {
     if (isData() && getSubType()->isNumeric())
         return true;
 
@@ -424,38 +425,38 @@ bool ValueType::isDataNumeric() {
     return false;
 }
 
-bool ValueType::isAddress() {
+bool ValueType::isAddress() const {
     return kind == ValueTypeKind::A;
 }
 
-bool ValueType::isPointer() {
+bool ValueType::isPointer() const {
     return kind == ValueTypeKind::PTR;
 }
 
-bool ValueType::isFunction() {
+bool ValueType::isFunction() const {
     return kind == ValueTypeKind::FUN;
 }
 
-bool ValueType::isBlob() {
+bool ValueType::isBlob() const {
     return kind == ValueTypeKind::BLOB;
 }
 
-bool ValueType::isProto() {
+bool ValueType::isProto() const {
     return kind == ValueTypeKind::PROTO;
 }
 
-bool ValueType::isBoxed() {
+bool ValueType::isBoxed() const {
     return kind == ValueTypeKind::BOXED;
 }
 
-bool ValueType::isComposite() {
+bool ValueType::isComposite() const {
     return kind == ValueTypeKind::COMPOSITE;
 }
 
-bool ValueType::isNamedType() {
+bool ValueType::isNamedType() const {
     return kind == ValueTypeKind::NAMED_TYPE;
 }
 
-bool ValueType::isBoxedNamedType() {
+bool ValueType::isBoxedNamedType() const {
     return kind == ValueTypeKind::BOXED && subType->isNamedType();
 }

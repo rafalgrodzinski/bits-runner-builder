@@ -10,8 +10,9 @@ private:
 
 public:
     StatementProtoDeclaration(bool shouldExport, string name, shared_ptr<Location> location);
-    bool getShouldExport();
-    string getName();
+
+    bool getShouldExport() const;
+    string getName() const;
 };
 
 #endif

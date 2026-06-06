@@ -5,10 +5,10 @@
 Statement::Statement(StatementKind kind, shared_ptr<Location> location):
 kind(kind), location(location) { }
 
-StatementKind Statement::getKind() {
+StatementKind Statement::getKind() const {
     return kind;
 }
 
-shared_ptr<Location> Statement::getLocation() {
+shared_ptr<Location> Statement::getLocation() const {
     return location;
 }

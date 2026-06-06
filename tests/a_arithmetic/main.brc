@@ -1,0 +1,6 @@
+@export main fun -> u32
+    value data<u32, 4> <- {1, 2, 4, 8}
+    address a <- value.adr + 4
+    address.ptr<u32>.val <- 7
+    ret value[1]
+;

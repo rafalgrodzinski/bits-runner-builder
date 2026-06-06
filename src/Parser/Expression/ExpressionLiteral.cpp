@@ -120,18 +120,18 @@ shared_ptr<ExpressionLiteral> ExpressionLiteral::expressionLiteralForUInt(uint64
 ExpressionLiteral::ExpressionLiteral(shared_ptr<Location> location):
 Expression(ExpressionKind::LITERAL, nullptr, location) { }
 
-ExpressionLiteralKind ExpressionLiteral::getLiteralKind() {
+ExpressionLiteralKind ExpressionLiteral::getLiteralKind() const {
     return literalKind;
 }
 
-bool ExpressionLiteral::getBoolValue() {
+bool ExpressionLiteral::getBoolValue() const {
     return boolValue;
 }
 
-uint64_t ExpressionLiteral::getUIntValue() {
+uint64_t ExpressionLiteral::getUIntValue() const {
     return uIntValue;
 }
 
-double ExpressionLiteral::getFloatValue() {
+double ExpressionLiteral::getFloatValue() const {
     return floatValue;
 }

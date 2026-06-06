@@ -1,16 +1,16 @@
 #include "StatementVariableDeclaration.h"
 
 StatementVariableDeclaration::StatementVariableDeclaration(bool shouldExport, string identifier, shared_ptr<ValueType> valueType, shared_ptr<Location> location):
-Statement(StatementKind::VARIABLE_DECLARATION, location), shouldExport(shouldExport), identifier(identifier), valueType(valueType) { }
+Statement(StatementKind::VARIABLE_DECLARATION, location), shouldExport(shouldExport), identifier(std::move(identifier)), valueType(valueType) { }
 
-bool StatementVariableDeclaration::getShouldExport() {
+bool StatementVariableDeclaration::getShouldExport() const {
     return shouldExport;
 }
 
-string StatementVariableDeclaration::getIdentifier() {
+string StatementVariableDeclaration::getIdentifier() const {
     return identifier;
 }
 
-shared_ptr<ValueType> StatementVariableDeclaration::getValueType() {
+shared_ptr<ValueType> StatementVariableDeclaration::getValueType() const {
     return valueType;
 }

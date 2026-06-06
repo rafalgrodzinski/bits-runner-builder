@@ -23,11 +23,12 @@ public:
         shared_ptr<StatementBlock> bodyBlockStatement,
         shared_ptr<Location> location
     );
-    shared_ptr<Statement> getInitStatement();
-    shared_ptr<Statement> getPostStatement();
-    shared_ptr<Expression> getPreConditionExpression();
-    shared_ptr<Expression> getPostConditionExpression();
-    shared_ptr<StatementBlock> getBodyBlockStatement();
+
+    shared_ptr<Statement> getInitStatement() const;
+    shared_ptr<Statement> getPostStatement() const;
+    shared_ptr<Expression> getPreConditionExpression() const;
+    shared_ptr<Expression> getPostConditionExpression() const;
+    shared_ptr<StatementBlock> getBodyBlockStatement() const;
 };
 
 #endif

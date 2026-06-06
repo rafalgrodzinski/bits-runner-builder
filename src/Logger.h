@@ -102,7 +102,7 @@ private:
     static string toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents);
 
     // general support
-    static string formattedLine(string line, vector<IndentKind> indents);
+    static string formattedLine(const string &line, const vector<IndentKind> &indents);
     static vector<IndentKind> adjustedLastIndent(vector<IndentKind> indents);
 
     // errors support
@@ -110,9 +110,9 @@ private:
     static string toString(TokenKind tokenKind); // only kind
 
 public:
-    static void print(vector<shared_ptr<Token>> tokens);
+    static void print(const vector<shared_ptr<Token>> &tokens);
     static void print(shared_ptr<Module> module);
-    static void printExportedHeaderStatements(map<string, vector<shared_ptr<Statement>>> statmentsMap);
+    static void printExportedHeaderStatements(const map<string, vector<shared_ptr<Statement>>> &statmentsMap);
     static void print(shared_ptr<Error> error);
 
     static string toString(shared_ptr<Location> location);

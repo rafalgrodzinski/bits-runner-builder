@@ -882,7 +882,7 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
     return formattedLine(line, indents);
 }
 
-string Logger::formattedLine(string line, vector<IndentKind> indents) {
+string Logger::formattedLine(const string &line, const vector<IndentKind> &indents) {
     // Just return the input, if no indents (useful for inline expressions)
     if (indents.empty())
         return line;
@@ -891,7 +891,7 @@ string Logger::formattedLine(string line, vector<IndentKind> indents) {
     string text;
 
     // Draw tree
-    for (IndentKind &indent : indents) {
+    for (const IndentKind &indent : indents) {
         switch (indent) {
             case IndentKind::ROOT:
                 text = "";
@@ -965,8 +965,9 @@ string Logger::toString(Parsee parsee) {
         case ParseeKind::EXPRESSION_BLOCK_SINGLE_LINE:
         case ParseeKind::EXPRESSION_BLOCK_MULTI_LINE:
             return "Expression Block";
-        case ParseeKind::IF_ELSE_SINGLE_LINE:
+        case ParseeKind::IF_ELSE:
         case ParseeKind::IF_ELSE_MULTI_LINE:
+        case ParseeKind::IF_ELSE_SINGLE_LINE:
             return "Expression If-Else";
         case ParseeKind::DEBUG:
             return "DEBUG";
@@ -1127,7 +1128,7 @@ string Logger::toString(ExpressionUnaryOperation operationUnary) {
 
 /// Public ///
 
-void Logger::print(vector<shared_ptr<Token>> tokens) {
+void Logger::print(const vector<shared_ptr<Token>> &tokens) {
         for (int i=0; i<tokens.size(); i++) {
             cout << i << "|" << toString(tokens.at(i));
             if (i < tokens.size() - 1)
@@ -1177,7 +1178,7 @@ void Logger::print(shared_ptr<Module> module) {
     cout << text;
 }
 
-void Logger::printExportedHeaderStatements(map<string, vector<shared_ptr<Statement>>> statementsMap) {
+void Logger::printExportedHeaderStatements(const map<string, vector<shared_ptr<Statement>>> &statementsMap) {
     // iterate over exported statements from each of the module
     for (auto &statementsMapEntry : statementsMap) {
         // skip over modules with no exported statements

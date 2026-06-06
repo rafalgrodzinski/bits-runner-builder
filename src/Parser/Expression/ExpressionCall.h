@@ -12,8 +12,9 @@ private:
 
 public:
     ExpressionCall(string name, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<Location> location);
-    string getName();
-    vector<shared_ptr<Expression>> getArgumentExpressions();
+
+    string getName() const;
+    vector<shared_ptr<Expression>> getArgumentExpressions() const;
 };
 
 #endif

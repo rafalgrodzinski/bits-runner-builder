@@ -38,9 +38,10 @@ private:
 
 public:
     Statement(StatementKind kind, shared_ptr<Location> location);
+
     virtual ~Statement() { }
-    StatementKind getKind();
-    shared_ptr<Location> getLocation();
+    StatementKind getKind() const;
+    shared_ptr<Location> getLocation() const;
 };
 
 #endif

@@ -13,9 +13,10 @@ private:
 
 public:
     Location(string fileName, int line, int column);
-    string getFileName();
-    int getLine();
-    int getColumn();
+
+    string getFileName() const;
+    int getLine() const;
+    int getColumn() const;
 };
 
 #endif

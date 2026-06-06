@@ -50,31 +50,30 @@ ParseeResult ParseeResult::expressionResult(shared_ptr<Expression> expression, i
 
 ParseeResult::ParseeResult() { }
 
-
-ParseeResultKind ParseeResult::getKind() {
+ParseeResultKind ParseeResult::getKind() const {
     return kind;
 }
 
-int ParseeResult::getTag() {
+int ParseeResult::getTag() const {
     return tag;
 }
 
-shared_ptr<Token> ParseeResult::getToken() {
+shared_ptr<Token> ParseeResult::getToken() const {
     return token;
 }
 
-shared_ptr<ValueType> ParseeResult::getValueType() {
+shared_ptr<ValueType> ParseeResult::getValueType() const {
     return valueType;
 }
 
-shared_ptr<Statement> ParseeResult::getStatement() {
+shared_ptr<Statement> ParseeResult::getStatement() const {
     return statement;
 }
 
-shared_ptr<Expression> ParseeResult::getExpression() {
+shared_ptr<Expression> ParseeResult::getExpression() const {
     return expression;
 }
 
-int ParseeResult::getTokensCount() {
+int ParseeResult::getTokensCount() const {
     return tokensCount;
 }

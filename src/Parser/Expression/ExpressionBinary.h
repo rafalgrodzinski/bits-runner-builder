@@ -39,16 +39,16 @@ private:
     shared_ptr<Expression> left;
     shared_ptr<Expression> right;
 
-    static bool doTokensMatchTokenKinds(vector<shared_ptr<Token>> tokens, vector<TokenKind> tokenKinds);
+    static bool doTokensMatchTokenKinds(const vector<shared_ptr<Token>> &tokens, const vector<TokenKind> &tokenKinds);
 
 public:
-    static shared_ptr<ExpressionBinary> expression(vector<shared_ptr<Token>> tokens, shared_ptr<Expression> left, shared_ptr<Expression> right);
+    static shared_ptr<ExpressionBinary> expression(const vector<shared_ptr<Token>> &tokens, shared_ptr<Expression> left, shared_ptr<Expression> right);
 
     ExpressionBinary(shared_ptr<Location> location);
 
-    ExpressionBinaryOperation getOperation();
-    shared_ptr<Expression> getLeft();
-    shared_ptr<Expression> getRight();
+    ExpressionBinaryOperation getOperation() const;
+    shared_ptr<Expression> getLeft() const;
+    shared_ptr<Expression> getRight() const;
 };
 
 #endif

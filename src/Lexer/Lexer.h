@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
+class Error;
 class Token;
 enum class TokenKind;
-class Error;
 
 using namespace std;
 
@@ -24,7 +24,7 @@ private:
     bool isParsingRawSource;
 
     shared_ptr<Token> nextToken();
-    shared_ptr<Token> match(TokenKind kind, string lexme, bool needsSeparator);
+    shared_ptr<Token> match(TokenKind kind, const string &lexme, bool needsSeparator);
     shared_ptr<Token> matchFloat();
     shared_ptr<Token> matchIntegerDec();
     shared_ptr<Token> matchIntegerHex();
@@ -37,18 +37,19 @@ private:
     shared_ptr<Token> matchRawSourceLine();
     shared_ptr<Token> matchEnd();
 
-    bool isWhiteSpace(int index);
-    bool isDecDigit(int index);
-    bool isHexDigit(int index);
-    bool isBinDigit(int index);
-    bool isIdentifier(int index);
-    bool isSeparator(int index);
+    bool isWhiteSpace(int index) const;
+    bool isDecDigit(int index) const;
+    bool isHexDigit(int index) const;
+    bool isBinDigit(int index) const;
+    bool isIdentifier(int index) const;
+    bool isSeparator(int index) const;
     void advanceWithToken(shared_ptr<Token> token);
 
     void markError();
 
 public:
     Lexer(string fileName, string source);
+
     vector<shared_ptr<Token>> getTokens();
 };
 

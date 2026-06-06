@@ -8,14 +8,14 @@ shared_ptr<Expression> Expression::NONE = make_shared<Expression>(ExpressionKind
 Expression::Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, shared_ptr<Location> location):
 kind(kind), valueType(valueType), location(location) { }
 
-ExpressionKind Expression::getKind() {
+ExpressionKind Expression::getKind() const {
     return kind;
 }
 
-shared_ptr<Location> Expression::getLocation() {
+shared_ptr<Location> Expression::getLocation() const {
     return location;
 }
 
-shared_ptr<ValueType> Expression::getValueType() {
+shared_ptr<ValueType> Expression::getValueType() const {
     return valueType;
 }

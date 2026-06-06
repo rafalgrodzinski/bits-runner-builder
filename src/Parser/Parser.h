@@ -98,7 +98,7 @@ private:
     optional<pair<vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     optional<pair<vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
-    optional<pair<vector<ParseeResult>, int>> ifElseParseeResults(bool isMultiLine, int tag);
+    optional<pair<vector<ParseeResult>, int>> ifElseParseeResults(optional<bool> isMultiLine, int tag);
 
     // Support
     optional<vector<shared_ptr<Token>>> tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
@@ -106,6 +106,7 @@ private:
 
 public:
     Parser(vector<shared_ptr<Token>> tokens);
+
     vector<shared_ptr<Statement>> getStatements();
 };
 

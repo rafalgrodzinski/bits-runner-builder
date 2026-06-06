@@ -55,6 +55,6 @@ shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCom
 ExpressionCompositeLiteral::ExpressionCompositeLiteral(shared_ptr<Location> location):
 Expression(ExpressionKind::COMPOSITE_LITERAL, nullptr, location) { }
 
-vector<shared_ptr<Expression>> ExpressionCompositeLiteral::getExpressions() {
+vector<shared_ptr<Expression>> ExpressionCompositeLiteral::getExpressions() const {
     return expressions;
 } 

@@ -24,13 +24,14 @@ public:
         string rawSource,
         shared_ptr<Location> location
     );
-    bool getShouldExport();
-    string getName();
-    string getConstraints();
-    vector<pair<string, shared_ptr<ValueType>>> getArguments();
-    shared_ptr<ValueType> getReturnValueType();
-    shared_ptr<ValueType> getValueType();
-    string getRawSource();
+
+    bool getShouldExport() const;
+    string getName() const;
+    string getConstraints() const;
+    vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
+    shared_ptr<ValueType> getReturnValueType() const;
+    shared_ptr<ValueType> getValueType() const;
+    string getRawSource() const;
 };
 
 #endif

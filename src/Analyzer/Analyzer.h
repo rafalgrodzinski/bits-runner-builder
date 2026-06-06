@@ -96,32 +96,33 @@ private:
     //
     // Support
     //
-    bool isUnaryOperationValidForType(ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
-    bool isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
+    bool isUnaryOperationValidForType(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) const;
+    bool isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) const;
 
-    shared_ptr<ValueType> typeForUnaryOperation(ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
-    shared_ptr<ValueType> typeForBinaryOperation(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
+    shared_ptr<ValueType> typeForUnaryOperation(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) const;
+    shared_ptr<ValueType> typeForBinaryOperation(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) const;
 
     shared_ptr<Expression> checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType);
     bool canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
     shared_ptr<ValueType> resolvedAndCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location);
 
-    void markErrorAlreadyDefined(shared_ptr<Location> location, string identifier);
-    void markErrorInvalidAttribute(shared_ptr<Location> location, string name);
+    void markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier);
+    void markErrorInvalidAttribute(shared_ptr<Location> location, const string &name);
     void markErrorInvalidArgumentsCount(shared_ptr<Location> location, int actulCount, int expectedCount);
-    void markErrorInvalidBuiltIn(shared_ptr<Location> location, string builtInName, shared_ptr<ValueType> type);
+    void markErrorInvalidBuiltIn(shared_ptr<Location> location, const string &builtInName, shared_ptr<ValueType> type);
     void markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
-    void markErrorInvalidImport(shared_ptr<Location> location, string moduleName);
+    void markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName);
     void markErrorInvalidOperationBinary(shared_ptr<Location> location, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markErrorInvalidType(shared_ptr<Location> location, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
-    void markErrorNotDefined(shared_ptr<Location> location, string name);
-    void markErrorNotImplemented(shared_ptr<Location> location, string protoName, string memberName);
+    void markErrorNotDefined(shared_ptr<Location> location, const string &name);
+    void markErrorNotImplemented(shared_ptr<Location> location, const string &protoName, const string &memberName);
     void markErrorUnexpectedExpression(shared_ptr<Location> location);
 
 public:
     Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap);
+
     void checkModule();
 };
 

@@ -39,8 +39,8 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
-Analyzer::Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap) :
-defaultModuleName(defaultModuleName), module(module), importableHeaderStatementsMap(importableHeaderStatementsMap) { }
+Analyzer::Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap):
+defaultModuleName(std::move(defaultModuleName)), module(module), importableHeaderStatementsMap(std::move(importableHeaderStatementsMap)) { }
 
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
@@ -1131,7 +1131,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 //
 // Support
 //
-bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) {
+bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) const {
     switch (type->getKind()) {
         // bool
         case ValueTypeKind::BOOL:
@@ -1192,7 +1192,7 @@ bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, 
     return false;
 }
 
-bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) {
+bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) const{
     // Unbox types if required
     if (firstType->isBoxed())
         firstType = firstType->getSubType();
@@ -1285,7 +1285,7 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
     return false;
 }
 
-shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) {
+shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) const {
     switch (operation) {
         case ExpressionUnaryOperation::MINUS:
             switch (type->getKind()) {
@@ -1311,7 +1311,7 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
     return type;
 }
 
- shared_ptr<ValueType> Analyzer::typeForBinaryOperation(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) {
+ shared_ptr<ValueType> Analyzer::typeForBinaryOperation(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) const {
     switch (operation) {
         case ExpressionBinaryOperation::EQUAL:
         case ExpressionBinaryOperation::NOT_EQUAL:
@@ -2080,12 +2080,12 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
     }
 }
 
-void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, string identifier) {
+void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {
     string message = format("\"{}\" is already defined", identifier);
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorInvalidAttribute(shared_ptr<Location> location, string name) {
+void Analyzer::markErrorInvalidAttribute(shared_ptr<Location> location, const string &name) {
     string message = format("Invalid attribute {}", name);
     errors.push_back(Error::error(location, message));
 }
@@ -2095,7 +2095,7 @@ void Analyzer::markErrorInvalidArgumentsCount(shared_ptr<Location> location, int
     errors.push_back(Error::error(location, message));
 }
 
- void Analyzer::markErrorInvalidBuiltIn(shared_ptr<Location> location, string builtInName, shared_ptr<ValueType> type) {
+ void Analyzer::markErrorInvalidBuiltIn(shared_ptr<Location> location, const string &builtInName, shared_ptr<ValueType> type) {
     string message = format("Invalid built-in \"{}\" on type {}", builtInName, Logger::toString(type));
     errors.push_back(Error::error(location, message));
 }
@@ -2105,7 +2105,7 @@ void Analyzer::markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<Va
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorInvalidImport(shared_ptr<Location> location, string moduleName) {
+void Analyzer::markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName) {
     string message = format("Invalid import, module \"{}\" doesn't exist", moduleName);
     errors.push_back(Error::error(location, message));
 }
@@ -2129,12 +2129,12 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorNotDefined(shared_ptr<Location> location, string name) {
+void Analyzer::markErrorNotDefined(shared_ptr<Location> location, const string &name) {
     string message = format("{} is not defined in scope", name);
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorNotImplemented(shared_ptr<Location> location, string protoName, string memberName) {
+void Analyzer::markErrorNotImplemented(shared_ptr<Location> location, const string &protoName, const string &memberName) {
     string message = format("member `{}` of proto `{}` not implemented", memberName, protoName);
     errors.push_back(Error::error(location, message));
 }

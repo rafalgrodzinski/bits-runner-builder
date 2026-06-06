@@ -1,9 +1,6 @@
-Bleh::stuff raw<"">
-;
-
-Bleh::doStuff fun
-;
-
 @export main fun -> u32
+    value u32
+    value.adr
+
     ret 0
 ;

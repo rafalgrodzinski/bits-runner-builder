@@ -7,6 +7,6 @@ Statement(StatementKind::RETURN, location) {
     this->expression = expression ? expression : Expression::NONE;
  }
 
-shared_ptr<Expression> StatementReturn::getExpression() {
+shared_ptr<Expression> StatementReturn::getExpression() const {
     return expression;
 }
