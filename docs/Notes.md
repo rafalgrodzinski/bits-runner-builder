@@ -8,5 +8,6 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
-- [1.0.0-dev-103]()
+- [1.0.0-dev-103](https://github.com/rafalgrodzinski/bits-runner-builder/pull/197)
   - Verify that index access is used on `data`
+  - Moved libraries into `lib/brc/`
