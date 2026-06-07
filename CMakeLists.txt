@@ -131,5 +131,5 @@ install(
 
 install(
 	DIRECTORY lib/
-	DESTINATION lib/brc
+	DESTINATION lib/
 )
