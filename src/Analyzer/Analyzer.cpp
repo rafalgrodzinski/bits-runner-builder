@@ -1141,8 +1141,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     // check if it's blob's `it`
     } else if (type == nullptr && (expressionValue->getIdentifier().compare("it") == 0)) {
         shared_ptr<ValueType> blobPtrType = scope->getVariableType(".pit");
-        if (blobPtrType == nullptr)
+        if (blobPtrType == nullptr) {
+            markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
             return nullptr;
+        }
         type = blobPtrType->getSubType();
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
     // check if it's a function
