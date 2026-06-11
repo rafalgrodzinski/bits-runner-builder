@@ -1,7 +1,10 @@
 #ifndef STATEMENT_TYPE_H
 #define STATEMENT_TYPE_H
 
+#include <format>
+
 #include "Statement.h"
+#include "StatementBlobDeclaration.h"
 
 class StatementFunction;
 class StatementVariable;
@@ -12,6 +15,7 @@ class StatementBlob: public Statement {
 private:
     bool shouldExport;
     string name;
+    string moduleName;
     vector<string> namedTypeKeys;
     vector<shared_ptr<StatementVariable>> variableStatements;
     vector<shared_ptr<StatementFunction>> functionStatements;
@@ -30,11 +34,15 @@ public:
 
     bool getShouldExport() const;
     string getName() const;
+    string getModuleName() const;
+    void setModuleName(string moduleName);
     vector<string> getNamedTypeKeys() const;
     vector<string> getProtoNames() const;
     vector<shared_ptr<StatementVariable>> getVariableStatements() const;
     vector<shared_ptr<StatementFunction>> getFunctionStatements() const;
     vector<pair<string, shared_ptr<ValueType>>> getMembers() const;
+
+    shared_ptr<StatementBlobDeclaration> getDeclaration() const;
 };
 
 #endif

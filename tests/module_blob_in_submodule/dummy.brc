@@ -1,0 +1,7 @@
+@module dummy
+
+@import main
+
+@export doSuff fun: stuff blob<@main::Stuff> -> u32
+    ret stuff.value
+;

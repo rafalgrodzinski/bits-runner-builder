@@ -87,11 +87,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         switch (statement->getKind()) {
             case StatementKind::BLOB: {
                 shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
-                shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = make_shared<StatementBlobDeclaration>(
-                    statementBlob->getShouldExport(),
-                    statementBlob->getName(),
-                    statementBlob->getLocation()
-                );
+                shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = statementBlob->getDeclaration();
 
                 // local header
                 moduleBlobDeclarationStatements.push_back(statementBlobDeclaration);
