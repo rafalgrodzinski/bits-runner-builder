@@ -9,6 +9,7 @@
 #include <optional>
 
 class ValueType;
+class ValueTypeBlob;
 
 using namespace std;
 
@@ -40,8 +41,8 @@ public:
     optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(const string &name) const;
     bool setProtoMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
     
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(shared_ptr<ValueType> blobValueType) const;
-    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType) const;
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(shared_ptr<ValueTypeBlob> valueType) const;
+    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(shared_ptr<ValueTypeBlob> valueType) const;
     bool isBlobDeclared(const string &name) const;
     bool setBlobMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
 

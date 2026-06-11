@@ -5,6 +5,7 @@
 #include "Module/Module.h"
 #include "WrappedValue.h"
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
 
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"
@@ -935,7 +936,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             case ExpressionKind::COMPOSITE_LITERAL: {
                 vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
                 shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpressions.at(0));
-                string sourceBlobName = *(sourceWrappedValue->getValueType()->getSubType()->getBlobName());
+                shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(sourceWrappedValue->getValueType()->getSubType());
+                //string sourceBlobName = *(sourceWrappedValue->getValueType()->getSubType()->getBlobName());
+                string sourceBlobName = valueTypeBlob->getName();
                 llvm::StructType *sourceStructType = scope->getStructType(sourceBlobName);
                 llvm::Value *sourcePointerValue = sourceWrappedValue->getValue();
                 if (sourcePointerValue == nullptr)
@@ -1386,7 +1389,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             parentExpression = chainExpression;
         // Blob expression?
         } else if (parentExpression->getValueType()->isBlob()) {
-            string parentBlobName = *parentExpression->getValueType()->getBlobName();
+            shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
+            //string parentBlobName = *parentExpression->getValueType()->getBlobName();
+            string parentBlobName = valueTypeBlob->getName();
 
             // call expression?
             if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {

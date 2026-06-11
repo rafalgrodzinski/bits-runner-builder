@@ -5,6 +5,7 @@
 #include "AnalyzerScope.h"
 #include "Module/Module.h"
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
@@ -268,7 +269,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     scope->popLevel();
 
     // and the register
-    string name = importModulePrefix + statementBlob->getName();
+    //string name = importModulePrefix + statementBlob->getName();
+    string name = statementBlob->getName();
     if (!scope->setBlobMembers(name, members))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
     scope->setBlobNamedTypeKeys(name, statementBlob->getNamedTypeKeys());
@@ -276,7 +278,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    string name = importModulePrefix + statementBlobDeclaration->getName();
+    //string name = importModulePrefix + statementBlobDeclaration->getName();
+    string name = statementBlobDeclaration->getName();
     scope->setBlobMembers(name, {});
 }
 
@@ -1028,9 +1031,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             return expressionValue->getValueType();
         // check blob member
         } else if (isParentBlob) {
-            shared_ptr<ValueType> blobValueType = parentExpression->getValueType();
-            string blobName = *blobValueType->getBlobName();
-            optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(blobValueType);
+            shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
+            string blobName = valueTypeBlob->getName();
+            optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(valueTypeBlob);
             if (blobMembers) {
                 string nameVariable = expressionValue->getIdentifier();
                 string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
@@ -1385,7 +1388,8 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     // composite to blob
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isBlob()) {
         sourceExpression->valueType = targetType;
-        vector<shared_ptr<ValueType>> blobMemberTypes = *scope->getNonFunctionBlobMemberTypes(targetType);
+        shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(targetType);
+        vector<shared_ptr<ValueType>> blobMemberTypes = *scope->getNonFunctionBlobMemberTypes(valueTypeBlob);
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
         for (int i=0; i<blobMemberTypes.size(); i++) {
             shared_ptr<ValueType> memberType = blobMemberTypes.at(i);
@@ -1959,7 +1963,8 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                 // to blob
                 case ValueTypeKind::BLOB: {
                     // get target non-function types
-                    optional<vector<shared_ptr<ValueType>>> targetMemberTypes = scope->getNonFunctionBlobMemberTypes(targetType);
+                    shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(targetType);
+                    optional<vector<shared_ptr<ValueType>>> targetMemberTypes = scope->getNonFunctionBlobMemberTypes(valueTypeBlob);
                     if (!targetMemberTypes)
                         return false;
 

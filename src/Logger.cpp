@@ -9,6 +9,7 @@
 #include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -1342,8 +1343,9 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             break;
         }
         case ValueTypeKind::BLOB: {
+            shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(valueType);
             text = "";
-            text += format("BLOB<`{}`", *valueType->getBlobName());
+            text += format("BLOB<`{}`", valueTypeBlob->getName());
             if (valueType->getNamedTypeValues()) {
                 for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
                     text += ", ";

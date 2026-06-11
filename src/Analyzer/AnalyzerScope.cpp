@@ -1,6 +1,7 @@
 #include "AnalyzerScope.h"
 
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
 
 AnalyzerScope::AnalyzerScope() {
     pushLevel();
@@ -43,22 +44,23 @@ bool AnalyzerScope::setProtoMembers(const string &name, optional<vector<pair<str
     return true;
 }
 
-optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueType> blobValueType) const {
-    optional<string> blobName = blobValueType->getBlobName();
+optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueTypeBlob> valueType) const {
+    /*optional<string> blobName = blobValueType->getBlobName();
     if (!blobName)
-        return {};
+        return {};*/
+    string blobName = valueType->getName();
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().blobMembersMap.find(*blobName);
+        auto it = scopeLevels.top().blobMembersMap.find(blobName);
         // check if found members
         if (it != scopeLevels.top().blobMembersMap.end()) {
-            vector<pair<string, shared_ptr<ValueType>>> blobMembers = *scopeLevels.top().blobMembersMap[*blobName];
+            vector<pair<string, shared_ptr<ValueType>>> blobMembers = *scopeLevels.top().blobMembersMap[blobName];
             // update named value types
             for (pair<string, shared_ptr<ValueType>> &blobMember : blobMembers) {
                 if (blobMember.second->isBoxed()) {
-                    blobMember.second->namedTypeKeys = blobValueType->getNamedTypeKeys();
-                    blobMember.second->namedTypeValues = blobValueType->getNamedTypeValues();
+                    blobMember.second->namedTypeKeys = valueType->getNamedTypeKeys();
+                    blobMember.second->namedTypeValues = valueType->getNamedTypeValues();
                 }
             }
             return blobMembers;
@@ -69,8 +71,8 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMemb
     return {};
 }
 
-optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType) const {
-    optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = getBlobMembers(blobValueType);
+optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueTypeBlob> valueType) const {
+    optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = getBlobMembers(valueType);
         if (!blobMembers)
             return { };
 

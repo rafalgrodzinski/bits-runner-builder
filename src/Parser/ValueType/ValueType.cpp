@@ -84,13 +84,13 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
+/*shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::BLOB;
     valueType->blobName = std::move(blobName);
     valueType->namedTypeValues = std::move(namedTypeValues);
     return valueType;
-}
+}*/
 
 shared_ptr<ValueType> ValueType::proto(string protoName) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
@@ -191,9 +191,9 @@ shared_ptr<ValueType> ValueType::getReturnType() const {
     return returnType;
 }
 
-optional<string> ValueType::getBlobName() const {
+/*optional<string> ValueType::getBlobName() const {
     return blobName;
-}
+}*/
 
 optional<string> ValueType::getProtoName() const {
     return protoName;
@@ -250,11 +250,11 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
 
             return thisSize == thatSize;
         }
-        case ValueTypeKind::BLOB: {
+        /*case ValueTypeKind::BLOB: {
             if (!other->isBlob())
                 return false;
             return (*blobName).compare(*other->getBlobName()) == 0;
-        }
+        }*/
         case ValueTypeKind::BOXED: {
             return other->isBoxed() && subType->isEqual(other->getSubType());
         }

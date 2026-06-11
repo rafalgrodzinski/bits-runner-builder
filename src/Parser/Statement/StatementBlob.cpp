@@ -16,8 +16,8 @@ StatementBlob::StatementBlob(
 Statement(StatementKind::BLOB, location), shouldExport(shouldExport), namedTypeKeys(std::move(namedTypeKeys)), protoNames(std::move(protoNames)), variableStatements(std::move(variableStatements)), functionStatements(std::move(functionStatements)) {
     size_t pos = name.find('.');
     if (pos != string::npos) {
-        this->name = name.substr(0, pos);
-        this->moduleName = name.substr(pos, name.size());
+        this->moduleName = name.substr(0, pos);
+        this->name = name.substr(pos + 1, name.size());
     } else {
         this->name = std::move(name);
     }

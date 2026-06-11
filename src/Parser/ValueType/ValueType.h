@@ -54,7 +54,7 @@ private:
     shared_ptr<Expression> countExpression = nullptr;
     optional<vector<shared_ptr<ValueType>>> argumentTypes = {};
     shared_ptr<ValueType> returnType = nullptr;
-    optional<string> blobName = {};
+    //optional<string> blobName = {};
     optional<string> protoName = {};
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes = {};
     optional<string> namedTypeKey = {};
@@ -82,7 +82,7 @@ public:
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
+    //static shared_ptr<ValueType> blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
     static shared_ptr<ValueType> proto(string protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
@@ -105,7 +105,7 @@ public:
     optional<vector<shared_ptr<ValueType>>> getArgumentTypes() const;
     shared_ptr<ValueType> getReturnType() const;
     // blob
-    optional<string> getBlobName() const;
+    //optional<string> getBlobName() const;
     // proto
     optional<string> getProtoName() const;
     // composite
