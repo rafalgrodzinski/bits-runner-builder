@@ -1,6 +1,6 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 StatementMetaExternFunction::StatementMetaExternFunction(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<Location> location):
 Statement(StatementKind::META_EXTERN_FUNCTION, location), name(std::move(name)), arguments(std::move(arguments)), returnValueType(returnValueType) { }

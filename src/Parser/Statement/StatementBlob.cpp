@@ -2,7 +2,7 @@
 
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 StatementBlob::StatementBlob(
     bool shouldExport,

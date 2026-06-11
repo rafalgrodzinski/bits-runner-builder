@@ -4,7 +4,7 @@
 #include "Logger.h"
 #include "AnalyzerScope.h"
 #include "Module/Module.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"

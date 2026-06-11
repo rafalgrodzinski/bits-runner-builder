@@ -92,6 +92,7 @@ public:
 
     ValueType();
     ValueType(ValueTypeKind kind);
+    virtual ~ValueType() { }
 
     ValueTypeKind getKind() const;
     bool getIsVolatile() const;
@@ -114,7 +115,7 @@ public:
     optional<vector<string>> getNamedTypeKeys() const;
     optional<vector<shared_ptr<ValueType>>> getNamedTypeValues() const;
 
-    bool isEqual(shared_ptr<ValueType> other) const;
+    virtual bool isEqual(shared_ptr<ValueType> other) const;
 
     bool isNumeric() const;
     bool isInteger() const;

@@ -5,7 +5,8 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
 
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"
@@ -2252,9 +2253,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
     if (isData)
         return ValueType::data(subType, countExpression);
     else if (isBlob && argTypes.empty())
-        return ValueType::blob(blobName, {});
+        return make_shared<ValueTypeBlob>(blobName, optional<vector<shared_ptr<ValueType>>>({}));
     else if (isBlob)
-        return ValueType::blob(blobName, argTypes);
+        return make_shared<ValueTypeBlob>(blobName, argTypes);
     else if (isProto)
         return ValueType::proto(protoName);
     else if (isBoxed)

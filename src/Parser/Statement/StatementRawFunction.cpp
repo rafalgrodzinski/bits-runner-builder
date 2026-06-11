@@ -1,6 +1,6 @@
 #include "StatementRawFunction.h"
 
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 StatementRawFunction::StatementRawFunction(
     bool shouldExport,

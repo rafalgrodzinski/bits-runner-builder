@@ -1,6 +1,6 @@
 #include "AnalyzerScope.h"
 
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 AnalyzerScope::AnalyzerScope() {
     pushLevel();

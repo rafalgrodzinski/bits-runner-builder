@@ -5,6 +5,6 @@
 ;
 
 @export main fun -> u32
-    stuff blob<Stuff> <- {7}
+    stuff blob<Stuff> //<- {7}
     ret @dummy::doSuff(stuff)
 ;

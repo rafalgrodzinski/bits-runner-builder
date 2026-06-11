@@ -1,6 +1,6 @@
 #include "Error.h"
 
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 #include "Lexer/Location.h"
 
 shared_ptr<Error> Error::error(shared_ptr<Location> location, string message) {

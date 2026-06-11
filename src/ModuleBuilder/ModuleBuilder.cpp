@@ -4,7 +4,7 @@
 #include "Logger.h"
 #include "Module/Module.h"
 #include "WrappedValue.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"

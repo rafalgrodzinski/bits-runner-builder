@@ -3,7 +3,7 @@
 #include "Parser/Expression/Expression.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementReturn.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 StatementFunction::StatementFunction(
     bool shouldExport,

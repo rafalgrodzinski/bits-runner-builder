@@ -13,13 +13,14 @@
 #include "Parser/Statement/StatementRawFunction.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 ModulesStore::ModulesStore(string defaultModuleName):
 defaultModuleName(std::move(defaultModuleName)) { }
 
 /// Private ///
 
+/*
 shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<ValueType> valueType, const string &moduleName) {
     switch (valueType->getKind()) {
         case ValueTypeKind::BLOB: {
@@ -56,7 +57,7 @@ shared_ptr<ValueType> ModulesStore::typeForExportedStatementFromType(shared_ptr<
             return valueType;
         }
     }
-}
+}*/
 
 /// Public ///
 
@@ -87,6 +88,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         switch (statement->getKind()) {
             case StatementKind::BLOB: {
                 shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
+                statementBlob->setModuleName(moduleName);
                 shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = statementBlob->getDeclaration();
 
                 // local header
@@ -113,7 +115,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         shared_ptr<StatementVariable> exportedVariableStatement = make_shared<StatementVariable>(
                             statementVariable->getShouldExport(),
                             statementVariable->getIdentifier(),
-                            typeForExportedStatementFromType(statementVariable->getValueType(), moduleName),
+                            //typeForExportedStatementFromType(statementVariable->getValueType(), moduleName),
+                            statementVariable->getValueType(),
                             statementVariable->getExpression(),
                             statementVariable->getLocation()
                         );
@@ -152,10 +155,10 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         // update argument types for exported statement
                         vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
                         for (pair<string, shared_ptr<ValueType>> argument : statementBlobFunctionDeclaration->getArguments())
-                            exportedArguments.push_back(pair(argument.first, typeForExportedStatementFromType(argument.second, moduleName)));
+                            exportedArguments.push_back(pair(argument.first, argument.second));// typeForExportedStatementFromType(argument.second, moduleName)));
 
                         // updated return type for exported statement
-                        shared_ptr<ValueType> exportedReturnValueType = typeForExportedStatementFromType(statementBlobFunctionDeclaration->getReturnValueType(), moduleName);
+                        shared_ptr<ValueType> exportedReturnValueType = statementBlobFunctionDeclaration->getReturnValueType();// typeForExportedStatementFromType(statementBlobFunctionDeclaration->getReturnValueType(), moduleName);
 
                         shared_ptr<StatementFunctionDeclaration> exportedStatementBlobFunctionDeclaration = make_shared<StatementFunctionDeclaration>(  
                             statementBlobFunctionDeclaration->getShouldExport(),
@@ -190,10 +193,10 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     // update argument types for exported statement
                     vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
                     for (pair<string, shared_ptr<ValueType>> argument : statementFunctionDeclaration->getArguments())
-                        exportedArguments.push_back(pair(argument.first, typeForExportedStatementFromType(argument.second, moduleName)));
+                        exportedArguments.push_back(pair(argument.first, argument.second));// typeForExportedStatementFromType(argument.second, moduleName)));
 
                     // updated return type for exported statement
-                    shared_ptr<ValueType> exportedReturnValueType = typeForExportedStatementFromType(statementFunctionDeclaration->getReturnValueType(), moduleName);
+                    shared_ptr<ValueType> exportedReturnValueType = statementFunctionDeclaration->getReturnValueType();// typeForExportedStatementFromType(statementFunctionDeclaration->getReturnValueType(), moduleName);
 
                     shared_ptr<StatementFunctionDeclaration> exportedStatementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
                         statementFunctionDeclaration->getShouldExport(),
@@ -242,7 +245,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         shared_ptr<StatementVariable> exportedVariableStatement = make_shared<StatementVariable>(
                             statementVariable->getShouldExport(),
                             statementVariable->getIdentifier(),
-                            typeForExportedStatementFromType(statementVariable->getValueType(), moduleName),
+                            //typeForExportedStatementFromType(statementVariable->getValueType(), moduleName),
+                            statementVariable->getValueType(),
                             statementVariable->getExpression(),
                             statementVariable->getLocation()
                         );
@@ -255,7 +259,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         // convert earch argument into na exportable version
                         vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
                         for (pair<string, shared_ptr<ValueType>> &argument : statementFunctionDeclaration->getArguments()) {
-                            shared_ptr<ValueType> exportedType = typeForExportedStatementFromType(argument.second, moduleName);
+                            shared_ptr<ValueType> exportedType = argument.second;// typeForExportedStatementFromType(argument.second, moduleName);
                             exportedArguments.push_back(pair(argument.first, exportedType));
                         }
 
@@ -263,7 +267,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                             statementFunctionDeclaration->getShouldExport(),
                             statementFunctionDeclaration->getName(),
                             exportedArguments,
-                            typeForExportedStatementFromType(statementFunctionDeclaration->getReturnValueType(), moduleName),
+                            //typeForExportedStatementFromType(statementFunctionDeclaration->getReturnValueType(), moduleName),
+                            statementFunctionDeclaration->getReturnValueType(),
                             statementFunctionDeclaration->getLocation()
                         );
                         exportedFunctionDeclarationStatements.push_back(exportedFunctionDeclarationStatement);
@@ -308,7 +313,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 // exported header
                 if (statementVariable->getShouldExport()) {
                     // updated variable type for exported statement
-                    shared_ptr<ValueType> valueType = typeForExportedStatementFromType(statementVariableDeclaration->getValueType(), moduleName);
+                    shared_ptr<ValueType> valueType = statementVariableDeclaration->getValueType();// typeForExportedStatementFromType(statementVariableDeclaration->getValueType(), moduleName);
 
                     // new declaration with updated type
                     shared_ptr<StatementVariableDeclaration> exportedStatementVariableDeclaration = make_shared<StatementVariableDeclaration>(

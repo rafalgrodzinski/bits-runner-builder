@@ -1,6 +1,13 @@
-@export main fun -> u32
-    value u32
-    value.adr
+//@module Test
 
+@import Dummy
+
+@export Animal blob
+    value u32
+;
+
+main fun -> u32
+    cat blob<Animal> <- {7}
+    //ret @Dummy::doStuff(cat)
     ret 0
 ;
