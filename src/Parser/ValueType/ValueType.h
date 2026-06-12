@@ -54,7 +54,6 @@ private:
     shared_ptr<Expression> countExpression = nullptr;
     optional<vector<shared_ptr<ValueType>>> argumentTypes = {};
     shared_ptr<ValueType> returnType = nullptr;
-    //optional<string> blobName = {};
     optional<string> protoName = {};
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes = {};
     optional<string> namedTypeKey = {};
@@ -82,7 +81,6 @@ public:
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    //static shared_ptr<ValueType> blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
     static shared_ptr<ValueType> proto(string protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
@@ -95,6 +93,8 @@ public:
     virtual ~ValueType() { }
 
     ValueTypeKind getKind() const;
+    virtual string getName() const { return ""; };
+    virtual string getGlobalName() const { return ""; };
     bool getIsVolatile() const;
     // data, pointer, boxed
     shared_ptr<ValueType> getSubType() const;

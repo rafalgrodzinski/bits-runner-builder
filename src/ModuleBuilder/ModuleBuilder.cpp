@@ -936,9 +936,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             case ExpressionKind::COMPOSITE_LITERAL: {
                 vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
                 shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpressions.at(0));
-                shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(sourceWrappedValue->getValueType()->getSubType());
-                //string sourceBlobName = *(sourceWrappedValue->getValueType()->getSubType()->getBlobName());
-                string sourceBlobName = valueTypeBlob->getName();
+                string sourceBlobName = sourceWrappedValue->getValueType()->getSubType()->getGlobalName();
                 llvm::StructType *sourceStructType = scope->getStructType(sourceBlobName);
                 llvm::Value *sourcePointerValue = sourceWrappedValue->getValue();
                 if (sourcePointerValue == nullptr)
@@ -1389,9 +1387,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             parentExpression = chainExpression;
         // Blob expression?
         } else if (parentExpression->getValueType()->isBlob()) {
-            shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
-            //string parentBlobName = *parentExpression->getValueType()->getBlobName();
-            string parentBlobName = valueTypeBlob->getName();
+            string parentBlobName = parentExpression->getValueType()->getGlobalName();
 
             // call expression?
             if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
@@ -2372,9 +2368,9 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             return llvm::ArrayType::get(subType, elementsCount);
         }
         case ValueTypeKind::BLOB: {
-            llvm::StructType *structType = scope->getStructType(*(valueType->getBlobName()));
+            llvm::StructType *structType = scope->getStructType(valueType->getGlobalName());
             if (structType == nullptr)
-                markErrorNotDefined(nullptr, format("blob \"{}\"", *(valueType->getBlobName())));
+                markErrorNotDefined(nullptr, format("blob \"{}\"", valueType->getGlobalName()));
             return structType;
         }
         case ValueTypeKind::PROTO: {

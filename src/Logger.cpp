@@ -1343,9 +1343,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             break;
         }
         case ValueTypeKind::BLOB: {
-            shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(valueType);
             text = "";
-            text += format("BLOB<`{}`", valueTypeBlob->getName());
+            text += format("BLOB<`{}`", valueType->getGlobalName());
             if (valueType->getNamedTypeValues()) {
                 for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
                     text += ", ";

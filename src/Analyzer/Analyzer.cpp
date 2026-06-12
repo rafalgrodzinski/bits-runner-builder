@@ -679,7 +679,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         if (isParentPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
             valueType = parentExpression->getValueType()->getSubType();
         } else if (isParentBlob) {
-            string functionName = format("{}.{}", *(parentExpression->getValueType()->getBlobName()), expressionCall->getName());
+            string functionName = format("{}.{}", parentExpression->getValueType()->getGlobalName(), expressionCall->getName());
             valueType = scope->getFunctionType(functionName);
             if (valueType == nullptr) {
                 markErrorNotDefined(expressionCall->getLocation(), functionName);
@@ -1032,7 +1032,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         // check blob member
         } else if (isParentBlob) {
             shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
-            string blobName = valueTypeBlob->getName();
+            string blobName = valueTypeBlob->getGlobalName();
             optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(valueTypeBlob);
             if (blobMembers) {
                 string nameVariable = expressionValue->getIdentifier();
@@ -1935,8 +1935,8 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             if (!targetType->isBlob())
                 return false;
 
-            string sourceBlobName = *(sourceType->getBlobName());
-            string targetBlobName = *(targetType->getBlobName());
+            string sourceBlobName = sourceType->getGlobalName();
+            string targetBlobName = targetType->getGlobalName();
 
             return sourceBlobName.compare(targetBlobName) == 0;
         }
@@ -1995,7 +1995,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     if (subType == nullptr || !subType->isBlob())
                         return false;
 
-                    string blobName = *(subType->getBlobName());
+                    string blobName = subType->getGlobalName();
                     optional<vector<string>> protoNames = scope->getBlobProtoNames(blobName);
                     if (!protoNames)
                         return false;
@@ -2061,7 +2061,7 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             } else
             */
             if (!valueType->namedTypeKeys)
-                valueType->namedTypeKeys = scope->getBlobNamedTypeKeys(*valueType->getBlobName());
+                valueType->namedTypeKeys = scope->getBlobNamedTypeKeys(valueType->getGlobalName());
             return valueType;
         }
         case ValueTypeKind::BOXED: {

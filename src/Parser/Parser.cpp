@@ -853,7 +853,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                         // prefix function with name of the blob
                         statementFunction->name = format("{}.{}", name, statementFunction->getName());
                         // Insert an implicit "it" argument for the blob function
-                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::blob(name, {}), false));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(make_shared<ValueTypeBlob>(name), false));
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
                         break;
@@ -2253,7 +2253,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     if (isData)
         return ValueType::data(subType, countExpression);
     else if (isBlob && argTypes.empty())
-        return make_shared<ValueTypeBlob>(blobName, optional<vector<shared_ptr<ValueType>>>({}));
+        return make_shared<ValueTypeBlob>(blobName);
     else if (isBlob)
         return make_shared<ValueTypeBlob>(blobName, argTypes);
     else if (isProto)

@@ -17,13 +17,14 @@ private:
     optional<vector<shared_ptr<ValueType>>> namedTypeValues;
 
 public:
-    ValueTypeBlob(string name, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
+    ValueTypeBlob(string name, optional<vector<shared_ptr<ValueType>>> namedTypeValues = {});
 
-    string getName() const;
+    string getName() const override;
+    string getGlobalName() const override;
     string getModuleName() const;
     void setModuleName(string moduleName);
 
-    bool isEqual(shared_ptr<ValueType> other) const;
+    bool isEqual(shared_ptr<ValueType> other) const override;
 };
 
 #endif

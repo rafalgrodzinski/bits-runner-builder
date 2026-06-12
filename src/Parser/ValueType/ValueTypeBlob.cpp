@@ -12,6 +12,10 @@ ValueType(ValueTypeKind::BLOB), name(name), namedTypeValues(namedTypeValues) {
 }
 
 string ValueTypeBlob::getName() const {
+    return name;
+}
+
+string ValueTypeBlob::getGlobalName() const {
     if (!moduleName.empty())
         return format("{}.{}", moduleName, name);
     return name;
@@ -28,8 +32,7 @@ void ValueTypeBlob::setModuleName(string moduleName) {
 bool ValueTypeBlob::isEqual(shared_ptr<ValueType> other) const {
     switch (other->getKind()) {
         case ValueTypeKind::BLOB: {
-            shared_ptr<ValueTypeBlob> otherBlob = dynamic_pointer_cast<ValueTypeBlob>(other);
-            return getName() == otherBlob->getName();
+            return getGlobalName() == other->getGlobalName();
         }
         case ValueTypeKind::BOXED: {
             shared_ptr<ValueType> otherBoxed = dynamic_pointer_cast<ValueType>(other);
