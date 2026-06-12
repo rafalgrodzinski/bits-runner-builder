@@ -709,13 +709,8 @@ void ModuleBuilder::buildBlobDeclaration(const string &moduleName, const string 
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
         symbolName = format("{}.{}", moduleName, name);
 
-    // internal name
-    string internalName = name;
-    if (moduleName.compare(module->getName()) != 0)
-        internalName = format("{}.{}", moduleName, name);
-
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
-    scope->setStruct(internalName, structType, {});
+    scope->setStruct(name, structType, {});
 }
 
 void ModuleBuilder::buildBlobDefinition(const string &moduleName, const string &name, const vector<pair<string, shared_ptr<ValueType>>> &members) {
@@ -724,12 +719,7 @@ void ModuleBuilder::buildBlobDefinition(const string &moduleName, const string &
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
         symbolName = format("{}.{}", moduleName, name);
 
-    // internal name
-    string internalName = name;
-    if (moduleName.compare(module->getName()) != 0)
-        internalName = format("{}.{}", moduleName, name);
-
-    llvm::StructType *structType = scope->getStructType(internalName);
+    llvm::StructType *structType = scope->getStructType(name);
     if (structType == nullptr) {
         markErrorNotDeclared(nullptr, format("blob \"{}\"", symbolName));
         return;
@@ -746,7 +736,7 @@ void ModuleBuilder::buildBlobDefinition(const string &moduleName, const string &
         types.push_back(type);
     }
     structType->setBody(types, false);
-    scope->setStruct(internalName, structType, memberNames);
+    scope->setStruct(name, structType, memberNames);
 }
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {

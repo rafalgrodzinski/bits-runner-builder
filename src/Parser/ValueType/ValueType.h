@@ -61,6 +61,10 @@ private:
     optional<vector<shared_ptr<ValueType>>> namedTypeValues = {};
     bool isVolatile = false;
 
+protected:
+    string name;
+    string moduleName;
+
 public:
     static shared_ptr<ValueType> NONE;
     static shared_ptr<ValueType> BOOL;
@@ -93,8 +97,12 @@ public:
     virtual ~ValueType() { }
 
     ValueTypeKind getKind() const;
-    virtual string getName() const { return ""; };
-    virtual string getGlobalName() const { return ""; };
+
+    string getName() const;
+    string getModuleName() const;
+    void setModuleName(string moduleName);
+    string getGlobalName() const;
+
     bool getIsVolatile() const;
     // data, pointer, boxed
     shared_ptr<ValueType> getSubType() const;

@@ -45,10 +45,7 @@ bool AnalyzerScope::setProtoMembers(const string &name, optional<vector<pair<str
 }
 
 optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueTypeBlob> valueType) const {
-    /*optional<string> blobName = blobValueType->getBlobName();
-    if (!blobName)
-        return {};*/
-    string blobName = valueType->getName();
+    string blobName = valueType->getGlobalName();
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {

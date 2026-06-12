@@ -149,6 +149,25 @@ ValueTypeKind ValueType::getKind() const {
     return kind;
 }
 
+string ValueType::getName() const {
+    return name;
+}
+
+string ValueType::getModuleName() const {
+    return moduleName;
+}
+
+void ValueType::setModuleName(string moduleName) {
+    if (this->moduleName.empty())
+        this->moduleName = std::move(moduleName);
+}
+
+string ValueType::getGlobalName() const {
+    if (!moduleName.empty())
+        return format("{}.{}", moduleName, name);
+    return name;
+}
+
 bool ValueType::getIsVolatile() const {
     return isVolatile;
 }

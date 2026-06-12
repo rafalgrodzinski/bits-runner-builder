@@ -8,6 +8,7 @@
 #include <vector>
 
 class Module;
+class Expression;
 class Statement;
 class ValueType;
 
@@ -39,7 +40,8 @@ private:
     map<string, vector<shared_ptr<Statement>>> exportedFunctionDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
 
-    //shared_ptr<ValueType> typeForExportedStatementFromType(shared_ptr<ValueType> valueType, const string &moduleName);
+    void setModuleName(shared_ptr<Statement> statement, string moduleName);
+    void setModuleName(shared_ptr<Expression> expression, string moduleName);
 
 public:
     ModulesStore(string defaultModuleName);
