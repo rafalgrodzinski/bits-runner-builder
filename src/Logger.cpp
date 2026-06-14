@@ -9,7 +9,6 @@
 #include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
 #include "Parser/ValueType/ValueType.h"
-#include "Parser/ValueType/ValueTypeBlob.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"

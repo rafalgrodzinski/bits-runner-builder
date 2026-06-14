@@ -1,7 +1,6 @@
 #include "AnalyzerScope.h"
 
 #include "Parser/ValueType/ValueType.h"
-#include "Parser/ValueType/ValueTypeBlob.h"
 
 AnalyzerScope::AnalyzerScope() {
     pushLevel();
@@ -44,7 +43,7 @@ bool AnalyzerScope::setProtoMembers(const string &name, optional<vector<pair<str
     return true;
 }
 
-optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueTypeBlob> valueType) const {
+optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueType> valueType) const {
     string blobName = valueType->getGlobalName();
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
@@ -68,7 +67,7 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMemb
     return {};
 }
 
-optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueTypeBlob> valueType) const {
+optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueType> valueType) const {
     optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = getBlobMembers(valueType);
         if (!blobMembers)
             return { };

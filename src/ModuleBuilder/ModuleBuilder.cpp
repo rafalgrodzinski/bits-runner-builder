@@ -5,7 +5,6 @@
 #include "Module/Module.h"
 #include "WrappedValue.h"
 #include "Parser/ValueType/ValueType.h"
-#include "Parser/ValueType/ValueTypeBlob.h"
 
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"
