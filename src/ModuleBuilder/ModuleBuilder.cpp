@@ -934,7 +934,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 if (sourcePointerValue == nullptr)
                     return;
 
-                string targetProtoName = *(targetWrappedValue->getValueType()->getProtoName());
+                string targetProtoName = targetWrappedValue->getValueType()->getGlobalName();
                 auto targetProtoMembers = *scope->getProtoStructMembers(targetProtoName);
 
                 int targetMembersCount = targetWrappedValue->getStructType()->getStructNumElements();
@@ -1440,7 +1440,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             }
         // Proto expression?
         } else if (parentExpression->getValueType()->isProto()) {
-            string parentProtoName = *parentExpression->getValueType()->getProtoName();
+            string parentProtoName = parentExpression->getValueType()->getGlobalName();
 
             // call expression?
             if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
@@ -1818,7 +1818,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         builder->CreateStore(pointerValue, alloca)->setVolatile(parentWrappedValue->getValueType()->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueType::A);
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {
-        string protoName = *(parentWrappedValue->getValueType()->getProtoName());
+        string protoName = parentWrappedValue->getValueType()->getGlobalName();
         llvm::StructType *structType = scope->getProtoStructType(protoName);
         // pointer to implementing blob is at index 0
         llvm::Value *index[] = {
@@ -2366,9 +2366,9 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             return structType;
         }
         case ValueTypeKind::PROTO: {
-            llvm::StructType *structType = scope->getProtoStructType(*(valueType->getProtoName()));
+            llvm::StructType *structType = scope->getProtoStructType(valueType->getGlobalName());
             if (structType == nullptr)
-                markErrorNotDefined(nullptr, format("proto \"{}\"", *(valueType->getProtoName())));
+                markErrorNotDefined(nullptr, format("proto \"{}\"", valueType->getGlobalName()));
             return structType;
         }
         case ValueTypeKind::FUN: {

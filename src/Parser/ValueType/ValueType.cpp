@@ -84,18 +84,14 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::BLOB;
-    valueType->blobName = std::move(blobName);
+shared_ptr<ValueType> ValueType::blob(const string &blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::BLOB, blobName);
     valueType->namedTypeValues = std::move(namedTypeValues);
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::proto(string protoName) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::PROTO;
-    valueType->protoName = std::move(protoName);
+shared_ptr<ValueType> ValueType::proto(const string &protoName) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::PROTO, protoName);
     return valueType;
 }
 
@@ -142,8 +138,16 @@ shared_ptr<ValueType> ValueType::namedType(string namedTypeKey) {
 
 ValueType::ValueType() { }
 
-ValueType::ValueType(ValueTypeKind kind):
-kind(kind) { }
+ValueType::ValueType(ValueTypeKind kind, const string &name):
+kind(kind) {
+    size_t pos = name.find('.');
+    if (pos != string::npos) {
+        this->moduleName = name.substr(0, pos);
+        this->name = name.substr(pos + 1, name.length());
+    } else {
+        this->name = name;
+    }
+}
 
 ValueTypeKind ValueType::getKind() const {
     return kind;
@@ -215,14 +219,6 @@ shared_ptr<ValueType> ValueType::getReturnType() const {
     return returnType;
 }
 
-optional<string> ValueType::getBlobName() const {
-    return blobName;
-}
-
-optional<string> ValueType::getProtoName() const {
-    return protoName;
-}
-
 optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() const {
     return compositeElementTypes;
 }
@@ -277,7 +273,7 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
         case ValueTypeKind::BLOB: {
             if (!other->isBlob())
                 return false;
-            return (*blobName).compare(*other->getBlobName()) == 0;
+            return getGlobalName() == other->getGlobalName();
         }
         case ValueTypeKind::BOXED: {
             return other->isBoxed() && subType->isEqual(other->getSubType());

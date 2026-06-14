@@ -688,7 +688,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             valueType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
             extraArguments = 1; // for the implicit "it"
         } else if (isParentProto) {
-            string protoName = *(parentExpression->getValueType()->getProtoName());
+            string protoName = parentExpression->getValueType()->getGlobalName();
             auto members = *(scope->getProtoMembers(protoName));
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionCall->getName().compare(member.first) == 0) {
@@ -1075,7 +1075,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             return nullptr;
         // check proto member
         } else if (isParentProto) {
-            string protoName = *(parentExpression->getValueType()->getProtoName());
+            string protoName = parentExpression->getValueType()->getGlobalName();
             auto members = *(scope->getProtoMembers(protoName));
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionValue->getIdentifier().compare(member.first) == 0) {
@@ -1982,7 +1982,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // to proto
                 case ValueTypeKind::PROTO: {
-                    string targetProtoName = *(targetType->getProtoName());
+                    string targetProtoName = targetType->getGlobalName();
 
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
                     if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPointer())

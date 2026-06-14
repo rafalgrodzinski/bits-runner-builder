@@ -50,21 +50,17 @@ friend class AnalyzerScope;
 
 private:
     ValueTypeKind kind;
+    string name;
+    string moduleName;
     shared_ptr<ValueType> subType;
     shared_ptr<Expression> countExpression = nullptr;
     optional<vector<shared_ptr<ValueType>>> argumentTypes = {};
     shared_ptr<ValueType> returnType = nullptr;
-    optional<string> blobName = {};
-    optional<string> protoName = {};
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes = {};
     optional<string> namedTypeKey = {};
     optional<vector<string>> namedTypeKeys = {};
     optional<vector<shared_ptr<ValueType>>> namedTypeValues = {};
     bool isVolatile = false;
-
-protected:
-    string name;
-    string moduleName;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -86,8 +82,8 @@ public:
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
-    static shared_ptr<ValueType> proto(string protoName);
+    static shared_ptr<ValueType> blob(const string &blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
+    static shared_ptr<ValueType> proto(const string &protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType, bool isVolatile);
@@ -95,8 +91,7 @@ public:
     static shared_ptr<ValueType> namedType(string namedTypeKey);
 
     ValueType();
-    ValueType(ValueTypeKind kind);
-    virtual ~ValueType() { }
+    ValueType(ValueTypeKind kind, const string &name = "");
 
     ValueTypeKind getKind() const;
 
@@ -114,10 +109,6 @@ public:
     // function
     optional<vector<shared_ptr<ValueType>>> getArgumentTypes() const;
     shared_ptr<ValueType> getReturnType() const;
-    // blob
-    optional<string> getBlobName() const;
-    // proto
-    optional<string> getProtoName() const;
     // composite
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes() const;
     // boxed

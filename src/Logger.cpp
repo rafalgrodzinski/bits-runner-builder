@@ -1354,7 +1354,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             break;
         }
         case ValueTypeKind::PROTO:
-            text = format("PROTO<`{}`>", *(valueType->getProtoName()));
+            text = format("PROTO<`{}`>", valueType->getGlobalName());
             break;
         case ValueTypeKind::BOXED:
             text = format("BOXED<{}>", toString(valueType->getSubType()));
