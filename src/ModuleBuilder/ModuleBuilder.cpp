@@ -210,14 +210,14 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
     // build blob type (member variables only)
     buildBlobDefinition(
-        module->getName(),
+        statementBlob->getModuleName(),
         statementBlob->getName(),
         statementBlob->getMembers()
     );
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    buildBlobDeclaration(module->getName(), statementBlobDeclaration->getName());
+    buildBlobDeclaration(statementBlobDeclaration->getModuleName(), statementBlobDeclaration->getName());
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
@@ -236,15 +236,15 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementExpression> statementExpr
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFunction) {
     // Check if declared
-    llvm::Function *fun = scope->getFunction(statementFunction->getName());
+    llvm::Function *fun = scope->getFunction(statementFunction->getGlobalName());
     if (fun == nullptr) {
-        markErrorNotDeclared(statementFunction->getLocation(), format("function \"{}\"", statementFunction->getName()));
+        markErrorNotDeclared(statementFunction->getLocation(), format("function \"{}\"", statementFunction->getGlobalName()));
         return;
     }
 
     // define function body
-    this->currentInitBlock = llvm::BasicBlock::Create(*context, format("{}_init_block", statementFunction->getName()), fun);
-    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, format("{}_body_block", statementFunction->getName()), fun);
+    this->currentInitBlock = llvm::BasicBlock::Create(*context, format("{}_init_block", statementFunction->getGlobalName()), fun);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(*context, format("{}_body_block", statementFunction->getGlobalName()), fun);
 
     builder->SetInsertPoint(bodyBlock);
     scope->pushLevel();
@@ -307,7 +307,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
     buildFunctionDeclaration(
-        module->getName(),
+        statementFunctionDeclaration->getModuleName(),
         statementFunctionDeclaration->getName(),
         statementFunctionDeclaration->getShouldExport(),
         false,
@@ -349,7 +349,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
             case StatementKind::BLOB: {
                 shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(importedStatement);
                 buildBlobDefinition(
-                    statementMetaImport->getName(),
+                    statementBlob->getModuleName(),
                     statementBlob->getName(),
                     statementBlob->getMembers()
                 );
@@ -358,7 +358,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
             case StatementKind::BLOB_DECLARATION: {
                 shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
                 buildBlobDeclaration(
-                    statementMetaImport->getName(),
+                    statementDeclaration->getModuleName(),
                     statementDeclaration->getName()
                 );
                 break;
@@ -366,7 +366,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
             case StatementKind::FUNCTION_DECLARATION: {
                 shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(importedStatement);
                 buildFunctionDeclaration(
-                    statementMetaImport->getName(),
+                    statementDeclaration->getModuleName(),
                     statementDeclaration->getName(),
                     true,
                     false,
@@ -517,9 +517,7 @@ void ModuleBuilder::buildFunctionDeclaration(const string &moduleName, const str
         symbolName = format("{}.{}", moduleName, name);
 
     // internal name
-    string internalName = name;
-    if (moduleName.compare(module->getName()) != 0)
-        internalName = format("{}.{}", moduleName, name);
+   string internalName = format("{}.{}", moduleName, name);
 
     // arguments
     vector<llvm::Type *> funArgTypes;
@@ -709,8 +707,11 @@ void ModuleBuilder::buildBlobDeclaration(const string &moduleName, const string 
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
         symbolName = format("{}.{}", moduleName, name);
 
+    // internal name
+    string internalName = format("{}.{}", moduleName, name);
+
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
-    scope->setStruct(name, structType, {});
+    scope->setStruct(internalName, structType, {});
 }
 
 void ModuleBuilder::buildBlobDefinition(const string &moduleName, const string &name, const vector<pair<string, shared_ptr<ValueType>>> &members) {
@@ -718,10 +719,12 @@ void ModuleBuilder::buildBlobDefinition(const string &moduleName, const string &
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
         symbolName = format("{}.{}", moduleName, name);
+    // internal name
+    string internalName = format("{}.{}", moduleName, name);
 
-    llvm::StructType *structType = scope->getStructType(name);
+    llvm::StructType *structType = scope->getStructType(internalName);
     if (structType == nullptr) {
-        markErrorNotDeclared(nullptr, format("blob \"{}\"", symbolName));
+        markErrorNotDeclared(nullptr, format("blob \"{}\"", internalName));
         return;
     }
 
@@ -736,7 +739,7 @@ void ModuleBuilder::buildBlobDefinition(const string &moduleName, const string &
         types.push_back(type);
     }
     structType->setBody(types, false);
-    scope->setStruct(name, structType, memberNames);
+    scope->setStruct(internalName, structType, memberNames);
 }
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
@@ -1305,11 +1308,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionCall> expressionCall) {
-    if (llvm::Function *fun = scope->getFunction(expressionCall->getName())) {
+    if (llvm::Function *fun = scope->getFunction(expressionCall->getGlobalName())) {
         return wrappedValueForCall(fun, fun->getFunctionType(), {}, expressionCall->getArgumentExpressions(), expressionCall->getValueType());
     }
 
-    if (llvm::InlineAsm *rawFun = scope->getInlineAsm(expressionCall->getName())) {
+    if (llvm::InlineAsm *rawFun = scope->getInlineAsm(expressionCall->getGlobalName())) {
         vector<llvm::Value *>argValues;
         for (shared_ptr<Expression> &argumentExpression : expressionCall->getArgumentExpressions()) {
             llvm::Value *argValue = wrappedValueForExpression(argumentExpression)->getValue();
@@ -1319,7 +1322,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         return WrappedValue::wrappedValue(resultValue, expressionCall->getValueType());
     }
 
-    markErrorNotDefined(expressionCall->getLocation(), format("function \"{}\"", expressionCall->getName()));
+    markErrorNotDefined(expressionCall->getLocation(), format("function \"{}\"", expressionCall->getGlobalName()));
     return nullptr;
 }
 

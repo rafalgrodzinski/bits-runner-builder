@@ -100,7 +100,7 @@ public:
 
     string getName() const;
     string getModuleName() const;
-    void setModuleName(string moduleName);
+    void setModuleName(const string &moduleName);
     string getGlobalName() const;
 
     bool getIsVolatile() const;

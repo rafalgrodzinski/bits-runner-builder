@@ -24,7 +24,7 @@ private:
 public:
     StatementBlob(
         bool shouldExport,
-        string name,
+        const string &name,
         vector<string> namedTypeKeys,
         vector<string> protoNames,
         vector<shared_ptr<StatementVariable>> variableStatements,
@@ -33,9 +33,12 @@ public:
     );
 
     bool getShouldExport() const;
+
     string getName() const;
+    string getGlobalName() const;
     string getModuleName() const;
-    void setModuleName(string moduleName);
+    void setModuleName(const string &moduleName);
+
     vector<string> getNamedTypeKeys() const;
     vector<string> getProtoNames() const;
     vector<shared_ptr<StatementVariable>> getVariableStatements() const;

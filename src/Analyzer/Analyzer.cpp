@@ -270,9 +270,9 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
     // and the register
     //string name = importModulePrefix + statementBlob->getName();
-    string name = statementBlob->getName();
+    string name = statementBlob->getGlobalName();
     if (!scope->setBlobMembers(name, members))
-        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
+        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getGlobalName());
     scope->setBlobNamedTypeKeys(name, statementBlob->getNamedTypeKeys());
     scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
@@ -305,7 +305,7 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
         return;
 
     // check if function is not yet defined and register it
-    if (!scope->setFunctionType(statementFunction->getName(), statementFunction->getValueType(), true))
+    if (!scope->setFunctionType(statementFunction->getGlobalName(), statementFunction->getValueType(), true))
         markErrorAlreadyDefined(statementFunction->getLocation(), statementFunction->getName());
 
     scope->pushLevel();

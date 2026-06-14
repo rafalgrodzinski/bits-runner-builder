@@ -246,7 +246,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     string line;
 
     // name
-    line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
+    line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName());
     // named type keys
     if (!statement->getNamedTypeKeys().empty()) {
         line += "<";
@@ -295,7 +295,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 }
 
 string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("BLOB DECL `{}`", statement->getName());
+    string line = format ("BLOB DECL `{}`", statement->getGlobalName());
     return formattedLine(line, indents);
 }
 
@@ -325,7 +325,7 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("{}FUN `{}` → {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName(), toString(statement->getReturnValueType()));
+    line = format("{}FUN `{}` → {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName(), toString(statement->getReturnValueType()));
     if (!statement->getArguments().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -349,7 +349,7 @@ string Logger::toString(shared_ptr<StatementFunctionDeclaration> statement, vect
     string line;
 
     // name
-    line = format("FUN DECL `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
+    line = format("FUN DECL `{}` → {}", statement->getGlobalName(), toString(statement->getReturnValueType()));
     if (!statement->getArguments().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -706,7 +706,7 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
 
     if (indents.size() > 0) {
         string line;
-        line = format("CALL `{}`｢{}｣", expression->getName(), toString(expression->getValueType()));
+        line = format("CALL `{}`｢{}｣", expression->getGlobalName(), toString(expression->getValueType()));
         if (!expression->getArgumentExpressions().empty())
             line += ":";
         text += formattedLine(line, indents);
@@ -716,7 +716,7 @@ string Logger::toString(shared_ptr<ExpressionCall> expression, vector<IndentKind
         for (shared_ptr<Expression> argExpression : expression->getArgumentExpressions())
             text += toString(argExpression, indents, false);
     } else {
-        text = format("`{}`(", expression->getName());
+        text = format("`{}`(", expression->getGlobalName());
         int expressionsCount = expression->getArgumentExpressions().size();
         for (int i=0; i<expressionsCount; i++) {
             text += toString(expression->getArgumentExpressions().at(i), indents, true);

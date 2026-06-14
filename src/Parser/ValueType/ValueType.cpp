@@ -84,14 +84,6 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-/*shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::BLOB;
-    valueType->blobName = std::move(blobName);
-    valueType->namedTypeValues = std::move(namedTypeValues);
-    return valueType;
-}*/
-
 shared_ptr<ValueType> ValueType::proto(string protoName) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::PROTO;
@@ -157,15 +149,20 @@ string ValueType::getModuleName() const {
     return moduleName;
 }
 
-void ValueType::setModuleName(string moduleName) {
+void ValueType::setModuleName(const string &moduleName) {
     if (this->moduleName.empty())
-        this->moduleName = std::move(moduleName);
+        this->moduleName = moduleName;
+
+    if (this->getSubType() != nullptr)
+        this->getSubType()->setModuleName(moduleName);
 }
 
 string ValueType::getGlobalName() const {
-    if (!moduleName.empty())
-        return format("{}.{}", moduleName, name);
-    return name;
+    string moduleName = this->moduleName;
+    if (moduleName.empty())
+        moduleName = "{UNDEFINED}";
+
+    return format("{}.{}", moduleName, name);
 }
 
 bool ValueType::getIsVolatile() const {

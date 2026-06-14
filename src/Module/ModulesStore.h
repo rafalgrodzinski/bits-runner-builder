@@ -40,8 +40,8 @@ private:
     map<string, vector<shared_ptr<Statement>>> exportedFunctionDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
 
-    void setModuleName(shared_ptr<Statement> statement, string moduleName);
-    void setModuleName(shared_ptr<Expression> expression, string moduleName);
+    void setModuleName(shared_ptr<Statement> statement, const string &moduleName);
+    void setModuleName(shared_ptr<Expression> expression, const string &moduleName);
 
 public:
     ModulesStore(string defaultModuleName);

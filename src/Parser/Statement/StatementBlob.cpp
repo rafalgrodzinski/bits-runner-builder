@@ -6,7 +6,7 @@
 
 StatementBlob::StatementBlob(
     bool shouldExport,
-    string name,
+    const string &name,
     vector<string> namedTypeKeys,
     vector<string> protoNames,
     vector<shared_ptr<StatementVariable>> variableStatements,
@@ -19,7 +19,7 @@ Statement(StatementKind::BLOB, location), shouldExport(shouldExport), namedTypeK
         this->moduleName = name.substr(0, pos);
         this->name = name.substr(pos + 1, name.size());
     } else {
-        this->name = std::move(name);
+        this->name = name;
     }
 }
 
@@ -28,17 +28,24 @@ bool StatementBlob::getShouldExport() const {
 }
 
 string StatementBlob::getName() const {
-    if (!moduleName.empty())
-        return format("{}.{}", moduleName, name);
     return name;
+}
+
+string StatementBlob::getGlobalName() const {
+    string moduleName = this->moduleName;
+    if (moduleName.empty())
+        moduleName = "{UNDEFINED}";
+
+    return format("{}.{}", moduleName, name);
 }
 
 string StatementBlob::getModuleName() const {
     return moduleName;
 }
 
-void StatementBlob::setModuleName(string moduleName) {
-    this->moduleName = std::move(moduleName);
+void StatementBlob::setModuleName(const string &moduleName) {
+    if (this->moduleName.empty())
+        this->moduleName = moduleName;
 }
 
 vector<string> StatementBlob::getNamedTypeKeys() const {
@@ -70,6 +77,7 @@ shared_ptr<StatementBlobDeclaration> StatementBlob::getDeclaration() const {
     return make_shared<StatementBlobDeclaration>(
         getShouldExport(),
         getName(),
+        getModuleName(),
         getLocation()
     );
 }

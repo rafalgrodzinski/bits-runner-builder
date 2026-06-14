@@ -1,7 +1,8 @@
 #ifndef STATEMENT_FUNCTION_H
 #define STATEMENT_FUNCTION_H
 
-#include "Parser/Statement/Statement.h"
+#include "Statement.h"
+#include "StatementFunctionDeclaration.h"
 
 class StatementBlock;
 class ValueType;
@@ -12,6 +13,7 @@ friend class Parser;
 private:
     bool shouldExport;
     string name;
+    string moduleName;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnValueType;
     shared_ptr<StatementBlock> statementBlock;
@@ -19,7 +21,7 @@ private:
 public:
     StatementFunction(
         bool shouldExport,
-        string name,
+        const string &name,
         vector<pair<string, shared_ptr<ValueType>>> arguments,
         shared_ptr<ValueType> returnValueType,
         shared_ptr<StatementBlock> statementBlock,
@@ -27,11 +29,18 @@ public:
     );
 
     bool getShouldExport() const;
+
     string getName() const;
+    string getGlobalName() const;
+    string getModuleName() const;
+    void setModuleName(const string &moduleName);
+
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
     shared_ptr<ValueType> getValueType() const;
     shared_ptr<StatementBlock> getStatementBlock() const;
+
+    shared_ptr<StatementFunctionDeclaration> getDeclaration() const;
 };
 
 #endif

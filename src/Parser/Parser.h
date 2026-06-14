@@ -41,7 +41,6 @@ private:
     shared_ptr<Statement> matchStatementMetaExternFunction();
     shared_ptr<Statement> matchStatementVariable(bool isRootStatement);
     shared_ptr<Statement> matchStatementFunction();
-    shared_ptr<Statement> matchStatementFunctionDeclaration();
     shared_ptr<Statement> matchStatementRawFunction();
     shared_ptr<Statement> matchStatementBlob();
     shared_ptr<Statement> matchStatementProto();

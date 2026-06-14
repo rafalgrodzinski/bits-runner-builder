@@ -496,91 +496,6 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), location);
 }
 
-shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
-    enum {
-        TAG_SHOULD_EXPORT,
-        TAG_NAME,
-        TAG_ARGUMENT_IDENTIFIER,
-        TAG_ARGUMENT_TYPE,
-        TAG_RETURN_TYPE
-    };
-
-    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
-
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // export
-            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
-            // arguments
-            Parsee::groupParsee(
-                {
-                    // first argument
-                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
-                    // additional arguments
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                            Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
-                        }, ParseeLevel::OPTIONAL, true
-                    )
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // return type
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
-                }, ParseeLevel::OPTIONAL, true
-            )
-        }
-    );
-
-    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
-        return nullptr;
-
-    bool shouldExport = false;
-    string name;
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnType = ValueType::NONE;
-    shared_ptr<Statement> statementBlock;
-
-    for (int i=0; i<resultsGroup.getResults().size(); i++) {
-        ParseeResult parseeResult = resultsGroup.getResults().at(i);
-        switch (parseeResult.getTag()) {
-            case TAG_SHOULD_EXPORT: {
-                shouldExport = true;
-                break;
-            }
-            case TAG_NAME: {
-                name = parseeResult.getToken()->getLexme();
-                break;
-            }
-            case TAG_ARGUMENT_IDENTIFIER: {
-                pair<string, shared_ptr<ValueType>> argument;
-                argument.first = parseeResult.getToken()->getLexme();
-                argument.second = resultsGroup.getResults().at(++i).getValueType();
-                arguments.push_back(argument);
-                break;
-            }
-            case TAG_RETURN_TYPE: {
-                returnType = parseeResult.getValueType();
-                break;
-            }
-        }
-    }
-
-    return make_shared<StatementFunctionDeclaration>(shouldExport, name, arguments, returnType, location);
-}
-
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
     enum {
         TAG_SHOULD_EXPORT,
@@ -2461,9 +2376,9 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(ve
             case StatementKind::FUNCTION:
                 statement = matchStatementFunction();
                 break;
-            case StatementKind::FUNCTION_DECLARATION:
+            /*case StatementKind::FUNCTION_DECLARATION:
                 statement = matchStatementFunctionDeclaration();
-                break;
+                break;*/
             case StatementKind::META_EXTERN_FUNCTION:
                 statement = matchStatementMetaExternFunction();
                 break;

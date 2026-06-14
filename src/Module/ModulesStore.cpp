@@ -28,7 +28,7 @@ defaultModuleName(std::move(defaultModuleName)) { }
 
 /// Private ///
 
-void ModulesStore::setModuleName(shared_ptr<Statement> statement, string moduleName) {
+void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &moduleName) {
     if (statement == nullptr)
         return;
 
@@ -60,6 +60,7 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, string moduleN
         }
         case StatementKind::FUNCTION: {
             shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
+            statementFunction->setModuleName(moduleName);
             // arguments
             for (const pair<string, shared_ptr<ValueType>> &argumentPair : statementFunction->getArguments()) {
                 argumentPair.second->setModuleName(moduleName);
@@ -86,7 +87,7 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, string moduleN
     }
 }
 
-void ModulesStore::setModuleName(shared_ptr<Expression> expression, string moduleName) {
+void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string &moduleName) {
     if (expression == nullptr)
         return;
 
@@ -94,6 +95,7 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, string modul
         case ExpressionKind::CALL: {
             shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
             for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
+                expressionCall->setModuleName(moduleName);
                 setModuleName(argumentExpression, moduleName);
             }
             break;
@@ -190,6 +192,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     shared_ptr<StatementFunctionDeclaration> statementBlobFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
                         statementBlob->getShouldExport(),
                         statementBlobFunction->getName(),
+                        statementBlobFunction->getModuleName(),
                         statementBlobFunction->getArguments(),
                         statementBlobFunction->getReturnValueType(),
                         statementBlobFunction->getLocation()
@@ -198,6 +201,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                     // handle exported & public functions
                     if (statementBlob->getShouldExport()) {
+                        /*/
                         // update argument types for exported statement
                         vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
                         for (pair<string, shared_ptr<ValueType>> argument : statementBlobFunctionDeclaration->getArguments())
@@ -216,19 +220,22 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                         // append updated statement
                         moduleExportedFunctionDeclarationStatements.push_back(exportedStatementBlobFunctionDeclaration);
+                        */
+                       moduleExportedFunctionDeclarationStatements.push_back(statementBlobFunctionDeclaration);
                     }
                 }
                 break;
             }
             case StatementKind::FUNCTION: {
                 shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
-                shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
+                /*shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
                     statementFunction->getShouldExport(),
                     statementFunction->getName(),
                     statementFunction->getArguments(),
                     statementFunction->getReturnValueType(),
                     statementFunction->getLocation()
-                );
+                );*/
+                shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = statementFunction->getDeclaration();
                 // local header
                 moduleFunctionDeclarationStatements.push_back(statementFunctionDeclaration);
                 // body
@@ -236,6 +243,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // exported header
                 if (statementFunction->getShouldExport()) {
+                    /*
                     // update argument types for exported statement
                     vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
                     for (pair<string, shared_ptr<ValueType>> argument : statementFunctionDeclaration->getArguments())
@@ -254,6 +262,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                     // append updated statement
                     moduleExportedFunctionDeclarationStatements.push_back(exportedStatementFunctionDeclaration);
+                    */
+                   moduleExportedFunctionDeclarationStatements.push_back(statementFunctionDeclaration);
                 }
                 break;
             }
@@ -302,6 +312,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     // update member function declaration statements for exported statement
                     vector<shared_ptr<StatementFunctionDeclaration>> exportedFunctionDeclarationStatements;
                     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
+                        /*
                         // convert earch argument into na exportable version
                         vector<pair<string, shared_ptr<ValueType>>> exportedArguments;
                         for (pair<string, shared_ptr<ValueType>> &argument : statementFunctionDeclaration->getArguments()) {
@@ -318,6 +329,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                             statementFunctionDeclaration->getLocation()
                         );
                         exportedFunctionDeclarationStatements.push_back(exportedFunctionDeclarationStatement);
+                        */
+                       exportedFunctionDeclarationStatements.push_back(statementFunctionDeclaration);
                     }
 
                     // use the modified members to create an exportable proto
