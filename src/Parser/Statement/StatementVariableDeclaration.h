@@ -14,7 +14,7 @@ private:
     shared_ptr<ValueType> valueType;
 
 public:
-    StatementVariableDeclaration(bool shouldExport, string identifier, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
+    StatementVariableDeclaration(bool shouldExport, const string &identifier, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
 
     bool getShouldExport() const;
     string getIdentifier() const;

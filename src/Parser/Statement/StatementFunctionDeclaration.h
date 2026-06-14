@@ -12,6 +12,7 @@ private:
     bool shouldExport;
     string name;
     string moduleName;
+
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnValueType;
 
@@ -29,6 +30,7 @@ public:
     string getName() const;
     string getGlobalName() const;
     string getModuleName() const;
+
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
     shared_ptr<ValueType> getValueType() const;

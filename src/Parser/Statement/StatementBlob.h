@@ -16,6 +16,7 @@ private:
     bool shouldExport;
     string name;
     string moduleName;
+
     vector<string> namedTypeKeys;
     vector<shared_ptr<StatementVariable>> variableStatements;
     vector<shared_ptr<StatementFunction>> functionStatements;
@@ -33,7 +34,6 @@ public:
     );
 
     bool getShouldExport() const;
-
     string getName() const;
     string getGlobalName() const;
     string getModuleName() const;
