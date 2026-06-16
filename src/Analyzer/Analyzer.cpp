@@ -277,8 +277,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    //string name = importModulePrefix + statementBlobDeclaration->getName();
-    string name = statementBlobDeclaration->getName();
+    string name = statementBlobDeclaration->getGlobalName();
     scope->setBlobMembers(name, {});
 }
 
@@ -327,7 +326,7 @@ void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statement
     if (resolvedAndCheckedValueType(statementFunctionDeclaration->getReturnValueType(), true, statementFunctionDeclaration->getLocation()) == nullptr)
         return;
 
-    string name = importModulePrefix + statementFunctionDeclaration->getName();
+    string name = statementFunctionDeclaration->getGlobalName();
 
     if (!scope->setFunctionType(name, statementFunctionDeclaration->getValueType(), false)) {
         markErrorInvalidType(
@@ -349,12 +348,12 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementM
     if (resolvedAndCheckedValueType(statementMetaExternFunction->getReturnValueType(), true, statementMetaExternFunction->getLocation()) == nullptr)
         return;
 
-    if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType(), false))
-        markErrorAlreadyDefined(statementMetaExternFunction->getLocation(), statementMetaExternFunction->getName());
+    if (!scope->setFunctionType(statementMetaExternFunction->getGlobalName(), statementMetaExternFunction->getValueType(), false))
+        markErrorAlreadyDefined(statementMetaExternFunction->getLocation(), statementMetaExternFunction->getGlobalName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
-    string identifier = importModulePrefix + statementMetaExternVariable->getIdentifier();
+   string identifier = statementMetaExternVariable->getIdentifier();
 
     if (!scope->setVariableType(identifier, statementMetaExternVariable->getValueType(), false))
         markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);
@@ -366,11 +365,9 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statement) {
         markErrorInvalidImport(statement->getLocation(), statement->getName());
         return;
     }
-    importModulePrefix = statement->getName() + ".";
     for (shared_ptr<Statement> &importStatement : it->second) {
         checkStatement(importStatement, nullptr, true);
     }
-    importModulePrefix = "";
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
@@ -422,13 +419,13 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     }
 
     // and the register
-    string name = importModulePrefix + statement->getName();
+    string name = statement->getGlobalName();
     if (!scope->setProtoMembers(name, members))
-        markErrorAlreadyDefined(statement->getLocation(), statement->getName());
+        markErrorAlreadyDefined(statement->getLocation(), statement->getGlobalName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProtoDeclaration> statement) {
-    string name = importModulePrefix + statement->getName();
+    string name = statement->getGlobalName();
     scope->setProtoMembers(name, {});
 }
 
@@ -438,7 +435,7 @@ void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunct
     for (auto &argument : statementRawFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    string name = importModulePrefix + statementRawFunction->getName();
+    string name = statementRawFunction->getName();
 
     if (!scope->setFunctionType(name, statementRawFunction->getValueType(), true))
         markErrorAlreadyDefined(statementRawFunction->getLocation(), statementRawFunction->getName());
@@ -522,7 +519,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         return;
     }
 
-    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType(), true)) {
+    if (!scope->setVariableType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true)) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
         return;
     }
@@ -538,7 +535,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
-    string identifier = importModulePrefix + statementVariableDeclaration->getIdentifier();
+    string identifier = statementVariableDeclaration->getGlobalIdentifier();
 
     if (resolvedAndCheckedValueType(statementVariableDeclaration->getValueType(), true, statementVariableDeclaration->getLocation()) == nullptr)
         return;
@@ -701,12 +698,13 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             return nullptr;
         }
     } else {
-        valueType = scope->getFunctionType(expressionCall->getName());
+        expressionCall->setModuleName(module->getName());
+        valueType = scope->getFunctionType(expressionCall->getGlobalName());
     }
 
     // check if defined
     if (valueType == nullptr) {
-        markErrorNotDefined(expressionCall->getLocation(), expressionCall->getName());
+        markErrorNotDefined(expressionCall->getLocation(), expressionCall->getGlobalName());
         return nullptr;
     }
 
@@ -1078,7 +1076,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             string protoName = parentExpression->getValueType()->getGlobalName();
             auto members = *(scope->getProtoMembers(protoName));
             for (pair<string, shared_ptr<ValueType>> &member : members) {
-                if (expressionValue->getIdentifier().compare(member.first) == 0) {
+                if (expressionValue->getIdentifier() == member.first) {
                     // found corresponding member, decide if it's a simple or data access
                     switch (expressionValue->getValueKind()) {
                         case ExpressionValueKind::SIMPLE:
@@ -1116,6 +1114,13 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 
     // first assume it's just simple
     shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
+    // try with global identifier
+    if (type == nullptr && expressionValue->getModuleName().empty()) {
+        string globalIdentifier = format("{}.{}", module->getName(), expressionValue->getIdentifier());
+        type = scope->getVariableType(globalIdentifier);
+        if (type != nullptr)
+            expressionValue->setModuleName(module->getName());
+    }
     if (type != nullptr) {
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
     }
@@ -1151,7 +1156,14 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
     // check if it's a function
     } else if (type == nullptr) {
-        if (type = scope->getFunctionType(expressionValue->getIdentifier()))
+        type = scope->getFunctionType(expressionValue->getIdentifier());
+        if (type == nullptr && expressionValue->getModuleName().empty()) {
+            string globalIdentifier = format("{}.{}", module->getName(), expressionValue->getIdentifier());
+            type = scope->getFunctionType(globalIdentifier);
+            if (type != nullptr)
+                expressionValue->setModuleName(module->getName());
+        }
+        if (type != nullptr)
             expressionValue->valueKind = ExpressionValueKind::FUN;
     }
     

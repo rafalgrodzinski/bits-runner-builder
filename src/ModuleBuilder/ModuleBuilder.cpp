@@ -316,11 +316,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> stat
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
-    buildFunctionDeclaration(
-        module->getName(),
-        statementMetaExternFunction->getName(),
-        false,
-        true,
+    buildExternFunction(
+        statementMetaExternFunction->getGlobalName(),
+        statementMetaExternFunction->getSymbolName(),
         statementMetaExternFunction->getArguments(),
         statementMetaExternFunction->getReturnValueType()
     );
@@ -501,7 +499,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariable> statementVariab
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     buildVariableDeclaration(
-        module->getName(),
+        statementVariableDeclaration->getModuleName(),
         statementVariableDeclaration->getIdentifier(),
         statementVariableDeclaration->getShouldExport(),
         false,
@@ -512,7 +510,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> stat
 void ModuleBuilder::buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType) {    
     // symbol name
     string symbolName = name;
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0 && !isExtern)
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName))
         symbolName = format("{}.{}", moduleName, name);
 
     // internal name
@@ -637,6 +635,29 @@ void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const str
     );
 }
 
+void ModuleBuilder::buildExternFunction(const string &name, const string &symbolName, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType) {
+    // arguments
+    vector<llvm::Type *> funArgTypes;
+    for (const pair<string, shared_ptr<ValueType>> &argument : arguments) {
+        llvm::Type *funArgType = llvmTypeForValueType(argument.second);
+        if (funArgType == nullptr)
+            return;
+        funArgTypes.push_back(funArgType);
+    }
+
+    // return type
+    llvm::Type *funReturnType = llvmTypeForValueType(returnType);
+    if (funReturnType == nullptr)
+        return;
+
+    // build function declaration
+    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgTypes, false);
+    llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::LinkageTypes::ExternalLinkage, symbolName, *llvmModule);
+    fun->setCallingConv(callingConvention);
+
+    scope->setFunction(name, fun);
+}
+
 void ModuleBuilder::buildProtoDeclaration(const string &moduleName, shared_ptr<StatementProtoDeclaration> statement) {
     // symbol name
     string symbolName = statement->getName();
@@ -644,9 +665,7 @@ void ModuleBuilder::buildProtoDeclaration(const string &moduleName, shared_ptr<S
         symbolName = format("{}.{}", moduleName, statement->getName());
 
     // internal name
-    string internalName = statement->getName();
-    if (moduleName.compare(module->getName()) != 0)
-        internalName = format("{}.{}", moduleName, statement->getName());
+    string internalName = format("{}.{}", moduleName, statement->getName());
 
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
     scope->setProtoStructType(internalName, structType, {});
@@ -659,9 +678,7 @@ void ModuleBuilder::buildProtoDefinition(const string &moduleName, shared_ptr<St
         symbolName = format("{}.{}", moduleName, statement->getName());
 
     // internal name
-    string internalName = statement->getName();
-    if (moduleName.compare(module->getName()) != 0)
-        internalName = format("{}.{}", moduleName, statement->getName());
+    string internalName = format("{}.{}", moduleName, statement->getName());
 
     llvm::StructType *structType = scope->getProtoStructType(internalName);
     if (structType == nullptr) {
@@ -751,7 +768,7 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
 
     // try registering new variable in scope
     scope->setWrappedValue(
-        statement->getIdentifier(),
+        statement->getGlobalIdentifier(),
         wrappedValue
     );
 
@@ -771,7 +788,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
         symbolName = format("{}.{}", moduleName, statement->getIdentifier());
 
     // internal name
-    string internalName = statement->getIdentifier();
+    string internalName = statement->getGlobalIdentifier();
 
     // type
     llvm::Type *type = llvmTypeForValueType(statement->getValueType());

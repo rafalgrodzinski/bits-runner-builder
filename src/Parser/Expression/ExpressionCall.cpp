@@ -18,7 +18,7 @@ string ExpressionCall::getName() const {
 string ExpressionCall::getGlobalName() const {
     string moduleName = this->moduleName;
     if (moduleName.empty())
-        moduleName = "{UNDEFINED}";
+        return name;
 
     return format("{}.{}", moduleName, name);
 }

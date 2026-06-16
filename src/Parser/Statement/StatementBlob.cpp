@@ -13,15 +13,13 @@ StatementBlob::StatementBlob(
     vector<shared_ptr<StatementFunction>> functionStatements,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::BLOB, location), shouldExport(shouldExport), namedTypeKeys(std::move(namedTypeKeys)), protoNames(std::move(protoNames)), variableStatements(std::move(variableStatements)), functionStatements(std::move(functionStatements)) {
-    size_t pos = name.find('.');
-    if (pos != string::npos) {
-        this->moduleName = name.substr(0, pos);
-        this->name = name.substr(pos + 1, name.size());
-    } else {
-        this->name = name;
-    }
-}
+Statement(StatementKind::BLOB, location),
+shouldExport(shouldExport),
+name(name),
+namedTypeKeys(std::move(namedTypeKeys)),
+protoNames(std::move(protoNames)),
+variableStatements(std::move(variableStatements)),
+functionStatements(std::move(functionStatements)) { }
 
 bool StatementBlob::getShouldExport() const {
     return shouldExport;
@@ -44,8 +42,19 @@ string StatementBlob::getModuleName() const {
 }
 
 void StatementBlob::setModuleName(const string &moduleName) {
-    if (this->moduleName.empty())
-        this->moduleName = moduleName;
+    if (!this->moduleName.empty())
+        return;
+
+    // First register the name
+    this->moduleName = moduleName;
+
+    // Then ppend module name to proto names if required
+    for (string &protoName : protoNames) {
+        size_t pos = protoName.find('.');
+        if (pos == string::npos) {
+            protoName = format("{}.{}", moduleName, protoName);
+        }
+    }
 }
 
 vector<string> StatementBlob::getNamedTypeKeys() const {

@@ -196,6 +196,7 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::VARIABLE_DECLARATION:
             return toString(dynamic_pointer_cast<StatementVariableDeclaration>(statement), indents);
         case StatementKind::VARIABLE:
+        case StatementKind::VARIABLE_ROOT:
             return toString(dynamic_pointer_cast<StatementVariable>(statement), indents);
         case StatementKind::FUNCTION_DECLARATION:
             return toString(dynamic_pointer_cast<StatementFunctionDeclaration>(statement), indents);
@@ -369,7 +370,7 @@ string Logger::toString(shared_ptr<StatementMetaExternFunction> statement, vecto
     string line;
 
     // name
-    line = format("@EXTERN FUN `{}` → {}", statement->getName(), toString(statement->getReturnValueType()));
+    line = format("@EXTERN FUN `{}` → {}", statement->getGlobalName(), toString(statement->getReturnValueType()));
     if (!statement->getArguments().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -415,7 +416,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
     string line;
 
     // name
-    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getName());
+    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName());
     if (!statement->getVariableStatements().empty() || !statement->getFunctionDeclarationStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -451,7 +452,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
 }
 
 string Logger::toString(shared_ptr<StatementProtoDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("PROTO DECL `{}`", statement->getName());
+    string line = format ("PROTO DECL `{}`", statement->getGlobalName());
     return formattedLine(line, indents);
 }
 
@@ -558,7 +559,7 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getIdentifier(), toString(statement->getValueType()));
+    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalIdentifier(), toString(statement->getValueType()));
     if (statement->getExpression() != nullptr)
         line += ":";
     text += formattedLine(line, indents);

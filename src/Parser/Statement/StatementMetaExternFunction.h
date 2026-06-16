@@ -8,13 +8,21 @@ class ValueType;
 class StatementMetaExternFunction: public Statement {
 private:
     string name;
+    string moduleName;
+    string symbolName;
+
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnValueType;
 
 public:
-    StatementMetaExternFunction(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<Location> location);
+    StatementMetaExternFunction(const string &name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<Location> location);
 
     string getName() const;
+    string getGlobalName() const;
+    string getModuleName() const;
+    void setModuleName(const string &moduleName);
+    string getSymbolName() const;
+
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
     shared_ptr<ValueType> getValueType() const;

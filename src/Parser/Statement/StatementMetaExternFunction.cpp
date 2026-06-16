@@ -2,11 +2,42 @@
 
 #include "Parser/ValueType/ValueType.h"
 
-StatementMetaExternFunction::StatementMetaExternFunction(string name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<Location> location):
-Statement(StatementKind::META_EXTERN_FUNCTION, location), name(std::move(name)), arguments(std::move(arguments)), returnValueType(returnValueType) { }
+StatementMetaExternFunction::StatementMetaExternFunction(const string &name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<Location> location):
+Statement(StatementKind::META_EXTERN_FUNCTION, location), arguments(std::move(arguments)), returnValueType(returnValueType) {
+    symbolName = name;
+
+    size_t pos = name.find('.');
+    if (pos != string::npos) {
+        this->moduleName = name.substr(0, pos);
+        this->name = name.substr(pos + 1, name.size());
+    } else {
+        this->name = name;
+    }
+}
 
 string StatementMetaExternFunction::getName() const {
     return name;
+}
+
+string StatementMetaExternFunction::getGlobalName() const {
+    string moduleName = this->moduleName;
+    if (moduleName.empty())
+        moduleName = "{UNDEFINED}";
+
+    return format("{}.{}", moduleName, name);
+}
+
+string StatementMetaExternFunction::getModuleName() const {
+    return moduleName;
+}
+
+void StatementMetaExternFunction::setModuleName(const string &moduleName) {
+    if (this->moduleName.empty())
+        this->moduleName = moduleName;
+}
+
+string StatementMetaExternFunction::getSymbolName() const {
+    return symbolName;
 }
 
 vector<pair<string, shared_ptr<ValueType>>> StatementMetaExternFunction::getArguments() const {

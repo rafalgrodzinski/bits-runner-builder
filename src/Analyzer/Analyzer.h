@@ -59,7 +59,6 @@ private:
     shared_ptr<AnalyzerScope> scope;
     shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
-    string importModulePrefix;
 
     void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported = false);
     void checkStatement(shared_ptr<StatementAssignment> statementAssignment);

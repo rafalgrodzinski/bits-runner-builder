@@ -167,6 +167,16 @@ void ValueType::setModuleName(const string &moduleName) {
 
     if (this->getSubType() != nullptr)
         this->getSubType()->setModuleName(moduleName);
+
+    if (argumentTypes) {
+        for (shared_ptr<ValueType> typeValue : *argumentTypes)
+            typeValue->setModuleName(moduleName);
+    }
+
+    if (namedTypeValues) {
+        for (shared_ptr<ValueType> typeValue : *namedTypeValues)
+            typeValue->setModuleName(moduleName);
+    }
 }
 
 string ValueType::getGlobalName() const {

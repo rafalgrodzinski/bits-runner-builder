@@ -20,7 +20,7 @@ Statement(StatementKind::FUNCTION, location), shouldExport(shouldExport), argume
         this->moduleName = name.substr(0, pos);
         this->name = name.substr(pos + 1, name.size());
     } else {
-        this->name = std::move(name);
+        this->name = name;
     }
 
     // setup statements
