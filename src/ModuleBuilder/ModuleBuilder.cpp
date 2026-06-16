@@ -374,23 +374,23 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
             }
             case StatementKind::PROTO: {
                 shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(importedStatement);
-                buildProtoDefinition(statementMetaImport->getName(), statementProto);
+                buildProtoDefinition(statementProto->getModuleName(), statementProto);
                 break;
             }
             case StatementKind::PROTO_DECLARATION: {
                 shared_ptr<StatementProtoDeclaration> statementProtoDeclaration = dynamic_pointer_cast<StatementProtoDeclaration>(importedStatement);
-                buildProtoDeclaration(statementMetaImport->getName(), statementProtoDeclaration);
+                buildProtoDeclaration(statementProtoDeclaration->getModuleName(), statementProtoDeclaration);
                 break;
             }
             case StatementKind::RAW_FUNCTION: {
                 shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
-                buildRawFunction(statementMetaImport->getName(), statementRawFunction);
+                buildRawFunction(statementRawFunction->getModuleName(), statementRawFunction);
                 break;
             }
             case StatementKind::VARIABLE_DECLARATION: {
                 shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(importedStatement);
                 buildVariableDeclaration(
-                    statementMetaImport->getName(),
+                    statementDeclaration->getModuleName(),
                     statementDeclaration->getIdentifier(),
                     true,
                     false,
@@ -414,7 +414,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProtoDeclaration> stateme
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
-    buildRawFunction(module->getName(), statementRawFunction);
+    buildRawFunction(statementRawFunction->getModuleName(), statementRawFunction);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRepeat> statementRepeat) {
@@ -544,15 +544,8 @@ void ModuleBuilder::buildFunctionDeclaration(const string &moduleName, const str
 }
 
 void ModuleBuilder::buildRawFunction(const string &moduleName, shared_ptr<StatementRawFunction> statement) {
-    // symbol name
-    string symbolName = statement->getName();
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, statement->getName());
-
     // internal name
-    string internalName = statement->getName();
-    if (moduleName.compare(module->getName()) != 0)
-        internalName = format("{}.{}", moduleName, statement->getName());
+    string internalName = format("{}.{}", moduleName, statement->getName());
 
     // function types
     llvm::Type *funReturnType = llvmTypeForValueType(statement->getReturnValueType());

@@ -108,6 +108,11 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
                 setModuleName(functionStatement, moduleName);
             break;
         }
+        case StatementKind::RAW_FUNCTION: {
+            shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(statement);
+            statementRawFunction->setModuleName(moduleName);
+            break;
+        }
         case StatementKind::REPEAT: {
             shared_ptr<StatementRepeat> statementRepeat = dynamic_pointer_cast<StatementRepeat>(statement);
             setModuleName(statementRepeat->getInitStatement(), moduleName);

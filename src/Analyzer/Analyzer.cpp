@@ -435,10 +435,10 @@ void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunct
     for (auto &argument : statementRawFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    string name = statementRawFunction->getName();
+    string name = statementRawFunction->getGlobalName();
 
     if (!scope->setFunctionType(name, statementRawFunction->getValueType(), true))
-        markErrorAlreadyDefined(statementRawFunction->getLocation(), statementRawFunction->getName());
+        markErrorAlreadyDefined(statementRawFunction->getLocation(), statementRawFunction->getGlobalName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType) {
