@@ -22,12 +22,15 @@
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
 #include "Parser/Expression/Expression.h"
+#include "Parser/Expression/ExpressionBinary.h"
 #include "Parser/Expression/ExpressionBlock.h"
 #include "Parser/Expression/ExpressionCall.h"
 #include "Parser/Expression/ExpressionCast.h"
 #include "Parser/Expression/ExpressionChained.h"
 #include "Parser/Expression/ExpressionCompositeLiteral.h"
+#include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
+#include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
 #include "Parser/ValueType/ValueType.h"
@@ -145,6 +148,12 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
         return;
 
     switch (expression->getKind()) {
+        case ExpressionKind::BINARY: {
+            shared_ptr<ExpressionBinary> expressionBinary = dynamic_pointer_cast<ExpressionBinary>(expression);
+            setModuleName(expressionBinary->getLeft(), moduleName);
+            setModuleName(expressionBinary->getRight(), moduleName);
+            break;
+        }
         case ExpressionKind::BLOCK: {
             shared_ptr<ExpressionBlock> expressionBlock = dynamic_pointer_cast<ExpressionBlock>(expression);
             setModuleName(expressionBlock->getStatementBlock(), moduleName);
@@ -177,11 +186,21 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
             }
             break;
         }
+        case ExpressionKind::GROUPING: {
+            shared_ptr<ExpressionGrouping> expressionGrouping = dynamic_pointer_cast<ExpressionGrouping>(expression);
+            setModuleName(expressionGrouping->getSubExpression(), moduleName);
+            break;
+        }
         case ExpressionKind::IF_ELSE: {
             shared_ptr<ExpressionIfElse> expressionIfElse = dynamic_pointer_cast<ExpressionIfElse>(expression);
             setModuleName(expressionIfElse->getConditionExpression(), moduleName);
             setModuleName(expressionIfElse->getThenExpression(), moduleName);
             setModuleName(expressionIfElse->getElseExpression(), moduleName);
+            break;
+        }
+        case ExpressionKind::UNARY: {
+            shared_ptr<ExpressionUnary> expressionUnary = dynamic_pointer_cast<ExpressionUnary>(expression);
+            setModuleName(expressionUnary->getSubExpression(), moduleName);
             break;
         }
         case ExpressionKind::VALUE: {
