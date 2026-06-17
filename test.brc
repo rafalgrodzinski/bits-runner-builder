@@ -1,13 +1,6 @@
-//@module Test
-
-@import Dummy
-
-@export Animal blob
-    value u32
-;
+global u32 <- 8
 
 main fun -> u32
-    cat blob<Animal> <- {7}
-    //ret @Dummy::doStuff(cat)
-    ret 0
+    local u32 <- global
+    ret local
 ;

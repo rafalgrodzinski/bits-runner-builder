@@ -54,7 +54,7 @@ vector<shared_ptr<Statement>> Parser::getStatements() {
                             StatementKind::META_IMPORT,
                             StatementKind::FUNCTION,
                             StatementKind::RAW_FUNCTION,
-                            StatementKind::VARIABLE_ROOT,
+                            StatementKind::VARIABLE,
                             StatementKind::META_EXTERN_FUNCTION,
                             StatementKind::META_EXTERN_VARIABLE,
                             StatementKind::BLOB,
@@ -92,7 +92,7 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
     shared_ptr<Statement> statement;
     int errorsCount = errors.size();
 
-    if ((statement = matchStatementVariable(false)) || errors.size() > errorsCount)
+    if ((statement = matchStatementVariable()) || errors.size() > errorsCount)
         return statement;
 
     if ((statement = matchStatementAssignment()) || errors.size() > errorsCount)
@@ -312,7 +312,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
     return make_shared<StatementMetaExternFunction>(identifier, arguments, returnType, location);
 }
 
-shared_ptr<Statement> Parser::matchStatementVariable(bool isRootStatement) {
+shared_ptr<Statement> Parser::matchStatementVariable() {
     enum Tag {
         TAG_SHOULD_EXPORT,
         TAG_NAMESPACE,
@@ -358,10 +358,6 @@ shared_ptr<Statement> Parser::matchStatementVariable(bool isRootStatement) {
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_SHOULD_EXPORT: {
-                if (!isRootStatement) {
-                    markError(TokenKind::M_EXPORT, {}, "@export only allowed for root statements");
-                    return nullptr;
-                }
                 shouldExport =  true;
                 break;
             }
@@ -385,7 +381,7 @@ shared_ptr<Statement> Parser::matchStatementVariable(bool isRootStatement) {
         }
     }
 
-    return make_shared<StatementVariable>(isRootStatement, shouldExport, identifier, valueType, expression, location);
+    return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementFunction() {
@@ -2489,10 +2485,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(ve
                 statement = matchStatementReturn();
                 break;
             case StatementKind::VARIABLE:
-                statement = matchStatementVariable(false);
-                break;
-            case StatementKind::VARIABLE_ROOT:
-                statement = matchStatementVariable(true);
+                statement = matchStatementVariable();
                 break;
             default:
                 markError({}, {}, {});

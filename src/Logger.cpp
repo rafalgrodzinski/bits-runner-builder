@@ -196,7 +196,6 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
         case StatementKind::VARIABLE_DECLARATION:
             return toString(dynamic_pointer_cast<StatementVariableDeclaration>(statement), indents);
         case StatementKind::VARIABLE:
-        case StatementKind::VARIABLE_ROOT:
             return toString(dynamic_pointer_cast<StatementVariable>(statement), indents);
         case StatementKind::FUNCTION_DECLARATION:
             return toString(dynamic_pointer_cast<StatementFunctionDeclaration>(statement), indents);

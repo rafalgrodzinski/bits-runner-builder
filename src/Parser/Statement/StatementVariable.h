@@ -11,22 +11,29 @@ class StatementVariable: public Statement {
 friend class Analyzer;
 
 private:
-    bool isRoot;
     bool shouldExport;
     string identifier;
     string moduleName;
+    bool isRoot;
     shared_ptr<ValueType> valueType;
     shared_ptr<Expression> expression;
 
 public:
-    StatementVariable(bool isRoot, bool shouldExport, const string &identifier, shared_ptr<ValueType> valueType, shared_ptr<Expression> expression, shared_ptr<Location> location);
+    StatementVariable(
+        bool shouldExport,
+        const string &identifier,
+        shared_ptr<ValueType> valueType,
+        shared_ptr<Expression> expression,
+        shared_ptr<Location> location
+    );
 
-    bool getIsRoot() const;
     bool getShouldExport() const;
     string getIdentifier() const;
     string getGlobalIdentifier() const;
     string getModuleName() const;
     void setModuleName(const string &moduleName);
+    bool getIsRoot() const;
+    void setIsRoot(bool isRoot);
     shared_ptr<ValueType> getValueType() const;
     shared_ptr<Expression> getExpression() const;
 

@@ -28,7 +28,6 @@ enum class StatementKind {
     REPEAT,
     RETURN,
     VARIABLE,
-    VARIABLE_ROOT,
     VARIABLE_DECLARATION
 };
 

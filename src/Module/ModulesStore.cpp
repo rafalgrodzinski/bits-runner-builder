@@ -40,7 +40,7 @@ defaultModuleName(std::move(defaultModuleName)) { }
 
 /// Private ///
 
-void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &moduleName) {
+void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot) {
     if (statement == nullptr)
         return;
 
@@ -132,6 +132,7 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
         }
         case StatementKind::VARIABLE: {
             shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
+            statementVariable->setIsRoot(isRoot);
             statementVariable->getValueType()->setModuleName(moduleName);
             statementVariable->setModuleName(moduleName);
             statementVariable->getValueType()->setModuleName(moduleName);
@@ -240,7 +241,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     vector<shared_ptr<Statement>> moduleExportedRawFunctionStatements;
 
     for (shared_ptr<Statement> statement : statements) {
-        setModuleName(statement, moduleName);
+        setModuleName(statement, moduleName, true);
 
         switch (statement->getKind()) {
             case StatementKind::BLOB: {
