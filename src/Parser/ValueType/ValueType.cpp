@@ -177,6 +177,10 @@ void ValueType::setModuleName(const string &moduleName) {
         for (shared_ptr<ValueType> typeValue : *namedTypeValues)
             typeValue->setModuleName(moduleName);
     }
+
+    if (returnType != nullptr) {
+        returnType->setModuleName(moduleName);
+    }
 }
 
 string ValueType::getGlobalName() const {
