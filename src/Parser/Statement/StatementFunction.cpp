@@ -8,12 +8,12 @@
 StatementFunction::StatementFunction(
     bool shouldExport,
     const string &name,
-    vector<pair<string, shared_ptr<ValueType>>> arguments,
+    const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
     shared_ptr<StatementBlock> statementBlock,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION, location), shouldExport(shouldExport), arguments(std::move(arguments)), returnValueType(returnValueType), statementBlock(statementBlock) {
+Statement(StatementKind::FUNCTION, location), shouldExport(shouldExport), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
     // setup names
     size_t pos = name.find('.');
     if (pos != string::npos) {

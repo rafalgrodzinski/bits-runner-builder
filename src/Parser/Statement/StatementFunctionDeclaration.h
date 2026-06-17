@@ -21,7 +21,7 @@ public:
         bool shouldExport,
         const string &name,
         const string &moduleName,
-        vector<pair<string, shared_ptr<ValueType>>> arguments,
+        const vector<pair<string, shared_ptr<ValueType>>> &arguments,
         shared_ptr<ValueType> returnValueType,
         shared_ptr<Location> location
     );

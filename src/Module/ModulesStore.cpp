@@ -36,8 +36,8 @@
 
 #include "Parser/ValueType/ValueType.h"
 
-ModulesStore::ModulesStore(string defaultModuleName):
-defaultModuleName(std::move(defaultModuleName)) { }
+ModulesStore::ModulesStore(const string &defaultModuleName):
+defaultModuleName(defaultModuleName) { }
 
 /// Private ///
 

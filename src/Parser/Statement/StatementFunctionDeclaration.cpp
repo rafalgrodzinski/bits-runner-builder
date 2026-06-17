@@ -7,11 +7,11 @@ StatementFunctionDeclaration::StatementFunctionDeclaration(
     bool shouldExport,
     const string &name,
     const string &moduleName,
-    vector<pair<string, shared_ptr<ValueType>>> arguments,
+    const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION_DECLARATION, location), shouldExport(shouldExport), name(name), moduleName(moduleName), arguments(std::move(arguments)), returnValueType(returnValueType) { }
+Statement(StatementKind::FUNCTION_DECLARATION, location), shouldExport(shouldExport), name(name), moduleName(moduleName), arguments(arguments), returnValueType(returnValueType) { }
 
 bool StatementFunctionDeclaration::getShouldExport() const {
     return shouldExport;

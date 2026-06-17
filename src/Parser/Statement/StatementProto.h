@@ -20,8 +20,8 @@ public:
     StatementProto(
         bool shouldExport,
         const string &name,
-        vector<shared_ptr<StatementVariable>> variableStatements,
-        vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements,
+        const vector<shared_ptr<StatementVariable>> &variableStatements,
+        const vector<shared_ptr<StatementFunctionDeclaration>> &functionDeclarationStatements,
         shared_ptr<Location> location
     );
 

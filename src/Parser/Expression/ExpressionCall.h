@@ -12,7 +12,7 @@ private:
     vector<shared_ptr<Expression>> argumentExpressions;
 
 public:
-    ExpressionCall(const string &name, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<Location> location);
+    ExpressionCall(const string &name, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<Location> location);
 
     string getName() const;
     string getGlobalName() const;

@@ -20,7 +20,7 @@ public:
         bool shouldExport,
         const string &name,
         const string &constraints,
-        vector<pair<string, shared_ptr<ValueType>>> arguments,
+        const vector<pair<string, shared_ptr<ValueType>>> &arguments,
         shared_ptr<ValueType> returnValueType,
         const string &rawSource,
         shared_ptr<Location> location

@@ -110,7 +110,7 @@ public:
 
     static vector<TokenKind> tokensLiteral;
 
-    Token(TokenKind kind, string lexme, shared_ptr<Location> location);
+    Token(TokenKind kind, const string &lexme, shared_ptr<Location> location);
 
     TokenKind getKind() const;
     string getLexme() const;

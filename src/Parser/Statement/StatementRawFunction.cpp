@@ -6,7 +6,7 @@ StatementRawFunction::StatementRawFunction(
     bool shouldExport,
     const string &name,
     const string &constraints,
-    vector<pair<string, shared_ptr<ValueType>>> arguments,
+    const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
     const string &rawSource,
     shared_ptr<Location> location
@@ -14,7 +14,7 @@ StatementRawFunction::StatementRawFunction(
 Statement(StatementKind::RAW_FUNCTION, location),
 shouldExport(shouldExport), name(name),
 constraints(constraints),
-arguments(std::move(arguments)),
+arguments(arguments),
 returnValueType(returnValueType),
 rawSource(rawSource) { }
 

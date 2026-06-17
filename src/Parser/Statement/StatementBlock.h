@@ -10,7 +10,7 @@ private:
     vector<shared_ptr<Statement>> statements;
 
 public:
-    StatementBlock(vector<shared_ptr<Statement>> statements, shared_ptr<Location> location);
+    StatementBlock(const vector<shared_ptr<Statement>> &statements, shared_ptr<Location> location);
 
     vector<shared_ptr<Statement>> getStatements() const;
 };

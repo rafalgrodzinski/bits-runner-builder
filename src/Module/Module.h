@@ -16,7 +16,7 @@ private:
     vector<shared_ptr<Statement>> bodyStatements;
 
 public:
-    Module(string name, vector<shared_ptr<Statement>> headerStatements, vector<shared_ptr<Statement>> bodyStatements);
+    Module(const string &name, const vector<shared_ptr<Statement>> &headerStatements, const vector<shared_ptr<Statement>> &bodyStatements);
 
     string getName() const;
     vector<shared_ptr<Statement>> getHeaderStatements() const;

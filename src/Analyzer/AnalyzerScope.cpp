@@ -27,7 +27,7 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getProtoMem
     return {};
 }
 
-bool AnalyzerScope::setProtoMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
+bool AnalyzerScope::setProtoMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members) {
     bool isDefinition = members.has_value();
     bool isDefined = false;
     if (scopeLevels.top().protoMembersMap.find(name) != scopeLevels.top().protoMembersMap.end())
@@ -38,7 +38,7 @@ bool AnalyzerScope::setProtoMembers(const string &name, optional<vector<pair<str
         return false;
 
     if (!isDefined)
-        scopeLevels.top().protoMembersMap[name] = std::move(members);
+        scopeLevels.top().protoMembersMap[name] = members;
 
     return true;
 }
@@ -94,7 +94,7 @@ bool AnalyzerScope::isBlobDeclared(const string &name) const{
     return false;
 }
 
-bool AnalyzerScope::setBlobMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members) {
+bool AnalyzerScope::setBlobMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members) {
     bool isDefinition = members.has_value();
     bool isDefined = false;
     if (scopeLevels.top().blobMembersMap.find(name) != scopeLevels.top().blobMembersMap.end())
@@ -105,7 +105,7 @@ bool AnalyzerScope::setBlobMembers(const string &name, optional<vector<pair<stri
         return false;
 
     if (!isDefined)
-        scopeLevels.top().blobMembersMap[name] = std::move(members);
+        scopeLevels.top().blobMembersMap[name] = members;
 
     return true;
 }
@@ -149,12 +149,12 @@ optional<vector<string>> AnalyzerScope::getBlobNamedTypeKeys(const string &blobN
     return {};
 }
 
-bool AnalyzerScope::setBlobNamedTypeKeys(const string &blobName, vector<string> namedTypeKeys) {
+bool AnalyzerScope::setBlobNamedTypeKeys(const string &blobName, const vector<string> &namedTypeKeys) {
     // check if named types are already defined
     if (scopeLevels.top().blobNamedTypeKeysMap.find(blobName) != scopeLevels.top().blobNamedTypeKeysMap.end())
         return false;
 
-    scopeLevels.top().blobNamedTypeKeysMap[blobName] = std::move(namedTypeKeys);
+    scopeLevels.top().blobNamedTypeKeysMap[blobName] = namedTypeKeys;
 
     return true;
 }
@@ -172,8 +172,8 @@ optional<vector<string>> AnalyzerScope::getBlobProtoNames(const string &name) co
     return {};
 }
 
-bool AnalyzerScope::setBlobProtoNames(const string &name, vector<string> protoNames) {
-    scopeLevels.top().blobProtosMap[name] = std::move(protoNames);
+bool AnalyzerScope::setBlobProtoNames(const string &name, const vector<string> &protoNames) {
+    scopeLevels.top().blobProtosMap[name] = protoNames;
 
     return true;
 }

@@ -44,7 +44,7 @@ private:
     void setModuleName(shared_ptr<Expression> expression, const string &moduleName);
 
 public:
-    ModulesStore(string defaultModuleName);
+    ModulesStore(const string &defaultModuleName);
 
     void appendStatements(vector<shared_ptr<Statement>> statements);
     vector<shared_ptr<Module>> getModules();

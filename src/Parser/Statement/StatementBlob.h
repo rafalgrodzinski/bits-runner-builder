@@ -26,10 +26,10 @@ public:
     StatementBlob(
         bool shouldExport,
         const string &name,
-        vector<string> namedTypeKeys,
-        vector<string> protoNames,
-        vector<shared_ptr<StatementVariable>> variableStatements,
-        vector<shared_ptr<StatementFunction>> functionStatements,
+        const vector<string> &namedTypeKeys,
+        const vector<string> &protoNames,
+        const vector<shared_ptr<StatementVariable>> &variableStatements,
+        const vector<shared_ptr<StatementFunction>> &functionStatements,
         shared_ptr<Location> location
     );
 

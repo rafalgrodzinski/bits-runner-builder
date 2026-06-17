@@ -2,8 +2,13 @@
 
 #include "Parser/ValueType/ValueType.h"
 
-StatementMetaExternFunction::StatementMetaExternFunction(const string &name, vector<pair<string, shared_ptr<ValueType>>> arguments, shared_ptr<ValueType> returnValueType, shared_ptr<Location> location):
-Statement(StatementKind::META_EXTERN_FUNCTION, location), arguments(std::move(arguments)), returnValueType(returnValueType) {
+StatementMetaExternFunction::StatementMetaExternFunction(
+    const string &name,
+    const vector<pair<string, shared_ptr<ValueType>>> &arguments,
+    shared_ptr<ValueType> returnValueType,
+    shared_ptr<Location> location
+):
+Statement(StatementKind::META_EXTERN_FUNCTION, location), arguments(arguments), returnValueType(returnValueType) {
     symbolName = name;
 
     size_t pos = name.find('.');

@@ -65,8 +65,8 @@ private:
 
 public:
     CodeGenerator(
-        string targetTripleOption,
-        string architectureOption,
+        const string &targetTripleOption,
+        const string &architectureOption,
         RelocationModel relocationModelOption,
         CodeModel codeModelOption,
         OptimizationLevel optimizationLevelOption,

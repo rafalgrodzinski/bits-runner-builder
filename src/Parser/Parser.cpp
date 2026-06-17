@@ -39,8 +39,8 @@
 #include "Parsee/ParseeResult.h"
 #include "Parsee/ParseeResultsGroup.h"
 
-Parser::Parser(vector<shared_ptr<Token>> tokens):
-tokens(std::move(tokens)) { }
+Parser::Parser(const vector<shared_ptr<Token>> &tokens):
+tokens(tokens) { }
 
 vector<shared_ptr<Statement>> Parser::getStatements() {
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(

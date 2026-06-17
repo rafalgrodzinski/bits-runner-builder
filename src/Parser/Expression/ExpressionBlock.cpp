@@ -6,9 +6,9 @@
 
 #include "Lexer/Location.h"
 
-ExpressionBlock::ExpressionBlock(vector<shared_ptr<Statement>> statements, shared_ptr<Location> location):
+ExpressionBlock::ExpressionBlock(const vector<shared_ptr<Statement>> &statements, shared_ptr<Location> location):
 Expression(ExpressionKind::BLOCK, nullptr, location) {
-    vector<shared_ptr<Statement>> blockStatements = std::move(statements);
+    vector<shared_ptr<Statement>> blockStatements = statements;
     if (!blockStatements.empty() && blockStatements.back()->getKind() == StatementKind::EXPRESSION) {
         resultStatementExpression = dynamic_pointer_cast<StatementExpression>(blockStatements.back());
         blockStatements.pop_back();

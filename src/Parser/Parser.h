@@ -105,7 +105,7 @@ private:
     void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
 
 public:
-    Parser(vector<shared_ptr<Token>> tokens);
+    Parser(const vector<shared_ptr<Token>> &tokens);
 
     vector<shared_ptr<Statement>> getStatements();
 };

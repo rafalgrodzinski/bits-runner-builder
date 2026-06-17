@@ -3,11 +3,15 @@
 StatementProto::StatementProto(
     bool shouldExport,
     const string &name,
-    vector<shared_ptr<StatementVariable>> variableStatements,
-    vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements,
+    const vector<shared_ptr<StatementVariable>> &variableStatements,
+    const vector<shared_ptr<StatementFunctionDeclaration>> &functionDeclarationStatements,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::PROTO, location), shouldExport(shouldExport), name(name), variableStatements(std::move(variableStatements)), functionDeclarationStatements(std::move(functionDeclarationStatements)) { }
+Statement(StatementKind::PROTO, location),
+shouldExport(shouldExport),
+name(name),
+variableStatements(variableStatements),
+functionDeclarationStatements(functionDeclarationStatements) { }
 
 bool StatementProto::getShouldExport() const {
     return shouldExport;

@@ -82,13 +82,13 @@ public:
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> blob(const string &blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues);
+    static shared_ptr<ValueType> blob(const string &blobName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues);
     static shared_ptr<ValueType> proto(const string &protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
-    static shared_ptr<ValueType> fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType);
+    static shared_ptr<ValueType> fun(const vector<shared_ptr<ValueType>> &argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType, bool isVolatile);
-    static shared_ptr<ValueType> composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> namedType(string namedTypeKey);
+    static shared_ptr<ValueType> composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression);
+    static shared_ptr<ValueType> namedType(const string &namedTypeKey);
 
     ValueType();
     ValueType(ValueTypeKind kind, const string &name = "");

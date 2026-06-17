@@ -1,7 +1,7 @@
 #include "ExpressionCall.h"
 
-ExpressionCall::ExpressionCall(const string &name, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<Location> location):
-Expression(ExpressionKind::CALL, nullptr, location), argumentExpressions(std::move(argumentExpressions)) {
+ExpressionCall::ExpressionCall(const string &name, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<Location> location):
+Expression(ExpressionKind::CALL, nullptr, location), argumentExpressions(argumentExpressions) {
     size_t pos = name.find('.');
     if (pos != string::npos) {
         this->moduleName = name.substr(0, pos);
