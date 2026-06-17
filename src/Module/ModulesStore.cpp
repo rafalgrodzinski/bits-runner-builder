@@ -266,18 +266,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         exportedProtoNames.push_back(name);
                     }
 
-                    // update member variable statements for exported statement
-                    vector<shared_ptr<StatementVariable>> exportedVariableStatements;
-                    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
-                        exportedVariableStatements.push_back(statementVariable);
-                    }
-
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
                         statementBlob->getName(),
                         statementBlob->getNamedTypeKeys(),
                         exportedProtoNames,
-                        exportedVariableStatements,
+                        statementBlob->getVariableStatements(),
                         vector<shared_ptr<StatementFunction>>(), // don't include function definitions
                         statementBlob->getLocation()
                     );
@@ -302,24 +296,25 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     moduleFunctionDeclarationStatements.push_back(statementBlobFunctionDeclaration);
 
                     // handle exported & public functions
-                    if (statementBlob->getShouldExport()) {
+                    if (statementBlob->getShouldExport())
                        moduleExportedFunctionDeclarationStatements.push_back(statementBlobFunctionDeclaration);
-                    }
                 }
+
                 break;
             }
             case StatementKind::FUNCTION: {
                 shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
                 shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = statementFunction->getDeclaration();
+
                 // local header
                 moduleFunctionDeclarationStatements.push_back(statementFunctionDeclaration);
                 // body
                 moduleBodyStatements.push_back(statementFunction);
 
                 // exported header
-                if (statementFunction->getShouldExport()) {
+                if (statementFunction->getShouldExport())
                    moduleExportedFunctionDeclarationStatements.push_back(statementFunctionDeclaration);
-                }
+
                 break;
             }
             case StatementKind::META_EXTERN_FUNCTION:
@@ -346,20 +341,20 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // exported header
                 if (statementProto->getShouldExport()) {
-
-                    // append updated statement
+                    // append proto statement
                     moduleExportedProtoStatements.push_back(statementProto);
                     // declaration doesn't contain any types, so it's fine like this
                     moduleExportedProtoDeclarationStatements.push_back(statementProtoDeclaration);
                 }
+
                 break;
             }
             case StatementKind::RAW_FUNCTION: {
                 shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(statement);
                 moduleRawFunctionStatements.push_back(statementRawFunction);
-                if (statementRawFunction->getShouldExport()) {
+                if (statementRawFunction->getShouldExport())
                     moduleExportedRawFunctionStatements.push_back(statementRawFunction);
-                }
+
                 break;
             }
             case StatementKind::VARIABLE: {
@@ -370,9 +365,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleVariableStatements.push_back(statementVariable);
 
                 // exported header
-                if (statementVariable->getShouldExport()) {
+                if (statementVariable->getShouldExport())
                    moduleExportedVariableDeclarationStatements.push_back(statementVariableDeclaration);
-                }
+
                 break;
             }
             default: {
