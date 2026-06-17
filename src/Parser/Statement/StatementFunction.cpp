@@ -13,16 +13,11 @@ StatementFunction::StatementFunction(
     shared_ptr<StatementBlock> statementBlock,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION, location), shouldExport(shouldExport), arguments(arguments), returnValueType(returnValueType), statementBlock(statementBlock) {
-    // setup names
-    size_t pos = name.find('.');
-    if (pos != string::npos) {
-        this->moduleName = name.substr(0, pos);
-        this->name = name.substr(pos + 1, name.size());
-    } else {
-        this->name = name;
-    }
-
+Statement(StatementKind::FUNCTION, location),
+shouldExport(shouldExport),
+name(name),
+arguments(arguments),
+returnValueType(returnValueType), statementBlock(statementBlock) {
     // setup statements
     vector<shared_ptr<Statement>> statements = statementBlock->getStatements();
     if (!statements.empty() && statements.back()->getKind() == StatementKind::RETURN)

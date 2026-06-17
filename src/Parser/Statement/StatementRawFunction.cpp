@@ -12,7 +12,8 @@ StatementRawFunction::StatementRawFunction(
     shared_ptr<Location> location
 ):
 Statement(StatementKind::RAW_FUNCTION, location),
-shouldExport(shouldExport), name(name),
+shouldExport(shouldExport),
+name(name),
 constraints(constraints),
 arguments(arguments),
 returnValueType(returnValueType),
