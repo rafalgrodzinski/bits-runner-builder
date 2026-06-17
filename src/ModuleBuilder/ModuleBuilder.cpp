@@ -309,7 +309,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> stat
         statementFunctionDeclaration->getModuleName(),
         statementFunctionDeclaration->getName(),
         statementFunctionDeclaration->getShouldExport(),
-        false,
         statementFunctionDeclaration->getArguments(),
         statementFunctionDeclaration->getReturnValueType()
     );
@@ -397,7 +396,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                     statementDeclaration->getModuleName(),
                     statementDeclaration->getName(),
                     true,
-                    false,
                     statementDeclaration->getArguments(),
                     statementDeclaration->getReturnValueType()
                 );
@@ -424,7 +422,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                     statementDeclaration->getModuleName(),
                     statementDeclaration->getIdentifier(),
                     true,
-                    false,
                     statementDeclaration->getValueType()
                 );
                 break;
@@ -533,12 +530,11 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> stat
         statementVariableDeclaration->getModuleName(),
         statementVariableDeclaration->getIdentifier(),
         statementVariableDeclaration->getShouldExport(),
-        false,
         statementVariableDeclaration->getValueType()
     );
 }
 
-void ModuleBuilder::buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType) {    
+void ModuleBuilder::buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType) {    
     // symbol name
     string symbolName = name;
     if (!moduleName.empty() && moduleName.compare(defaultModuleName))
@@ -562,7 +558,7 @@ void ModuleBuilder::buildFunctionDeclaration(const string &moduleName, const str
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes funLinkage = (shouldExport || isExtern) ?
+    llvm::GlobalValue::LinkageTypes funLinkage = shouldExport ?
         llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
@@ -629,10 +625,10 @@ void ModuleBuilder::buildRawFunction(const string &moduleName, shared_ptr<Statem
     scope->setInlineAsm(internalName, rawFun);
 }
 
-void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType) {
+void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, shared_ptr<ValueType> valueType) {
     // symbol name
     string symbolName = name;
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0 && !isExtern)
+    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
         symbolName = format("{}.{}", moduleName, name);
 
     // internal name
@@ -646,7 +642,7 @@ void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const str
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes linkage = (shouldExport || isExtern) ?
+    llvm::GlobalValue::LinkageTypes linkage = shouldExport  ?
         llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
