@@ -120,7 +120,6 @@ private:
     void buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType);
     void buildRawFunction(const string &moduleName, shared_ptr<StatementRawFunction> statement);
     void buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType);
-    void buildExternFunction(const string &name, const string &symbolName, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType);
 
     void buildProtoDeclaration(const string &moduleName, shared_ptr<StatementProtoDeclaration> statement);
     void buildProtoDefinition(const string &moduleName, shared_ptr<StatementProto> statement);

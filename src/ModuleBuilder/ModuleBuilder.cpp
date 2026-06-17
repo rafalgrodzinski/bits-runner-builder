@@ -316,21 +316,52 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> stat
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
-    buildExternFunction(
-        statementMetaExternFunction->getGlobalName(),
+    // arguments
+    vector<llvm::Type *> funArgTypes;
+    for (const pair<string, shared_ptr<ValueType>> &argument : statementMetaExternFunction->getArguments()) {
+        llvm::Type *funArgType = llvmTypeForValueType(argument.second);
+        if (funArgType == nullptr)
+            return;
+        funArgTypes.push_back(funArgType);
+    }
+
+    // return type
+    llvm::Type *funReturnType = llvmTypeForValueType(statementMetaExternFunction->getReturnValueType());
+    if (funReturnType == nullptr)
+        return;
+
+    // build function declaration
+    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgTypes, false);
+    llvm::Function *fun = llvm::Function::Create(
+        funType,
+        llvm::GlobalValue::LinkageTypes::ExternalLinkage,
         statementMetaExternFunction->getSymbolName(),
-        statementMetaExternFunction->getArguments(),
-        statementMetaExternFunction->getReturnValueType()
+        *llvmModule
     );
+    fun->setCallingConv(callingConvention);
+
+    scope->setFunction(statementMetaExternFunction->getGlobalName(), fun);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
-    buildVariableDeclaration(
-        module->getName(),
-        statementMetaExternVariable->getIdentifier(),
+    // type
+    llvm::Type *type = llvmTypeForValueType(statementMetaExternVariable->getValueType());
+    if (type == nullptr)
+        return;
+
+    llvm::GlobalVariable *global = new llvm::GlobalVariable(
+        *llvmModule,
+        type,
         false,
-        true,
-        statementMetaExternVariable->getValueType()
+        llvm::GlobalValue::LinkageTypes::ExternalLinkage,
+        nullptr,
+        statementMetaExternVariable->getSymbolName()
+    );
+
+    // register
+    scope->setWrappedValue(
+        statementMetaExternVariable->getGlobalIdentifier(),
+        WrappedValue::wrappedValue(global, statementMetaExternVariable->getValueType())
     );
 }
 
@@ -626,29 +657,6 @@ void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const str
         internalName,
         WrappedValue::wrappedValue(global, valueType)
     );
-}
-
-void ModuleBuilder::buildExternFunction(const string &name, const string &symbolName, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType) {
-    // arguments
-    vector<llvm::Type *> funArgTypes;
-    for (const pair<string, shared_ptr<ValueType>> &argument : arguments) {
-        llvm::Type *funArgType = llvmTypeForValueType(argument.second);
-        if (funArgType == nullptr)
-            return;
-        funArgTypes.push_back(funArgType);
-    }
-
-    // return type
-    llvm::Type *funReturnType = llvmTypeForValueType(returnType);
-    if (funReturnType == nullptr)
-        return;
-
-    // build function declaration
-    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgTypes, false);
-    llvm::Function *fun = llvm::Function::Create(funType, llvm::GlobalValue::LinkageTypes::ExternalLinkage, symbolName, *llvmModule);
-    fun->setCallingConv(callingConvention);
-
-    scope->setFunction(name, fun);
 }
 
 void ModuleBuilder::buildProtoDeclaration(const string &moduleName, shared_ptr<StatementProtoDeclaration> statement) {

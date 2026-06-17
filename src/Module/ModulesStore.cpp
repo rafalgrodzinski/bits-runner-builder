@@ -11,6 +11,7 @@
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
+#include "Parser/Statement/StatementMetaExternVariable.h"
 #include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementProto.h"
@@ -98,6 +99,11 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             }
             // return
             statementMetaExternFunction->getReturnValueType()->setModuleName(moduleName);
+            break;
+        }
+        case StatementKind::META_EXTERN_VARIABLE: {
+            shared_ptr<StatementMetaExternVariable> statementMetaExternVariable = dynamic_pointer_cast<StatementMetaExternVariable>(statement);
+            statementMetaExternVariable->setModuleName(moduleName);
             break;
         }
         case StatementKind::PROTO: {

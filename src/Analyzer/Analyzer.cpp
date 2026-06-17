@@ -353,7 +353,7 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementM
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
-   string identifier = statementMetaExternVariable->getIdentifier();
+   string identifier = statementMetaExternVariable->getGlobalIdentifier();
 
     if (!scope->setVariableType(identifier, statementMetaExternVariable->getValueType(), false))
         markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);
