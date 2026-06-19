@@ -62,6 +62,12 @@ enum class ExpressionUnaryOperation;
 
 using namespace std;
 
+enum class ModuleBuilderImportLevel {
+    NONE,
+    ROOT,
+    SUB
+};
+
 class ModuleBuilder {
 private:
     vector<shared_ptr<Error>> errors;
@@ -108,7 +114,7 @@ private:
     void buildStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport);
+    void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ModuleBuilderImportLevel ImportLevel);
     void buildStatement(shared_ptr<StatementProto> statementProto);
     void buildStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration);
     void buildStatement(shared_ptr<StatementRawFunction> statementRawFunction);

@@ -170,7 +170,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
             buildStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
             break;
         case StatementKind::META_IMPORT:
-            buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
+            buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement), ModuleBuilderImportLevel::ROOT);
             break;
         case StatementKind::PROTO:
             buildStatement(dynamic_pointer_cast<StatementProto>(statement));
@@ -364,7 +364,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> state
     );
 }
 
-void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport) {
+void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ModuleBuilderImportLevel importLevel) {
     auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
     if (it == importableHeaderStatementsMap.end()) {
         markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
@@ -374,12 +374,14 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
     for (shared_ptr<Statement> &importedStatement : it->second) {
         switch (importedStatement->getKind()) {
             case StatementKind::BLOB: {
-                shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(importedStatement);
-                buildBlobDefinition(
-                    statementBlob->getModuleName(),
-                    statementBlob->getName(),
-                    statementBlob->getMembers()
-                );
+                if (importLevel != ModuleBuilderImportLevel::SUB) {
+                    shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(importedStatement);
+                    buildBlobDefinition(
+                        statementBlob->getModuleName(),
+                        statementBlob->getName(),
+                        statementBlob->getMembers()
+                    );
+                }
                 break;
             }
             case StatementKind::BLOB_DECLARATION: {
@@ -401,9 +403,22 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 );
                 break;
             }
+            case StatementKind::META_IMPORT: {
+                shared_ptr<StatementMetaImport> statementMetaImport = dynamic_pointer_cast<StatementMetaImport>(importedStatement);
+                ModuleBuilderImportLevel newImportLevel;
+                if (importLevel == ModuleBuilderImportLevel::NONE) {
+                    newImportLevel = ModuleBuilderImportLevel::ROOT;
+                } else {
+                    newImportLevel = ModuleBuilderImportLevel::SUB;
+                }
+                buildStatement(statementMetaImport, newImportLevel);
+                break;
+            }
             case StatementKind::PROTO: {
-                shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(importedStatement);
-                buildProtoDefinition(statementProto->getModuleName(), statementProto);
+                if (importLevel != ModuleBuilderImportLevel::SUB) {
+                    shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(importedStatement);
+                    buildProtoDefinition(statementProto->getModuleName(), statementProto);
+                }
                 break;
             }
             case StatementKind::PROTO_DECLARATION: {
@@ -412,8 +427,10 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
                 break;
             }
             case StatementKind::RAW_FUNCTION: {
-                shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
-                buildRawFunction(statementRawFunction->getModuleName(), statementRawFunction);
+                if (importLevel != ModuleBuilderImportLevel::SUB) {
+                    shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
+                    buildRawFunction(statementRawFunction->getModuleName(), statementRawFunction);
+                }
                 break;
             }
             case StatementKind::VARIABLE_DECLARATION: {

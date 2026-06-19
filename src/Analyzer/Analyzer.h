@@ -51,6 +51,12 @@ enum class ExpressionBinaryOperation;
 
 using namespace std;
 
+enum class ImportLevel {
+    NONE,
+    ROOT,
+    SUB
+};
+
 class Analyzer {
 private:
     vector<shared_ptr<Error>> errors;
@@ -60,7 +66,7 @@ private:
     shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
 
-    void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported = false);
+    void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported = false, ImportLevel importLevel = ImportLevel::NONE);
     void checkStatement(shared_ptr<StatementAssignment> statementAssignment);
     void checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported);
     void checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
@@ -70,7 +76,7 @@ private:
     void checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void checkStatement(shared_ptr<StatementMetaImport> statement);
+    void checkStatement(shared_ptr<StatementMetaImport> statement, ImportLevel ImportLevel);
     void checkStatement(shared_ptr<StatementProto> statement);
     void checkStatement(shared_ptr<StatementProtoDeclaration> statement);
     void checkStatement(shared_ptr<StatementRawFunction> statementRawFunction);

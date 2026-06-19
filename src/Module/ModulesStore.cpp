@@ -557,6 +557,7 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
     // it is shared by all the modules
 
     // order for exported header statements is:
+    // - import statements
     // - proto declarations
     // - proto definitions
     // - blob declarations
@@ -569,6 +570,9 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
         // first initialize it with an empty array (in case there are no exported statements)
         statementsMap[moduleName] = {};
 
+        // imports
+        for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
         // exported proto declarations
         for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
