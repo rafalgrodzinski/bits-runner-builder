@@ -124,7 +124,6 @@ private:
     void buildStatement(shared_ptr<StatementVariable> statementVariable);
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    void buildRawFunction(const string &moduleName, shared_ptr<StatementRawFunction> statement);
     void buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, shared_ptr<ValueType> valueType);
 
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
@@ -160,7 +159,7 @@ private:
     void markModuleError(const string &message);
     
     void markErrorAlreadyDefined(shared_ptr<Location> location, const string &name);
-    void markInvalidConstraints(shared_ptr<Location> location, const string &functionName, const string &constraints);
+    void markErrorInvalidConstraints(shared_ptr<Location> location, const string &functionName, const string &constraints);
     void markErrorInvalidAssignment(shared_ptr<Location> location);
     void markErrorInvalidBuiltIn(shared_ptr<Location> location, const string &name);
     void markErrorInvalidCast(shared_ptr<Location> location);
