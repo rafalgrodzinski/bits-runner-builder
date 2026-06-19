@@ -441,11 +441,56 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
-    buildProtoDefinition(statementProto->getModuleName(), statementProto);
+    // symbol name
+    string symbolName = statementProto->getName();
+    if (statementProto->getModuleName() != defaultModuleName)
+        symbolName = statementProto->getGlobalName();
+
+    llvm::StructType *structType = scope->getProtoStructType(statementProto->getGlobalName());
+    if (structType == nullptr) {
+        markErrorNotDeclared(nullptr, format("proto \"{}\"", symbolName));
+        return;
+    }
+
+    // Generate types for body (and convert them to pointers) and keep each member type
+    vector<pair<string, shared_ptr<ValueType>>> members;
+    vector<llvm::Type *> types;
+
+    // first add pointer to the implementation
+    types.push_back(typePtr);
+
+    // then pointers to all the variables
+    for (shared_ptr<StatementVariable> statementVariable : statementProto->getVariableStatements()) {
+        shared_ptr<ValueType> valueType = ValueType::ptr(statementVariable->getValueType(), false);
+        members.push_back(pair(statementVariable->getIdentifier(), valueType));
+        llvm::Type *type = llvmTypeForValueType(valueType);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+
+    // and then pointers to the functions
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
+        shared_ptr<ValueType> valueType = ValueType::ptr(statementFunctionDeclaration->getValueType(), false);
+        members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
+        llvm::Type *type = llvmTypeForValueType(valueType);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+
+    structType->setBody(types, false);
+    scope->setProtoStructType(statementProto->getGlobalName(), structType, members);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration) {
-    buildProtoDeclaration(statementProtoDeclaration->getModuleName(), statementProtoDeclaration);
+    // symbol name
+    string symbolName = statementProtoDeclaration->getName();
+    if (statementProtoDeclaration->getModuleName() != defaultModuleName)
+        symbolName = statementProtoDeclaration->getGlobalName();
+
+    llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
+    scope->setProtoStructType(statementProtoDeclaration->getGlobalName(), structType, {});
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
@@ -660,65 +705,6 @@ void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const str
         internalName,
         WrappedValue::wrappedValue(global, valueType)
     );
-}
-
-void ModuleBuilder::buildProtoDeclaration(const string &moduleName, shared_ptr<StatementProtoDeclaration> statement) {
-    // symbol name
-    string symbolName = statement->getName();
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, statement->getName());
-
-    // internal name
-    string internalName = format("{}.{}", moduleName, statement->getName());
-
-    llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
-    scope->setProtoStructType(internalName, structType, {});
-}
-
-void ModuleBuilder::buildProtoDefinition(const string &moduleName, shared_ptr<StatementProto> statement) {
-    // symbol name
-    string symbolName = statement->getName();
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, statement->getName());
-
-    // internal name
-    string internalName = format("{}.{}", moduleName, statement->getName());
-
-    llvm::StructType *structType = scope->getProtoStructType(internalName);
-    if (structType == nullptr) {
-        markErrorNotDeclared(nullptr, format("proto \"{}\"", symbolName));
-        return;
-    }
-
-    // Generate types for body (and convert them to pointers) and keep each member type
-    vector<pair<string, shared_ptr<ValueType>>> members;
-    vector<llvm::Type *> types;
-
-    // first add pointer to the implementation
-    types.push_back(typePtr);
-
-    // then pointers to all the variables
-    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements()) {
-        shared_ptr<ValueType> valueType = ValueType::ptr(statementVariable->getValueType(), false);
-        members.push_back(pair(statementVariable->getIdentifier(), valueType));
-        llvm::Type *type = llvmTypeForValueType(valueType);
-        if (type == nullptr)
-            return;
-        types.push_back(type);
-    }
-
-    // and then pointers to the functions
-    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements()) {
-        shared_ptr<ValueType> valueType = ValueType::ptr(statementFunctionDeclaration->getValueType(), false);
-        members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
-        llvm::Type *type = llvmTypeForValueType(valueType);
-        if (type == nullptr)
-            return;
-        types.push_back(type);
-    }
-
-    structType->setBody(types, false);
-    scope->setProtoStructType(internalName, structType, members);
 }
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
