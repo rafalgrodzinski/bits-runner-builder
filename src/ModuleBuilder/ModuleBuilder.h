@@ -62,20 +62,20 @@ enum class ExpressionUnaryOperation;
 
 using namespace std;
 
-enum class ModuleBuilderImportLevel {
-    NONE,
-    ROOT,
-    SUB
-};
-
 class ModuleBuilder {
+    enum class ImportLevel {
+        NONE,
+        EXPLICIT,
+        IMPLICIT
+    };
+
 private:
     vector<shared_ptr<Error>> errors;
     string defaultModuleName;
 
     shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
-    vector<string> alreadyImportedModuleNames;
+    map<string, ImportLevel> importedModuleLevelsMap;
 
     shared_ptr<Scope> scope;
 
@@ -105,7 +105,7 @@ private:
     llvm::Type *typeBoxed;
 
     // Statements
-    void buildStatement(shared_ptr<Statement> statement);
+    void buildStatement(shared_ptr<Statement> statement, ImportLevel importLevel = ImportLevel::NONE);
     void buildStatement(shared_ptr<StatementAssignment> statementAssignment);
     void buildStatement(shared_ptr<StatementBlob> statementBlob);
     void buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
@@ -115,7 +115,7 @@ private:
     void buildStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ModuleBuilderImportLevel ImportLevel);
+    void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel);
     void buildStatement(shared_ptr<StatementProto> statementProto);
     void buildStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration);
     void buildStatement(shared_ptr<StatementRawFunction> statementRawFunction);

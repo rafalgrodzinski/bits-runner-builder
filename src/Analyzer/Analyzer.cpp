@@ -135,13 +135,13 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             checkStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
             break;
         }
-        case StatementKind::REPEAT: {
-            checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
-            break;
-        }
         case StatementKind::RAW_FUNCTION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
+            break;
+        }
+        case StatementKind::REPEAT: {
+            checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
             break;
         }
         case StatementKind::RETURN: {
@@ -392,30 +392,30 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementM
         markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);
 }
 
-void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statement, ImportLevel importLevel) {
-    // Check if desired import exits
-    auto it = importableHeaderStatementsMap.find(statement->getName());
+void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel) {
+    // Check if import exits
+    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
     if (it == importableHeaderStatementsMap.end()) {
-        markErrorInvalidImport(statement->getLocation(), statement->getName());
+        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
         return;
     }
 
     // Skip if import circles back
-    if (statement->getName() == module->getName())
+    if (statementMetaImport->getName() == module->getName())
         return;
     
     // Check already imported levels
-    ImportLevel currentImport = importedModuleLevelsMap[statement->getName()];
+    ImportLevel currentImport = importedModuleLevelsMap[statementMetaImport->getName()];
     if (
         currentImport == ImportLevel::EXPLICIT ||
         currentImport == ImportLevel::IMPLICIT && importLevel != ImportLevel::EXPLICIT
     ) {
         return;
     }
-    importedModuleLevelsMap[statement->getName()] = importLevel;
+    importedModuleLevelsMap[statementMetaImport->getName()] = importLevel;
 
-    for (shared_ptr<Statement> &importStatement : it->second) {
-        checkStatement(importStatement, nullptr, true, importLevel);
+    for (shared_ptr<Statement> &importedStatement : it->second) {
+        checkStatement(importedStatement, nullptr, true, importLevel);
     }
 }
 

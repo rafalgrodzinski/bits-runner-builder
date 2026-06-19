@@ -140,59 +140,85 @@ shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
 //
 // Statements
 //
-void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
+void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel importLevel) {
     switch (statement->getKind()) {
-        case StatementKind::ASSIGNMENT:
+        case StatementKind::ASSIGNMENT: {
             buildStatement(dynamic_pointer_cast<StatementAssignment>(statement));
             break;
-        case StatementKind::BLOB:
-            buildStatement(dynamic_pointer_cast<StatementBlob>(statement));
+        }
+        case StatementKind::BLOB: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                buildStatement(dynamic_pointer_cast<StatementBlob>(statement));
             break;
-        case StatementKind::BLOB_DECLARATION:
+        }
+        case StatementKind::BLOB_DECLARATION: {
             buildStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
             break;
-        case StatementKind::BLOCK:
+        }
+        case StatementKind::BLOCK: {
             buildStatement(dynamic_pointer_cast<StatementBlock>(statement));
             break;
-        case StatementKind::EXPRESSION:
+        }
+        case StatementKind::EXPRESSION: {
             buildStatement(dynamic_pointer_cast<StatementExpression>(statement));
             break;
-        case StatementKind::FUNCTION:
+        }
+        case StatementKind::FUNCTION: {
             buildStatement(dynamic_pointer_cast<StatementFunction>(statement));
             break;
-        case StatementKind::FUNCTION_DECLARATION:
-            buildStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+        }
+        case StatementKind::FUNCTION_DECLARATION: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                buildStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
             break;
-        case StatementKind::META_EXTERN_FUNCTION:
+        }
+        case StatementKind::META_EXTERN_FUNCTION: {
             buildStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
             break;
-        case StatementKind::META_EXTERN_VARIABLE:
+        }
+        case StatementKind::META_EXTERN_VARIABLE: {
             buildStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
             break;
-        case StatementKind::META_IMPORT:
-            buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement), ModuleBuilderImportLevel::ROOT);
+        }
+        case StatementKind::META_IMPORT: {
+            ImportLevel newImportLevel = ImportLevel::IMPLICIT;
+            if (importLevel == ImportLevel::NONE)
+                newImportLevel = ImportLevel::EXPLICIT;
+            buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement), newImportLevel);
             break;
-        case StatementKind::PROTO:
-            buildStatement(dynamic_pointer_cast<StatementProto>(statement));
+        }
+        case StatementKind::PROTO: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                buildStatement(dynamic_pointer_cast<StatementProto>(statement));
             break;
-        case StatementKind::PROTO_DECLARATION:
+        }
+        case StatementKind::PROTO_DECLARATION: {
             buildStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
             break;
-        case StatementKind::RAW_FUNCTION:
-            buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
+        }
+        case StatementKind::RAW_FUNCTION: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
             break;
-        case StatementKind::REPEAT:
+        }
+        case StatementKind::REPEAT: {
             buildStatement(dynamic_pointer_cast<StatementRepeat>(statement));
             break;
-        case StatementKind::RETURN:
+        }
+        case StatementKind::RETURN: {
             buildStatement(dynamic_pointer_cast<StatementReturn>(statement));
             break;
-        case StatementKind::VARIABLE:
-            buildStatement(dynamic_pointer_cast<StatementVariable>(statement));
+        }
+        case StatementKind::VARIABLE: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                buildStatement(dynamic_pointer_cast<StatementVariable>(statement));
             break;
-        case StatementKind::VARIABLE_DECLARATION:
-            buildStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+        }
+        case StatementKind::VARIABLE_DECLARATION: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                buildStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
             break;
+        }
         default:
             markErrorUnexpected(statement->getLocation(), "statement");
     }
@@ -364,112 +390,39 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> state
     );
 }
 
-void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ModuleBuilderImportLevel importLevel) {
-    // Skip if import circles back
-    if (statementMetaImport->getName() == module->getName())
-        return;
-
-    // Skip if already imported
-    for (const string &moduleName : alreadyImportedModuleNames) {
-        if (moduleName == statementMetaImport->getName())
-            return;
-    }
-
-    // Register if it's an explicit import
-    if (importLevel !=ModuleBuilderImportLevel::SUB)
-        alreadyImportedModuleNames.push_back(statementMetaImport->getName());
-
+void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel) {
+    // Check if import exists
     auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
     if (it == importableHeaderStatementsMap.end()) {
         markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
         return;
     }
 
+    // Skip if import circles back
+    if (statementMetaImport->getName() == module->getName())
+        return;
+
+    // Check already imported levels
+    ImportLevel currentImport = importedModuleLevelsMap[statementMetaImport->getName()];
+    if (
+        currentImport == ImportLevel::EXPLICIT ||
+        currentImport == ImportLevel::IMPLICIT && importLevel != ImportLevel::EXPLICIT
+    ) {
+        return;
+    }
+    importedModuleLevelsMap[statementMetaImport->getName()] = importLevel;
+
     for (shared_ptr<Statement> &importedStatement : it->second) {
-        switch (importedStatement->getKind()) {
-            case StatementKind::BLOB: {
-                if (importLevel != ModuleBuilderImportLevel::SUB) {
-                    shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(importedStatement);
-                    buildBlobDefinition(
-                        statementBlob->getModuleName(),
-                        statementBlob->getName(),
-                        statementBlob->getMembers()
-                    );
-                }
-                break;
-            }
-            case StatementKind::BLOB_DECLARATION: {
-                shared_ptr<StatementBlobDeclaration> statementDeclaration = dynamic_pointer_cast<StatementBlobDeclaration>(importedStatement);
-                buildBlobDeclaration(
-                    statementDeclaration->getModuleName(),
-                    statementDeclaration->getName()
-                );
-                break;
-            }
-            case StatementKind::FUNCTION_DECLARATION: {
-                shared_ptr<StatementFunctionDeclaration> statementDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(importedStatement);
-                buildFunctionDeclaration(
-                    statementDeclaration->getModuleName(),
-                    statementDeclaration->getName(),
-                    true,
-                    statementDeclaration->getArguments(),
-                    statementDeclaration->getReturnValueType()
-                );
-                break;
-            }
-            case StatementKind::META_IMPORT: {
-                shared_ptr<StatementMetaImport> statementMetaImport = dynamic_pointer_cast<StatementMetaImport>(importedStatement);
-                ModuleBuilderImportLevel newImportLevel;
-                if (importLevel == ModuleBuilderImportLevel::NONE) {
-                    newImportLevel = ModuleBuilderImportLevel::ROOT;
-                } else {
-                    newImportLevel = ModuleBuilderImportLevel::SUB;
-                }
-                buildStatement(statementMetaImport, newImportLevel);
-                break;
-            }
-            case StatementKind::PROTO: {
-                if (importLevel != ModuleBuilderImportLevel::SUB) {
-                    shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(importedStatement);
-                    buildProtoDefinition(statementProto->getModuleName(), statementProto);
-                }
-                break;
-            }
-            case StatementKind::PROTO_DECLARATION: {
-                shared_ptr<StatementProtoDeclaration> statementProtoDeclaration = dynamic_pointer_cast<StatementProtoDeclaration>(importedStatement);
-                buildProtoDeclaration(statementProtoDeclaration->getModuleName(), statementProtoDeclaration);
-                break;
-            }
-            case StatementKind::RAW_FUNCTION: {
-                if (importLevel != ModuleBuilderImportLevel::SUB) {
-                    shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(importedStatement);
-                    buildRawFunction(statementRawFunction->getModuleName(), statementRawFunction);
-                }
-                break;
-            }
-            case StatementKind::VARIABLE_DECLARATION: {
-                shared_ptr<StatementVariableDeclaration> statementDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(importedStatement);
-                buildVariableDeclaration(
-                    statementDeclaration->getModuleName(),
-                    statementDeclaration->getIdentifier(),
-                    true,
-                    statementDeclaration->getValueType()
-                );
-                break;
-            }
-            default: {
-                markErrorUnexpected(importedStatement->getLocation(), "imported statement");
-            }
-        }
+        buildStatement(importedStatement, importLevel);
     }
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
-    buildProtoDefinition(module->getName(), statementProto);
+    buildProtoDefinition(statementProto->getModuleName(), statementProto);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration) {
-    buildProtoDeclaration(module->getName(), statementProtoDeclaration);
+    buildProtoDeclaration(statementProtoDeclaration->getModuleName(), statementProtoDeclaration);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
