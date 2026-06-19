@@ -378,6 +378,9 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementM
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statement, ImportLevel importLevel) {
+    if (statement->getName() == module->getName())
+        return;
+
     auto it = importableHeaderStatementsMap.find(statement->getName());
     if (it == importableHeaderStatementsMap.end()) {
         markErrorInvalidImport(statement->getLocation(), statement->getName());

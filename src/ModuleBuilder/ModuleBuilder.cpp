@@ -365,6 +365,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> state
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ModuleBuilderImportLevel importLevel) {
+    if (statementMetaImport->getName() == module->getName())
+        return;
+
     auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
     if (it == importableHeaderStatementsMap.end()) {
         markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
