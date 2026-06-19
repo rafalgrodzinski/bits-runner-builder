@@ -75,6 +75,7 @@ private:
 
     shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
+    vector<string> alreadyImportedModuleNames;
 
     shared_ptr<Scope> scope;
 

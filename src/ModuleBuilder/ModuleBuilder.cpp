@@ -365,8 +365,19 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> state
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ModuleBuilderImportLevel importLevel) {
+    // Skip if import circles back
     if (statementMetaImport->getName() == module->getName())
         return;
+
+    // Skip if already imported
+    for (const string &moduleName : alreadyImportedModuleNames) {
+        if (moduleName == statementMetaImport->getName())
+            return;
+    }
+
+    // Register if it's an explicit import
+    if (importLevel !=ModuleBuilderImportLevel::SUB)
+        alreadyImportedModuleNames.push_back(statementMetaImport->getName());
 
     auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
     if (it == importableHeaderStatementsMap.end()) {
