@@ -642,39 +642,25 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) 
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementVariable> statementVariable) {
-    if (builder->GetInsertBlock() != nullptr)
-        buildLocalVariable(statementVariable);
-    else
+    if (statementVariable->getIsRoot())
         buildGlobalVariable(statementVariable);
+    else
+        buildLocalVariable(statementVariable);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
-    buildVariableDeclaration(
-        statementVariableDeclaration->getModuleName(),
-        statementVariableDeclaration->getIdentifier(),
-        statementVariableDeclaration->getShouldExport(),
-        statementVariableDeclaration->getValueType()
-    );
-}
-
-void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, shared_ptr<ValueType> valueType) {
     // symbol name
-    string symbolName = name;
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, name);
-
-    // internal name
-    string internalName = name;
-    if (moduleName.compare(module->getName()) != 0)
-        internalName = format("{}.{}", moduleName, name);
+    string symbolName = statementVariableDeclaration->getIdentifier();
+    if (statementVariableDeclaration->getModuleName() != defaultModuleName)
+        symbolName = statementVariableDeclaration->getGlobalIdentifier();
 
     // type
-    llvm::Type *type = llvmTypeForValueType(valueType);
+    llvm::Type *type = llvmTypeForValueType(statementVariableDeclaration->getValueType());
     if (type == nullptr)
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes linkage = shouldExport  ?
+    llvm::GlobalValue::LinkageTypes linkage = statementVariableDeclaration->getShouldExport()  ?
         llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
@@ -682,26 +668,26 @@ void ModuleBuilder::buildVariableDeclaration(const string &moduleName, const str
 
     // register
     scope->setWrappedValue(
-        internalName,
-        WrappedValue::wrappedValue(global, valueType)
+        statementVariableDeclaration->getGlobalIdentifier(),
+        WrappedValue::wrappedValue(global, statementVariableDeclaration->getValueType())
     );
 }
 
-void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
-    llvm::Type *type = llvmTypeForValueType(statement->getValueType(), false);
+void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statementVariable) {
+    llvm::Type *type = llvmTypeForValueType(statementVariable->getValueType(), false);
     if (type == nullptr)
         return;
-    llvm::AllocaInst *alloca = buildAlloca(type, format("a_{}", statement->getIdentifier()));
+    llvm::AllocaInst *alloca = buildAlloca(type, format("a_{}", statementVariable->getGlobalIdentifier()));
 
-    shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(alloca, statement->getValueType());
+    shared_ptr<WrappedValue> wrappedValue = WrappedValue::wrappedValue(alloca, statementVariable->getValueType());
 
     // try registering new variable in scope
     scope->setWrappedValue(
-        statement->getGlobalIdentifier(),
+        statementVariable->getGlobalIdentifier(),
         wrappedValue
     );
 
-    if (shared_ptr<Expression> valueExpression = statement->getExpression()) {
+    if (shared_ptr<Expression> valueExpression = statementVariable->getExpression()) {
         buildAssignment(wrappedValue, valueExpression);
     } else {
         llvm::Constant *constantValue = llvm::Constant::getNullValue(type);
@@ -709,32 +695,28 @@ void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) 
     }
 }
 
-void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement) {
+void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statementVariable) {
     // symbol name
-    string moduleName = module->getName();
-    string symbolName = statement->getIdentifier();
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, statement->getIdentifier());
-
-    // internal name
-    string internalName = statement->getGlobalIdentifier();
+    string symbolName = statementVariable->getIdentifier();
+    if (statementVariable->getModuleName() != defaultModuleName)
+        symbolName = statementVariable->getGlobalIdentifier();
 
     // type
-    llvm::Type *type = llvmTypeForValueType(statement->getValueType());
+    llvm::Type *type = llvmTypeForValueType(statementVariable->getValueType());
     if (type == nullptr)
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes linkage = statement->getShouldExport() ?
+    llvm::GlobalValue::LinkageTypes linkage = statementVariable->getShouldExport() ?
         linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
     // initializer
     llvm::Constant *constantValue = llvm::Constant::getNullValue(type);
-    if (statement->getExpression() != nullptr) {
-        shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(statement->getExpression());
+    if (statementVariable->getExpression() != nullptr) {
+        shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(statementVariable->getExpression());
         if (wrappedValue == nullptr || (constantValue = wrappedValue->getConstantValue()) == nullptr) {
-            markErrorInvalidConstant(statement->getLocation());
+            markErrorInvalidConstant(statementVariable->getLocation());
             return;
         }
     }
@@ -743,8 +725,8 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statement)
 
     // register
     scope->setWrappedValue(
-        internalName,
-        WrappedValue::wrappedValue(global, statement->getValueType())
+        statementVariable->getGlobalIdentifier(),
+        WrappedValue::wrappedValue(global, statementVariable->getValueType())
     );
 }
 
