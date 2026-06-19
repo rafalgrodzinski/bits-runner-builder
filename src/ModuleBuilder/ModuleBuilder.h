@@ -124,7 +124,6 @@ private:
     void buildStatement(shared_ptr<StatementVariable> statementVariable);
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    void buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType);
     void buildRawFunction(const string &moduleName, shared_ptr<StatementRawFunction> statement);
     void buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, shared_ptr<ValueType> valueType);
 

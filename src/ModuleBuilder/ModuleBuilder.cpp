@@ -354,13 +354,36 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
-    buildFunctionDeclaration(
-        statementFunctionDeclaration->getModuleName(),
-        statementFunctionDeclaration->getName(),
-        statementFunctionDeclaration->getShouldExport(),
-        statementFunctionDeclaration->getArguments(),
-        statementFunctionDeclaration->getReturnValueType()
-    );
+    // symbol name
+    string symbolName = statementFunctionDeclaration->getName();
+    if (statementFunctionDeclaration->getModuleName() != defaultModuleName)
+        symbolName = statementFunctionDeclaration->getGlobalName();
+
+    // arguments
+    vector<llvm::Type *> funArgTypes;
+    for (const pair<string, shared_ptr<ValueType>> &argument : statementFunctionDeclaration->getArguments()) {
+        llvm::Type *funArgType = llvmTypeForValueType(argument.second);
+        if (funArgType == nullptr)
+            return;
+        funArgTypes.push_back(funArgType);
+    }
+
+    // return type
+    llvm::Type *funReturnType = llvmTypeForValueType(statementFunctionDeclaration->getReturnValueType());
+    if (funReturnType == nullptr)
+        return;
+
+    // linkage
+    llvm::GlobalValue::LinkageTypes funLinkage = statementFunctionDeclaration->getShouldExport() ?
+        llvm::GlobalValue::LinkageTypes::ExternalLinkage :
+        llvm::GlobalValue::LinkageTypes::InternalLinkage;
+
+    // build function declaration
+    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgTypes, false);
+    llvm::Function *fun = llvm::Function::Create(funType, funLinkage, symbolName, *llvmModule);
+    fun->setCallingConv(callingConvention);
+
+    scope->setFunction(statementFunctionDeclaration->getGlobalName(), fun);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
@@ -584,42 +607,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> stat
         statementVariableDeclaration->getShouldExport(),
         statementVariableDeclaration->getValueType()
     );
-}
-
-void ModuleBuilder::buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType) {    
-    // symbol name
-    string symbolName = name;
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName))
-        symbolName = format("{}.{}", moduleName, name);
-
-    // internal name
-   string internalName = format("{}.{}", moduleName, name);
-
-    // arguments
-    vector<llvm::Type *> funArgTypes;
-    for (const pair<string, shared_ptr<ValueType>> &argument : arguments) {
-        llvm::Type *funArgType = llvmTypeForValueType(argument.second);
-        if (funArgType == nullptr)
-            return;
-        funArgTypes.push_back(funArgType);
-    }
-
-    // return type
-    llvm::Type *funReturnType = llvmTypeForValueType(returnType);
-    if (funReturnType == nullptr)
-        return;
-
-    // linkage
-    llvm::GlobalValue::LinkageTypes funLinkage = shouldExport ?
-        llvm::GlobalValue::LinkageTypes::ExternalLinkage :
-        llvm::GlobalValue::LinkageTypes::InternalLinkage;
-
-    // build function declaration
-    llvm::FunctionType *funType = llvm::FunctionType::get(funReturnType, funArgTypes, false);
-    llvm::Function *fun = llvm::Function::Create(funType, funLinkage, symbolName, *llvmModule);
-    fun->setCallingConv(callingConvention);
-
-    scope->setFunction(internalName, fun);
 }
 
 void ModuleBuilder::buildRawFunction(const string &moduleName, shared_ptr<StatementRawFunction> statement) {
