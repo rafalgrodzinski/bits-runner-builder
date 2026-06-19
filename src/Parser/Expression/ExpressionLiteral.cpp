@@ -1,7 +1,7 @@
 #include "ExpressionLiteral.h"
 
 #include "Lexer/Token.h"
-#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType.h"
 
 optional<int> ExpressionLiteral::decodeEscapedCharString(string charString) {
     switch (charString.length()) {

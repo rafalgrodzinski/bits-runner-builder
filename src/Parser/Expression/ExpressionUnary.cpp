@@ -1,7 +1,7 @@
 #include "ExpressionUnary.h"
 
 #include "Lexer/Token.h"
-#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType.h"
 
 ExpressionUnary::ExpressionUnary(shared_ptr<Location> location):
 Expression(ExpressionKind::UNARY, nullptr, location) { }

@@ -1,7 +1,7 @@
 #include "StatementFunctionDeclaration.h"
 
 #include "Parser/Statement/StatementReturn.h"
-#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType.h"
 
 StatementFunctionDeclaration::StatementFunctionDeclaration(
     bool shouldExport,

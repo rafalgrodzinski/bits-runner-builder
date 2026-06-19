@@ -1,6 +1,6 @@
 #include "WrappedValue.h"
 
-#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType.h"
 
 weak_ptr<llvm::Module> WrappedValue::llvmModule;
 weak_ptr<llvm::IRBuilder<>> WrappedValue::builder;

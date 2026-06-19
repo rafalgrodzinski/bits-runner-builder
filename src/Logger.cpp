@@ -8,7 +8,7 @@
 #include "Lexer/Token.h"
 #include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
-#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"

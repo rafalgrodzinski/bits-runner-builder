@@ -5,7 +5,7 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
-#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType.h"
 
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionLiteral.h"

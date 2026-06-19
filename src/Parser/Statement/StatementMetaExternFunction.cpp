@@ -1,6 +1,6 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 
-#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType.h"
 
 StatementMetaExternFunction::StatementMetaExternFunction(
     const string &name,
