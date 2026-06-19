@@ -12,6 +12,7 @@ private:
     bool shouldExport;
     string identifier;
     string moduleName;
+    bool isRoot;
     shared_ptr<ValueType> valueType;
 
 public:
@@ -19,6 +20,7 @@ public:
         bool shouldExport,
         const string &identifier,
         const string &moduleName,
+        bool isRoot,
         shared_ptr<ValueType> valueType,
         shared_ptr<Location> location
     );
@@ -28,6 +30,7 @@ public:
     string getGlobalIdentifier() const;
     string getModuleName() const;
     void setModuleName(const string &moduleName);
+    bool getIsRoot() const;
     shared_ptr<ValueType> getValueType() const;
 };
 

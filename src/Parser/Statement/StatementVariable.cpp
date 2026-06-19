@@ -64,6 +64,7 @@ shared_ptr<StatementVariableDeclaration> StatementVariable::getDeclaration() con
         shouldExport,
         identifier,
         moduleName,
+        isRoot,
         valueType,
         getLocation()
     );

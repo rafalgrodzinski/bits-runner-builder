@@ -124,8 +124,6 @@ private:
     void buildStatement(shared_ptr<StatementVariable> statementVariable);
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    void buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, shared_ptr<ValueType> valueType);
-
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);
