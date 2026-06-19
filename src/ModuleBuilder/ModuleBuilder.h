@@ -131,8 +131,6 @@ private:
     void buildProtoDeclaration(const string &moduleName, shared_ptr<StatementProtoDeclaration> statement);
     void buildProtoDefinition(const string &moduleName, shared_ptr<StatementProto> statement);
 
-    void buildBlobDeclaration(const string &moduleName, const string &name);
-    void buildBlobDefinition(const string &moduleName, const string &name, const vector<pair<string, shared_ptr<ValueType>>> &members);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);

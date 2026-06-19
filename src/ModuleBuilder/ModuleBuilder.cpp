@@ -233,16 +233,39 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
-    // build blob type (member variables only)
-    buildBlobDefinition(
-        statementBlob->getModuleName(),
-        statementBlob->getName(),
-        statementBlob->getMembers()
-    );
+    // symbol name
+    string symbolName = statementBlob->getName();
+    if (statementBlob->getModuleName() != defaultModuleName)
+        symbolName = statementBlob->getGlobalName();
+
+    llvm::StructType *structType = scope->getStructType(statementBlob->getGlobalName());
+    if (structType == nullptr) {
+        markErrorNotDeclared(nullptr, format("blob \"{}\"", statementBlob->getGlobalName()));
+        return;
+    }
+
+    // Generate types for body
+    vector<string> memberNames;
+    vector<llvm::Type *> types;
+    for (const pair<string, shared_ptr<ValueType>> &member: statementBlob->getMembers()) {
+        memberNames.push_back(member.first);
+        llvm::Type *type = llvmTypeForValueType(member.second);
+        if (type == nullptr)
+            return;
+        types.push_back(type);
+    }
+    structType->setBody(types, false);
+    scope->setStruct(statementBlob->getGlobalName(), structType, memberNames);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    buildBlobDeclaration(statementBlobDeclaration->getModuleName(), statementBlobDeclaration->getName());
+    // symbol name
+    string symbolName = statementBlobDeclaration->getName();
+    if (statementBlobDeclaration->getModuleName() != defaultModuleName)
+        symbolName = statementBlobDeclaration->getGlobalName();
+
+    llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
+    scope->setStruct(statementBlobDeclaration->getGlobalName(), structType, {});
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
@@ -696,47 +719,6 @@ void ModuleBuilder::buildProtoDefinition(const string &moduleName, shared_ptr<St
 
     structType->setBody(types, false);
     scope->setProtoStructType(internalName, structType, members);
-}
-
-void ModuleBuilder::buildBlobDeclaration(const string &moduleName, const string &name) {
-    // symbol name
-    string symbolName = name;
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, name);
-
-    // internal name
-    string internalName = format("{}.{}", moduleName, name);
-
-    llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
-    scope->setStruct(internalName, structType, {});
-}
-
-void ModuleBuilder::buildBlobDefinition(const string &moduleName, const string &name, const vector<pair<string, shared_ptr<ValueType>>> &members) {
-    // symbol name
-    string symbolName = name;
-    if (!moduleName.empty() && moduleName.compare(defaultModuleName) != 0)
-        symbolName = format("{}.{}", moduleName, name);
-    // internal name
-    string internalName = format("{}.{}", moduleName, name);
-
-    llvm::StructType *structType = scope->getStructType(internalName);
-    if (structType == nullptr) {
-        markErrorNotDeclared(nullptr, format("blob \"{}\"", internalName));
-        return;
-    }
-
-    // Generate types for body
-    vector<string> memberNames;
-    vector<llvm::Type *> types;
-    for (const pair<string, shared_ptr<ValueType>> &member: members) {
-        memberNames.push_back(member.first);
-        llvm::Type *type = llvmTypeForValueType(member.second);
-        if (type == nullptr)
-            return;
-        types.push_back(type);
-    }
-    structType->setBody(types, false);
-    scope->setStruct(internalName, structType, memberNames);
 }
 
 void ModuleBuilder::buildLocalVariable(shared_ptr<StatementVariable> statement) {
