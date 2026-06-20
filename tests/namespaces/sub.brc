@@ -1,0 +1,7 @@
+@module sub
+
+@export Proxy::value u32
+
+@export Proxy::Another::doStuff fun -> u32
+    ret @sub::Proxy::value
+;

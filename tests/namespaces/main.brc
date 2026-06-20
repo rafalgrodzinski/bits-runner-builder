@@ -1,0 +1,14 @@
+@import sub
+
+Proxy::Another::instance blob<Proxy::Dummy>
+
+@export Proxy::Dummy blob
+   doStuff fun -> u32
+      @sub::Proxy::value <- 33
+      ret @sub::Proxy::Another::doStuff()
+   ;
+;
+
+@export main fun -> u32
+   ret Proxy::Another::instance.doStuff()
+;
