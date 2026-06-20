@@ -1,6 +1,6 @@
-global u32 <- 8
+Timer::Pit::instance blob<Timer::Pit>
 
-main fun -> u32
-    local u32 <- global
-    ret local
+@export Timer::Pit blob
+   init fun
+   ;
 ;

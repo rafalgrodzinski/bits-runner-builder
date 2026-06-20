@@ -720,6 +720,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 shared_ptr<Statement> Parser::matchStatementBlob() {
     enum Tag {
         TAG_SHOULD_EXPORT,
+        TAG_NAMESPACE,
         TAG_NAME,
         TAG_TYPE_ARGUMENT_NAME,
         TAG_STATEMENT_IN_BLOB,
@@ -733,6 +734,13 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         {
             // export
             Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
             // identifier
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             // type argument names
@@ -823,8 +831,13 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                 shouldExport = true;
                 break;
             }
+            case TAG_NAMESPACE: {
+                name += parseeResult.getToken()->getLexme();
+                name += "::";
+                break;
+            }
             case TAG_NAME: {
-                name = parseeResult.getToken()->getLexme();
+                name += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_TYPE_ARGUMENT_NAME: {
@@ -2020,23 +2033,31 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
 
 shared_ptr<ValueType> Parser::matchValueType() {
     enum TAG {
-        TAG_DATA,
-        TAG_BLOB_MODULE_PREFIX,
-        TAG_BLOB,
-        TAG_PROTO_MODULE_PREFIX,
-        TAG_PROTO,
-        TAG_BOXED,
-        TAG_PTR_FUN,
+        TAG_ARGUMENT_TYPE,
+        TAG_SUBTYPE,
+
         TAG_PTR,
         TAG_PTR_VOLATILE,
-        TAG_ARGUMENT_TYPE,
+        TAG_PTR_FUN,
         TAG_RETURN_TYPE,
-        TAG_TYPE,
-        TAG_SUBTYPE,
+
+        TAG_DATA,
         TAG_SIZE_EXPRESSION,
+        
+        TAG_BLOB,
+        TAG_BLOB_MODULE_PREFIX,
+        TAG_BLOB_NAMESPACE,
         TAG_BLOB_NAME,
+        
+        TAG_PROTO,
+        TAG_PROTO_MODULE_PREFIX,
+        TAG_PROTO_NAMESPACE,
         TAG_PROTO_NAME,
-        TAG_TYPE_NAME
+        
+        TAG_BOXED,
+        TAG_TYPE_NAME,
+    
+        TAG_TYPE,
     };
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
@@ -2118,7 +2139,14 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                 Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
-                        // identifier
+                        // identifier - namespaces
+                        Parsee::repeatedGroupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_BLOB_NAMESPACE),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier - name
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
                         // argument types
                         Parsee::repeatedGroupParsee(
@@ -2141,7 +2169,14 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                 Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
-                        // identifier
+                        // identifier - namespaces
+                        Parsee::repeatedGroupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_PROTO_NAMESPACE),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier - name
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
                         Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
@@ -2192,60 +2227,87 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_DATA:
-                isData = true;
+            case TAG_ARGUMENT_TYPE: {
+                argTypes.push_back(parseeResult.getValueType());
                 break;
-            case TAG_BLOB:
-                isBlob = true;
+            }
+            case TAG_SUBTYPE: {
+                subType = parseeResult.getValueType();
                 break;
-            case TAG_PROTO:
-                isProto = true;
-                break;
-            case TAG_BOXED:
-                isBoxed = true;
-                break;
-            case TAG_PTR_FUN:
-                isPtrFun = true;
-                break;
-            case TAG_PTR:
+            }
+            case TAG_PTR: {
                 isPtr = true;
                 break;
-            case TAG_PTR_VOLATILE:
+            }
+            case TAG_PTR_VOLATILE: {
                 isPtr = true;
                 isVolatile = true;
                 break;
-            case TAG_ARGUMENT_TYPE:
-                argTypes.push_back(parseeResult.getValueType());
+            }
+            case TAG_PTR_FUN: {
+                isPtrFun = true;
                 break;
-            case TAG_RETURN_TYPE:
+            }
+            case TAG_RETURN_TYPE: {
                 retType = parseeResult.getValueType();
                 break;
-            case TAG_TYPE:
-                typeToken = parseeResult.getToken();
+            }
+            case TAG_DATA: {
+                isData = true;
                 break;
-            case TAG_SUBTYPE:
-                subType = parseeResult.getValueType();
-                break;
-            case TAG_SIZE_EXPRESSION:
+            }
+            case TAG_SIZE_EXPRESSION: {
                 countExpression = parseeResult.getExpression();
                 break;
-            case TAG_BLOB_MODULE_PREFIX:
+            }
+            case TAG_BLOB: {
+                isBlob = true;
+                break;
+            }
+            case TAG_BLOB_MODULE_PREFIX: {
                 blobName += parseeResult.getToken()->getLexme();
                 blobName += ".";
                 break;
-            case TAG_BLOB_NAME:
+            }
+            case TAG_BLOB_NAMESPACE: {
+                blobName += parseeResult.getToken()->getLexme();
+                blobName += "::";
+                break;
+            }
+            case TAG_BLOB_NAME: {
                 blobName += parseeResult.getToken()->getLexme();
                 break;
-            case TAG_PROTO_MODULE_PREFIX:
+            }
+            case TAG_PROTO: {
+                isProto = true;
+                break;
+            }
+            case TAG_PROTO_MODULE_PREFIX: {
                 protoName += parseeResult.getToken()->getLexme();
                 protoName += ".";
                 break;
-            case TAG_PROTO_NAME:
+            }
+            case TAG_PROTO_NAMESPACE: {
+                protoName += parseeResult.getToken()->getLexme();
+                protoName += "::";
+                break;
+            }
+            case TAG_PROTO_NAME: {
                 protoName += parseeResult.getToken()->getLexme();
                 break;
-            case TAG_TYPE_NAME:
+            }
+            case TAG_BOXED: {
+                isBoxed = true;
+                break;
+            }
+            case TAG_TYPE_NAME: {
                 subType = ValueType::namedType(parseeResult.getToken()->getLexme());
                 break;
+            }
+            case TAG_TYPE: {
+                typeToken = parseeResult.getToken();
+                break;
+            }
         }
     }
 

@@ -1375,7 +1375,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                 auto members = *scope->getProtoStructMembers(parentProtoName);
                 for (int i=0; i<members.size(); i++) {
                     pair<string, shared_ptr<ValueType>> member = members.at(i);
-                    if (expressionCall->getName().compare(member.first) == 0) {
+                    if (expressionCall->getName() == member.first) {
                         llvm::StructType *structType = scope->getProtoStructType(parentProtoName);
 
                         shared_ptr<ValueType> funValueType = member.second->getSubType();
@@ -1417,7 +1417,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                 auto members = *scope->getProtoStructMembers(parentProtoName);
                 for (int i=0; i<members.size(); i++) {
                     pair<string, shared_ptr<ValueType>> member = members.at(i);
-                    if (expressionValue->getIdentifier().compare(member.first) == 0) {
+                    if (expressionValue->getIdentifier() == member.first) {
                         llvm::Value *index[] = {
                             builder->getInt32(0),
                             builder->getInt32(i+1)
@@ -1673,7 +1673,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     llvm::Value *sourcePointerValue = nullptr;
     llvm::Type *sourceType = nullptr;
 
-    bool isIt = expressionValue->getIdentifier().compare("it") == 0;
+    bool isIt = expressionValue->getIdentifier() == "it";
     shared_ptr<WrappedValue> wrappedPitValue = scope->getWrappedValue(".pit");
     shared_ptr<WrappedValue> wrappedValue = scope->getWrappedValue(expressionValue->getIdentifier());
     llvm::Value *fun = scope->getFunction(expressionValue->getIdentifier());
@@ -1712,13 +1712,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
 
     if (expressionValue != nullptr) {
-        isCount = expressionValue->getIdentifier().compare("count") == 0;
-        isVal = expressionValue->getIdentifier().compare("val") == 0;
-        isVadr = expressionValue->getIdentifier().compare("vadr") == 0;
-        isAdr = expressionValue->getIdentifier().compare("adr") == 0;
-        isSize = expressionValue->getIdentifier().compare("size") == 0;
+        isCount = expressionValue->getIdentifier() == "count";
+        isVal = expressionValue->getIdentifier() == "val";
+        isVadr = expressionValue->getIdentifier() == "vadr";
+        isAdr = expressionValue->getIdentifier() == "adr";
+        isSize = expressionValue->getIdentifier() == "size";
     } else if (expressionCall != nullptr) {
-        isVal = expressionCall->getName().compare("val") == 0;
+        isVal = expressionCall->getName() == "val";
     }
 
     // Return quickly if not a built-in
@@ -2213,7 +2213,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForValue(llvm::Value *value,
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression) {
-    bool isSize = expression->getIdentifier().compare("size") == 0;
+    bool isSize = expression->getIdentifier() == "size";
 
     if (isSize) {
         int sizeInBytes = sizeInBitsForType(type) / 8;
