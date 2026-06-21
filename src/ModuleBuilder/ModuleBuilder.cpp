@@ -338,7 +338,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
 
     // Set attributes
     fun->addFnAttr(llvm::Attribute::NoUnwind);
-    fun->addFnAttr(llvm::Attribute::MustProgress);
 
     if (!statementFunction->getShouldExport())
         fun->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Local);
