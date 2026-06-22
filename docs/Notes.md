@@ -9,5 +9,8 @@ Available for:
 
 Changelist:
 - [1.0.0-dev-103](https://github.com/rafalgrodzinski/bits-runner-builder/pull/197)
+  - Implicit sub-imports import delcarations for blobs and protos
+  - Global names for types, so `blob<@main::something>` and `blob<something>` will refer to the same type in `main` module
+  - Namespaces can be used fro blob types
   - Verify that index access is used on `data`
   - Moved libraries into `lib/brc/`
