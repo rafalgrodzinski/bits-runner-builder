@@ -190,7 +190,7 @@ For a real use of the language checkout sources for the [Bits Runner](https://gi
 
 
 ## 🖍️ Visual Studio Code support
-There are "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 which will then build and start debugging using command `brb --verb=v3 samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode and `lldb-dap` on your system. There is also [a BRC langauge extension](https://github.com/rafalgrodzinski/brc-vscode) available.
+There are "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 which will then build and start debugging using command `brb --verb=v3 samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode and `lldb-dap` on your system. There is also a [BRC langauge extension](https://github.com/rafalgrodzinski/brc-vscode) available.
 
 
 ## 🔗 Further resources
