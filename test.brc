@@ -1,6 +1,6 @@
-@export main fun -> u32
-    value u32
-    value.adr
+Timer::Pit::instance blob<Timer::Pit>
 
-    ret 0
+@export Timer::Pit blob
+   init fun
+   ;
 ;

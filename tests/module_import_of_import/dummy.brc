@@ -1,0 +1,11 @@
+@module dummy
+
+@import sub_dummy
+
+@export doStuff fun -> u32
+    ret 7
+;
+
+@export useSubDummy fun: blobValue blob<@sub_dummy::sub_blob> -> u32
+    ret blobValue.value
+;

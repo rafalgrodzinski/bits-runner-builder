@@ -1,0 +1,5 @@
+@import dummy
+
+@export main fun -> u32
+    ret @dummy::doStuff()
+;

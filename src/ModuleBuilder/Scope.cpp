@@ -58,7 +58,7 @@ bool Scope::setInlineAsm(const string &name, llvm::InlineAsm *inlineAsm) {
     if (scopeLevels.top().rawFunMap[name] != nullptr)
         return false;
     
-    scopeLevels.top().rawFunMap[name] = std::move(inlineAsm);
+    scopeLevels.top().rawFunMap[name] = inlineAsm;
     return true;
 }
 
@@ -75,9 +75,9 @@ llvm::InlineAsm *Scope::getInlineAsm(const string &name) const {
     return nullptr;
 }
 
-bool Scope::setProtoStructType(const string &name, llvm::StructType *structType, vector<pair<string, shared_ptr<ValueType>>> members) {
+bool Scope::setProtoStructType(const string &name, llvm::StructType *structType, const vector<pair<string, shared_ptr<ValueType>>> &members) {
     scopeLevels.top().protoStructTypesMap[name] = structType;
-    scopeLevels.top().protoStructMembersMap[name] = std::move(members);
+    scopeLevels.top().protoStructMembersMap[name] = members;
 
     return true;
 }
@@ -107,9 +107,9 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> Scope::getProtoStructMembe
     return {};
 }
 
-bool Scope::setStruct(const string &structName, llvm::StructType *structType, vector<string> memberNames) {
+bool Scope::setStruct(const string &structName, llvm::StructType *structType, const vector<string> &memberNames) {
     scopeLevels.top().structTypeMap[structName] = structType;
-    scopeLevels.top().structMembersMap[structName] = std::move(memberNames);
+    scopeLevels.top().structMembersMap[structName] = memberNames;
 
     return true;
 }

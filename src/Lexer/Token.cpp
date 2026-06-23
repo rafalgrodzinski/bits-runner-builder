@@ -80,8 +80,8 @@ vector<TokenKind> Token::tokensLiteral = {
     TokenKind::STRING
 };
 
-Token::Token(TokenKind kind, string lexme, shared_ptr<Location> location):
-kind(kind), lexme(std::move(lexme)), location(location) { }
+Token::Token(TokenKind kind, const string &lexme, shared_ptr<Location> location):
+kind(kind), lexme(lexme), location(location) { }
 
 TokenKind Token::getKind() const {
     return kind;

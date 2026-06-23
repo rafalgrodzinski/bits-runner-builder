@@ -8,77 +8,10 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
-- [1.0.0-dev-102](https://github.com/rafalgrodzinski/bits-runner-builder/pull/196)
-  - Any `if-else` syntax combination now works correctly
-  - Fixed `a` arithmetics
-  - Added function attributes
-  - Sprinkled source with const references
-  - Catch invalid double dot `..`
-- [1.0.0-dev-101](https://github.com/rafalgrodzinski/bits-runner-builder/pull/195)
-  - Module and statics namespace resolution with `::`
-- [1.0.0-dev-100](https://github.com/rafalgrodzinski/bits-runner-builder/pull/194)
-  - `@import main` now works correctly
-  - Fixed implicit casting of if-else expression
-  - Fixed blob-type blob members with boxed types
-- [1.0.0-dev-99](https://github.com/rafalgrodzinski/bits-runner-builder/pull/185)
-  - Added `ptr_volatile` type
-  - LLVM allocas are declared at top of functions
-  - Properly initialize data layout
-  - Changed how size of data types is calculated
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/182](https://github.com/rafalgrodzinski/bits-runner-builder/pull/182)
-  - Blobs can have named types that are passed down to `boxed`
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/178](https://github.com/rafalgrodzinski/bits-runner-builder/pull/178)
-  - Installable through Homebrew
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/176](https://github.com/rafalgrodzinski/bits-runner-builder/pull/176)
-  - Correctness improvements
-  - Added tests
-  - Check if variable of type data has specified count
-  - Fixed logging of inlined if-else
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/169](https://github.com/rafalgrodzinski/bits-runner-builder/pull/169)
-  - Handle duplicated imports
-  - Can cast composite literals to blob types with functions
-  - Empty source file is valid now
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/167](https://github.com/rafalgrodzinski/bits-runner-builder/pull/167)
-  - Composite literals can now be case directly into complex types
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/162](https://github.com/rafalgrodzinski/bits-runner-builder/pull/162)
-  - Added `proto` interfaces
-  - Can get `adr` from function of a `blob` and `proto`
-  - Fixed importing of an empty module
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/160](https://github.com/rafalgrodzinski/bits-runner-builder/pull/160)
-  - Sped up analysis
-  - Zero uninitialized local variables
-  - Restrict usage of `@export`, and intitializer on blob members
-  - Enaled usage of intrinsic functions `memset`, `memmove`, and `memcpy`
-  - Configured MSVC debugging on windows
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/151](https://github.com/rafalgrodzinski/bits-runner-builder/pull/151)
-  - Builds and runs on windows
-  - Automatic relase with github actions
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/155](https://github.com/rafalgrodzinski/bits-runner-builder/pull/155)
-  - Functions and can now be inccluded in blobs
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/159](https://github.com/rafalgrodzinski/bits-runner-builder/pull/159)
-  - Added bit test operator `&?`
-  - Raw functions are now exportable
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/153](https://github.com/rafalgrodzinski/bits-runner-builder/pull/153)
-  - Allow for such syntax `numAdr.a.ptr<u32>.val`
-  - Updated base String functions
-  - Ambiguous `>>` and `<<` is now deducted correctly
-  - Added `u16` and `s16` types
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/152](https://github.com/rafalgrodzinski/bits-runner-builder/pull/152)
-  - Fixed pointers when O2 optimization is enabled
-  - Specialized `a` type for handling addresses
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/148](https://github.com/rafalgrodzinski/bits-runner-builder/pull/148)
-  - Use new pass manager for optimizations
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/147](https://github.com/rafalgrodzinski/bits-runner-builder/pull/147)
-  - Optimized builds
-  - Using wrapped values all over the place
-  - Bunch of various bug fixes
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/143](https://github.com/rafalgrodzinski/bits-runner-builder/pull/143)
-  - Single line if-else can be embeded in an expression
-  - Added @B.Date which can convert date components to a timestamp
-  - @BSys which acts as a layer between OS and the B library
-  - @B.String can now print hex, signed, and floating point numbers
-  - Casting between types has been fixed
-  - Multiple analyzer crashes fixed
-- [https://github.com/rafalgrodzinski/bits-runner-builder/pull/142](https://github.com/rafalgrodzinski/bits-runner-builder/pull/142)
-  - Dispalys file name in error messages. Useful when a single module is split into multiple files.
-  - Updated parsing of if-else statements
+- [1.0.0-dev-103](https://github.com/rafalgrodzinski/bits-runner-builder/pull/197)
+  - Implicit sub-imports import delcarations for blobs and protos
+  - Global names for types, so `blob<@main::something>` and `blob<something>` will refer to the same type in `main` module
+  - Namespaces can be used for blob types
+  - Verify that index access is used on `data`
+  - Moved libraries into `lib/brc/`
+  - Updated docs

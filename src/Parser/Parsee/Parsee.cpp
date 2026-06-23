@@ -2,10 +2,10 @@
 
 Parsee::Parsee() { }
 
-Parsee Parsee::debug(string debugMessage) {
+Parsee Parsee::debug(const string &debugMessage) {
     Parsee parsee;
     parsee.kind = ParseeKind::DEBUG;
-    parsee.debugMessage = std::move(debugMessage);
+    parsee.debugMessage = debugMessage;
     return parsee;
 }
 
@@ -37,7 +37,7 @@ Parsee Parsee::expressionBlockSingleLineParsee(ParseeLevel level, bool shouldRet
     return parsee;
 }
 
-Parsee Parsee::groupParsee(vector<Parsee> groupParsees, ParseeLevel level, bool shouldReturn) {
+Parsee Parsee::groupParsee(const vector<Parsee> &groupParsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::GROUP;
     parsee.groupParsees = groupParsees;
@@ -59,28 +59,28 @@ Parsee Parsee::ifElseParsee(optional<bool> isMultiLine, ParseeLevel level, bool 
     return parsee;
 }
 
-Parsee Parsee::oneOfParsee(vector<vector<Parsee>> parsees, ParseeLevel level, bool shouldReturn) {
+Parsee Parsee::oneOfParsee(const vector<vector<Parsee>> &parsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::ONE_OF;
-    parsee.parsees = std::move(parsees);
+    parsee.parsees = parsees;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
 }
 
-Parsee Parsee::repeatedGroupParsee(vector<Parsee> repeatedParsees, ParseeLevel level, bool shouldReturn) {
+Parsee Parsee::repeatedGroupParsee(const vector<Parsee> &repeatedParsees, ParseeLevel level, bool shouldReturn) {
     Parsee parsee;
     parsee.kind = ParseeKind::REPEATED_GROUP;
-    parsee.repeatedParsees = std::move(repeatedParsees);
+    parsee.repeatedParsees = repeatedParsees;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     return parsee;
 }
 
-Parsee Parsee::statementKindsParsee(vector<StatementKind> statementKinds, ParseeLevel level, bool shouldReturn, int tag) {
+Parsee Parsee::statementKindsParsee(const vector<StatementKind> &statementKinds, ParseeLevel level, bool shouldReturn, int tag) {
     Parsee parsee;
     parsee.kind = ParseeKind::STATEMENT_KINDS;
-    parsee.statementKinds = std::move(statementKinds);
+    parsee.statementKinds = statementKinds;
     parsee.level = level;
     parsee.shouldReturn = shouldReturn;
     parsee.tag = tag;

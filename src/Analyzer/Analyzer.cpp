@@ -39,8 +39,14 @@
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
-Analyzer::Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap):
-defaultModuleName(std::move(defaultModuleName)), module(module), importableHeaderStatementsMap(std::move(importableHeaderStatementsMap)) { }
+Analyzer::Analyzer(
+    const string &defaultModuleName,
+    shared_ptr<Module> module,
+    const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
+):
+defaultModuleName(defaultModuleName),
+module(module),
+importableHeaderStatementsMap(importableHeaderStatementsMap) { }
 
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
@@ -73,61 +79,88 @@ void Analyzer::checkModule() {
 //
 // Statements
 //
-void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported) {
+void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported, ImportLevel importLevel) {
     switch (statement->getKind()) {
-        case StatementKind::ASSIGNMENT:
+        case StatementKind::ASSIGNMENT: {
             checkStatement(dynamic_pointer_cast<StatementAssignment>(statement));
             break;
-        case StatementKind::BLOB:
-            checkStatement(dynamic_pointer_cast<StatementBlob>(statement), isImported);
+        }
+        case StatementKind::BLOB: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                checkStatement(dynamic_pointer_cast<StatementBlob>(statement), isImported);
             break;
-        case StatementKind::BLOB_DECLARATION:
+        }
+        case StatementKind::BLOB_DECLARATION: {
             checkStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
             break;
-        case StatementKind::BLOCK:
+        }
+        case StatementKind::BLOCK: {
             checkStatement(dynamic_pointer_cast<StatementBlock>(statement), returnType);
             break;
-        case StatementKind::EXPRESSION:
+        }
+        case StatementKind::EXPRESSION: {
             checkStatement(dynamic_pointer_cast<StatementExpression>(statement), returnType);
             break;
-        case StatementKind::FUNCTION:
+        }
+        case StatementKind::FUNCTION: {
             checkStatement(dynamic_pointer_cast<StatementFunction>(statement));
             break;
-        case StatementKind::FUNCTION_DECLARATION:
-            checkStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+        }
+        case StatementKind::FUNCTION_DECLARATION: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                checkStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
             break;
-        case StatementKind::META_EXTERN_FUNCTION:
+        }
+        case StatementKind::META_EXTERN_FUNCTION: {
             checkStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
             break;
-        case StatementKind::META_EXTERN_VARIABLE:
+        }
+        case StatementKind::META_EXTERN_VARIABLE: {
             checkStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
             break;
-        case StatementKind::META_IMPORT:
-            checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement));
+        }
+        case StatementKind::META_IMPORT: {
+            ImportLevel newImportLevel = ImportLevel::IMPLICIT;
+            if (importLevel == ImportLevel::NONE)
+                newImportLevel = ImportLevel::EXPLICIT;
+            checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement), newImportLevel);
             break;
-        case StatementKind::MODULE:
+        }
+        case StatementKind::PROTO: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                checkStatement(dynamic_pointer_cast<StatementProto>(statement));
             break;
-        case StatementKind::PROTO:
-            checkStatement(dynamic_pointer_cast<StatementProto>(statement));
-            break;
-        case StatementKind::PROTO_DECLARATION:
+        }
+        case StatementKind::PROTO_DECLARATION: {
             checkStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
             break;
-        case StatementKind::REPEAT:
+        }
+        case StatementKind::RAW_FUNCTION: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                checkStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
+            break;
+        }
+        case StatementKind::REPEAT: {
             checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
             break;
-        case StatementKind::RAW_FUNCTION:
-            checkStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
-            break;
-        case StatementKind::RETURN:
+        }
+        case StatementKind::RETURN: {
             checkStatement(dynamic_pointer_cast<StatementReturn>(statement), returnType);
             break;
-        case StatementKind::VARIABLE:
-            checkStatement(dynamic_pointer_cast<StatementVariable>(statement));
+        }
+        case StatementKind::VARIABLE: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                checkStatement(dynamic_pointer_cast<StatementVariable>(statement));
             break;
-        case StatementKind::VARIABLE_DECLARATION:
-            checkStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+        }
+        case StatementKind::VARIABLE_DECLARATION: {
+            if (importLevel != ImportLevel::IMPLICIT)
+                checkStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
             break;
+        }
+        default: {
+            break;
+        }
     }
 }
 
@@ -268,15 +301,16 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     scope->popLevel();
 
     // and the register
-    string name = importModulePrefix + statementBlob->getName();
+    //string name = importModulePrefix + statementBlob->getName();
+    string name = statementBlob->getGlobalName();
     if (!scope->setBlobMembers(name, members))
-        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getName());
+        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getGlobalName());
     scope->setBlobNamedTypeKeys(name, statementBlob->getNamedTypeKeys());
     scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    string name = importModulePrefix + statementBlobDeclaration->getName();
+    string name = statementBlobDeclaration->getGlobalName();
     scope->setBlobMembers(name, {});
 }
 
@@ -302,7 +336,7 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
         return;
 
     // check if function is not yet defined and register it
-    if (!scope->setFunctionType(statementFunction->getName(), statementFunction->getValueType(), true))
+    if (!scope->setFunctionType(statementFunction->getGlobalName(), statementFunction->getValueType(), true))
         markErrorAlreadyDefined(statementFunction->getLocation(), statementFunction->getName());
 
     scope->pushLevel();
@@ -325,7 +359,7 @@ void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statement
     if (resolvedAndCheckedValueType(statementFunctionDeclaration->getReturnValueType(), true, statementFunctionDeclaration->getLocation()) == nullptr)
         return;
 
-    string name = importModulePrefix + statementFunctionDeclaration->getName();
+    string name = statementFunctionDeclaration->getGlobalName();
 
     if (!scope->setFunctionType(name, statementFunctionDeclaration->getValueType(), false)) {
         markErrorInvalidType(
@@ -347,28 +381,42 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementM
     if (resolvedAndCheckedValueType(statementMetaExternFunction->getReturnValueType(), true, statementMetaExternFunction->getLocation()) == nullptr)
         return;
 
-    if (!scope->setFunctionType(statementMetaExternFunction->getName(), statementMetaExternFunction->getValueType(), false))
-        markErrorAlreadyDefined(statementMetaExternFunction->getLocation(), statementMetaExternFunction->getName());
+    if (!scope->setFunctionType(statementMetaExternFunction->getGlobalName(), statementMetaExternFunction->getValueType(), false))
+        markErrorAlreadyDefined(statementMetaExternFunction->getLocation(), statementMetaExternFunction->getGlobalName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
-    string identifier = importModulePrefix + statementMetaExternVariable->getIdentifier();
+   string identifier = statementMetaExternVariable->getGlobalIdentifier();
 
     if (!scope->setVariableType(identifier, statementMetaExternVariable->getValueType(), false))
         markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);
 }
 
-void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statement) {
-    auto it = importableHeaderStatementsMap.find(statement->getName());
+void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel) {
+    // Check if import exits
+    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
     if (it == importableHeaderStatementsMap.end()) {
-        markErrorInvalidImport(statement->getLocation(), statement->getName());
+        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
         return;
     }
-    importModulePrefix = statement->getName() + ".";
-    for (shared_ptr<Statement> &importStatement : it->second) {
-        checkStatement(importStatement, nullptr, true);
+
+    // Skip if import circles back
+    if (statementMetaImport->getName() == module->getName())
+        return;
+    
+    // Check already imported levels
+    ImportLevel currentImport = importedModuleLevelsMap[statementMetaImport->getName()];
+    if (
+        currentImport == ImportLevel::EXPLICIT ||
+        currentImport == ImportLevel::IMPLICIT && importLevel != ImportLevel::EXPLICIT
+    ) {
+        return;
     }
-    importModulePrefix = "";
+    importedModuleLevelsMap[statementMetaImport->getName()] = importLevel;
+
+    for (shared_ptr<Statement> &importedStatement : it->second) {
+        checkStatement(importedStatement, nullptr, true, importLevel);
+    }
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
@@ -420,13 +468,13 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     }
 
     // and the register
-    string name = importModulePrefix + statement->getName();
+    string name = statement->getGlobalName();
     if (!scope->setProtoMembers(name, members))
-        markErrorAlreadyDefined(statement->getLocation(), statement->getName());
+        markErrorAlreadyDefined(statement->getLocation(), statement->getGlobalName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProtoDeclaration> statement) {
-    string name = importModulePrefix + statement->getName();
+    string name = statement->getGlobalName();
     scope->setProtoMembers(name, {});
 }
 
@@ -436,10 +484,10 @@ void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunct
     for (auto &argument : statementRawFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    string name = importModulePrefix + statementRawFunction->getName();
+    string name = statementRawFunction->getGlobalName();
 
     if (!scope->setFunctionType(name, statementRawFunction->getValueType(), true))
-        markErrorAlreadyDefined(statementRawFunction->getLocation(), statementRawFunction->getName());
+        markErrorAlreadyDefined(statementRawFunction->getLocation(), statementRawFunction->getGlobalName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType) {
@@ -520,7 +568,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         return;
     }
 
-    if (!scope->setVariableType(statementVariable->getIdentifier(), statementVariable->getValueType(), true)) {
+    if (!scope->setVariableType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true)) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
         return;
     }
@@ -536,7 +584,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
-    string identifier = importModulePrefix + statementVariableDeclaration->getIdentifier();
+    string identifier = statementVariableDeclaration->getGlobalIdentifier();
 
     if (resolvedAndCheckedValueType(statementVariableDeclaration->getValueType(), true, statementVariableDeclaration->getLocation()) == nullptr)
         return;
@@ -676,15 +724,17 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         if (isParentPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
             valueType = parentExpression->getValueType()->getSubType();
         } else if (isParentBlob) {
-            string functionName = format("{}.{}", *(parentExpression->getValueType()->getBlobName()), expressionCall->getName());
+            string functionName = format("{}.{}", parentExpression->getValueType()->getGlobalName(), expressionCall->getName());
             valueType = scope->getFunctionType(functionName);
-            if (valueType == nullptr)
+            if (valueType == nullptr) {
+                markErrorNotDefined(expressionCall->getLocation(), functionName);
                 return nullptr;
+            }
             valueType->namedTypeKeys = parentExpression->getValueType()->getNamedTypeKeys();
             valueType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
             extraArguments = 1; // for the implicit "it"
         } else if (isParentProto) {
-            string protoName = *(parentExpression->getValueType()->getProtoName());
+            string protoName = parentExpression->getValueType()->getGlobalName();
             auto members = *(scope->getProtoMembers(protoName));
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionCall->getName().compare(member.first) == 0) {
@@ -697,12 +747,13 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             return nullptr;
         }
     } else {
-        valueType = scope->getFunctionType(expressionCall->getName());
+        expressionCall->setModuleName(module->getName());
+        valueType = scope->getFunctionType(expressionCall->getGlobalName());
     }
 
     // check if defined
     if (valueType == nullptr) {
-        markErrorNotDefined(expressionCall->getLocation(), expressionCall->getName());
+        markErrorNotDefined(expressionCall->getLocation(), expressionCall->getGlobalName());
         return nullptr;
     }
 
@@ -1027,7 +1078,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         // check blob member
         } else if (isParentBlob) {
             shared_ptr<ValueType> blobValueType = parentExpression->getValueType();
-            string blobName = *blobValueType->getBlobName();
+            string blobName = blobValueType->getGlobalName();
             optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->getBlobMembers(blobValueType);
             if (blobMembers) {
                 string nameVariable = expressionValue->getIdentifier();
@@ -1042,8 +1093,20 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                 return expressionValue->getValueType();
                             }
                             case ExpressionValueKind::DATA: {
+                                // make sure that the indexed value is an array
+                                shared_ptr<ValueType> valueType = blobMember.second;
+                                if (valueType->getKind() != ValueTypeKind::DATA) {
+                                    markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
+                                    return nullptr;
+                                }
                                 expressionValue->valueType = blobMember.second->getSubType();
                                 expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
+                                // make sure that the index expression evaluates to an uint
+                                shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
+                                if (!indexExpression->getValueType()->isUnsignedInteger()) {
+                                    markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+                                    return nullptr;
+                                }
                                 return expressionValue->getValueType();
                             }
                             default:
@@ -1059,19 +1122,32 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             return nullptr;
         // check proto member
         } else if (isParentProto) {
-            string protoName = *(parentExpression->getValueType()->getProtoName());
+            string protoName = parentExpression->getValueType()->getGlobalName();
             auto members = *(scope->getProtoMembers(protoName));
             for (pair<string, shared_ptr<ValueType>> &member : members) {
-                if (expressionValue->getIdentifier().compare(member.first) == 0) {
+                if (expressionValue->getIdentifier() == member.first) {
                     // found corresponding member, decide if it's a simple or data access
                     switch (expressionValue->getValueKind()) {
                         case ExpressionValueKind::SIMPLE:
                             expressionValue->valueType = member.second;
                             return expressionValue->getValueType();
-                        case ExpressionValueKind::DATA:
+                        case ExpressionValueKind::DATA: {
+                            // make sure that the indexed value is an array
+                            shared_ptr<ValueType> valueType = member.second;
+                            if (valueType->getKind() != ValueTypeKind::DATA) {
+                                markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
+                                return nullptr;
+                            }
                             expressionValue->valueType = member.second->getSubType();
                             expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
+                            // make sure that the index expression evaluates to an uint
+                            shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
+                            if (!indexExpression->getValueType()->isUnsignedInteger()) {
+                                markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+                                return nullptr;
+                            }
                             return expressionValue->getValueType();
+                        }
                         default:
                             break;
                     }
@@ -1087,18 +1163,31 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
 
     // first assume it's just simple
     shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
+    // try with global identifier
+    if (type == nullptr && expressionValue->getModuleName().empty()) {
+        string globalIdentifier = format("{}.{}", module->getName(), expressionValue->getIdentifier());
+        type = scope->getVariableType(globalIdentifier);
+        if (type != nullptr)
+            expressionValue->setModuleName(module->getName());
+    }
     if (type != nullptr) {
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
     }
 
     // then check if it's data
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
+        // make sure that the indexed value is an array
+        if (type->getKind() != ValueTypeKind::DATA) {
+            markErrorInvalidType(expressionValue->getLocation(), type, nullptr);
+            return nullptr;
+        }
         expressionValue->indexExpression = checkAndTryCasting(
             expressionValue->getIndexExpression(),
             ValueType::UINT,
             nullptr
         );
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
+        // make sure that the index expression evaluates to an uint
         if (!indexExpression->getValueType()->isUnsignedInteger()) {
             markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
             return nullptr;
@@ -1108,13 +1197,22 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     // check if it's blob's `it`
     } else if (type == nullptr && (expressionValue->getIdentifier().compare("it") == 0)) {
         shared_ptr<ValueType> blobPtrType = scope->getVariableType(".pit");
-        if (blobPtrType == nullptr)
+        if (blobPtrType == nullptr) {
+            markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
             return nullptr;
+        }
         type = blobPtrType->getSubType();
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
     // check if it's a function
     } else if (type == nullptr) {
-        if (type = scope->getFunctionType(expressionValue->getIdentifier()))
+        type = scope->getFunctionType(expressionValue->getIdentifier());
+        if (type == nullptr && expressionValue->getModuleName().empty()) {
+            string globalIdentifier = format("{}.{}", module->getName(), expressionValue->getIdentifier());
+            type = scope->getFunctionType(globalIdentifier);
+            if (type != nullptr)
+                expressionValue->setModuleName(module->getName());
+        }
+        if (type != nullptr)
             expressionValue->valueKind = ExpressionValueKind::FUN;
     }
     
@@ -1896,8 +1994,8 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             if (!targetType->isBlob())
                 return false;
 
-            string sourceBlobName = *(sourceType->getBlobName());
-            string targetBlobName = *(targetType->getBlobName());
+            string sourceBlobName = sourceType->getGlobalName();
+            string targetBlobName = targetType->getGlobalName();
 
             return sourceBlobName.compare(targetBlobName) == 0;
         }
@@ -1924,7 +2022,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                 // to blob
                 case ValueTypeKind::BLOB: {
                     // get target non-function types
-                    optional<vector<shared_ptr<ValueType>>> targetMemberTypes = scope->getNonFunctionBlobMemberTypes(targetType);
+                    optional<vector<shared_ptr<ValueType>>> targetMemberTypes = scope->getNonFunctionBlobMemberTypes(targetType);;
                     if (!targetMemberTypes)
                         return false;
 
@@ -1945,7 +2043,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // to proto
                 case ValueTypeKind::PROTO: {
-                    string targetProtoName = *(targetType->getProtoName());
+                    string targetProtoName = targetType->getGlobalName();
 
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
                     if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPointer())
@@ -1955,7 +2053,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     if (subType == nullptr || !subType->isBlob())
                         return false;
 
-                    string blobName = *(subType->getBlobName());
+                    string blobName = subType->getGlobalName();
                     optional<vector<string>> protoNames = scope->getBlobProtoNames(blobName);
                     if (!protoNames)
                         return false;
@@ -2021,7 +2119,7 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             } else
             */
             if (!valueType->namedTypeKeys)
-                valueType->namedTypeKeys = scope->getBlobNamedTypeKeys(*valueType->getBlobName());
+                valueType->namedTypeKeys = scope->getBlobNamedTypeKeys(valueType->getGlobalName());
             return valueType;
         }
         case ValueTypeKind::BOXED: {
@@ -2125,7 +2223,7 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
     if (expectedType != nullptr)
         message = format("Invalid type {}, expected {}", Logger::toString(actualType), Logger::toString(expectedType));
     else
-        message = format("Invalid type {}", Logger::toString(actualType));
+        message = format(         "Invalid type {}", Logger::toString(actualType));
     errors.push_back(Error::error(location, message));
 }
 

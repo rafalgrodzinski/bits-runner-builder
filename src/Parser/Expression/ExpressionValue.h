@@ -21,16 +21,19 @@ friend class Analyzer;
 private:
     ExpressionValueKind valueKind;
     string identifier;
+    string moduleName;
     shared_ptr<Expression> indexExpression;
 
 public:
-    static shared_ptr<ExpressionValue> simple(string identifer, shared_ptr<Location> location);
-    static shared_ptr<ExpressionValue> data(string identifier, shared_ptr<Expression> indexExpression, shared_ptr<Location> location);
+    static shared_ptr<ExpressionValue> simple(const string &identifer, shared_ptr<Location> location);
+    static shared_ptr<ExpressionValue> data(const string &identifier, shared_ptr<Expression> indexExpression, shared_ptr<Location> location);
 
-    ExpressionValue(shared_ptr<Location> location);
+    ExpressionValue(const string &identifier, shared_ptr<Location> location);
 
     ExpressionValueKind getValueKind() const;
     string getIdentifier() const;
+    string getModuleName() const;
+    void setModuleName(const string &moduleName);
     shared_ptr<Expression> getIndexExpression() const;
 };
 

@@ -7,13 +7,18 @@
 
 StatementFunction::StatementFunction(
     bool shouldExport,
-    string name,
-    vector<pair<string, shared_ptr<ValueType>>> arguments,
+    const string &name,
+    const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
     shared_ptr<StatementBlock> statementBlock,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION, location), shouldExport(shouldExport), name(std::move(name)), arguments(std::move(arguments)), returnValueType(returnValueType), statementBlock(statementBlock) {
+Statement(StatementKind::FUNCTION, location),
+shouldExport(shouldExport),
+name(name),
+arguments(arguments),
+returnValueType(returnValueType), statementBlock(statementBlock) {
+    // setup statements
     vector<shared_ptr<Statement>> statements = statementBlock->getStatements();
     if (!statements.empty() && statements.back()->getKind() == StatementKind::RETURN)
         return;
@@ -30,6 +35,23 @@ bool StatementFunction::getShouldExport() const {
 
 string StatementFunction::getName() const {
     return name;
+}
+
+string StatementFunction::getGlobalName() const {
+    string moduleName = this->moduleName;
+    if (moduleName.empty())
+        moduleName = "{UNDEFINED}";
+
+    return format("{}.{}", moduleName, name);
+}
+
+string StatementFunction::getModuleName() const {
+    return moduleName;
+}
+
+void StatementFunction::setModuleName(const string &moduleName) {
+    if (this->moduleName.empty())
+        this->moduleName = moduleName;
 }
 
 vector<pair<string, shared_ptr<ValueType>>> StatementFunction::getArguments() const {
@@ -50,4 +72,15 @@ shared_ptr<ValueType> StatementFunction::getValueType() const {
 
 shared_ptr<StatementBlock> StatementFunction::getStatementBlock() const {
     return statementBlock;
+}
+
+shared_ptr<StatementFunctionDeclaration> StatementFunction::getDeclaration() const {
+    return make_shared<StatementFunctionDeclaration>(
+        getShouldExport(),
+        getName(),
+        getModuleName(),
+        getArguments(),
+        getReturnValueType(),
+        getLocation()
+    );
 }

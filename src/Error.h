@@ -47,13 +47,13 @@ private:
     optional<string> message;
 
 public:
-    static shared_ptr<Error> error(shared_ptr<Location> location, string message); 
+    static shared_ptr<Error> error(shared_ptr<Location> location, const string &message); 
 
-    static shared_ptr<Error> lexerError(shared_ptr<Location> location, string lexme);
-    static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
+    static shared_ptr<Error> lexerError(shared_ptr<Location> location, const string &lexme);
+    static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, const optional<Parsee> &expectedParsee, const optional<string> &message);
 
-    static shared_ptr<Error> builderFunctionError(string funtionName, string message);
-    static shared_ptr<Error> builderModuleError(string moduleName, string message);
+    static shared_ptr<Error> builderFunctionError(const string &funtionName, const string &message);
+    static shared_ptr<Error> builderModuleError(const string &moduleName, const string &message);
 
     Error();
 

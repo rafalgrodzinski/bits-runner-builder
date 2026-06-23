@@ -63,12 +63,19 @@ enum class ExpressionUnaryOperation;
 using namespace std;
 
 class ModuleBuilder {
+    enum class ImportLevel {
+        NONE,
+        EXPLICIT,
+        IMPLICIT
+    };
+
 private:
     vector<shared_ptr<Error>> errors;
     string defaultModuleName;
 
     shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
+    map<string, ImportLevel> importedModuleLevelsMap;
 
     shared_ptr<Scope> scope;
 
@@ -98,7 +105,7 @@ private:
     llvm::Type *typeBoxed;
 
     // Statements
-    void buildStatement(shared_ptr<Statement> statement);
+    void buildStatement(shared_ptr<Statement> statement, ImportLevel importLevel = ImportLevel::NONE);
     void buildStatement(shared_ptr<StatementAssignment> statementAssignment);
     void buildStatement(shared_ptr<StatementBlob> statementBlob);
     void buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
@@ -108,7 +115,7 @@ private:
     void buildStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void buildStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void buildStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport);
+    void buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel);
     void buildStatement(shared_ptr<StatementProto> statementProto);
     void buildStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration);
     void buildStatement(shared_ptr<StatementRawFunction> statementRawFunction);
@@ -117,15 +124,6 @@ private:
     void buildStatement(shared_ptr<StatementVariable> statementVariable);
     void buildStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    void buildFunctionDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, const vector<pair<string, shared_ptr<ValueType>>> &arguments, shared_ptr<ValueType> returnType);
-    void buildRawFunction(const string &moduleName, shared_ptr<StatementRawFunction> statement);
-    void buildVariableDeclaration(const string &moduleName, const string &name, bool shouldExport, bool isExtern, shared_ptr<ValueType> valueType);
-
-    void buildProtoDeclaration(const string &moduleName, shared_ptr<StatementProtoDeclaration> statement);
-    void buildProtoDefinition(const string &moduleName, shared_ptr<StatementProto> statement);
-
-    void buildBlobDeclaration(const string &moduleName, const string &name);
-    void buildBlobDefinition(const string &moduleName, const string &name, const vector<pair<string, shared_ptr<ValueType>>> &members);
     void buildLocalVariable(shared_ptr<StatementVariable> statement);
     void buildGlobalVariable(shared_ptr<StatementVariable> statement);
     void buildAssignment(shared_ptr<WrappedValue> targetWrappedValue, shared_ptr<Expression> valueExpression);
@@ -159,7 +157,7 @@ private:
     void markModuleError(const string &message);
     
     void markErrorAlreadyDefined(shared_ptr<Location> location, const string &name);
-    void markInvalidConstraints(shared_ptr<Location> location, const string &functionName, const string &constraints);
+    void markErrorInvalidConstraints(shared_ptr<Location> location, const string &functionName, const string &constraints);
     void markErrorInvalidAssignment(shared_ptr<Location> location);
     void markErrorInvalidBuiltIn(shared_ptr<Location> location, const string &name);
     void markErrorInvalidCast(shared_ptr<Location> location);
@@ -181,12 +179,12 @@ private:
 
 public:
     ModuleBuilder(
-        string defaultModuleName,
+        const string &defaultModuleName,
         llvm::Triple::ArchType archType,
         llvm::DataLayout dataLayout,
         llvm::CallingConv::ID callingConvention,
         shared_ptr<Module> module,
-        map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap
+        const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
     );
     shared_ptr<llvm::Module> getLlvmModule();
 };

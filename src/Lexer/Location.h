@@ -12,7 +12,7 @@ private:
     int column;
 
 public:
-    Location(string fileName, int line, int column);
+    Location(const string &fileName, int line, int column);
 
     string getFileName() const;
     int getLine() const;

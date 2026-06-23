@@ -4,14 +4,20 @@
 
 StatementRawFunction::StatementRawFunction(
     bool shouldExport,
-    string name,
-    string constraints,
-    vector<pair<string, shared_ptr<ValueType>>> arguments,
+    const string &name,
+    const string &constraints,
+    const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
-    string rawSource,
+    const string &rawSource,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::RAW_FUNCTION, location), shouldExport(shouldExport), name(std::move(name)), constraints(std::move(constraints)), arguments(std::move(arguments)), returnValueType(returnValueType), rawSource(std::move(rawSource)) { }
+Statement(StatementKind::RAW_FUNCTION, location),
+shouldExport(shouldExport),
+name(name),
+constraints(constraints),
+arguments(arguments),
+returnValueType(returnValueType),
+rawSource(rawSource) { }
 
 bool StatementRawFunction::getShouldExport() const {
     return shouldExport;
@@ -19,6 +25,23 @@ bool StatementRawFunction::getShouldExport() const {
 
 string StatementRawFunction::getName() const {
     return name;
+}
+
+string StatementRawFunction::getGlobalName() const {
+    string moduleName = this->moduleName;
+    if (moduleName.empty())
+        moduleName = "{UNDEFINED}";
+
+    return format("{}.{}", moduleName, name);
+}
+
+string StatementRawFunction::getModuleName() const {
+    return moduleName;
+}
+
+void StatementRawFunction::setModuleName(const string &moduleName) {
+    if (this->moduleName.empty())
+        this->moduleName = moduleName;
 }
 
 string StatementRawFunction::getConstraints() const {

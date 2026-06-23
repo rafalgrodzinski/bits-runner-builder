@@ -38,21 +38,21 @@ public:
     void popLevel();
 
     optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(const string &name) const;
-    bool setProtoMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
+    bool setProtoMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members);
     
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(shared_ptr<ValueType> blobValueType) const;
-    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(shared_ptr<ValueType> blobValueType) const;
+    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(shared_ptr<ValueType> valueType) const;
+    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(shared_ptr<ValueType> valueType) const;
     bool isBlobDeclared(const string &name) const;
-    bool setBlobMembers(const string &name, optional<vector<pair<string, shared_ptr<ValueType>>>> members);
+    bool setBlobMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members);
 
     bool isNamedTypeDeclared(const string &namedType) const;
     bool setNamedTypes(const vector<string> &namedTypes);
 
     optional<vector<string>> getBlobNamedTypeKeys(const string &blobName) const;
-    bool setBlobNamedTypeKeys(const string &blobName, vector<string> namedTypeKeys);
+    bool setBlobNamedTypeKeys(const string &blobName, const vector<string> &namedTypeKeys);
 
     optional<vector<string>> getBlobProtoNames(const string &name) const;
-    bool setBlobProtoNames(const string &name, vector<string> protoNames);
+    bool setBlobProtoNames(const string &name, const vector<string> &protoNames);
 
     shared_ptr<ValueType> getVariableType(const string &identifier) const;
     bool setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition);

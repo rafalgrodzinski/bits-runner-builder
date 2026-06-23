@@ -7,12 +7,15 @@ class StatementBlobDeclaration: public Statement {
 private:
     bool shouldExport;
     string name;
+    string moduleName;
 
 public:
-    StatementBlobDeclaration(bool shouldExport, string name, shared_ptr<Location> location);
+    StatementBlobDeclaration(bool shouldExport, const string &name, const string &moduleName, shared_ptr<Location> location);
 
     bool getShouldExport() const;
     string getName() const;
+    string getGlobalName() const;
+    string getModuleName() const;
 };
 
 #endif

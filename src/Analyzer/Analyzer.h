@@ -52,6 +52,12 @@ enum class ExpressionBinaryOperation;
 using namespace std;
 
 class Analyzer {
+    enum class ImportLevel {
+        NONE,
+        EXPLICIT,
+        IMPLICIT
+    };
+
 private:
     vector<shared_ptr<Error>> errors;
     string defaultModuleName;
@@ -59,9 +65,9 @@ private:
     shared_ptr<AnalyzerScope> scope;
     shared_ptr<Module> module;
     map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
-    string importModulePrefix;
+    map<string, ImportLevel> importedModuleLevelsMap;
 
-    void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported = false);
+    void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported = false, ImportLevel importLevel = ImportLevel::NONE);
     void checkStatement(shared_ptr<StatementAssignment> statementAssignment);
     void checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported);
     void checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
@@ -71,7 +77,7 @@ private:
     void checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void checkStatement(shared_ptr<StatementMetaImport> statement);
+    void checkStatement(shared_ptr<StatementMetaImport> statement, ImportLevel ImportLevel);
     void checkStatement(shared_ptr<StatementProto> statement);
     void checkStatement(shared_ptr<StatementProtoDeclaration> statement);
     void checkStatement(shared_ptr<StatementRawFunction> statementRawFunction);
@@ -121,7 +127,11 @@ private:
     void markErrorUnexpectedExpression(shared_ptr<Location> location);
 
 public:
-    Analyzer(string defaultModuleName, shared_ptr<Module> module, map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap);
+    Analyzer(
+        const string &defaultModuleName,
+        shared_ptr<Module> module,
+        const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
+    );
 
     void checkModule();
 };

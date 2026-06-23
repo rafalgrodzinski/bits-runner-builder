@@ -84,18 +84,14 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::blob(string blobName, optional<vector<shared_ptr<ValueType>>> namedTypeValues) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::BLOB;
-    valueType->blobName = std::move(blobName);
-    valueType->namedTypeValues = std::move(namedTypeValues);
+shared_ptr<ValueType> ValueType::blob(const string &blobName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::BLOB, blobName);
+    valueType->namedTypeValues = namedTypeValues;
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::proto(string protoName) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::PROTO;
-    valueType->protoName = std::move(protoName);
+shared_ptr<ValueType> ValueType::proto(const string &protoName) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::PROTO, protoName);
     return valueType;
 }
 
@@ -106,10 +102,10 @@ shared_ptr<ValueType> ValueType::boxed(shared_ptr<ValueType> subType) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::fun(vector<shared_ptr<ValueType>> argumentTypes, shared_ptr<ValueType> returnType) {
+shared_ptr<ValueType> ValueType::fun(const vector<shared_ptr<ValueType>> &argumentTypes, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
-    valueType->argumentTypes = std::move(argumentTypes);
+    valueType->argumentTypes = argumentTypes;
     if (returnType != nullptr)
         valueType->returnType = returnType;
     else
@@ -125,28 +121,74 @@ shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType, bool isVolat
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::composite(vector<shared_ptr<ValueType>> elementTypes, shared_ptr<Expression> countExpression) {
+shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::COMPOSITE;
-    valueType->compositeElementTypes = std::move(elementTypes);
+    valueType->compositeElementTypes = elementTypes;
     valueType->countExpression = countExpression;
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::namedType(string namedTypeKey) {
+shared_ptr<ValueType> ValueType::namedType(const string &namedTypeKey) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::NAMED_TYPE;
-    valueType->namedTypeKey = std::move(namedTypeKey);
+    valueType->namedTypeKey = namedTypeKey;
     return valueType;
 }
 
 ValueType::ValueType() { }
 
-ValueType::ValueType(ValueTypeKind kind):
-kind(kind) { }
+ValueType::ValueType(ValueTypeKind kind, const string &name):
+kind(kind) {
+    size_t pos = name.find('.');
+    if (pos != string::npos) {
+        this->moduleName = name.substr(0, pos);
+        this->name = name.substr(pos + 1, name.length());
+    } else {
+        this->name = name;
+    }
+}
 
 ValueTypeKind ValueType::getKind() const {
     return kind;
+}
+
+string ValueType::getName() const {
+    return name;
+}
+
+string ValueType::getModuleName() const {
+    return moduleName;
+}
+
+void ValueType::setModuleName(const string &moduleName) {
+    if (this->moduleName.empty())
+        this->moduleName = moduleName;
+
+    if (this->getSubType() != nullptr)
+        this->getSubType()->setModuleName(moduleName);
+
+    if (argumentTypes) {
+        for (shared_ptr<ValueType> typeValue : *argumentTypes)
+            typeValue->setModuleName(moduleName);
+    }
+
+    if (namedTypeValues) {
+        for (shared_ptr<ValueType> typeValue : *namedTypeValues)
+            typeValue->setModuleName(moduleName);
+    }
+
+    if (returnType != nullptr) {
+        returnType->setModuleName(moduleName);
+    }
+}
+
+string ValueType::getGlobalName() const {
+    string moduleName = this->moduleName;
+    if (moduleName.empty())
+        moduleName = "{UNDEFINED}";
+
+    return format("{}.{}", moduleName, name);
 }
 
 bool ValueType::getIsVolatile() const {
@@ -189,14 +231,6 @@ shared_ptr<ValueType> ValueType::getReturnType() const {
     returnType->namedTypeKeys = namedTypeKeys;
     returnType->namedTypeValues = namedTypeValues;
     return returnType;
-}
-
-optional<string> ValueType::getBlobName() const {
-    return blobName;
-}
-
-optional<string> ValueType::getProtoName() const {
-    return protoName;
 }
 
 optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() const {
@@ -253,7 +287,7 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
         case ValueTypeKind::BLOB: {
             if (!other->isBlob())
                 return false;
-            return (*blobName).compare(*other->getBlobName()) == 0;
+            return getGlobalName() == other->getGlobalName();
         }
         case ValueTypeKind::BOXED: {
             return other->isBoxed() && subType->isEqual(other->getSubType());

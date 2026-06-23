@@ -5,8 +5,8 @@
 #include "Location.h"
 #include "Token.h"
 
-Lexer::Lexer(string fileName, string source):
-currentFileName(std::move(fileName)), source(std::move(source)) { }
+Lexer::Lexer(const string &fileName, const string &source):
+currentFileName(fileName), source(source) { }
 
 vector<shared_ptr<Token>> Lexer::getTokens() {
     currentIndex = 0;

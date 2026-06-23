@@ -7,8 +7,8 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": ["--verb=v3", "--gen=obj", "--opt=o0", "${workspaceFolder}/test.brc"],
-            //"args": ["--verb=v3", "--gen=obj", "--opt=o0", "${workspaceFolder}/test.brc", "${workspaceFolder}/test2.brc"],
-            //"args": ["--verb=v3", "--gen=obj", "--opt=o2", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/B/String.brc", "${workspaceFolder}/lib/B/Array.brc", "${workspaceFolder}/lib/BSys.brc"],
+            //"args": ["--verb=v3", "--gen=obj", "--opt=o0", "${workspaceFolder}/tests/module_import_of_import/main.brc", "${workspaceFolder}/tests/module_import_of_import/dummy.brc", "${workspaceFolder}/tests/module_import_of_import/sub_dummy.brc"],
+            //"args": ["--verb=v3", "--gen=obj", "--opt=o0", "${workspaceFolder}/tests/module_main_reference/main.brc", "${workspaceFolder}/tests/module_main_reference/dummy.brc"],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build Bits Runner Builder (Debug)"
         },
@@ -18,7 +18,6 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": ["--verb=v3", "${workspaceFolder}/test.brc"],
-            //"args": ["--verb=v3", "--gen=obj", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/B/String.brc", "${workspaceFolder}/lib/B/BSys.brc"],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build Bits Runner Builder (Debug)"
         }

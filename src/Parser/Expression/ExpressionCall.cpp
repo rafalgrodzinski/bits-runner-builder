@@ -1,10 +1,35 @@
 #include "ExpressionCall.h"
 
-ExpressionCall::ExpressionCall(string name, vector<shared_ptr<Expression>> argumentExpressions, shared_ptr<Location> location):
-Expression(ExpressionKind::CALL, nullptr, location), name(std::move(name)), argumentExpressions(std::move(argumentExpressions)) { }
+ExpressionCall::ExpressionCall(const string &name, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<Location> location):
+Expression(ExpressionKind::CALL, nullptr, location), argumentExpressions(argumentExpressions) {
+    size_t pos = name.find('.');
+    if (pos != string::npos) {
+        this->moduleName = name.substr(0, pos);
+        this->name = name.substr(pos + 1, name.size());
+    } else {
+        this->name = name;
+    }
+}
 
 string ExpressionCall::getName() const {
     return name;
+}
+
+string ExpressionCall::getGlobalName() const {
+    string moduleName = this->moduleName;
+    if (moduleName.empty())
+        return name;
+
+    return format("{}.{}", moduleName, name);
+}
+
+string ExpressionCall::getModuleName() const {
+    return moduleName;
+}
+
+void ExpressionCall::setModuleName(const string &moduleName) {
+    if (this->moduleName.empty())
+        this->moduleName = moduleName;
 }
 
 vector<shared_ptr<Expression>> ExpressionCall::getArgumentExpressions() const {

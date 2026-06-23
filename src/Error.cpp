@@ -3,45 +3,45 @@
 #include "Parser/ValueType.h"
 #include "Lexer/Location.h"
 
-shared_ptr<Error> Error::error(shared_ptr<Location> location, string message) {
+shared_ptr<Error> Error::error(shared_ptr<Location> location, const string &message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::MESSAGE;
     error->location = location;
-    error->message = std::move(message);
+    error->message = message;
     return error;
 }
 
-shared_ptr<Error> Error::lexerError(shared_ptr<Location> location, string lexme) {
+shared_ptr<Error> Error::lexerError(shared_ptr<Location> location, const string &lexme) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::LEXER_ERROR;
     error->location = location;
-    error->lexme = std::move(lexme);
+    error->lexme = lexme;
     return error;
 }
 
-shared_ptr<Error> Error::parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message) {
+shared_ptr<Error> Error::parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, const optional<Parsee> &expectedParsee, const optional<string> &message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::PARSER_ERROR;
     error->actualToken = actualToken;
     error->expectedTokenKind = expectedTokenKind;
-    error->expectedParsee = std::move(expectedParsee);
-    error->message = std::move(message);
+    error->expectedParsee = expectedParsee;
+    error->message = message;
     return error;
 }
 
-shared_ptr<Error> Error::builderFunctionError(string functionName, string message) {
+shared_ptr<Error> Error::builderFunctionError(const string &functionName, const string &message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::BUILDER_FUNCTION_ERROR;
-    error->functionName = std::move(functionName);
-    error->message = std::move(message);
+    error->functionName = functionName;
+    error->message = message;
     return error;
 }
 
-shared_ptr<Error> Error::builderModuleError(string moduleName, string message) {
+shared_ptr<Error> Error::builderModuleError(const string &moduleName, const string &message) {
     shared_ptr<Error> error = make_shared<Error>();
     error->kind = ErrorKind::BUILDER_MODULE_ERROR;
-    error->moduleName = std::move(moduleName);
-    error->message = std::move(message);
+    error->moduleName = moduleName;
+    error->message = message;
     return error;
 }
 

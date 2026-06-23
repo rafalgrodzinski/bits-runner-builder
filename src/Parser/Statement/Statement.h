@@ -38,8 +38,8 @@ private:
 
 public:
     Statement(StatementKind kind, shared_ptr<Location> location);
-
     virtual ~Statement() { }
+
     StatementKind getKind() const;
     shared_ptr<Location> getLocation() const;
 };

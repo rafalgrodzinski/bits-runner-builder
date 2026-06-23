@@ -5,12 +5,13 @@
 
 StatementFunctionDeclaration::StatementFunctionDeclaration(
     bool shouldExport,
-    string name,
-    vector<pair<string, shared_ptr<ValueType>>> arguments,
+    const string &name,
+    const string &moduleName,
+    const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION_DECLARATION, location), shouldExport(shouldExport), name(std::move(name)), arguments(std::move(arguments)), returnValueType(returnValueType) { }
+Statement(StatementKind::FUNCTION_DECLARATION, location), shouldExport(shouldExport), name(name), moduleName(moduleName), arguments(arguments), returnValueType(returnValueType) { }
 
 bool StatementFunctionDeclaration::getShouldExport() const {
     return shouldExport;
@@ -18,6 +19,14 @@ bool StatementFunctionDeclaration::getShouldExport() const {
 
 string StatementFunctionDeclaration::getName() const {
     return name;
+}
+
+string StatementFunctionDeclaration::getGlobalName() const {
+    return format("{}.{}", moduleName, name); 
+}
+
+string StatementFunctionDeclaration::getModuleName() const {
+    return moduleName;
 }
 
 vector<pair<string, shared_ptr<ValueType>>> StatementFunctionDeclaration::getArguments() const {

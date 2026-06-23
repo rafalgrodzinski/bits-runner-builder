@@ -1,13 +1,13 @@
 # BRC Language Reference
 
 ## Overview
-Bits Runner Code (BRC) borrows a lot of concepts and syntax from C, but in a slightly modified way. The idea is to use familiar concept in a simplified way, avoiding usage of unnecessary fluff and just to make the code simpler and shorter, while avoiding any unambigouity.
+Bits Runner Code (BRC) borrows a lot of concepts and syntax from C, but in an altered way. The idea is to use familiar code style in a simplified way, avoiding usage of unnecessary fluff to make the code simpler and shorter, while preventing unambigouity.
 
-Semicolons are not placed at the end of statements, but instead they delimit blocks, such as body of a function or a loop. There are no curly brackets. They are not necessary if you, for example, declare an external method or have an `if` expression in a single line. Round brackets `()` are also not ncessary in most of the cases, for example when defining a function or evaluating a condition, but are required for function calls. New lines also play important role and may be required or invalid, depending on the context.
+Semicolons are not placed at the end of statements, but instead they delimit blocks, such as body of a function or a loop. There are no curly brackets for blocks. Round brackets `()` are also not ncessary in most of the cases, for example when defining a function or evaluating a condition, but are required for function calls. New lines also play important role and may be required or invalid, depending on the context.
 
-Single equal sign `=` denotes comparion and instead left arrow `<-` is used as an assign symbol.
+Single equal sign `=` denotes comparion and instead left arrow `<-` is used as an assignment symbol.
 
-Source code is grouped into named modules, each module can be compromised of number of files. There is no separate header file, instead prefix `@pub` if attached to externally visible symbols.
+Source code is grouped into named modules, each module can be composed of number of files. There is no header file. Symbols visible in other modules have to be prefixed with `@export`.
 
 ## Language Elements
 - [Comments](Reference.md#comments) (`//`, `/* */`)
@@ -26,13 +26,13 @@ Source code is grouped into named modules, each module can be compromised of num
 - [Conditional Expressions](Reference.md#conditional-expressions) (`if`, `else`)
 - [Repeats](Reference.md#repeats) (`rep`)
 - [Chaining](Reference.md#chaining) (`thing.sutff[5].something`)
-- [Modules](Reference.md#modules) (`@module`, `@import`, `@export`, `@extern`)
 - [Casts](Reference.md#casts) (`.u32`, `.data<u8>`)
 - [Built-Ins](Reference.md#built-ins) (`.size`, `.count`, `.val`, `.vadr`, `.adr`)
-- [Module Structure](Reference.md#module-structure)
+- [Modules](Reference.md#modules) (`@module`, `@import`, `@export`, `@extern`)
+- [Namespaces](Reference.md#namespaces) (`::`)
 
 ## Comments
-Like in C, comments can specified using either `\\` which will run until the end of the line or through `/* */` block. However, unlike C, the `/* bla bla /* bla */ */` comments can be also embeded inside each other.
+Like in C, comments can be specified using either `//`, which will run until the end of the line, or through `/* */` block. Unlike C, they can be also embeded inside of each other like `/* bla bla /* bla */ */`.
 ```
 // this is a main function
 main fun -> u32
@@ -75,7 +75,7 @@ _100
 _0b1101
 ```
 
-**Text literals** can be specified either as an implicitly zero terminated string, or as a single character. Strings are converted into arrays. Characters can be also backslash '\' escaped, just like in C.
+**Text literals** can be specified either as an implicitly zero terminated string, or as a single character. Strings are converted into arrays. Characters can be also backslash `\` escaped, just like in C.
 ```
 // Examples
 "Hello world"
@@ -94,10 +94,10 @@ _0b1101
 '\0' // 0 (as in integer 0)
 ```
 
-**Boolean literals** can also be specified using `true` or `false` keywords. There is no implicit conversion from integer to boolean and vice-versa.
+**Boolean literals** are specified using `true` and `false` keywords. There is no implicit conversion from integer to boolean and vice-versa.
 
 ## Operators
-All the standard operators, such as `+`, `-`, `*`, `/`, `%` are available. The biggest difference is that the assignment uses the left arrow `<-` and thus a comparison can be done through a single equal sign `=`.
+All the standard operators, such as `+`, `-`, `*`, `/`, `%` are available. The biggest difference is that the assignment uses the left arrow `<-` and thus a comparison is done with a single equal sign `=`.
 ```
 + // addition
 - // subtraction
@@ -107,9 +107,9 @@ All the standard operators, such as `+`, `-`, `*`, `/`, `%` are available. The b
 = // is equal
 != // is not equal
 < // is less than
-<= // is less or equal
-=> // is greater than
-> // is gearter or equal
+> // is greater
+<= // is less than or equal
+>= // is greater than or equal
 <- // assignment
 ( ) // precedence
 ```
@@ -124,20 +124,21 @@ or, xor // lowest piority
 `=` and `!=` can also be used on booleans, but they are effectively equivalent to `and` and `xor`.
 
 ## Bitwise Operators
-Bitwise operators work just like in C.
+Bitwise operators work just like in C. There are some additions though
 ```
 ~ // bitwise not, highest priority
-<<, >> // shift bits left or right
+<< // bit shift left
+>> // bit shift right
 & // bitwise and
-|, ^ // bitwise or, xor
-&? // bitwise test, lowest priority
+| // bitwise or
+^ // bitwise xor
+&? // bitwise test, lowest priority (returns true if given bits are set)
 ```
 
 ## Simple Variables
-Simple ariables are specified by first providing the name and then the type. They can have an optional initializer. There are standard float and integer types available, but unlike in C, you have to be explicit about their size and signiness. You can only perform `=` and `!=` operations on booleans. There is no `void` type or an equivalent.
+Simple variables are specified by first providing the name and then the type. They can have an optional initializer. There are standard float and integer types available, but unlike in C, you have to be explicit about their size and signiness. On booleans you can only perform `=` and `!=` operations. There is no `void` type or an equivalent. Simple variables are implicitly zero (or false) initialized.
 ```
 bytesInKilobyte u32 <- 1_024
-text data<u8> <- "Hello world!"
 pi f32 <- 3.14
 
 u8 // unsigned integer, 8 bits
@@ -147,12 +148,13 @@ s8 // signed integer, 8 bits
 s16 // signed integer, 16 bits
 s32 // signed integer, 32 bits
 f32 // floating point, 32 bits
+f64 // floating point, 64 bits
 bool // true or false
-a // memory address, size depends on target architecture (hence no following number)
+a // memory address, size depends on target architecture (hence not followed by a number)
 ```
 
 ## Boxed
-BRC supports generics-like compile-time types through `boxed`. It is effectively equivalent to a C's union, but it is compile-time type checked. Boxed types can store either a simple variable or a pointer. They can be either direclty specialized, for example through `boxed<u32>` or `boxed<ptr<data<u8>>`, or through named type passed through a blob. Refer to samples/dyn_array for an example.
+BRC supports generics-like compile-time types through `boxed`. It is effectively equivalent to a C's union, but it is compile-time type checked. Boxed types can store either a simple variable or a pointer. They can be either direclty specialized, for example through `boxed<u32>` or `boxed<ptr<data<u8>>`, or through named type passed through a blob. Refer to samples/dyn_array for a further example.
 ```
 Storage<T> blob
   value blob<T>
@@ -162,10 +164,10 @@ store blob<Storage, u32> <- {77}
 ```
 
 ## Data
-Data is a composite of identical members and constant size, also known as arrays. It has a built-in member `.count`, which is equivalent to the number of elements of the array. An array can be assigned to another array of the same type, which will create a shallow copy. If their sizes don't mach, only number of elements equivalent to the smaller array will be copied. If size is not specified, it will be inferred either from composite literal, other data variable, or a function call.
+Data is a composite of identical members and constant size (like an array in C). It has a built-in member `.count`, which is equivalent to the number of elements of the array. An array can be assigned to another array of the same type, which will create a shallow copy. If their sizes don't mach, only number of elements equivalent to the smaller array will be copied. If size is not specified, it will be inferred either from composite literal, other data variable, or a function call.
 ```
 text <u32> <- "Hello, world!"
-rep i u32 <- 0, text[i] != '\0'
+rep i u32, text[i] != '\0'
   printChar(text[i])
 ;
 
@@ -174,7 +176,7 @@ copiedNumbers <u32, 8> <- numbers // Only 8 values will be copied
 ```
 
 ## Blob
-Blobs are composites of different member types, also known as structs. Before use they need to be specified using the `blob` keyword. They can be instantiated using the composite literal `{ }` or by assigning each member `.member` individually. Assigning one blob to another will create its copy. There is no casting between different blob types. Blobs can contain other blobs, but only if they have been already beforehand defined. This helps prevent a blobacalypse where `blob1` would contain `blob2` and `blob2` would contain `blob1` which would end up with infinite blobs. Using pointers is fine though.
+Blobs are composites of different member types (like structs in C). Before use, they need to be defined using the `blob` keyword. They can be instantiated using the composite literal `{ }` or by assigning each member `.member` individually. Assigning one blob to another will create its copy. There is no casting between different blob types. Blobs can contain other blobs, but only if they have been already beforehand defined. This helps prevent a blobacalypse where `blob1` would contain `blob2` and `blob2` would contain `blob1` which would end up with infinite blobs. Using pointers is fine though.
 
 Blobs can implement a proto, which is indicated through `: proto1, proto` syntax. They can also define a named type through `BlobName<named1, named2>`, which then can be passed to a `boxed`.
 ```
@@ -190,7 +192,7 @@ u2.id <- 35
 ```
 
 ## Proto
-Protos allow for interface (or protocol) functionality. The idea is that a proto defines a contract (memeber variables and functions), which then can be fulfilled by a blob. A pointer to that blob can be then used as an initializer to a proto.
+Protos allow for interface (or protocol) functionality. The idea is that a proto defines a contract (member variables and functions), which then is fulfilled by a blob. A pointer to that blob can be then used as an initializer to a proto.
 ```
 Shape proto
   area fun -> u32
@@ -206,7 +208,7 @@ Square blob: Shape
 ## Pointers
 Pointers, just like in C, allow for low-level data manipulation and passing. They have an associated type, which is essential when reading/writing pointee's value. Each variable has a built-in member `.adr`, which will provide a system-dependant (32bit or 64bit) memory address value of type `a`. Pointers have also `.val`, which is equivalent to its pointee and `vadr`, which is the address of the thing it is pointing at. Don't confuse `.vadr` with `.adr`, as the later is the address of the pointer itself.
 
-Address is stored in an `a` type. You can see that it's similar to `u16`, or `f64`, but doesn't have an associated size, because it's implicit for the given target. `a` can be cast into a `ptr<>` type. You can think of it as an address and a window to a given address.
+Address is stored as an `a` type. You can see that it's similar to `u16`, or `f64`, but doesn't have an associated size, because it's implicit for the given target. `a` can be cast into a `ptr<>` type. You can think of it as an address and a window to a given address.
 ```
 a u32 <- 5
 pA ptr<u32>
@@ -222,7 +224,7 @@ a.ptr<u32> <- 0x66
 ```
 
 ## Functions
-Functions in BRC work just like in C. You can specify an optional list of arguments and a return type. Calls require usage of round brackets. Colon should be omitted if there are no arguments. Arrow has to be on the same line as the return type.
+Functions in BRC work just like in C. You can specify an optional list of arguments and a return type.Colon should be omitted if there are no arguments. Arrow has to be on the same line as the return type. Calls require usage of round brackets. 
 ```
 // Valid examples
 main fun -> u32
@@ -269,9 +271,9 @@ addNums: num1 s32, num2 s32 ->
 ```
 
 ## Raw Functions
-A unique feature of BRC is a seamless use of inline assembly. Raw functions can be used just like normal functions, altoght there is a couple of limitations and they require so called constraints to be specified. It's the same as in gcc or clang, but they are specified as a single string instead of splitting them into input, output, and clobbers. Some more information can be found here . Intel syntax is used for the assembly.
+A unique feature of BRC is a seamless use of inline assembly. Raw functions can be used just like normal functions, altoght there is a couple of limitations and they require so called constraints to be specified. It's the same as in gcc or clang, but they are specified as a single string instead of splitting them into input, output, and clobbers. Some more information can be found here . Intel syntax is used for the source.
 ```
-rawAdd raw<"=r,r,r">: num1 u32, num2 u32 -> u32
+rawAdd raw<"=r, r, r">: num1 u32, num2 u32 -> u32
     add $1, $2
     mov $0, $1
 ;
@@ -281,7 +283,7 @@ result u32 <- rawAdd(5, 4)
 ```
 
 ## Conditional Expressions
-If-Else statement can be written on a single or multiple lines. It is an expression, which allows it to return values. If just an `if` is used, a value cannot be returned (since what will be returned if a condition is not met?). Single line version uses colons `:`, which are ommited in the multi-line version. Single and multi-line versions cannot be mixed together
+If-Else statement can be written on a single or multiple lines. It is an expression, which allows it to return values. If just an `if` is used, a value cannot be returned (since what will be returned if a condition is not met?). Single line version uses colons `:`, which are ommited in the multi-line version. Single and multi-line versions can be mixed together
 ```
 isValid bool <- if count = 0: doForEmpty() else: doForCount(count)
 
@@ -309,7 +311,6 @@ else if secondCondition: doSecondThing()
 else if anotherCase: doThis()
 else: andThat()
 
-// this is invalid
 if something
   doStuff
 else: doSomethingElse()
@@ -319,7 +320,7 @@ else: doSomethingElse()
 C-style for, while, and do-while are all combined into a single `rep` loop. The format is `rep init-statement, pre-condition, post-condition, post-statement`. `init-statement` allows to setup a counter, pre-condition is evaluated before and post after each loop. `post-statement` is evaluated at the end of each loop. Each part is optional, but if you include post-condition, pre-condition must also be include. If you include `post-statement` then `init-statement` also has to be included. Body can be specified on the same line as the loop, in which case the final semicolon should be also included.
 ```
 // infinite loop
-rep: doStuff()
+rep:
 
 // do things ten times
 rep i u32 <- 0, i < 10, i <- i + 1
@@ -360,9 +361,9 @@ pThing.val.id <- 8
 ```
 
 ## Modules
-Each source forms a module and each module can be made out of multiple source files. `@module someModule` must be placed at the beginning of the file. If no `@module` is specified, then `@module main` is assumed. Main module lives in the global namespace.
+Each source file forms a module and each module can be made out of multiple source files. `@module NAME` must be placed at the beginning of the file. If no `@module` is specified, then `@module main` is assumed.
 
-Each module can export functionality using the `@export` prefix. In order to use a different module it has to be iported with `@import` and then we can use its exported symbols by prefixing them with `@moduleName.`.
+Each module can export functionality using the `@export` prefix. In order to use a different module it has to be imported with `@import` and then we can use its exported symbols by prefixing them with `@moduleName.`.
 
 ```
 // app.brc
@@ -371,7 +372,7 @@ Each module can export functionality using the `@export` prefix. In order to use
 
 // we need to export main so it's available to the OS
 @export main fun -> u32
-  @console.print("Hello, world!)
+  @console::print("Hello, world!)
 ;
 
 
@@ -385,7 +386,7 @@ Each module can export functionality using the `@export` prefix. In order to use
 
 We can then build both of the sources together with `brb app.brc console.brc` which will produce object files `main.o` and `console.o`.
 
-Separately linked symbosl can be specified using `@extern`. For example, we we want to use something from the standard library we can use `@extern putchar fun: character u32 -> u32`, which can then be resolved by linker.
+Symbols linked externally can be specified using `@extern`. For example, we we want to use something from the standard library we can use `@extern putchar fun: character u32 -> u32`, which can then be resolved by linker.
 
 ## Casts
 It's possible to cast between simple and data types (as long as data types don't contain blobs). It is done by appending a chain expression equivalent to the desired type such as `.u8` or `.data<f32>`.
@@ -407,20 +408,35 @@ There is a couple of built-in members that can be accessible on all or some vari
 .vadr // Pointers only: address of the referenced value (not the poitner itself)
 ```
 
-## Module Structure
-- Exported Statements (same as for loacl header if @export is present, ordered in main)
-  - Blob Declaration
-  - Blob Definition
-  - Global Variable Declaration
-  - Function Declaration
-- Header (autogenerated, based on body, order arranged by Parser)
-  - Blob Declaration
-  - Blob Definition
-  - Global Variable Declaration
-  - Function Declaration
-- Body
-  - All Statements except for:
-    - Blob Declaration
-    - Blob Definition
-    - Global Variable Declaration
-    - Function Declaration
+## Namespaces
+Each module define it's own namespace. Module-internal symbols can be references with or without the namespace. Imported symbols have to always be referenced with a module namespace. There is no equivalent to a `using NAME` from C++.
+```
+// main.brc
+@import Dummy
+
+doMainThing fun
+;
+
+@export fun main -> u32
+  @main::doMainThing()
+  // or
+  doMainThing()
+
+  @Dummy::doDummyThing()
+
+  ret 0
+;
+```
+
+Global symbols can also have additional namespaces either for groupping or for static-linke functions:
+```
+Values::DEFAULT u32 <- 7
+
+Dummy blob
+  number u32
+;
+
+Dummy::new fun -> blob<Dummy>
+  ret {Values::DEFAULT}.blob<Dummy>
+;
+```

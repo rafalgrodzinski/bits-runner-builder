@@ -1,7 +1,10 @@
 #ifndef STATEMENT_TYPE_H
 #define STATEMENT_TYPE_H
 
+#include <format>
+
 #include "Statement.h"
+#include "StatementBlobDeclaration.h"
 
 class StatementFunction;
 class StatementVariable;
@@ -12,6 +15,8 @@ class StatementBlob: public Statement {
 private:
     bool shouldExport;
     string name;
+    string moduleName;
+
     vector<string> namedTypeKeys;
     vector<shared_ptr<StatementVariable>> variableStatements;
     vector<shared_ptr<StatementFunction>> functionStatements;
@@ -20,21 +25,27 @@ private:
 public:
     StatementBlob(
         bool shouldExport,
-        string name,
-        vector<string> namedTypeKeys,
-        vector<string> protoNames,
-        vector<shared_ptr<StatementVariable>> variableStatements,
-        vector<shared_ptr<StatementFunction>> functionStatements,
+        const string &name,
+        const vector<string> &namedTypeKeys,
+        const vector<string> &protoNames,
+        const vector<shared_ptr<StatementVariable>> &variableStatements,
+        const vector<shared_ptr<StatementFunction>> &functionStatements,
         shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
     string getName() const;
+    string getGlobalName() const;
+    string getModuleName() const;
+    void setModuleName(const string &moduleName);
+
     vector<string> getNamedTypeKeys() const;
     vector<string> getProtoNames() const;
     vector<shared_ptr<StatementVariable>> getVariableStatements() const;
     vector<shared_ptr<StatementFunction>> getFunctionStatements() const;
     vector<pair<string, shared_ptr<ValueType>>> getMembers() const;
+
+    shared_ptr<StatementBlobDeclaration> getDeclaration() const;
 };
 
 #endif
