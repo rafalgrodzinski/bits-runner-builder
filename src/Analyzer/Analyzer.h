@@ -1,10 +1,10 @@
 #ifndef TYPES_ANALYZER_H
 #define TYPES_ANALYZER_H
 
+#include <format>
+#include <map>
 #include <memory>
 #include <vector>
-#include <map>
-#include <format>
 
 class AnalyzerScope;
 class Module;

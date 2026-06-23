@@ -1,6 +1,8 @@
 #ifndef STATEMENT_PROTO_DECLARATION_H
 #define STATEMENT_PROTO_DECLARATION_H
 
+#include <format>
+
 #include "Statement.h"
 
 class StatementProtoDeclaration: public Statement {

@@ -1,6 +1,8 @@
 #ifndef EXPRESSION_VALUE_H
 #define EXPRESSION_VALUE_H
 
+#include <format>
+
 #include "Expression.h"
 
 enum class ExpressionValueKind {
