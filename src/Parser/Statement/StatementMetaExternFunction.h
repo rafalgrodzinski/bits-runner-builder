@@ -1,6 +1,8 @@
 #ifndef STATEMENT_META_EXTERN_FUNCTION_H
 #define STATEMENT_META_EXTERN_FUNCTION_H
 
+#include <format>
+
 #include "Statement.h"
 
 class ValueType;

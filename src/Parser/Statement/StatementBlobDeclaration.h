@@ -1,6 +1,8 @@
 #ifndef STATEMENT_BLOB_DECLARATION_H
 #define STATEMENT_BLOB_DECLARATION_H
 
+#include <format>
+
 #include "Statement.h"
 
 class StatementBlobDeclaration: public Statement {

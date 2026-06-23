@@ -1,6 +1,8 @@
 #ifndef STATEMENT_FUNCTION
 #define STATEMENT_FUNCTION
 
+#include <format>
+
 #include "Parser/Statement/Statement.h"
 
 class ValueType;

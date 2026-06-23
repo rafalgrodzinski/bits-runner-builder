@@ -1,6 +1,8 @@
 #ifndef STATEMENT_FUNCTION_H
 #define STATEMENT_FUNCTION_H
 
+#include <format>
+
 #include "Statement.h"
 #include "StatementFunctionDeclaration.h"
 

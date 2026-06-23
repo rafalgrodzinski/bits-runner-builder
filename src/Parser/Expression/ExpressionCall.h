@@ -1,6 +1,8 @@
 #ifndef EXPRESSION_CALL_H
 #define EXPRESSION_CALL_H
 
+#include <format>
+
 #include "Expression.h"
 
 class ExpressionCall: public Expression {

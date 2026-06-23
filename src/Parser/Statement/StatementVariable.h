@@ -1,6 +1,8 @@
 #ifndef STATEMENT_VARIABLE_H
 #define STATEMENT_VARIABLE_H
 
+#include <format>
+
 #include "Statement.h"
 #include "StatementVariableDeclaration.h"
 
