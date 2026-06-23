@@ -2,16 +2,16 @@
 Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) Operating System project. It aims to be a modernised C with s clear and explicit syntax. Bits Runner Builder (BRB) is its implementation. It's available for macOS, Linux, and Windows.
 
 ### In this readme
-- [A taste of BRC](README.md#a-taste-of-brc-)
-- [But why?](README.md#but-why-)
-- [How to install](README.md#how-to-install-)
-- [How to build](README.md#how-to-build-)
-- [Samples](README.md#samples-)
-- [Visual Studio Code support](README.md#visual-studio-code-support-)
-- [Further resources](README.md#further-resources-)
+- [🥞 A taste of BRC](README.md#-a-taste-of-brc)
+- [🤓 But why?](README.md#-but-why)
+- [💿 How to install](README.md#-how-to-install)
+- [🛠️ How to build](README.md#-how-to-build)
+- [💡 Samples](README.md#-samples)
+- [🖍️ Visual Studio Code support](README.md#-visual-studio-code-support)
+- [🔗 Further resources](README.md#-further-resources)
 
 
-## A taste of BRC 🥞
+## 🥞 A taste of BRC
 ```
 // main.brc
 
@@ -51,7 +51,7 @@ cc -o taste main.o BSys.o B.o
 ```
 
 
-## But why? 🤓
+## 🤓 But why?
 The idea was to build the whole computing environment from scratch which can be its own thing. Many project try to be a sort of recreation of C/Unix, but this is not the point here. This project doesn't aim at compatibility with existing sfotware so it may hapilly break things in order to make them simpler, more modern, or simply different.
 
 It aims to be an opinionated, low-level system language, a modernised C with revised syntax and a number of quality of life improvement. It is explicit and clear, so what you write is what you get. No runtime, implicit startup code, or templates. Altough it has a simple class-like functionality using `blob`, class hierarchies, templates, or other unnecessary fluff is not supported. It alows for interface types with `proto` and generic/template/union like functionality with `boxed<T>` type.
@@ -79,34 +79,34 @@ It's mostly a learning opportunity and a bit of fun, but maybe you can find some
 - Shows tokens, AST, and build statistics for each phase with `--verb=v2` or `--verb=v3`
 
 
-## How to Install 💿
+## 💿 How to Install
 To try out BRC download an appropriate build of brb from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases) and make sure that you have LLVM 20 installed on your system.
 
-### macOS
+### 🍎 macOS
 Tested on macOS 15 (Sequoia)
 - Make sure you have [Homebrew](https://brew.sh/) installed
 - Install using homebrew through my personal tap `brew install rafalgrodzinski/tap/brb`
 - Or install manually by first nstalling LLVM: `brew install llvm@20`
 - Then get the latest macOS build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-macos-<arch>.zip`
 
-### Linux
+### 🐧 Linux
 Tested on Ubuntu 24
 - LLVM: `sudo apt install llvm-20`
 - Get latest Linux build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-linux-x86_64.zip`
 
-### Windows
+### 🪟 Windows
 Tested on Windows 11, but should work fine for other 64 bit windows too. Windows version has statically linked LLVM, so no additional libraries are required.
 - Get latest Windows build from [releases](https://github.com/rafalgrodzinski/bits-runner-builder/releases): `brb-<version>-<build>-win-x86_64.zip`
 
 
-## How to Build? 🛠️
+## 🛠️ How to Build?
 Required dependencies
 - clang 17.0.0 and up
 - Visual Studio 2026
 - LLVM 20.1.0
 - CMake 4.0.0 and up
 
-### macOS
+### 🍎 macOS
 - Just as for installation, first get [Homebrew](https://brew.sh/) installed
 - `brew install llvm@20` Install LLVM
 - `brew install cmake` Install cmake
@@ -116,12 +116,12 @@ Required dependencies
 - `cmake --build build --target install` Install in system
 - `bin/brb` will be the executables, `lib/brc/` will contain the standard libraries
 
-### Linux
+### 🐧 Linux
 - CMake: Version 4 wasn't available with apt-get, so it had to be installed manually from [cmake.org](https://cmake.org/download/)
 - Install LLVM: `sudo apt install llvm-20`
 - build process is the same as for macOS
 
-### Windows
+### 🪟 Windows
 Windows build is a little bit more involved because you need to setup the environment and build LLVM from sources. Available LLVM binaries don't contain the necessary libraries.
 - Instal `Visual Studio 2026` (any version) or just the `Build Tools for Visual Studio 2026` from (here)[https://visualstudio.microsoft.com/ja/downloads/]. Make sure that you install C++ and CMake components.
 - Setup `PATH` environment variable so it includes the `cmake.exe` location at
@@ -134,7 +134,7 @@ Windows build is a little bit more involved because you need to setup the enviro
 - You'll then be able to find the executable under `build/Release/brb`.
 
 
-## Samples 💡
+## 💡 Samples
 Inside of `samples/` there is a bunch of different sample code using different features of the code. Inside each of them there is a `build.sh` and `build.bat`, which will generate an executable. You can also Run `samples/run_all.sh` to build and run each of the samples, which is useful for testing to check if everything works as expected.
 
 `callback`:
@@ -189,11 +189,11 @@ There is a bunch of small tests that are used to check correctness of the genera
 For a real use of the language checkout sources for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) project.
 
 
-## Visual Studio Code support
+## 🖍️ Visual Studio Code support
 There are "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 which will then build and start debugging using command `brb --verb=v3 samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode and `lldb-dap` on your system. There is also [a BRC langauge extension](https://github.com/rafalgrodzinski/brc-vscode) available.
 
 
-## Further resources 🔗
+## 🔗 Further resources
 - [Language reference](docs/Reference.md)
 - [Casting rules](docs/Casts.md)
 - [Extra information](docs/Extra.md)
