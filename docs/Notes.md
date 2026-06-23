@@ -14,3 +14,4 @@ Changelist:
   - Namespaces can be used fro blob types
   - Verify that index access is used on `data`
   - Moved libraries into `lib/brc/`
+  - Updated docs
