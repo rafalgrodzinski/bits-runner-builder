@@ -8,5 +8,5 @@ Available for:
 - Windows (x86_64)
 
 Changelist:
-- [1.0.0-dev-105]()
+- [1.0.0-dev-105](https://github.com/rafalgrodzinski/bits-runner-builder/pull/201)
   - Print strings in color
