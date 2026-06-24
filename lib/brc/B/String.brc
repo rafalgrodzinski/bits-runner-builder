@@ -70,43 +70,43 @@
         ;
 
         // Foreground color
-        if attribute &? String::FOREGROUND_RED
+        if (attribute & 0b111) = String::FOREGROUND_RED
             if attribute &? String::ATTRIB_BRIGHT
                 String(";91").print()
             else 
                 String(";31").print()
             ;
-        else if attribute &? String::FOREGROUND_GREEN
+        else if (attribute & 0b111) = String::FOREGROUND_GREEN
             if attribute &? String::ATTRIB_BRIGHT
                 String(";92").print()
             else 
                 String(";32").print()
             ;
-        else if attribute &? String::FOREGROUND_BLUE
+        else if (attribute & 0b111) = String::FOREGROUND_BLUE
             if attribute &? String::ATTRIB_BRIGHT
                 String(";94").print()
             else 
                 String(";34").print()
             ;
-        else if attribute &? String::FOREGROUND_CYAN
+        else if (attribute & 0b111) = String::FOREGROUND_CYAN
             if attribute &? String::ATTRIB_BRIGHT
                 String(";96").print()
             else 
                 String(";36").print()
             ;
-        else if attribute &? String::FOREGROUND_MAGENTA
+        else if (attribute & 0b111) = String::FOREGROUND_MAGENTA
             if attribute &? String::ATTRIB_BRIGHT
                 String(";95").print()
             else 
                 String(";35").print()
             ;
-        else if attribute &? String::FOREGROUND_BROWN
+        else if (attribute & 0b111) = String::FOREGROUND_BROWN
             if attribute &? String::ATTRIB_BRIGHT
                 String(";93").print()
             else 
                 String(";33").print()
             ;
-        else if attribute &? String::FOREGROUND_GRAY
+        else if (attribute & 0b111) = String::FOREGROUND_GRAY
             if attribute &? String::ATTRIB_BRIGHT
                 String(";97").print()
             else 
@@ -122,17 +122,17 @@
         ;
  
         // Background
-        if attribute &? String::BACKGROUND_RED
+        if (attribute & 0b111_000) = String::BACKGROUND_RED
             String(";41").print()
-        else if attribute &? String::BACKGROUND_GREEN
+        else if (attribute & 0b111_000) = String::BACKGROUND_GREEN
             String(";42").print()
-        else if attribute &? String::BACKGROUND_BLUE
+        else if (attribute & 0b111_000) = String::BACKGROUND_BLUE
             String(";44").print()
-        else if attribute &? String::BACKGROUND_CYAN
+        else if (attribute & 0b111_000) = String::BACKGROUND_CYAN
             String(";46").print()
-        else if attribute &? String::BACKGROUND_MAGENTA
+        else if (attribute & 0b111_000) = String::BACKGROUND_MAGENTA
             String(";45").print()
-        else if attribute &? String::BACKGROUND_BROWN
+        else if (attribute & 0b111_000) = String::BACKGROUND_BROWN
             String(";43").print()
         // black
         else
