@@ -2,6 +2,27 @@
 
 @import BSys
 
+@export String::FOREGROUND_BLACK u8 <- 0b000
+@export String::FOREGROUND_BLUE u8 <- 0b001
+@export String::FOREGROUND_GREEN u8 <- 0b010
+@export String::FOREGROUND_CYAN u8 <- 0b011
+@export String::FOREGROUND_RED u8 <- 0b100
+@export String::FOREGROUND_MAGENTA u8 <- 0b101
+@export String::FOREGROUND_BROWN u8 <- 0b110
+@export String::FOREGROUND_GRAY u8 <- 0b111
+
+@export String::BACKGROUND_BLACK u8 <- 0b000_000
+@export String::BACKGROUND_RED u8 <- 0b001_000
+@export String::BACKGROUND_GREEN u8 <- 0b010_000
+@export String::BACKGROUND_BLUE u8 <- 0b011_000
+@export String::BACKGROUND_CYAN u8 <- 0b100_000
+@export String::BACKGROUND_MAGENTA u8 <- 0b101_000
+@export String::BACKGROUND_BROWN u8 <- 0b110_000
+@export String::BACKGROUND_WHITE u8 <- 0b111_000
+
+@export String::ATTRIB_BLINK u8 <- 0b01_000_000
+@export String::ATTRIB_BRIGHT u8 <- 0b10_000_000
+
 @export String blob
     string data<u8, 64>
 
@@ -30,6 +51,107 @@
     println fun
         it.print()
         @BSys::printChar('\n')
+    ;
+
+    printColor fun: attribute u8
+        /*
+            \033[X;X;Xm<YOUR_TEXT>\033[0m
+            Where each X is a semicolon separated attribute
+        */
+
+        // First print the attributes prefix
+        String({0x1b, '[', 0}).print()
+
+        // Attribute
+        if attribute &? String::ATTRIB_BLINK
+            String("5").print()
+        else
+            String("0").print()
+        ;
+
+        // Foreground color
+        if attribute &? String::FOREGROUND_RED
+            if attribute &? String::ATTRIB_BRIGHT
+                String(";91").print()
+            else 
+                String(";31").print()
+            ;
+        else if attribute &? String::FOREGROUND_GREEN
+            if attribute &? String::ATTRIB_BRIGHT
+                String(";92").print()
+            else 
+                String(";32").print()
+            ;
+        else if attribute &? String::FOREGROUND_BLUE
+            if attribute &? String::ATTRIB_BRIGHT
+                String(";94").print()
+            else 
+                String(";34").print()
+            ;
+        else if attribute &? String::FOREGROUND_CYAN
+            if attribute &? String::ATTRIB_BRIGHT
+                String(";96").print()
+            else 
+                String(";36").print()
+            ;
+        else if attribute &? String::FOREGROUND_MAGENTA
+            if attribute &? String::ATTRIB_BRIGHT
+                String(";95").print()
+            else 
+                String(";35").print()
+            ;
+        else if attribute &? String::FOREGROUND_BROWN
+            if attribute &? String::ATTRIB_BRIGHT
+                String(";93").print()
+            else 
+                String(";33").print()
+            ;
+        else if attribute &? String::FOREGROUND_GRAY
+            if attribute &? String::ATTRIB_BRIGHT
+                String(";97").print()
+            else 
+                String(";37").print()
+            ;
+        // black
+        else
+            if attribute &? String::ATTRIB_BRIGHT
+                String(";90").print()
+            else 
+                String(";30").print()
+            ;
+        ;
+ 
+        // Background
+        if attribute &? String::BACKGROUND_RED
+            String(";41").print()
+        else if attribute &? String::BACKGROUND_GREEN
+            String(";42").print()
+        else if attribute &? String::BACKGROUND_BLUE
+            String(";44").print()
+        else if attribute &? String::BACKGROUND_CYAN
+            String(";46").print()
+        else if attribute &? String::BACKGROUND_MAGENTA
+            String(";45").print()
+        else if attribute &? String::BACKGROUND_BROWN
+            String(";43").print()
+        // black
+        else
+            String(";40").print()
+        ;
+
+        // 'm' finishes the attributes
+        String("m").print()
+
+        // Then the text
+        it.print()
+
+        // And finally reset the attributes
+        String({0x1b, '[', '0', 'm', 0}).print()
+    ;
+
+    printlnColor fun: attribute u8
+        it.printColor(attribute)
+        String("\n").print()
     ;
 
     subString fun: from u32, to u32 -> blob<String>

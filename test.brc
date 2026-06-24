@@ -1,6 +1,7 @@
-Timer::Pit::instance blob<Timer::Pit>
+@import B
 
-@export Timer::Pit blob
-   init fun
-   ;
+@export main fun -> u32
+   @B::String("Hello, world!").printlnColor(@B::String::FOREGROUND_BLUE | @B::String::BACKGROUND_MAGENTA | @B::String::ATTRIB_BLINK)
+
+   ret 0
 ;
