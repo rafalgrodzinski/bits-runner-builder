@@ -487,7 +487,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
 
     // closing semicolon
-    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
+    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true, false)) {
         markError(TokenKind::SEMICOLON, {}, {});
         return nullptr;
     }
@@ -699,17 +699,14 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     }
 
     // source
-    while (tryMatchingTokenKinds({TokenKind::RAW_SOURCE_LINE}, true, false)) {
+    while (tryMatchingTokenKinds({TokenKind::RAW_SOURCE_LINE}, true, false, true)) {
         if (!rawSource.empty())
             rawSource += "\n";
         rawSource += tokens.at(currentIndex++)->getLexme();
-
-        // Consume optional new line (for example because of a comment)
-        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true);
     }
 
     // closing semicolon
-    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true)) {
+    if(!tryMatchingTokenKinds({TokenKind::SEMICOLON}, false, true, true)) {
         markError(TokenKind::SEMICOLON, {}, {});
         return nullptr;
     }
@@ -962,16 +959,16 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 
     vector<shared_ptr<Statement>> statements;
 
-    while (!tryMatchingTokenKinds(terminalTokenKinds, false, false)) {
+    while (!tryMatchingTokenKinds(terminalTokenKinds, false, false, false)) {
         shared_ptr<Statement> statement = nextInBlockStatement();
         if (statement != nullptr)
             statements.push_back(statement);
 
-        if (tryMatchingTokenKinds(terminalTokenKinds, false, false))
+        if (tryMatchingTokenKinds(terminalTokenKinds, false, false, false))
             break;
 
         // except new line
-        if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true))
+        if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false))
             markError(TokenKind::NEW_LINE, {}, {});
     }
 
@@ -1357,7 +1354,7 @@ shared_ptr<Expression> Parser::matchLogicalOrXor() {
     if (expression == nullptr)
         return nullptr;
 
-    while (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, false))
+    while (tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, false, true))
         expression = matchExpressionBinary(expression);
 
     // Expression cannot be on left hand side of an assignment
@@ -1372,7 +1369,7 @@ shared_ptr<Expression> Parser::matchLogicalAnd() {
     if (expression == nullptr)
         return nullptr;
 
-    while (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, false))
+    while (tryMatchingTokenKinds(Token::tokensLogicalAnd, false, false, true))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1381,7 +1378,7 @@ shared_ptr<Expression> Parser::matchLogicalAnd() {
 shared_ptr<Expression> Parser::matchLogicalNot() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
-    if (tryMatchingTokenKinds(Token::tokensLogicalNot, false, true)) {
+    if (tryMatchingTokenKinds(Token::tokensLogicalNot, false, true, true)) {
         shared_ptr<Expression> subExpression = matchLogicalNot();
         shared_ptr<ExpressionUnary> expression = ExpressionUnary::expression(token, subExpression);
 
@@ -1399,7 +1396,7 @@ shared_ptr<Expression> Parser::matchEquality() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensEquality, false, false))
+    if (tryMatchingTokenKinds(Token::tokensEquality, false, false, true))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1410,7 +1407,7 @@ shared_ptr<Expression> Parser::matchComparison() {
     if (expression == nullptr)
         return nullptr;
     
-    if (tryMatchingTokenKinds(Token::tokensComparison, false, false))
+    if (tryMatchingTokenKinds(Token::tokensComparison, false, false, true))
         expression = matchExpressionBinary(expression);
     
     return expression;
@@ -1421,7 +1418,7 @@ shared_ptr<Expression> Parser::matchBitwiseTest() {
     if (expression == nullptr)
         return nullptr;
 
-    if (tryMatchingTokenKinds(Token::tokensBitwiseTest, false, false))
+    if (tryMatchingTokenKinds(Token::tokensBitwiseTest, false, false, true))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1432,7 +1429,7 @@ shared_ptr<Expression> Parser::matchBitwiseOrXor() {
     if (expression == nullptr)
         return nullptr;
 
-    while (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, false))
+    while (tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, false, true))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1443,7 +1440,7 @@ shared_ptr<Expression> Parser::matchBitwiseAnd() {
     if (expression == nullptr)
         return nullptr;
 
-    while (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, false))
+    while (tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, false, true))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1458,8 +1455,8 @@ shared_ptr<Expression> Parser::matchBitwiseShift() {
     // a valid bit shift expression
     shared_ptr<Expression> previousExpression = expression;
     while (
-        tryMatchingTokenKinds({TokenKind::LEFT_ANGLE_BRACKET, TokenKind::LEFT_ANGLE_BRACKET}, true, false)
-        || tryMatchingTokenKinds({TokenKind::RIGHT_ANGLE_BRACKET, TokenKind::RIGHT_ANGLE_BRACKET}, true, false)
+        tryMatchingTokenKinds({TokenKind::LEFT_ANGLE_BRACKET, TokenKind::LEFT_ANGLE_BRACKET}, true, false, true)
+        || tryMatchingTokenKinds({TokenKind::RIGHT_ANGLE_BRACKET, TokenKind::RIGHT_ANGLE_BRACKET}, true, false, true)
     ) {
         expression = matchExpressionBinary(expression);
         // If there was no change, no expression is detected so stop trying further
@@ -1474,7 +1471,7 @@ shared_ptr<Expression> Parser::matchBitwiseShift() {
 shared_ptr<Expression> Parser::matchBitwiseNot() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
-    if (tryMatchingTokenKinds(Token::tokensBitwiseNot, false, true)) {
+    if (tryMatchingTokenKinds(Token::tokensBitwiseNot, false, true, true)) {
         shared_ptr<Expression> subExpression = matchBitwiseNot();
         shared_ptr<ExpressionUnary> expression = ExpressionUnary::expression(token, subExpression);
 
@@ -1492,7 +1489,7 @@ shared_ptr<Expression> Parser::matchTerm() {
     if (expression == nullptr)
         return nullptr;
 
-    while (tryMatchingTokenKinds(Token::tokensTerm, false, false))
+    while (tryMatchingTokenKinds(Token::tokensTerm, false, false, true))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1503,7 +1500,7 @@ shared_ptr<Expression> Parser::matchFactor() {
     if (expression == nullptr)
         return nullptr;
 
-    while (tryMatchingTokenKinds(Token::tokensFactor, false, false))
+    while (tryMatchingTokenKinds(Token::tokensFactor, false, false, true))
         expression = matchExpressionBinary(expression);
 
     return expression;
@@ -1512,7 +1509,7 @@ shared_ptr<Expression> Parser::matchFactor() {
 shared_ptr<Expression> Parser::matchUnary() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
-    if (tryMatchingTokenKinds(Token::tokensUnary, false, true)) {
+    if (tryMatchingTokenKinds(Token::tokensUnary, false, true, true)) {
         shared_ptr<Expression> subExpression = matchExpressionChained(nullptr);
         shared_ptr<ExpressionUnary> expression = ExpressionUnary::expression(token, subExpression);
 
@@ -1535,7 +1532,7 @@ shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChain
         if (expression == nullptr)
             return nullptr;
         chainExpressions.push_back(expression);
-    } while (tryMatchingTokenKinds({TokenKind::DOT}, false, true));
+    } while (tryMatchingTokenKinds({TokenKind::DOT}, false, true, true));
 
     switch (chainExpressions.size()) {
         case 0:
@@ -1548,6 +1545,10 @@ shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChain
 }
 
 shared_ptr<Expression> Parser::matchPrimary() {
+    int originalIndex = currentIndex;
+    // Consume optional new lines
+    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
     shared_ptr<Expression> expression;
     int errorsCount = errors.size();
 
@@ -1572,18 +1573,19 @@ shared_ptr<Expression> Parser::matchPrimary() {
     if ((expression = matchExpressionIfElse(false)) || errors.size() > errorsCount)
         return expression;
 
+    currentIndex = originalIndex;
     return nullptr;
 }
 
 shared_ptr<Expression> Parser::matchExpressionGrouping() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    if (tryMatchingTokenKinds({TokenKind::LEFT_ROUND_BRACKET}, true, true)) {
+    if (tryMatchingTokenKinds({TokenKind::LEFT_ROUND_BRACKET}, true, true, true)) {
         shared_ptr<Expression> expression = matchLogicalOrXor();
         // has grouped expression failed?
         if (expression == nullptr) {
             return nullptr;
-        } else if (tryMatchingTokenKinds({TokenKind::RIGHT_ROUND_BRACKET}, true, true)) {
+        } else if (tryMatchingTokenKinds({TokenKind::RIGHT_ROUND_BRACKET}, true, true, true)) {
             return make_shared<ExpressionGrouping>(expression, location);
         } else {
             markError(TokenKind::RIGHT_ROUND_BRACKET, {}, {});
@@ -1660,7 +1662,7 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
 shared_ptr<Expression> Parser::matchExpressionLiteral() {
     shared_ptr<Token> token = tokens.at(currentIndex);
 
-    if (tryMatchingTokenKinds(Token::tokensLiteral, false, true))
+    if (tryMatchingTokenKinds(Token::tokensLiteral, false, true, true))
         return ExpressionLiteral::expressionLiteralForToken(token);
 
     return nullptr;
@@ -1964,29 +1966,29 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     bool isAmbiguous = false;
     // What level of binary expression are we having?
     // << & >> need to be checked first in order not to be consumed by < & > comparisons
-    if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftLeft, true, true)) {
+    if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftLeft, true, true, true)) {
         isAmbiguous = true;
         right = matchBitwiseNot();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftRight, true, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftRight, true, true, true)) {
         isAmbiguous = true;
         right = matchBitwiseNot();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true, true)) {
         right = matchLogicalAnd();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true, true)) {
         right = matchLogicalNot();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensEquality, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensEquality, false, true, true)) {
         right = matchComparison();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensComparison, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensComparison, false, true, true)) {
         right = matchBitwiseTest();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseTest, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseTest, false, true, true)) {
         right = matchBitwiseOrXor();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true, true)) {
         right = matchBitwiseAnd();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true, true)) {
         right = matchBitwiseShift();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensTerm, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensTerm, false, true, true)) {
         right = matchFactor();
-    } else if (tokens = tryMatchingTokenKinds(Token::tokensFactor, false, true)) {
+    } else if (tokens = tryMatchingTokenKinds(Token::tokensFactor, false, true, true)) {
         right = matchUnary();
     }
 
@@ -2012,17 +2014,17 @@ shared_ptr<Expression> Parser::matchExpressionBlock(vector<TokenKind> terminalTo
 
     vector<shared_ptr<Statement>> statements;
 
-    while (!tryMatchingTokenKinds(terminalTokenKinds, false, false)) {
+    while (!tryMatchingTokenKinds(terminalTokenKinds, false, false, false)) {
         shared_ptr<Statement> statement = nextInBlockStatement();
 
         if (statement != nullptr)
             statements.push_back(statement);
 
-        if (tryMatchingTokenKinds(terminalTokenKinds, false, false))
+        if (tryMatchingTokenKinds(terminalTokenKinds, false, false, false))
             break;
 
         // except new line
-        if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true)) {
+        if (statement != nullptr && !tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false)) {
             markError(TokenKind::NEW_LINE, {}, {});
             return nullptr;
         }
@@ -2644,37 +2646,49 @@ optional<pair<vector<ParseeResult>, int>> Parser::ifElseParseeResults(optional<b
 //
 // Support
 //
-optional<vector<shared_ptr<Token>>> Parser::tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance) {
+optional<vector<shared_ptr<Token>>> Parser::tryMatchingTokenKinds(
+    vector<TokenKind> kinds,
+    bool shouldMatchAll,
+    bool shouldAdvance,
+    bool shouldSkipNewLine
+) {
+    // Figure out how many new line tokens to skip
+    int skippedCount = 0;
+    if (shouldSkipNewLine) {
+        while (tokens.at(currentIndex + skippedCount)->getKind() == TokenKind::NEW_LINE)
+            skippedCount++;
+    }
+
     int requiredCount = shouldMatchAll ? kinds.size() : 1;
-    if (currentIndex + requiredCount > tokens.size())
+    if (currentIndex + skippedCount + requiredCount > tokens.size())
         return { };
     
     if (shouldMatchAll) {
         for (int i=0; i<kinds.size(); i++) {
-            if (kinds.at(i) != tokens.at(currentIndex + i)->getKind())
+            if (kinds.at(i) != tokens.at(currentIndex + skippedCount + i)->getKind())
                 return { };
         }
 
         // collect found tokens
         vector<shared_ptr<Token>> foundTokens;
         for (int i=0; i<kinds.size(); i++)
-            foundTokens.push_back(tokens.at(currentIndex + i));
+            foundTokens.push_back(tokens.at(currentIndex + skippedCount + i));
 
         // advance current token index
         if (shouldAdvance)
-            currentIndex += kinds.size();
+            currentIndex += skippedCount + kinds.size();
         
         return foundTokens;
     } else {
         for (int i=0; i<kinds.size(); i++) {
-            if (kinds.at(i) == tokens.at(currentIndex)->getKind()) {
+            if (kinds.at(i) == tokens.at(currentIndex + skippedCount)->getKind()) {
                 // collect found token
                 vector<shared_ptr<Token>> foundTokens;
-                foundTokens.push_back(tokens.at(currentIndex));
+                foundTokens.push_back(tokens.at(currentIndex + skippedCount));
 
                 // advance current token index by just one
                 if (shouldAdvance)
-                    currentIndex++;
+                    currentIndex += skippedCount + 1;
                 return vector(foundTokens);
             }
         }
@@ -2693,7 +2707,7 @@ void Parser::markError(optional<TokenKind> expectedTokenKind, optional<Parsee> e
     if (!actualToken->isOfKind({TokenKind::SEMICOLON}))
         safeKinds.push_back(TokenKind::SEMICOLON);
 
-    while (!tryMatchingTokenKinds(safeKinds, false, true))
+    while (!tryMatchingTokenKinds(safeKinds, false, true, false))
         currentIndex++;
 
     // Last END should not be consumed

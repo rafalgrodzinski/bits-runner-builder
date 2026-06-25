@@ -101,7 +101,12 @@ private:
     optional<pair<vector<ParseeResult>, int>> ifElseParseeResults(optional<bool> isMultiLine, int tag);
 
     // Support
-    optional<vector<shared_ptr<Token>>> tryMatchingTokenKinds(vector<TokenKind> kinds, bool shouldMatchAll, bool shouldAdvance);
+    optional<vector<shared_ptr<Token>>> tryMatchingTokenKinds(
+        vector<TokenKind> kinds,
+        bool shouldMatchAll,
+        bool shouldAdvance,
+        bool shouldSkipNewLine
+    );
     void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
 
 public:
