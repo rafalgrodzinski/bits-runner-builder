@@ -1,12 +1,8 @@
 @module BSys
 
-@extern putchar fun: character u32 -> u32
+// Memory
 @extern malloc fun: bytesCount u64 -> a
 @extern free fun: address a
-
-@export printChar fun: character u8
-    putchar(character)
-;
 
 @export memAlloc fun: bytesCount u64 -> a
     ret malloc(bytesCount)
@@ -14,4 +10,102 @@
 
 @export memFree fun: address a
     free(address)
+;
+
+// Print
+@extern putchar fun: character u32 -> u32
+
+@export FOREGROUND_BLACK u8 <- 0b000
+@export FOREGROUND_BLUE u8 <- 0b001
+@export FOREGROUND_GREEN u8 <- 0b010
+@export FOREGROUND_CYAN u8 <- 0b011
+@export FOREGROUND_RED u8 <- 0b100
+@export FOREGROUND_MAGENTA u8 <- 0b101
+@export FOREGROUND_BROWN u8 <- 0b110
+@export FOREGROUND_GRAY u8 <- 0b111
+
+@export BACKGROUND_BLACK u8 <- 0b000_000
+@export BACKGROUND_RED u8 <- 0b001_000
+@export BACKGROUND_GREEN u8 <- 0b010_000
+@export BACKGROUND_BLUE u8 <- 0b011_000
+@export BACKGROUND_CYAN u8 <- 0b100_000
+@export BACKGROUND_MAGENTA u8 <- 0b101_000
+@export BACKGROUND_BROWN u8 <- 0b110_000
+@export BACKGROUND_WHITE u8 <- 0b111_000
+
+@export ATTRIB_BLINK u8 <- 0b01_000_000
+@export ATTRIB_BRIGHT u8 <- 0b10_000_000
+
+@export printChar fun: character u8
+    putchar(character)
+;
+
+@export setPrintAttribute fun: attribute u8
+    /*
+        \033[X;X;Xm<YOUR_TEXT>\033[0m
+        Where each X is a semicolon separated attribute
+    */
+
+    isFgRed bool <- (attribute & 0b111) = FOREGROUND_RED
+    isFgGreen bool <- (attribute & 0b111) = FOREGROUND_GREEN
+    isFgBlue bool <- (attribute & 0b111) = FOREGROUND_BLUE
+    isFgCyan bool <- (attribute & 0b111) = FOREGROUND_CYAN
+    isFgMagenta bool <- (attribute & 0b111) = FOREGROUND_MAGENTA
+    isFgBrown bool <- (attribute & 0b111) = FOREGROUND_BROWN
+    isFgGray bool <- (attribute & 0b111) = FOREGROUND_GRAY
+
+    isBgRed bool <- (attribute & 0b111_000) = BACKGROUND_RED
+    isBgGreen bool <- (attribute & 0b111_000) = BACKGROUND_GREEN
+    isBgBlue bool <- (attribute & 0b111_000) = BACKGROUND_BLUE
+    isBgCyan bool <- (attribute & 0b111_000) = BACKGROUND_CYAN
+    isBgMagenta bool <- (attribute & 0b111_000) = BACKGROUND_MAGENTA
+    isBgBrown bool <- (attribute & 0b111_000) = BACKGROUND_BROWN
+    isBgWhite bool <- (attribute & 0b111_000) = BACKGROUND_WHITE
+
+    isBlink bool <- attribute &? ATTRIB_BLINK
+    isBright bool <- attribute &? ATTRIB_BRIGHT
+
+    // First print the attributes prefix
+    putchar(0x1b)
+    putchar('[')
+
+    // Attribute
+    if isBlink: putchar('5')
+    else: putchar('0')
+
+    // Foreground
+    putchar(';')
+    if isBright: putchar('9') else: putchar('3')
+
+    if isFgRed: putchar('1')
+    else if isFgGreen: putchar('2')
+    else if isFgBlue: putchar('4')
+    else if isFgCyan: putchar('6')
+    else if isFgMagenta: putchar('5')
+    else if isFgBrown: putchar('3')
+    else if isFgGray: putchar('7')
+    else: putchar('0')
+
+    // Background
+    putchar(';')
+    putchar('4')
+
+    if isBgRed: putchar('1')
+    else if isBgGreen: putchar('2')
+    else if isBgBlue: putchar('4')
+    else if isBgCyan: putchar('6')
+    else if isBgMagenta: putchar('5')
+    else if isBgBrown: putchar('3')
+    else if isBgWhite: putchar('7')
+    else: putchar('0')
+
+    // 'm' finishes the attributes
+    putchar('m')
+;
+
+@export resetPrintAttribute fun
+    putchar(0x1b)
+    putchar('[')
+    putchar('0')
+    putchar('m')
 ;

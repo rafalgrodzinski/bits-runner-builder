@@ -1,7 +1,7 @@
 @import B
 
 @export main fun -> u32
-   @B::String("Hello, world!").printlnColor(@B::String::FOREGROUND_MAGENTA | @B::String::BACKGROUND_BROWN | @B::String::ATTRIB_BLINK | @B::String::ATTRIB_BRIGHT)
+   @B::String("Hello, world!").printlnColor(@B::String::FOREGROUND_BROWN | @B::String::BACKGROUND_BLUE | @B::String::ATTRIB_BLINK | @B::String::ATTRIB_BRIGHT)
 
    ret 0
 ;
