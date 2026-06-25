@@ -1545,10 +1545,6 @@ shared_ptr<Expression> Parser::matchExpressionChained(shared_ptr<ExpressionChain
 }
 
 shared_ptr<Expression> Parser::matchPrimary() {
-    int originalIndex = currentIndex;
-    // Consume optional new lines
-    tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
-
     shared_ptr<Expression> expression;
     int errorsCount = errors.size();
 
@@ -1573,7 +1569,6 @@ shared_ptr<Expression> Parser::matchPrimary() {
     if ((expression = matchExpressionIfElse(false)) || errors.size() > errorsCount)
         return expression;
 
-    currentIndex = originalIndex;
     return nullptr;
 }
 
@@ -1966,6 +1961,8 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
     bool isAmbiguous = false;
     // What level of binary expression are we having?
     // << & >> need to be checked first in order not to be consumed by < & > comparisons
+
+    // TODO: Having shifts split into multiple lines doesn't work correctly because of ambiguity with closing >
     if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseShiftLeft, true, true, true)) {
         isAmbiguous = true;
         right = matchBitwiseNot();
@@ -1973,22 +1970,49 @@ shared_ptr<Expression> Parser::matchExpressionBinary(shared_ptr<Expression> left
         isAmbiguous = true;
         right = matchBitwiseNot();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalOrXor, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchLogicalAnd();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensLogicalAnd, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchLogicalNot();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensEquality, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchComparison();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensComparison, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchBitwiseTest();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseTest, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchBitwiseOrXor();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseOrXor, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchBitwiseAnd();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensBitwiseAnd, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchBitwiseShift();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensTerm, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchFactor();
     } else if (tokens = tryMatchingTokenKinds(Token::tokensFactor, false, true, true)) {
+        // Consume optional new lines
+        tryMatchingTokenKinds({TokenKind::NEW_LINE}, true, true, false);
+
         right = matchUnary();
     }
 
