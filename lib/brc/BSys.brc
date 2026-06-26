@@ -15,26 +15,26 @@
 // Print
 @extern putchar fun: character u32 -> u32
 
-@export FOREGROUND_BLACK u8 <- 0b000
-@export FOREGROUND_BLUE u8 <- 0b001
-@export FOREGROUND_GREEN u8 <- 0b010
-@export FOREGROUND_CYAN u8 <- 0b011
-@export FOREGROUND_RED u8 <- 0b100
-@export FOREGROUND_MAGENTA u8 <- 0b101
-@export FOREGROUND_BROWN u8 <- 0b110
-@export FOREGROUND_GRAY u8 <- 0b111
+@export FOREGROUND_BLACK u8 <- 0x00
+@export FOREGROUND_BLUE u8 <- 0x01
+@export FOREGROUND_GREEN u8 <- 0x02
+@export FOREGROUND_CYAN u8 <- 0x03
+@export FOREGROUND_RED u8 <- 0x04
+@export FOREGROUND_MAGENTA u8 <- 0x05
+@export FOREGROUND_BROWN u8 <- 0x06
+@export FOREGROUND_GRAY u8 <- 0x07
 
-@export BACKGROUND_BLACK u8 <- 0b000_000
-@export BACKGROUND_RED u8 <- 0b001_000
-@export BACKGROUND_GREEN u8 <- 0b010_000
-@export BACKGROUND_BLUE u8 <- 0b011_000
-@export BACKGROUND_CYAN u8 <- 0b100_000
-@export BACKGROUND_MAGENTA u8 <- 0b101_000
-@export BACKGROUND_BROWN u8 <- 0b110_000
-@export BACKGROUND_WHITE u8 <- 0b111_000
+@export BACKGROUND_BLACK u8 <- 0x00
+@export BACKGROUND_BLUE u8 <- 0x10
+@export BACKGROUND_GREEN u8 <- 0x20
+@export BACKGROUND_CYAN u8 <- 0x30
+@export BACKGROUND_RED u8 <- 0x40
+@export BACKGROUND_MAGENTA u8 <- 0x50
+@export BACKGROUND_BROWN u8 <- 0x60
+@export BACKGROUND_WHITE u8 <- 0x70
 
-@export ATTRIB_BLINK u8 <- 0b01_000_000
-@export ATTRIB_BRIGHT u8 <- 0b10_000_000
+@export ATTRIB_BRIGHT u8 <- 0x08
+@export ATTRIB_BLINK u8 <- 0x80
 
 @export printChar fun: character u8
     putchar(character)
@@ -46,21 +46,21 @@
         Where each X is a semicolon separated attribute
     */
 
-    isFgRed bool <- (attribute & 0b111) = FOREGROUND_RED
-    isFgGreen bool <- (attribute & 0b111) = FOREGROUND_GREEN
-    isFgBlue bool <- (attribute & 0b111) = FOREGROUND_BLUE
-    isFgCyan bool <- (attribute & 0b111) = FOREGROUND_CYAN
-    isFgMagenta bool <- (attribute & 0b111) = FOREGROUND_MAGENTA
-    isFgBrown bool <- (attribute & 0b111) = FOREGROUND_BROWN
-    isFgGray bool <- (attribute & 0b111) = FOREGROUND_GRAY
+    isFgRed bool <- (attribute & 0b0111) = FOREGROUND_RED
+    isFgGreen bool <- (attribute & 0b0111) = FOREGROUND_GREEN
+    isFgBlue bool <- (attribute & 0b0111) = FOREGROUND_BLUE
+    isFgCyan bool <- (attribute & 0b0111) = FOREGROUND_CYAN
+    isFgMagenta bool <- (attribute & 0b0111) = FOREGROUND_MAGENTA
+    isFgBrown bool <- (attribute & 0b0111) = FOREGROUND_BROWN
+    isFgGray bool <- (attribute & 0b0111) = FOREGROUND_GRAY
 
-    isBgRed bool <- (attribute & 0b111_000) = BACKGROUND_RED
-    isBgGreen bool <- (attribute & 0b111_000) = BACKGROUND_GREEN
-    isBgBlue bool <- (attribute & 0b111_000) = BACKGROUND_BLUE
-    isBgCyan bool <- (attribute & 0b111_000) = BACKGROUND_CYAN
-    isBgMagenta bool <- (attribute & 0b111_000) = BACKGROUND_MAGENTA
-    isBgBrown bool <- (attribute & 0b111_000) = BACKGROUND_BROWN
-    isBgWhite bool <- (attribute & 0b111_000) = BACKGROUND_WHITE
+    isBgRed bool <- (attribute & 0b0111_0000) = BACKGROUND_RED
+    isBgGreen bool <- (attribute & 0b0111_0000) = BACKGROUND_GREEN
+    isBgBlue bool <- (attribute & 0b0111_0000) = BACKGROUND_BLUE
+    isBgCyan bool <- (attribute & 0b0111_0000) = BACKGROUND_CYAN
+    isBgMagenta bool <- (attribute & 0b0111_0000) = BACKGROUND_MAGENTA
+    isBgBrown bool <- (attribute & 0b0111_0000) = BACKGROUND_BROWN
+    isBgWhite bool <- (attribute & 0b0111_0000) = BACKGROUND_WHITE
 
     isBlink bool <- attribute &? ATTRIB_BLINK
     isBright bool <- attribute &? ATTRIB_BRIGHT

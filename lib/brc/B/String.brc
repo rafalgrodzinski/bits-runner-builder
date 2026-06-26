@@ -2,26 +2,26 @@
 
 @import BSys
 
-@export String::FOREGROUND_BLACK u8 <- 0b000
-@export String::FOREGROUND_BLUE u8 <- 0b001
-@export String::FOREGROUND_GREEN u8 <- 0b010
-@export String::FOREGROUND_CYAN u8 <- 0b011
-@export String::FOREGROUND_RED u8 <- 0b100
-@export String::FOREGROUND_MAGENTA u8 <- 0b101
-@export String::FOREGROUND_BROWN u8 <- 0b110
-@export String::FOREGROUND_GRAY u8 <- 0b111
+@export String::FOREGROUND_BLACK u8 <- 0x00
+@export String::FOREGROUND_BLUE u8 <- 0x01
+@export String::FOREGROUND_GREEN u8 <- 0x02
+@export String::FOREGROUND_CYAN u8 <- 0x03
+@export String::FOREGROUND_RED u8 <- 0x04
+@export String::FOREGROUND_MAGENTA u8 <- 0x05
+@export String::FOREGROUND_BROWN u8 <- 0x06
+@export String::FOREGROUND_GRAY u8 <- 0x07
 
-@export String::BACKGROUND_BLACK u8 <- 0b000_000
-@export String::BACKGROUND_RED u8 <- 0b001_000
-@export String::BACKGROUND_GREEN u8 <- 0b010_000
-@export String::BACKGROUND_BLUE u8 <- 0b011_000
-@export String::BACKGROUND_CYAN u8 <- 0b100_000
-@export String::BACKGROUND_MAGENTA u8 <- 0b101_000
-@export String::BACKGROUND_BROWN u8 <- 0b110_000
-@export String::BACKGROUND_WHITE u8 <- 0b111_000
+@export String::BACKGROUND_BLACK u8 <- 0x00
+@export String::BACKGROUND_BLUE u8 <- 0x10
+@export String::BACKGROUND_GREEN u8 <- 0x20
+@export String::BACKGROUND_CYAN u8 <- 0x30
+@export String::BACKGROUND_RED u8 <- 0x40
+@export String::BACKGROUND_MAGENTA u8 <- 0x50
+@export String::BACKGROUND_BROWN u8 <- 0x60
+@export String::BACKGROUND_WHITE u8 <- 0x70
 
-@export String::ATTRIB_BLINK u8 <- 0b01_000_000
-@export String::ATTRIB_BRIGHT u8 <- 0b10_000_000
+@export String::ATTRIB_BRIGHT u8 <- 0x08
+@export String::ATTRIB_BLINK u8 <- 0x80
 
 @export String blob
     string data<u8, 64>
@@ -309,4 +309,8 @@
     string[currentIndex] <- 0
 
     ret String(string)
+;
+
+@export String::println fun
+    @BSys::printChar('\n')
 ;
