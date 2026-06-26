@@ -84,3 +84,7 @@ BRC supports inline assembly, which is declared simillary to a function, but req
 
 ## Linking with LLVM
 `llvm-config --components`
+
+## Terminal Emulator
+- Mead's Guide to Colorized Output using ANSI Escape Sequences
+[https://azrael.digipen.edu/~mmead/www/mg/ansicolors/index.html](https://azrael.digipen.edu/~mmead/www/mg/ansicolors/index.html)
