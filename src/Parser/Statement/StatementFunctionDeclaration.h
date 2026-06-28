@@ -32,7 +32,7 @@ public:
     string getName() const;
     string getGlobalName() const;
     string getModuleName() const;
-
+    void setModuleName(const string &moduleName);
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
     shared_ptr<ValueType> getValueType() const;

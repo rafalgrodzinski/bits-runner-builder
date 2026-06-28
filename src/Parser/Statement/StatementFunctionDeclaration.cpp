@@ -29,6 +29,21 @@ string StatementFunctionDeclaration::getModuleName() const {
     return moduleName;
 }
 
+void StatementFunctionDeclaration::setModuleName(const string &moduleName) {
+    if (!this->moduleName.empty())
+        return;
+
+    this->moduleName = moduleName;
+
+    // arguments
+    for (const pair<string, shared_ptr<ValueType>> &argumentPair : arguments)
+        argumentPair.second->setModuleName(moduleName);
+
+    // return
+    
+    returnValueType->setModuleName(moduleName);
+}
+
 vector<pair<string, shared_ptr<ValueType>>> StatementFunctionDeclaration::getArguments() const {
     return arguments;
 }

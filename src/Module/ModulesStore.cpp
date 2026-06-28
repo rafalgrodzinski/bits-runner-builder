@@ -90,6 +90,11 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             setModuleName(statementFunction->getStatementBlock(), moduleName);
             break;
         }
+        case StatementKind::FUNCTION_DECLARATION: {
+            shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
+            statementFunctionDeclaration->setModuleName(moduleName);
+            break;
+        }
         case StatementKind::META_EXTERN_FUNCTION: {
             shared_ptr<StatementMetaExternFunction> statementMetaExternFunction = dynamic_pointer_cast<StatementMetaExternFunction>(statement);
             statementMetaExternFunction->setModuleName(moduleName);
@@ -112,9 +117,9 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             // variable statements
             for (shared_ptr<Statement> variableStatement : statementProto->getVariableStatements())
                 setModuleName(variableStatement, moduleName);
-            // function statements
-            for (shared_ptr<Statement> functionStatement : statementProto->getFunctionDeclarationStatements())
-                setModuleName(functionStatement, moduleName);
+            // function declaration statements
+            for (shared_ptr<Statement> functionDeclarationStatement : statementProto->getFunctionDeclarationStatements())
+                setModuleName(functionDeclarationStatement, moduleName);
             break;
         }
         case StatementKind::RAW_FUNCTION: {
