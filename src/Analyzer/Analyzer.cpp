@@ -219,6 +219,23 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
         }
     }
 
+    // register blob members in scope
+    vector<pair<string, shared_ptr<ValueType>>> members;
+
+    // extract variable members
+    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
+        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+
+    // then function members
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
+        members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
+
+    // check each of the extracted member's type
+    for (auto &member : members) {
+        if (resolvedAndCheckedValueType(member.second, true, statementBlob->getLocation()) == nullptr)
+            return;
+    }
+
     // verify proto compliance (but only if it's not an import statement)
     if (!isImported) {
         for (string &protoName : statementBlob->getProtoNames()) {
@@ -279,23 +296,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                 }
             }
         }
-    }
-
-    // register blob members in scope
-    vector<pair<string, shared_ptr<ValueType>>> members;
-
-    // extract variable members
-    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
-        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
-
-    // then function members
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
-        members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
-
-    // check each of the extracted member's type
-    for (auto &member : members) {
-        if (resolvedAndCheckedValueType(member.second, true, statementBlob->getLocation()) == nullptr)
-            return;
     }
 
     scope->popLevel();
