@@ -1264,8 +1264,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         if (currentWrappedValue == nullptr && chainExpression->getKind() == ExpressionKind::CAST && chainExpressions.size() >= 2) {
             llvm::Type *type = llvmTypeForValueType(chainExpression->getValueType());
             shared_ptr<ExpressionValue> childExpressionValue = dynamic_pointer_cast<ExpressionValue>(chainExpressions.at(++i));
-            if (childExpressionValue == nullptr)
+            if (childExpressionValue == nullptr) {
+                markErrorInvalidCast(chainExpression->getLocation());
                 return nullptr;
+            }
             currentWrappedValue = wrappedValueForTypeBuiltIn(type, childExpressionValue);
             parentExpression = chainExpression;
         // If first in chain is a composite, then next should be a cast
