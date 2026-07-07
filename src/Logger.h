@@ -19,6 +19,7 @@ class StatementAssignment;
 class StatementBlob;
 class StatementBlobDeclaration;
 class StatementBlock;
+class StatementEnum;
 class StatementExpression;
 class StatementFunction;
 class StatementFunctionDeclaration;
@@ -72,6 +73,7 @@ private:
     static string toString(shared_ptr<StatementBlob> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents);
+    static string toString(shared_ptr<StatementEnum> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementFunction> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents);

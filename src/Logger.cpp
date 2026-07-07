@@ -15,6 +15,7 @@
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementEnum.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -136,6 +137,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "ID(" + token->getLexme() + ")";
         case TokenKind::TYPE:
             return "TYPE(" + token->getLexme() + ")";
+        case TokenKind::ENUM:
+            return "ENUM";
         case TokenKind::DATA:
             return "DATA";
         case TokenKind::BLOB:
@@ -211,6 +214,8 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
             return toString(dynamic_pointer_cast<StatementProto>(statement), indents);
         case StatementKind::PROTO_DECLARATION:
             return toString(dynamic_pointer_cast<StatementProtoDeclaration>(statement), indents);
+        case StatementKind::ENUM:
+            return toString(dynamic_pointer_cast<StatementEnum>(statement), indents);
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
         case StatementKind::ASSIGNMENT:
@@ -311,6 +316,20 @@ string Logger::toString(shared_ptr<StatementBlock> statement, vector<IndentKind>
 
         text += toString(statement->getStatements().at(i), currentIndents);
     }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementEnum> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName());
+
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
 
     return text;
 }
@@ -1064,6 +1083,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "LITERAL(ID)";
         case TokenKind::TYPE:
             return "TYPE";
+        case TokenKind::ENUM:
+            return "ENUM";
         case TokenKind::DATA:
             return "DATA";
         case TokenKind::BLOB:
