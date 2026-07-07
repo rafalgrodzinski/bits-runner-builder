@@ -17,6 +17,7 @@ class StatementAssignment;
 class StatementBlob;
 class StatementBlobDeclaration;
 class StatementBlock;
+class StatementEnum;
 class StatementExpression;
 class StatementFunction;
 class StatementFunctionDeclaration;
@@ -72,6 +73,7 @@ private:
     void checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported);
     void checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
     void checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType);
+    void checkStatement(shared_ptr<StatementEnum> statementEnum);
     void checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType);
     void checkStatement(shared_ptr<StatementFunction> statementFunction);
     void checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);

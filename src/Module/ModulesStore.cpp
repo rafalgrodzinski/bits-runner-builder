@@ -239,6 +239,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
     vector<shared_ptr<Statement>> moduleImportStatements;
     vector<shared_ptr<Statement>> moduleExternStatements;
+    vector<shared_ptr<Statement>> moduleEnumStatements;
     vector<shared_ptr<Statement>> moduleProtoDeclarationStatements;
     vector<shared_ptr<Statement>> moduleProtoStatements;
     vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
@@ -249,6 +250,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     vector<shared_ptr<Statement>> moduleRawFunctionStatements;
     vector<shared_ptr<Statement>> moduleBodyStatements;
 
+    vector<shared_ptr<Statement>> moduleExportedEnumStatements;
     vector<shared_ptr<Statement>> moduleExportedProtoDeclarationStatements;
     vector<shared_ptr<Statement>> moduleExportedProtoStatements;
     vector<shared_ptr<Statement>> moduleExportedBlobDeclarationStatements;
@@ -316,6 +318,17 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     if (statementBlob->getShouldExport())
                        moduleExportedFunctionDeclarationStatements.push_back(statementBlobFunctionDeclaration);
                 }
+
+                break;
+            }
+            case StatementKind::ENUM: {
+                shared_ptr<StatementEnum> statementEnum = dynamic_pointer_cast<StatementEnum>(statement);
+                // local header
+                moduleEnumStatements.push_back(statementEnum);
+
+                // exported header
+                if (statementEnum->getShouldExport())
+                    moduleExportedEnumStatements.push_back(statementEnum);
 
                 break;
             }
@@ -404,6 +417,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         importStatementsMap[moduleName] = moduleImportStatements;
         // externs
         externStatementsMap[moduleName] = moduleExternStatements;
+        // enums
+        enumStatementsMap[moduleName] = moduleEnumStatements;
         // proto declarations
         protoDeclarationStatementsMap[moduleName] = moduleProtoDeclarationStatements;
         // proto definitions
@@ -422,6 +437,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // body statements
         bodyStatementsMap[moduleName] = moduleBodyStatements;
 
+        // exported enums
+        exportedEnumStatementsMap[moduleName] = moduleExportedEnumStatements;
         // exported proto declarations
         exportedProtoDeclarationStatementsMap[moduleName] = moduleExportedProtoDeclarationStatements;
         // exported proto definitions
@@ -513,6 +530,7 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // construct the local header
         // order for local header statements is:
         // - externs
+        // - enums
         // - proto declaration
         // - blob declarations
         // - import statements (imported statements may use blobs & protos)
@@ -525,6 +543,9 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         vector<shared_ptr<Statement>> headerStatements;
         // externs
         for (shared_ptr<Statement> statement : externStatementsMap[moduleName])
+            headerStatements.push_back(statement);
+        // enums
+        for (shared_ptr<Statement> statement : enumStatementsMap[moduleName])
             headerStatements.push_back(statement);
         // proto declarations
         for (shared_ptr<Statement> statement : protoDeclarationStatementsMap[moduleName])
@@ -583,6 +604,9 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
 
         // imports
         for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported enums
+        for (shared_ptr<Statement> statement : exportedEnumStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
         // exported proto declarations
         for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])

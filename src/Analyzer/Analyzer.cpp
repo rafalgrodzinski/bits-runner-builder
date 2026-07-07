@@ -24,6 +24,7 @@
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementEnum.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -96,6 +97,10 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
         }
         case StatementKind::BLOCK: {
             checkStatement(dynamic_pointer_cast<StatementBlock>(statement), returnType);
+            break;
+        }
+        case StatementKind::ENUM: {
+            checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
             break;
         }
         case StatementKind::EXPRESSION: {
@@ -317,6 +322,10 @@ void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlob
 void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {
     for (shared_ptr<Statement> statement : statementBlock->getStatements())
         checkStatement(statement, returnType);
+}
+
+void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
+
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {
