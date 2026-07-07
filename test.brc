@@ -1,6 +1,6 @@
-@export main fun -> u32
-   a.u32
-   a.size
+Dummy enum
+;
 
+@export main fun -> u32
    ret 0
 ;

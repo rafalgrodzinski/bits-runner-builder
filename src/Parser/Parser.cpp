@@ -34,6 +34,7 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementRepeat.h"
+#include "Parser/Statement/StatementEnum.h"
 
 #include "Parsee/Parsee.h"
 #include "Parsee/ParseeResult.h"
@@ -57,6 +58,7 @@ vector<shared_ptr<Statement>> Parser::getStatements() {
                             StatementKind::VARIABLE,
                             StatementKind::META_EXTERN_FUNCTION,
                             StatementKind::META_EXTERN_VARIABLE,
+                            StatementKind::ENUM,
                             StatementKind::BLOB,
                             StatementKind::PROTO
                         },
@@ -738,7 +740,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                     Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
-            // identifier
+            // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
             // type argument names
             Parsee::groupParsee(
@@ -952,6 +954,62 @@ shared_ptr<Statement> Parser::matchStatementProto() {
     }
 
     return make_shared<StatementProto>(shouldExport, name, variableStatements, functionDeclarationStatements, location);
+}
+
+shared_ptr<Statement> Parser::matchStatementEnum() {
+    enum Tag {
+        TAG_SHOULD_EXPORT,
+        TAG_NAMESPACE,
+        TAG_NAME
+    };
+
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
+        {
+            // export
+            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+            // type name
+            Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, false),
+            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+        }
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    bool shouldExport = false;
+    string name;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_SHOULD_EXPORT: {
+                shouldExport = true;
+                break;
+            }
+            case TAG_NAMESPACE: {
+                name += parseeResult.getToken()->getLexme();
+                name += "::";
+                break;
+            }
+            case TAG_NAME: {
+                name = parseeResult.getToken()->getLexme();
+                break;
+            }
+        }
+    }
+
+    return make_shared<StatementEnum>(shouldExport, name, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
@@ -2538,6 +2596,9 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(ve
                 break;
             case StatementKind::BLOB:
                 statement = matchStatementBlob();
+                break;
+            case StatementKind::ENUM:
+                statement = matchStatementEnum();
                 break;
             case StatementKind::PROTO:
                 statement = matchStatementProto();
