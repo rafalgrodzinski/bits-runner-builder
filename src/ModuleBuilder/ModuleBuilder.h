@@ -29,6 +29,7 @@ class StatementAssignment;
 class StatementBlob;
 class StatementBlobDeclaration;
 class StatementBlock;
+class StatementEnum;
 class StatementExpression;
 class StatementFunction;
 class StatementFunctionDeclaration;
@@ -110,6 +111,7 @@ private:
     void buildStatement(shared_ptr<StatementBlob> statementBlob);
     void buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
     void buildStatement(shared_ptr<StatementBlock> statementBlock);
+    void buildStatement(shared_ptr<StatementEnum> statementEnum);
     void buildStatement(shared_ptr<StatementExpression> statementExpression);
     void buildStatement(shared_ptr<StatementFunction> statementFunction);
     void buildStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);

@@ -10,6 +10,7 @@
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementEnum.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -159,6 +160,10 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             buildStatement(dynamic_pointer_cast<StatementBlock>(statement));
             break;
         }
+        case StatementKind::ENUM: {
+            buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
+            break;
+        }
         case StatementKind::EXPRESSION: {
             buildStatement(dynamic_pointer_cast<StatementExpression>(statement));
             break;
@@ -275,6 +280,13 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
         if (innerStatement->getKind() == StatementKind::RETURN)
             return;
     }
+}
+
+void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
+    // symbol name
+    string symbolName = statementEnum->getName();
+    if (statementEnum->getModuleName() != defaultModuleName)
+        symbolName = statementEnum->getGlobalName();
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementExpression> statementExpression) {
