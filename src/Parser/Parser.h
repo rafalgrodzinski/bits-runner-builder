@@ -27,6 +27,11 @@ class ParseeResultsGroup;
 using namespace std;
 
 class Parser {
+public:
+    Parser(const vector<shared_ptr<Token>> &tokens);
+
+    vector<shared_ptr<Statement>> getStatements();
+
 private:
     vector<shared_ptr<Error>> errors;
     vector<shared_ptr<Token>> tokens;
@@ -35,23 +40,22 @@ private:
     // Statements
     shared_ptr<Statement> nextInBlockStatement();
 
-    shared_ptr<Statement> matchStatementModule();
-    shared_ptr<Statement> matchStatementImport();
-    shared_ptr<Statement> matchStatementMetaExternVariable();
-    shared_ptr<Statement> matchStatementMetaExternFunction();
-    shared_ptr<Statement> matchStatementVariable();
+    shared_ptr<Statement> matchStatementAssignment();
+    shared_ptr<Statement> matchStatementBlob();
+    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
+    shared_ptr<Statement> matchStatementEnum();
+    shared_ptr<Statement> matchStatementExpression();
     shared_ptr<Statement> matchStatementFunction();
     shared_ptr<Statement> matchStatementFunctionDeclaration();
-    shared_ptr<Statement> matchStatementRawFunction();
-    shared_ptr<Statement> matchStatementBlob();
+    shared_ptr<Statement> matchStatementMetaExternFunction();
+    shared_ptr<Statement> matchStatementMetaExternVariable();
+    shared_ptr<Statement> matchStatementMetaImport();
+    shared_ptr<Statement> matchStatementModule();
     shared_ptr<Statement> matchStatementProto();
-    shared_ptr<Statement> matchStatementEnum();
-
-    shared_ptr<Statement> matchStatementBlock(vector<TokenKind> terminalTokenKinds);
-    shared_ptr<Statement> matchStatementAssignment();
-    shared_ptr<Statement> matchStatementReturn();
+    shared_ptr<Statement> matchStatementRawFunction();
     shared_ptr<Statement> matchStatementRepeat();
-    shared_ptr<Statement> matchStatementExpression();
+    shared_ptr<Statement> matchStatementReturn();
+    shared_ptr<Statement> matchStatementVariable();
 
     // Expressions
     shared_ptr<Expression> nextExpression();
@@ -75,15 +79,15 @@ private:
     shared_ptr<Expression> matchExpressionChained(shared_ptr<ExpressionChained> expression); // .stuff
 
     shared_ptr<Expression> matchPrimary(); // literal, ()
-    shared_ptr<Expression> matchExpressionGrouping();
-    shared_ptr<Expression> matchExpressionCompositeLiteral();
-    shared_ptr<Expression> matchExpressionLiteral();
-    shared_ptr<Expression> matchExpressionCall();
-    shared_ptr<Expression> matchExpressionVariable();
-    shared_ptr<Expression> matchExpressionCast();
-    shared_ptr<Expression> matchExpressionIfElse(optional<bool> isMultiLine);
     shared_ptr<Expression> matchExpressionBinary(shared_ptr<Expression> left);
     shared_ptr<Expression> matchExpressionBlock(vector<TokenKind> terminalTokenKinds);
+    shared_ptr<Expression> matchExpressionCall();
+    shared_ptr<Expression> matchExpressionCast();
+    shared_ptr<Expression> matchExpressionCompositeLiteral();
+    shared_ptr<Expression> matchExpressionGrouping();
+    shared_ptr<Expression> matchExpressionIfElse(optional<bool> isMultiLine);
+    shared_ptr<Expression> matchExpressionLiteral();
+    shared_ptr<Expression> matchExpressionValue();
 
     shared_ptr<ValueType> matchValueType();
 
@@ -109,11 +113,6 @@ private:
         bool shouldSkipNewLine
     );
     void markError(optional<TokenKind> expectedTokenKind, optional<Parsee> expectedParsee, optional<string> message);
-
-public:
-    Parser(const vector<shared_ptr<Token>> &tokens);
-
-    vector<shared_ptr<Statement>> getStatements();
 };
 
 #endif
