@@ -102,7 +102,21 @@
         // doesn't fit in
         if otherLength > length: ret 0
 
-        rep i u32 <- 0, i <= length - otherLength, i <- i + 1
+        rep i u32, i <= length - otherLength, i <- i + 1
+            subString blob<String> <- it.subString(i, i + otherLength)
+            if subString.isEqual(other): ret i
+        ;
+
+        ret 0
+    ;
+
+    findLast fun: other blob<String> -> u32
+        length u32 <- it.length()
+        otherLength u32 <- other.length()
+
+        // doesn't fit int
+        if otherLength > length: ret 0
+        rep i u32 <- length - otherLength, i >= 0, i <- i - 1
             subString blob<String> <- it.subString(i, i + otherLength)
             if subString.isEqual(other): ret i
         ;
