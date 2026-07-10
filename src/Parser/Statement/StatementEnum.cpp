@@ -6,30 +6,14 @@ StatementEnum::StatementEnum(
     shared_ptr<Location> Location
 ):
 Statement(StatementKind::ENUM, Location),
-shouldExport(shouldExport),
-name(name) {
+shouldExport(shouldExport) {
+    symbolName = make_shared<SymbolName>(name);
 }
 
 bool StatementEnum::getShouldExport() const {
     return shouldExport;
 }
 
-string StatementEnum::getName() const {
-    return name;
-}
-
-string StatementEnum::getGlobalName() const {
-    string moduleName = this->moduleName;
-    if (moduleName.empty())
-        moduleName = "{UNDEFINED}";
-
-    return format("{}.{}", moduleName, name);
-}
-
-string StatementEnum::getModuleName() const {
-    return moduleName;
-}
-
-void StatementEnum::setModuleName(const string &moduleName) {
-    this->moduleName = moduleName;
+shared_ptr<SymbolName> StatementEnum::getSymbolName() const {
+    return symbolName;
 }
