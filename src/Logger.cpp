@@ -325,7 +325,7 @@ string Logger::toString(shared_ptr<StatementEnum> statement, vector<IndentKind> 
     string line;
 
     // name
-    line = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName());
+    line = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
 
     text += formattedLine(line, indents);
 

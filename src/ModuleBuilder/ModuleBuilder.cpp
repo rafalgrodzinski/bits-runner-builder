@@ -284,9 +284,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
     // symbol name
-    string symbolName = statementEnum->getName();
-    if (statementEnum->getModuleName() != defaultModuleName)
-        symbolName = statementEnum->getGlobalName();
+    string symbolName = statementEnum->getSymbolName()->getName();
+    if (statementEnum->getSymbolName()->getModuleName() != defaultModuleName)
+        symbolName = statementEnum->getSymbolName()->getGlobalName();
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementExpression> statementExpression) {
