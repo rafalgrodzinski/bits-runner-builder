@@ -325,7 +325,21 @@ void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
+    // check fields
+    for (Field &field : statementEnum->getFields()) {
+        // Only none or boxed types are valid
+        if (!field.valueType->isBoxed() && field.valueType->getKind() != ValueTypeKind::NONE) {
+            markErrorInvalidType(statementEnum->getLocation(), field.valueType, nullptr);
+            return;
+        }
+    }
 
+    // register the enum
+    bool isSuccess = scope->registerEnumFields(statementEnum->getSymbolName()->getGlobalName(), statementEnum->getFields());
+    if (!isSuccess) {
+        markErrorAlreadyDefined(statementEnum->getLocation(), statementEnum->getSymbolName()->getGlobalName());
+        return;
+    }
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {

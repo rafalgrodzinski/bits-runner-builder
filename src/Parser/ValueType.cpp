@@ -90,6 +90,12 @@ shared_ptr<ValueType> ValueType::blob(const string &blobName, const optional<vec
     return valueType;
 }
 
+shared_ptr<ValueType> ValueType::enumeration(const string &enumName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues) {
+    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::ENUM, enumName);
+    valueType->namedTypeValues = namedTypeValues;
+    return valueType;
+}
+
 shared_ptr<ValueType> ValueType::proto(const string &protoName) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::PROTO, protoName);
     return valueType;

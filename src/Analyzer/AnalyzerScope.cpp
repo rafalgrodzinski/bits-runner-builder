@@ -245,3 +245,7 @@ bool AnalyzerScope::setFunctionType(const string &name, shared_ptr<ValueType> ty
 
     return true;
 }
+
+bool AnalyzerScope::registerEnumFields(const string &enumGlobalName, const vector<Field> &fields) {
+    return true;
+}

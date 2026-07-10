@@ -9,6 +9,7 @@
 #include <optional>
 
 class ValueType;
+struct Field;
 
 using namespace std;
 
@@ -59,6 +60,8 @@ public:
 
     shared_ptr<ValueType> getFunctionType(const string &name) const;
     bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
+
+    bool registerEnumFields(const string &enumGlobalName, const vector<Field> &fields);
 };
 
 #endif

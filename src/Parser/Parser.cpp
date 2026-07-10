@@ -2175,15 +2175,13 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_SIZE_EXPRESSION,
         
         TAG_BLOB,
-        TAG_BLOB_MODULE_PREFIX,
-        TAG_BLOB_NAMESPACE,
-        TAG_BLOB_NAME,
-        
+        TAG_ENUM,
         TAG_PROTO,
-        TAG_PROTO_MODULE_PREFIX,
-        TAG_PROTO_NAMESPACE,
-        TAG_PROTO_NAME,
-        
+
+        TAG_NAME_MODULE_PREFIX,
+        TAG_NAME_NAMESPACE,
+        TAG_NAME,
+
         TAG_BOXED,
         TAG_TYPE_NAME,
     
@@ -2265,19 +2263,19 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         Parsee::groupParsee(
                             {
                                 Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_MODULE_PREFIX),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
                                 Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
                         // identifier - namespaces
                         Parsee::repeatedGroupParsee(
                             {
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_BLOB_NAMESPACE),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
                                 Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
                         // identifier - name
-                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_BLOB_NAME),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
                         // argument types
                         Parsee::repeatedGroupParsee(
                             {
@@ -2295,19 +2293,42 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         Parsee::groupParsee(
                             {
                                 Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_MODULE_PREFIX),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
                                 Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
                         // identifier - namespaces
                         Parsee::repeatedGroupParsee(
                             {
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_PROTO_NAMESPACE),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
                                 Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
                         // identifier - name
-                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
+                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                    },
+                    // ENUM
+                    {
+                        Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, true, TAG_ENUM),
+                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                        // identifier - module prefix
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier - namespaces
+                        Parsee::repeatedGroupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier - name
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
                         Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
                     // BOXED
@@ -2338,12 +2359,13 @@ shared_ptr<ValueType> Parser::matchValueType() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    bool isPtr = false;
+    bool isPtrFun = false;
     bool isData = false;
     bool isBlob = false;
+    bool isEnum = false;
     bool isProto = false;
     bool isBoxed = false;
-    bool isPtrFun = false;
-    bool isPtr = false;
 
     vector<shared_ptr<ValueType>> argTypes;
     shared_ptr<ValueType> retType;
@@ -2352,8 +2374,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     bool isVolatile = false;
     shared_ptr<ValueType> subType;
     shared_ptr<Expression> countExpression;
-    string blobName;
-    string protoName;
+    string name;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -2394,36 +2415,26 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 isBlob = true;
                 break;
             }
-            case TAG_BLOB_MODULE_PREFIX: {
-                blobName += parseeResult.getToken()->getLexme();
-                blobName += ".";
-                break;
-            }
-            case TAG_BLOB_NAMESPACE: {
-                blobName += parseeResult.getToken()->getLexme();
-                blobName += "::";
-                break;
-            }
-            case TAG_BLOB_NAME: {
-                blobName += parseeResult.getToken()->getLexme();
+            case TAG_ENUM: {
+                isEnum = true;
                 break;
             }
             case TAG_PROTO: {
                 isProto = true;
                 break;
             }
-            case TAG_PROTO_MODULE_PREFIX: {
-                protoName += parseeResult.getToken()->getLexme();
-                protoName += ".";
+            case TAG_NAME_MODULE_PREFIX: {
+                name += parseeResult.getToken()->getLexme();
+                name += ".";
                 break;
             }
-            case TAG_PROTO_NAMESPACE: {
-                protoName += parseeResult.getToken()->getLexme();
-                protoName += "::";
+            case TAG_NAME_NAMESPACE: {
+                name += parseeResult.getToken()->getLexme();
+                name += "::";
                 break;
             }
-            case TAG_PROTO_NAME: {
-                protoName += parseeResult.getToken()->getLexme();
+            case TAG_NAME: {
+                name += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_BOXED: {
@@ -2441,20 +2452,24 @@ shared_ptr<ValueType> Parser::matchValueType() {
         }
     }
 
-    if (isData)
-        return ValueType::data(subType, countExpression);
-    else if (isBlob && argTypes.empty())
-        return ValueType::blob(blobName, {});
-    else if (isBlob)
-        return ValueType::blob(blobName, argTypes);
-    else if (isProto)
-        return ValueType::proto(protoName);
-    else if (isBoxed)
-        return ValueType::boxed(subType);
+    if (isPtr)
+        return ValueType::ptr(subType, isVolatile);
     else if (isPtrFun)
         return ValueType::ptr(ValueType::fun(argTypes, retType), isVolatile);
-    else if (isPtr)
-        return ValueType::ptr(subType, isVolatile);
+    else if (isData)
+        return ValueType::data(subType, countExpression);
+    else if (isBlob && argTypes.empty())
+        return ValueType::blob(name, {});
+    else if (isBlob)
+        return ValueType::blob(name, argTypes);
+    else if (isEnum && argTypes.empty())
+        return ValueType::enumeration(name, {});
+    else if (isEnum)
+        return ValueType::enumeration(name, argTypes);
+    else if (isProto)
+        return ValueType::proto(name);
+    else if (isBoxed)
+        return ValueType::boxed(subType);
     else
         return ValueType::simpleForToken(typeToken);
 }

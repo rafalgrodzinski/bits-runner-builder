@@ -1,9 +1,9 @@
-Dummy<S, T, V> enum
-   num u32
-   thing boxed<u8>
-   noType
+Result enum
+   Success
+   Failure
 ;
 
 @export main fun -> u32
+   result enum<Result>
    ret 0
 ;
