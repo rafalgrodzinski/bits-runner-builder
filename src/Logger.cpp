@@ -1396,6 +1396,18 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             text += ">";
             break;
         }
+        case ValueTypeKind::ENUM: {
+            text = "";
+            text += format("ENUM<`{}`", valueType->getGlobalName());
+            if (valueType->getNamedTypeValues()) {
+                for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
+                    text += ", ";
+                    text += toString((*valueType->getNamedTypeValues()).at(i));
+                }
+            }
+            text += ">";
+            break;
+        }
         case ValueTypeKind::PROTO:
             text = format("PROTO<`{}`>", valueType->getGlobalName());
             break;
