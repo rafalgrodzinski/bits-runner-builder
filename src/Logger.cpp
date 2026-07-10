@@ -8,6 +8,7 @@
 #include "Lexer/Token.h"
 #include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
+#include "Parser/Field.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
@@ -326,10 +327,21 @@ string Logger::toString(shared_ptr<StatementEnum> statement, vector<IndentKind> 
 
     // name
     line = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
-
     text += formattedLine(line, indents);
 
     indents = adjustedLastIndent(indents);
+
+    // fields
+    int fieldsCount = statement->getFields().size();
+    for (int i=0; i<fieldsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < fieldsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getFields().at(i), currentIndents);
+    }
 
     return text;
 }
@@ -899,6 +911,16 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
     }
 
     return formattedLine(line, indents);
+}
+
+string Logger::toString(Field field, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    line = format("`{}` {}", field.name, toString(field.valueType));
+    text += formattedLine(line, indents);
+
+    return text;
 }
 
 string Logger::formattedLine(const string &line, const vector<IndentKind> &indents) {

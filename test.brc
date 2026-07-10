@@ -1,4 +1,7 @@
 Dummy enum
+   num u32
+   thing boxed<u8>
+   noType
 ;
 
 @export main fun -> u32

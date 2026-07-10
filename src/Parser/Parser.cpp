@@ -5,6 +5,7 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
+#include "Parser/Field.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
@@ -500,7 +501,9 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
     enum Tag {
         TAG_SHOULD_EXPORT,
         TAG_NAMESPACE,
-        TAG_NAME
+        TAG_NAME,
+        TAG_FIELD_NAME,
+        TAG_FIELD_VALUE_TYPE
     };
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
@@ -518,9 +521,17 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
             ),
             // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            // type name
+            // enum
             Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, false),
             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+            // fields
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_NAME),
+                    Parsee::valueTypeParsee(ParseeLevel::OPTIONAL, true, TAG_FIELD_VALUE_TYPE),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
             Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
         }
     );
@@ -530,6 +541,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
 
     bool shouldExport = false;
     string name;
+    vector<Field> fields;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -546,10 +558,18 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
                 name = parseeResult.getToken()->getLexme();
                 break;
             }
+            case TAG_FIELD_NAME: {
+                fields.push_back(Field(parseeResult.getToken()->getLexme(), ValueType::NONE));
+                break;
+            }
+            case TAG_FIELD_VALUE_TYPE: {
+                fields.back().valueType = parseeResult.getValueType();
+                break;
+            }
         }
     }
 
-    return make_shared<StatementEnum>(shouldExport, name, location);
+    return make_shared<StatementEnum>(shouldExport, name, fields, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementExpression() {
