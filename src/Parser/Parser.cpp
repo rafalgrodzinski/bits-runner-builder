@@ -502,6 +502,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
         TAG_SHOULD_EXPORT,
         TAG_NAMESPACE,
         TAG_NAME,
+        TAG_NAMED_TYPE_KEY,
         TAG_FIELD_NAME,
         TAG_FIELD_VALUE_TYPE
     };
@@ -521,6 +522,24 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
             ),
             // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+            // named type keys
+            Parsee::groupParsee(
+                {
+                    // <
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                    // first name
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAMED_TYPE_KEY),
+                    // subsequent names
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAMED_TYPE_KEY)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // >
+                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                }, ParseeLevel::OPTIONAL, true
+            ),
             // enum
             Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, false),
             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
@@ -541,6 +560,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
 
     bool shouldExport = false;
     string name;
+    vector<string> namedTypeKeys;
     vector<Field> fields;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
@@ -558,6 +578,10 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
                 name = parseeResult.getToken()->getLexme();
                 break;
             }
+            case TAG_NAMED_TYPE_KEY: {
+                namedTypeKeys.push_back(parseeResult.getToken()->getLexme());
+                break;
+            }
             case TAG_FIELD_NAME: {
                 fields.push_back(Field(parseeResult.getToken()->getLexme(), ValueType::NONE));
                 break;
@@ -569,7 +593,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
         }
     }
 
-    return make_shared<StatementEnum>(shouldExport, name, fields, location);
+    return make_shared<StatementEnum>(shouldExport, name, namedTypeKeys, fields, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementExpression() {
