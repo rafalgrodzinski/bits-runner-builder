@@ -75,6 +75,25 @@ llvm::InlineAsm *Scope::getInlineAsm(const string &name) const {
     return nullptr;
 }
 
+bool Scope::setEnumValue(const string &enumName, llvm::Value *value) {
+    scopeLevels.top().enumValuesMap[enumName] = value;
+
+    return true;
+}
+
+llvm::Value *Scope::getEnumValue(const string &enumName) const {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        llvm::Value *value = scopeLevels.top().enumValuesMap[enumName];
+        if (value != nullptr)
+            return value;
+        scopeLevels.pop();
+    }
+
+    return nullptr;
+}
+
 bool Scope::setProtoStructType(const string &name, llvm::StructType *structType, const vector<pair<string, shared_ptr<ValueType>>> &members) {
     scopeLevels.top().protoStructTypesMap[name] = structType;
     scopeLevels.top().protoStructMembersMap[name] = members;

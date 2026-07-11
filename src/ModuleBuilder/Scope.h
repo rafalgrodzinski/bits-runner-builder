@@ -20,6 +20,8 @@ private:
         map<string, llvm::Function*> funMap;
         map<string, llvm::InlineAsm*> rawFunMap;
 
+        map<string, llvm::Value*> enumValuesMap;
+
         map<string, llvm::StructType*> protoStructTypesMap;
         map<string, vector<pair<string, shared_ptr<ValueType>>>> protoStructMembersMap;
 
@@ -43,6 +45,9 @@ public:
 
     bool setInlineAsm(const string &name, llvm::InlineAsm *inlineAsm);
     llvm::InlineAsm *getInlineAsm(const string &name) const;
+
+    bool setEnumValue(const string &enumName, llvm::Value *enumValue);
+    llvm::Value *getEnumValue(const string &enumName) const;
 
     bool setProtoStructType(const string &name, llvm::StructType *structType, const vector<pair<string, shared_ptr<ValueType>>> &members);
     llvm::StructType *getProtoStructType(const string &name) const;

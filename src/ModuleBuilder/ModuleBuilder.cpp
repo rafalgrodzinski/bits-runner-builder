@@ -82,6 +82,14 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
         boxedSize = intSize;
     typeBoxed = llvm::Type::getIntNTy(*context, boxedSize);
 
+    // Enum is a struct of an identifying int and a boxed
+    vector<llvm::Type *> enumStructTypes;
+    enumStructTypes.push_back(typeInt);
+    enumStructTypes.push_back(typeBoxed);
+
+    this->typeEnumStruct = llvm::StructType::create(*context, "enum");
+    this->typeEnumStruct->setBody(enumStructTypes, false);
+
     // callback for wrapped value
     WrappedValue::setup(
         llvmModule,
@@ -287,6 +295,10 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
     string symbolName = statementEnum->getSymbolName()->getName();
     if (statementEnum->getSymbolName()->getModuleName() != defaultModuleName)
         symbolName = statementEnum->getSymbolName()->getGlobalName();
+
+    for (int i=0; i<statementEnum->getFields().size(); i++) {
+        scope->setEnumValue(statementEnum->getFields().at(i).name, llvm::ConstantInt::get(typeInt, i));
+    }
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementExpression> statementExpression) {
@@ -2305,6 +2317,9 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             if (structType == nullptr)
                 markErrorNotDefined(nullptr, format("blob \"{}\"", valueType->getGlobalName()));
             return structType;
+        }
+        case ValueTypeKind::ENUM: {
+            return typeEnumStruct;
         }
         case ValueTypeKind::PROTO: {
             llvm::StructType *structType = scope->getProtoStructType(valueType->getGlobalName());

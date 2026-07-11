@@ -105,6 +105,8 @@ private:
     llvm::IntegerType *typePtrInt;
     llvm::Type *typeBoxed;
 
+    llvm::StructType *typeEnumStruct;
+
     // Statements
     void buildStatement(shared_ptr<Statement> statement, ImportLevel importLevel = ImportLevel::NONE);
     void buildStatement(shared_ptr<StatementAssignment> statementAssignment);
