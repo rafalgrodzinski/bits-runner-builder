@@ -2448,6 +2448,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 break;
             }
             case TAG_PTR_FUN: {
+                isPtr = false;
                 isPtrFun = true;
                 break;
             }
