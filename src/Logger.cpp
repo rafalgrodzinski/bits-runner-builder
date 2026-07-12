@@ -916,7 +916,7 @@ string Logger::toString(EnumField field, vector<IndentKind> indents) {
     string text;
     string line;
 
-    line = format("`{}` {}", field.name, toString(field.payloadValueType));
+    line = format("`{}` {}", field.symbolName->getGlobalName(), toString(field.payloadValueType));
     text += formattedLine(line, indents);
 
     return text;

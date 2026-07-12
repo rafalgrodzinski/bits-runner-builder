@@ -580,7 +580,14 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
                 break;
             }
             case TAG_FIELD_NAME: {
-                fields.push_back(EnumField(parseeResult.getToken()->getLexme(), nullptr, ValueType::NONE));
+                string fieldName = format("{}::{}", name, parseeResult.getToken()->getLexme());
+                fields.push_back(
+                    EnumField(
+                        make_shared<SymbolName>(fieldName),
+                        nullptr,
+                        ValueType::NONE
+                    )
+                );
                 break;
             }
         }

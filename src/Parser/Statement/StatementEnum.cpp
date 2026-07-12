@@ -22,6 +22,12 @@ shared_ptr<SymbolName> StatementEnum::getSymbolName() const {
     return symbolName;
 }
 
+void StatementEnum::setModuleName(const string &moduleName) {
+    symbolName->setModuleName(moduleName);
+    for (EnumField &field : fields)
+        field.symbolName->setModuleName(moduleName);
+}
+
 vector<string> StatementEnum::getNamedTypeKeys() const {
     return namedTypeKeys;
 }
@@ -29,3 +35,7 @@ vector<string> StatementEnum::getNamedTypeKeys() const {
 vector<EnumField> StatementEnum::getFields() const {
     return fields;
 }
+
+shared_ptr<ValueType> StatementEnum::getValueType() const {
+    return ValueType::enumeration(symbolName->getGlobalName(), {});
+};

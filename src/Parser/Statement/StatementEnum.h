@@ -7,12 +7,14 @@
 #include "Parser/ValueType.h"
 
 struct EnumField {
-    string name;
+    shared_ptr<SymbolName> symbolName;
     shared_ptr<Expression> valueExpression;
     shared_ptr<ValueType> payloadValueType;
 };
 
 class StatementEnum: public Statement {
+friend class Analyzer;
+
 public:
     StatementEnum(
         bool shouldExport,
@@ -24,14 +26,17 @@ public:
 
     bool getShouldExport() const;
     shared_ptr<SymbolName> getSymbolName() const;
+    void setModuleName(const string &moduleName);
     vector<string> getNamedTypeKeys() const;
     vector<EnumField> getFields() const;
+    shared_ptr<ValueType> getValueType() const;
 
 private:
     bool shouldExport;
     shared_ptr<SymbolName> symbolName;
     vector<string> namedTypeKeys;
     vector<EnumField> fields;
+    shared_ptr<ValueType> valueType;
 };
 
 #endif

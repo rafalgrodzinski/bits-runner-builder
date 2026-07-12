@@ -291,13 +291,33 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
-    // symbol name
-    string symbolName = statementEnum->getSymbolName()->getName();
-    if (statementEnum->getSymbolName()->getModuleName() != defaultModuleName)
-        symbolName = statementEnum->getSymbolName()->getGlobalName();
+    // linkage
+    llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
+    if (statementEnum->getShouldExport())
+        linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage;
 
-    for (int i=0; i<statementEnum->getFields().size(); i++) {
-        scope->setEnumValue(statementEnum->getFields().at(i).name, llvm::ConstantInt::get(typeInt, i));
+    // Register enum field values
+    for (const EnumField &field : statementEnum->getFields()) {
+        string symbolName = field.symbolName->getName();
+        if (field.symbolName->getModuleName() != defaultModuleName)
+            symbolName = field.symbolName->getGlobalName();
+
+        shared_ptr<WrappedValue> constantWrappedValue = wrappedValueForExpression(field.valueExpression);
+        llvm::Constant *constantValue = constantWrappedValue->getConstantValue();
+
+        llvm::GlobalVariable *global = new llvm::GlobalVariable(
+            *llvmModule,
+            typeInt,
+            true,
+            linkage,
+            constantValue,
+            symbolName
+        );
+
+        scope->setWrappedValue(
+            field.symbolName->getGlobalName(),
+            WrappedValue::wrappedValue(global, statementEnum->getValueType())
+        );
     }
 }
 
@@ -730,9 +750,9 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statementV
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes linkage = statementVariable->getShouldExport() ?
-        linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage :
-        llvm::GlobalValue::LinkageTypes::InternalLinkage;
+    llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
+    if (statementVariable->getShouldExport())
+        linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage;
 
     // initializer
     llvm::Constant *constantValue = llvm::Constant::getNullValue(type);

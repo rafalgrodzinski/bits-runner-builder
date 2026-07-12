@@ -75,7 +75,7 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
         }
         case StatementKind::ENUM: {
             shared_ptr<StatementEnum> statementEnum = dynamic_pointer_cast<StatementEnum>(statement);
-            statementEnum->getSymbolName()->setModuleName(moduleName);
+            statementEnum->setModuleName(moduleName);
             break;
         }
         case StatementKind::EXPRESSION: {

@@ -326,16 +326,36 @@ void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_
 
 void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
     // check fields
-    for (EnumField &field : statementEnum->getFields()) {
+    shared_ptr<Expression> currentValueExpression = nullptr;
+    for (EnumField &field : statementEnum->fields) {
         // Only none or boxed types are valid
         if (!field.payloadValueType->isBoxed() && field.payloadValueType->getKind() != ValueTypeKind::NONE) {
             markErrorInvalidType(statementEnum->getLocation(), field.payloadValueType, nullptr);
             return;
         }
 
-        string name = format("{}::{}", statementEnum->getSymbolName()->getGlobalName(), field.name);
-        shared_ptr<ValueType> valueType = ValueType::enumeration(statementEnum->getSymbolName()->getGlobalName(), {});
-        scope->setVariableType(name, valueType, true);
+        // Make sure each field has a value expression
+        if (field.valueExpression == nullptr) {
+            // if none present, initialize from zero
+            if (currentValueExpression == nullptr) {
+                currentValueExpression = ExpressionLiteral::expressionLiteralForUInt(0, statementEnum->getLocation());
+            // otherwise just add 1 to the current value
+            } else {
+                currentValueExpression = ExpressionBinary::expression(
+                    ExpressionBinaryOperation::ADD,
+                    currentValueExpression,
+                    ExpressionLiteral::expressionLiteralForUInt(1, statementEnum->getLocation()),
+                    statementEnum->getLocation()
+                );
+            }
+
+            field.valueExpression = currentValueExpression;
+        } else {
+            currentValueExpression = field.valueExpression;
+        }
+        currentValueExpression->valueType = typeForExpression(currentValueExpression, nullptr, nullptr);
+
+        scope->setVariableType(field.symbolName->getGlobalName(), statementEnum->getValueType(), true);
     }
 
     // register the enum
