@@ -1836,9 +1836,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         llvm::Value *memberPtr = builder->CreateGEP(structType, parentWrappedValue->getPointerValue(), index);
         llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, memberPtr);
         pointerLoad->setVolatile(parentWrappedValue->getValueType()->getIsVolatile());
-        llvm::LoadInst *pointeeLoad = builder->CreateLoad(typePtr, pointerLoad);
-        pointeeLoad->setVolatile(parentWrappedValue->getValueType()->getIsVolatile());
-        return WrappedValue::wrappedValue(pointeeLoad, ValueType::A);
+        return WrappedValue::wrappedValue(pointerLoad, ValueType::A);
     } else if (isAdr) {
         llvm::Value *pointerValue = parentWrappedValue->getPointerValue();
         llvm::Value *alloca = buildAlloca(typePtr, format("a_adr-{}", string(pointerValue->getName())));
