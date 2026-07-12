@@ -126,13 +126,15 @@ shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
         buildStatement(statement);
     }
 
-    // verify moduleLLVM
-    string errorMessage;
-    llvm::raw_string_ostream llvmErrorMessage(errorMessage);
-    if (llvm::verifyModule(*llvmModule, &llvmErrorMessage)) {
-        if (errorMessage.at(errorMessage.length() - 1) == '\n')
-            errorMessage = errorMessage.substr(0, errorMessage.length() - 1);
-        markModuleError(errorMessage);
+    // verify LLVM Module (only if there are no other errors, not to pollute the output)
+    if (errors.empty()) {
+        string errorMessage;
+        llvm::raw_string_ostream llvmErrorMessage(errorMessage);
+        if (llvm::verifyModule(*llvmModule, &llvmErrorMessage)) {
+            if (errorMessage.at(errorMessage.length() - 1) == '\n')
+                errorMessage = errorMessage.substr(0, errorMessage.length() - 1);
+            markModuleError(errorMessage);
+        }
     }
 
     if (!errors.empty()) {
@@ -1968,6 +1970,18 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::BOXED: {
             isSourceBoxed = true;
             sourceSize = typeBoxed->getIntegerBitWidth();
+            break;
+        }
+        case ValueTypeKind::ENUM: {
+            isSourceUInt = true;
+            sourceSize = typeInt->getBitWidth();
+            // extract enum value from the enum struct
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(0)
+            };
+            llvm::Value *enumValuePtr = builder->CreateGEP(typeEnumStruct, sourceWrappedValue->getPointerValue(), index);
+            sourceWrappedValue = WrappedValue::wrappedPointerValue(enumValuePtr, typeInt, ValueType::UINT);
             break;
         }
         default:

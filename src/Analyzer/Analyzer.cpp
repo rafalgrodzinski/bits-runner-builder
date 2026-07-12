@@ -882,10 +882,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
 
     bool isSourceComposite = parentExpression->getValueType()->isComposite();
     bool isSourceBoxed = parentExpression->getValueType()->isBoxed();
+    bool isSourceEnum = parentExpression->getValueType()->isEnum();
     bool isTargetBlob = expressionCast->getValueType()->isBlob();
     bool isTargetData = expressionCast->getValueType()->isData();
     bool isTargetPointer = expressionCast->getValueType()->isPointer();
     bool isTargetProto = expressionCast->getValueType()->isProto();
+    bool isTargetNumeric = expressionCast->getValueType()->isNumeric();
 
     if (areNumeric || areBool || areDataNumeric || areDataBool | isAddressToPointer) {
         // if cast does not have a count expression, use one from the parent expression
@@ -913,6 +915,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
             }
             return expressionCast->getValueType();
         }
+    // from enum
+    } else if (isSourceEnum && isTargetNumeric) {
+        return expressionCast->getValueType();
     }
 
     markErrorInvalidCast(expressionCast->getLocation(), parentExpression->getValueType(), expressionCast->getValueType());
