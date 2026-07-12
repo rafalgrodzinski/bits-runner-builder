@@ -5,7 +5,6 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
-#include "Parser/Field.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
@@ -503,8 +502,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
         TAG_NAMESPACE,
         TAG_NAME,
         TAG_NAMED_TYPE_KEY,
-        TAG_FIELD_NAME,
-        TAG_FIELD_VALUE_TYPE
+        TAG_FIELD_NAME
     };
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
@@ -547,7 +545,6 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
             Parsee::repeatedGroupParsee(
                 {
                     Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_NAME),
-                    Parsee::valueTypeParsee(ParseeLevel::OPTIONAL, true, TAG_FIELD_VALUE_TYPE),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
@@ -561,7 +558,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
     bool shouldExport = false;
     string name;
     vector<string> namedTypeKeys;
-    vector<Field> fields;
+    vector<EnumField> fields;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -583,11 +580,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
                 break;
             }
             case TAG_FIELD_NAME: {
-                fields.push_back(Field(parseeResult.getToken()->getLexme(), ValueType::NONE));
-                break;
-            }
-            case TAG_FIELD_VALUE_TYPE: {
-                fields.back().valueType = parseeResult.getValueType();
+                fields.push_back(EnumField(parseeResult.getToken()->getLexme(), nullptr, ValueType::NONE));
                 break;
             }
         }
@@ -2090,9 +2083,13 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 
 shared_ptr<Expression> Parser::matchExpressionValue() {
     enum {
-        TAG_MODULE_PREFIX,
-        TAG_NAMESPACE,
-        TAG_IDENTIFIER,
+        TAG_ENUM,
+        TAG_DATA,
+
+        TAG_NAME_MODULE_PREFIX,
+        TAG_NAME_NAMESPACE,
+        TAG_NAME,
+
         TAG_INDEX_EXPRESSION
     };
 
@@ -2100,65 +2097,113 @@ shared_ptr<Expression> Parser::matchExpressionValue() {
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
-            // identifier - module prefix
-            Parsee::groupParsee(
+            Parsee::oneOfParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
-            // index expression
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
-                    Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
-                    Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
+                    // ENUM
+                    {
+                        Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, true, TAG_ENUM),
+                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                        // identifier - module prefix
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier - namespaces
+                        Parsee::repeatedGroupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier - enum name
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_NAMESPACE),
+                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                        // identifier - name
+                        Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
+                    },
+                    // SMPLE or DATA
+                    {
+                        // identifier - module prefix
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier - namespaces
+                        Parsee::repeatedGroupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier - name
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+                        // index expression
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, true, TAG_DATA),
+                                Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
+                                Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                            }, ParseeLevel::OPTIONAL, true
+                        )
+                    }
+                }, ParseeLevel::REQUIRED, true
             )
         }
     );
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
+    
+    bool isData = false;
+    bool isEnum = false;
 
-    string identifier;
+    string name;
     shared_ptr<Expression> indexExpression;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_MODULE_PREFIX: {
-                identifier += parseeResult.getToken()->getLexme();
-                identifier += ".";
+            case TAG_ENUM: {
+                isEnum = true;
                 break;
             }
-            case TAG_NAMESPACE: {
-                identifier += parseeResult.getToken()->getLexme();
-                identifier += "::";
+            case TAG_DATA: {
+                isData = true;
                 break;
             }
-            case TAG_IDENTIFIER:
-                identifier += parseeResult.getToken()->getLexme();
+            case TAG_NAME_MODULE_PREFIX: {
+                name += parseeResult.getToken()->getLexme();
+                name += ".";
                 break;
-            case TAG_INDEX_EXPRESSION:
+            }
+            case TAG_NAME_NAMESPACE: {
+                name += parseeResult.getToken()->getLexme();
+                name += "::";
+                break;
+            }
+            case TAG_NAME: {
+                name += parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_INDEX_EXPRESSION: {
                 indexExpression = parseeResult.getExpression();
                 break;
+            }
         }
     }
 
-    if (indexExpression != nullptr)
-        return ExpressionValue::data(identifier, indexExpression, location);
+    if (isData)
+        return ExpressionValue::data(name, indexExpression, location);
+    else if (isEnum)
+        return ExpressionValue::enumeration(name, location);
     else
-        return ExpressionValue::simple(identifier, location);
+        return ExpressionValue::simple(name, location);
 }
 
 shared_ptr<ValueType> Parser::matchValueType() {

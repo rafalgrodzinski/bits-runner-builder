@@ -4,7 +4,7 @@ StatementEnum::StatementEnum(
     bool shouldExport,
     const string &name,
     const vector<string> &namedTypeKeys,
-    const vector<Field> &fields,
+    const vector<EnumField> &fields,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::ENUM, location),
@@ -26,6 +26,6 @@ vector<string> StatementEnum::getNamedTypeKeys() const {
     return namedTypeKeys;
 }
 
-vector<Field> StatementEnum::getFields() const {
+vector<EnumField> StatementEnum::getFields() const {
     return fields;
 }

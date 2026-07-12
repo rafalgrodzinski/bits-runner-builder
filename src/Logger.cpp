@@ -8,7 +8,6 @@
 #include "Lexer/Token.h"
 #include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
-#include "Parser/Field.h"
 #include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
@@ -913,11 +912,11 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
     return formattedLine(line, indents);
 }
 
-string Logger::toString(Field field, vector<IndentKind> indents) {
+string Logger::toString(EnumField field, vector<IndentKind> indents) {
     string text;
     string line;
 
-    line = format("`{}` {}", field.name, toString(field.valueType));
+    line = format("`{}` {}", field.name, toString(field.payloadValueType));
     text += formattedLine(line, indents);
 
     return text;

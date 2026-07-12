@@ -326,12 +326,16 @@ void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_
 
 void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
     // check fields
-    for (Field &field : statementEnum->getFields()) {
+    for (EnumField &field : statementEnum->getFields()) {
         // Only none or boxed types are valid
-        if (!field.valueType->isBoxed() && field.valueType->getKind() != ValueTypeKind::NONE) {
-            markErrorInvalidType(statementEnum->getLocation(), field.valueType, nullptr);
+        if (!field.payloadValueType->isBoxed() && field.payloadValueType->getKind() != ValueTypeKind::NONE) {
+            markErrorInvalidType(statementEnum->getLocation(), field.payloadValueType, nullptr);
             return;
         }
+
+        string name = format("{}::{}", statementEnum->getSymbolName()->getGlobalName(), field.name);
+        shared_ptr<ValueType> valueType = ValueType::enumeration(statementEnum->getSymbolName()->getGlobalName(), {});
+        scope->setVariableType(name, valueType, true);
     }
 
     // register the enum

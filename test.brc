@@ -1,9 +1,11 @@
+
+
 Result enum
    Success
    Failure
 ;
 
 @export main fun -> u32
-   result enum<Result>
+   result enum<Result> <- enum<Result>::Success
    ret 0
 ;

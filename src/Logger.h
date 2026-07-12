@@ -13,7 +13,7 @@ class Module;
 class Parsee;
 class Token;
 class ValueType;
-struct Field;
+struct EnumField;
 
 class Statement;
 class StatementAssignment;
@@ -105,7 +105,7 @@ private:
     static string toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents);
  
     // general support
-    static string toString(Field field, vector<IndentKind> indents);
+    static string toString(EnumField field, vector<IndentKind> indents);
     static string formattedLine(const string &line, const vector<IndentKind> &indents);
     static vector<IndentKind> adjustedLastIndent(vector<IndentKind> indents);
 

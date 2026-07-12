@@ -295,6 +295,11 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
                 return false;
             return getGlobalName() == other->getGlobalName();
         }
+        case ValueTypeKind::ENUM: {
+            if (other->getKind() != ValueTypeKind::ENUM)
+                return false;
+            return getGlobalName() == other->getGlobalName();
+        }
         case ValueTypeKind::BOXED: {
             return other->isBoxed() && subType->isEqual(other->getSubType());
         }
