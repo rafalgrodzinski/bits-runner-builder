@@ -221,6 +221,10 @@ bool WrappedValue::isBlobStruct() const {
     return valueType->isBlob();
 }
 
+bool WrappedValue::isEnumStruct() const {
+    return valueType->isEnum();
+}
+
 bool WrappedValue::isProtoStruct() const {
     return valueType->isProto();
 }

@@ -302,15 +302,25 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
         if (field.symbolName->getModuleName() != defaultModuleName)
             symbolName = field.symbolName->getGlobalName();
 
+        vector<llvm::Constant*> values;
+        // enum value
         shared_ptr<WrappedValue> constantWrappedValue = wrappedValueForExpression(field.valueExpression);
         llvm::Constant *constantValue = constantWrappedValue->getConstantValue();
+        values.push_back(constantValue);
+
+        // payload value
+        llvm::Constant *payloadValue = llvm::Constant::getNullValue(typeBoxed);
+        values.push_back(payloadValue);
+        
+        llvm::ArrayRef<llvm::Constant *> constantValues = llvm::ArrayRef(values);
+        llvm::Constant *constantStructValue = llvm::ConstantStruct::get(typeEnumStruct, constantValues);
 
         llvm::GlobalVariable *global = new llvm::GlobalVariable(
             *llvmModule,
-            typeInt,
+            typeEnumStruct,
             true,
             linkage,
-            constantValue,
+            constantStructValue,
             symbolName
         );
 
@@ -891,6 +901,23 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 markErrorInvalidAssignment(valueExpression->getLocation());
                 break;
             }
+        }
+    // enum
+    } else if (targetWrappedValue->isEnumStruct()) {
+        // enum <- enum
+        if (valueExpression->getValueType()->isEnum()) {
+            shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
+            if (sourceWrappedValue == nullptr)
+                return;
+            llvm::Value *sourceValue = sourceWrappedValue->getValue();
+            if (sourceValue == nullptr)
+                return;
+            llvm::Value *targetValue = targetWrappedValue->getPointerValue();
+            if (targetValue == nullptr)
+                return;
+            builder->CreateStore(sourceValue, targetValue)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+        } else {
+            markErrorInvalidAssignment(valueExpression->getLocation());
         }
     // proto
     } else if (targetWrappedValue->isProtoStruct()) {

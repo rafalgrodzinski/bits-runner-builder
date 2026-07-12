@@ -5,6 +5,11 @@ Result enum
    Failure
 ;
 
+Shape enum
+   Square
+   Triangle
+;
+
 @export main fun -> u32
    result enum<Result> <- enum<Result>::Success
    ret 0

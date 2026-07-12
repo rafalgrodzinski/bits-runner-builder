@@ -54,6 +54,7 @@ public:
     bool isArray() const;
     bool isPointer() const;
     bool isBlobStruct() const;
+    bool isEnumStruct() const;
     bool isProtoStruct() const;
 };
 

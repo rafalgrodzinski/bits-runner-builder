@@ -136,6 +136,7 @@ public:
     bool isPointer() const;
     bool isFunction() const;
     bool isBlob() const;
+    bool isEnum() const;
     bool isProto() const;
     bool isBoxed() const;
     bool isComposite() const;
