@@ -1123,6 +1123,20 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (rightValue->getType()->isPointerTy())
         rightValue = builder->CreatePtrToInt(rightValue, typePtrInt);
 
+    // For enums extract values
+    if (leftWrappedValue->isEnumStruct() && rightWrappedValue->isEnumStruct()) {
+        llvm::Value *index[] = {
+            builder->getInt32(0),
+            builder->getInt32(0)
+        };
+
+        llvm::Value *leftEnumValuePtr = builder->CreateGEP(typeEnumStruct, leftWrappedValue->getPointerValue(), index);
+        leftValue = builder->CreateLoad(typeInt, leftEnumValuePtr);
+        llvm::Value *rightEnumValuePtr = builder->CreateGEP(typeEnumStruct, rightWrappedValue->getPointerValue(), index);
+        rightValue = builder->CreateLoad(typeInt, rightEnumValuePtr);
+        debugPrint({leftEnumValuePtr, leftValue, rightEnumValuePtr, rightValue});
+    }
+
     // types will match in cases when it's important
     shared_ptr<ValueType> valueType = expressionBinary->getLeft()->getValueType();
 
@@ -1184,14 +1198,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
         // comparison
         case ExpressionBinaryOperation::EQUAL: {
-            if (valueType->isInteger() || valueType->isBool())
+            if (valueType->isInteger() || valueType->isBool() || valueType->isEnum())
                 resultValue = builder->CreateICmpEQ(leftValue, rightValue);
             else if (valueType->isFloat())
                 resultValue = builder->CreateFCmpOEQ(leftValue, rightValue);
             break;
         }
         case ExpressionBinaryOperation::NOT_EQUAL: {
-            if (valueType->isInteger() || valueType->isBool())
+            if (valueType->isInteger() || valueType->isBool() || valueType->isEnum())
                 resultValue = builder->CreateICmpNE(leftValue, rightValue);
             else if (valueType->isFloat())
                 resultValue = builder->CreateFCmpONE(leftValue, rightValue);

@@ -1422,6 +1422,9 @@ bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operatio
             }
             break;
         }
+        case ValueTypeKind::ENUM: {
+            return firstType->isEqual(secondType);
+        }
         default:
             break;
     }
