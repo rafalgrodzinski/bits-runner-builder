@@ -1127,16 +1127,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
     // For enums extract values
     if (leftWrappedValue->isEnumStruct() && rightWrappedValue->isEnumStruct()) {
-        llvm::Value *index[] = {
-            builder->getInt32(0),
-            builder->getInt32(0)
-        };
-
-        llvm::Value *leftEnumValuePtr = builder->CreateGEP(typeEnumStruct, leftWrappedValue->getPointerValue(), index);
-        leftValue = builder->CreateLoad(typeInt, leftEnumValuePtr);
-        llvm::Value *rightEnumValuePtr = builder->CreateGEP(typeEnumStruct, rightWrappedValue->getPointerValue(), index);
-        rightValue = builder->CreateLoad(typeInt, rightEnumValuePtr);
-        debugPrint({leftEnumValuePtr, leftValue, rightEnumValuePtr, rightValue});
+        leftValue = builder->CreateExtractValue(leftValue, {0});
+        rightValue = builder->CreateExtractValue(rightValue, {0});
     }
 
     // types will match in cases when it's important

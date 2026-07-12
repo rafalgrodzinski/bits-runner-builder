@@ -11,7 +11,10 @@ Shape enum
 ;
 
 @export main fun -> u32
-   result enum<Shape> <- enum<Shape>::Triangle
+   result enum<Shape> <- enum<Shape>::Square
+   if result = enum<Shape>::Triangle
+      ret 1
+   ;
 
-   ret result.u32
+   ret 2
 ;
