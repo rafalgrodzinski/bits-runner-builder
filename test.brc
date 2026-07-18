@@ -1,20 +1,36 @@
-
-
-Result enum
-   Success
-   Failure
+Result<T> enum
+   Status::Success boxed<T>: 42
+   Status::Failure boxed<u32>: 77
+   Other: 1 << 2
+   This: 1 << 3
+   Else
 ;
 
-Shape enum
-   Square
-   Triangle
-;
+/*
+doStuff fun: value u32 -> enum<Result, u32>
+   /*
+   pCluster ptr<u16> <- {it.aFat + cluster * 2}
+   value <- pCluster.val
 
-@export main fun -> u32
-   result enum<Shape> <- enum<Shape>::Square
-   if result = enum<Shape>::Triangle
-      ret 1
+   value <- {it.aFat + cluster * 2}.ptr<u16>.val
+   */
+
+   result enum<Result, u32>::Success <- {value}
+   {value}.enum<Result, u32>::Success
+
+   if value % 2 = 0: ret enum<Result, u32>::Success(value)
+   if value % 2 = 0: ret {value}.enum<Result, u32>::Success
+
+   ret enum<Result, u32>::Failure
+;
+*/
+
+@export main fun
+   /*
+   result enum<Result, u32> <- doStuff(11)
+
+   if result = enum<Result, u32>::Success
+   else if result = enum<Result, u32>::Failure
    ;
-
-   ret 2
+   */
 ;

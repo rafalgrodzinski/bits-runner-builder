@@ -8,8 +8,8 @@
 
 struct EnumField {
     shared_ptr<SymbolName> symbolName;
-    shared_ptr<Expression> valueExpression;
     shared_ptr<ValueType> payloadValueType;
+    shared_ptr<Expression> tagExpression;
 };
 
 class StatementEnum: public Statement {
@@ -36,6 +36,7 @@ private:
     shared_ptr<SymbolName> symbolName;
     vector<string> namedTypeKeys;
     vector<EnumField> fields;
+
     shared_ptr<ValueType> valueType;
 };
 

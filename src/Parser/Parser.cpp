@@ -499,10 +499,14 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 shared_ptr<Statement> Parser::matchStatementEnum() {
     enum Tag {
         TAG_SHOULD_EXPORT,
-        TAG_NAMESPACE,
-        TAG_NAME,
+        TAG_IDENT_NAMESPACE,
+        TAG_IDENT_NAME,
         TAG_NAMED_TYPE_KEY,
-        TAG_FIELD_NAME
+        TAG_FIELD_IDENT_NAMESPACE,
+        TAG_FIELD_IDENT_NAME,
+        TAG_FIELD_PAYLOAD_VALUE_TYPE,
+        TAG_FIELD_TAG_EXPRESSION,
+        TAG_FIELD_FINISHED
     };
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
@@ -514,12 +518,12 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
             // identifier - namespaces
             Parsee::repeatedGroupParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENT_NAMESPACE),
                     Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
                 }, ParseeLevel::OPTIONAL, true
             ),
             // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENT_NAME),
             // named type keys
             Parsee::groupParsee(
                 {
@@ -544,8 +548,25 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
             // fields
             Parsee::repeatedGroupParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_NAME),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+                    // identifier - namespaces
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_IDENT_NAMESPACE),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - name
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_IDENT_NAME),
+                    // payload value type
+                    Parsee::valueTypeParsee(ParseeLevel::OPTIONAL, true, TAG_FIELD_PAYLOAD_VALUE_TYPE),
+                    // tag expression
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_FIELD_TAG_EXPRESSION)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, true, TAG_FIELD_FINISHED)
                 }, ParseeLevel::OPTIONAL, true
             ),
             Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
@@ -556,9 +577,12 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
         return nullptr;
 
     bool shouldExport = false;
-    string name;
+    string name = "";
     vector<string> namedTypeKeys;
     vector<EnumField> fields;
+    string fieldName = "";
+    shared_ptr<ValueType> payloadValueType = ValueType::NONE;
+    shared_ptr<Expression> tagExpression = nullptr;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -566,28 +590,47 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
                 shouldExport = true;
                 break;
             }
-            case TAG_NAMESPACE: {
+            case TAG_IDENT_NAMESPACE: {
                 name += parseeResult.getToken()->getLexme();
                 name += "::";
                 break;
             }
-            case TAG_NAME: {
-                name = parseeResult.getToken()->getLexme();
+            case TAG_IDENT_NAME: {
+                name += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_NAMED_TYPE_KEY: {
                 namedTypeKeys.push_back(parseeResult.getToken()->getLexme());
                 break;
             }
-            case TAG_FIELD_NAME: {
-                string fieldName = format("{}::{}", name, parseeResult.getToken()->getLexme());
+            case TAG_FIELD_IDENT_NAMESPACE: {
+                fieldName += parseeResult.getToken()->getLexme();
+                fieldName += "::";
+                break;
+            }
+            case TAG_FIELD_IDENT_NAME: {
+                fieldName += parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_FIELD_PAYLOAD_VALUE_TYPE: {
+                payloadValueType = parseeResult.getValueType();
+                break;
+            }
+            case TAG_FIELD_TAG_EXPRESSION: {
+                tagExpression = parseeResult.getExpression();
+                break;
+            }
+            case TAG_FIELD_FINISHED: {
                 fields.push_back(
                     EnumField(
                         make_shared<SymbolName>(fieldName),
-                        nullptr,
-                        ValueType::NONE
+                        payloadValueType,
+                        tagExpression
                     )
                 );
+                fieldName = "";
+                payloadValueType = ValueType::NONE;
+                tagExpression = nullptr;
                 break;
             }
         }

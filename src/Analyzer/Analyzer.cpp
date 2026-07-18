@@ -326,7 +326,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_
 
 void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
     // check fields
-    shared_ptr<Expression> currentValueExpression = nullptr;
+    shared_ptr<Expression> currentTagExpression = nullptr;
     for (EnumField &field : statementEnum->fields) {
         // Only none or boxed types are valid
         if (!field.payloadValueType->isBoxed() && field.payloadValueType->getKind() != ValueTypeKind::NONE) {
@@ -335,25 +335,25 @@ void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
         }
 
         // Make sure each field has a value expression
-        if (field.valueExpression == nullptr) {
+        if (field.tagExpression == nullptr) {
             // if none present, initialize from zero
-            if (currentValueExpression == nullptr) {
-                currentValueExpression = ExpressionLiteral::expressionLiteralForUInt(0, statementEnum->getLocation());
+            if (currentTagExpression == nullptr) {
+                currentTagExpression = ExpressionLiteral::expressionLiteralForUInt(0, statementEnum->getLocation());
             // otherwise just add 1 to the current value
             } else {
-                currentValueExpression = ExpressionBinary::expression(
+                currentTagExpression = ExpressionBinary::expression(
                     ExpressionBinaryOperation::ADD,
-                    currentValueExpression,
+                    currentTagExpression,
                     ExpressionLiteral::expressionLiteralForUInt(1, statementEnum->getLocation()),
                     statementEnum->getLocation()
                 );
             }
 
-            field.valueExpression = currentValueExpression;
+            field.tagExpression = currentTagExpression;
         } else {
-            currentValueExpression = field.valueExpression;
+            currentTagExpression = field.tagExpression;
         }
-        currentValueExpression->valueType = typeForExpression(currentValueExpression, nullptr, nullptr);
+        currentTagExpression->valueType = typeForExpression(currentTagExpression, nullptr, nullptr);
 
         scope->setVariableType(field.symbolName->getGlobalName(), statementEnum->getValueType(), true);
     }

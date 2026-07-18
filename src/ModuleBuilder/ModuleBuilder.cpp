@@ -306,7 +306,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
 
         vector<llvm::Constant*> values;
         // enum value
-        shared_ptr<WrappedValue> constantWrappedValue = wrappedValueForExpression(field.valueExpression);
+        shared_ptr<WrappedValue> constantWrappedValue = wrappedValueForExpression(field.tagExpression);
         llvm::Constant *constantValue = constantWrappedValue->getConstantValue();
         values.push_back(constantValue);
 
