@@ -2424,6 +2424,13 @@ shared_ptr<ValueType> Parser::matchValueType() {
                         ),
                         // identifier - name
                         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
+                        // argument types
+                        Parsee::repeatedGroupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
                         Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
                     },
                     // BOXED

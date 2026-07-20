@@ -6,7 +6,6 @@ Result<T> enum
    Else
 ;
 
-/*
 doStuff fun: value u32 -> enum<Result, u32>
    /*
    pCluster ptr<u16> <- {it.aFat + cluster * 2}
@@ -16,14 +15,14 @@ doStuff fun: value u32 -> enum<Result, u32>
    */
 
    result enum<Result, u32>::Success <- {value}
-   {value}.enum<Result, u32>::Success
+   /*{value}.enum<Result, u32>::Success
 
    if value % 2 = 0: ret enum<Result, u32>::Success(value)
    if value % 2 = 0: ret {value}.enum<Result, u32>::Success
 
-   ret enum<Result, u32>::Failure
+   ret enum<Result, u32>::Failure*/
+   ret result
 ;
-*/
 
 @export main fun
    /*
