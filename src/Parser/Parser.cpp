@@ -2276,6 +2276,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_NAME_MODULE_PREFIX,
         TAG_NAME_NAMESPACE,
         TAG_NAME,
+        TAG_ENUM_VALUE_NAME,
 
         TAG_BOXED,
         TAG_TYPE_NAME,
@@ -2431,7 +2432,14 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                 Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
                             }, ParseeLevel::OPTIONAL, true
                         ),
-                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                        Parsee::repeatedGroupParsee(
+                            {
+                                // identifier - value name
+                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ENUM_VALUE_NAME)
+                            },ParseeLevel::OPTIONAL, true
+                        )
                     },
                     // BOXED
                     {
@@ -2466,6 +2474,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     bool isData = false;
     bool isBlob = false;
     bool isEnum = false;
+    bool isEnumValue = false;
     bool isProto = false;
     bool isBoxed = false;
 
@@ -2522,6 +2531,13 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 isEnum = true;
                 break;
             }
+            case TAG_ENUM_VALUE_NAME: {
+                isEnum = false;
+                isEnumValue = true;
+                name += "::";
+                name += parseeResult.getToken()->getLexme();
+                break;
+            }
             case TAG_PROTO: {
                 isProto = true;
                 break;
@@ -2569,6 +2585,10 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::enumeration(name, {});
     else if (isEnum)
         return ValueType::enumeration(name, argTypes);
+    else if (isEnumValue && argTypes.empty())
+        return ValueType::enumValue(name, {});
+    else if (isEnumValue)
+        return ValueType::enumValue(name, argTypes);
     else if (isProto)
         return ValueType::proto(name);
     else if (isBoxed)

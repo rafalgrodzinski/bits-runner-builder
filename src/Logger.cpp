@@ -1395,7 +1395,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             text += ">";
             break;
         }
-        case ValueTypeKind::ENUM: {
+        case ValueTypeKind::ENUM:
+        case ValueTypeKind::ENUM_VALUE: {
             text = "";
             text += format("ENUM<`{}`", valueType->getGlobalName());
             if (valueType->getNamedTypeValues()) {

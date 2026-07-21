@@ -38,6 +38,7 @@ enum class ValueTypeKind {
     DATA,
     BLOB,
     ENUM,
+    ENUM_VALUE,
     PROTO,
     BOXED,
     FUN,
@@ -86,6 +87,7 @@ public:
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
     static shared_ptr<ValueType> blob(const string &blobName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues);
     static shared_ptr<ValueType> enumeration(const string &enumName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues);
+    static shared_ptr<ValueType> enumValue(const string &enumName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues);
     static shared_ptr<ValueType> proto(const string &protoName);
     static shared_ptr<ValueType> boxed(shared_ptr<ValueType> subType);
     static shared_ptr<ValueType> fun(const vector<shared_ptr<ValueType>> &argumentTypes, shared_ptr<ValueType> returnType);

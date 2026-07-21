@@ -2158,6 +2158,11 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             }
         }
 
+        // from enum value
+        case ValueTypeKind::ENUM_VALUE: {
+            
+        }
+
         default:
             return false;
     }

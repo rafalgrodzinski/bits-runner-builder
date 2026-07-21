@@ -1,9 +1,9 @@
 Result<T> enum
    Status::Success boxed<T>: 42
-   Status::Failure boxed<u32>: 77
-   Other: 1 << 2
+   Status::Failure //boxed<u32>: 77
+   /*Other: 1 << 2
    This: 1 << 3
-   Else
+   Else*/
 ;
 
 doStuff fun: value u32 -> enum<Result, u32>
@@ -14,13 +14,18 @@ doStuff fun: value u32 -> enum<Result, u32>
    value <- {it.aFat + cluster * 2}.ptr<u16>.val
    */
 
-   result enum<Result, u32>::Success <- {value}
-   /*{value}.enum<Result, u32>::Success
+   result enum<Result, u32>::Success //<- {value}
+   /*
+   //{value}.enum<Result, u32>::Success
+   result enum<Result, u32> <- {}.enum<Result, u32>::Success
+   result enum<Result, u32>::Else
 
-   if value % 2 = 0: ret enum<Result, u32>::Success(value)
+   if value % 2 = 0: ret {value}.enum<Result, u32>::Success
    if value % 2 = 0: ret {value}.enum<Result, u32>::Success
 
-   ret enum<Result, u32>::Failure*/
+   ret enum<Result, u32>::Failure
+   ret {}.enum<Resul,t, u32>::Else
+   */
    ret result
 ;
 
