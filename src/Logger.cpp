@@ -8,7 +8,6 @@
 #include "Lexer/Token.h"
 #include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
-#include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -43,6 +42,10 @@
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
+
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeEnum.h"
+#include "Parser/ValueType/ValueTypeEnumField.h"
 
 /// Private ///
 
@@ -912,6 +915,34 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
     return formattedLine(line, indents);
 }
 
+string Logger::toString(shared_ptr<ValueTypeEnum> valueType) {
+    string text = "";
+    text += format("ENUM<`{}`", valueType->getSymbolName()->getGlobalName());
+    if (valueType->getNamedTypeValues()) {
+        for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
+            text += ", ";
+            text += toString((*valueType->getNamedTypeValues()).at(i));
+        }
+    }
+    text += ">";
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeEnumField> valueType) {
+    string text = "";
+    text += format("ENUM_FIELD<`{}`", valueType->getSymbolName()->getGlobalName());
+    if (valueType->getNamedTypeValues()) {
+        for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
+            text += ", ";
+            text += toString((*valueType->getNamedTypeValues()).at(i));
+        }
+    }
+    text += ">";
+
+    return text;
+}
+
 string Logger::toString(EnumField field, vector<IndentKind> indents) {
     string text;
     string line;
@@ -1396,18 +1427,9 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             break;
         }
         case ValueTypeKind::ENUM:
-        case ValueTypeKind::ENUM_VALUE: {
-            text = "";
-            text += format("ENUM<`{}`", valueType->getGlobalName());
-            if (valueType->getNamedTypeValues()) {
-                for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
-                    text += ", ";
-                    text += toString((*valueType->getNamedTypeValues()).at(i));
-                }
-            }
-            text += ">";
-            break;
-        }
+            return toString(dynamic_pointer_cast<ValueTypeEnum>(valueType));
+        case ValueTypeKind::ENUM_FIELD:
+            return toString(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
         case ValueTypeKind::PROTO:
             text = format("PROTO<`{}`>", valueType->getGlobalName());
             break;

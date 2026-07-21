@@ -4,7 +4,9 @@
 #include "Logger.h"
 #include "AnalyzerScope.h"
 #include "Module/Module.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeEnum.h"
+#include "Parser/ValueType/ValueTypeEnumField.h"
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
@@ -355,15 +357,17 @@ void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
         }
         currentTagExpression->valueType = typeForExpression(currentTagExpression, nullptr, nullptr);
 
-        scope->setVariableType(field.symbolName->getGlobalName(), statementEnum->getValueType(), true);
+        //scope->setVariableType(field.symbolName->getGlobalName(), statementEnum->getValueType(), true);
     }
 
+    /*
     // register the enum
     bool isSuccess = scope->registerEnumFields(statementEnum->getSymbolName()->getGlobalName(), statementEnum->getFields());
     if (!isSuccess) {
         markErrorAlreadyDefined(statementEnum->getLocation(), statementEnum->getSymbolName()->getGlobalName());
         return;
     }
+    */
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {
@@ -2158,9 +2162,9 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             }
         }
 
-        // from enum value
-        case ValueTypeKind::ENUM_VALUE: {
-            
+        // from enum field
+        case ValueTypeKind::ENUM_FIELD: {
+            return sourceType->canImplicitCastTo(targetType);
         }
 
         default:

@@ -22,3 +22,7 @@ string SymbolName::getModuleName() const {
 void SymbolName::setModuleName(const string &moduleName) {
     this->moduleName = moduleName;
 }
+
+bool SymbolName::isSubSymbol(shared_ptr<SymbolName> other) const {
+    return getGlobalName().starts_with(other->getGlobalName());
+}

@@ -90,18 +90,6 @@ shared_ptr<ValueType> ValueType::blob(const string &blobName, const optional<vec
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::enumeration(const string &enumName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::ENUM, enumName);
-    valueType->namedTypeValues = namedTypeValues;
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::enumValue(const string &enumName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::ENUM_VALUE, enumName);
-    valueType->namedTypeValues = namedTypeValues;
-    return valueType;
-}
-
 shared_ptr<ValueType> ValueType::proto(const string &protoName) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::PROTO, protoName);
     return valueType;
@@ -335,6 +323,10 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
     }
 
     return kind == other->getKind();
+}
+
+bool ValueType::canImplicitCastTo(shared_ptr<ValueType> other) const {
+    return false;
 }
 
 bool ValueType::isNumeric() const {

@@ -35,7 +35,7 @@
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 ModulesStore::ModulesStore(const string &defaultModuleName):
 defaultModuleName(defaultModuleName) { }

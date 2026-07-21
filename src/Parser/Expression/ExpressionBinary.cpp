@@ -1,7 +1,7 @@
 #include "ExpressionBinary.h"
 
 #include "Lexer/Token.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 ExpressionBinary::ExpressionBinary(shared_ptr<Location> location):
 Expression(ExpressionKind::BINARY, nullptr, location) { }

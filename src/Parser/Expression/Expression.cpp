@@ -1,7 +1,7 @@
 #include "Expression.h"
 
 #include "Lexer/Location.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 shared_ptr<Expression> Expression::NONE = make_shared<Expression>(ExpressionKind::NONE, ValueType::NONE, nullptr);
 

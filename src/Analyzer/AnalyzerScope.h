@@ -61,7 +61,7 @@ public:
     shared_ptr<ValueType> getFunctionType(const string &name) const;
     bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
 
-    bool registerEnumFields(const string &enumGlobalName, const vector<EnumField> &fields);
+    //bool registerEnumFields(const string &enumGlobalName, const vector<EnumField> &fields);
 };
 
 #endif

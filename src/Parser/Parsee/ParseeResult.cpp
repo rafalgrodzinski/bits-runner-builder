@@ -1,7 +1,7 @@
 #include "ParseeResult.h"
 
 #include "Lexer/Token.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 ParseeResult ParseeResult::tokenResult(shared_ptr<Token> token, int tag) {
     ParseeResult parseeResult;

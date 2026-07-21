@@ -4,7 +4,7 @@
 #include "Statement.h"
 
 #include "Parser/SymbolName.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 struct EnumField {
     shared_ptr<SymbolName> symbolName;
@@ -37,7 +37,7 @@ private:
     vector<string> namedTypeKeys;
     vector<EnumField> fields;
 
-    shared_ptr<ValueType> valueType;
+    //shared_ptr<ValueType> valueType;
 };
 
 #endif

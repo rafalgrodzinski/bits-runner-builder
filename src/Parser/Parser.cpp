@@ -5,7 +5,9 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeEnum.h"
+#include "Parser/ValueType/ValueTypeEnumField.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -2276,7 +2278,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_NAME_MODULE_PREFIX,
         TAG_NAME_NAMESPACE,
         TAG_NAME,
-        TAG_ENUM_VALUE_NAME,
+        TAG_ENUM_FIELD_NAME,
 
         TAG_BOXED,
         TAG_TYPE_NAME,
@@ -2437,7 +2439,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                             {
                                 // identifier - value name
                                 Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ENUM_VALUE_NAME)
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ENUM_FIELD_NAME)
                             },ParseeLevel::OPTIONAL, true
                         )
                     },
@@ -2531,7 +2533,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 isEnum = true;
                 break;
             }
-            case TAG_ENUM_VALUE_NAME: {
+            case TAG_ENUM_FIELD_NAME: {
                 isEnum = false;
                 isEnumValue = true;
                 name += "::";
@@ -2581,7 +2583,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::blob(name, {});
     else if (isBlob)
         return ValueType::blob(name, argTypes);
-    else if (isEnum && argTypes.empty())
+    /*else if (isEnum && argTypes.empty())
         return ValueType::enumeration(name, {});
     else if (isEnum)
         return ValueType::enumeration(name, argTypes);
@@ -2589,6 +2591,11 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::enumValue(name, {});
     else if (isEnumValue)
         return ValueType::enumValue(name, argTypes);
+    */
+    else if (isEnum)
+        return make_shared<ValueTypeEnum>(name, argTypes);
+    else if (isEnumValue)
+        return make_shared<ValueTypeEnumField>(name, argTypes);
     else if (isProto)
         return ValueType::proto(name);
     else if (isBoxed)

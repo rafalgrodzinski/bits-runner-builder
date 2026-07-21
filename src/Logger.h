@@ -12,7 +12,6 @@ class Location;
 class Module;
 class Parsee;
 class Token;
-class ValueType;
 struct EnumField;
 
 class Statement;
@@ -52,6 +51,10 @@ class ExpressionValue;
 enum class ExpressionBinaryOperation;
 enum class ExpressionUnaryOperation;
 enum class TokenKind;
+
+class ValueType;
+class ValueTypeEnum;
+class ValueTypeEnumField;
 
 using namespace std;
 
@@ -103,6 +106,10 @@ private:
     static string toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents);
+
+    // value type
+    static string toString(shared_ptr<ValueTypeEnum> valueType);
+    static string toString(shared_ptr<ValueTypeEnumField> valueType);
  
     // general support
     static string toString(EnumField field, vector<IndentKind> indents);

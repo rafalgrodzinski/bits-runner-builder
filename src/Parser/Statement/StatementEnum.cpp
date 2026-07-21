@@ -36,6 +36,8 @@ vector<EnumField> StatementEnum::getFields() const {
     return fields;
 }
 
+/*
 shared_ptr<ValueType> StatementEnum::getValueType() const {
     return ValueType::enumeration(symbolName->getGlobalName(), {});
 };
+*/

@@ -4,7 +4,7 @@
 #include "Logger.h"
 #include "Module/Module.h"
 #include "WrappedValue.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"
@@ -326,10 +326,10 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
             symbolName
         );
 
-        scope->setWrappedValue(
+        /*scope->setWrappedValue(
             field.symbolName->getGlobalName(),
             WrappedValue::wrappedValue(global, statementEnum->getValueType())
-        );
+        );*/
     }
 }
 
