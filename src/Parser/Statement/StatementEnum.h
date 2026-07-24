@@ -19,7 +19,7 @@ public:
     StatementEnum(
         bool shouldExport,
         const string &name,
-        const vector<string> &namedTypeKeys,
+        const vector<string> &namedValueTypeKeys,
         const vector<EnumField> &fields,
         shared_ptr<Location> location
     );
@@ -27,17 +27,14 @@ public:
     bool getShouldExport() const;
     shared_ptr<SymbolName> getSymbolName() const;
     void setModuleName(const string &moduleName);
-    vector<string> getNamedTypeKeys() const;
+    vector<string> getNamedValueTypeKeys() const;
     vector<EnumField> getFields() const;
-    shared_ptr<ValueType> getValueType() const;
 
 private:
     bool shouldExport;
     shared_ptr<SymbolName> symbolName;
-    vector<string> namedTypeKeys;
+    vector<string> namedValueTypeKeys;
     vector<EnumField> fields;
-
-    //shared_ptr<ValueType> valueType;
 };
 
 #endif

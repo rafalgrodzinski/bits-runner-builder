@@ -2,10 +2,10 @@
 
 #include "ValueTypeEnum.h"
 
-ValueTypeEnumField::ValueTypeEnumField(const string &name, const vector<shared_ptr<ValueType>> namedTypeValues):
-ValueType(ValueTypeKind::ENUM_FIELD) {
-    symbolName = make_shared<SymbolName>(name);
-}
+ValueTypeEnumField::ValueTypeEnumField(const string &name, const vector<shared_ptr<ValueType>> namedValueTypes):
+ValueType(ValueTypeKind::ENUM_FIELD),
+symbolName(make_shared<SymbolName>(name)),
+namedValueTypes(namedValueTypes) { }
 
 shared_ptr<SymbolName> ValueTypeEnumField::getSymbolName() const {
     return symbolName;
@@ -37,6 +37,22 @@ bool ValueTypeEnumField::canImplicitCastTo(shared_ptr<ValueType> other) const {
         return false;
 
     // Are the named value types identical?
-
+    //return getNamedTypesMap() == valueTypeEnum->getNamedTypesMap();
     return true;
 }
+
+shared_ptr<ValueType> ValueTypeEnumField::getPayloadValueType() const {
+    return payloadValueType;
+}
+
+/*map<string, shared_ptr<ValueType>> ValueTypeEnumField::getNamedTypesMap() const {
+    map<string, shared_ptr<ValueType>> namedTypesMap;
+
+    if (namedValueTypeKeys.size() != namedValueTypes.size())
+        return namedTypesMap;;
+
+    for (int i=0; i<namedValueTypeKeys.size(); i++)
+        namedTypesMap[namedValueTypeKeys[i]] = namedValueTypes[i];
+
+    return namedTypesMap;
+}*/

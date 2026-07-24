@@ -114,6 +114,8 @@ private:
     bool canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
     shared_ptr<ValueType> resolvedAndCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location);
+    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum);
+    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
 
     void markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier);
     void markErrorInvalidAttribute(shared_ptr<Location> location, const string &name);

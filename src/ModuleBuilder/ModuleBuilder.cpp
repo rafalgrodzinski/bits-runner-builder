@@ -1885,6 +1885,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isSourcePointer = false;
     bool isSourceData = false;
     bool isSourceBoxed = false;
+    bool isSourceEnum = false;
     int sourceSize = 0;
 
     // Unbox source type if required
@@ -1962,16 +1963,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             sourceSize = typeBoxed->getIntegerBitWidth();
             break;
         }
-        case ValueTypeKind::ENUM: {
-            isSourceUInt = true;
-            sourceSize = typeInt->getBitWidth();
-            // extract enum value from the enum struct
-            llvm::Value *index[] = {
-                builder->getInt32(0),
-                builder->getInt32(0)
-            };
-            llvm::Value *enumValuePtr = builder->CreateGEP(typeEnumStruct, sourceWrappedValue->getPointerValue(), index);
-            sourceWrappedValue = WrappedValue::wrappedPointerValue(enumValuePtr, typeInt, ValueType::UINT);
+        case ValueTypeKind::ENUM: 
+        case ValueTypeKind::ENUM_FIELD: {
+            isSourceEnum = true;
             break;
         }
         default:
@@ -1987,6 +1981,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isTargetPointer = false;
     bool isTargetData = false;
     bool isTargetBoxed = false;
+    bool isTargetEnum = false;
     int targetSize = 0;
 
     // Unwrap target type if required
@@ -2062,6 +2057,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::BOXED: {
             isTargetBoxed = true;
             targetSize = typeBoxed->getIntegerBitWidth();
+            break;
+        }
+        case ValueTypeKind::ENUM:
+        case ValueTypeKind::ENUM_FIELD: {
+            isTargetEnum = true;
             break;
         }
         default:
@@ -2245,6 +2245,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             bitcastValue,
             targetValueType
         );
+    // enum to enum
+    } else if (isSourceEnum && isTargetEnum) {
+        llvm::Value *sourceValue = sourceWrappedValue->getValue();
+        return WrappedValue::wrappedValue(sourceValue, targetValueType);
     } else {
         markErrorInvalidCast(nullptr);
         return nullptr;
@@ -2383,7 +2387,8 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
                 markErrorNotDefined(nullptr, format("blob \"{}\"", valueType->getGlobalName()));
             return structType;
         }
-        case ValueTypeKind::ENUM: {
+        case ValueTypeKind::ENUM:
+        case ValueTypeKind::ENUM_FIELD: {
             return typeEnumStruct;
         }
         case ValueTypeKind::PROTO: {

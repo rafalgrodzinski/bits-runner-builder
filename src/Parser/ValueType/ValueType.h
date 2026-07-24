@@ -143,6 +143,13 @@ public:
     bool isComposite() const;
     bool isNamedType() const;
     bool isBoxedNamedType() const;
+
+public:
+    void setParent(weak_ptr<ValueType> parent);
+    weak_ptr<ValueType> getParent();
+
+private:
+    weak_ptr<ValueType> parent;
 };
 
 #endif

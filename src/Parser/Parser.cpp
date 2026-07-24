@@ -2135,7 +2135,6 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 
 shared_ptr<Expression> Parser::matchExpressionValue() {
     enum {
-        TAG_ENUM,
         TAG_DATA,
 
         TAG_NAME_MODULE_PREFIX,
@@ -2151,32 +2150,6 @@ shared_ptr<Expression> Parser::matchExpressionValue() {
         {
             Parsee::oneOfParsee(
                 {
-                    // ENUM
-                    {
-                        Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, true, TAG_ENUM),
-                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
-                        // identifier - module prefix
-                        Parsee::groupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - namespaces
-                        Parsee::repeatedGroupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - enum name
-                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_NAMESPACE),
-                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
-                        // identifier - name
-                        Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false),
-                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
-                    },
                     // SMPLE or DATA
                     {
                         // identifier - module prefix
@@ -2214,17 +2187,12 @@ shared_ptr<Expression> Parser::matchExpressionValue() {
         return nullptr;
     
     bool isData = false;
-    bool isEnum = false;
 
     string name;
     shared_ptr<Expression> indexExpression;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_ENUM: {
-                isEnum = true;
-                break;
-            }
             case TAG_DATA: {
                 isData = true;
                 break;
@@ -2252,8 +2220,6 @@ shared_ptr<Expression> Parser::matchExpressionValue() {
 
     if (isData)
         return ExpressionValue::data(name, indexExpression, location);
-    else if (isEnum)
-        return ExpressionValue::enumeration(name, location);
     else
         return ExpressionValue::simple(name, location);
 }

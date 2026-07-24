@@ -3,16 +3,15 @@
 StatementEnum::StatementEnum(
     bool shouldExport,
     const string &name,
-    const vector<string> &namedTypeKeys,
+    const vector<string> &namedValueTypeKeys,
     const vector<EnumField> &fields,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::ENUM, location),
 shouldExport(shouldExport),
-namedTypeKeys(namedTypeKeys),
-fields(fields) {
-    symbolName = make_shared<SymbolName>(name);
-}
+symbolName(make_shared<SymbolName>(name)),
+namedValueTypeKeys(namedValueTypeKeys),
+fields(fields) { }
 
 bool StatementEnum::getShouldExport() const {
     return shouldExport;
@@ -28,16 +27,10 @@ void StatementEnum::setModuleName(const string &moduleName) {
         field.symbolName->setModuleName(moduleName);
 }
 
-vector<string> StatementEnum::getNamedTypeKeys() const {
-    return namedTypeKeys;
+vector<string> StatementEnum::getNamedValueTypeKeys() const {
+    return namedValueTypeKeys;
 }
 
 vector<EnumField> StatementEnum::getFields() const {
     return fields;
 }
-
-/*
-shared_ptr<ValueType> StatementEnum::getValueType() const {
-    return ValueType::enumeration(symbolName->getGlobalName(), {});
-};
-*/

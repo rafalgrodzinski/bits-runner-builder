@@ -8,10 +8,17 @@
 #include <vector>
 #include <optional>
 
+class SymbolName;
 class ValueType;
 struct EnumField;
 
 using namespace std;
+
+class AnalyzerScopeEnum {
+public:
+    void registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys);
+    optional<vector<string>> getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName);
+};
 
 class AnalyzerScope {
 private:
@@ -29,8 +36,6 @@ private:
         map<string, shared_ptr<ValueType>> functionTypeMap;
         map<string, bool> isFunctionDefinedMap;
     } ScopeLevel;
-
-    stack<ScopeLevel> scopeLevels;
 
 public:
     AnalyzerScope();
@@ -62,6 +67,10 @@ public:
     bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
 
     //bool registerEnumFields(const string &enumGlobalName, const vector<EnumField> &fields);
+    shared_ptr<AnalyzerScopeEnum> enums;
+
+private:
+    stack<ScopeLevel> scopeLevels;
 };
 
 #endif

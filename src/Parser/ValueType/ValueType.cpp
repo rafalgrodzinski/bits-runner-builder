@@ -507,3 +507,11 @@ bool ValueType::isNamedType() const {
 bool ValueType::isBoxedNamedType() const {
     return kind == ValueTypeKind::BOXED && subType->isNamedType();
 }
+
+void ValueType::setParent(weak_ptr<ValueType> parent) {
+    this->parent = parent;
+}
+
+weak_ptr<ValueType> ValueType::getParent() {
+    return parent;
+}

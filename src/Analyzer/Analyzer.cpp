@@ -358,6 +358,7 @@ void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
         currentTagExpression->valueType = typeForExpression(currentTagExpression, nullptr, nullptr);
 
         //scope->setVariableType(field.symbolName->getGlobalName(), statementEnum->getValueType(), true);
+        scope->enums->registerNamedValueTypeKeys(statementEnum->getSymbolName(), statementEnum->getNamedValueTypeKeys());
     }
 
     /*
@@ -889,6 +890,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     bool isSourceEnum = parentExpression->getValueType()->isEnum();
     bool isTargetBlob = expressionCast->getValueType()->isBlob();
     bool isTargetData = expressionCast->getValueType()->isData();
+    bool isTargetEnumField = expressionCast->getValueType()->getKind() == ValueTypeKind::ENUM_FIELD;
     bool isTargetPointer = expressionCast->getValueType()->isPointer();
     bool isTargetProto = expressionCast->getValueType()->isProto();
     bool isTargetNumeric = expressionCast->getValueType()->isNumeric();
@@ -903,7 +905,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
         }
         return expressionCast->getValueType();
     // cast composite to complex type
-    } else if (isSourceComposite && (isTargetBlob || isTargetData || isTargetPointer || isTargetProto)) {
+    } else if (isSourceComposite && (isTargetBlob || isTargetData || isTargetEnumField || isTargetPointer || isTargetProto)) {
         if (canImplicitCast(parentExpression->getValueType(), expressionCast->getValueType())) {
             // we don't want to cast the whole composite, just the individual expression
             // so we ignore the result (we don't replace the composite expression itself)
@@ -2100,6 +2102,25 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
                 }
 
+                // to enum field
+                case ValueTypeKind::ENUM_FIELD: {
+                    // get target & source types
+                    shared_ptr<ValueTypeEnumField> targetValueTypeEnumField = dynamic_pointer_cast<ValueTypeEnumField>(targetType);
+                    vector<shared_ptr<ValueType>> sourceElementTypes = *sourceType->getCompositeElementTypes();
+
+                    // first option, no source types and target is none
+                    if (sourceElementTypes.size() == 0) {
+                        return targetValueTypeEnumField->getPayloadValueType()->getKind() == ValueTypeKind::NONE;
+                    }
+
+                    // otherwise source has to have one element
+                    if (sourceElementTypes.size() != 1)
+                        return false;
+
+                    // and check if it can be cast
+                    return canImplicitCast(sourceElementTypes.front(), targetValueTypeEnumField->getPayloadValueType());
+                }
+
                 // to proto
                 case ValueTypeKind::PROTO: {
                     string targetProtoName = targetType->getGlobalName();
@@ -2199,6 +2220,12 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             }
             return valueType;
         }
+        case ValueTypeKind::ENUM: {
+            return checkValueType(dynamic_pointer_cast<ValueTypeEnum>(valueType));
+        }
+        case ValueTypeKind::ENUM_FIELD: {
+            return checkValueType(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
+        }
         case ValueTypeKind::FUN: {
             vector<shared_ptr<ValueType>> argValueTypes = *valueType->getArgumentTypes();
             for (shared_ptr<ValueType> argValueType : argValueTypes) {
@@ -2240,6 +2267,33 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             return valueType;
         }
     }
+}
+
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum) {
+    optional<vector<string>> namedValueTypeKeys = scope->enums->getNamedValueTypeKeys(valueTypeEnum->getSymbolName());
+
+    // Check if it's registered
+    if (!namedValueTypeKeys) {
+        markErrorInvalidType(nullptr, valueTypeEnum, nullptr);
+        return nullptr;
+    }
+
+    // Check number of named types match
+    if ((*namedValueTypeKeys).size() != valueTypeEnum->getNamedValueTypes().size()) {
+        markErrorInvalidType(nullptr, valueTypeEnum, nullptr);
+        return nullptr;
+    }
+
+    valueTypeEnum->setNamedValueTypeKeys(*namedValueTypeKeys);
+    return valueTypeEnum;
+}
+
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
+    optional<vector<string>> namedValueTypeKeys = scope->enums->getNamedValueTypeKeys(valueTypeEnumField->getSymbolName());
+
+    // Check if 
+    if (!namedValueTypeKeys)
+        return nullptr;
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {

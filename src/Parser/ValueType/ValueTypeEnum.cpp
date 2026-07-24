@@ -1,9 +1,9 @@
 #include "ValueTypeEnum.h"
 
-ValueTypeEnum::ValueTypeEnum(const string &name, const vector<shared_ptr<ValueType>> namedTypeValues):
-ValueType(ValueTypeKind::ENUM) {
-    symbolName = make_shared<SymbolName>(name);
-}
+ValueTypeEnum::ValueTypeEnum(const string &name, const vector<shared_ptr<ValueType>> &namedValueTypes):
+ValueType(ValueTypeKind::ENUM),
+symbolName(make_shared<SymbolName>(name)),
+namedValueTypes(namedValueTypes) { }
 
 shared_ptr<SymbolName> ValueTypeEnum::getSymbolName() const {
     return symbolName;
@@ -30,4 +30,12 @@ bool ValueTypeEnum::isEqual(shared_ptr<ValueType> other) const {
 
 bool ValueTypeEnum::canImplicitCastTo(shared_ptr<ValueType> other) const {
     return isEqual(other);
+}
+
+/*map<string, shared_ptr<ValueType>> ValueTypeEnum::getNamedTypesMap() {
+    return namedTypesMap;
+}*/
+
+void ValueTypeEnum::setNamedValueTypeKeys(const vector<string> &namedValueTypeKeys) {
+    this->namedValueTypeKeys = namedValueTypeKeys;
 }
