@@ -10,7 +10,6 @@ class AnalyzerScope;
 class Module;
 class Error;
 class Location;
-class ValueType;
 
 class Statement;
 class StatementAssignment;
@@ -46,6 +45,10 @@ class ExpressionLiteral;
 class ExpressionNone;
 class ExpressionUnary;
 class ExpressionValue;
+
+class ValueType;
+class ValueTypeEnum;
+class ValueTypeEnumField;
 
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;

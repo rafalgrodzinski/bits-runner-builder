@@ -17,6 +17,9 @@ public:
 
     bool isSubSymbol(shared_ptr<SymbolName> other) const;
 
+    bool operator == (const SymbolName &other) const;
+    bool operator < (const SymbolName &other) const;
+
 private:
     string name;
     string moduleName;

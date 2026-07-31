@@ -2,7 +2,76 @@
 
 #include "Parser/ValueType/ValueType.h"
 
+#include "Parser/SymbolName.h"
+
+//
+// AnalyzerScopeEnum
+//
+AnalyzerScopeEnum::AnalyzerScopeEnum(AnalyzerScope *parent):
+parent(parent) { }
+
+optional<vector<string>> AnalyzerScopeEnum::getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName) {
+    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().enumNamedValueTypeKeys.find(*symbolName);
+        if (it != scopeLevels.top().enumNamedValueTypeKeys.end())
+            return scopeLevels.top().enumNamedValueTypeKeys[*symbolName];
+        scopeLevels.pop();
+    }
+
+    return {};
+}
+
+AnalyzerScopeRegisterResult AnalyzerScopeEnum::registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys) {
+    optional<vector<string>> &oDeclaredNamedValueTypeKeys = parent->scopeLevels.top().enumNamedValueTypeKeys[*symbolName];
+
+    // If it's already declared, check
+    if (oDeclaredNamedValueTypeKeys) {
+        vector<string> &declaredNamedValueTypeKeys = *oDeclaredNamedValueTypeKeys;
+        for (const string &namedValueTypeKey : namedValueTypeKeys) {
+            // first check if each of the named types is not yet declared
+            for (string &declaredNamedValueTypeKey : declaredNamedValueTypeKeys) {
+                if (declaredNamedValueTypeKey == namedValueTypeKey)
+                    return AnalyzerScopeRegisterResult::FAILURE_ALREADY_DECLARED;
+            }
+        }
+    } else {
+        oDeclaredNamedValueTypeKeys = vector<string>();
+    }
+
+    for (const string &namedValueTypeKey : namedValueTypeKeys) {
+        (*oDeclaredNamedValueTypeKeys).push_back(namedValueTypeKey);
+    }
+
+    return AnalyzerScopeRegisterResult::SUCCES;
+}
+
+shared_ptr<ValueType> AnalyzerScopeEnum::getPayloadValueType(shared_ptr<SymbolName> symbolName) {
+    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().enumPayloadValueType.find(*symbolName);
+        if (it != scopeLevels.top().enumPayloadValueType.end())
+            return scopeLevels.top().enumPayloadValueType[*symbolName];
+        scopeLevels.pop();
+    }
+
+    return nullptr;
+}
+
+AnalyzerScopeRegisterResult AnalyzerScopeEnum::registerPayloadValueType(shared_ptr<SymbolName> symbolName, shared_ptr<ValueType> payloadValueType) {
+    parent->scopeLevels.top().enumPayloadValueType[*symbolName] = payloadValueType;
+    return AnalyzerScopeRegisterResult::SUCCES;
+}
+
+//
+// AnalyzerScope
+//
+
 AnalyzerScope::AnalyzerScope() {
+    enumScope = make_shared<AnalyzerScopeEnum>(this);
+
     pushLevel();
 }
 
@@ -245,9 +314,3 @@ bool AnalyzerScope::setFunctionType(const string &name, shared_ptr<ValueType> ty
 
     return true;
 }
-
-/*
-bool AnalyzerScope::registerEnumFields(const string &enumGlobalName, const vector<EnumField> &fields) {
-    return true;
-}
-*/

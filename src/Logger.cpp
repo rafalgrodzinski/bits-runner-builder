@@ -918,11 +918,9 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
 string Logger::toString(shared_ptr<ValueTypeEnum> valueType) {
     string text = "";
     text += format("ENUM<`{}`", valueType->getSymbolName()->getGlobalName());
-    if (valueType->getNamedTypeValues()) {
-        for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
-            text += ", ";
-            text += toString((*valueType->getNamedTypeValues()).at(i));
-        }
+    for (shared_ptr<ValueType> valueType : valueType->getNamedValueTypes()) {
+        text += ", ";
+        text += toString(valueType);
     }
     text += ">";
 
@@ -932,11 +930,9 @@ string Logger::toString(shared_ptr<ValueTypeEnum> valueType) {
 string Logger::toString(shared_ptr<ValueTypeEnumField> valueType) {
     string text = "";
     text += format("ENUM_FIELD<`{}`", valueType->getSymbolName()->getGlobalName());
-    if (valueType->getNamedTypeValues()) {
-        for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
-            text += ", ";
-            text += toString((*valueType->getNamedTypeValues()).at(i));
-        }
+    for (shared_ptr<ValueType> valueType : valueType->getNamedValueTypes()) {
+        text += ", ";
+        text += toString(valueType);
     }
     text += ">";
 

@@ -12,16 +12,33 @@ class SymbolName;
 class ValueType;
 struct EnumField;
 
+class AnalyzerScope;
+
 using namespace std;
+
+enum class AnalyzerScopeRegisterResult {
+    SUCCES,
+    FAILURE_ALREADY_DECLARED,
+    FAILURE_ALREAD_DEFINED
+};
 
 class AnalyzerScopeEnum {
 public:
-    void registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys);
+    AnalyzerScopeEnum(AnalyzerScope *parent);
     optional<vector<string>> getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName);
+    AnalyzerScopeRegisterResult registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys);
+
+    shared_ptr<ValueType> getPayloadValueType(shared_ptr<SymbolName> symbolName);
+    AnalyzerScopeRegisterResult registerPayloadValueType(shared_ptr<SymbolName> symbolName, shared_ptr<ValueType> payloadValueType);
+
+private:
+    AnalyzerScope *parent;
 };
 
 class AnalyzerScope {
-private:
+friend AnalyzerScopeEnum;
+
+public:
     typedef struct {
         map<string, optional<vector<string>>> blobNamedTypeKeysMap;
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
@@ -35,6 +52,10 @@ private:
 
         map<string, shared_ptr<ValueType>> functionTypeMap;
         map<string, bool> isFunctionDefinedMap;
+
+        // enum
+        map<SymbolName, optional<vector<string>>> enumNamedValueTypeKeys;
+        map<SymbolName, shared_ptr<ValueType>> enumPayloadValueType;
     } ScopeLevel;
 
 public:
@@ -67,7 +88,7 @@ public:
     bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
 
     //bool registerEnumFields(const string &enumGlobalName, const vector<EnumField> &fields);
-    shared_ptr<AnalyzerScopeEnum> enums;
+    shared_ptr<AnalyzerScopeEnum> enumScope;
 
 private:
     stack<ScopeLevel> scopeLevels;

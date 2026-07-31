@@ -26,3 +26,11 @@ void SymbolName::setModuleName(const string &moduleName) {
 bool SymbolName::isSubSymbol(shared_ptr<SymbolName> other) const {
     return getGlobalName().starts_with(other->getGlobalName());
 }
+
+bool SymbolName::operator == (const SymbolName &other) const {
+    return getGlobalName() == other.getGlobalName();
+}
+
+bool SymbolName::operator < (const SymbolName &other) const {
+    return getGlobalName() < other.getGlobalName();
+}

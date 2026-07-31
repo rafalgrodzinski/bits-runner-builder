@@ -120,7 +120,6 @@ public:
     optional<vector<shared_ptr<ValueType>>> getNamedTypeValues() const;
 
     virtual bool isEqual(shared_ptr<ValueType> other) const;
-    virtual bool canImplicitCastTo(shared_ptr<ValueType> other) const;
 
     bool isNumeric() const;
     bool isInteger() const;

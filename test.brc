@@ -14,7 +14,7 @@ doStuff fun: value u32 -> enum<Result, u32>
    value <- {it.aFat + cluster * 2}.ptr<u16>.val
    */
 
-   result enum<Result, u32> <- {}.enum<Result, u32>::Failure
+   result enum<Result, u32> <- {}.enum<Result, u32>::Status::Failure
    /*
    //{value}.enum<Result, u32>::Success
    result enum<Result, u32> <- {}.enum<Result, u32>::Success

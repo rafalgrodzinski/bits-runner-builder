@@ -325,10 +325,6 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
     return kind == other->getKind();
 }
 
-bool ValueType::canImplicitCastTo(shared_ptr<ValueType> other) const {
-    return false;
-}
-
 bool ValueType::isNumeric() const {
     switch (kind) {
         case ValueTypeKind::UINT:

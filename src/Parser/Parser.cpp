@@ -623,6 +623,8 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
                 break;
             }
             case TAG_FIELD_FINISHED: {
+                // prefix field with the enum name
+                fieldName = format("{}::{}", name, fieldName);
                 fields.push_back(
                     EnumField(
                         make_shared<SymbolName>(fieldName),

@@ -4,9 +4,6 @@
 #include "Logger.h"
 #include "AnalyzerScope.h"
 #include "Module/Module.h"
-#include "Parser/ValueType/ValueType.h"
-#include "Parser/ValueType/ValueTypeEnum.h"
-#include "Parser/ValueType/ValueTypeEnumField.h"
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
@@ -41,6 +38,10 @@
 #include "Parser/Statement/StatementReturn.h"
 #include "Parser/Statement/StatementVariable.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
+
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeEnum.h"
+#include "Parser/ValueType/ValueTypeEnumField.h"
 
 Analyzer::Analyzer(
     const string &defaultModuleName,
@@ -357,18 +358,13 @@ void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
         }
         currentTagExpression->valueType = typeForExpression(currentTagExpression, nullptr, nullptr);
 
-        //scope->setVariableType(field.symbolName->getGlobalName(), statementEnum->getValueType(), true);
-        scope->enums->registerNamedValueTypeKeys(statementEnum->getSymbolName(), statementEnum->getNamedValueTypeKeys());
+        // Register enum field type
+        scope->enumScope->registerNamedValueTypeKeys(field.symbolName, statementEnum->getNamedValueTypeKeys());
+        scope->enumScope->registerPayloadValueType(field.symbolName, field.payloadValueType);
     }
 
-    /*
-    // register the enum
-    bool isSuccess = scope->registerEnumFields(statementEnum->getSymbolName()->getGlobalName(), statementEnum->getFields());
-    if (!isSuccess) {
-        markErrorAlreadyDefined(statementEnum->getLocation(), statementEnum->getSymbolName()->getGlobalName());
-        return;
-    }
-    */
+   // register enum type
+   scope->enumScope->registerNamedValueTypeKeys(statementEnum->getSymbolName(), statementEnum->getNamedValueTypeKeys());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {
@@ -872,6 +868,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
             nullptr
         );
     }
+
+    expressionCast->valueType = resolvedAndCheckedValueType(expressionCast->getValueType(), false, expressionCast->getLocation());
+    if (expressionCast->getValueType() == nullptr)
+        return nullptr;
 
     // if the first expression in a chain is a cast, we may want to do a built-in operation on it
     if (parentExpression == nullptr)
@@ -2185,7 +2185,32 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
         // from enum field
         case ValueTypeKind::ENUM_FIELD: {
-            return sourceType->canImplicitCastTo(targetType);
+            // Are identical?
+            if (sourceType->isEqual(targetType))
+                return true;
+            
+            // Is this a field of a parent enum?
+            shared_ptr<ValueTypeEnumField> sourceValueTypeEnumField = dynamic_pointer_cast<ValueTypeEnumField>(sourceType);
+            shared_ptr<ValueTypeEnum> targetValueTypeEnum = dynamic_pointer_cast<ValueTypeEnum>(targetType);
+            if (targetValueTypeEnum == nullptr)
+                return false;
+
+            if (!sourceValueTypeEnumField->getSymbolName()->getGlobalName().starts_with(targetValueTypeEnum->getSymbolName()->getGlobalName()))
+                return false;
+
+            // Does number of named types match?
+            if (sourceValueTypeEnumField->getNamedValueTypes().size() != targetValueTypeEnum->getNamedValueTypes().size())
+                return false;
+
+            // Are the named value types identical?
+            for (int i=0; i<sourceValueTypeEnumField->getNamedValueTypes().size(); i++) {
+                shared_ptr<ValueType> sourceNamedValueType = sourceValueTypeEnumField->getNamedValueTypes().at(i);
+                shared_ptr<ValueType> targetNamedValueType = targetValueTypeEnum->getNamedValueTypes().at(i);
+                if (!sourceNamedValueType->isEqual(targetNamedValueType))
+                    return false;
+            }
+
+            return true;
         }
 
         default:
@@ -2270,30 +2295,45 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum) {
-    optional<vector<string>> namedValueTypeKeys = scope->enums->getNamedValueTypeKeys(valueTypeEnum->getSymbolName());
+    optional<vector<string>> oNamedValueTypeKeys = scope->enumScope->getNamedValueTypeKeys(valueTypeEnum->getSymbolName());
 
-    // Check if it's registered
-    if (!namedValueTypeKeys) {
-        markErrorInvalidType(nullptr, valueTypeEnum, nullptr);
+    // Check if enum is registered
+    if (!oNamedValueTypeKeys) {
+        markErrorNotDefined(nullptr, valueTypeEnum->getSymbolName()->getGlobalName());
         return nullptr;
     }
 
     // Check number of named types match
-    if ((*namedValueTypeKeys).size() != valueTypeEnum->getNamedValueTypes().size()) {
+    if ((*oNamedValueTypeKeys).size() != valueTypeEnum->getNamedValueTypes().size()) {
         markErrorInvalidType(nullptr, valueTypeEnum, nullptr);
         return nullptr;
     }
 
-    valueTypeEnum->setNamedValueTypeKeys(*namedValueTypeKeys);
+    valueTypeEnum->namedValueTypeKeys = *oNamedValueTypeKeys;
+
     return valueTypeEnum;
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
-    optional<vector<string>> namedValueTypeKeys = scope->enums->getNamedValueTypeKeys(valueTypeEnumField->getSymbolName());
+    optional<vector<string>> oNamedValueTypeKeys = scope->enumScope->getNamedValueTypeKeys(valueTypeEnumField->getSymbolName());
+    shared_ptr<ValueType> payloadValueType = scope->enumScope->getPayloadValueType(valueTypeEnumField->getSymbolName());
 
-    // Check if 
-    if (!namedValueTypeKeys)
+    // Check if enum field is registered
+    if (!oNamedValueTypeKeys || payloadValueType == nullptr) {
+        markErrorNotDefined(nullptr, valueTypeEnumField->getSymbolName()->getGlobalName());
         return nullptr;
+    }
+
+    // Check number of named types match
+    if ((*oNamedValueTypeKeys).size() != valueTypeEnumField->getNamedValueTypes().size()) {
+        markErrorInvalidType(nullptr, valueTypeEnumField, nullptr);
+        return nullptr;
+    }
+
+    valueTypeEnumField->namedValueTypeKeys = *oNamedValueTypeKeys;
+    valueTypeEnumField->payloadValueType = payloadValueType;
+
+    return valueTypeEnumField;
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {

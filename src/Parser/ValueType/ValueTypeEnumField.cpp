@@ -23,36 +23,10 @@ bool ValueTypeEnumField::isEqual(shared_ptr<ValueType> other) const {
     return symbolName->getGlobalName() == valueTypeEnumField->getSymbolName()->getGlobalName();
 }
 
-bool ValueTypeEnumField::canImplicitCastTo(shared_ptr<ValueType> other) const {
-    // Are these identical?
-    if (isEqual(other))
-        return true;
-
-    // Is this a field of a parent enum?
-    shared_ptr<ValueTypeEnum> valueTypeEnum = dynamic_pointer_cast<ValueTypeEnum>(other);
-    if (valueTypeEnum == nullptr)
-        return false;
-
-    if (!symbolName->getGlobalName().starts_with(valueTypeEnum->getSymbolName()->getGlobalName()))
-        return false;
-
-    // Are the named value types identical?
-    //return getNamedTypesMap() == valueTypeEnum->getNamedTypesMap();
-    return true;
+vector<shared_ptr<ValueType>> ValueTypeEnumField::getNamedValueTypes() const {
+    return namedValueTypes;
 }
 
 shared_ptr<ValueType> ValueTypeEnumField::getPayloadValueType() const {
     return payloadValueType;
 }
-
-/*map<string, shared_ptr<ValueType>> ValueTypeEnumField::getNamedTypesMap() const {
-    map<string, shared_ptr<ValueType>> namedTypesMap;
-
-    if (namedValueTypeKeys.size() != namedValueTypes.size())
-        return namedTypesMap;;
-
-    for (int i=0; i<namedValueTypeKeys.size(); i++)
-        namedTypesMap[namedValueTypeKeys[i]] = namedValueTypes[i];
-
-    return namedTypesMap;
-}*/

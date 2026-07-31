@@ -28,14 +28,6 @@ bool ValueTypeEnum::isEqual(shared_ptr<ValueType> other) const {
     return true;
 }
 
-bool ValueTypeEnum::canImplicitCastTo(shared_ptr<ValueType> other) const {
-    return isEqual(other);
-}
-
-/*map<string, shared_ptr<ValueType>> ValueTypeEnum::getNamedTypesMap() {
-    return namedTypesMap;
-}*/
-
-void ValueTypeEnum::setNamedValueTypeKeys(const vector<string> &namedValueTypeKeys) {
-    this->namedValueTypeKeys = namedValueTypeKeys;
+vector<shared_ptr<ValueType>> ValueTypeEnum::getNamedValueTypes() {
+    return namedValueTypes;
 }
