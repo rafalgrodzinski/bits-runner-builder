@@ -4,7 +4,6 @@
 #include "Logger.h"
 #include "Module/Module.h"
 #include "WrappedValue.h"
-#include "Parser/ValueType/ValueType.h"
 
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"
@@ -36,6 +35,9 @@
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
+
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeEnumField.h"
 
 ModuleBuilder::ModuleBuilder(
     const string &defaultModuleName,
@@ -298,38 +300,11 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
     if (statementEnum->getShouldExport())
         linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage;
 
-    // Register enum field values
+    // Register enum field tag values
     for (const EnumField &field : statementEnum->getFields()) {
-        string symbolName = field.symbolName->getName();
-        if (field.symbolName->getModuleName() != defaultModuleName)
-            symbolName = field.symbolName->getGlobalName();
-
-        vector<llvm::Constant*> values;
-        // enum value
         shared_ptr<WrappedValue> constantWrappedValue = wrappedValueForExpression(field.tagExpression);
-        llvm::Constant *constantValue = constantWrappedValue->getConstantValue();
-        values.push_back(constantValue);
-
-        // payload value
-        llvm::Constant *payloadValue = llvm::Constant::getNullValue(typeBoxed);
-        values.push_back(payloadValue);
-        
-        llvm::ArrayRef<llvm::Constant *> constantValues = llvm::ArrayRef(values);
-        llvm::Constant *constantStructValue = llvm::ConstantStruct::get(typeEnumStruct, constantValues);
-
-        llvm::GlobalVariable *global = new llvm::GlobalVariable(
-            *llvmModule,
-            typeEnumStruct,
-            true,
-            linkage,
-            constantStructValue,
-            symbolName
-        );
-
-        /*scope->setWrappedValue(
-            field.symbolName->getGlobalName(),
-            WrappedValue::wrappedValue(global, statementEnum->getValueType())
-        );*/
+        llvm::Constant *tagValue = constantWrappedValue->getConstantValue();
+        scope->setEnumFieldTagValue(field.symbolName->getGlobalName(), tagValue);
     }
 }
 
@@ -906,20 +881,69 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
         }
     // enum
     } else if (targetWrappedValue->isEnumStruct()) {
-        // enum <- enum
-        if (valueExpression->getValueType()->isEnum()) {
-            shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
-            if (sourceWrappedValue == nullptr)
-                return;
-            llvm::Value *sourceValue = sourceWrappedValue->getValue();
-            if (sourceValue == nullptr)
-                return;
-            llvm::Value *targetValue = targetWrappedValue->getPointerValue();
-            if (targetValue == nullptr)
-                return;
-            builder->CreateStore(sourceValue, targetValue)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
-        } else {
-            markErrorInvalidAssignment(valueExpression->getLocation());
+        switch (valueExpression->getKind()) {
+            // enum <- { }
+            case ExpressionKind::COMPOSITE_LITERAL: {
+                vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
+                if (valueExpressions.size() > 1) {
+                    markErrorInvalidType(valueExpression->getLocation());
+                    return;
+                }
+
+                // store tag
+                shared_ptr<ValueTypeEnumField> valueTypeEnumField = dynamic_pointer_cast<ValueTypeEnumField>(targetWrappedValue->getValueType());
+                
+                vector<llvm::Constant*> values;
+                // enum tag value
+                llvm::Constant *tagValue = scope->getEnumFieldTagValue(valueTypeEnumField->getSymbolName()->getGlobalName());
+                values.push_back(tagValue);
+                // payload value
+                llvm::Constant *payloadValue = llvm::Constant::getNullValue(typeBoxed);
+                values.push_back(payloadValue);
+
+                llvm::ArrayRef<llvm::Constant *> constantValues = llvm::ArrayRef(values);
+                llvm::Constant *constantStructValue = llvm::ConstantStruct::get(typeEnumStruct, constantValues);
+                builder->CreateStore(constantStructValue, targetWrappedValue->getPointerValue())->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+
+                // store payload
+                if (valueExpressions.size() == 1) {
+                    llvm::Value *index[] = {
+                        builder->getInt32(0),
+                        builder->getInt32(1)
+                    };
+                    shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpressions.at(0));
+                    if (wrappedSourceValue == nullptr) {
+                        markErrorInvalidType(valueExpression->getLocation());
+                        return;
+                    }
+                    llvm::Value *targetPointerValue = targetWrappedValue->getPointerValue();
+                    llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetPointerValue, index, format("gep_enum-{}", string(targetPointerValue->getName())));
+                    builder->CreateStore(wrappedSourceValue->getValue(), targetMember)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                }
+                break;
+            }
+            // enum <- ?
+            case ExpressionKind::VALUE: // enum <- enum
+            case ExpressionKind::CHAINED: // enum <- .val
+            case ExpressionKind::IF_ELSE: // enum <- if else
+            case ExpressionKind::CALL: { // enum <- function()
+                shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
+                if (sourceWrappedValue == nullptr)
+                    return;
+                llvm::Value *sourceValue = sourceWrappedValue->getValue();
+                if (sourceValue == nullptr)
+                    return;
+                llvm::Value *targetValue = targetWrappedValue->getPointerValue();
+                if (targetValue == nullptr)
+                    return;
+                builder->CreateStore(sourceValue, targetValue)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                break;
+            }
+            // enum <- invalid
+            default: {
+                markErrorInvalidAssignment(valueExpression->getLocation());
+                break;
+            }
         }
     // proto
     } else if (targetWrappedValue->isProtoStruct()) {

@@ -481,7 +481,7 @@ bool ValueType::isBlob() const {
 }
 
 bool ValueType::isEnum() const {
-    return kind == ValueTypeKind::ENUM;
+    return kind == ValueTypeKind::ENUM || kind == ValueTypeKind::ENUM_FIELD;
 }
 
 bool ValueType::isProto() const {
