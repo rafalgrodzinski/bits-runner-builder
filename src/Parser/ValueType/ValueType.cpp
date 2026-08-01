@@ -95,13 +95,6 @@ shared_ptr<ValueType> ValueType::proto(const string &protoName) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::boxed(shared_ptr<ValueType> subType) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::BOXED;
-    valueType->subType = subType;
-    return valueType;
-}
-
 shared_ptr<ValueType> ValueType::fun(const vector<shared_ptr<ValueType>> &argumentTypes, shared_ptr<ValueType> returnType) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::FUN;
@@ -126,13 +119,6 @@ shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &
     valueType->kind = ValueTypeKind::COMPOSITE;
     valueType->compositeElementTypes = elementTypes;
     valueType->countExpression = countExpression;
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::namedType(const string &namedTypeKey) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::NAMED_TYPE;
-    valueType->namedTypeKey = namedTypeKey;
     return valueType;
 }
 

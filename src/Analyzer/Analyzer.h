@@ -47,6 +47,7 @@ class ExpressionUnary;
 class ExpressionValue;
 
 class ValueType;
+class ValueTypeBoxed;
 class ValueTypeEnum;
 class ValueTypeEnumField;
 
@@ -117,6 +118,7 @@ private:
     bool canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
     shared_ptr<ValueType> resolvedAndCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location);
+    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
     shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum);
     shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
 

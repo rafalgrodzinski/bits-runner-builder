@@ -53,6 +53,7 @@ enum class ExpressionUnaryOperation;
 enum class TokenKind;
 
 class ValueType;
+class ValueTypeBoxed;
 class ValueTypeEnum;
 class ValueTypeEnumField;
 
@@ -108,6 +109,7 @@ private:
     static string toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents);
 
     // value type
+    static string toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
     static string toString(shared_ptr<ValueTypeEnum> valueType);
     static string toString(shared_ptr<ValueTypeEnumField> valueType);
  

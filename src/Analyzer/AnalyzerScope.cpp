@@ -5,6 +5,33 @@
 #include "Parser/SymbolName.h"
 
 //
+// AnalyzerScopeBoxed
+//
+AnalyzerScopeBoxed::AnalyzerScopeBoxed(AnalyzerScope *parent):
+parent(parent) { }
+
+shared_ptr<ValueType> AnalyzerScopeBoxed::getNamedValueType(const string &namedValueTypeKey) const {
+    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().boxedNamedValueTypesMap.find(namedValueTypeKey);
+        if (it != scopeLevels.top().boxedNamedValueTypesMap.end())
+            return scopeLevels.top().boxedNamedValueTypesMap[namedValueTypeKey];
+        scopeLevels.pop();
+    }
+
+    return nullptr;
+}
+
+AnalyzerScopeRegisterResult AnalyzerScopeBoxed::registerNamedValueTypesMap(const vector<string> &namedValueTypeKeys, const vector<shared_ptr<ValueType>> &namedValueTypes) {
+    for (int i=0; i<namedValueTypeKeys.size(); i++) {
+        parent->scopeLevels.top().boxedNamedValueTypesMap[namedValueTypeKeys[i]] = namedValueTypes[i];
+    }
+
+    return AnalyzerScopeRegisterResult::SUCCES;
+}
+
+//
 // AnalyzerScopeEnum
 //
 AnalyzerScopeEnum::AnalyzerScopeEnum(AnalyzerScope *parent):
@@ -70,6 +97,7 @@ AnalyzerScopeRegisterResult AnalyzerScopeEnum::registerPayloadValueType(shared_p
 //
 
 AnalyzerScope::AnalyzerScope() {
+    boxedScope = make_shared<AnalyzerScopeBoxed>(this);
     enumScope = make_shared<AnalyzerScopeEnum>(this);
 
     pushLevel();

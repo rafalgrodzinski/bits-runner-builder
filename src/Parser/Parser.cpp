@@ -5,9 +5,6 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
-#include "Parser/ValueType/ValueType.h"
-#include "Parser/ValueType/ValueTypeEnum.h"
-#include "Parser/ValueType/ValueTypeEnumField.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -39,6 +36,11 @@
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
+
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeEnum.h"
+#include "Parser/ValueType/ValueTypeEnumField.h"
+#include "Parser/ValueType/ValueTypeBoxed.h"
 
 #include "Parsee/Parsee.h"
 #include "Parsee/ParseeResult.h"
@@ -2249,7 +2251,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_ENUM_FIELD_NAME,
 
         TAG_BOXED,
-        TAG_TYPE_NAME,
+        TAG_BOXED_NAMED_VALUE_TYPE_KEY,
     
         TAG_TYPE,
     };
@@ -2421,7 +2423,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
                                     Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_SUBTYPE),
                                 },
                                 {
-                                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_TYPE_NAME)
+                                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_BOXED_NAMED_VALUE_TYPE_KEY)
                                 }
                             }, ParseeLevel::CRITICAL, true
                         ),
@@ -2453,9 +2455,10 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     shared_ptr<Token> typeToken;
     bool isVolatile = false;
-    shared_ptr<ValueType> subType;
+    shared_ptr<ValueType> subType = nullptr;
     shared_ptr<Expression> countExpression;
     string name;
+    optional<string> boxedNamedValueTypeKey;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -2530,8 +2533,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 isBoxed = true;
                 break;
             }
-            case TAG_TYPE_NAME: {
-                subType = ValueType::namedType(parseeResult.getToken()->getLexme());
+            case TAG_BOXED_NAMED_VALUE_TYPE_KEY: {
+                boxedNamedValueTypeKey = parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_TYPE: {
@@ -2551,15 +2554,6 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::blob(name, {});
     else if (isBlob)
         return ValueType::blob(name, argTypes);
-    /*else if (isEnum && argTypes.empty())
-        return ValueType::enumeration(name, {});
-    else if (isEnum)
-        return ValueType::enumeration(name, argTypes);
-    else if (isEnumValue && argTypes.empty())
-        return ValueType::enumValue(name, {});
-    else if (isEnumValue)
-        return ValueType::enumValue(name, argTypes);
-    */
     else if (isEnum)
         return make_shared<ValueTypeEnum>(name, argTypes);
     else if (isEnumValue)
@@ -2567,7 +2561,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     else if (isProto)
         return ValueType::proto(name);
     else if (isBoxed)
-        return ValueType::boxed(subType);
+        return make_shared<ValueTypeBoxed>(boxedNamedValueTypeKey, subType);
     else
         return ValueType::simpleForToken(typeToken);
 }

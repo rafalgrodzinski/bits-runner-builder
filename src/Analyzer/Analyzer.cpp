@@ -40,6 +40,7 @@
 #include "Parser/Statement/StatementVariableDeclaration.h"
 
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBoxed.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 
@@ -1580,27 +1581,25 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     shared_ptr<ExpressionChained> targetExpression;
 
     if (targetType->isBoxed()) {
-        // resolve named type
-        shared_ptr<ValueType> targetSubType;
-        if (shared_ptr<ValueType> namedTypeValueType = resolvedAndCheckedValueType(targetType->getSubType(), false, sourceExpression->getLocation())) {
-            targetSubType = namedTypeValueType;
-        } else {
-            targetSubType = targetType->getSubType();
-        }
+        targetType = resolvedAndCheckedValueType(targetType, false, sourceExpression->getLocation());
+        if (targetType == nullptr)
+            return nullptr;
 
-        sourceExpression = checkAndTryCasting(sourceExpression, targetSubType, returnType);
+        shared_ptr<ValueTypeBoxed> valueTypeBoxed = dynamic_pointer_cast<ValueTypeBoxed>(targetType);
+
+        sourceExpression = checkAndTryCasting(sourceExpression, valueTypeBoxed->getSubType(), returnType);
 
         targetExpression = make_shared<ExpressionChained>(
             vector<shared_ptr<Expression>>(
                 {
                     sourceExpression,
-                    make_shared<ExpressionCast>(ValueType::boxed(targetSubType), sourceExpression->getLocation())
+                    make_shared<ExpressionCast>(valueTypeBoxed, sourceExpression->getLocation())
                 }
             ),
             sourceExpression->getLocation()
         );
 
-        targetExpression->valueType = ValueType::boxed(targetSubType);
+        targetExpression->valueType = valueTypeBoxed->getSubType();
     } else {
         targetExpression = make_shared<ExpressionChained>(
             vector<shared_ptr<Expression>>(
@@ -2233,7 +2232,7 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             return valueType;
         }
         case ValueTypeKind::BOXED: {
-            return ValueType::boxed(resolvedAndCheckedValueType(valueType->getSubType(), false, location));
+            return checkValueType(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
         }
         case ValueTypeKind::DATA: {
             if (valueType->getCountExpression() != nullptr) {
@@ -2261,30 +2260,6 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
                 return nullptr;
             return valueType;
         }
-        case ValueTypeKind::NAMED_TYPE: {
-            // maybe it doesn't have to be resolved?
-            if (!valueType->getNamedTypeKeys() || !valueType->getNamedTypeValues())
-                return valueType;
-
-            // check all the keys and values have been set correctly
-            if (
-                !valueType->getNamedTypeKey() ||
-                !valueType->getNamedTypeKeys() ||
-                !valueType->getNamedTypeValues() ||
-                (*valueType->getNamedTypeKeys()).size() != (*valueType->getNamedTypeValues()).size()
-            ) {
-                return nullptr;
-            }
-
-            // find corresponding key
-            for (int i=0; i<(*valueType->getNamedTypeKeys()).size(); i++) {
-                if ((*valueType->getNamedTypeKeys()).at(i).compare(*valueType->getNamedTypeKey()) == 0)
-                    return (*valueType->getNamedTypeValues()).at(i);
-            }
-
-            // everything has failed
-            return nullptr;
-        }
         case ValueTypeKind::PTR: {
             return ValueType::ptr(resolvedAndCheckedValueType(valueType->getSubType(), false, location), valueType->getIsVolatile());
         }
@@ -2292,6 +2267,27 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             return valueType;
         }
     }
+}
+
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
+    // Skip if already resolved
+    if (valueTypeBoxed->getSubType() != nullptr)
+        return valueTypeBoxed;
+
+    // Otherwise try getting value type from the provided scope
+    if (!valueTypeBoxed->getNamedValueTypeKey()) {
+        markErrorInvalidType(nullptr, valueTypeBoxed, nullptr);
+        return nullptr;
+    }
+    shared_ptr<ValueType> valueType = scope->boxedScope->getNamedValueType(*valueTypeBoxed->getNamedValueTypeKey());
+    if (valueType == nullptr) {
+        markErrorInvalidType(nullptr, valueTypeBoxed, nullptr);
+        return nullptr;
+    }
+
+    valueTypeBoxed->subType = valueType;
+
+    return valueType;
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum) {
@@ -2326,6 +2322,16 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnumField> va
 
     // Check number of named types match
     if ((*oNamedValueTypeKeys).size() != valueTypeEnumField->getNamedValueTypes().size()) {
+        markErrorInvalidType(nullptr, valueTypeEnumField, nullptr);
+        return nullptr;
+    }
+
+    // Check payload type, first make sure that potential named types in boxed have access to the current context
+    scope->pushLevel();
+    scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeEnumField->getNamedValueTypes());
+    payloadValueType = resolvedAndCheckedValueType(payloadValueType, false, nullptr);
+    scope->popLevel();
+    if (payloadValueType == nullptr) {
         markErrorInvalidType(nullptr, valueTypeEnumField, nullptr);
         return nullptr;
     }

@@ -22,9 +22,21 @@ enum class AnalyzerScopeRegisterResult {
     FAILURE_ALREAD_DEFINED
 };
 
+class AnalyzerScopeBoxed {
+public:
+    AnalyzerScopeBoxed(AnalyzerScope *parent);
+
+    shared_ptr<ValueType> getNamedValueType(const string &namedValueTypeKey) const;
+    AnalyzerScopeRegisterResult registerNamedValueTypesMap(const vector<string> &namedValueTypeKeys, const vector<shared_ptr<ValueType>> &namedValueTypes);
+
+private:
+    AnalyzerScope *parent;
+};
+
 class AnalyzerScopeEnum {
 public:
     AnalyzerScopeEnum(AnalyzerScope *parent);
+
     optional<vector<string>> getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName);
     AnalyzerScopeRegisterResult registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys);
 
@@ -36,7 +48,8 @@ private:
 };
 
 class AnalyzerScope {
-friend AnalyzerScopeEnum;
+friend class AnalyzerScopeBoxed;
+friend class AnalyzerScopeEnum;
 
 public:
     typedef struct {
@@ -52,6 +65,9 @@ public:
 
         map<string, shared_ptr<ValueType>> functionTypeMap;
         map<string, bool> isFunctionDefinedMap;
+
+        // boxed
+        map<string, shared_ptr<ValueType>> boxedNamedValueTypesMap;
 
         // enum
         map<SymbolName, optional<vector<string>>> enumNamedValueTypeKeys;
@@ -87,7 +103,7 @@ public:
     shared_ptr<ValueType> getFunctionType(const string &name) const;
     bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
 
-    //bool registerEnumFields(const string &enumGlobalName, const vector<EnumField> &fields);
+    shared_ptr<AnalyzerScopeBoxed> boxedScope;
     shared_ptr<AnalyzerScopeEnum> enumScope;
 
 private:

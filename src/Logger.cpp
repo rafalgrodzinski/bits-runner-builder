@@ -44,6 +44,7 @@
 #include "Parser/Expression/ExpressionValue.h"
 
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBoxed.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 
@@ -915,6 +916,22 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
     return formattedLine(line, indents);
 }
 
+string Logger::toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
+    string text = "";
+
+    text += "BOXED<";
+    if (valueTypeBoxed->getSubType() != nullptr) {
+        text += toString(valueTypeBoxed->getSubType());
+    } else if (valueTypeBoxed->getNamedValueTypeKey()) {
+        text += format("`{}", *valueTypeBoxed->getNamedValueTypeKey());
+    } else {
+        text += "{INVALID}";
+    }
+    text += ">";
+
+    return text;
+}
+
 string Logger::toString(shared_ptr<ValueTypeEnum> valueType) {
     string text = "";
     text += format("ENUM<`{}`", valueType->getSymbolName()->getGlobalName());
@@ -1430,8 +1447,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             text = format("PROTO<`{}`>", valueType->getGlobalName());
             break;
         case ValueTypeKind::BOXED:
-            text = format("BOXED<{}>", toString(valueType->getSubType()));
-            break;
+            return toString(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
         case ValueTypeKind::FUN: {
             text = "FUN";
             // args
