@@ -217,6 +217,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
             return;
         }
         checkStatement(statementVariable);
+        if (statementVariable->getValueType() == nullptr)
+            return;
     }
 
     // verify member functions
@@ -2279,15 +2281,15 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueT
         markErrorInvalidType(nullptr, valueTypeBoxed, nullptr);
         return nullptr;
     }
+
+    // Try resolving named value type key (ignore failures, since it may be a blob field)
     shared_ptr<ValueType> valueType = scope->boxedScope->getNamedValueType(*valueTypeBoxed->getNamedValueTypeKey());
-    if (valueType == nullptr) {
-        markErrorInvalidType(nullptr, valueTypeBoxed, nullptr);
-        return nullptr;
+    if (valueType != nullptr) {
+        valueTypeBoxed->subType = valueType;
+        return valueType;
     }
 
-    valueTypeBoxed->subType = valueType;
-
-    return valueType;
+    return valueTypeBoxed;
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum) {

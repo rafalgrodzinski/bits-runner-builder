@@ -923,7 +923,7 @@ string Logger::toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
     if (valueTypeBoxed->getSubType() != nullptr) {
         text += toString(valueTypeBoxed->getSubType());
     } else if (valueTypeBoxed->getNamedValueTypeKey()) {
-        text += format("`{}", *valueTypeBoxed->getNamedValueTypeKey());
+        text += format("`{}`", *valueTypeBoxed->getNamedValueTypeKey());
     } else {
         text += "{INVALID}";
     }
