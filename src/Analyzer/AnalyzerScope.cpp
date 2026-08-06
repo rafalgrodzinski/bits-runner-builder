@@ -1,7 +1,7 @@
 #include "AnalyzerScope.h"
 
+#include "AnalyzerScopeBlob.h"
 #include "Parser/ValueType/ValueType.h"
-
 #include "Parser/SymbolName.h"
 
 //
@@ -97,6 +97,7 @@ AnalyzerScopeRegisterResult AnalyzerScopeEnum::registerPayloadValueType(shared_p
 //
 
 AnalyzerScope::AnalyzerScope() {
+    blobScope = make_shared<AnalyzerScopeBlob>(this);
     boxedScope = make_shared<AnalyzerScopeBoxed>(this);
     enumScope = make_shared<AnalyzerScopeEnum>(this);
 
@@ -230,29 +231,6 @@ bool AnalyzerScope::setNamedTypes(const vector<string> &namedTypes) {
         }
         scopeLevels.top().namedTypes.push_back(namedType);
     }
-    return true;
-}
-
-optional<vector<string>> AnalyzerScope::getBlobNamedTypeKeys(const string &blobName) const {
-    stack<ScopeLevel> scopeLevels = this->scopeLevels;
-
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().blobNamedTypeKeysMap.find(blobName);
-        if (it != scopeLevels.top().blobNamedTypeKeysMap.end())
-            return scopeLevels.top().blobNamedTypeKeysMap[blobName];
-        scopeLevels.pop();
-    }
-
-    return {};
-}
-
-bool AnalyzerScope::setBlobNamedTypeKeys(const string &blobName, const vector<string> &namedTypeKeys) {
-    // check if named types are already defined
-    if (scopeLevels.top().blobNamedTypeKeysMap.find(blobName) != scopeLevels.top().blobNamedTypeKeysMap.end())
-        return false;
-
-    scopeLevels.top().blobNamedTypeKeysMap[blobName] = namedTypeKeys;
-
     return true;
 }
 

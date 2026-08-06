@@ -13,6 +13,7 @@ class ValueType;
 struct EnumField;
 
 class AnalyzerScope;
+class AnalyzerScopeBlob;
 
 using namespace std;
 
@@ -48,12 +49,12 @@ private:
 };
 
 class AnalyzerScope {
+friend class AnalyzerScopeBlob;
 friend class AnalyzerScopeBoxed;
 friend class AnalyzerScopeEnum;
 
 public:
     typedef struct {
-        map<string, optional<vector<string>>> blobNamedTypeKeysMap;
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
         map<string, vector<string>> blobProtosMap;
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> blobMembersMap;
@@ -65,6 +66,9 @@ public:
 
         map<string, shared_ptr<ValueType>> functionTypeMap;
         map<string, bool> isFunctionDefinedMap;
+
+        // blob
+        map<string, optional<vector<string>>> blobNamedValueTypeKeysMap;
 
         // boxed
         map<string, shared_ptr<ValueType>> boxedNamedValueTypesMap;
@@ -91,9 +95,6 @@ public:
     bool isNamedTypeDeclared(const string &namedType) const;
     bool setNamedTypes(const vector<string> &namedTypes);
 
-    optional<vector<string>> getBlobNamedTypeKeys(const string &blobName) const;
-    bool setBlobNamedTypeKeys(const string &blobName, const vector<string> &namedTypeKeys);
-
     optional<vector<string>> getBlobProtoNames(const string &name) const;
     bool setBlobProtoNames(const string &name, const vector<string> &protoNames);
 
@@ -103,6 +104,7 @@ public:
     shared_ptr<ValueType> getFunctionType(const string &name) const;
     bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
 
+    shared_ptr<AnalyzerScopeBlob> blobScope;
     shared_ptr<AnalyzerScopeBoxed> boxedScope;
     shared_ptr<AnalyzerScopeEnum> enumScope;
 

@@ -38,9 +38,10 @@
 #include "Parser/Expression/ExpressionValue.h"
 
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
+#include "Parser/ValueType/ValueTypeBoxed.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
-#include "Parser/ValueType/ValueTypeBoxed.h"
 
 #include "Parsee/Parsee.h"
 #include "Parsee/ParseeResult.h"
@@ -463,7 +464,10 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                         // prefix function with name of the blob
                         statementFunction->name = format("{}.{}", name, statementFunction->getName());
                         // Insert an implicit "it" argument for the blob function
-                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::blob(name, {}), false));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair(
+                            ".pit",
+                            make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>())
+                        );
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
                         break;
@@ -2550,10 +2554,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueType::ptr(ValueType::fun(argTypes, retType), isVolatile);
     else if (isData)
         return ValueType::data(subType, countExpression);
-    else if (isBlob && argTypes.empty())
-        return ValueType::blob(name, {});
     else if (isBlob)
-        return ValueType::blob(name, argTypes);
+        return make_shared<ValueTypeBlob>(name, argTypes);
     else if (isEnum)
         return make_shared<ValueTypeEnum>(name, argTypes);
     else if (isEnumValue)

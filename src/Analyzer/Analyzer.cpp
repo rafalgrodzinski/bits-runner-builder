@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "Logger.h"
 #include "AnalyzerScope.h"
+#include "AnalyzerScopeBlob.h"
 #include "Module/Module.h"
 
 #include "Parser/Expression/Expression.h"
@@ -41,6 +42,7 @@
 
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypeBoxed.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 
@@ -316,7 +318,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     string name = statementBlob->getGlobalName();
     if (!scope->setBlobMembers(name, members))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getGlobalName());
-    scope->setBlobNamedTypeKeys(name, statementBlob->getNamedTypeKeys());
+    //scope->setBlobNamedTypeKeys(name, statementBlob->getNamedTypeKeys());
+    scope->blobScope->registerNamedValueTypeKeys(name, statementBlob->getNamedTypeKeys());
     scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
 
@@ -2083,8 +2086,10 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // to blob
                 case ValueTypeKind::BLOB: {
+                    shared_ptr<ValueTypeBlob> targetValueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(targetType);
                     // get target non-function types
-                    optional<vector<shared_ptr<ValueType>>> targetMemberTypes = scope->getNonFunctionBlobMemberTypes(targetType);;
+                    optional<vector<shared_ptr<ValueType>>> targetMemberTypes = scope->getNonFunctionBlobMemberTypes(targetType);
+                    //scope->blobScope->getVariableFieldTypes
                     if (!targetMemberTypes)
                         return false;
 
@@ -2229,9 +2234,12 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
                 return false;
             } else
             */
+            /*
             if (!valueType->namedTypeKeys)
                 valueType->namedTypeKeys = scope->getBlobNamedTypeKeys(valueType->getGlobalName());
             return valueType;
+            */
+           return checkValueType(dynamic_pointer_cast<ValueTypeBlob>(valueType));
         }
         case ValueTypeKind::BOXED: {
             return checkValueType(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
@@ -2269,6 +2277,26 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             return valueType;
         }
     }
+}
+
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTypeBlob) {
+    optional<vector<string>> oNamedValueTypeKeys = scope->blobScope->getNamedValueTypeKeys(valueTypeBlob->getSymbolName()->getGlobalName());
+
+    // Check if blob is registered
+    if (!oNamedValueTypeKeys) {
+        markErrorNotDefined(nullptr, valueTypeBlob->getSymbolName()->getGlobalName());
+        return nullptr;
+    }
+
+    /*
+    // check 
+    scope->pushLevel();
+    scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeBlob->getNamedValueTypes());
+    scope->popLevel();
+    */
+    valueTypeBlob->namedValueTypeKeys = *oNamedValueTypeKeys;
+
+    return valueTypeBlob;
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {

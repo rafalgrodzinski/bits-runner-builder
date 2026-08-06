@@ -84,12 +84,6 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::blob(const string &blobName, const optional<vector<shared_ptr<ValueType>>> &namedTypeValues) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::BLOB, blobName);
-    valueType->namedTypeValues = namedTypeValues;
-    return valueType;
-}
-
 shared_ptr<ValueType> ValueType::proto(const string &protoName) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::PROTO, protoName);
     return valueType;
