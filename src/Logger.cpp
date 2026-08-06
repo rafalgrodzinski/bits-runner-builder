@@ -254,7 +254,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     string line;
 
     // name
-    line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName());
+    line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
     // named type keys
     if (!statement->getNamedTypeKeys().empty()) {
         line += "<";
@@ -303,7 +303,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 }
 
 string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("BLOB DECL `{}`", statement->getGlobalName());
+    string line = format ("BLOB DECL `{}`", statement->getSymbolName()->getGlobalName());
     return formattedLine(line, indents);
 }
 

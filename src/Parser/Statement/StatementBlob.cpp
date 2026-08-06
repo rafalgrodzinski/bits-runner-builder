@@ -1,7 +1,9 @@
 #include "StatementBlob.h"
 
+#include "StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
+#include "Parser/SymbolName.h"
 #include "Parser/ValueType/ValueType.h"
 
 StatementBlob::StatementBlob(
@@ -15,7 +17,7 @@ StatementBlob::StatementBlob(
 ):
 Statement(StatementKind::BLOB, location),
 shouldExport(shouldExport),
-name(name),
+symbolName(make_shared<SymbolName>(name)),
 namedTypeKeys(namedTypeKeys),
 protoNames(protoNames),
 variableStatements(variableStatements),
@@ -25,30 +27,14 @@ bool StatementBlob::getShouldExport() const {
     return shouldExport;
 }
 
-string StatementBlob::getName() const {
-    return name;
-}
-
-string StatementBlob::getGlobalName() const {
-    string moduleName = this->moduleName;
-    if (moduleName.empty())
-        moduleName = "{UNDEFINED}";
-
-    return format("{}.{}", moduleName, name);
-}
-
-string StatementBlob::getModuleName() const {
-    return moduleName;
+shared_ptr<SymbolName> StatementBlob::getSymbolName() const {
+    return symbolName;
 }
 
 void StatementBlob::setModuleName(const string &moduleName) {
-    if (!this->moduleName.empty())
-        return;
+    symbolName->setModuleName(moduleName);
 
-    // First register the name
-    this->moduleName = moduleName;
-
-    // Then ppend module name to proto names if required
+    // Prepend module name to proto names if required
     for (string &protoName : protoNames) {
         size_t pos = protoName.find('.');
         if (pos == string::npos) {
@@ -85,8 +71,7 @@ vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getMembers() const {
 shared_ptr<StatementBlobDeclaration> StatementBlob::getDeclaration() const {
     return make_shared<StatementBlobDeclaration>(
         getShouldExport(),
-        getName(),
-        getModuleName(),
+        getSymbolName(),
         getLocation()
     );
 }

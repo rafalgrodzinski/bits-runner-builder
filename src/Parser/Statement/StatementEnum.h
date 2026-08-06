@@ -2,7 +2,6 @@
 #define STATEMENT_ENUM_H
 
 #include "Statement.h"
-
 #include "Parser/SymbolName.h"
 #include "Parser/ValueType/ValueType.h"
 

@@ -251,13 +251,13 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssi
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
     // symbol name
-    string symbolName = statementBlob->getName();
-    if (statementBlob->getModuleName() != defaultModuleName)
-        symbolName = statementBlob->getGlobalName();
+    string symbolName = statementBlob->getSymbolName()->getName();
+    if (statementBlob->getSymbolName()->getModuleName() != defaultModuleName)
+        symbolName = statementBlob->getSymbolName()->getGlobalName();
 
-    llvm::StructType *structType = scope->getStructType(statementBlob->getGlobalName());
+    llvm::StructType *structType = scope->getStructType(statementBlob->getSymbolName()->getGlobalName());
     if (structType == nullptr) {
-        markErrorNotDeclared(nullptr, format("blob \"{}\"", statementBlob->getGlobalName()));
+        markErrorNotDeclared(nullptr, format("blob \"{}\"", statementBlob->getSymbolName()->getGlobalName()));
         return;
     }
 
@@ -272,17 +272,17 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
         types.push_back(type);
     }
     structType->setBody(types, false);
-    scope->setStruct(statementBlob->getGlobalName(), structType, memberNames);
+    scope->setStruct(statementBlob->getSymbolName()->getGlobalName(), structType, memberNames);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
     // symbol name
-    string symbolName = statementBlobDeclaration->getName();
-    if (statementBlobDeclaration->getModuleName() != defaultModuleName)
-        symbolName = statementBlobDeclaration->getGlobalName();
+    string symbolName = statementBlobDeclaration->getSymbolName()->getName();
+    if (statementBlobDeclaration->getSymbolName()->getModuleName() != defaultModuleName)
+        symbolName = statementBlobDeclaration->getSymbolName()->getGlobalName();
 
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
-    scope->setStruct(statementBlobDeclaration->getGlobalName(), structType, {});
+    scope->setStruct(statementBlobDeclaration->getSymbolName()->getGlobalName(), structType, {});
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {

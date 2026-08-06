@@ -263,7 +263,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                 bool isImplemented = false;
 
                 if (protoMember.second->isFunction()) {
-                    string name = format("{}.{}", statementBlob->getName(), protoMember.first);
+                    string name = format("{}.{}", statementBlob->getSymbolName()->getName(), protoMember.first);
                     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
                         // check name
                         if (name.compare(statementFunction->getName()) != 0) 
@@ -315,16 +315,16 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
     // and the register
     //string name = importModulePrefix + statementBlob->getName();
-    string name = statementBlob->getGlobalName();
+    string name = statementBlob->getSymbolName()->getGlobalName();
     if (!scope->setBlobMembers(name, members))
-        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getGlobalName());
+        markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getSymbolName()->getGlobalName());
     //scope->setBlobNamedTypeKeys(name, statementBlob->getNamedTypeKeys());
     scope->blobScope->registerNamedValueTypeKeys(name, statementBlob->getNamedTypeKeys());
     scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    string name = statementBlobDeclaration->getGlobalName();
+    string name = statementBlobDeclaration->getSymbolName()->getGlobalName();
     scope->setBlobMembers(name, {});
 }
 

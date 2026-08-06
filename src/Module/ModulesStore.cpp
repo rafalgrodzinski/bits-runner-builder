@@ -287,14 +287,14 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
-                        statementBlob->getName(),
+                        statementBlob->getSymbolName()->getName(),
                         statementBlob->getNamedTypeKeys(),
                         exportedProtoNames,
                         statementBlob->getVariableStatements(),
                         vector<shared_ptr<StatementFunction>>(), // don't include function definitions
                         statementBlob->getLocation()
                     );
-                    exportedStatementBlob->setModuleName(statementBlob->getModuleName());
+                    exportedStatementBlob->setModuleName(statementBlob->getSymbolName()->getModuleName());
 
                     // append updated statement
                     moduleExportedBlobStatements.push_back(exportedStatementBlob);

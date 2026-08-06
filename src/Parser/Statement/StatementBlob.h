@@ -2,26 +2,15 @@
 #define STATEMENT_TYPE_H
 
 #include <format>
-
 #include "Statement.h"
-#include "StatementBlobDeclaration.h"
 
+class StatementBlobDeclaration;
 class StatementFunction;
 class StatementVariable;
-
+class SymbolName;
 class ValueType;
 
 class StatementBlob: public Statement {
-private:
-    bool shouldExport;
-    string name;
-    string moduleName;
-
-    vector<string> namedTypeKeys;
-    vector<shared_ptr<StatementVariable>> variableStatements;
-    vector<shared_ptr<StatementFunction>> functionStatements;
-    vector<string> protoNames;
-
 public:
     StatementBlob(
         bool shouldExport,
@@ -34,9 +23,7 @@ public:
     );
 
     bool getShouldExport() const;
-    string getName() const;
-    string getGlobalName() const;
-    string getModuleName() const;
+    shared_ptr<SymbolName> getSymbolName() const;
     void setModuleName(const string &moduleName);
 
     vector<string> getNamedTypeKeys() const;
@@ -46,6 +33,14 @@ public:
     vector<pair<string, shared_ptr<ValueType>>> getMembers() const;
 
     shared_ptr<StatementBlobDeclaration> getDeclaration() const;
+
+private:
+    bool shouldExport;
+    shared_ptr<SymbolName> symbolName;
+    vector<string> namedTypeKeys;
+    vector<shared_ptr<StatementVariable>> variableStatements;
+    vector<shared_ptr<StatementFunction>> functionStatements;
+    vector<string> protoNames;
 };
 
 #endif
