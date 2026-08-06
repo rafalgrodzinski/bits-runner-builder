@@ -2,18 +2,17 @@
 #define ANALYZER_SCOPE_H
 
 #include <map>
-#include <string>
-#include <stack>
 #include <memory>
-#include <vector>
 #include <optional>
+#include <stack>
+#include <string>
+#include <vector>
+#include "AnalyzerScopeBlob.h"
+#include "AnalyzerScopeBoxed.h"
+#include "AnalyzerScopeEnum.h"
 
 class SymbolName;
 class ValueType;
-struct EnumField;
-
-class AnalyzerScope;
-class AnalyzerScopeBlob;
 
 using namespace std;
 
@@ -21,31 +20,6 @@ enum class AnalyzerScopeRegisterResult {
     SUCCES,
     FAILURE_ALREADY_DECLARED,
     FAILURE_ALREAD_DEFINED
-};
-
-class AnalyzerScopeBoxed {
-public:
-    AnalyzerScopeBoxed(AnalyzerScope *parent);
-
-    shared_ptr<ValueType> getNamedValueType(const string &namedValueTypeKey) const;
-    AnalyzerScopeRegisterResult registerNamedValueTypesMap(const vector<string> &namedValueTypeKeys, const vector<shared_ptr<ValueType>> &namedValueTypes);
-
-private:
-    AnalyzerScope *parent;
-};
-
-class AnalyzerScopeEnum {
-public:
-    AnalyzerScopeEnum(AnalyzerScope *parent);
-
-    optional<vector<string>> getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName);
-    AnalyzerScopeRegisterResult registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys);
-
-    shared_ptr<ValueType> getPayloadValueType(shared_ptr<SymbolName> symbolName);
-    AnalyzerScopeRegisterResult registerPayloadValueType(shared_ptr<SymbolName> symbolName, shared_ptr<ValueType> payloadValueType);
-
-private:
-    AnalyzerScope *parent;
 };
 
 class AnalyzerScope {
@@ -67,18 +41,11 @@ public:
         map<string, shared_ptr<ValueType>> functionTypeMap;
         map<string, bool> isFunctionDefinedMap;
 
-        // blob
-        map<string, optional<vector<string>>> blobNamedValueTypeKeysMap;
-
-        // boxed
-        map<string, shared_ptr<ValueType>> boxedNamedValueTypesMap;
-
-        // enum
-        map<SymbolName, optional<vector<string>>> enumNamedValueTypeKeys;
-        map<SymbolName, shared_ptr<ValueType>> enumPayloadValueType;
+        AnalyzerScopeBlob::ScopeLevel scopeLevelBlob;
+        AnalyzerScopeBoxed::ScopeLevel scopeLevelBoxed;
+        AnalyzerScopeEnum::ScopeLevel scopeLevelEnum;
     } ScopeLevel;
 
-public:
     AnalyzerScope();
 
     void pushLevel();

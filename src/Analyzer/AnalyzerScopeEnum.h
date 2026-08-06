@@ -1,5 +1,5 @@
-#ifndef ANALYZER_SCOPE_BLOB_H
-#define ANALYZER_SCOPE_BLOB_H
+#ifndef ANALYZER_SCOPE_ENUM_H
+#define ANALYZER_SCOPE_ENUM_H
 
 #include <map>
 #include <memory>
@@ -14,17 +14,20 @@ class ValueType;
 
 using namespace std;
 
-class AnalyzerScopeBlob {
+class AnalyzerScopeEnum {
 public:
     typedef struct {
-        map<SymbolName, optional<vector<string>>> namedValueTypeKeysMap;
+        map<SymbolName, optional<vector<string>>> namedValueTypeKeys;
+        map<SymbolName, shared_ptr<ValueType>> payloadValueType;
     } ScopeLevel;
 
-    AnalyzerScopeBlob(AnalyzerScope *parent);
+    AnalyzerScopeEnum(AnalyzerScope *parent);
 
     optional<vector<string>> getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName);
     void registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys);
-    optional<vector<shared_ptr<ValueType>>> getFieldVariableValueTypes(shared_ptr<SymbolName> symbolName);
+
+    shared_ptr<ValueType> getPayloadValueType(shared_ptr<SymbolName> symbolName);
+    void registerPayloadValueType(shared_ptr<SymbolName> symbolName, shared_ptr<ValueType> payloadValueType);
 
 private:
     AnalyzerScope *parent;

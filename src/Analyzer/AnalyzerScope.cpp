@@ -1,13 +1,11 @@
 #include "AnalyzerScope.h"
-
-#include "AnalyzerScopeBlob.h"
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/SymbolName.h"
 
 //
 // AnalyzerScopeBoxed
 //
-AnalyzerScopeBoxed::AnalyzerScopeBoxed(AnalyzerScope *parent):
+/*AnalyzerScopeBoxed::AnalyzerScopeBoxed(AnalyzerScope *parent):
 parent(parent) { }
 
 shared_ptr<ValueType> AnalyzerScopeBoxed::getNamedValueType(const string &namedValueTypeKey) const {
@@ -29,12 +27,12 @@ AnalyzerScopeRegisterResult AnalyzerScopeBoxed::registerNamedValueTypesMap(const
     }
 
     return AnalyzerScopeRegisterResult::SUCCES;
-}
+}*/
 
 //
 // AnalyzerScopeEnum
 //
-AnalyzerScopeEnum::AnalyzerScopeEnum(AnalyzerScope *parent):
+/*AnalyzerScopeEnum::AnalyzerScopeEnum(AnalyzerScope *parent):
 parent(parent) { }
 
 optional<vector<string>> AnalyzerScopeEnum::getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName) {
@@ -90,7 +88,7 @@ shared_ptr<ValueType> AnalyzerScopeEnum::getPayloadValueType(shared_ptr<SymbolNa
 AnalyzerScopeRegisterResult AnalyzerScopeEnum::registerPayloadValueType(shared_ptr<SymbolName> symbolName, shared_ptr<ValueType> payloadValueType) {
     parent->scopeLevels.top().enumPayloadValueType[*symbolName] = payloadValueType;
     return AnalyzerScopeRegisterResult::SUCCES;
-}
+}*/
 
 //
 // AnalyzerScope

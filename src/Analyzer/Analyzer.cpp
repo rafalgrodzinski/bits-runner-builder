@@ -318,8 +318,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     string name = statementBlob->getSymbolName()->getGlobalName();
     if (!scope->setBlobMembers(name, members))
         markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getSymbolName()->getGlobalName());
-    //scope->setBlobNamedTypeKeys(name, statementBlob->getNamedTypeKeys());
-    scope->blobScope->registerNamedValueTypeKeys(name, statementBlob->getNamedTypeKeys());
+    scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
     scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
 
@@ -2280,7 +2279,7 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTypeBlob) {
-    optional<vector<string>> oNamedValueTypeKeys = scope->blobScope->getNamedValueTypeKeys(valueTypeBlob->getSymbolName()->getGlobalName());
+    optional<vector<string>> oNamedValueTypeKeys = scope->blobScope->getNamedValueTypeKeys(valueTypeBlob->getSymbolName());
 
     // Check if blob is registered
     if (!oNamedValueTypeKeys) {
