@@ -476,14 +476,6 @@ bool ValueType::isComposite() const {
     return kind == ValueTypeKind::COMPOSITE;
 }
 
-bool ValueType::isNamedType() const {
-    return kind == ValueTypeKind::NAMED_TYPE;
-}
-
-bool ValueType::isBoxedNamedType() const {
-    return kind == ValueTypeKind::BOXED && subType->isNamedType();
-}
-
 void ValueType::setParent(weak_ptr<ValueType> parent) {
     this->parent = parent;
 }

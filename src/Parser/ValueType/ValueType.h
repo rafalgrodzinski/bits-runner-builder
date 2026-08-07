@@ -42,9 +42,7 @@ enum class ValueTypeKind {
     PROTO,
     BOXED,
     FUN,
-    COMPOSITE,
-
-    NAMED_TYPE
+    COMPOSITE
 };
 
 class ValueType {
@@ -137,8 +135,6 @@ public:
     bool isProto() const;
     bool isBoxed() const;
     bool isComposite() const;
-    bool isNamedType() const;
-    bool isBoxedNamedType() const;
 
 public:
     void setParent(weak_ptr<ValueType> parent);

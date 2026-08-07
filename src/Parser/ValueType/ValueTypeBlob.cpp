@@ -26,6 +26,10 @@ bool ValueTypeBlob::isEqual(shared_ptr<ValueType> other) const {
     return true;
 }
 
+optional<vector<string>> ValueTypeBlob::getNamedValueTypeKeys() {
+    return namedValueTypeKeys;
+}
+
 vector<shared_ptr<ValueType>> ValueTypeBlob::getNamedValueTypes() {
     return namedValueTypes;
 }

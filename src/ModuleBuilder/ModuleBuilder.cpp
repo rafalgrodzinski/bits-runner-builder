@@ -2387,7 +2387,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
         case ValueTypeKind::A:
             return typePtr;
         case ValueTypeKind::BOXED:
-            if (shouldUnbox && !valueType->isBoxedNamedType())
+            if (shouldUnbox /*&& !valueType->isBoxedNamedType()*/)
                 return llvmTypeForValueType(valueType->getSubType());
             else
                 return typeBoxed;

@@ -1466,9 +1466,6 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::COMPOSITE:
             text = format("COMPOSITE");
             break;
-        case ValueTypeKind::NAMED_TYPE:
-            text = format("`{}`", *valueType->getNamedTypeKey());
-            break;
     }
 
     if (valueType->getIsVolatile())

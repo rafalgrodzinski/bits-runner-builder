@@ -139,7 +139,7 @@ bool AnalyzerScope::setProtoMembers(const string &name, const optional<vector<pa
     return true;
 }
 
-optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueType> valueType) const {
+/*optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMembers(shared_ptr<ValueType> valueType) const {
     string blobName = valueType->getGlobalName();
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
@@ -161,9 +161,9 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getBlobMemb
     }
 
     return {};
-}
+}*/
 
-optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueType> valueType) const {
+/*optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberTypes(shared_ptr<ValueType> valueType) const {
     optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = getBlobMembers(valueType);
         if (!blobMembers)
             return { };
@@ -175,9 +175,9 @@ optional<vector<shared_ptr<ValueType>>> AnalyzerScope::getNonFunctionBlobMemberT
     }
 
     return targetMemberTypes;
-}
+}*/
 
-bool AnalyzerScope::isBlobDeclared(const string &name) const{
+/*bool AnalyzerScope::isBlobDeclared(const string &name) const{
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -188,9 +188,9 @@ bool AnalyzerScope::isBlobDeclared(const string &name) const{
     }
 
     return false;
-}
+}*/
 
-bool AnalyzerScope::setBlobMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members) {
+/*bool AnalyzerScope::setBlobMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members) {
     bool isDefinition = members.has_value();
     bool isDefined = false;
     if (scopeLevels.top().blobMembersMap.find(name) != scopeLevels.top().blobMembersMap.end())
@@ -204,7 +204,7 @@ bool AnalyzerScope::setBlobMembers(const string &name, const optional<vector<pai
         scopeLevels.top().blobMembersMap[name] = members;
 
     return true;
-}
+}*/
 
 bool AnalyzerScope::isNamedTypeDeclared(const string &namedType) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
