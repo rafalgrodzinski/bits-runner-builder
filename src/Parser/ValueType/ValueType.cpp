@@ -293,6 +293,10 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
     return kind == other->getKind();
 }
 
+shared_ptr<ValueType> ValueType::clone() const {
+    return make_shared<ValueType>(*this);
+}
+
 bool ValueType::isNumeric() const {
     switch (kind) {
         case ValueTypeKind::UINT:

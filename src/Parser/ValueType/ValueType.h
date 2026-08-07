@@ -112,6 +112,7 @@ public:
     // boxed
 
     virtual bool isEqual(shared_ptr<ValueType> other) const;
+    virtual shared_ptr<ValueType> clone() const;
 
     bool isNumeric() const;
     bool isInteger() const;

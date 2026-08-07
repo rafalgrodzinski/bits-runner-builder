@@ -11,6 +11,7 @@ public:
 
     optional<string> getNamedValueTypeKey();
     shared_ptr<ValueType> getSubType();
+    virtual shared_ptr<ValueType> clone() const override;
 
 private:
     optional<string> namedValueTypeKey;

@@ -12,3 +12,7 @@ optional<string> ValueTypeBoxed::getNamedValueTypeKey() {
 shared_ptr<ValueType> ValueTypeBoxed::getSubType() {
     return subType;
 }
+
+shared_ptr<ValueType> ValueTypeBoxed::clone() const {
+    return make_shared<ValueTypeBoxed>(*this);
+}

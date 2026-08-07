@@ -1517,14 +1517,20 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         return sourceExpression;
     // composite to blob
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isBlob()) {
+        shared_ptr<ValueTypeBlob> targetValueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(targetType);
+        scope->pushLevel();
+        scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
+
         sourceExpression->valueType = targetType;
-        //vector<shared_ptr<ValueType>> blobMemberTypes = *scope->getNonFunctionBlobMemberTypes(targetType);
         vector<shared_ptr<ValueType>> blobMemberTypes = *scope->blobScope->getVariableFieldValueTypes(dynamic_pointer_cast<ValueTypeBlob>(targetType)->getSymbolName());
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
         for (int i=0; i<blobMemberTypes.size(); i++) {
             shared_ptr<ValueType> memberType = blobMemberTypes.at(i);
             expressionCompositeLiteral->expressions[i] = checkAndTryCasting(expressionCompositeLiteral->getExpressions().at(i), memberType, returnType);
         }
+
+        scope->popLevel();
+
         return sourceExpression;
     // composite to proto
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isProto()) {

@@ -13,6 +13,7 @@ public:
     shared_ptr<SymbolName> getSymbolName() const;
     void setModuleName(const string &moduleName) override;
     bool isEqual(shared_ptr<ValueType> other) const override;
+    virtual shared_ptr<ValueType> clone() const override;
     optional<vector<string>> getNamedValueTypeKeys();
     vector<shared_ptr<ValueType>> getNamedValueTypes();
 

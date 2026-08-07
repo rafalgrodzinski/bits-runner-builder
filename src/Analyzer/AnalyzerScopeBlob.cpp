@@ -37,8 +37,15 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScopeBlob::getFiel
 
     while (!scopeLevels.empty()) {
         auto it = scopeLevels.top().scopeLevelBlob.fieldsMap.find(*symbolName);
-        if (it != scopeLevels.top().scopeLevelBlob.fieldsMap.end())
-            return scopeLevels.top().scopeLevelBlob.fieldsMap[*symbolName];
+        if (it != scopeLevels.top().scopeLevelBlob.fieldsMap.end()) {
+            vector<pair<string, shared_ptr<ValueType>>> fields = *it->second;
+
+            vector<pair<string, shared_ptr<ValueType>>> clonedFields;
+            for (pair<string, shared_ptr<ValueType>> &field : fields) {
+                clonedFields.push_back({field.first, field.second->clone()});
+            }
+            return clonedFields;
+        }
         scopeLevels.pop();
     }
 
