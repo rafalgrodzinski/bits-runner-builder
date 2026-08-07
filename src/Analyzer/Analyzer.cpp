@@ -1148,6 +1148,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             string blobName = blobValueType->getSymbolName()->getGlobalName();
             optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->blobScope->getFields(blobValueType->getSymbolName());
             if (blobMembers) {
+                scope->pushLevel();
+                scope->boxedScope->registerNamedValueTypesMap(*blobValueType->getNamedValueTypeKeys(), blobValueType->getNamedValueTypes());
+
                 string nameVariable = expressionValue->getIdentifier();
                 string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
                 for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
@@ -1157,6 +1160,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                             case ExpressionValueKind::SIMPLE: {
                                 // resolve type of named type if required
                                 expressionValue->valueType = resolvedAndCheckedValueType(blobMember.second, false, expressionValue->getLocation());
+                                scope->popLevel();
                                 return expressionValue->getValueType();
                             }
                             case ExpressionValueKind::DATA: {
@@ -1172,8 +1176,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                 shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
                                 if (!indexExpression->getValueType()->isUnsignedInteger()) {
                                     markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+                                    scope->popLevel();
                                     return nullptr;
                                 }
+                                scope->popLevel();
                                 return expressionValue->getValueType();
                             }
                             default:
@@ -1181,6 +1187,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                         }
                     }
                 }
+                scope->popLevel();
             }
             markErrorNotDefined(
                 expressionValue->getLocation(),
@@ -2329,7 +2336,6 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueT
     shared_ptr<ValueType> valueType = scope->boxedScope->getNamedValueType(*valueTypeBoxed->getNamedValueTypeKey());
     if (valueType != nullptr) {
         valueTypeBoxed->subType = valueType;
-        return valueType;
     }
 
     return valueTypeBoxed;

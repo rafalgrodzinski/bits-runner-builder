@@ -37,6 +37,8 @@
 #include "Parser/Expression/ExpressionValue.h"
 
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBoxed.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 
 ModuleBuilder::ModuleBuilder(
@@ -1411,7 +1413,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             parentExpression = chainExpression;
         // Blob expression?
         } else if (parentExpression->getValueType()->isBlob()) {
-            string parentBlobName = parentExpression->getValueType()->getGlobalName();
+            string parentBlobName = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType())->getSymbolName()->getGlobalName();
 
             // call expression?
             if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
@@ -2388,7 +2390,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             return typePtr;
         case ValueTypeKind::BOXED:
             if (shouldUnbox /*&& !valueType->isBoxedNamedType()*/)
-                return llvmTypeForValueType(valueType->getSubType());
+                return llvmTypeForValueType(dynamic_pointer_cast<ValueTypeBoxed>(valueType)->getSubType());
             else
                 return typeBoxed;
         case ValueTypeKind::DATA: {
@@ -2406,7 +2408,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             return llvm::ArrayType::get(subType, elementsCount);
         }
         case ValueTypeKind::BLOB: {
-            llvm::StructType *structType = scope->getStructType(valueType->getGlobalName());
+            llvm::StructType *structType = scope->getStructType(dynamic_pointer_cast<ValueTypeBlob>(valueType)->getSymbolName()->getGlobalName());
             if (structType == nullptr)
                 markErrorNotDefined(nullptr, format("blob \"{}\"", valueType->getGlobalName()));
             return structType;
