@@ -612,8 +612,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
             );
         }
 
-        if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType()))
-            markErrorInvalidType(statementVariable->getExpression()->getLocation(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
+        //if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType()))
+        //    markErrorInvalidType(statementVariable->getExpression()->getLocation(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
     }
 
     // data types should have count expression
