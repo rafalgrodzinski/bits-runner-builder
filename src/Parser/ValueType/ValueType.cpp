@@ -217,18 +217,6 @@ optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() co
     return compositeElementTypes;
 }
 
-optional<string> ValueType::getNamedTypeKey() const {
-    return namedTypeKey;
-}
-
-optional<vector<string>> ValueType::getNamedTypeKeys() const {
-    return namedTypeKeys;
-}
-
-optional<vector<shared_ptr<ValueType>>> ValueType::getNamedTypeValues() const {
-    return namedTypeValues;
-}
-
 bool ValueType::isEqual(shared_ptr<ValueType> other) const {
     if (other == nullptr)
         return false;

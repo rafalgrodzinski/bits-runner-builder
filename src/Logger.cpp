@@ -44,6 +44,7 @@
 #include "Parser/Expression/ExpressionValue.h"
 
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeBoxed.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
@@ -916,6 +917,17 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
     return formattedLine(line, indents);
 }
 
+string Logger::toString(shared_ptr<ValueTypeBlob> valueTypeBlob) {
+    string text = "";
+    text += format("BLOB<`{}`", valueTypeBlob->getSymbolName()->getGlobalName());
+    for (shared_ptr<ValueType> valueType : valueTypeBlob->getNamedValueTypes()) {
+        text += ", ";
+        text += toString(valueType);
+    }
+    text += ">";
+    return text;
+}
+
 string Logger::toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
     string text = "";
 
@@ -1428,16 +1440,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             break;
         }
         case ValueTypeKind::BLOB: {
-            text = "";
-            text += format("BLOB<`{}`", valueType->getGlobalName());
-            if (valueType->getNamedTypeValues()) {
-                for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
-                    text += ", ";
-                    text += toString((*valueType->getNamedTypeValues()).at(i));
-                }
-            }
-            text += ">";
-            break;
+            return toString(dynamic_pointer_cast<ValueTypeBlob>(valueType));
         }
         case ValueTypeKind::ENUM:
             return toString(dynamic_pointer_cast<ValueTypeEnum>(valueType));

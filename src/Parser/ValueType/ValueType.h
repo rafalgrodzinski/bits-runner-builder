@@ -110,9 +110,6 @@ public:
     // composite
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes() const;
     // boxed
-    optional<string> getNamedTypeKey() const;
-    optional<vector<string>> getNamedTypeKeys() const;
-    optional<vector<shared_ptr<ValueType>>> getNamedTypeValues() const;
 
     virtual bool isEqual(shared_ptr<ValueType> other) const;
 

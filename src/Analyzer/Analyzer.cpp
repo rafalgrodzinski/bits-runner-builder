@@ -784,8 +784,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                 markErrorNotDefined(expressionCall->getLocation(), functionName);
                 return nullptr;
             }
+            /*
             valueType->namedTypeKeys = parentExpression->getValueType()->getNamedTypeKeys();
             valueType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
+            */
             extraArguments = 1; // for the implicit "it"
         } else if (isParentProto) {
             string protoName = parentExpression->getValueType()->getGlobalName();
@@ -825,11 +827,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
     // we want to skip the implicit argumnets hence startring from "extraArguments"
     for (int i=extraArguments; i<argumentTypes.size(); i++) {
         shared_ptr<ValueType> targetType = argumentTypes.at(i);
-        if (parentExpression != nullptr) {
+        /*if (parentExpression != nullptr) {
             targetType->namedTypeKeys = parentExpression->getValueType()->getNamedTypeKeys();
             targetType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
             targetType = resolvedAndCheckedValueType(targetType, false, parentExpression->getLocation());
-        }
+        }*/
 
         // ignore the implicit arguments
         int argumentExpressionIndex = i - extraArguments;
