@@ -11,6 +11,7 @@ public:
 
     optional<string> getNamedValueTypeKey();
     shared_ptr<ValueType> getSubType();
+    virtual bool isEqual(shared_ptr<ValueType> other) const override;
     virtual shared_ptr<ValueType> clone() const override;
 
 private:

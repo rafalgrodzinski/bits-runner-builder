@@ -18,6 +18,9 @@ shared_ptr<ValueType> AnalyzerScopeBoxed::getNamedValueType(const string &namedV
 }
 
 void AnalyzerScopeBoxed::registerNamedValueTypesMap(const vector<string> &namedValueTypeKeys, const vector<shared_ptr<ValueType>> &namedValueTypes) {
+    if (namedValueTypes.empty())
+        return;
+
     for (int i=0; i<namedValueTypeKeys.size(); i++) {
         parent->scopeLevels.top().scopeLevelBoxed.namedValueTypesMap[namedValueTypeKeys[i]] = namedValueTypes[i];
     }

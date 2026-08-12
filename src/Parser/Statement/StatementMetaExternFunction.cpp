@@ -1,6 +1,6 @@
 #include "Parser/Statement/StatementMetaExternFunction.h"
-
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeFun.h"
 
 StatementMetaExternFunction::StatementMetaExternFunction(
     const string &name,
@@ -53,10 +53,10 @@ shared_ptr<ValueType> StatementMetaExternFunction::getReturnValueType() const {
     return returnValueType;
 }
 
-shared_ptr<ValueType> StatementMetaExternFunction::getValueType() const {
+shared_ptr<ValueTypeFun> StatementMetaExternFunction::getValueType() const {
     vector<shared_ptr<ValueType>> argumentTypes;
     for (auto &argument : arguments)
         argumentTypes.push_back(argument.second);
 
-    return ValueType::fun(argumentTypes, returnValueType);
+    return make_shared<ValueTypeFun>(argumentTypes, returnValueType);
 }

@@ -51,6 +51,7 @@ class ValueTypeBlob;
 class ValueTypeBoxed;
 class ValueTypeEnum;
 class ValueTypeEnumField;
+class ValueTypeFun;
 
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
@@ -123,6 +124,7 @@ private:
     shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
     shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum);
     shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
+    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeFun> valueTypeFun);
 
     void markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier);
     void markErrorInvalidAttribute(shared_ptr<Location> location, const string &name);

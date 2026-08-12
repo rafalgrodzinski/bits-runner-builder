@@ -32,8 +32,6 @@ public:
         map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
         map<string, vector<string>> blobProtosMap;
 
-        vector<string> namedTypes;
-
         map<string, shared_ptr<ValueType>> variableTypes;
         map<string, bool> isVariableDefinedMap;
 
@@ -52,9 +50,6 @@ public:
 
     optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(const string &name) const;
     bool setProtoMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members);
-
-    bool isNamedTypeDeclared(const string &namedType) const;
-    bool setNamedTypes(const vector<string> &namedTypes);
 
     optional<vector<string>> getBlobProtoNames(const string &name) const;
     bool setBlobProtoNames(const string &name, const vector<string> &protoNames);

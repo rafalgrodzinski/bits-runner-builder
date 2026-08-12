@@ -206,7 +206,7 @@ bool AnalyzerScope::setProtoMembers(const string &name, const optional<vector<pa
     return true;
 }*/
 
-bool AnalyzerScope::isNamedTypeDeclared(const string &namedType) const {
+/*bool AnalyzerScope::isNamedTypeDeclared(const string &namedType) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -230,7 +230,7 @@ bool AnalyzerScope::setNamedTypes(const vector<string> &namedTypes) {
         scopeLevels.top().namedTypes.push_back(namedType);
     }
     return true;
-}
+}*/
 
 optional<vector<string>> AnalyzerScope::getBlobProtoNames(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
@@ -308,8 +308,8 @@ bool AnalyzerScope::setFunctionType(const string &name, shared_ptr<ValueType> ty
         if (scopeLevels.top().isFunctionDefinedMap[name] && isDefinition)
             return false;
         // type doesn't match existing type
-        if (!existingType->isEqual(type))
-            return false;
+        /*if (!existingType->isEqual(type))
+            return false;*/
     }
 
     scopeLevels.top().functionTypeMap[name] = type;

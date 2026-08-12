@@ -84,7 +84,6 @@ public:
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
     static shared_ptr<ValueType> proto(const string &protoName);
-    static shared_ptr<ValueType> fun(const vector<shared_ptr<ValueType>> &argumentTypes, shared_ptr<ValueType> returnType);
     static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType, bool isVolatile);
     static shared_ptr<ValueType> composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression);
 
@@ -104,9 +103,6 @@ public:
     // data
     int getValueArg(); // TODO: remove
     shared_ptr<Expression> getCountExpression() const;
-    // function
-    optional<vector<shared_ptr<ValueType>>> getArgumentTypes() const;
-    shared_ptr<ValueType> getReturnType() const;
     // composite
     optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes() const;
     // boxed

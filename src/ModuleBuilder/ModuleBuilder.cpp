@@ -40,6 +40,7 @@
 #include "Parser/ValueType/ValueTypeBoxed.h"
 #include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
+#include "Parser/ValueType/ValueTypeFun.h"
 
 ModuleBuilder::ModuleBuilder(
     const string &defaultModuleName,
@@ -2425,11 +2426,11 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
         }
         case ValueTypeKind::FUN: {
             // returnType
-            llvm::Type *functionReturnType = llvmTypeForValueType(valueType->getReturnType());
+            llvm::Type *functionReturnType = llvmTypeForValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType());
 
             // argument types
             vector<llvm::Type *> functionArgumentTypes;
-            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+            vector<shared_ptr<ValueType>> argumentTypes = dynamic_pointer_cast<ValueTypeFun>(valueType)->getArgumentValueTypes();
             for (shared_ptr<ValueType> &argumentType : argumentTypes) {
                 llvm::Type *functionArgumentType = llvmTypeForValueType(argumentType);
                     if (functionArgumentType == nullptr)

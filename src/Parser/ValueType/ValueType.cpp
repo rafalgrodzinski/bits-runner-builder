@@ -89,17 +89,6 @@ shared_ptr<ValueType> ValueType::proto(const string &protoName) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::fun(const vector<shared_ptr<ValueType>> &argumentTypes, shared_ptr<ValueType> returnType) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::FUN;
-    valueType->argumentTypes = argumentTypes;
-    if (returnType != nullptr)
-        valueType->returnType = returnType;
-    else
-        valueType->returnType = ValueType::NONE;
-    return valueType;
-}
-
 shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType, bool isVolatile) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::PTR;
@@ -201,18 +190,6 @@ shared_ptr<Expression> ValueType::getCountExpression() const {
     return countExpression;
 }
 
-optional<vector<shared_ptr<ValueType>>> ValueType::getArgumentTypes() const {
-    return argumentTypes;
-}
-
-shared_ptr<ValueType> ValueType::getReturnType() const {
-    if (returnType == nullptr)
-        return nullptr;
-    returnType->namedTypeKeys = namedTypeKeys;
-    returnType->namedTypeValues = namedTypeValues;
-    return returnType;
-}
-
 optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() const {
     return compositeElementTypes;
 }
@@ -261,30 +238,6 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
             if (other->getKind() != ValueTypeKind::ENUM)
                 return false;
             return getGlobalName() == other->getGlobalName();
-        }
-        case ValueTypeKind::BOXED: {
-            return other->isBoxed() && subType->isEqual(other->getSubType());
-        }
-        case ValueTypeKind::FUN: {
-            // are both function types?
-            if (!other->isFunction())
-                return false;
-
-            // does argument count match?
-            if ((*argumentTypes).size() != (*other->getArgumentTypes()).size())
-                return false;
-
-            // do argument types match?
-            for (int i=0; i<(*argumentTypes).size(); i++) {
-                if (!(*argumentTypes).at(i)->isEqual((*other->getArgumentTypes()).at(i)))
-                    return false;
-            }
-
-            // do the return types match?
-            if (!returnType->isEqual(other->getReturnType()))
-                return false;
-
-            return true;
         }
         default:
             break;

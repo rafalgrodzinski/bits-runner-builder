@@ -6,6 +6,7 @@
 #include "Statement.h"
 
 class ValueType;
+class ValueTypeFun;
 
 class StatementFunctionDeclaration: public Statement {
 friend class Parser;
@@ -35,7 +36,7 @@ public:
     void setModuleName(const string &moduleName);
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
-    shared_ptr<ValueType> getValueType() const;
+    shared_ptr<ValueTypeFun> getValueType() const;
 };
 
 #endif

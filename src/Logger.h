@@ -57,6 +57,7 @@ class ValueTypeBlob;
 class ValueTypeBoxed;
 class ValueTypeEnum;
 class ValueTypeEnumField;
+class ValueTypeFun;
 
 using namespace std;
 
@@ -114,6 +115,7 @@ private:
     static string toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
     static string toString(shared_ptr<ValueTypeEnum> valueType);
     static string toString(shared_ptr<ValueTypeEnumField> valueType);
+    static string toString(shared_ptr<ValueTypeFun> valueType);
  
     // general support
     static string toString(EnumField field, vector<IndentKind> indents);

@@ -5,6 +5,7 @@
 #include "AnalyzerScope.h"
 #include "AnalyzerScopeBlob.h"
 #include "Module/Module.h"
+#include "Defer.h"
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
@@ -45,6 +46,7 @@
 #include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
+#include "Parser/ValueType/ValueTypeFun.h"
 
 Analyzer::Analyzer(
     const string &defaultModuleName,
@@ -195,9 +197,10 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported) {
-    scope->pushLevel();
-
-    scope->setNamedTypes(statementBlob->getNamedTypeKeys());
+    //scope->pushLevel();
+    //scope->setNamedTypes(statementBlob->getNamedTypeKeys());
+    //scope->blobScope->registerContextNamedValueTypeKeys(statementBlob->getNamedTypeKeys());
+    scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
 
     // check and verify blob member variables
     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
@@ -232,23 +235,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
         }
     }
 
-    // register blob members in scope
-    vector<pair<string, shared_ptr<ValueType>>> members;
-
-    // extract variable members
-    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
-        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
-
-    // then function members
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
-        members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
-
-    // check each of the extracted member's type
-    for (auto &member : members) {
-        if (resolvedAndCheckedValueType(member.second, true, statementBlob->getLocation()) == nullptr)
-            return;
-    }
-
+    /*
     // verify proto compliance (but only if it's not an import statement)
     if (!isImported) {
         for (string &protoName : statementBlob->getProtoNames()) {
@@ -272,7 +259,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                         isImplemented = true;
 
                         // check arguments
-                        int argsCount = (*protoMember.second->getArgumentTypes()).size();
+                        //int argsCount = (*protoMember.second->getArgumentTypes()).size();
+
                         if (argsCount != statementFunction->getArguments().size()) {
                             isImplemented = false;
                             break;
@@ -310,8 +298,26 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
             }
         }
     }
+    */
 
-    scope->popLevel();
+    // register blob members in scope
+    vector<pair<string, shared_ptr<ValueType>>> members;
+
+    // extract variable members
+    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
+        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+
+    // then function members
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
+        members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
+
+    // check each of the extracted member's type
+    for (auto &member : members) {
+        if (resolvedAndCheckedValueType(member.second, true, statementBlob->getLocation()) == nullptr)
+            return;
+    }
+
+    //scope->popLevel();
 
     // and the register
     //string name = importModulePrefix + statementBlob->getName();
@@ -319,7 +325,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     //if (!scope->setBlobMembers(name, members))
     //    markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getSymbolName()->getGlobalName());
     scope->blobScope->registerFields(statementBlob->getSymbolName(), members);
-    scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
     scope->setBlobProtoNames(name, statementBlob->getProtoNames());
 }
 
@@ -768,6 +773,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
     int extraArguments = 0;
 
+    Defer defer([&](){
+        scope->popLevel();
+    });
+    scope->pushLevel();
+
     // check for built-in
     if (parentExpression != nullptr) {
         bool isParentPointer = parentExpression->getValueType()->isPointer();
@@ -778,17 +788,15 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         if (isParentPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
             valueType = parentExpression->getValueType()->getSubType();
         } else if (isParentBlob) {
-            string functionName = format("{}.{}", parentExpression->getValueType()->getGlobalName(), expressionCall->getName());
+            shared_ptr<ValueTypeBlob> parentBlobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
+            string functionName = format("{}.{}", parentBlobValueType->getSymbolName()->getGlobalName(), expressionCall->getName());
             valueType = scope->getFunctionType(functionName);
             if (valueType == nullptr) {
                 markErrorNotDefined(expressionCall->getLocation(), functionName);
                 return nullptr;
             }
-            /*
-            valueType->namedTypeKeys = parentExpression->getValueType()->getNamedTypeKeys();
-            valueType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
-            */
             extraArguments = 1; // for the implicit "it"
+            scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
         } else if (isParentProto) {
             string protoName = parentExpression->getValueType()->getGlobalName();
             auto members = *(scope->getProtoMembers(protoName));
@@ -814,7 +822,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
     }
 
     // check arguments count
-    vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
+    vector<shared_ptr<ValueType>> argumentTypes = dynamic_pointer_cast<ValueTypeFun>(valueType)->getArgumentValueTypes();
     if (argumentTypes.size() != expressionCall->getArgumentExpressions().size() + extraArguments) {
         markErrorInvalidArgumentsCount(
             expressionCall->getLocation(),
@@ -839,7 +847,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
             expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
             targetType,
-            valueType->getReturnType()
+            dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType()
         );
         if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
             return nullptr;
@@ -859,9 +867,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         }
     }
 
-    expressionCall->valueType = resolvedAndCheckedValueType(valueType->getReturnType(), false, expressionCall->getLocation());
+    expressionCall->valueType = resolvedAndCheckedValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), false, expressionCall->getLocation());
     if (expressionCall->getValueType() == nullptr) {
-        markErrorInvalidType(expressionCall->getLocation(), valueType->getReturnType(), nullptr);
+        markErrorInvalidType(expressionCall->getLocation(), dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), nullptr);
         return nullptr;
     }
     return expressionCall->getValueType();
@@ -1269,7 +1277,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         type = type->getSubType();
         expressionValue->valueKind = ExpressionValueKind::DATA;
     // check if it's blob's `it`
-    } else if (type == nullptr && (expressionValue->getIdentifier().compare("it") == 0)) {
+    } else if (type == nullptr && expressionValue->getIdentifier() == "it") {
         shared_ptr<ValueType> blobPtrType = scope->getVariableType(".pit");
         if (blobPtrType == nullptr) {
             markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
@@ -2283,14 +2291,7 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             return checkValueType(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
         }
         case ValueTypeKind::FUN: {
-            vector<shared_ptr<ValueType>> argValueTypes = *valueType->getArgumentTypes();
-            for (shared_ptr<ValueType> argValueType : argValueTypes) {
-                if (resolvedAndCheckedValueType(argValueType, true, location) == nullptr)
-                    return nullptr;
-            }
-            if (resolvedAndCheckedValueType(valueType->getReturnType(), true, location) == nullptr)
-                return nullptr;
-            return valueType;
+            return checkValueType(dynamic_pointer_cast<ValueTypeFun>(valueType));
         }
         case ValueTypeKind::PTR: {
             return ValueType::ptr(resolvedAndCheckedValueType(valueType->getSubType(), false, location), valueType->getIsVolatile());
@@ -2391,6 +2392,18 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnumField> va
     valueTypeEnumField->payloadValueType = payloadValueType;
 
     return valueTypeEnumField;
+}
+
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeFun> valueTypeFun) {
+    vector<shared_ptr<ValueType>> argValueTypes = valueTypeFun->getArgumentValueTypes();
+    for (shared_ptr<ValueType> argValueType : argValueTypes) {
+        if (resolvedAndCheckedValueType(argValueType, true, nullptr) == nullptr)
+            return nullptr;
+    }
+    if (resolvedAndCheckedValueType(valueTypeFun->getReturnValueType(), true, nullptr) == nullptr)
+        return nullptr;
+
+    return valueTypeFun;
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {

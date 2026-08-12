@@ -48,6 +48,7 @@
 #include "Parser/ValueType/ValueTypeBoxed.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
+#include "Parser/ValueType/ValueTypeFun.h"
 
 /// Private ///
 
@@ -920,9 +921,16 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
 string Logger::toString(shared_ptr<ValueTypeBlob> valueTypeBlob) {
     string text = "";
     text += format("BLOB<`{}`", valueTypeBlob->getSymbolName()->getGlobalName());
-    for (shared_ptr<ValueType> valueType : valueTypeBlob->getNamedValueTypes()) {
-        text += ", ";
-        text += toString(valueType);
+    // If there are no named value types, print the keys
+    if (valueTypeBlob->getNamedValueTypes().empty() && valueTypeBlob->getNamedValueTypeKeys()) {
+        vector<string> keys = *valueTypeBlob->getNamedValueTypeKeys();
+        for (string &key : keys) {
+            text += format(", `{}`", key);
+        }
+    } else {
+        for (shared_ptr<ValueType> valueType : valueTypeBlob->getNamedValueTypes()) {
+            text += format(", {}", toString(valueType));
+        }
     }
     text += ">";
     return text;
@@ -964,6 +972,24 @@ string Logger::toString(shared_ptr<ValueTypeEnumField> valueType) {
         text += toString(valueType);
     }
     text += ">";
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeFun> valueType) {
+    string text = "FUN";
+
+    // args
+    vector<shared_ptr<ValueType>> argumentTypes = valueType->getArgumentValueTypes();
+    for (int i=0; i<argumentTypes.size(); i++) {
+        if (i > 0)
+            text += ",";
+        text += format(" {}", toString(argumentTypes.at(i)));
+    }
+    // return
+    if (valueType->getReturnValueType() != nullptr) {
+        text += format(" -> {}", toString(valueType->getReturnValueType()));
+    }
 
     return text;
 }
@@ -1451,21 +1477,8 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             break;
         case ValueTypeKind::BOXED:
             return toString(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
-        case ValueTypeKind::FUN: {
-            text = "FUN";
-            // args
-            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
-            for (int i=0; i<argumentTypes.size(); i++) {
-                if (i > 0)
-                    text += ",";
-                text += format(" {}", toString(argumentTypes.at(i)));
-            }
-            // return
-            if (valueType->getReturnType() != nullptr) {
-                text += format(" -> {}", toString(valueType->getReturnType()));
-            }
-            break;
-        }
+        case ValueTypeKind::FUN:
+            return toString(dynamic_pointer_cast<ValueTypeFun>(valueType));
         case ValueTypeKind::COMPOSITE:
             text = format("COMPOSITE");
             break;
