@@ -2170,7 +2170,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     if (subType == nullptr || !subType->isBlob())
                         return false;
 
-                    string blobName = subType->getGlobalName();
+                    string blobName = dynamic_pointer_cast<ValueTypeBlob>(subType)->getSymbolName()->getGlobalName();
                     optional<vector<string>> protoNames = scope->getBlobProtoNames(blobName);
                     if (!protoNames)
                         return false;
