@@ -268,8 +268,15 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
         line += ">";
     }
     // proto
-    for (string &protoName : statement->getProtoNames())
-        line += format(", {}", protoName);
+    if (!statement->getProtoNames().empty()) {
+        line += "(";
+        for (int i=0; i<statement->getProtoNames().size(); i++) {
+            if (i > 0)
+                line += ", ";
+            line += format("`{}`", statement->getProtoNames().at(i));
+        }
+        line += ")";
+    }
     if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
