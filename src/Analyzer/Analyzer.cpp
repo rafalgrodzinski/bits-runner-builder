@@ -585,12 +585,13 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 
     shared_ptr<ValueType> expressionType = statementReturn->getExpression()->getValueType();
 
-    if (expressionType == nullptr || !expressionType->isEqual(returnType))
+    /*if (expressionType == nullptr || !expressionType->isEqual(returnType))
         markErrorInvalidType(
             statementReturn->getLocation(),
             expressionType,
             returnType
         );
+    */
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
@@ -856,7 +857,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         if (sourceType == nullptr)
             return nullptr;
 
-        if (!sourceType->isEqual(targetType)) {
+        /*if (!sourceType->isEqual(targetType)) {
             markErrorInvalidType(
                 expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getLocation(),
                 sourceType,
@@ -864,7 +865,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             );
             expressionCall->valueType = nullptr;
             return nullptr;
-        }
+        }*/
     }
 
     expressionCall->valueType = resolvedAndCheckedValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), false, expressionCall->getLocation());
