@@ -2456,7 +2456,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     bool isBoxed = false;
 
     vector<shared_ptr<ValueType>> argTypes;
-    shared_ptr<ValueType> retType;
+    shared_ptr<ValueType> retType = ValueType::NONE;
 
     shared_ptr<Token> typeToken;
     bool isVolatile = false;
