@@ -3,9 +3,9 @@
 set "SCRIPT_DIR=%~dp0"
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 set "BRB_PATH=%SCRIPT_DIR%\..\..\build\brb"
-set "B_DIR=%SCRIPT_DIR%\..\..\lib\B"
+set "LIB_DIR=%SCRIPT_DIR%\..\..\lib\brc"
 
-"%BRB_PATH%" "%SCRIPT_DIR%\main.brc" "%B_DIR%\String.brc" "%B_DIR%\Date.brc" "%B_DIR%\BSys.brc"
+"%BRB_PATH%" "%SCRIPT_DIR%\main.brc" "%LIB_DIR%\B\String.brc" "%LIB_DIR%\B\Date.brc" "%LIB_DIR%\BSys.brc"
 if %ERRORLEVEL% gtr 0 exit
 
 :: Setup MSVC Environment and link
