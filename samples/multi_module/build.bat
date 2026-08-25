@@ -1,7 +1,14 @@
 @echo off
 
 set "SCRIPT_DIR=%~dp0"
-set "BRB_PATH=%SCRIPT_DIR%\..\..\build\Release\brb"
+set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
+set "BRB_PATH=%SCRIPT_DIR%\..\..\build\brb"
 
-%BRB_PATH% "%SCRIPT_DIR%\io.brc" "%SCRIPT_DIR%\main.brc" "%SCRIPT_DIR%\stuff.brc"
-cl /o multi_module io.o stuff.o main.o msvcrt.lib
+"%BRB_PATH%" "%SCRIPT_DIR%\main.brc" "%SCRIPT_DIR%\io.brc" "%SCRIPT_DIR%\stuff.brc"
+if %ERRORLEVEL% gtr 0 exit
+
+:: Setup MSVC Environment and link
+call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+if %ERRORLEVEL% gtr 0 exit
+
+link /out:multi_module.exe main.o io.o stuff.o msvcrt.lib

@@ -3,12 +3,13 @@
 set "SCRIPT_DIR=%~dp0"
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 set "BRB_PATH=%SCRIPT_DIR%\..\..\build\brb"
+set "B_DIR=%SCRIPT_DIR%\..\..\lib\B"
 
-"%BRB_PATH%" "%SCRIPT_DIR%\main.brc"
+"%BRB_PATH%" "%SCRIPT_DIR%\main.brc" "%SCRIPT_DIR%\Lib.brc" "%B_DIR%\String.brc" "%B_DIR%\BSys.brc"
 if %ERRORLEVEL% gtr 0 exit
 
 :: Setup MSVC Environment and link
 call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 if %ERRORLEVEL% gtr 0 exit
 
-link /out:fizz_buzz.exe main.o msvcrt.lib
+link /out:interfaces.exe main.o Lib.o B.o BSys.o msvcrt.lib
