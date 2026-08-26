@@ -14,6 +14,11 @@ goto :start
     exit /b 0
 
 :start
+:: Setup MSVC Environment
+call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+if %ERRORLEVEL% gtr 0 exit /b
+
+:: Build brb
 echo 🤖 Building brb...
 cmake -B "%SCRIPT_DIR%\..\build"
 call :check "Building brb"
@@ -21,6 +26,7 @@ cmake --build "%SCRIPT_DIR%\..\build" --config RelWithDebInfo
 call :check "Building brb"
 echo:
 
+:: Build and run samples
 for /D %%S in ("%SCRIPT_DIR%\*") do (
     :: Build sample
     echo 🐷 Building %%~nxS
