@@ -5,7 +5,7 @@ SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 
 function check {
     if [ $? -ne 0 ]; then
-        echo "⛔️ \"${1}\" Failed"
+        echo "⛔️ ${1} failed"
         exit 1
     fi
 }
@@ -23,10 +23,13 @@ SAMPLES=`ls -d */ | cut -f1 -d'/'`
 cd - > /dev/null
 
 for SAMPLE in ${SAMPLES}; do
+    # Build sample
     echo "🐷 Building ${SAMPLE}" &&
     "${SCRIPT_DIR}/${SAMPLE}/build.sh" &&
+    # Run sample
     echo "🐷🐷 Running ${SAMPLE}" &&
     "./${SAMPLE}"
     check "${SAMPLE}"
+
     echo
 done

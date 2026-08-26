@@ -22,7 +22,7 @@ call :check "Building brb"
 echo:
 
 for /D %%S in ("%SCRIPT_DIR%\*") do (
-    :: Buld sample
+    :: Build sample
     echo 🐷 Building %%~nxS
     call "%SCRIPT_DIR%\%%~nxS\build.bat"
     call :check "Building %%~nxS"
@@ -30,5 +30,6 @@ for /D %%S in ("%SCRIPT_DIR%\*") do (
     echo 🐷🐷 Running %%~nxS
     "%%~nxS.exe"
     call :check "%%~nxS"
+
     echo:
 )
