@@ -1,7 +1,15 @@
 #include "SymbolName.h"
 
-SymbolName::SymbolName(const string &name, const string &moduleName):
-name(name), moduleName(moduleName) { }
+SymbolName::SymbolName(const string &name, const string &moduleName) {
+    size_t pos = name.find('.');
+    if (pos != string::npos) {
+        this->name = name.substr(pos + 1, name.length());
+        this->moduleName = name.substr(0, pos);
+    } else {
+        this->name = name;
+        this->moduleName = moduleName;
+    }
+}
 
 string SymbolName::getName() const {
     return name;
@@ -20,7 +28,8 @@ string SymbolName::getModuleName() const {
 }
 
 void SymbolName::setModuleName(const string &moduleName) {
-    this->moduleName = moduleName;
+    if (moduleName.empty())
+        this->moduleName = moduleName;
 }
 
 bool SymbolName::isSubSymbol(shared_ptr<SymbolName> other) const {
