@@ -10,14 +10,17 @@ function check {
     fi
 }
 
+# Setup Environment
+export PATH="${SCRIPT_DIR}/../build/:${PATH}"
+
+# Build brb
 echo "🤖 Building brb..."
 cmake -B "${SCRIPT_DIR}/../build" &&
 cmake --build "${SCRIPT_DIR}/../build" --config RelWithDebInfo
 check "Building brb"
 echo
 
-export PATH="${SCRIPT_DIR}/../build/:${PATH}"
-
+# Build and run samples
 cd "${SCRIPT_DIR}" > /dev/null
 SAMPLES=`ls -d */ | cut -f1 -d'/'`
 cd - > /dev/null

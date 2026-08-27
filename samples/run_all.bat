@@ -14,7 +14,7 @@ goto :start
     exit /b 0
 
 :start
-:: Setup MSVC Environment
+:: Setup Environment
 call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 if %ERRORLEVEL% gtr 0 exit /b
 
