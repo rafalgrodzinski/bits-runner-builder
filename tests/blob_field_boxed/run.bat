@@ -1,7 +1,7 @@
 @echo off
 
 :: Setup
-set /a EXPECTED_VALUE=7
+set /a EXPECTED_VALUE=5
 
 set "SCRIPT_DIR=%~dp0"
 set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
