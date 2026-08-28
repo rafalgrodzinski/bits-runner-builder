@@ -16,6 +16,12 @@ class ValueType;
 
 using namespace std;
 
+enum class AnalyzerScopeState {
+    NOT_REGISTERED,
+    DECLARED,
+    DEFINED
+};
+
 enum class AnalyzerScopeRegisterResult {
     SUCCES,
     FAILURE_ALREADY_DECLARED,

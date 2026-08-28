@@ -11,17 +11,22 @@
 
 class AnalyzerScope;
 class ValueType;
+enum class AnalyzerScopeState;
 
 using namespace std;
 
 class AnalyzerScopeBlob {
 public:
     typedef struct {
+        map<SymbolName, AnalyzerScopeState> statesMap;
         map<SymbolName, optional<vector<string>>> namedValueTypeKeysMap;
         map<SymbolName, optional<vector<pair<string, shared_ptr<ValueType>>>>> fieldsMap;
     } ScopeLevel;
 
     AnalyzerScopeBlob(AnalyzerScope *parent);
+
+    void registerDeclaration(shared_ptr<SymbolName> symbolName);
+    AnalyzerScopeState getState(shared_ptr<SymbolName> symbolName);
 
     void registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys);
     optional<vector<string>> getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName) const;

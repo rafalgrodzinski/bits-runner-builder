@@ -20,7 +20,7 @@ bool ValueTypeBlob::isEqual(shared_ptr<ValueType> other) const {
         return false;
 
     // Are the symbol names identical?
-    if (symbolName != valueTypeBlob->getSymbolName())
+    if (!symbolName->isEqual(valueTypeBlob->getSymbolName()))
         return false;
 
     return true;

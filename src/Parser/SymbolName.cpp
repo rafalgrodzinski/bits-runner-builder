@@ -28,12 +28,16 @@ string SymbolName::getModuleName() const {
 }
 
 void SymbolName::setModuleName(const string &moduleName) {
-    if (moduleName.empty())
+    if (this->moduleName.empty())
         this->moduleName = moduleName;
 }
 
 bool SymbolName::isSubSymbol(shared_ptr<SymbolName> other) const {
     return getGlobalName().starts_with(other->getGlobalName());
+}
+
+bool SymbolName::isEqual(shared_ptr<SymbolName> other) const {
+    return *this == *other;
 }
 
 bool SymbolName::operator == (const SymbolName &other) const {

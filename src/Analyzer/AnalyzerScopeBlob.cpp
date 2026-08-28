@@ -5,6 +5,26 @@
 AnalyzerScopeBlob::AnalyzerScopeBlob(AnalyzerScope *parent):
 parent(parent) { }
 
+void AnalyzerScopeBlob::registerDeclaration(shared_ptr<SymbolName> symbolName) {
+    if (getState(symbolName) != AnalyzerScopeState::NOT_REGISTERED)
+        return;
+
+    parent->scopeLevels.top().scopeLevelBlob.statesMap[*symbolName] = AnalyzerScopeState::DECLARED;
+}
+
+AnalyzerScopeState AnalyzerScopeBlob::getState(shared_ptr<SymbolName> symbolName) {
+    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().scopeLevelBlob.statesMap.find(*symbolName);
+        if (it != scopeLevels.top().scopeLevelBlob.statesMap.end())
+            return scopeLevels.top().scopeLevelBlob.statesMap[*symbolName];
+        scopeLevels.pop();
+    }
+
+    return AnalyzerScopeState::NOT_REGISTERED;
+}
+
 void AnalyzerScopeBlob::registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys) {
     // check if named types are already defined
     //if (scopeLevels.top().blobNamedTypeKeysMap.find(blobName) != scopeLevels.top().blobNamedTypeKeysMap.end())

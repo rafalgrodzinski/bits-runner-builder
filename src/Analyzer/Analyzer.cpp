@@ -330,7 +330,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
     string name = statementBlobDeclaration->getSymbolName()->getGlobalName();
-    //scope->setBlobMembers(name, {});
+    scope->blobScope->registerDeclaration(statementBlobDeclaration->getSymbolName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType) {
@@ -2303,22 +2303,22 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
     }
 }
 
-shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTypeBlob) {
-    optional<vector<string>> oNamedValueTypeKeys = scope->blobScope->getNamedValueTypeKeys(valueTypeBlob->getSymbolName());
-
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTypeBlob) {    
     // Check if blob is registered
-    if (!oNamedValueTypeKeys) {
+    if (scope->blobScope->getState(valueTypeBlob->getSymbolName()) == AnalyzerScopeState::NOT_REGISTERED) {
         markErrorNotDefined(nullptr, valueTypeBlob->getSymbolName()->getGlobalName());
         return nullptr;
     }
-
+    
     /*
     // check 
     scope->pushLevel();
     scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeBlob->getNamedValueTypes());
     scope->popLevel();
     */
-    valueTypeBlob->namedValueTypeKeys = *oNamedValueTypeKeys;
+    optional<vector<string>> oNamedValueTypeKeys = scope->blobScope->getNamedValueTypeKeys(valueTypeBlob->getSymbolName());
+    if (oNamedValueTypeKeys)
+        valueTypeBlob->namedValueTypeKeys = *oNamedValueTypeKeys;
 
     return valueTypeBlob;
 }

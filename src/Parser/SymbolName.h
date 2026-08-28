@@ -17,6 +17,7 @@ public:
 
     bool isSubSymbol(shared_ptr<SymbolName> other) const;
 
+    bool isEqual(shared_ptr<SymbolName> other) const;
     bool operator == (const SymbolName &other) const;
     bool operator < (const SymbolName &other) const;
 
