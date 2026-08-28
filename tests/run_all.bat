@@ -41,6 +41,7 @@ for /D %%T in ("%SCRIPT_DIR%\*") do (
     ) else (
         set /a PASSED_TESTS=!PASSED_TESTS! + 1
     )
+    echo:
 )
 
 echo ✅ Passed tests: %PASSED_TESTS%
