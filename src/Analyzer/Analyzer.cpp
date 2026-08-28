@@ -1630,7 +1630,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             sourceExpression->getLocation()
         );
 
-        targetExpression->valueType = valueTypeBoxed->getSubType();
+        targetExpression->valueType = valueTypeBoxed;
     } else {
         targetExpression = make_shared<ExpressionChained>(
             vector<shared_ptr<Expression>>(

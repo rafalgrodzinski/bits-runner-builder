@@ -1,0 +1,10 @@
+Thing<T> blob
+    value boxed<T>
+;
+
+@export main fun -> u32
+   thing blob<Thing, u32>
+   thing.value <- 5
+
+   ret thing.value.u32
+;
