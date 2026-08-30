@@ -223,6 +223,8 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
         }
         case ExpressionKind::VALUE: {
             shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(expression);
+            if (expressionValue->getValueType() != nullptr)
+                expressionValue->getValueType()->setModuleName(moduleName);
             if (expressionValue->getIndexExpression() != nullptr)
                 setModuleName(expressionValue->getIndexExpression(), moduleName);
             break;

@@ -951,12 +951,20 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionChained> expressionChained) {
     shared_ptr<Expression> parentExpression = nullptr;
 
+    Defer defer([&](){
+        scope->popLevel();
+    });
+    scope->pushLevel();
+
     for (shared_ptr<Expression> chainExpression : expressionChained->getChainExpressions()) {
         shared_ptr<ValueType> chainType = typeForExpression(chainExpression, parentExpression, nullptr);
         chainExpression->valueType = chainType;
         parentExpression = chainExpression;
         if (chainType == nullptr)
             return nullptr;
+        if (shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(chainType)) {
+            scope->boxedScope->registerNamedValueTypesMap(*valueTypeBlob->getNamedValueTypeKeys(), valueTypeBlob->getNamedValueTypes());
+        }
     }
 
     expressionChained->valueType = parentExpression->getValueType();
@@ -2326,7 +2334,7 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTy
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
     // Skip if already resolved
     if (valueTypeBoxed->getBoxedValueType() != nullptr)
-    return valueTypeBoxed;
+        return valueTypeBoxed;
     
     // Otherwise try getting value type from the provided scope
     if (!valueTypeBoxed->getNamedValueTypeKey()) {
@@ -2338,7 +2346,7 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueT
     shared_ptr<ValueType> valueType = scope->boxedScope->getNamedValueType(*valueTypeBoxed->getNamedValueTypeKey());
     shared_ptr<ValueTypeBoxed> clonedValueTypeBoxed = dynamic_pointer_cast<ValueTypeBoxed>(valueTypeBoxed->clone());
     if (valueType != nullptr) {
-        clonedValueTypeBoxed->subType = valueType;
+        clonedValueTypeBoxed->boxedValueType = valueType;
     }
 
     return clonedValueTypeBoxed;
