@@ -835,7 +835,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
     // check argument types
     // we want to skip the implicit argumnets hence startring from "extraArguments"
     for (int i=extraArguments; i<argumentTypes.size(); i++) {
-        shared_ptr<ValueType> targetType = argumentTypes.at(i);
+        shared_ptr<ValueType> targetType = resolvedAndCheckedValueType(argumentTypes.at(i), false, nullptr);
         /*if (parentExpression != nullptr) {
             targetType->namedTypeKeys = parentExpression->getValueType()->getNamedTypeKeys();
             targetType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
@@ -2326,21 +2326,22 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTy
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
     // Skip if already resolved
     if (valueTypeBoxed->getSubType() != nullptr)
-        return valueTypeBoxed;
-
+    return valueTypeBoxed;
+    
     // Otherwise try getting value type from the provided scope
     if (!valueTypeBoxed->getNamedValueTypeKey()) {
         markErrorInvalidType(nullptr, valueTypeBoxed, nullptr);
         return nullptr;
     }
-
+    
     // Try resolving named value type key (ignore failures, since it may be a blob field)
     shared_ptr<ValueType> valueType = scope->boxedScope->getNamedValueType(*valueTypeBoxed->getNamedValueTypeKey());
+    shared_ptr<ValueTypeBoxed> clonedValueTypeBoxed = dynamic_pointer_cast<ValueTypeBoxed>(valueTypeBoxed->clone());
     if (valueType != nullptr) {
-        valueTypeBoxed->subType = valueType;
+        clonedValueTypeBoxed->subType = valueType;
     }
 
-    return valueTypeBoxed;
+    return clonedValueTypeBoxed;
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum) {
