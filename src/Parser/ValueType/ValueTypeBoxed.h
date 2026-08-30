@@ -7,16 +7,16 @@ class ValueTypeBoxed: public ValueType {
 friend class Analyzer;
 
 public:
-    ValueTypeBoxed(const optional<string> &namedValueTypeKey, shared_ptr<ValueType> subType);
+    ValueTypeBoxed(const optional<string> &namedValueTypeKey, shared_ptr<ValueType> boxedValueType);
 
     optional<string> getNamedValueTypeKey();
-    shared_ptr<ValueType> getSubType();
+    shared_ptr<ValueType> getBoxedValueType();
     virtual bool isEqual(shared_ptr<ValueType> other) const override;
     virtual shared_ptr<ValueType> clone() const override;
 
 private:
     optional<string> namedValueTypeKey;
-    shared_ptr<ValueType> subType;
+    shared_ptr<ValueType> boxedValueType;
 };
 
 #endif

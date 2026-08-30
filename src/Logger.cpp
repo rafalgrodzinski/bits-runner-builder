@@ -947,8 +947,8 @@ string Logger::toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
     string text = "";
 
     text += "BOXED<";
-    if (valueTypeBoxed->getSubType() != nullptr) {
-        text += toString(valueTypeBoxed->getSubType());
+    if (valueTypeBoxed->getBoxedValueType() != nullptr) {
+        text += toString(valueTypeBoxed->getBoxedValueType());
     } else if (valueTypeBoxed->getNamedValueTypeKey()) {
         text += format("`{}`", *valueTypeBoxed->getNamedValueTypeKey());
     } else {

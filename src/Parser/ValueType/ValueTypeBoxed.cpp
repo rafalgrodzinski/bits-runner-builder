@@ -1,16 +1,16 @@
 #include "ValueTypeBoxed.h"
 
-ValueTypeBoxed::ValueTypeBoxed(const optional<string> &namedValueTypeKey, shared_ptr<ValueType> subType):
+ValueTypeBoxed::ValueTypeBoxed(const optional<string> &namedValueTypeKey, shared_ptr<ValueType> boxedValueType):
 ValueType(ValueTypeKind::BOXED),
 namedValueTypeKey(namedValueTypeKey),
-subType(subType) { }
+boxedValueType(boxedValueType) { }
 
 optional<string> ValueTypeBoxed::getNamedValueTypeKey() {
     return namedValueTypeKey;
 }
 
-shared_ptr<ValueType> ValueTypeBoxed::getSubType() {
-    return subType;
+shared_ptr<ValueType> ValueTypeBoxed::getBoxedValueType() {
+    return boxedValueType;
 }
 
 bool ValueTypeBoxed::isEqual(shared_ptr<ValueType> other) const {
@@ -23,12 +23,12 @@ bool ValueTypeBoxed::isEqual(shared_ptr<ValueType> other) const {
     if (otherBoxed == nullptr)
         return false;
 
-    // If both sub types can also be null
-    if (subType == nullptr) {
-        return otherBoxed->getSubType() == nullptr;
+    // Both boxed value types can be null
+    if (boxedValueType == nullptr) {
+        return otherBoxed->getBoxedValueType() == nullptr;
     // Otherwise they have to match
     } else {
-        return subType->isEqual(otherBoxed->getSubType());
+        return boxedValueType->isEqual(otherBoxed->getBoxedValueType());
     }
 }
 

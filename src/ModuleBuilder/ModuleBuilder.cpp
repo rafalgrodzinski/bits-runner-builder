@@ -2390,8 +2390,8 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
         case ValueTypeKind::A:
             return typePtr;
         case ValueTypeKind::BOXED:
-            if (shouldUnbox && dynamic_pointer_cast<ValueTypeBoxed>(valueType)->getSubType() != nullptr)
-                return llvmTypeForValueType(dynamic_pointer_cast<ValueTypeBoxed>(valueType)->getSubType());
+            if (shouldUnbox && dynamic_pointer_cast<ValueTypeBoxed>(valueType)->getBoxedValueType() != nullptr)
+                return llvmTypeForValueType(dynamic_pointer_cast<ValueTypeBoxed>(valueType)->getBoxedValueType());
             else
                 return typeBoxed;
         case ValueTypeKind::DATA: {

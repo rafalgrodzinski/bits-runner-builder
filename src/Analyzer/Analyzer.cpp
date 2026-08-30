@@ -1618,7 +1618,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
         shared_ptr<ValueTypeBoxed> valueTypeBoxed = dynamic_pointer_cast<ValueTypeBoxed>(targetType);
 
-        sourceExpression = checkAndTryCasting(sourceExpression, valueTypeBoxed->getSubType(), returnType);
+        sourceExpression = checkAndTryCasting(sourceExpression, valueTypeBoxed->getBoxedValueType(), returnType);
 
         targetExpression = make_shared<ExpressionChained>(
             vector<shared_ptr<Expression>>(
@@ -1674,7 +1674,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1702,7 +1702,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1725,7 +1725,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1763,7 +1763,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1797,7 +1797,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1829,7 +1829,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
                 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1859,7 +1859,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1889,7 +1889,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1916,7 +1916,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1942,7 +1942,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1967,7 +1967,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -1991,7 +1991,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -2012,7 +2012,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -2034,7 +2034,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
 
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -2056,7 +2056,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return sourceType->getSubType()->isEqual(targetType->getSubType());
                 }
                 case ValueTypeKind::BOXED: {
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getSubType());
+                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
                 }
                 /*case ValueTypeKind::NAMED_TYPE: {
                     shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
@@ -2325,7 +2325,7 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTy
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
     // Skip if already resolved
-    if (valueTypeBoxed->getSubType() != nullptr)
+    if (valueTypeBoxed->getBoxedValueType() != nullptr)
     return valueTypeBoxed;
     
     // Otherwise try getting value type from the provided scope
