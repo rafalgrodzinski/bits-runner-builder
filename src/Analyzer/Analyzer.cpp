@@ -2311,7 +2311,8 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
     }
 }
 
-shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTypeBlob) {    
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBlob> valueTypeBlob) {
+    valueTypeBlob->setModuleName(module->getName());
     // Check if blob is registered
     if (scope->blobScope->getState(valueTypeBlob->getSymbolName()) == AnalyzerScopeState::NOT_REGISTERED) {
         markErrorNotDefined(nullptr, valueTypeBlob->getSymbolName()->getGlobalName());

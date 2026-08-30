@@ -13,6 +13,11 @@ shared_ptr<ValueType> ValueTypeBoxed::getBoxedValueType() {
     return boxedValueType;
 }
 
+void ValueTypeBoxed::setModuleName(const string &moduleName) {
+    if (boxedValueType != nullptr)
+        boxedValueType->setModuleName(moduleName);
+}
+
 bool ValueTypeBoxed::isEqual(shared_ptr<ValueType> other) const {
     // Sanity check
     if (other == nullptr)
