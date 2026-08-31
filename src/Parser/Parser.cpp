@@ -43,6 +43,7 @@
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
 
 #include "Parsee/Parsee.h"
@@ -2566,7 +2567,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     else if (isEnumValue)
         return make_shared<ValueTypeEnumField>(name, argTypes);
     else if (isProto)
-        return ValueType::proto(name);
+        return make_shared<ValueTypeProto>(name);
     else if (isBoxed)
         return make_shared<ValueTypeBoxed>(boxedNamedValueTypeKey, subType);
     else

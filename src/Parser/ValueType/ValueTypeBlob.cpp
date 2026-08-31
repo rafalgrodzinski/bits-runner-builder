@@ -9,6 +9,14 @@ shared_ptr<SymbolName> ValueTypeBlob::getSymbolName() const {
     return symbolName;
 }
 
+optional<vector<string>> ValueTypeBlob::getNamedValueTypeKeys() {
+    return namedValueTypeKeys;
+}
+
+vector<shared_ptr<ValueType>> ValueTypeBlob::getNamedValueTypes() {
+    return namedValueTypes;
+}
+
 void ValueTypeBlob::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
 }
@@ -28,12 +36,4 @@ bool ValueTypeBlob::isEqual(shared_ptr<ValueType> other) const {
 
 shared_ptr<ValueType> ValueTypeBlob::clone() const {
     return make_shared<ValueTypeBlob>(*this);
-}
-
-optional<vector<string>> ValueTypeBlob::getNamedValueTypeKeys() {
-    return namedValueTypeKeys;
-}
-
-vector<shared_ptr<ValueType>> ValueTypeBlob::getNamedValueTypes() {
-    return namedValueTypes;
 }

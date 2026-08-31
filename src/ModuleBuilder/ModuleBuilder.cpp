@@ -41,6 +41,7 @@
 #include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
 
 ModuleBuilder::ModuleBuilder(
@@ -978,7 +979,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 if (sourcePointerValue == nullptr)
                     return;
 
-                string targetProtoName = targetWrappedValue->getValueType()->getGlobalName();
+                string targetProtoName = dynamic_pointer_cast<ValueTypeProto>(targetWrappedValue->getValueType())->getSymbolName()->getGlobalName();
                 auto targetProtoMembers = *scope->getProtoStructMembers(targetProtoName);
 
                 int targetMembersCount = targetWrappedValue->getStructType()->getStructNumElements();
@@ -1502,7 +1503,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             }
         // Proto expression?
         } else if (parentExpression->getValueType()->isProto()) {
-            string parentProtoName = parentExpression->getValueType()->getGlobalName();
+            string parentProtoName = dynamic_pointer_cast<ValueTypeProto>(parentExpression->getValueType())->getSymbolName()->getGlobalName();
 
             // call expression?
             if (shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(chainExpression)) {
@@ -1885,7 +1886,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             store->setVolatile(valueTypePtr->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueType::A);
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {
-        string protoName = parentWrappedValue->getValueType()->getGlobalName();
+        string protoName = dynamic_pointer_cast<ValueTypeProto>(parentWrappedValue->getValueType())->getSymbolName()->getGlobalName();
         llvm::StructType *structType = scope->getProtoStructType(protoName);
         // pointer to implementing blob is at index 0
         llvm::Value *index[] = {
@@ -2449,7 +2450,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
         case ValueTypeKind::BLOB: {
             llvm::StructType *structType = scope->getStructType(dynamic_pointer_cast<ValueTypeBlob>(valueType)->getSymbolName()->getGlobalName());
             if (structType == nullptr)
-                markErrorNotDefined(nullptr, format("blob \"{}\"", valueType->getGlobalName()));
+                markErrorNotDefined(nullptr, format("blob \"{}\"", dynamic_pointer_cast<ValueTypeBlob>(valueType)->getSymbolName()->getGlobalName()));
             return structType;
         }
         case ValueTypeKind::ENUM:
@@ -2457,9 +2458,9 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             return typeEnumStruct;
         }
         case ValueTypeKind::PROTO: {
-            llvm::StructType *structType = scope->getProtoStructType(valueType->getGlobalName());
+            llvm::StructType *structType = scope->getProtoStructType(dynamic_pointer_cast<ValueTypeProto>(valueType)->getSymbolName()->getGlobalName());
             if (structType == nullptr)
-                markErrorNotDefined(nullptr, format("proto \"{}\"", valueType->getGlobalName()));
+                markErrorNotDefined(nullptr, format("proto \"{}\"", dynamic_pointer_cast<ValueTypeProto>(valueType)->getSymbolName()->getGlobalName()));
             return structType;
         }
         case ValueTypeKind::FUN: {

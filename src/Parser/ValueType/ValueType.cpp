@@ -84,11 +84,6 @@ shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::proto(const string &protoName) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::PROTO, protoName);
-    return valueType;
-}
-
 shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::COMPOSITE;
@@ -99,67 +94,16 @@ shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &
 
 ValueType::ValueType() { }
 
-ValueType::ValueType(ValueTypeKind kind, const string &name):
-kind(kind) {
-    size_t pos = name.find('.');
-    if (pos != string::npos) {
-        this->moduleName = name.substr(0, pos);
-        this->name = name.substr(pos + 1, name.length());
-    } else {
-        this->name = name;
-    }
-}
+ValueType::ValueType(ValueTypeKind kind):
+kind(kind) { }
 
 ValueTypeKind ValueType::getKind() const {
     return kind;
 }
 
-string ValueType::getName() const {
-    return name;
-}
-
-string ValueType::getModuleName() const {
-    return moduleName;
-}
-
-void ValueType::setModuleName(const string &moduleName) {
-    if (this->moduleName.empty())
-        this->moduleName = moduleName;
-
-    if (this->getSubType() != nullptr)
-        this->getSubType()->setModuleName(moduleName);
-
-    if (argumentTypes) {
-        for (shared_ptr<ValueType> typeValue : *argumentTypes)
-            typeValue->setModuleName(moduleName);
-    }
-
-    if (namedTypeValues) {
-        for (shared_ptr<ValueType> typeValue : *namedTypeValues)
-            typeValue->setModuleName(moduleName);
-    }
-
-    if (returnType != nullptr) {
-        returnType->setModuleName(moduleName);
-    }
-}
-
-string ValueType::getGlobalName() const {
-    string moduleName = this->moduleName;
-    if (moduleName.empty())
-        moduleName = "{UNDEFINED}";
-
-    return format("{}.{}", moduleName, name);
-}
-
 shared_ptr<ValueType> ValueType::getSubType() const {
     if (subType == nullptr)
         return nullptr;
-
-    if (kind == ValueTypeKind::BOXED) {
-        subType->namedTypeKeys = namedTypeKeys;
-        subType->namedTypeValues = namedTypeValues;
-    }
 
     return subType;
 }
@@ -392,12 +336,4 @@ bool ValueType::isBoxed() const {
 
 bool ValueType::isComposite() const {
     return kind == ValueTypeKind::COMPOSITE;
-}
-
-void ValueType::setParent(weak_ptr<ValueType> parent) {
-    this->parent = parent;
-}
-
-weak_ptr<ValueType> ValueType::getParent() {
-    return parent;
 }

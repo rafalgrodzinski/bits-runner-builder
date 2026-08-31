@@ -47,6 +47,7 @@
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
 
 Analyzer::Analyzer(
@@ -800,7 +801,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             extraArguments = 1; // for the implicit "it"
             scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
         } else if (isParentProto) {
-            string protoName = parentExpression->getValueType()->getGlobalName();
+            string protoName = dynamic_pointer_cast<ValueTypeProto>(parentExpression->getValueType())->getSymbolName()->getGlobalName();
             auto members = *(scope->getProtoMembers(protoName));
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionCall->getName().compare(member.first) == 0) {
@@ -1214,7 +1215,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             return nullptr;
         // check proto member
         } else if (isParentProto) {
-            string protoName = parentExpression->getValueType()->getGlobalName();
+            string protoName = dynamic_pointer_cast<ValueTypeProto>(parentExpression->getValueType())->getSymbolName()->getGlobalName();
             auto members = *(scope->getProtoMembers(protoName));
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionValue->getIdentifier() == member.first) {
@@ -2093,13 +2094,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
         // blob
         case ValueTypeKind::BLOB: {
-            if (!targetType->isBlob())
-                return false;
-
-            string sourceBlobName = sourceType->getGlobalName();
-            string targetBlobName = targetType->getGlobalName();
-
-            return sourceBlobName.compare(targetBlobName) == 0;
+            return sourceType->isEqual(targetType);
         }
 
         // from composite
@@ -2169,7 +2164,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // to proto
                 case ValueTypeKind::PROTO: {
-                    string targetProtoName = targetType->getGlobalName();
+                    string targetProtoName = dynamic_pointer_cast<ValueTypeProto>(targetType)->getSymbolName()->getGlobalName();
 
                     vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
                     if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPointer())

@@ -49,6 +49,7 @@
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
 
 /// Private ///
@@ -1002,6 +1003,10 @@ string Logger::toString(shared_ptr<ValueTypeFun> valueType) {
     return text;
 }
 
+string Logger::toString(shared_ptr<ValueTypeProto> valueType) {
+    return format("PROTO<`{}`>", valueType->getSymbolName()->getGlobalName());
+}
+
 string Logger::toString(shared_ptr<ValueTypePtr> valueType) {
     string text;
 
@@ -1490,8 +1495,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::ENUM_FIELD:
             return toString(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
         case ValueTypeKind::PROTO:
-            text = format("PROTO<`{}`>", valueType->getGlobalName());
-            break;
+            return toString(dynamic_pointer_cast<ValueTypeProto>(valueType));
         case ValueTypeKind::BOXED:
             return toString(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
         case ValueTypeKind::FUN:

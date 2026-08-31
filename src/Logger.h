@@ -58,6 +58,7 @@ class ValueTypeBoxed;
 class ValueTypeEnum;
 class ValueTypeEnumField;
 class ValueTypeFun;
+class ValueTypeProto;
 class ValueTypePtr;
 
 using namespace std;
@@ -117,6 +118,7 @@ private:
     static string toString(shared_ptr<ValueTypeEnum> valueType);
     static string toString(shared_ptr<ValueTypeEnumField> valueType);
     static string toString(shared_ptr<ValueTypeFun> valueType);
+    static string toString(shared_ptr<ValueTypeProto> valueType);
     static string toString(shared_ptr<ValueTypePtr> valueType);
  
     // general support

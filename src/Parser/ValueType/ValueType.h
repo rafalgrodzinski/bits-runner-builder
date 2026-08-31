@@ -51,16 +51,9 @@ friend class AnalyzerScope;
 
 private:
     ValueTypeKind kind;
-    string name;
-    string moduleName;
     shared_ptr<ValueType> subType;
     shared_ptr<Expression> countExpression = nullptr;
-    optional<vector<shared_ptr<ValueType>>> argumentTypes = {};
-    shared_ptr<ValueType> returnType = nullptr;
     optional<vector<shared_ptr<ValueType>>> compositeElementTypes = {};
-    optional<string> namedTypeKey = {};
-    optional<vector<string>> namedTypeKeys = {};
-    optional<vector<shared_ptr<ValueType>>> namedTypeValues = {};
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -82,18 +75,14 @@ public:
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> proto(const string &protoName);
     static shared_ptr<ValueType> composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression);
 
     ValueType();
-    ValueType(ValueTypeKind kind, const string &name = "");
+    ValueType(ValueTypeKind kind);
 
     ValueTypeKind getKind() const;
 
-    string getName() const;
-    string getModuleName() const;
-    virtual void setModuleName(const string &moduleName);
-    string getGlobalName() const;
+    virtual void setModuleName(const string &moduleName) { }
 
     // data, pointer, boxed
     shared_ptr<ValueType> getSubType() const;
@@ -126,13 +115,6 @@ public:
     bool isProto() const;
     bool isBoxed() const;
     bool isComposite() const;
-
-public:
-    void setParent(weak_ptr<ValueType> parent);
-    weak_ptr<ValueType> getParent();
-
-private:
-    weak_ptr<ValueType> parent;
 };
 
 #endif
