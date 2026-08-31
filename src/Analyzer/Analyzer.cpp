@@ -47,6 +47,7 @@
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypePtr.h"
 
 Analyzer::Analyzer(
     const string &defaultModuleName,
@@ -786,8 +787,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         bool isParentProto = parentExpression->getValueType()->isProto();
         bool isVal = expressionCall->getName().compare("val") == 0;
 
-        if (isParentPointer && isVal && parentExpression->getValueType()->getSubType()->isFunction()) {
-            valueType = parentExpression->getValueType()->getSubType();
+        if (isParentPointer && isVal && dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->isFunction()) {
+            valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
         } else if (isParentBlob) {
             shared_ptr<ValueTypeBlob> parentBlobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
             string functionName = format("{}.{}", parentBlobValueType->getSymbolName()->getGlobalName(), expressionCall->getName());
@@ -808,7 +809,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             }
             extraArguments = 1; // for the implicit "it"
         } else {
-            markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->getSubType(), nullptr);
+            markErrorInvalidType(expressionCall->getLocation(), dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType(), nullptr);
             return nullptr;
         }
     } else {
@@ -1118,7 +1119,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             switch (expressionValue->getValueKind()) {
                 case ExpressionValueKind::SIMPLE:
                 case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
-                    expressionValue->valueType = parentExpression->getValueType()->getSubType();
+                    expressionValue->valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
                     expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_SIMPLE;
                     break;
                 case ExpressionValueKind::DATA:
@@ -1133,7 +1134,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                         );
                         break;
                     }
-                    expressionValue->valueType = parentExpression->getValueType()->getSubType()->getSubType();
+                    expressionValue->valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->getSubType();
                     expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_DATA;
                     expressionValue->indexExpression = checkAndTryCasting(expressionValue->getIndexExpression(), ValueType::UINT, nullptr);
                     break;
@@ -1292,7 +1293,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
             return nullptr;
         }
-        type = blobPtrType->getSubType();
+        type = dynamic_pointer_cast<ValueTypePtr>(blobPtrType)->getPointeeValueType();
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
     // check if it's a function
     } else if (type == nullptr) {
@@ -1384,10 +1385,10 @@ bool Analyzer::isUnaryOperationValidForType(ExpressionUnaryOperation operation, 
 bool Analyzer::isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) const{
     // Unbox types if required
     if (firstType->isBoxed())
-        firstType = firstType->getSubType();
+        firstType = dynamic_pointer_cast<ValueTypeBoxed>(firstType)->getBoxedValueType();
 
     if (secondType->isBoxed())
-        secondType = secondType->getSubType();
+        secondType = dynamic_pointer_cast<ValueTypeBoxed>(secondType)->getBoxedValueType();
 
     switch (firstType->getKind()) {
         // Valid operations for boolean types
@@ -2061,7 +2062,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
         case ValueTypeKind::PTR: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::PTR: {
-                    return sourceType->getSubType()->isEqual(targetType->getSubType());
+                    return sourceType->isEqual(targetType);
                 }
                 case ValueTypeKind::BOXED: {
                     return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
@@ -2174,7 +2175,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPointer())
                         return false;
 
-                    shared_ptr<ValueType> subType = sourceElementTypes.at(0)->getSubType();
+                    shared_ptr<ValueType> subType = dynamic_pointer_cast<ValueTypePtr>(sourceElementTypes.at(0))->getPointeeValueType();
                     if (subType == nullptr || !subType->isBlob())
                         return false;
 
@@ -2303,7 +2304,7 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             return checkValueType(dynamic_pointer_cast<ValueTypeFun>(valueType));
         }
         case ValueTypeKind::PTR: {
-            return ValueType::ptr(resolvedAndCheckedValueType(valueType->getSubType(), false, location), valueType->getIsVolatile());
+            return checkValueType(dynamic_pointer_cast<ValueTypePtr>(valueType));
         }
         default: {
             return valueType;
@@ -2415,6 +2416,13 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeFun> valueTyp
         return nullptr;
 
     return valueTypeFun;
+}
+
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypePtr> valueTypePtr) {
+    return make_shared<ValueTypePtr>(
+        resolvedAndCheckedValueType(valueTypePtr->getPointeeValueType(), false, nullptr),
+        valueTypePtr->getIsVolatile()
+    );
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {

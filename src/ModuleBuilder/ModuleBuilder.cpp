@@ -41,6 +41,7 @@
 #include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypePtr.h"
 
 ModuleBuilder::ModuleBuilder(
     const string &defaultModuleName,
@@ -343,7 +344,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
         if (funArgumentType == nullptr)
             return;
         llvm::AllocaInst *alloca = buildAlloca(funArgumentType, format("a_arg_{}", argument.first));
-        builder->CreateStore(funArgument, alloca)->setVolatile(argument.second->getIsVolatile());
+        llvm::StoreInst *store = builder->CreateStore(funArgument, alloca);
+        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(argument.second))
+            store->setVolatile(valueTypePtr->getIsVolatile());
 
         scope->setWrappedValue(
             argument.first,
@@ -517,7 +520,8 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
 
     // then pointers to all the variables
     for (shared_ptr<StatementVariable> statementVariable : statementProto->getVariableStatements()) {
-        shared_ptr<ValueType> valueType = ValueType::ptr(statementVariable->getValueType(), false);
+
+        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariable->getValueType(), false);
         members.push_back(pair(statementVariable->getIdentifier(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
         if (type == nullptr)
@@ -527,7 +531,8 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
 
     // and then pointers to the functions
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
-        shared_ptr<ValueType> valueType = ValueType::ptr(statementFunctionDeclaration->getValueType(), false);
+        //shared_ptr<ValueType> valueType = ValueType::ptr(statementFunctionDeclaration->getValueType(), false);
+        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementFunctionDeclaration->getValueType(), false);
         members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
         if (type == nullptr)
@@ -787,7 +792,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     llvm::Value *sourceValue = wrappedValueForExpression(valueExpressions.at(i))->getValue();
                     if (sourceValue == nullptr)
                         return;
-                    builder->CreateStore(sourceValue, targetPtr)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                    llvm::StoreInst *store = builder->CreateStore(sourceValue, targetPtr);
+                    if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                        store->setVolatile(valueTypePtr->getIsVolatile());
                 }
                 break;
             }
@@ -856,7 +863,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     }
                     llvm::Value *targetPointerValue = targetWrappedValue->getPointerValue();
                     llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetPointerValue, index, format("gep_blob-{}", string(targetPointerValue->getName())));
-                    builder->CreateStore(wrappedSourceValue->getValue(), targetMember)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                    llvm::StoreInst *store = builder->CreateStore(wrappedSourceValue->getValue(), targetMember);
+                    if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                        store->setVolatile(valueTypePtr->getIsVolatile());
                 }
                 break;
             }
@@ -874,7 +883,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 llvm::Value *targetValue = targetWrappedValue->getPointerValue();
                 if (targetValue == nullptr)
                     return;
-                builder->CreateStore(sourceValue, targetValue)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                llvm::StoreInst *store = builder->CreateStore(sourceValue, targetValue);
+                if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                    store->setVolatile(valueTypePtr->getIsVolatile());
                 break;
             }
             default: {
@@ -906,7 +917,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
 
                 llvm::ArrayRef<llvm::Constant *> constantValues = llvm::ArrayRef(values);
                 llvm::Constant *constantStructValue = llvm::ConstantStruct::get(typeEnumStruct, constantValues);
-                builder->CreateStore(constantStructValue, targetWrappedValue->getPointerValue())->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                llvm::StoreInst *store = builder->CreateStore(constantStructValue, targetWrappedValue->getPointerValue());
+                if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                    store->setVolatile(valueTypePtr->getIsVolatile());
 
                 // store payload
                 if (valueExpressions.size() == 1) {
@@ -921,7 +934,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     }
                     llvm::Value *targetPointerValue = targetWrappedValue->getPointerValue();
                     llvm::Value *targetMember = builder->CreateGEP(targetWrappedValue->getType(), targetPointerValue, index, format("gep_enum-{}", string(targetPointerValue->getName())));
-                    builder->CreateStore(wrappedSourceValue->getValue(), targetMember)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                    llvm::StoreInst *store = builder->CreateStore(wrappedSourceValue->getValue(), targetMember);
+                    if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                        store->setVolatile(valueTypePtr->getIsVolatile());
                 }
                 break;
             }
@@ -939,7 +954,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 llvm::Value *targetValue = targetWrappedValue->getPointerValue();
                 if (targetValue == nullptr)
                     return;
-                builder->CreateStore(sourceValue, targetValue)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                llvm::StoreInst *store = builder->CreateStore(sourceValue, targetValue);
+                if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                    store->setVolatile(valueTypePtr->getIsVolatile());
                 break;
             }
             // enum <- invalid
@@ -993,7 +1010,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     };
                     llvm::StructType *targetStructType = targetWrappedValue->getStructType();
                     llvm::Value *targetMember = builder->CreateGEP(targetStructType, targetWrappedValue->getPointerValue(), targetIndex);
-                    builder->CreateStore(sourceValue, targetMember)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                    llvm::StoreInst *store = builder->CreateStore(sourceValue, targetMember);
+                    if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                        store->setVolatile(valueTypePtr->getIsVolatile());
                 }
                 break;
             }
@@ -1011,7 +1030,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 llvm::Value *targetValue = targetWrappedValue->getPointerValue();
                 if (targetValue == nullptr)
                     return;
-                builder->CreateStore(sourceValue, targetValue)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                llvm::StoreInst *store = builder->CreateStore(sourceValue, targetValue);
+                if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                    store->setVolatile(valueTypePtr->getIsVolatile());
                 break;
             }
             default: {
@@ -1035,7 +1056,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
 
                 llvm::Value *sourceValue = adrWrappedValue->getValue();
                 llvm::Value *targetValue = targetWrappedValue->getPointerValue();
-                builder->CreateStore(sourceValue, targetValue)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                llvm::StoreInst *store = builder->CreateStore(sourceValue, targetValue);
+                if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                    store->setVolatile(valueTypePtr->getIsVolatile());
                 break;
             }
             // ptr <- ?
@@ -1048,7 +1071,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     markErrorInvalidAssignment(valueExpression->getLocation());
                     return;
                 }
-                builder->CreateStore(wrappedSourceValue->getValue(), targetWrappedValue->getPointerValue())->setVolatile(wrappedSourceValue->getValueType()->getIsVolatile());
+                llvm::StoreInst *store = builder->CreateStore(wrappedSourceValue->getValue(), targetWrappedValue->getPointerValue());
+                if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(wrappedSourceValue->getValueType()))
+                    store->setVolatile(valueTypePtr->getIsVolatile());
                 break;
             }
             default: {
@@ -1076,7 +1101,9 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 llvm::Value *targetValue = targetWrappedValue->getPointerValue();
                 if (targetValue == nullptr)
                     return;
-                builder->CreateStore(sourceValue, targetValue)->setVolatile(targetWrappedValue->getValueType()->getIsVolatile());
+                llvm::StoreInst *store = builder->CreateStore(sourceValue, targetValue);
+                if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetWrappedValue->getValueType()))
+                    store->setVolatile(valueTypePtr->getIsVolatile());
                 break;
             }
             default: {
@@ -1496,7 +1523,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         };
                         llvm::Value *funMemberPtr = builder->CreateGEP(structType, currentWrappedValue->getPointerValue(), funIndexMember);
                         llvm::LoadInst *funPointerLoad = builder->CreateLoad(typePtr, funMemberPtr);
-                        funPointerLoad->setVolatile(currentWrappedValue->getValueType()->getIsVolatile());
+                        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(currentWrappedValue->getValueType()))
+                            funPointerLoad->setVolatile(valueTypePtr->getIsVolatile());
 
                         // it value
                         llvm::Value *itIndexMember[] = {
@@ -1507,7 +1535,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         llvm::Value *sourcePointer = currentWrappedValue->getPointerValue();
                         llvm::Value *protoMemberPointer = builder->CreateGEP(structType, sourcePointer, itIndexMember, format("gep_proto-{}", string(sourcePointer->getName())));
                         llvm::LoadInst *blobMemberLoad = builder->CreateLoad(typePtr, protoMemberPointer, format("ld_proto-{}", string(protoMemberPointer->getName())));
-                        blobMemberLoad->setVolatile(currentWrappedValue->getValueType()->getIsVolatile());
+                        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(currentWrappedValue->getValueType()))
+                            blobMemberLoad->setVolatile(valueTypePtr->getIsVolatile());
 
                         currentWrappedValue = wrappedValueForCall(
                             funPointerLoad,
@@ -1537,7 +1566,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         llvm::Value *sourcePointer = currentWrappedValue->getPointerValue();
                         llvm::Value *protoMemberPointer = builder->CreateGEP(currentWrappedValue->getStructType(), sourcePointer, index, format("gep-proto-{}", string(sourcePointer->getName())));
                         llvm::LoadInst *blobMemberLoad = builder->CreateLoad(typePtr, protoMemberPointer, format("ld_proto-{}", string(protoMemberPointer->getName())));
-                        blobMemberLoad->setVolatile(currentWrappedValue->getValueType()->getIsVolatile());
+                        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(currentWrappedValue->getValueType()))
+                            blobMemberLoad->setVolatile(valueTypePtr->getIsVolatile());
 
                         currentWrappedValue = wrappedValueForValue(nullptr, blobMemberLoad, pointeeType, expressionValue);
                         parentExpression = chainExpression;
@@ -1836,7 +1866,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     if (parentWrappedValue->isArray() && isCount) {
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
-        shared_ptr<ValueType> pointeeValueType = parentExpression->getValueType()->getSubType();
+        shared_ptr<ValueType> pointeeValueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
         if (pointeeValueType == nullptr) {
             markErrorNoTypeForPointer(parentExpression->getLocation());
             return nullptr;
@@ -1850,7 +1880,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     } else if (parentWrappedValue->isPointer() && isVadr) {
         llvm::Value *pointerValue = parentWrappedValue->getValue();
         llvm::Value *alloca = buildAlloca(typePtr, format("a_vadr-{}", string(pointerValue->getName())));
-        builder->CreateStore(pointerValue, alloca)->setVolatile(parentWrappedValue->getValueType()->getIsVolatile());
+        llvm::StoreInst *store = builder->CreateStore(pointerValue, alloca);
+        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
+            store->setVolatile(valueTypePtr->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueType::A);
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {
         string protoName = parentWrappedValue->getValueType()->getGlobalName();
@@ -1862,12 +1894,15 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         };
         llvm::Value *memberPtr = builder->CreateGEP(structType, parentWrappedValue->getPointerValue(), index);
         llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, memberPtr);
-        pointerLoad->setVolatile(parentWrappedValue->getValueType()->getIsVolatile());
+        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
+            pointerLoad->setVolatile(valueTypePtr->getIsVolatile());
         return WrappedValue::wrappedValue(pointerLoad, ValueType::A);
     } else if (isAdr) {
         llvm::Value *pointerValue = parentWrappedValue->getPointerValue();
         llvm::Value *alloca = buildAlloca(typePtr, format("a_adr-{}", string(pointerValue->getName())));
-        builder->CreateStore(pointerValue, alloca)->setVolatile(parentWrappedValue->getValueType()->getIsVolatile());
+        llvm::StoreInst *store = builder->CreateStore(pointerValue, alloca);
+        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
+            store->setVolatile(valueTypePtr->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueType::A);
     } else if (isSize) {
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
@@ -2228,7 +2263,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                 } else {
                     llvm::Value *sourceMemberPtr = builder->CreateGEP(sourceWrappedValue->getArrayType(), sourceWrappedValue->getPointerValue(), index);
                     sourceMemberValue = builder->CreateLoad(sourceWrappedValue->getArrayType()->getArrayElementType(), sourceMemberPtr);
-                    ((llvm::LoadInst*)sourceMemberValue)->setVolatile(sourceWrappedValue->getValueType()->getIsVolatile());
+                    if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(sourceWrappedValue->getValueType()))
+                        ((llvm::LoadInst*)sourceMemberValue)->setVolatile(valueTypePtr->getIsVolatile());
                 }
 
                 // cast the individual source member to target type
@@ -2246,7 +2282,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                 llvm::Value *targetMemberPtr = builder->CreateGEP(targetType, targetAlloca, index);
 
                 // and finally store source member in the target member
-                builder->CreateStore(castSourceMemberValue->getValue(), targetMemberPtr)->setVolatile(targetValueType->getIsVolatile());
+                llvm::StoreInst *store = builder->CreateStore(castSourceMemberValue->getValue(), targetMemberPtr);
+                if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(targetValueType))
+                    store->setVolatile(valueTypePtr->getIsVolatile());
             }
         }
 

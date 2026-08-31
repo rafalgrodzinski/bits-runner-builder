@@ -61,7 +61,6 @@ private:
     optional<string> namedTypeKey = {};
     optional<vector<string>> namedTypeKeys = {};
     optional<vector<shared_ptr<ValueType>>> namedTypeValues = {};
-    bool isVolatile = false;
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -84,7 +83,6 @@ public:
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
     static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
     static shared_ptr<ValueType> proto(const string &protoName);
-    static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType, bool isVolatile);
     static shared_ptr<ValueType> composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression);
 
     ValueType();
@@ -97,7 +95,6 @@ public:
     virtual void setModuleName(const string &moduleName);
     string getGlobalName() const;
 
-    bool getIsVolatile() const;
     // data, pointer, boxed
     shared_ptr<ValueType> getSubType() const;
     // data

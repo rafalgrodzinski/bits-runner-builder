@@ -49,6 +49,7 @@
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypePtr.h"
 
 /// Private ///
 
@@ -1001,6 +1002,16 @@ string Logger::toString(shared_ptr<ValueTypeFun> valueType) {
     return text;
 }
 
+string Logger::toString(shared_ptr<ValueTypePtr> valueType) {
+    string text;
+
+    text += format("PTR<{}>", toString(valueType->getPointeeValueType()));
+    if (valueType->getIsVolatile())
+        text = format("v_{}", text);
+
+    return text;
+}
+
 string Logger::toString(EnumField field, vector<IndentKind> indents) {
     string text;
     string line;
@@ -1462,8 +1473,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             text = "A";
             break;
         case ValueTypeKind::PTR:
-            text = format("PTR<{}>", toString(valueType->getSubType()));
-            break;
+            return toString(dynamic_pointer_cast<ValueTypePtr>(valueType));
         case ValueTypeKind::DATA: {
             if (valueType->getCountExpression() != nullptr) {
                 text = format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));
@@ -1490,9 +1500,6 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             text = format("COMPOSITE");
             break;
     }
-
-    if (valueType->getIsVolatile())
-        text = format("v_{}", text);
 
     return text;
 }

@@ -43,6 +43,7 @@
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypePtr.h"
 
 #include "Parsee/Parsee.h"
 #include "Parsee/ParseeResult.h"
@@ -467,7 +468,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                         // Insert an implicit "it" argument for the blob function
                         pair<string, shared_ptr<ValueType>> itArgument = pair(
                             ".pit",
-                            ValueType::ptr(make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>()), false)
+                            make_shared<ValueTypePtr>(make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>()), false)
                         );
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
@@ -1118,7 +1119,10 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                     case StatementKind::FUNCTION_DECLARATION: {
                         shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(parseeResult.getStatement());
                         // Insert an implicit "it" argument at the beging
-                        pair<string, shared_ptr<ValueType>> itArgument = pair(".pit", ValueType::ptr(ValueType::NONE, false));
+                        pair<string, shared_ptr<ValueType>> itArgument = pair(
+                            ".pit",
+                            make_shared<ValueTypePtr>(ValueType::NONE, false)
+                        );
                         statementFunctionDeclaration->arguments.insert(statementFunctionDeclaration->arguments.begin(), itArgument);
                         functionDeclarationStatements.push_back(statementFunctionDeclaration);
                         break;
@@ -2550,9 +2554,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
     }
 
     if (isPtr)
-        return ValueType::ptr(subType, isVolatile);
+        return make_shared<ValueTypePtr>(subType, isVolatile);
     else if (isPtrFun)
-        return ValueType::ptr(make_shared<ValueTypeFun>(argTypes, retType), isVolatile);
+        return make_shared<ValueTypePtr>(make_shared<ValueTypeFun>(argTypes, retType), isVolatile);
     else if (isData)
         return ValueType::data(subType, countExpression);
     else if (isBlob)

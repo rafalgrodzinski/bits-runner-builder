@@ -89,14 +89,6 @@ shared_ptr<ValueType> ValueType::proto(const string &protoName) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType, bool isVolatile) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::PTR;
-    valueType->subType = subType;
-    valueType->isVolatile = isVolatile;
-    return valueType;
-}
-
 shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression) {
     shared_ptr<ValueType> valueType = make_shared<ValueType>();
     valueType->kind = ValueTypeKind::COMPOSITE;
@@ -160,15 +152,9 @@ string ValueType::getGlobalName() const {
     return format("{}.{}", moduleName, name);
 }
 
-bool ValueType::getIsVolatile() const {
-    return isVolatile;
-}
-
 shared_ptr<ValueType> ValueType::getSubType() const {
     if (subType == nullptr)
         return nullptr;
-
-    subType->isVolatile = isVolatile;
 
     if (kind == ValueTypeKind::BOXED) {
         subType->namedTypeKeys = namedTypeKeys;
@@ -199,9 +185,6 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
         return false;
 
     switch (kind) {
-        case ValueTypeKind::PTR: {
-            return other->isPointer() && subType->isEqual(other->getSubType());
-        }
         case ValueTypeKind::DATA: {
             // first check the types
             if (!other->isData() || !subType->isEqual(other->getSubType()))
@@ -228,16 +211,6 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
             int thatSize = thatCountLiteralExpression->getUIntValue();
 
             return thisSize == thatSize;
-        }
-        case ValueTypeKind::BLOB: {
-            if (!other->isBlob())
-                return false;
-            return getGlobalName() == other->getGlobalName();
-        }
-        case ValueTypeKind::ENUM: {
-            if (other->getKind() != ValueTypeKind::ENUM)
-                return false;
-            return getGlobalName() == other->getGlobalName();
         }
         default:
             break;
