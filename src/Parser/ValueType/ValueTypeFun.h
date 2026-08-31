@@ -14,9 +14,10 @@ public:
         shared_ptr<ValueType> returnValueType
     );
 
-    bool isEqual(shared_ptr<ValueType> other) const override;
     vector<shared_ptr<ValueType>> getArgumentValueTypes();
     shared_ptr<ValueType> getReturnValueType();
+
+    bool isEqual(shared_ptr<ValueType> other) const override;
 
 private:
     shared_ptr<SymbolName> symbolName;

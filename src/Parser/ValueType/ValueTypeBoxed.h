@@ -11,6 +11,7 @@ public:
 
     optional<string> getNamedValueTypeKey();
     shared_ptr<ValueType> getBoxedValueType();
+
     void setModuleName(const string &moduleName) override;
     bool isEqual(shared_ptr<ValueType> other) const override;
     shared_ptr<ValueType> clone() const override;

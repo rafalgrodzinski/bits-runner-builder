@@ -9,6 +9,10 @@ shared_ptr<SymbolName> ValueTypeEnum::getSymbolName() const {
     return symbolName;
 }
 
+vector<shared_ptr<ValueType>> ValueTypeEnum::getNamedValueTypes() {
+    return namedValueTypes;
+}
+
 void ValueTypeEnum::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
 }
@@ -26,8 +30,4 @@ bool ValueTypeEnum::isEqual(shared_ptr<ValueType> other) const {
     // Are the named value types identical?
 
     return true;
-}
-
-vector<shared_ptr<ValueType>> ValueTypeEnum::getNamedValueTypes() {
-    return namedValueTypes;
 }

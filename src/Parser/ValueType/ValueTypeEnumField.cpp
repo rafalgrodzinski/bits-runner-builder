@@ -11,6 +11,14 @@ shared_ptr<SymbolName> ValueTypeEnumField::getSymbolName() const {
     return symbolName;
 }
 
+vector<shared_ptr<ValueType>> ValueTypeEnumField::getNamedValueTypes() const {
+    return namedValueTypes;
+}
+
+shared_ptr<ValueType> ValueTypeEnumField::getPayloadValueType() const {
+    return payloadValueType;
+}
+
 void ValueTypeEnumField::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
 }
@@ -21,12 +29,4 @@ bool ValueTypeEnumField::isEqual(shared_ptr<ValueType> other) const {
         return false;
     
     return symbolName->getGlobalName() == valueTypeEnumField->getSymbolName()->getGlobalName();
-}
-
-vector<shared_ptr<ValueType>> ValueTypeEnumField::getNamedValueTypes() const {
-    return namedValueTypes;
-}
-
-shared_ptr<ValueType> ValueTypeEnumField::getPayloadValueType() const {
-    return payloadValueType;
 }

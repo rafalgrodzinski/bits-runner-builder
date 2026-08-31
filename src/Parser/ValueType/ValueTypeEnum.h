@@ -13,9 +13,10 @@ public:
     ValueTypeEnum(const string &name, const vector<shared_ptr<ValueType>> &namedValueTypes);
 
     shared_ptr<SymbolName> getSymbolName() const;
+    vector<shared_ptr<ValueType>> getNamedValueTypes();
+
     void setModuleName(const string &moduleName) override;
     bool isEqual(shared_ptr<ValueType> other) const override;
-    vector<shared_ptr<ValueType>> getNamedValueTypes();
 
 private:
     shared_ptr<SymbolName> symbolName;

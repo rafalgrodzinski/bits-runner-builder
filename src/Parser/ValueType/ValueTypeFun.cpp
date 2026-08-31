@@ -9,6 +9,14 @@ ValueType(ValueTypeKind::FUN),
 argumentValueTypes(argumentValueTypes),
 returnValueType(returnValueType) { }
 
+vector<shared_ptr<ValueType>> ValueTypeFun::getArgumentValueTypes() {
+    return argumentValueTypes;
+}
+
+shared_ptr<ValueType> ValueTypeFun::getReturnValueType() {
+    return returnValueType;
+}
+
 bool ValueTypeFun::isEqual(shared_ptr<ValueType> other) const {
     // Sanity check
     if (other == nullptr)
@@ -34,12 +42,4 @@ bool ValueTypeFun::isEqual(shared_ptr<ValueType> other) const {
         return false;
 
     return true;
-}
-
-vector<shared_ptr<ValueType>> ValueTypeFun::getArgumentValueTypes() {
-    return argumentValueTypes;
-}
-
-shared_ptr<ValueType> ValueTypeFun::getReturnValueType() {
-    return returnValueType;
 }
