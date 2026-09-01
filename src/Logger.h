@@ -55,6 +55,8 @@ enum class TokenKind;
 class ValueType;
 class ValueTypeBlob;
 class ValueTypeBoxed;
+class ValueTypeComposite;
+class ValueTypeData;
 class ValueTypeEnum;
 class ValueTypeEnumField;
 class ValueTypeFun;
@@ -115,11 +117,13 @@ private:
     // value type
     static string toString(shared_ptr<ValueTypeBlob> valueTypeBlob);
     static string toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
-    static string toString(shared_ptr<ValueTypeEnum> valueType);
-    static string toString(shared_ptr<ValueTypeEnumField> valueType);
-    static string toString(shared_ptr<ValueTypeFun> valueType);
-    static string toString(shared_ptr<ValueTypeProto> valueType);
-    static string toString(shared_ptr<ValueTypePtr> valueType);
+    static string toString(shared_ptr<ValueTypeComposite> ValueTypeComposite);
+    static string toString(shared_ptr<ValueTypeData> valueTypeData);
+    static string toString(shared_ptr<ValueTypeEnum> valueTypeEnum);
+    static string toString(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
+    static string toString(shared_ptr<ValueTypeFun> valueTypeFun);
+    static string toString(shared_ptr<ValueTypeProto> valueTypeProto);
+    static string toString(shared_ptr<ValueTypePtr> valueTypePtr);
  
     // general support
     static string toString(EnumField field, vector<IndentKind> indents);

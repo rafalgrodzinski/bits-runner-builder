@@ -39,6 +39,8 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypeBoxed.h"
 #include "Parser/ValueType/ValueTypeBlob.h"
+#include "Parser/ValueType/ValueTypeComposite.h"
+#include "Parser/ValueType/ValueTypeData.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
 #include "Parser/ValueType/ValueTypeProto.h"
@@ -973,7 +975,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
             case ExpressionKind::COMPOSITE_LITERAL: {
                 vector<shared_ptr<Expression>> valueExpressions = dynamic_pointer_cast<ExpressionCompositeLiteral>(valueExpression)->getExpressions();
                 shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpressions.at(0));
-                string sourceBlobName = dynamic_pointer_cast<ValueTypeBlob>(sourceWrappedValue->getValueType()->getSubType())->getSymbolName()->getGlobalName();
+                string sourceBlobName = dynamic_pointer_cast<ValueTypeBlob>(dynamic_pointer_cast<ValueTypePtr>(sourceWrappedValue->getValueType())->getPointeeValueType())->getSymbolName()->getGlobalName();
                 llvm::StructType *sourceStructType = scope->getStructType(sourceBlobName);
                 llvm::Value *sourcePointerValue = sourceWrappedValue->getValue();
                 if (sourcePointerValue == nullptr)
@@ -991,7 +993,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     } else {
                         pair<string, shared_ptr<ValueType>> targetMember = targetProtoMembers.at(i - 1);
                         // if subsequent member is a function, retrieve function from the registered ones
-                        if (targetMember.second->getSubType()->isFunction()) {
+                        if (dynamic_pointer_cast<ValueTypePtr>(targetMember.second)->getPointeeValueType()->isFunction()) {
                             string sourceFunctionName = format("{}.{}", sourceBlobName, targetMember.first);
                             sourceValue = scope->getFunction(sourceFunctionName);
                         // otherwise figure out index and copy value from the source struct
@@ -1513,7 +1515,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                     if (expressionCall->getName() == member.first) {
                         llvm::StructType *structType = scope->getProtoStructType(parentProtoName);
 
-                        shared_ptr<ValueType> funValueType = member.second->getSubType();
+                        shared_ptr<ValueType> funValueType = dynamic_pointer_cast<ValueTypePtr>(member.second)->getPointeeValueType();
                         llvm::Type *type = llvmTypeForValueType(funValueType);
                         llvm::FunctionType *funType = llvm::dyn_cast<llvm::FunctionType>(type);
 
@@ -1561,8 +1563,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         };
                         // function type has to be treated as a pointer (we cannot load a function)
                         llvm::Type *pointeeType = typePtr;
-                        if (!member.second->getSubType()->isFunction())
-                            pointeeType = llvmTypeForValueType(member.second->getSubType());
+                        if (!dynamic_pointer_cast<ValueTypePtr>(member.second)->getPointeeValueType()->isFunction())
+                            pointeeType = llvmTypeForValueType(dynamic_pointer_cast<ValueTypePtr>(member.second)->getPointeeValueType());
 
                         llvm::Value *sourcePointer = currentWrappedValue->getPointerValue();
                         llvm::Value *protoMemberPointer = builder->CreateGEP(currentWrappedValue->getStructType(), sourcePointer, index, format("gep-proto-{}", string(sourcePointer->getName())));
@@ -1595,7 +1597,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     // First try making them constant
     if (expressionCompositeLiteral->getValueType()->isData()) {
         vector<llvm::Constant*> constantValues;
-        int count = expressionCompositeLiteral->getValueType()->getValueArg();
+        // Try getting count from the count expression if it's a literal
+        int count = 0;
+        shared_ptr<Expression> countExpression = dynamic_pointer_cast<ValueTypeComposite>(expressionCompositeLiteral->getValueType())->getCountExpression();
+        if (shared_ptr<ExpressionLiteral> countExpressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(countExpression))
+            count = countExpressionLiteral->getUIntValue();
         for (int i=0; i<count; i++) {
             shared_ptr<Expression> elementExpression = expressionCompositeLiteral->getExpressions().at(i);
             llvm::Value *value = wrappedValueForExpression(elementExpression)->getValue();
@@ -2016,7 +2022,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         case ValueTypeKind::DATA: {
             isSourceData = true;
-            if (shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(sourceWrappedValue->getValueType()->getCountExpression())) {
+            if (shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(dynamic_pointer_cast<ValueTypeData>(sourceWrappedValue->getValueType())->getCountExpression())) {
                 sourceSize = expressionLiteral->getUIntValue();
             }
             break;
@@ -2112,7 +2118,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         case ValueTypeKind::DATA: {
             isTargetData = true;
-            if (shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(targetValueType->getCountExpression())) {
+            if (shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(dynamic_pointer_cast<ValueTypeData>(targetValueType)->getCountExpression())) {
                 targetSize = expressionLiteral->getUIntValue();
             }
             break;
@@ -2238,7 +2244,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         int elementsCount = min(sourceSize, targetSize);
         int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
-        bool areElementTypesSame = sourceWrappedValue->getValueType()->getSubType()->isEqual(targetValueType->getSubType());
+        bool areElementTypesSame = dynamic_pointer_cast<ValueTypeData>(sourceWrappedValue->getValueType())->getElementValueType()->isEqual(dynamic_pointer_cast<ValueTypeData>(targetValueType)->getElementValueType());
 
         // Do we just adjust the count or do we need to cast each of the element
         if (areElementTypesSame) {
@@ -2272,9 +2278,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                 shared_ptr<WrappedValue> castSourceMemberValue = wrappedValueForCast(
                     WrappedValue::wrappedValue(
                         sourceMemberValue,
-                        sourceWrappedValue->getValueType()->getSubType()
+                        dynamic_pointer_cast<ValueTypeData>(sourceWrappedValue->getValueType())->getElementValueType()
                     ),
-                    targetValueType->getSubType()
+                    dynamic_pointer_cast<ValueTypeData>(targetValueType)->getElementValueType()
                 );
                 if (castSourceMemberValue == nullptr)
                     return nullptr;
@@ -2434,14 +2440,14 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             else
                 return typeBoxed;
         case ValueTypeKind::DATA: {
-            if (valueType->getSubType() == nullptr)
+            if (dynamic_pointer_cast<ValueTypeData>(valueType)->getElementValueType() == nullptr)
                 return nullptr;
 
             // sometimes the count can be empty (for example pointer to data)
             int elementsCount = 0;
-            if (dynamic_pointer_cast<ExpressionLiteral>(valueType->getCountExpression()) != nullptr)
-                elementsCount = dynamic_pointer_cast<ExpressionLiteral>(valueType->getCountExpression())->getUIntValue();
-            llvm::Type *subType = llvmTypeForValueType(valueType->getSubType());
+            if (dynamic_pointer_cast<ExpressionLiteral>(dynamic_pointer_cast<ValueTypeData>(valueType)->getCountExpression()) != nullptr)
+                elementsCount = dynamic_pointer_cast<ExpressionLiteral>(dynamic_pointer_cast<ValueTypeData>(valueType)->getCountExpression())->getUIntValue();
+            llvm::Type *subType = llvmTypeForValueType(dynamic_pointer_cast<ValueTypeData>(valueType)->getElementValueType());
             if (subType == nullptr)
                 return nullptr;
 

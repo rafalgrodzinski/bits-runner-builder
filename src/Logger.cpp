@@ -46,6 +46,8 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeBoxed.h"
+#include "Parser/ValueType/ValueTypeComposite.h"
+#include "Parser/ValueType/ValueTypeData.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
@@ -961,10 +963,26 @@ string Logger::toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
     return text;
 }
 
-string Logger::toString(shared_ptr<ValueTypeEnum> valueType) {
+string Logger::toString(shared_ptr<ValueTypeComposite> ValueTypeComposite) {
+    return "COMPOSITE";
+}
+
+string Logger::toString(shared_ptr<ValueTypeData> valueTypeData) {
+    string text;
+
+    if (valueTypeData->getCountExpression() != nullptr) {
+        text = format("DATA<{}, {}>", toString(valueTypeData->getElementValueType()), toString(valueTypeData->getCountExpression(), {}, false));
+    } else {
+        text = format("DATA<{}>", toString(valueTypeData->getElementValueType()));
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeEnum> valueTypeEnum) {
     string text = "";
-    text += format("ENUM<`{}`", valueType->getSymbolName()->getGlobalName());
-    for (shared_ptr<ValueType> valueType : valueType->getNamedValueTypes()) {
+    text += format("ENUM<`{}`", valueTypeEnum->getSymbolName()->getGlobalName());
+    for (shared_ptr<ValueType> valueType : valueTypeEnum->getNamedValueTypes()) {
         text += ", ";
         text += toString(valueType);
     }
@@ -973,10 +991,10 @@ string Logger::toString(shared_ptr<ValueTypeEnum> valueType) {
     return text;
 }
 
-string Logger::toString(shared_ptr<ValueTypeEnumField> valueType) {
+string Logger::toString(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
     string text = "";
-    text += format("ENUM_FIELD<`{}`", valueType->getSymbolName()->getGlobalName());
-    for (shared_ptr<ValueType> valueType : valueType->getNamedValueTypes()) {
+    text += format("ENUM_FIELD<`{}`", valueTypeEnumField->getSymbolName()->getGlobalName());
+    for (shared_ptr<ValueType> valueType : valueTypeEnumField->getNamedValueTypes()) {
         text += ", ";
         text += toString(valueType);
     }
@@ -985,33 +1003,33 @@ string Logger::toString(shared_ptr<ValueTypeEnumField> valueType) {
     return text;
 }
 
-string Logger::toString(shared_ptr<ValueTypeFun> valueType) {
+string Logger::toString(shared_ptr<ValueTypeFun> valueTypeFun) {
     string text = "FUN";
 
     // args
-    vector<shared_ptr<ValueType>> argumentTypes = valueType->getArgumentValueTypes();
+    vector<shared_ptr<ValueType>> argumentTypes = valueTypeFun->getArgumentValueTypes();
     for (int i=0; i<argumentTypes.size(); i++) {
         if (i > 0)
             text += ",";
         text += format(" {}", toString(argumentTypes.at(i)));
     }
     // return
-    if (valueType->getReturnValueType() != nullptr) {
-        text += format(" -> {}", toString(valueType->getReturnValueType()));
+    if (valueTypeFun->getReturnValueType() != nullptr) {
+        text += format(" -> {}", toString(valueTypeFun->getReturnValueType()));
     }
 
     return text;
 }
 
-string Logger::toString(shared_ptr<ValueTypeProto> valueType) {
-    return format("PROTO<`{}`>", valueType->getSymbolName()->getGlobalName());
+string Logger::toString(shared_ptr<ValueTypeProto> valueTypeProto) {
+    return format("PROTO<`{}`>", valueTypeProto->getSymbolName()->getGlobalName());
 }
 
-string Logger::toString(shared_ptr<ValueTypePtr> valueType) {
+string Logger::toString(shared_ptr<ValueTypePtr> valueTypePtr) {
     string text;
 
-    text += format("PTR<{}>", toString(valueType->getPointeeValueType()));
-    if (valueType->getIsVolatile())
+    text += format("PTR<{}>", toString(valueTypePtr->getPointeeValueType()));
+    if (valueTypePtr->getIsVolatile())
         text = format("v_{}", text);
 
     return text;
@@ -1479,17 +1497,10 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
             break;
         case ValueTypeKind::PTR:
             return toString(dynamic_pointer_cast<ValueTypePtr>(valueType));
-        case ValueTypeKind::DATA: {
-            if (valueType->getCountExpression() != nullptr) {
-                text = format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));
-            } else {
-                text = format("DATA<{}>", toString(valueType->getSubType()));
-            }
-            break;
-        }
-        case ValueTypeKind::BLOB: {
+        case ValueTypeKind::DATA:
+            return toString(dynamic_pointer_cast<ValueTypeData>(valueType));
+        case ValueTypeKind::BLOB:
             return toString(dynamic_pointer_cast<ValueTypeBlob>(valueType));
-        }
         case ValueTypeKind::ENUM:
             return toString(dynamic_pointer_cast<ValueTypeEnum>(valueType));
         case ValueTypeKind::ENUM_FIELD:
@@ -1501,8 +1512,7 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
         case ValueTypeKind::FUN:
             return toString(dynamic_pointer_cast<ValueTypeFun>(valueType));
         case ValueTypeKind::COMPOSITE:
-            text = format("COMPOSITE");
-            break;
+            return toString(dynamic_pointer_cast<ValueTypeComposite>(valueType));
     }
 
     return text;

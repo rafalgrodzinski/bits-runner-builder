@@ -275,10 +275,10 @@ bool AnalyzerScope::setVariableType(const string &identifier, shared_ptr<ValueTy
         if (existingType->getKind() != type->getKind())
             return false;
 
-        if (existingType->getSubType() != nullptr && type->getSubType() != nullptr) {
+        /*if (existingType->getSubType() != nullptr && type->getSubType() != nullptr) {
             if (existingType->getSubType()->getKind() != type->getSubType()->getKind())
                 return false;
-        }
+        }*/
     }
 
     scopeLevels.top().variableTypes[identifier] = type;

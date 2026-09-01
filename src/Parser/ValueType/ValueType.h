@@ -51,9 +51,6 @@ friend class AnalyzerScope;
 
 private:
     ValueTypeKind kind;
-    shared_ptr<ValueType> subType;
-    shared_ptr<Expression> countExpression = nullptr;
-    optional<vector<shared_ptr<ValueType>>> compositeElementTypes = {};
 
 public:
     static shared_ptr<ValueType> NONE;
@@ -74,8 +71,6 @@ public:
     static shared_ptr<ValueType> A;
 
     static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
-    static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression);
 
     ValueType();
     ValueType(ValueTypeKind kind);
@@ -83,15 +78,6 @@ public:
     ValueTypeKind getKind() const;
 
     virtual void setModuleName(const string &moduleName) { }
-
-    // data, pointer, boxed
-    shared_ptr<ValueType> getSubType() const;
-    // data
-    int getValueArg(); // TODO: remove
-    shared_ptr<Expression> getCountExpression() const;
-    // composite
-    optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes() const;
-    // boxed
 
     virtual bool isEqual(shared_ptr<ValueType> other) const;
     virtual shared_ptr<ValueType> clone() const;

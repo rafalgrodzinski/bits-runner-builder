@@ -76,22 +76,6 @@ shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
     return valueType;
 }
 
-shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::DATA;
-    valueType->subType = subType;
-    valueType->countExpression = countExpression;
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::COMPOSITE;
-    valueType->compositeElementTypes = elementTypes;
-    valueType->countExpression = countExpression;
-    return valueType;
-}
-
 ValueType::ValueType() { }
 
 ValueType::ValueType(ValueTypeKind kind):
@@ -101,34 +85,11 @@ ValueTypeKind ValueType::getKind() const {
     return kind;
 }
 
-shared_ptr<ValueType> ValueType::getSubType() const {
-    if (subType == nullptr)
-        return nullptr;
-
-    return subType;
-}
-
-int ValueType::getValueArg() {
-    shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(countExpression);
-    if (expressionLiteral != nullptr)
-        return expressionLiteral->getUIntValue();
-    else
-        return 0;
-}
-
-shared_ptr<Expression> ValueType::getCountExpression() const {
-    return countExpression;
-}
-
-optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() const {
-    return compositeElementTypes;
-}
-
 bool ValueType::isEqual(shared_ptr<ValueType> other) const {
     if (other == nullptr)
         return false;
 
-    switch (kind) {
+    /*switch (kind) {
         case ValueTypeKind::DATA: {
             // first check the types
             if (!other->isData() || !subType->isEqual(other->getSubType()))
@@ -158,7 +119,7 @@ bool ValueType::isEqual(shared_ptr<ValueType> other) const {
         }
         default:
             break;
-    }
+    }*/
 
     return kind == other->getKind();
 }
@@ -275,7 +236,7 @@ bool ValueType::isData() const {
 }
 
 bool ValueType::isDataBool() const {
-    if (isData() && getSubType()->isBool())
+    /*if (isData() && getSubType()->isBool())
         return true;
 
     if (kind == ValueTypeKind::COMPOSITE) {
@@ -285,13 +246,13 @@ bool ValueType::isDataBool() const {
                 return false;
         }
         return true;
-    }
+    }*/
 
     return false;
 }
 
 bool ValueType::isDataNumeric() const {
-    if (isData() && getSubType()->isNumeric())
+    /*if (isData() && getSubType()->isNumeric())
         return true;
 
     if (kind == ValueTypeKind::COMPOSITE) {
@@ -301,7 +262,7 @@ bool ValueType::isDataNumeric() const {
                 return false;
         }
         return true;
-    }
+    }*/
 
     return false;
 }

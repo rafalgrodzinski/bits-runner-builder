@@ -40,6 +40,8 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypeBlob.h"
 #include "Parser/ValueType/ValueTypeBoxed.h"
+#include "Parser/ValueType/ValueTypeComposite.h"
+#include "Parser/ValueType/ValueTypeData.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
@@ -2559,7 +2561,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     else if (isPtrFun)
         return make_shared<ValueTypePtr>(make_shared<ValueTypeFun>(argTypes, retType), isVolatile);
     else if (isData)
-        return ValueType::data(subType, countExpression);
+        return make_shared<ValueTypeData>(subType, countExpression);
     else if (isBlob)
         return make_shared<ValueTypeBlob>(name, argTypes);
     else if (isEnum)

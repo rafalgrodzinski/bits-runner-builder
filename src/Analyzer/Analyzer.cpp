@@ -44,6 +44,8 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypeBoxed.h"
 #include "Parser/ValueType/ValueTypeBlob.h"
+#include "Parser/ValueType/ValueTypeComposite.h"
+#include "Parser/ValueType/ValueTypeData.h"
 #include "Parser/ValueType/ValueTypeEnum.h"
 #include "Parser/ValueType/ValueTypeEnumField.h"
 #include "Parser/ValueType/ValueTypeFun.h"
@@ -613,10 +615,10 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
             return;
 
         // if target has no count expression defined, use the one from source
-        if (statementVariable->getValueType()->isData() && statementVariable->getValueType()->getCountExpression() == nullptr) {
-            statementVariable->valueType = ValueType::data(
-                statementVariable->getValueType()->getSubType(),
-                statementVariable->getExpression()->getValueType()->getCountExpression()
+        if (statementVariable->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(statementVariable->getValueType())->getCountExpression() == nullptr) {
+            statementVariable->valueType = make_shared<ValueTypeData>(
+                dynamic_pointer_cast<ValueTypeData>(statementVariable->getValueType())->getElementValueType(),
+                dynamic_pointer_cast<ValueTypeData>(statementVariable->getExpression()->getValueType())->getCountExpression()
             );
         }
 
@@ -625,7 +627,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     }
 
     // data types should have count expression
-    if (statementVariable->getValueType()->isData() && statementVariable->getValueType()->getCountExpression() == nullptr) {
+    if (statementVariable->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(statementVariable->getValueType())->getCountExpression() == nullptr) {
         markErrorInvalidType(statementVariable->getLocation(), statementVariable->getValueType(), nullptr);
         return;
     }
@@ -880,9 +882,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression) {
     // update count expression type
-    if (expressionCast->getValueType()->getCountExpression() != nullptr) {
-        expressionCast->getValueType()->getCountExpression()->valueType = typeForExpression(
-            expressionCast->getValueType()->getCountExpression(),
+    if (dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression() != nullptr) {
+        dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression()->valueType = typeForExpression(
+            dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression(),
             nullptr,
             nullptr
         );
@@ -916,10 +918,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
 
     if (areNumeric || areBool || areDataNumeric || areDataBool | isAddressToPointer) {
         // if cast does not have a count expression, use one from the parent expression
-        if (expressionCast->getValueType()->isData() && expressionCast->getValueType()->getCountExpression() == nullptr) {
-            expressionCast->valueType = ValueType::data(
-                expressionCast->getValueType()->getSubType(),
-                parentExpression->getValueType()->getCountExpression()
+        if (expressionCast->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression() == nullptr) {
+            expressionCast->valueType = make_shared<ValueTypeData>(
+                dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getElementValueType(),
+                dynamic_pointer_cast<ValueTypeData>(parentExpression->getValueType())->getCountExpression()
             );
         }
         return expressionCast->getValueType();
@@ -985,7 +987,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionComposite
     }
     shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForUInt(elementTypes.size(), expressionCompositeLiteral->getLocation());
     countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
-    expressionCompositeLiteral->valueType = ValueType::composite(elementTypes, countExpression);
+    expressionCompositeLiteral->valueType = make_shared<ValueTypeComposite>(elementTypes, countExpression);
     return expressionCompositeLiteral->getValueType();
 }
 
@@ -1126,7 +1128,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                 case ExpressionValueKind::DATA:
                 case ExpressionValueKind::BUILT_IN_VAL_DATA:
                     // make sure we're referencing a pointer to data
-                    if (!parentExpression->getValueType()->getSubType()->isData()) {
+                    if (!dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->isData()) {
                         expressionValue->valueType = nullptr;
                         markErrorInvalidBuiltIn(
                             expressionValue->getLocation(),
@@ -1135,7 +1137,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                         );
                         break;
                     }
-                    expressionValue->valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->getSubType();
+                    expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType())->getElementValueType();
                     expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_DATA;
                     expressionValue->indexExpression = checkAndTryCasting(expressionValue->getIndexExpression(), ValueType::UINT, nullptr);
                     break;
@@ -1189,7 +1191,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                     markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
                                     return nullptr;
                                 }
-                                expressionValue->valueType = blobMember.second->getSubType();
+                                expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobMember.second)->getElementValueType();
                                 expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
                                 // make sure that the index expression evaluates to an uint
                                 shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
@@ -1231,7 +1233,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                 markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
                                 return nullptr;
                             }
-                            expressionValue->valueType = member.second->getSubType();
+                            expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(member.second)->getElementValueType();
                             expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
                             // make sure that the index expression evaluates to an uint
                             shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
@@ -1285,7 +1287,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
             return nullptr;
         }
-        type = type->getSubType();
+        type = dynamic_pointer_cast<ValueTypeData>(type)->getElementValueType();
         expressionValue->valueKind = ExpressionValueKind::DATA;
     // check if it's blob's `it`
     } else if (type == nullptr && expressionValue->getIdentifier() == "it") {
@@ -1566,21 +1568,21 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isData()) {
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
         // first update the type
-        sourceExpression->valueType = ValueType::data(
-            targetType->getSubType(),
+        sourceExpression->valueType = make_shared<ValueTypeData>(
+            dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType(),
             ExpressionLiteral::expressionLiteralForUInt(
                 expressionCompositeLiteral->getExpressions().size(),
                 sourceExpression->getLocation()
             )
         );
-        sourceExpression->getValueType()->getCountExpression()->valueType = typeForExpression(sourceExpression->getValueType()->getCountExpression(), nullptr, returnType);
+        dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression()->valueType = typeForExpression(dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression(), nullptr, returnType);
         // and then cast (if necessary) each of the element expressions
         for (int i=0; i<expressionCompositeLiteral->getExpressions().size(); i++) {
             shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(i);
-            sourceElementExpression = checkAndTryCasting(sourceElementExpression, targetType->getSubType(), returnType);
+            sourceElementExpression = checkAndTryCasting(sourceElementExpression, dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType(), returnType);
         }
         // check if types are already equal or we need additional cast
-        if (targetType->getCountExpression() == nullptr || expressionCompositeLiteral->getValueType()->isEqual(targetType))
+        if (dynamic_pointer_cast<ValueTypeData>(targetType)->getCountExpression() == nullptr || expressionCompositeLiteral->getValueType()->isEqual(targetType))
             return sourceExpression;
     // composite to pointer
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
@@ -1592,10 +1594,10 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {
-        if (sourceType->getCountExpression() != nullptr)
-            sourceType->getCountExpression()->valueType = typeForExpression(sourceType->getCountExpression(), nullptr, returnType);
+        if (dynamic_pointer_cast<ValueTypeData>(sourceType)->getCountExpression() != nullptr)
+            dynamic_pointer_cast<ValueTypeData>(sourceType)->getCountExpression()->valueType = typeForExpression(dynamic_pointer_cast<ValueTypeData>(sourceType)->getCountExpression(), nullptr, returnType);
 
-        if (targetType->getCountExpression() == nullptr)
+        if (dynamic_pointer_cast<ValueTypeData>(targetType)->getCountExpression() == nullptr)
             return sourceExpression;
     } else if (sourceExpression->getKind() == ExpressionKind::IF_ELSE) {
         sourceExpression->valueType = targetType;
@@ -1611,10 +1613,10 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     }
 
     // if target has no count expression defined, use the one from source
-    if (targetType->isData() && targetType->getCountExpression() == nullptr) {
-        targetType = ValueType::data(
-            targetType->getSubType(),
-            sourceExpression->getValueType()->getCountExpression()
+    if (targetType->isData() && dynamic_pointer_cast<ValueTypeData>(targetType)->getCountExpression() == nullptr) {
+        targetType = make_shared<ValueTypeData>(
+            dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType(),
+            dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression()
         );
     }
 
@@ -2084,7 +2086,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
         case ValueTypeKind::DATA: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::DATA:
-                    return canImplicitCast(sourceType->getSubType(), targetType->getSubType());
+                    return canImplicitCast(dynamic_pointer_cast<ValueTypeData>(sourceType)->getElementValueType(), dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType());
 
                 default:
                     return false;
@@ -2102,15 +2104,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             switch (targetType->getKind()) {
                 // to pointer
                 case ValueTypeKind::PTR: {
-                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
                     return sourceElementTypes.size() == 1 && sourceElementTypes.at(0)->isInteger();
                 }
 
                 // to data
                 case ValueTypeKind::DATA: {
-                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
                     for (shared_ptr<ValueType> sourceElementType : sourceElementTypes) {
-                        if (!canImplicitCast(sourceElementType, targetType->getSubType()))
+                        if (!canImplicitCast(sourceElementType, dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType()))
                             return false;
                     }
                     return true;
@@ -2126,7 +2128,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                         return false;
 
                     // get source types
-                    vector<shared_ptr<ValueType>> sourceElementTypes = *sourceType->getCompositeElementTypes();
+                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
 
                     // check that number of memebrs match
                     if (sourceElementTypes.size() != (*oTargetFieldValueTypes).size())
@@ -2147,7 +2149,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                 case ValueTypeKind::ENUM_FIELD: {
                     // get target & source types
                     shared_ptr<ValueTypeEnumField> targetValueTypeEnumField = dynamic_pointer_cast<ValueTypeEnumField>(targetType);
-                    vector<shared_ptr<ValueType>> sourceElementTypes = *sourceType->getCompositeElementTypes();
+                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
 
                     // first option, no source types and target is none
                     if (sourceElementTypes.size() == 0) {
@@ -2166,7 +2168,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                 case ValueTypeKind::PROTO: {
                     string targetProtoName = dynamic_pointer_cast<ValueTypeProto>(targetType)->getSymbolName()->getGlobalName();
 
-                    vector<shared_ptr<ValueType>> sourceElementTypes = *(sourceType->getCompositeElementTypes());
+                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
                     if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPointer())
                         return false;
 
@@ -2280,8 +2282,8 @@ shared_ptr<ValueType> Analyzer::resolvedAndCheckedValueType(shared_ptr<ValueType
             return checkValueType(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
         }
         case ValueTypeKind::DATA: {
-            if (valueType->getCountExpression() != nullptr) {
-                valueType->getCountExpression()->valueType = typeForExpression(valueType->getCountExpression(), nullptr, nullptr);
+            if (dynamic_pointer_cast<ValueTypeData>(valueType)->getCountExpression() != nullptr) {
+                dynamic_pointer_cast<ValueTypeData>(valueType)->getCountExpression()->valueType = typeForExpression(dynamic_pointer_cast<ValueTypeData>(valueType)->getCountExpression(), nullptr, nullptr);
                 return valueType;
             } else if (isCountExperssionRequired) {
                 markErrorInvalidType(location, valueType, nullptr);
@@ -2347,6 +2349,10 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueT
     }
 
     return clonedValueTypeBoxed;
+}
+
+shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeData> valueTypeData) {
+    
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum) {
