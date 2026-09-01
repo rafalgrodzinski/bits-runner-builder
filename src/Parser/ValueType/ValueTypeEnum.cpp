@@ -18,16 +18,14 @@ void ValueTypeEnum::setModuleName(const string &moduleName) {
 }
 
 bool ValueTypeEnum::isEqual(shared_ptr<ValueType> other) const {
-    // Are both ValueTypeEnum?
-    shared_ptr<ValueTypeEnum> valueTypeEnum = dynamic_pointer_cast<ValueTypeEnum>(other);
-    if (valueTypeEnum == nullptr)
+    // Check if types match
+    shared_ptr<ValueTypeEnum> otherValueTypeEnum = other->enumeration();
+    if (otherValueTypeEnum == nullptr)
         return false;
 
     // Are the symbol names identical?
-    if (symbolName->getGlobalName() != valueTypeEnum->getSymbolName()->getGlobalName())
+    if (!symbolName->isEqual(otherValueTypeEnum->getSymbolName()))
         return false;
-
-    // Are the named value types identical?
 
     return true;
 }

@@ -13,13 +13,16 @@ void ValueTypeProto::setModuleName(const string &moduleName) {
 }
 
 bool ValueTypeProto::isEqual(shared_ptr<ValueType> other) const {
-    // Are both ValueTypeProto?
-    shared_ptr<ValueTypeProto> otherValueTypeProto = dynamic_pointer_cast<ValueTypeProto>(other);
+    // Check types
+    shared_ptr<ValueTypeProto> otherValueTypeProto = other->proto();
     if (otherValueTypeProto == nullptr)
         return false;
 
     // Are the symbol names identical?
-    return symbolName->isEqual(otherValueTypeProto->getSymbolName());
+    if (!symbolName->isEqual(otherValueTypeProto->getSymbolName()))
+        return false;
+
+    return true;
 }
 
 shared_ptr<ValueType> ValueTypeProto::clone() const {

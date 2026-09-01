@@ -24,11 +24,16 @@ void ValueTypeEnumField::setModuleName(const string &moduleName) {
 }
 
 bool ValueTypeEnumField::isEqual(shared_ptr<ValueType> other) const {
-    shared_ptr<ValueTypeEnumField> valueTypeEnumField = dynamic_pointer_cast<ValueTypeEnumField>(other);
-    if (valueTypeEnumField == nullptr)
+    // Check types
+    shared_ptr<ValueTypeEnumField> otherValueTypeEnumField = other->enumField();
+    if (otherValueTypeEnumField == nullptr)
         return false;
-    
-    return symbolName->getGlobalName() == valueTypeEnumField->getSymbolName()->getGlobalName();
+
+    // Are the symbol names identical?
+    if (!symbolName->isEqual(otherValueTypeEnumField->getSymbolName()))
+        return false;
+
+    return true;
 }
 
 shared_ptr<ValueType> ValueTypeEnumField::clone() const {

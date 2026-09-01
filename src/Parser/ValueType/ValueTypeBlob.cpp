@@ -23,8 +23,8 @@ void ValueTypeBlob::setModuleName(const string &moduleName) {
 }
 
 bool ValueTypeBlob::isEqual(shared_ptr<ValueType> other) const {
-    // Are both ValueTypeBlob?
-    shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(other);
+    // Check if types match
+    shared_ptr<ValueTypeBlob> valueTypeBlob = other->blob();
     if (valueTypeBlob == nullptr)
         return false;
 

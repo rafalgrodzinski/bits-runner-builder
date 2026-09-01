@@ -1600,7 +1600,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         vector<llvm::Constant*> constantValues;
         // Try getting count from the count expression if it's a literal
         int count = 0;
-        shared_ptr<Expression> countExpression = dynamic_pointer_cast<ValueTypeComposite>(expressionCompositeLiteral->getValueType())->getCountExpression();
+        shared_ptr<Expression> countExpression = dynamic_pointer_cast<ValueTypeData>(expressionCompositeLiteral->getValueType())->getCountExpression();
         if (shared_ptr<ExpressionLiteral> countExpressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(countExpression))
             count = countExpressionLiteral->getUIntValue();
         for (int i=0; i<count; i++) {

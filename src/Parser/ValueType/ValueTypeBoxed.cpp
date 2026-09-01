@@ -19,22 +19,20 @@ void ValueTypeBoxed::setModuleName(const string &moduleName) {
 }
 
 bool ValueTypeBoxed::isEqual(shared_ptr<ValueType> other) const {
-    // Sanity check
-    if (other == nullptr)
-        return false;
-
-    // Check if it's a correct value type
-    shared_ptr<ValueTypeBoxed> otherBoxed = dynamic_pointer_cast<ValueTypeBoxed>(other);
-    if (otherBoxed == nullptr)
+    // Check if types match
+    shared_ptr<ValueTypeBoxed> otherValueTypeBoxed = other->boxed();
+    if (otherValueTypeBoxed == nullptr)
         return false;
 
     // Both boxed value types can be null
-    if (boxedValueType == nullptr) {
-        return otherBoxed->getBoxedValueType() == nullptr;
+    if (boxedValueType == nullptr)
+        return otherValueTypeBoxed->getBoxedValueType() == nullptr;
+
     // Otherwise they have to match
-    } else {
-        return boxedValueType->isEqual(otherBoxed->getBoxedValueType());
-    }
+    if (!boxedValueType->isEqual(otherValueTypeBoxed->getBoxedValueType()))
+        return false;
+
+    return true;
 }
 
 shared_ptr<ValueType> ValueTypeBoxed::clone() const {

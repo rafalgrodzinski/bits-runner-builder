@@ -19,8 +19,8 @@ void ValueTypePtr::setModuleName(const string &moduleName) {
 }
 
 bool ValueTypePtr::isEqual(shared_ptr<ValueType> other) const {
-    // Are both ValueTypePtr?
-    shared_ptr<ValueTypePtr> otherValueTypePtr = dynamic_pointer_cast<ValueTypePtr>(other);
+    // Check if types match
+    shared_ptr<ValueTypePtr> otherValueTypePtr = other->ptr();
     if (otherValueTypePtr == nullptr)
         return false;
 
@@ -28,7 +28,7 @@ bool ValueTypePtr::isEqual(shared_ptr<ValueType> other) const {
     if (pointeeValueType == nullptr)
         return otherValueTypePtr->getPointeeValueType() == nullptr;
 
-    // Otherwise they must be equal
+    // Otherwise pointee types must be equal
     return pointeeValueType->isEqual(otherValueTypePtr->getPointeeValueType());
 }
 
