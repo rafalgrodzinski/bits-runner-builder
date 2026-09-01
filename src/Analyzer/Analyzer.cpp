@@ -51,6 +51,7 @@
 #include "Parser/ValueType/ValueTypeFun.h"
 #include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
+#include "Parser/ValueType/ValueTypeSimple.h"
 
 Analyzer::Analyzer(
     const string &defaultModuleName,
@@ -563,14 +564,14 @@ void Analyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, share
 
     if (shared_ptr<Expression> preConditionExpression = statementRepeat->getPreConditionExpression()) {
         preConditionExpression->valueType = typeForExpression(preConditionExpression, nullptr, nullptr);
-        if (preConditionExpression->getValueType() != nullptr && !preConditionExpression->getValueType()->isEqual(ValueType::BOOL))
-            markErrorInvalidType(preConditionExpression->getLocation(), preConditionExpression->getValueType(), ValueType::BOOL);
+        if (preConditionExpression->getValueType() != nullptr && !preConditionExpression->getValueType()->isEqual(ValueTypeSimple::BOOL))
+            markErrorInvalidType(preConditionExpression->getLocation(), preConditionExpression->getValueType(), ValueTypeSimple::BOOL);
     }
 
     if (shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression()) {
         postConditionExpression->valueType = typeForExpression(postConditionExpression, nullptr, nullptr);
-        if (postConditionExpression->getValueType() != nullptr && !postConditionExpression->getValueType()->isEqual(ValueType::BOOL))
-            markErrorInvalidType(postConditionExpression->getLocation(), postConditionExpression->getValueType(), ValueType::BOOL);
+        if (postConditionExpression->getValueType() != nullptr && !postConditionExpression->getValueType()->isEqual(ValueTypeSimple::BOOL))
+            markErrorInvalidType(postConditionExpression->getLocation(), postConditionExpression->getValueType(), ValueTypeSimple::BOOL);
     }
 
     // body
@@ -687,7 +688,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
         case ExpressionKind::LITERAL:
             return typeForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
         case ExpressionKind::NONE:
-            return ValueType::NONE;
+            return ValueTypeSimple::NONE;
         case ExpressionKind::UNARY:
             return typeForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::VALUE:
@@ -710,7 +711,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
     shared_ptr<ValueType> rightTargetType;
     // bit shift requires right operand to be unsigned integer
     if (expressionBinary->getOperation() == ExpressionBinaryOperation::BIT_SHL || expressionBinary->getOperation() == ExpressionBinaryOperation::BIT_SHR) {
-        rightTargetType = ValueType::UINT;
+        rightTargetType = ValueTypeSimple::UINT;
     } else {
         rightTargetType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
     }
@@ -998,16 +999,16 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionGrouping>
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
     // first check that condition is as BOOL
-    expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueType::BOOL, returnType);
+    expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueTypeSimple::BOOL, returnType);
     if (expressionIfElse->getConditionExpression() == nullptr)
         return nullptr;
     shared_ptr<ValueType> conditionType = expressionIfElse->getConditionExpression()->getValueType();
     if (conditionType == nullptr) {
         return nullptr;
-    } else if (!conditionType->isEqual(ValueType::BOOL)) {
+    } else if (!conditionType->isEqual(ValueTypeSimple::BOOL)) {
         markErrorInvalidType(
             expressionIfElse->getConditionExpression()->getLocation(),
-            conditionType, ValueType::BOOL
+            conditionType, ValueTypeSimple::BOOL
         );
     }
 
@@ -1056,7 +1057,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
     // finally, figure out resulting type
     shared_ptr<ValueType> thenType = expressionIfElse->getThenExpression()->getValueType();
     shared_ptr<ValueType> elseType = expressionIfElse->getElseExpression() != nullptr ? expressionIfElse->getElseExpression()->getValueType() : nullptr;
-    expressionIfElse->valueType = thenType->isEqual(elseType) ? thenType : ValueType::NONE;
+    expressionIfElse->valueType = thenType->isEqual(elseType) ? thenType : ValueTypeSimple::NONE;
 
     return expressionIfElse->getValueType();
 }
@@ -1069,13 +1070,13 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
     // otherwise get a default one
     switch (expressionLiteral->getLiteralKind()) {
         case ExpressionLiteralKind::BOOL:
-            expressionLiteral->valueType = ValueType::BOOL;
+            expressionLiteral->valueType = ValueTypeSimple::BOOL;
             break;
         case ExpressionLiteralKind::UINT:
-            expressionLiteral->valueType = ValueType::UINT;
+            expressionLiteral->valueType = ValueTypeSimple::UINT;
             break;
         case ExpressionLiteralKind::FLOAT:
-            expressionLiteral->valueType = ValueType::FLOAT;
+            expressionLiteral->valueType = ValueTypeSimple::FLOAT;
             break;
         default:
             markErrorInvalidType(expressionLiteral->getLocation(), nullptr, nullptr);
@@ -1115,7 +1116,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isSize = expressionValue->getIdentifier().compare("size") == 0;
 
         if (isParentData && isCount) {
-            expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueType = ValueTypeSimple::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_COUNT;
             return expressionValue->getValueType();
         } else if (isParentPointer && isVal) {
@@ -1139,7 +1140,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                     }
                     expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType())->getElementValueType();
                     expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_DATA;
-                    expressionValue->indexExpression = checkAndTryCasting(expressionValue->getIndexExpression(), ValueType::UINT, nullptr);
+                    expressionValue->indexExpression = checkAndTryCasting(expressionValue->getIndexExpression(), ValueTypeSimple::UINT, nullptr);
                     break;
                 default:
                     expressionValue->valueType = nullptr;
@@ -1152,15 +1153,15 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             }
             return expressionValue->getValueType();
         } else if ((isParentPointer || isParentProto) && isVadr) {
-            expressionValue->valueType = ValueType::A;
+            expressionValue->valueType = ValueTypeSimple::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
         } else if (isAdr) {
-            expressionValue->valueType = ValueType::A;
+            expressionValue->valueType = ValueTypeSimple::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_ADR;
             return expressionValue->getValueType();
         } else if (isSize) {
-            expressionValue->valueType = ValueType::UINT;
+            expressionValue->valueType = ValueTypeSimple::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_SIZE;
             return expressionValue->getValueType();
         // check blob member
@@ -1196,7 +1197,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                 // make sure that the index expression evaluates to an uint
                                 shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
                                 if (!indexExpression->getValueType()->isUnsignedInteger()) {
-                                    markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+                                    markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
                                     scope->popLevel();
                                     return nullptr;
                                 }
@@ -1238,7 +1239,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                             // make sure that the index expression evaluates to an uint
                             shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
                             if (!indexExpression->getValueType()->isUnsignedInteger()) {
-                                markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+                                markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
                                 return nullptr;
                             }
                             return expressionValue->getValueType();
@@ -1278,13 +1279,13 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         }
         expressionValue->indexExpression = checkAndTryCasting(
             expressionValue->getIndexExpression(),
-            ValueType::UINT,
+            ValueTypeSimple::UINT,
             nullptr
         );
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
         // make sure that the index expression evaluates to an uint
         if (!indexExpression->getValueType()->isUnsignedInteger()) {
-            markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueType::UINT);
+            markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
             return nullptr;
         }
         type = dynamic_pointer_cast<ValueTypeData>(type)->getElementValueType();
@@ -1486,15 +1487,15 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
         case ExpressionUnaryOperation::MINUS:
             switch (type->getKind()) {
                 case ValueTypeKind::UINT:
-                    return ValueType::SINT;
+                    return ValueTypeSimple::SINT;
                 case ValueTypeKind::U8:
-                    return ValueType::S8;
+                    return ValueTypeSimple::S8;
                 case ValueTypeKind::U16:
-                    return ValueType::S16;
+                    return ValueTypeSimple::S16;
                 case ValueTypeKind::U32:
-                    return ValueType::S32;
+                    return ValueTypeSimple::S32;
                 case ValueTypeKind::U64:
-                    return ValueType::S64;
+                    return ValueTypeSimple::S64;
                 default:
                     break;
             }
@@ -1516,7 +1517,7 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
         case ExpressionBinaryOperation::GREATER:
         case ExpressionBinaryOperation::GREATER_EQUAL:
         case ExpressionBinaryOperation::BIT_TEST:
-            return ValueType::BOOL;
+            return ValueTypeSimple::BOOL;
         default:
             break;
     }
@@ -1590,7 +1591,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         // make sure the composite element expression is of type a
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
         shared_ptr<Expression> sourceElementExpression = expressionCompositeLiteral->getExpressions().at(0);
-        sourceElementExpression = checkAndTryCasting(sourceElementExpression, ValueType::A, nullptr);
+        sourceElementExpression = checkAndTryCasting(sourceElementExpression, ValueTypeSimple::A, nullptr);
         return sourceExpression;
     // data to data
     } else if (sourceExpression->getValueType()->isData() && targetType->isData()) {

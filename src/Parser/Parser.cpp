@@ -47,6 +47,7 @@
 #include "Parser/ValueType/ValueTypeFun.h"
 #include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
+#include "Parser/ValueType/ValueTypeSimple.h"
 
 #include "Parsee/Parsee.h"
 #include "Parsee/ParseeResult.h"
@@ -594,7 +595,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
     vector<string> namedTypeKeys;
     vector<EnumField> fields;
     string fieldName = "";
-    shared_ptr<ValueType> payloadValueType = ValueType::NONE;
+    shared_ptr<ValueType> payloadValueType = ValueTypeSimple::NONE;
     shared_ptr<Expression> tagExpression = nullptr;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
@@ -644,7 +645,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
                     )
                 );
                 fieldName = "";
-                payloadValueType = ValueType::NONE;
+                payloadValueType = ValueTypeSimple::NONE;
                 tagExpression = nullptr;
                 break;
             }
@@ -729,7 +730,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     bool shouldExport = false;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnType = ValueType::NONE;
+    shared_ptr<ValueType> returnType = ValueTypeSimple::NONE;
     shared_ptr<Statement> statementBlock;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
@@ -830,7 +831,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     bool shouldExport = false;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnType = ValueType::NONE;
+    shared_ptr<ValueType> returnType = ValueTypeSimple::NONE;
     shared_ptr<Statement> statementBlock;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
@@ -930,7 +931,7 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
 
     string identifier;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnType = ValueType::NONE;
+    shared_ptr<ValueType> returnType = ValueTypeSimple::NONE;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
@@ -1124,7 +1125,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                         // Insert an implicit "it" argument at the beging
                         pair<string, shared_ptr<ValueType>> itArgument = pair(
                             ".pit",
-                            make_shared<ValueTypePtr>(ValueType::NONE, false)
+                            make_shared<ValueTypePtr>(ValueTypeSimple::NONE, false)
                         );
                         statementFunctionDeclaration->arguments.insert(statementFunctionDeclaration->arguments.begin(), itArgument);
                         functionDeclarationStatements.push_back(statementFunctionDeclaration);
@@ -1212,7 +1213,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     string name;
     string constraints;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnType = ValueType::NONE;
+    shared_ptr<ValueType> returnType = ValueTypeSimple::NONE;
     string rawSource;
 
     switch (resultsGroup.getKind()) {
@@ -2463,7 +2464,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     bool isBoxed = false;
 
     vector<shared_ptr<ValueType>> argTypes;
-    shared_ptr<ValueType> retType = ValueType::NONE;
+    shared_ptr<ValueType> retType = ValueTypeSimple::NONE;
 
     shared_ptr<Token> typeToken;
     bool isVolatile = false;
@@ -2573,7 +2574,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     else if (isBoxed)
         return make_shared<ValueTypeBoxed>(boxedNamedValueTypeKey, subType);
     else
-        return ValueType::simpleForToken(typeToken);
+        return ValueTypeSimple::simpleForToken(typeToken);
 }
 
 //

@@ -31,3 +31,7 @@ bool ValueTypeEnum::isEqual(shared_ptr<ValueType> other) const {
 
     return true;
 }
+
+shared_ptr<ValueType> ValueTypeEnum::clone() const {
+    return make_shared<ValueTypeEnum>(*this);
+}

@@ -1,7 +1,10 @@
 #ifndef VALUE_TYPE_COMPOSITE_H
 #define VALUE_TYPE_COMPOSITE_H
 
+#include <vector>
 #include "ValueType.h"
+
+class Expression;
 
 class ValueTypeComposite: public ValueType {
 public:

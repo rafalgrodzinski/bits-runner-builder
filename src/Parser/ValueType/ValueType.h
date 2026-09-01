@@ -1,14 +1,8 @@
 #ifndef VALUE_TYPE_H
 #define VALUE_TYPE_H
 
-#include <format>
 #include <memory>
-#include <optional>
 #include <string>
-#include <vector>
-
-class Expression;
-class Token;
 
 using namespace std;
 
@@ -46,41 +40,11 @@ enum class ValueTypeKind {
 };
 
 class ValueType {
-friend class Analyzer;
-friend class AnalyzerScope;
-
-private:
-    ValueTypeKind kind;
-
 public:
-    static shared_ptr<ValueType> NONE;
-    static shared_ptr<ValueType> BOOL;
-    static shared_ptr<ValueType> UINT;
-    static shared_ptr<ValueType> U8;
-    static shared_ptr<ValueType> U16;
-    static shared_ptr<ValueType> U32;
-    static shared_ptr<ValueType> U64;
-    static shared_ptr<ValueType> SINT;
-    static shared_ptr<ValueType> S8;
-    static shared_ptr<ValueType> S16;
-    static shared_ptr<ValueType> S32;
-    static shared_ptr<ValueType> S64;
-    static shared_ptr<ValueType> FLOAT;
-    static shared_ptr<ValueType> F32;
-    static shared_ptr<ValueType> F64;
-    static shared_ptr<ValueType> A;
-
-    static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
-
-    ValueType();
     ValueType(ValueTypeKind kind);
+    virtual ~ValueType() = default;
 
     ValueTypeKind getKind() const;
-
-    virtual void setModuleName(const string &moduleName) { }
-
-    virtual bool isEqual(shared_ptr<ValueType> other) const;
-    virtual shared_ptr<ValueType> clone() const;
 
     bool isNumeric() const;
     bool isInteger() const;
@@ -101,6 +65,13 @@ public:
     bool isProto() const;
     bool isBoxed() const;
     bool isComposite() const;
+
+    virtual void setModuleName(const string &moduleName) { }
+    virtual bool isEqual(shared_ptr<ValueType> other) const = 0;
+    virtual shared_ptr<ValueType> clone() const = 0;
+
+private:
+    ValueTypeKind kind;
 };
 
 #endif

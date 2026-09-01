@@ -3,6 +3,8 @@
 
 #include "ValueType.h"
 
+class Expression;
+
 class ValueTypeData: public ValueType {
 public:
     ValueTypeData(shared_ptr<ValueType> elementValueType, shared_ptr<Expression> countExpression);

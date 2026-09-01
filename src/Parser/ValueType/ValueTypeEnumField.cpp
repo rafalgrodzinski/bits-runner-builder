@@ -30,3 +30,7 @@ bool ValueTypeEnumField::isEqual(shared_ptr<ValueType> other) const {
     
     return symbolName->getGlobalName() == valueTypeEnumField->getSymbolName()->getGlobalName();
 }
+
+shared_ptr<ValueType> ValueTypeEnumField::clone() const {
+    return make_shared<ValueTypeEnumField>(*this);
+}

@@ -17,6 +17,13 @@ shared_ptr<ValueType> ValueTypeFun::getReturnValueType() {
     return returnValueType;
 }
 
+void ValueTypeFun::setModuleName(const string &moduleName) {
+    for (shared_ptr<ValueType> valueType : argumentValueTypes)
+        valueType->setModuleName(moduleName);
+
+    returnValueType->setModuleName(moduleName);
+}
+
 bool ValueTypeFun::isEqual(shared_ptr<ValueType> other) const {
     // Sanity check
     if (other == nullptr)
@@ -42,4 +49,8 @@ bool ValueTypeFun::isEqual(shared_ptr<ValueType> other) const {
         return false;
 
     return true;
+}
+
+shared_ptr<ValueType> ValueTypeFun::clone() const {
+    return make_shared<ValueTypeFun>(*this);
 }

@@ -1,4 +1,4 @@
-Result<T> enum
+/*Result<T> enum
    Status::Success boxed<T>: 42
    Status::Failure //boxed<u32>: 77
    /*Other: 1 << 2
@@ -37,4 +37,12 @@ doStuff fun: value u32 -> enum<Result, u32>
    else if result = enum<Result, u32>::Failure
    ;
    */
+;
+*/
+
+@export main fun -> u32
+    value data<u32, 4> <- {1, 2, 4, 8}
+    address a <- value.adr + 4
+    address.ptr<u32>.val <- 7
+    ret value[1]
 ;

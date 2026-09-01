@@ -62,6 +62,7 @@ class ValueTypeEnumField;
 class ValueTypeFun;
 class ValueTypeProto;
 class ValueTypePtr;
+class ValueTypeSimple;
 
 using namespace std;
 
@@ -124,6 +125,7 @@ private:
     static string toString(shared_ptr<ValueTypeFun> valueTypeFun);
     static string toString(shared_ptr<ValueTypeProto> valueTypeProto);
     static string toString(shared_ptr<ValueTypePtr> valueTypePtr);
+    static string toString(shared_ptr<ValueTypeSimple> valueTypeSimple);
  
     // general support
     static string toString(EnumField field, vector<IndentKind> indents);

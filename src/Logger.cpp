@@ -53,6 +53,7 @@
 #include "Parser/ValueType/ValueTypeFun.h"
 #include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
+#include "Parser/ValueType/ValueTypeSimple.h"
 
 /// Private ///
 
@@ -1035,6 +1036,63 @@ string Logger::toString(shared_ptr<ValueTypePtr> valueTypePtr) {
     return text;
 }
 
+string Logger::toString(shared_ptr<ValueTypeSimple> valueTypeSimple) {
+    string text;
+
+    switch (valueTypeSimple->getKind()) {
+        case ValueTypeKind::BOOL:
+            text = "BOOL";
+            break;
+        case ValueTypeKind::UINT:
+            text = "UINT";
+            break;
+        case ValueTypeKind::U8:
+            text = "U8";
+            break;
+        case ValueTypeKind::U16:
+            text = "U16";
+            break;
+        case ValueTypeKind::U32:
+            text = "U32";
+            break;
+        case ValueTypeKind::U64:
+            text = "U64";
+            break;
+        case ValueTypeKind::SINT:
+            text = "SINT";
+            break;
+        case ValueTypeKind::S8:
+            text = "S8";
+            break;
+        case ValueTypeKind::S16:
+            text = "S16";
+            break;
+        case ValueTypeKind::S32:
+            text = "S32";
+            break;
+        case ValueTypeKind::S64:
+            text = "S64";
+            break;
+        case ValueTypeKind::FLOAT:
+            text = "FLOAT";
+            break;
+        case ValueTypeKind::F32:
+            text = "F32";
+            break;
+        case ValueTypeKind::F64:
+            text = "F64";
+            break;
+        case ValueTypeKind::A:
+            text = "A";
+            break;
+        default:
+            text = "{INVALID}";
+            break;
+    }
+
+    return text;
+}
+
 string Logger::toString(EnumField field, vector<IndentKind> indents) {
     string text;
     string line;
@@ -1441,78 +1499,53 @@ string Logger::toString(shared_ptr<Location> location) {
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {
-    string text = "{INVALID}";
-
-    if (valueType == nullptr)
-        return text;
+    string text;
 
     switch (valueType->getKind()) {
-        case ValueTypeKind::NONE:
+        case ValueTypeKind::NONE: {
             text = "NONE";
             break;
-        case ValueTypeKind::BOOL:
-            text = "BOOL";
+        }
+        case ValueTypeKind::PTR: {
+            text = toString(dynamic_pointer_cast<ValueTypePtr>(valueType));
             break;
-        case ValueTypeKind::UINT:
-            text = "UINT";
+        }
+        case ValueTypeKind::DATA: {
+            text = toString(dynamic_pointer_cast<ValueTypeData>(valueType));
             break;
-        case ValueTypeKind::U8:
-            text = "U8";
+        }
+        case ValueTypeKind::BLOB: {
+            text = toString(dynamic_pointer_cast<ValueTypeBlob>(valueType));
             break;
-        case ValueTypeKind::U16:
-            text = "U16";
+        }
+        case ValueTypeKind::ENUM: {
+            text = toString(dynamic_pointer_cast<ValueTypeEnum>(valueType));
             break;
-        case ValueTypeKind::U32:
-            text = "U32";
+        }
+        case ValueTypeKind::ENUM_FIELD: {
+            text =  toString(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
             break;
-        case ValueTypeKind::U64:
-            text = "U64";
+        }
+        case ValueTypeKind::PROTO: {
+            text = toString(dynamic_pointer_cast<ValueTypeProto>(valueType));
             break;
-        case ValueTypeKind::SINT:
-            text = "SINT";
+        }
+        case ValueTypeKind::BOXED: {
+            text = toString(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
             break;
-        case ValueTypeKind::S8:
-            text = "S8";
+        }
+        case ValueTypeKind::FUN: {
+            text = toString(dynamic_pointer_cast<ValueTypeFun>(valueType));
             break;
-        case ValueTypeKind::S16:
-            text = "S16";
+        }
+        case ValueTypeKind::COMPOSITE: {
+            text = toString(dynamic_pointer_cast<ValueTypeComposite>(valueType));
             break;
-        case ValueTypeKind::S32:
-            text = "S32";
+        }
+        default: {
+            text = toString(dynamic_pointer_cast<ValueTypeSimple>(valueType));
             break;
-        case ValueTypeKind::S64:
-            text = "S64";
-            break;
-        case ValueTypeKind::FLOAT:
-            text = "FLOAT";
-            break;
-        case ValueTypeKind::F32:
-            text = "F32";
-            break;
-        case ValueTypeKind::F64:
-            text = "F64";
-            break;
-        case ValueTypeKind::A:
-            text = "A";
-            break;
-        case ValueTypeKind::PTR:
-            return toString(dynamic_pointer_cast<ValueTypePtr>(valueType));
-        case ValueTypeKind::DATA:
-            return toString(dynamic_pointer_cast<ValueTypeData>(valueType));
-        case ValueTypeKind::BLOB:
-            return toString(dynamic_pointer_cast<ValueTypeBlob>(valueType));
-        case ValueTypeKind::ENUM:
-            return toString(dynamic_pointer_cast<ValueTypeEnum>(valueType));
-        case ValueTypeKind::ENUM_FIELD:
-            return toString(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
-        case ValueTypeKind::PROTO:
-            return toString(dynamic_pointer_cast<ValueTypeProto>(valueType));
-        case ValueTypeKind::BOXED:
-            return toString(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
-        case ValueTypeKind::FUN:
-            return toString(dynamic_pointer_cast<ValueTypeFun>(valueType));
-        case ValueTypeKind::COMPOSITE:
-            return toString(dynamic_pointer_cast<ValueTypeComposite>(valueType));
+        }
     }
 
     return text;

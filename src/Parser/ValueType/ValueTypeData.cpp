@@ -1,4 +1,5 @@
 #include "ValueTypeData.h"
+#include "Parser/Expression/Expression.h"
 
 ValueTypeData::ValueTypeData(shared_ptr<ValueType> elementValueType, shared_ptr<Expression> countExpression):
 ValueType(ValueTypeKind::DATA),
@@ -30,6 +31,36 @@ bool ValueTypeData::isEqual(shared_ptr<ValueType> other) const {
 
     // Otherwise they must be equal
     return elementValueType->isEqual(otherValueTypeData->getElementValueType());
+
+    /*
+            case ValueTypeKind::DATA: {
+            // first check the types
+            if (!other->isData() || !subType->isEqual(other->getSubType()))
+                return false;
+
+            // then check the elements count
+            shared_ptr<ExpressionLiteral> thisCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(countExpression);
+            shared_ptr<ExpressionLiteral> thatCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(other->getCountExpression());
+
+            // if both have no size specified, then it's good
+            if (thisCountLiteralExpression == nullptr && thatCountLiteralExpression == nullptr)
+                return true;
+
+            // otherwise check that both have some sizes
+            if (thisCountLiteralExpression == nullptr || thatCountLiteralExpression == nullptr)
+                return false;
+            // sizes must be unsigned integers
+            bool isThisTypeValid = thisCountLiteralExpression->getValueType()->isUnsignedInteger();
+            bool isThatTypeValid = thatCountLiteralExpression->getValueType()->isUnsignedInteger();
+            if (!isThisTypeValid || !isThatTypeValid)
+                return false;
+
+            int thisSize = thisCountLiteralExpression->getUIntValue();
+            int thatSize = thatCountLiteralExpression->getUIntValue();
+
+            return thisSize == thatSize;
+        }
+    */
 }
 
 shared_ptr<ValueType> ValueTypeData::clone() const {

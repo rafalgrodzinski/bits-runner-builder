@@ -45,6 +45,7 @@
 #include "Parser/ValueType/ValueTypeFun.h"
 #include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
+#include "Parser/ValueType/ValueTypeSimple.h"
 
 ModuleBuilder::ModuleBuilder(
     const string &defaultModuleName,
@@ -666,7 +667,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementRepeat> statementRepeat) 
 void ModuleBuilder::buildStatement(shared_ptr<StatementReturn> statementReturn) {
     llvm::BasicBlock *basicBlock = builder->GetInsertBlock();
 
-    if (!statementReturn->getExpression()->getValueType()->isEqual(ValueType::NONE)) {
+    if (!statementReturn->getExpression()->getValueType()->isEqual(ValueTypeSimple::NONE)) {
         shared_ptr<WrappedValue> returnWrappedValue = wrappedValueForExpression(statementReturn->getExpression());
         if (returnWrappedValue == nullptr)
             return;
@@ -1154,7 +1155,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         case ExpressionKind::LITERAL:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
         case ExpressionKind::NONE:
-            return WrappedValue::wrappedNone(typeVoid, ValueType::NONE);
+            return WrappedValue::wrappedNone(typeVoid, ValueTypeSimple::NONE);
         case ExpressionKind::UNARY:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionUnary>(expression));
         case ExpressionKind::VALUE:
@@ -1871,7 +1872,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
 
     // Do the appropriate built-in operation
     if (parentWrappedValue->isArray() && isCount) {
-        return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueType::UINT);
+        return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueTypeSimple::UINT);
     } else if (parentWrappedValue->isPointer() && isVal) {
         shared_ptr<ValueType> pointeeValueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
         if (pointeeValueType == nullptr) {
@@ -1890,7 +1891,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         llvm::StoreInst *store = builder->CreateStore(pointerValue, alloca);
         if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
             store->setVolatile(valueTypePtr->getIsVolatile());
-        return WrappedValue::wrappedValue(alloca, ValueType::A);
+        return WrappedValue::wrappedValue(alloca, ValueTypeSimple::A);
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {
         string protoName = dynamic_pointer_cast<ValueTypeProto>(parentWrappedValue->getValueType())->getSymbolName()->getGlobalName();
         llvm::StructType *structType = scope->getProtoStructType(protoName);
@@ -1903,19 +1904,19 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         llvm::LoadInst *pointerLoad = builder->CreateLoad(typePtr, memberPtr);
         if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
             pointerLoad->setVolatile(valueTypePtr->getIsVolatile());
-        return WrappedValue::wrappedValue(pointerLoad, ValueType::A);
+        return WrappedValue::wrappedValue(pointerLoad, ValueTypeSimple::A);
     } else if (isAdr) {
         llvm::Value *pointerValue = parentWrappedValue->getPointerValue();
         llvm::Value *alloca = buildAlloca(typePtr, format("a_adr-{}", string(pointerValue->getName())));
         llvm::StoreInst *store = builder->CreateStore(pointerValue, alloca);
         if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
             store->setVolatile(valueTypePtr->getIsVolatile());
-        return WrappedValue::wrappedValue(alloca, ValueType::A);
+        return WrappedValue::wrappedValue(alloca, ValueTypeSimple::A);
     } else if (isSize) {
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
         if (sizeInBytes <= 0)
             return nullptr;
-        return WrappedValue::wrappedUIntValue(typeInt, sizeInBytes, ValueType::UINT);
+        return WrappedValue::wrappedUIntValue(typeInt, sizeInBytes, ValueTypeSimple::UINT);
     }
 
     return nullptr;
