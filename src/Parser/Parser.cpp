@@ -2454,14 +2454,14 @@ shared_ptr<ValueType> Parser::matchValueType() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
+    bool isBlob = false;
+    bool isBoxed = false;
+    bool isData = false;
+    bool isEnum = false;
+    bool isEnumField = false;
+    bool isProto = false;
     bool isPtr = false;
     bool isPtrFun = false;
-    bool isData = false;
-    bool isBlob = false;
-    bool isEnum = false;
-    bool isEnumValue = false;
-    bool isProto = false;
-    bool isBoxed = false;
 
     vector<shared_ptr<ValueType>> argTypes;
     shared_ptr<ValueType> retType = ValueTypeSimple::NONE;
@@ -2475,12 +2475,31 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_ARGUMENT_TYPE: {
-                argTypes.push_back(parseeResult.getValueType());
+            case TAG_BLOB: {
+                isBlob = true;
                 break;
             }
-            case TAG_SUBTYPE: {
-                subType = parseeResult.getValueType();
+            case TAG_BOXED: {
+                isBoxed = true;
+                break;
+            }
+            case TAG_DATA: {
+                isData = true;
+                break;
+            }
+            case TAG_ENUM: {
+                isEnum = true;
+                break;
+            }
+            case TAG_ENUM_FIELD_NAME: {
+                isEnum = false;
+                isEnumField = true;
+                name += "::";
+                name += parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_PROTO: {
+                isProto = true;
                 break;
             }
             case TAG_PTR: {
@@ -2497,35 +2516,20 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 isPtrFun = true;
                 break;
             }
+            case TAG_ARGUMENT_TYPE: {
+                argTypes.push_back(parseeResult.getValueType());
+                break;
+            }
+            case TAG_SUBTYPE: {
+                subType = parseeResult.getValueType();
+                break;
+            }
             case TAG_RETURN_TYPE: {
                 retType = parseeResult.getValueType();
                 break;
             }
-            case TAG_DATA: {
-                isData = true;
-                break;
-            }
             case TAG_SIZE_EXPRESSION: {
                 countExpression = parseeResult.getExpression();
-                break;
-            }
-            case TAG_BLOB: {
-                isBlob = true;
-                break;
-            }
-            case TAG_ENUM: {
-                isEnum = true;
-                break;
-            }
-            case TAG_ENUM_FIELD_NAME: {
-                isEnum = false;
-                isEnumValue = true;
-                name += "::";
-                name += parseeResult.getToken()->getLexme();
-                break;
-            }
-            case TAG_PROTO: {
-                isProto = true;
                 break;
             }
             case TAG_NAME_MODULE_PREFIX: {
@@ -2542,10 +2546,6 @@ shared_ptr<ValueType> Parser::matchValueType() {
                 name += parseeResult.getToken()->getLexme();
                 break;
             }
-            case TAG_BOXED: {
-                isBoxed = true;
-                break;
-            }
             case TAG_BOXED_NAMED_VALUE_TYPE_KEY: {
                 boxedNamedValueTypeKey = parseeResult.getToken()->getLexme();
                 break;
@@ -2557,22 +2557,22 @@ shared_ptr<ValueType> Parser::matchValueType() {
         }
     }
 
-    if (isPtr)
-        return make_shared<ValueTypePtr>(subType, isVolatile);
-    else if (isPtrFun)
-        return make_shared<ValueTypePtr>(make_shared<ValueTypeFun>(argTypes, retType), isVolatile);
+    if (isBlob)
+        return make_shared<ValueTypeBlob>(name, argTypes);
+    else if (isBoxed)
+        return make_shared<ValueTypeBoxed>(boxedNamedValueTypeKey, subType);
     else if (isData)
         return make_shared<ValueTypeData>(subType, countExpression);
-    else if (isBlob)
-        return make_shared<ValueTypeBlob>(name, argTypes);
     else if (isEnum)
         return make_shared<ValueTypeEnum>(name, argTypes);
-    else if (isEnumValue)
+    else if (isEnumField)
         return make_shared<ValueTypeEnumField>(name, argTypes);
     else if (isProto)
         return make_shared<ValueTypeProto>(name);
-    else if (isBoxed)
-        return make_shared<ValueTypeBoxed>(boxedNamedValueTypeKey, subType);
+    else if (isPtr)
+        return make_shared<ValueTypePtr>(subType, isVolatile);
+    else if (isPtrFun)
+        return make_shared<ValueTypePtr>(make_shared<ValueTypeFun>(argTypes, retType), isVolatile);
     else
         return ValueTypeSimple::simpleForToken(typeToken);
 }
