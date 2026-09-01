@@ -170,7 +170,7 @@ bool AnalyzerScope::setProtoMembers(const string &name, const optional<vector<pa
 
     vector<shared_ptr<ValueType>> targetMemberTypes;
     for (pair<string, shared_ptr<ValueType>> &member : *blobMembers) {
-        if (!member.second->isFunction())
+        if (!member.second->isFun())
             targetMemberTypes.push_back(member.second);
     }
 
@@ -275,10 +275,10 @@ bool AnalyzerScope::setVariableType(const string &identifier, shared_ptr<ValueTy
         if (existingType->getKind() != type->getKind())
             return false;
 
-        if (existingType->getSubType() != nullptr && type->getSubType() != nullptr) {
+        /*if (existingType->getSubType() != nullptr && type->getSubType() != nullptr) {
             if (existingType->getSubType()->getKind() != type->getSubType()->getKind())
                 return false;
-        }
+        }*/
     }
 
     scopeLevels.top().variableTypes[identifier] = type;

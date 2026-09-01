@@ -9,25 +9,27 @@ shared_ptr<SymbolName> ValueTypeEnum::getSymbolName() const {
     return symbolName;
 }
 
+vector<shared_ptr<ValueType>> ValueTypeEnum::getNamedValueTypes() {
+    return namedValueTypes;
+}
+
 void ValueTypeEnum::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
 }
 
 bool ValueTypeEnum::isEqual(shared_ptr<ValueType> other) const {
-    // Are both ValueTypeEnum?
-    shared_ptr<ValueTypeEnum> valueTypeEnum = dynamic_pointer_cast<ValueTypeEnum>(other);
-    if (valueTypeEnum == nullptr)
+    // Check if types match
+    shared_ptr<ValueTypeEnum> otherValueTypeEnum = other->enumeration();
+    if (otherValueTypeEnum == nullptr)
         return false;
 
     // Are the symbol names identical?
-    if (symbolName->getGlobalName() != valueTypeEnum->getSymbolName()->getGlobalName())
+    if (!symbolName->isEqual(otherValueTypeEnum->getSymbolName()))
         return false;
-
-    // Are the named value types identical?
 
     return true;
 }
 
-vector<shared_ptr<ValueType>> ValueTypeEnum::getNamedValueTypes() {
-    return namedValueTypes;
+shared_ptr<ValueType> ValueTypeEnum::clone() const {
+    return make_shared<ValueTypeEnum>(*this);
 }

@@ -1,114 +1,68 @@
 #ifndef VALUE_TYPE_H
 #define VALUE_TYPE_H
 
-#include <format>
 #include <memory>
-#include <optional>
 #include <string>
-#include <vector>
 
-class Expression;
-class Token;
+class ValueTypeBlob;
+class ValueTypeBoxed;
+class ValueTypeComposite;
+class ValueTypeData;
+class ValueTypeEnum;
+class ValueTypeEnumField;
+class ValueTypeFun;
+class ValueTypeProto;
+class ValueTypePtr;
+class ValueTypeSimple;
 
 using namespace std;
 
 enum class ValueTypeKind {
     NONE,
-    BOOL,
 
+    BOOL,
     UINT,
     U8,
     U16,
     U32,
     U64,
-
     SINT,
     S8,
     S16,
     S32,
     S64,
-
     FLOAT,
     F32,
     F64,
-
     A,
-    PTR,
 
-    DATA,
     BLOB,
+    BOXED,
+    COMPOSITE,
+    DATA,
     ENUM,
     ENUM_FIELD,
-    PROTO,
-    BOXED,
     FUN,
-    COMPOSITE
+    PROTO,
+    PTR
 };
 
-class ValueType {
-friend class Analyzer;
-friend class AnalyzerScope;
-
-private:
-    ValueTypeKind kind;
-    string name;
-    string moduleName;
-    shared_ptr<ValueType> subType;
-    shared_ptr<Expression> countExpression = nullptr;
-    optional<vector<shared_ptr<ValueType>>> argumentTypes = {};
-    shared_ptr<ValueType> returnType = nullptr;
-    optional<vector<shared_ptr<ValueType>>> compositeElementTypes = {};
-    optional<string> namedTypeKey = {};
-    optional<vector<string>> namedTypeKeys = {};
-    optional<vector<shared_ptr<ValueType>>> namedTypeValues = {};
-    bool isVolatile = false;
-
+class ValueType: public enable_shared_from_this<ValueType> {
 public:
-    static shared_ptr<ValueType> NONE;
-    static shared_ptr<ValueType> BOOL;
-    static shared_ptr<ValueType> UINT;
-    static shared_ptr<ValueType> U8;
-    static shared_ptr<ValueType> U16;
-    static shared_ptr<ValueType> U32;
-    static shared_ptr<ValueType> U64;
-    static shared_ptr<ValueType> SINT;
-    static shared_ptr<ValueType> S8;
-    static shared_ptr<ValueType> S16;
-    static shared_ptr<ValueType> S32;
-    static shared_ptr<ValueType> S64;
-    static shared_ptr<ValueType> FLOAT;
-    static shared_ptr<ValueType> F32;
-    static shared_ptr<ValueType> F64;
-    static shared_ptr<ValueType> A;
-
-    static shared_ptr<ValueType> simpleForToken(shared_ptr<Token> token);
-    static shared_ptr<ValueType> data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression);
-    static shared_ptr<ValueType> proto(const string &protoName);
-    static shared_ptr<ValueType> ptr(shared_ptr<ValueType> subType, bool isVolatile);
-    static shared_ptr<ValueType> composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression);
-
-    ValueType();
-    ValueType(ValueTypeKind kind, const string &name = "");
+    ValueType(ValueTypeKind kind);
+    virtual ~ValueType() = default;
 
     ValueTypeKind getKind() const;
 
-    string getName() const;
-    string getModuleName() const;
-    virtual void setModuleName(const string &moduleName);
-    string getGlobalName() const;
-
-    bool getIsVolatile() const;
-    // data, pointer, boxed
-    shared_ptr<ValueType> getSubType() const;
-    // data
-    int getValueArg(); // TODO: remove
-    shared_ptr<Expression> getCountExpression() const;
-    // composite
-    optional<vector<shared_ptr<ValueType>>> getCompositeElementTypes() const;
-    // boxed
-
-    virtual bool isEqual(shared_ptr<ValueType> other) const;
-    virtual shared_ptr<ValueType> clone() const;
+    bool isBlob() const;
+    bool isBoxed() const;
+    bool isComposite() const;
+    bool isData() const;
+    bool isEnum() const;
+    bool isFun() const;
+    bool isProto() const;
+    bool isPtr() const;
+    bool isSimple() const;
 
     bool isNumeric() const;
     bool isInteger() const;
@@ -116,26 +70,27 @@ public:
     bool isSignedInteger() const;
     bool isFloat() const;
     bool isBool() const;
-
-    bool isData() const;
     bool isDataBool() const;
     bool isDataNumeric() const;
-
     bool isAddress() const;
-    bool isPointer() const;
-    bool isFunction() const;
-    bool isBlob() const;
-    bool isEnum() const;
-    bool isProto() const;
-    bool isBoxed() const;
-    bool isComposite() const;
 
-public:
-    void setParent(weak_ptr<ValueType> parent);
-    weak_ptr<ValueType> getParent();
+    shared_ptr<ValueTypeBlob> blob();
+    shared_ptr<ValueTypeBoxed> boxed();
+    shared_ptr<ValueTypeComposite> composite();
+    shared_ptr<ValueTypeData> data();
+    shared_ptr<ValueTypeEnum> enumeration();
+    shared_ptr<ValueTypeEnumField> enumField();
+    shared_ptr<ValueTypeFun> fun();
+    shared_ptr<ValueTypeProto> proto();
+    shared_ptr<ValueTypePtr> ptr();
+    shared_ptr<ValueTypeSimple> simple();
+
+    virtual void setModuleName(const string &moduleName) { }
+    virtual bool isEqual(shared_ptr<ValueType> other) const = 0;
+    virtual shared_ptr<ValueType> clone() const = 0;
 
 private:
-    weak_ptr<ValueType> parent;
+    ValueTypeKind kind;
 };
 
 #endif

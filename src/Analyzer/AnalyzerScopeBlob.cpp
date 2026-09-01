@@ -79,7 +79,7 @@ optional<vector<shared_ptr<ValueType>>> AnalyzerScopeBlob::getVariableFieldValue
 
     vector<shared_ptr<ValueType>> valueTypes;
     for (pair<string, shared_ptr<ValueType>> &field : *fields) {
-        if (!field.second->isFunction())
+        if (!field.second->isFun())
             valueTypes.push_back(field.second);
     }
 

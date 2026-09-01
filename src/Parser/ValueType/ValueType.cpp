@@ -1,253 +1,75 @@
 #include "ValueType.h"
+#include "ValueTypeBlob.h"
+#include "ValueTypeBoxed.h"
+#include "ValueTypeComposite.h"
+#include "ValueTypeData.h"
+#include "ValueTypeEnum.h"
+#include "ValueTypeEnumField.h"
+#include "ValueTypeFun.h"
+#include "ValueTypeProto.h"
+#include "ValueTypePtr.h"
+#include "ValueTypeSimple.h"
 
-#include "Lexer/Token.h"
-#include "Parser/Expression/ExpressionLiteral.h"
-
-shared_ptr<ValueType> ValueType::NONE = make_shared<ValueType>(ValueTypeKind::NONE);
-shared_ptr<ValueType> ValueType::BOOL = make_shared<ValueType>(ValueTypeKind::BOOL);
-shared_ptr<ValueType> ValueType::UINT = make_shared<ValueType>(ValueTypeKind::UINT);
-shared_ptr<ValueType> ValueType::U8 = make_shared<ValueType>(ValueTypeKind::U8);
-shared_ptr<ValueType> ValueType::U16 = make_shared<ValueType>(ValueTypeKind::U16);
-shared_ptr<ValueType> ValueType::U32 = make_shared<ValueType>(ValueTypeKind::U32);
-shared_ptr<ValueType> ValueType::U64 = make_shared<ValueType>(ValueTypeKind::U64);
-shared_ptr<ValueType> ValueType::SINT = make_shared<ValueType>(ValueTypeKind::SINT);
-shared_ptr<ValueType> ValueType::S8 = make_shared<ValueType>(ValueTypeKind::S8);
-shared_ptr<ValueType> ValueType::S16 = make_shared<ValueType>(ValueTypeKind::S16);
-shared_ptr<ValueType> ValueType::S32 = make_shared<ValueType>(ValueTypeKind::S32);
-shared_ptr<ValueType> ValueType::S64 = make_shared<ValueType>(ValueTypeKind::S64);
-shared_ptr<ValueType> ValueType::FLOAT = make_shared<ValueType>(ValueTypeKind::FLOAT);
-shared_ptr<ValueType> ValueType::F32 = make_shared<ValueType>(ValueTypeKind::F32);
-shared_ptr<ValueType> ValueType::F64 = make_shared<ValueType>(ValueTypeKind::F64);
-shared_ptr<ValueType> ValueType::A = make_shared<ValueType>(ValueTypeKind::A);
-
-shared_ptr<ValueType> ValueType::simpleForToken(shared_ptr<Token> token) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-
-    switch (token->getKind()) {
-        case TokenKind::TYPE: {
-            string lexme = token->getLexme();
-            if (lexme.compare("bool") == 0) {
-                valueType->kind = ValueTypeKind::BOOL;
-            } else if (lexme.compare("u8") == 0) {
-                valueType->kind = ValueTypeKind::U8;
-            } else if (lexme.compare("u16") == 0) {
-                valueType->kind = ValueTypeKind::U16;
-            } else if (lexme.compare("u32") == 0) {
-                valueType->kind = ValueTypeKind::U32;
-            } else if (lexme.compare("u64") == 0) {
-                valueType->kind = ValueTypeKind::U64;
-            } else if (lexme.compare("s8") == 0) {
-                valueType->kind = ValueTypeKind::S8;
-            } else if (lexme.compare("s16") == 0) {
-                valueType->kind = ValueTypeKind::S16;
-            } else if (lexme.compare("s32") == 0) {
-                valueType->kind = ValueTypeKind::S32;
-            } else if (lexme.compare("s64") == 0) {
-                valueType->kind = ValueTypeKind::S64;
-            } else if (lexme.compare("f32") == 0) {
-                valueType->kind = ValueTypeKind::F32;
-            } else if (lexme.compare("f64") == 0) {
-                valueType->kind = ValueTypeKind::F64;
-            } else if (lexme.compare("a") == 0) {
-                valueType->kind = ValueTypeKind::A;
-            } else {
-                return nullptr;
-            }
-            break;
-        }
-        case TokenKind::BOOL:
-            valueType->kind = ValueTypeKind::BOOL;
-            break;
-        case TokenKind::INTEGER_DEC:
-            valueType->kind = ValueTypeKind::SINT;
-            break;
-        case TokenKind::INTEGER_HEX:
-        case TokenKind::INTEGER_BIN:
-        case TokenKind::INTEGER_CHAR:
-            valueType->kind = ValueTypeKind::UINT;
-            break;
-        case TokenKind::FLOAT:
-            valueType->kind = ValueTypeKind::FLOAT;
-            break;
-        default:
-            return nullptr;
-    }
-
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::data(shared_ptr<ValueType> subType, shared_ptr<Expression> countExpression) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::DATA;
-    valueType->subType = subType;
-    valueType->countExpression = countExpression;
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::proto(const string &protoName) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>(ValueTypeKind::PROTO, protoName);
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::ptr(shared_ptr<ValueType> subType, bool isVolatile) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::PTR;
-    valueType->subType = subType;
-    valueType->isVolatile = isVolatile;
-    return valueType;
-}
-
-shared_ptr<ValueType> ValueType::composite(const vector<shared_ptr<ValueType>> &elementTypes, shared_ptr<Expression> countExpression) {
-    shared_ptr<ValueType> valueType = make_shared<ValueType>();
-    valueType->kind = ValueTypeKind::COMPOSITE;
-    valueType->compositeElementTypes = elementTypes;
-    valueType->countExpression = countExpression;
-    return valueType;
-}
-
-ValueType::ValueType() { }
-
-ValueType::ValueType(ValueTypeKind kind, const string &name):
-kind(kind) {
-    size_t pos = name.find('.');
-    if (pos != string::npos) {
-        this->moduleName = name.substr(0, pos);
-        this->name = name.substr(pos + 1, name.length());
-    } else {
-        this->name = name;
-    }
-}
+ValueType::ValueType(ValueTypeKind kind):
+kind(kind) { }
 
 ValueTypeKind ValueType::getKind() const {
     return kind;
 }
 
-string ValueType::getName() const {
-    return name;
+bool ValueType::isBlob() const {
+    return kind == ValueTypeKind::BLOB;
 }
 
-string ValueType::getModuleName() const {
-    return moduleName;
+bool ValueType::isBoxed() const {
+    return kind == ValueTypeKind::BOXED;
 }
 
-void ValueType::setModuleName(const string &moduleName) {
-    if (this->moduleName.empty())
-        this->moduleName = moduleName;
-
-    if (this->getSubType() != nullptr)
-        this->getSubType()->setModuleName(moduleName);
-
-    if (argumentTypes) {
-        for (shared_ptr<ValueType> typeValue : *argumentTypes)
-            typeValue->setModuleName(moduleName);
-    }
-
-    if (namedTypeValues) {
-        for (shared_ptr<ValueType> typeValue : *namedTypeValues)
-            typeValue->setModuleName(moduleName);
-    }
-
-    if (returnType != nullptr) {
-        returnType->setModuleName(moduleName);
-    }
+bool ValueType::isComposite() const {
+    return kind == ValueTypeKind::COMPOSITE;
 }
 
-string ValueType::getGlobalName() const {
-    string moduleName = this->moduleName;
-    if (moduleName.empty())
-        moduleName = "{UNDEFINED}";
-
-    return format("{}.{}", moduleName, name);
+bool ValueType::isData() const {
+    return kind == ValueTypeKind::DATA;
 }
 
-bool ValueType::getIsVolatile() const {
-    return isVolatile;
+bool ValueType::isEnum() const {
+    return kind == ValueTypeKind::ENUM || kind == ValueTypeKind::ENUM_FIELD;
 }
 
-shared_ptr<ValueType> ValueType::getSubType() const {
-    if (subType == nullptr)
-        return nullptr;
-
-    subType->isVolatile = isVolatile;
-
-    if (kind == ValueTypeKind::BOXED) {
-        subType->namedTypeKeys = namedTypeKeys;
-        subType->namedTypeValues = namedTypeValues;
-    }
-
-    return subType;
+bool ValueType::isFun() const {
+    return kind == ValueTypeKind::FUN;
 }
 
-int ValueType::getValueArg() {
-    shared_ptr<ExpressionLiteral> expressionLiteral = dynamic_pointer_cast<ExpressionLiteral>(countExpression);
-    if (expressionLiteral != nullptr)
-        return expressionLiteral->getUIntValue();
-    else
-        return 0;
+bool ValueType::isProto() const {
+    return kind == ValueTypeKind::PROTO;
 }
 
-shared_ptr<Expression> ValueType::getCountExpression() const {
-    return countExpression;
+bool ValueType::isPtr() const {
+    return kind == ValueTypeKind::PTR;
 }
 
-optional<vector<shared_ptr<ValueType>>> ValueType::getCompositeElementTypes() const {
-    return compositeElementTypes;
-}
-
-bool ValueType::isEqual(shared_ptr<ValueType> other) const {
-    if (other == nullptr)
-        return false;
-
+bool ValueType::isSimple() const {
     switch (kind) {
-        case ValueTypeKind::PTR: {
-            return other->isPointer() && subType->isEqual(other->getSubType());
-        }
-        case ValueTypeKind::DATA: {
-            // first check the types
-            if (!other->isData() || !subType->isEqual(other->getSubType()))
-                return false;
-
-            // then check the elements count
-            shared_ptr<ExpressionLiteral> thisCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(countExpression);
-            shared_ptr<ExpressionLiteral> thatCountLiteralExpression = dynamic_pointer_cast<ExpressionLiteral>(other->getCountExpression());
-
-            // if both have no size specified, then it's good
-            if (thisCountLiteralExpression == nullptr && thatCountLiteralExpression == nullptr)
-                return true;
-
-            // otherwise check that both have some sizes
-            if (thisCountLiteralExpression == nullptr || thatCountLiteralExpression == nullptr)
-                return false;
-            // sizes must be unsigned integers
-            bool isThisTypeValid = thisCountLiteralExpression->getValueType()->isUnsignedInteger();
-            bool isThatTypeValid = thatCountLiteralExpression->getValueType()->isUnsignedInteger();
-            if (!isThisTypeValid || !isThatTypeValid)
-                return false;
-
-            int thisSize = thisCountLiteralExpression->getUIntValue();
-            int thatSize = thatCountLiteralExpression->getUIntValue();
-
-            return thisSize == thatSize;
-        }
-        case ValueTypeKind::BLOB: {
-            if (!other->isBlob())
-                return false;
-            return getGlobalName() == other->getGlobalName();
-        }
-        case ValueTypeKind::ENUM: {
-            if (other->getKind() != ValueTypeKind::ENUM)
-                return false;
-            return getGlobalName() == other->getGlobalName();
-        }
+        case ValueTypeKind::BOOL:
+        case ValueTypeKind::UINT:
+        case ValueTypeKind::U8:
+        case ValueTypeKind::U16:
+        case ValueTypeKind::U32:
+        case ValueTypeKind::U64:
+        case ValueTypeKind::SINT:
+        case ValueTypeKind::S8:
+        case ValueTypeKind::S16:
+        case ValueTypeKind::S32:
+        case ValueTypeKind::S64:
+        case ValueTypeKind::FLOAT:
+        case ValueTypeKind::F32:
+        case ValueTypeKind::F64:
+        case ValueTypeKind::A:
+            return true;
         default:
-            break;
+            return false;
     }
-
-    return kind == other->getKind();
-}
-
-shared_ptr<ValueType> ValueType::clone() const {
-    return make_shared<ValueType>(*this);
 }
 
 bool ValueType::isNumeric() const {
@@ -353,12 +175,8 @@ bool ValueType::isBool() const {
     return kind == ValueTypeKind::BOOL;
 }
 
-bool ValueType::isData() const {
-    return kind == ValueTypeKind::DATA;
-}
-
 bool ValueType::isDataBool() const {
-    if (isData() && getSubType()->isBool())
+    /*if (isData() && getSubType()->isBool())
         return true;
 
     if (kind == ValueTypeKind::COMPOSITE) {
@@ -368,13 +186,13 @@ bool ValueType::isDataBool() const {
                 return false;
         }
         return true;
-    }
+    }*/
 
     return false;
 }
 
 bool ValueType::isDataNumeric() const {
-    if (isData() && getSubType()->isNumeric())
+    /*if (isData() && getSubType()->isNumeric())
         return true;
 
     if (kind == ValueTypeKind::COMPOSITE) {
@@ -384,7 +202,7 @@ bool ValueType::isDataNumeric() const {
                 return false;
         }
         return true;
-    }
+    }*/
 
     return false;
 }
@@ -393,38 +211,42 @@ bool ValueType::isAddress() const {
     return kind == ValueTypeKind::A;
 }
 
-bool ValueType::isPointer() const {
-    return kind == ValueTypeKind::PTR;
+shared_ptr<ValueTypeBlob> ValueType::blob() {
+    return dynamic_pointer_cast<ValueTypeBlob>(shared_from_this());
 }
 
-bool ValueType::isFunction() const {
-    return kind == ValueTypeKind::FUN;
+shared_ptr<ValueTypeBoxed> ValueType::boxed() {
+    return dynamic_pointer_cast<ValueTypeBoxed>(shared_from_this());
 }
 
-bool ValueType::isBlob() const {
-    return kind == ValueTypeKind::BLOB;
+shared_ptr<ValueTypeComposite> ValueType::composite() {
+    return dynamic_pointer_cast<ValueTypeComposite>(shared_from_this());
 }
 
-bool ValueType::isEnum() const {
-    return kind == ValueTypeKind::ENUM || kind == ValueTypeKind::ENUM_FIELD;
+shared_ptr<ValueTypeData> ValueType::data() {
+    return dynamic_pointer_cast<ValueTypeData>(shared_from_this());
 }
 
-bool ValueType::isProto() const {
-    return kind == ValueTypeKind::PROTO;
+shared_ptr<ValueTypeEnum> ValueType::enumeration() {
+    return dynamic_pointer_cast<ValueTypeEnum>(shared_from_this());
 }
 
-bool ValueType::isBoxed() const {
-    return kind == ValueTypeKind::BOXED;
+shared_ptr<ValueTypeEnumField> ValueType::enumField() {
+    return dynamic_pointer_cast<ValueTypeEnumField>(shared_from_this());
 }
 
-bool ValueType::isComposite() const {
-    return kind == ValueTypeKind::COMPOSITE;
+shared_ptr<ValueTypeFun> ValueType::fun() {
+    return dynamic_pointer_cast<ValueTypeFun>(shared_from_this());
 }
 
-void ValueType::setParent(weak_ptr<ValueType> parent) {
-    this->parent = parent;
+shared_ptr<ValueTypeProto> ValueType::proto() {
+    return dynamic_pointer_cast<ValueTypeProto>(shared_from_this());
 }
 
-weak_ptr<ValueType> ValueType::getParent() {
-    return parent;
+shared_ptr<ValueTypePtr> ValueType::ptr() {
+    return dynamic_pointer_cast<ValueTypePtr>(shared_from_this());
+}
+
+shared_ptr<ValueTypeSimple> ValueType::simple() {
+    return dynamic_pointer_cast<ValueTypeSimple>(shared_from_this());
 }

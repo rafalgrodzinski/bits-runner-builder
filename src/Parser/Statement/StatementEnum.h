@@ -5,6 +5,8 @@
 #include "Parser/SymbolName.h"
 #include "Parser/ValueType/ValueType.h"
 
+class Expression;
+
 struct EnumField {
     shared_ptr<SymbolName> symbolName;
     shared_ptr<ValueType> payloadValueType;

@@ -11,22 +11,31 @@ shared_ptr<SymbolName> ValueTypeEnumField::getSymbolName() const {
     return symbolName;
 }
 
-void ValueTypeEnumField::setModuleName(const string &moduleName) {
-    symbolName->setModuleName(moduleName);
-}
-
-bool ValueTypeEnumField::isEqual(shared_ptr<ValueType> other) const {
-    shared_ptr<ValueTypeEnumField> valueTypeEnumField = dynamic_pointer_cast<ValueTypeEnumField>(other);
-    if (valueTypeEnumField == nullptr)
-        return false;
-    
-    return symbolName->getGlobalName() == valueTypeEnumField->getSymbolName()->getGlobalName();
-}
-
 vector<shared_ptr<ValueType>> ValueTypeEnumField::getNamedValueTypes() const {
     return namedValueTypes;
 }
 
 shared_ptr<ValueType> ValueTypeEnumField::getPayloadValueType() const {
     return payloadValueType;
+}
+
+void ValueTypeEnumField::setModuleName(const string &moduleName) {
+    symbolName->setModuleName(moduleName);
+}
+
+bool ValueTypeEnumField::isEqual(shared_ptr<ValueType> other) const {
+    // Check types
+    shared_ptr<ValueTypeEnumField> otherValueTypeEnumField = other->enumField();
+    if (otherValueTypeEnumField == nullptr)
+        return false;
+
+    // Are the symbol names identical?
+    if (!symbolName->isEqual(otherValueTypeEnumField->getSymbolName()))
+        return false;
+
+    return true;
+}
+
+shared_ptr<ValueType> ValueTypeEnumField::clone() const {
+    return make_shared<ValueTypeEnumField>(*this);
 }
