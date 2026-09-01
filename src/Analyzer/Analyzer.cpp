@@ -1661,7 +1661,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 }
 
 bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
-    resolvedAndCheckedValueType(targetType, false, nullptr);
+    targetType = resolvedAndCheckedValueType(targetType, false, nullptr);
 
     switch (sourceType->getKind()) {
         // from literal types
