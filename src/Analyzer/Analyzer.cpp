@@ -2353,7 +2353,7 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeBoxed> valueT
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeData> valueTypeData) {
-    
+    return valueTypeData;
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum) {

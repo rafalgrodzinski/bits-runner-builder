@@ -2,7 +2,8 @@
 #define VALUE_TYPE_ENUM_H
 
 #include <map>
-
+#include <optional>
+#include <vector>
 #include "ValueType.h"
 #include "Parser/SymbolName.h"
 

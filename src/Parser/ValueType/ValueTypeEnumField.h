@@ -2,7 +2,7 @@
 #define VALUE_TYPE_ENUM_FIELD_H
 
 #include <map>
-
+#include <vector>
 #include "ValueType.h"
 #include "Parser/SymbolName.h"
 

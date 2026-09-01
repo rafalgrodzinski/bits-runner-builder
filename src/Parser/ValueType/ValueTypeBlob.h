@@ -1,6 +1,7 @@
 #ifndef VALUE_TYPE_BLOB_H
 #define VALUE_TYPE_BLOB_H
 
+#include <optional>
 #include <vector>
 #include "ValueType.h"
 
