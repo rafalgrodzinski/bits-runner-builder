@@ -6,12 +6,13 @@
             "type": "lldb-dap",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["--verb=v3", "--gen=ir", "--opt=o0", "${workspaceFolder}/test.brc"],
+            //"args": ["--verb=v3", "--gen=ir", "--opt=o0", "${workspaceFolder}/test.brc"],
             //"args": ["--verb=v3", "--gen=obj", "--opt=o0", "${workspaceFolder}/test.brc", "${workspaceFolder}/lib/brc/B/String.brc", "${workspaceFolder}/lib/brc/BSys.brc"],
             //"args": ["--verb=v3", "--gen=obj", "--opt=o0", "${workspaceFolder}/tests/blob_member_named_type/main.brc"],
-            //"args": ["--verb=v3", "--gen=obj", "--opt=o0", "${workspaceFolder}/tests/blob_field_boxed/main.brc",],
+            "args": ["--verb=v3", "--gen=obj", "--opt=o0", "${workspaceFolder}/tests/expr_if_else_assign_variable/main.brc",],
             //"args": ["--verb=v3", "${workspaceFolder}/samples/dyn_array/main.brc", "${workspaceFolder}/lib/brc/B/String.brc", "${workspaceFolder}/lib/brc/B/Array.brc", "${workspaceFolder}/lib/brc/BSys.brc", ],
             "cwd": "${workspaceFolder}",
+            "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": "Build Bits Runner Builder (Debug)"
         },
         {

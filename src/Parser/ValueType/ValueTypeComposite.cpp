@@ -19,7 +19,25 @@ void ValueTypeComposite::setModuleName(const string &moduleName) {
 }
 
 bool ValueTypeComposite::isEqual(shared_ptr<ValueType> other) const {
-    return false;
+    // Check if types match
+    shared_ptr<ValueTypeComposite> otherValueTypeComposite = other->composite();
+    if (otherValueTypeComposite == nullptr)
+        return false;
+
+    // Check if number of elements match
+    if (elementValueTypes.size() != otherValueTypeComposite->getElementValueTypes().size())
+        return false;
+
+    // TODO: We probably want this
+    /*
+    // Check if types of elements match
+    for (int i=0; i<elementValueTypes.size(); i++) {
+        if (!elementValueTypes[i]->isEqual(otherValueTypeComposite->getElementValueTypes()[i]))
+            return false;
+    }
+    */
+
+    return true;
 }
 
 shared_ptr<ValueType> ValueTypeComposite::clone() const {
