@@ -994,7 +994,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     } else {
                         pair<string, shared_ptr<ValueType>> targetMember = targetProtoMembers.at(i - 1);
                         // if subsequent member is a function, retrieve function from the registered ones
-                        if (dynamic_pointer_cast<ValueTypePtr>(targetMember.second)->getPointeeValueType()->isFunction()) {
+                        if (dynamic_pointer_cast<ValueTypePtr>(targetMember.second)->getPointeeValueType()->isFun()) {
                             string sourceFunctionName = format("{}.{}", sourceBlobName, targetMember.first);
                             sourceValue = scope->getFunction(sourceFunctionName);
                         // otherwise figure out index and copy value from the source struct
@@ -1564,7 +1564,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                         };
                         // function type has to be treated as a pointer (we cannot load a function)
                         llvm::Type *pointeeType = typePtr;
-                        if (!dynamic_pointer_cast<ValueTypePtr>(member.second)->getPointeeValueType()->isFunction())
+                        if (!dynamic_pointer_cast<ValueTypePtr>(member.second)->getPointeeValueType()->isFun())
                             pointeeType = llvmTypeForValueType(dynamic_pointer_cast<ValueTypePtr>(member.second)->getPointeeValueType());
 
                         llvm::Value *sourcePointer = currentWrappedValue->getPointerValue();
@@ -1626,7 +1626,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         llvm::StructType *structType = llvm::dyn_cast<llvm::StructType>(type);
         llvm::Constant *constantStruct = llvm::ConstantStruct::get(structType, constantValues);
         return WrappedValue::wrappedValue(constantStruct, expressionCompositeLiteral->getValueType());
-    } else if (expressionCompositeLiteral->getValueType()->isPointer()) {
+    } else if (expressionCompositeLiteral->getValueType()->isPtr()) {
         return wrappedValueForExpression(expressionCompositeLiteral->getExpressions().at(0));
     }
 
@@ -1873,7 +1873,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     // Do the appropriate built-in operation
     if (parentWrappedValue->isArray() && isCount) {
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueTypeSimple::UINT);
-    } else if (parentWrappedValue->isPointer() && isVal) {
+    } else if (parentWrappedValue->isPtr() && isVal) {
         shared_ptr<ValueType> pointeeValueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
         if (pointeeValueType == nullptr) {
             markErrorNoTypeForPointer(parentExpression->getLocation());
@@ -1885,7 +1885,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
             return nullptr; 
         }
         return wrappedValueForValue(nullptr, parentWrappedValue->getValue(), pointeeType, expression);
-    } else if (parentWrappedValue->isPointer() && isVadr) {
+    } else if (parentWrappedValue->isPtr() && isVadr) {
         llvm::Value *pointerValue = parentWrappedValue->getValue();
         llvm::Value *alloca = buildAlloca(typePtr, format("a_vadr-{}", string(pointerValue->getName())));
         llvm::StoreInst *store = builder->CreateStore(pointerValue, alloca);

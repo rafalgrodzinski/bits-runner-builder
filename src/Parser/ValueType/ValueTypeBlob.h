@@ -1,8 +1,10 @@
 #ifndef VALUE_TYPE_BLOB_H
 #define VALUE_TYPE_BLOB_H
 
+#include <vector>
 #include "ValueType.h"
-#include "Parser/SymbolName.h"
+
+class SymbolName;
 
 class ValueTypeBlob: public ValueType {
 friend class Analyzer;

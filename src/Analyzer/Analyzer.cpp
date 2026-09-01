@@ -254,7 +254,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
             for (auto protoMember : *protoMembers) {
                 bool isImplemented = false;
 
-                if (protoMember.second->isFunction()) {
+                if (protoMember.second->isFun()) {
                     string name = format("{}.{}", statementBlob->getSymbolName()->getName(), protoMember.first);
                     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
                         // check name
@@ -786,12 +786,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
     // check for built-in
     if (parentExpression != nullptr) {
-        bool isParentPointer = parentExpression->getValueType()->isPointer();
+        bool isParentPointer = parentExpression->getValueType()->isPtr();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isParentProto = parentExpression->getValueType()->isProto();
         bool isVal = expressionCall->getName().compare("val") == 0;
 
-        if (isParentPointer && isVal && dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->isFunction()) {
+        if (isParentPointer && isVal && dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->isFun()) {
             valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
         } else if (isParentBlob) {
             shared_ptr<ValueTypeBlob> parentBlobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
@@ -905,7 +905,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     bool areBool = parentExpression->getValueType()->isBool() && expressionCast->getValueType()->isBool();
     bool areDataNumeric = parentExpression->getValueType()->isDataNumeric() && expressionCast->getValueType()->isDataNumeric();
     bool areDataBool = parentExpression->getValueType()->isDataBool() && expressionCast->getValueType()->isDataBool();
-    bool isAddressToPointer = parentExpression->getValueType()->isAddress() && expressionCast->getValueType()->isPointer();
+    bool isAddressToPointer = parentExpression->getValueType()->isAddress() && expressionCast->getValueType()->isPtr();
 
     bool isSourceComposite = parentExpression->getValueType()->isComposite();
     bool isSourceBoxed = parentExpression->getValueType()->isBoxed();
@@ -913,7 +913,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     bool isTargetBlob = expressionCast->getValueType()->isBlob();
     bool isTargetData = expressionCast->getValueType()->isData();
     bool isTargetEnumField = expressionCast->getValueType()->getKind() == ValueTypeKind::ENUM_FIELD;
-    bool isTargetPointer = expressionCast->getValueType()->isPointer();
+    bool isTargetPointer = expressionCast->getValueType()->isPtr();
     bool isTargetProto = expressionCast->getValueType()->isProto();
     bool isTargetNumeric = expressionCast->getValueType()->isNumeric();
 
@@ -937,7 +937,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     // from boxed
     } else if (isSourceBoxed) {
         /*if (parentExpression->getValueType()->getSubType()->isEqual(expressionCast->getValueType())) {
-            if (parentExpression->getValueType()->getSubType()->isPointer()) {
+            if (parentExpression->getValueType()->getSubType()->isPtr()) {
                 expressionCast->getValueType()->getSubType()->namedTypeKeys = parentExpression->getValueType()->getSubType()->getSubType()->getNamedTypeKeys();
                 expressionCast->getValueType()->getSubType()->namedTypeValues = parentExpression->getValueType()->getSubType()->getSubType()->getNamedTypeValues();
             }
@@ -1105,7 +1105,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     if (parentExpression != nullptr) {
         // check built-in
         bool isParentData = parentExpression->getValueType()->isData();
-        bool isParentPointer = parentExpression->getValueType()->isPointer();
+        bool isParentPointer = parentExpression->getValueType()->isPtr();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isParentProto = parentExpression->getValueType()->isProto();
 
@@ -1586,7 +1586,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         if (dynamic_pointer_cast<ValueTypeData>(targetType)->getCountExpression() == nullptr || expressionCompositeLiteral->getValueType()->isEqual(targetType))
             return sourceExpression;
     // composite to pointer
-    } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPointer()) {
+    } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isPtr()) {
         sourceExpression->valueType = targetType;
         // make sure the composite element expression is of type a
         shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
@@ -2170,7 +2170,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     string targetProtoName = dynamic_pointer_cast<ValueTypeProto>(targetType)->getSymbolName()->getGlobalName();
 
                     vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
-                    if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPointer())
+                    if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPtr())
                         return false;
 
                     shared_ptr<ValueType> subType = dynamic_pointer_cast<ValueTypePtr>(sourceElementTypes.at(0))->getPointeeValueType();

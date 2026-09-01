@@ -170,7 +170,7 @@ bool AnalyzerScope::setProtoMembers(const string &name, const optional<vector<pa
 
     vector<shared_ptr<ValueType>> targetMemberTypes;
     for (pair<string, shared_ptr<ValueType>> &member : *blobMembers) {
-        if (!member.second->isFunction())
+        if (!member.second->isFun())
             targetMemberTypes.push_back(member.second);
     }
 

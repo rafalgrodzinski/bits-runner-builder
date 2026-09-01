@@ -1,4 +1,5 @@
 #include "ValueTypeBlob.h"
+#include "Parser/SymbolName.h"
 
 ValueTypeBlob::ValueTypeBlob(const string &name, const vector<shared_ptr<ValueType>> &namedValueTypes):
 ValueType(ValueTypeKind::BLOB),

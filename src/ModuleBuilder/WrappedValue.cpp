@@ -223,8 +223,8 @@ bool WrappedValue::isArray() const {
     return valueType->isData();
 }
 
-bool WrappedValue::isPointer() const {
-    return valueType->isPointer() || valueType->getKind() == ValueTypeKind::A;
+bool WrappedValue::isPtr() const {
+    return valueType->isPtr() || valueType->getKind() == ValueTypeKind::A;
 }
 
 bool WrappedValue::isBlobStruct() const {

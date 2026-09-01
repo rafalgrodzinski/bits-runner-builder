@@ -4,47 +4,65 @@
 #include <memory>
 #include <string>
 
+class ValueTypeBlob;
+class ValueTypeBoxed;
+class ValueTypeComposite;
+class ValueTypeData;
+class ValueTypeEnum;
+class ValueTypeEnumField;
+class ValueTypeFun;
+class ValueTypeProto;
+class ValueTypePtr;
+class ValueTypeSimple;
+
 using namespace std;
 
 enum class ValueTypeKind {
     NONE,
-    BOOL,
 
+    BOOL,
     UINT,
     U8,
     U16,
     U32,
     U64,
-
     SINT,
     S8,
     S16,
     S32,
     S64,
-
     FLOAT,
     F32,
     F64,
-
     A,
-    PTR,
 
-    DATA,
     BLOB,
+    BOXED,
+    COMPOSITE,
+    DATA,
     ENUM,
     ENUM_FIELD,
-    PROTO,
-    BOXED,
     FUN,
-    COMPOSITE
+    PROTO,
+    PTR
 };
 
-class ValueType {
+class ValueType: public enable_shared_from_this<ValueType> {
 public:
     ValueType(ValueTypeKind kind);
     virtual ~ValueType() = default;
 
     ValueTypeKind getKind() const;
+
+    bool isBlob() const;
+    bool isBoxed() const;
+    bool isComposite() const;
+    bool isData() const;
+    bool isEnum() const;
+    bool isFun() const;
+    bool isProto() const;
+    bool isPtr() const;
+    bool isSimple() const;
 
     bool isNumeric() const;
     bool isInteger() const;
@@ -52,19 +70,20 @@ public:
     bool isSignedInteger() const;
     bool isFloat() const;
     bool isBool() const;
-
-    bool isData() const;
     bool isDataBool() const;
     bool isDataNumeric() const;
-
     bool isAddress() const;
-    bool isPointer() const;
-    bool isFunction() const;
-    bool isBlob() const;
-    bool isEnum() const;
-    bool isProto() const;
-    bool isBoxed() const;
-    bool isComposite() const;
+
+    shared_ptr<ValueTypeBlob> blob();
+    shared_ptr<ValueTypeBoxed> boxed();
+    shared_ptr<ValueTypeComposite> composite();
+    shared_ptr<ValueTypeData> data();
+    shared_ptr<ValueTypeEnum> enumeration();
+    shared_ptr<ValueTypeEnumField> enumField();
+    shared_ptr<ValueTypeFun> fun();
+    shared_ptr<ValueTypeProto> proto();
+    shared_ptr<ValueTypePtr> ptr();
+    shared_ptr<ValueTypeSimple> simple();
 
     virtual void setModuleName(const string &moduleName) { }
     virtual bool isEqual(shared_ptr<ValueType> other) const = 0;

@@ -52,7 +52,7 @@ public:
     shared_ptr<ValueType> getValueType() const;
 
     bool isArray() const;
-    bool isPointer() const;
+    bool isPtr() const;
     bool isBlobStruct() const;
     bool isEnumStruct() const;
     bool isProtoStruct() const;
