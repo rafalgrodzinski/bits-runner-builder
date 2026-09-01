@@ -883,7 +883,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression) {
     // update count expression type
-    if (dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression() != nullptr) {
+    if (expressionCast->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression() != nullptr) {
         dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression()->valueType = typeForExpression(
             dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression(),
             nullptr,
