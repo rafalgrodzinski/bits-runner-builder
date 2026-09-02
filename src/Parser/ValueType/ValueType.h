@@ -64,15 +64,15 @@ public:
     bool isPtr() const;
     bool isSimple() const;
 
+    bool isBool() const;
     bool isNumeric() const;
     bool isInteger() const;
     bool isUnsignedInteger() const;
     bool isSignedInteger() const;
     bool isFloat() const;
-    bool isBool() const;
-    bool isDataBool() const;
-    bool isDataNumeric() const;
     bool isAddress() const;
+    bool isDataBool();
+    bool isDataNumeric();
 
     shared_ptr<ValueTypeBlob> blob();
     shared_ptr<ValueTypeBoxed> boxed();

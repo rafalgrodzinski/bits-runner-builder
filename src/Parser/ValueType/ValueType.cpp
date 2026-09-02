@@ -72,6 +72,10 @@ bool ValueType::isSimple() const {
     }
 }
 
+bool ValueType::isBool() const {
+    return kind == ValueTypeKind::BOOL;
+}
+
 bool ValueType::isNumeric() const {
     switch (kind) {
         case ValueTypeKind::UINT:
@@ -171,44 +175,22 @@ bool ValueType::isFloat() const {
     return false;
 }
 
-bool ValueType::isBool() const {
-    return kind == ValueTypeKind::BOOL;
-}
-
-bool ValueType::isDataBool() const {
-    /*if (isData() && getSubType()->isBool())
-        return true;
-
-    if (kind == ValueTypeKind::COMPOSITE) {
-        vector<shared_ptr<ValueType>> elementTypes = *(getCompositeElementTypes());
-        for (shared_ptr<ValueType> elementType : elementTypes) {
-            if (!elementType->isBool())
-                return false;
-        }
-        return true;
-    }*/
-
-    return false;
-}
-
-bool ValueType::isDataNumeric() const {
-    /*if (isData() && getSubType()->isNumeric())
-        return true;
-
-    if (kind == ValueTypeKind::COMPOSITE) {
-        vector<shared_ptr<ValueType>> elementTypes = *(getCompositeElementTypes());
-        for (shared_ptr<ValueType> elementType : elementTypes) {
-            if (!elementType->isNumeric())
-                return false;
-        }
-        return true;
-    }*/
-
-    return false;
-}
-
 bool ValueType::isAddress() const {
     return kind == ValueTypeKind::A;
+}
+
+bool ValueType::isDataBool() {
+    if (this->data() == nullptr)
+        return false;
+
+    return data()->getElementValueType()->isBool();
+}
+
+bool ValueType::isDataNumeric() {
+    if (data() == nullptr)
+        return false;
+
+    return data()->getElementValueType()->isNumeric();
 }
 
 shared_ptr<ValueTypeBlob> ValueType::blob() {
