@@ -1,6 +1,7 @@
 #ifndef ANALYZER_SCOPE_H
 #define ANALYZER_SCOPE_H
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -53,6 +54,7 @@ public:
 
     void pushLevel();
     void popLevel();
+    void level(function<void()> levelBlock);
 
     optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(const string &name) const;
     bool setProtoMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members);

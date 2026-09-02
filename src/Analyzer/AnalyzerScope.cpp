@@ -110,6 +110,12 @@ void AnalyzerScope::popLevel() {
     scopeLevels.pop();
 }
 
+void AnalyzerScope::level(function<void()> levelBlock) {
+    pushLevel();
+    levelBlock();
+    popLevel();
+}
+
 optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScope::getProtoMembers(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
