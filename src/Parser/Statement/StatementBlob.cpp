@@ -1,5 +1,4 @@
 #include "StatementBlob.h"
-
 #include "StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
@@ -19,7 +18,27 @@ Statement(StatementKind::BLOB, location),
 shouldExport(shouldExport),
 symbolName(make_shared<SymbolName>(name)),
 namedTypeKeys(namedTypeKeys),
-protoNames(protoNames),
+variableStatements(variableStatements),
+functionStatements(functionStatements) {
+    for (const string &protoName : protoNames) {
+        protoSymbolNames.push_back(make_shared<SymbolName>(protoName));
+    }
+}
+
+StatementBlob::StatementBlob(
+    bool shouldExport,
+    shared_ptr<SymbolName> symbolName,
+    const vector<string> &namedTypeKeys,
+    vector<shared_ptr<SymbolName>> conformingProtoSymbolNames,
+    const vector<shared_ptr<StatementVariable>> &variableStatements,
+    const vector<shared_ptr<StatementFunction>> &functionStatements,
+    shared_ptr<Location> location
+):
+Statement(StatementKind::BLOB, location),
+shouldExport(shouldExport),
+symbolName(symbolName),
+namedTypeKeys(namedTypeKeys),
+protoSymbolNames(conformingProtoSymbolNames),
 variableStatements(variableStatements),
 functionStatements(functionStatements) { }
 
@@ -34,21 +53,16 @@ shared_ptr<SymbolName> StatementBlob::getSymbolName() const {
 void StatementBlob::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
 
-    // Prepend module name to proto names if required
-    for (string &protoName : protoNames) {
-        size_t pos = protoName.find('.');
-        if (pos == string::npos) {
-            protoName = format("{}.{}", moduleName, protoName);
-        }
-    }
+    for (shared_ptr<SymbolName> protoSymbolName : protoSymbolNames)
+        protoSymbolName->setModuleName(moduleName);
 }
 
 vector<string> StatementBlob::getNamedTypeKeys() const {
     return namedTypeKeys;
 }
 
-vector<string> StatementBlob::getProtoNames() const {
-    return protoNames;
+vector<shared_ptr<SymbolName>> StatementBlob::getProtoSymbolNames() const {
+    return protoSymbolNames;
 }
 
 vector<shared_ptr<StatementVariable>> StatementBlob::getVariableStatements() const {
@@ -70,8 +84,8 @@ vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getMembers() const {
 
 shared_ptr<StatementBlobDeclaration> StatementBlob::getDeclaration() const {
     return make_shared<StatementBlobDeclaration>(
-        getShouldExport(),
-        getSymbolName(),
+        shouldExport,
+        symbolName,
         getLocation()
     );
 }

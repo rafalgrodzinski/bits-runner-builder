@@ -275,23 +275,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // exported header
                 if (statementBlob->getShouldExport()) {
-                    // update proto conformation for exported statement
-                    vector<string> exportedProtoNames;
-                    for (string &protoName : statementBlob->getProtoNames()) {
-                        string name;
-                        if (protoName.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
-                            name = moduleName + "." + protoName;
-                        } else {
-                            name = protoName;
-                        }
-                        exportedProtoNames.push_back(name);
-                    }
-
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
-                        statementBlob->getSymbolName()->getName(),
+                        statementBlob->getSymbolName(),
                         statementBlob->getNamedTypeKeys(),
-                        exportedProtoNames,
+                        statementBlob->getProtoSymbolNames(),
                         statementBlob->getVariableStatements(),
                         vector<shared_ptr<StatementFunction>>(), // don't include function definitions
                         statementBlob->getLocation()

@@ -85,3 +85,20 @@ optional<vector<shared_ptr<ValueType>>> AnalyzerScopeBlob::getVariableFieldValue
 
     return valueTypes;
 }
+
+void AnalyzerScopeBlob::registerConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName, vector<shared_ptr<SymbolName>> conformingProtoSymbolNames) {
+    parent->scopeLevels.top().scopeLevelBlob.conformingProtoSymbolNamsMap[*symbolName] = conformingProtoSymbolNames;
+}
+
+optional<vector<shared_ptr<SymbolName>>> AnalyzerScopeBlob::getConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName) {
+    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        auto it = scopeLevels.top().scopeLevelBlob.conformingProtoSymbolNamsMap.find(*symbolName);
+        if (it != scopeLevels.top().scopeLevelBlob.conformingProtoSymbolNamsMap.end())
+            return scopeLevels.top().scopeLevelBlob.conformingProtoSymbolNamsMap[*symbolName];
+        scopeLevels.pop();
+    }
+
+    return {};
+}

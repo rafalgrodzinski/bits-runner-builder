@@ -505,11 +505,11 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMeta
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
     // symbol name
-    string symbolName = statementProto->getName();
-    if (statementProto->getModuleName() != defaultModuleName)
-        symbolName = statementProto->getGlobalName();
+    string symbolName = statementProto->getSymbolName()->getName();
+    if (statementProto->getSymbolName()->getModuleName() != defaultModuleName)
+        symbolName = statementProto->getSymbolName()->getGlobalName();
 
-    llvm::StructType *structType = scope->getProtoStructType(statementProto->getGlobalName());
+    llvm::StructType *structType = scope->getProtoStructType(statementProto->getSymbolName()->getGlobalName());
     if (structType == nullptr) {
         markErrorNotDeclared(nullptr, format("proto \"{}\"", symbolName));
         return;
@@ -535,7 +535,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
 
     // and then pointers to the functions
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
-        //shared_ptr<ValueType> valueType = ValueType::ptr(statementFunctionDeclaration->getValueType(), false);
         shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementFunctionDeclaration->getValueType(), false);
         members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
@@ -545,17 +544,17 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
     }
 
     structType->setBody(types, false);
-    scope->setProtoStructType(statementProto->getGlobalName(), structType, members);
+    scope->setProtoStructType(statementProto->getSymbolName()->getGlobalName(), structType, members);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration) {
     // symbol name
-    string symbolName = statementProtoDeclaration->getName();
-    if (statementProtoDeclaration->getModuleName() != defaultModuleName)
-        symbolName = statementProtoDeclaration->getGlobalName();
+    string symbolName = statementProtoDeclaration->getSymbolName()->getName();
+    if (statementProtoDeclaration->getSymbolName()->getModuleName() != defaultModuleName)
+        symbolName = statementProtoDeclaration->getSymbolName()->getGlobalName();
 
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
-    scope->setProtoStructType(statementProtoDeclaration->getGlobalName(), structType, {});
+    scope->setProtoStructType(statementProtoDeclaration->getSymbolName()->getGlobalName(), structType, {});
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementRawFunction> statementRawFunction) {

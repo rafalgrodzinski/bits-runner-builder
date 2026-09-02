@@ -1,4 +1,6 @@
 #include "StatementProto.h"
+#include "StatementProtoDeclaration.h"
+#include "Parser/SymbolName.h"
 
 StatementProto::StatementProto(
     bool shouldExport,
@@ -9,7 +11,7 @@ StatementProto::StatementProto(
 ):
 Statement(StatementKind::PROTO, location),
 shouldExport(shouldExport),
-name(name),
+symbolName(make_shared<SymbolName>(name)),
 variableStatements(variableStatements),
 functionDeclarationStatements(functionDeclarationStatements) { }
 
@@ -17,25 +19,12 @@ bool StatementProto::getShouldExport() const {
     return shouldExport;
 }
 
-string StatementProto::getName() const {
-    return name;
-}
-
-string StatementProto::getGlobalName() const {
-    string moduleName = this->moduleName;
-    if (moduleName.empty())
-        moduleName = "{UNDEFINED}";
-
-    return format("{}.{}", moduleName, name);
-}
-
-string StatementProto::getModuleName() const {
-    return moduleName;
+shared_ptr<SymbolName> StatementProto::getSymbolName() const {
+    return symbolName;
 }
 
 void StatementProto::setModuleName(const string &moduleName) {
-    if (this->moduleName.empty())
-        this->moduleName = moduleName;
+    symbolName->setModuleName(moduleName);
 }
 
 vector<shared_ptr<StatementVariable>> StatementProto::getVariableStatements() const {
@@ -49,8 +38,7 @@ vector<shared_ptr<StatementFunctionDeclaration>> StatementProto::getFunctionDecl
 shared_ptr<StatementProtoDeclaration> StatementProto::getDeclaration() const {
     return make_shared<StatementProtoDeclaration>(
         shouldExport,
-        name,
-        moduleName,
+        symbolName,
         getLocation()
     );
 }

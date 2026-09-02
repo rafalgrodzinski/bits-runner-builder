@@ -22,12 +22,22 @@ public:
         shared_ptr<Location> location
     );
 
+    StatementBlob(
+        bool shouldExport,
+        shared_ptr<SymbolName> symbolName,
+        const vector<string> &namedTypeKeys,
+        vector<shared_ptr<SymbolName>> conformingProtoSymbolNames,
+        const vector<shared_ptr<StatementVariable>> &variableStatements,
+        const vector<shared_ptr<StatementFunction>> &functionStatements,
+        shared_ptr<Location> location
+    );
+
     bool getShouldExport() const;
     shared_ptr<SymbolName> getSymbolName() const;
     void setModuleName(const string &moduleName);
 
     vector<string> getNamedTypeKeys() const;
-    vector<string> getProtoNames() const;
+    vector<shared_ptr<SymbolName>> getProtoSymbolNames() const;
     vector<shared_ptr<StatementVariable>> getVariableStatements() const;
     vector<shared_ptr<StatementFunction>> getFunctionStatements() const;
     vector<pair<string, shared_ptr<ValueType>>> getMembers() const;
@@ -40,7 +50,7 @@ private:
     vector<string> namedTypeKeys;
     vector<shared_ptr<StatementVariable>> variableStatements;
     vector<shared_ptr<StatementFunction>> functionStatements;
-    vector<string> protoNames;
+    vector<shared_ptr<SymbolName>> protoSymbolNames;
 };
 
 #endif

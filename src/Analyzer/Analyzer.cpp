@@ -327,16 +327,13 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     //scope->popLevel();
 
     // and the register
-    //string name = importModulePrefix + statementBlob->getName();
-    string name = statementBlob->getSymbolName()->getGlobalName();
     //if (!scope->setBlobMembers(name, members))
     //    markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getSymbolName()->getGlobalName());
     scope->blobScope->registerFields(statementBlob->getSymbolName(), members);
-    scope->setBlobProtoNames(name, statementBlob->getProtoNames());
+    scope->blobScope->registerConformingProtoSymbolNames(statementBlob->getSymbolName(), statementBlob->getProtoSymbolNames());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
-    string name = statementBlobDeclaration->getSymbolName()->getGlobalName();
     scope->blobScope->registerDeclaration(statementBlobDeclaration->getSymbolName());
 }
 
@@ -534,14 +531,13 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     }
 
     // and the register
-    string name = statement->getGlobalName();
-    if (!scope->setProtoMembers(name, members))
-        markErrorAlreadyDefined(statement->getLocation(), statement->getGlobalName());
+    scope->protoScope->registerFields(statement->getSymbolName(), members);
+    //if (!scope->setProtoMembers(name, members))
+    //    markErrorAlreadyDefined(statement->getLocation(), statement->getGlobalName());
 }
 
-void Analyzer::checkStatement(shared_ptr<StatementProtoDeclaration> statement) {
-    string name = statement->getGlobalName();
-    scope->setProtoMembers(name, {});
+void Analyzer::checkStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration) {
+    scope->protoScope->registerDeclaration(statementProtoDeclaration->getSymbolName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunction) {
@@ -806,8 +802,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             extraArguments = 1; // for the implicit "it"
             scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
         } else if (isParentProto) {
-            string protoName = dynamic_pointer_cast<ValueTypeProto>(parentExpression->getValueType())->getSymbolName()->getGlobalName();
-            auto members = *(scope->getProtoMembers(protoName));
+            auto members = *scope->protoScope->getFields(parentExpression->getValueType()->proto()->getSymbolName());
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionCall->getName().compare(member.first) == 0) {
                     valueType = member.second;
@@ -1220,8 +1215,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             return nullptr;
         // check proto member
         } else if (isParentProto) {
-            string protoName = dynamic_pointer_cast<ValueTypeProto>(parentExpression->getValueType())->getSymbolName()->getGlobalName();
-            auto members = *(scope->getProtoMembers(protoName));
+            auto members = *scope->protoScope->getFields(parentExpression->getValueType()->proto()->getSymbolName());
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionValue->getIdentifier() == member.first) {
                     // found corresponding member, decide if it's a simple or data access
@@ -1253,7 +1247,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             }
             markErrorNotDefined(
                 expressionValue->getLocation(),
-                format("{}.{}", protoName, expressionValue->getIdentifier())
+                format("{}.{}", parentExpression->getValueType()->proto()->getSymbolName()->getGlobalName(), expressionValue->getIdentifier())
             );
             return nullptr;
         }
@@ -2169,7 +2163,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // to proto
                 case ValueTypeKind::PROTO: {
-                    string targetProtoName = dynamic_pointer_cast<ValueTypeProto>(targetType)->getSymbolName()->getGlobalName();
+                    shared_ptr<SymbolName> targetProtoSymbolName = targetType->proto()->getSymbolName();
 
                     vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
                     if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPtr())
@@ -2180,12 +2174,12 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                         return false;
 
                     string blobName = dynamic_pointer_cast<ValueTypeBlob>(subType)->getSymbolName()->getGlobalName();
-                    optional<vector<string>> protoNames = scope->getBlobProtoNames(blobName);
-                    if (!protoNames)
+                    optional<vector<shared_ptr<SymbolName>>> conformingProtoSymbolNames = scope->blobScope->getConformingProtoSymbolNames(subType->blob()->getSymbolName());
+                    if (!conformingProtoSymbolNames)
                         return false;
                     
-                    for (string &protoName : *protoNames) {
-                        if (targetProtoName.compare(protoName) == 0)
+                    for (shared_ptr<SymbolName> conformingProtoSymbolName : *conformingProtoSymbolNames) {
+                        if(targetProtoSymbolName->isEqual(conformingProtoSymbolName))
                             return true;
                     }
 

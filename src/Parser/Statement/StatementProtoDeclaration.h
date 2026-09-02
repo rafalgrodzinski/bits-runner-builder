@@ -1,23 +1,24 @@
 #ifndef STATEMENT_PROTO_DECLARATION_H
 #define STATEMENT_PROTO_DECLARATION_H
 
-#include <format>
-
 #include "Statement.h"
 
-class StatementProtoDeclaration: public Statement {
-private:
-    bool shouldExport;
-    string name;
-    string moduleName;
+class SymbolName;
 
+class StatementProtoDeclaration: public Statement {
 public:
-    StatementProtoDeclaration(bool shouldExport, const string &name, const string &moduleName, shared_ptr<Location> location);
+    StatementProtoDeclaration(
+        bool shouldExport,
+        shared_ptr<SymbolName> symbolName,
+        shared_ptr<Location> location
+    );
 
     bool getShouldExport() const;
-    string getName() const;
-    string getGlobalName() const;
-    string getModuleName() const;
+    shared_ptr<SymbolName> getSymbolName() const;
+
+private:
+    bool shouldExport;
+    shared_ptr<SymbolName> symbolName;
 };
 
 #endif

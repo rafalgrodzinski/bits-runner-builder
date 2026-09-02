@@ -21,6 +21,7 @@ public:
         map<SymbolName, AnalyzerScopeState> statesMap;
         map<SymbolName, optional<vector<string>>> namedValueTypeKeysMap;
         map<SymbolName, optional<vector<pair<string, shared_ptr<ValueType>>>>> fieldsMap;
+        map<SymbolName, vector<shared_ptr<SymbolName>>> conformingProtoSymbolNamsMap;
     } ScopeLevel;
 
     AnalyzerScopeBlob(AnalyzerScope *parent);
@@ -34,6 +35,9 @@ public:
     void registerFields(shared_ptr<SymbolName> symbolName, vector<pair<string, shared_ptr<ValueType>>> &fields);
     optional<vector<pair<string, shared_ptr<ValueType>>>> getFields(shared_ptr<SymbolName> symbolName) const;
     optional<vector<shared_ptr<ValueType>>> getVariableFieldValueTypes(shared_ptr<SymbolName> symbolName) const;
+
+    void registerConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName, vector<shared_ptr<SymbolName>> conformingProtoSymbolNames);
+    optional<vector<shared_ptr<SymbolName>>> getConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName);
 
 private:
     AnalyzerScope *parent;

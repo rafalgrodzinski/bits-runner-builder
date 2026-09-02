@@ -11,6 +11,7 @@
 #include "AnalyzerScopeBlob.h"
 #include "AnalyzerScopeBoxed.h"
 #include "AnalyzerScopeEnum.h"
+#include "AnalyzerScopeProto.h"
 
 class SymbolName;
 class ValueType;
@@ -33,12 +34,10 @@ class AnalyzerScope {
 friend class AnalyzerScopeBlob;
 friend class AnalyzerScopeBoxed;
 friend class AnalyzerScopeEnum;
+friend class AnalyzerScopeProto;
 
 public:
     typedef struct {
-        map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
-        map<string, vector<string>> blobProtosMap;
-
         map<string, shared_ptr<ValueType>> variableTypes;
         map<string, bool> isVariableDefinedMap;
 
@@ -48,6 +47,7 @@ public:
         AnalyzerScopeBlob::ScopeLevel scopeLevelBlob;
         AnalyzerScopeBoxed::ScopeLevel scopeLevelBoxed;
         AnalyzerScopeEnum::ScopeLevel scopeLevelEnum;
+        AnalyzerScopeProto::ScopeLevel scopeLevelProto;
     } ScopeLevel;
 
     AnalyzerScope();
@@ -55,12 +55,6 @@ public:
     void pushLevel();
     void popLevel();
     void level(function<void()> levelBlock);
-
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(const string &name) const;
-    bool setProtoMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members);
-
-    optional<vector<string>> getBlobProtoNames(const string &name) const;
-    bool setBlobProtoNames(const string &name, const vector<string> &protoNames);
 
     shared_ptr<ValueType> getVariableType(const string &identifier) const;
     bool setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition);
@@ -71,6 +65,7 @@ public:
     shared_ptr<AnalyzerScopeBlob> blobScope;
     shared_ptr<AnalyzerScopeBoxed> boxedScope;
     shared_ptr<AnalyzerScopeEnum> enumScope;
+    shared_ptr<AnalyzerScopeProto> protoScope;
 
 private:
     stack<ScopeLevel> scopeLevels;

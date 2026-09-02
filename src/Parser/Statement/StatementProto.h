@@ -2,20 +2,14 @@
 #define STATEMENT_PROTO_H
 
 #include "Statement.h"
-#include "StatementProtoDeclaration.h"
+
+class StatementProtoDeclaration;
+class SymbolName;
 
 class StatementVariable;
 class StatementFunctionDeclaration;
 
 class StatementProto: public Statement {
-private:
-    bool shouldExport;
-    string name;
-    string moduleName;
-
-    vector<shared_ptr<StatementVariable>> variableStatements;
-    vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements;
-
 public:
     StatementProto(
         bool shouldExport,
@@ -26,15 +20,19 @@ public:
     );
 
     bool getShouldExport() const;
-    string getName() const;
-    string getGlobalName() const;
-    string getModuleName() const;
+    shared_ptr<SymbolName> getSymbolName() const;
     void setModuleName(const string &moduleName);
 
     vector<shared_ptr<StatementVariable>> getVariableStatements() const;
     vector<shared_ptr<StatementFunctionDeclaration>> getFunctionDeclarationStatements() const;
 
     shared_ptr<StatementProtoDeclaration> getDeclaration() const;
+
+private:
+    bool shouldExport;
+    shared_ptr<SymbolName> symbolName;
+    vector<shared_ptr<StatementVariable>> variableStatements;
+    vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements;
 };
 
 #endif

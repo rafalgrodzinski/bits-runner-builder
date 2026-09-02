@@ -273,12 +273,12 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
         line += ">";
     }
     // proto
-    if (!statement->getProtoNames().empty()) {
+    if (!statement->getProtoSymbolNames().empty()) {
         line += "(";
-        for (int i=0; i<statement->getProtoNames().size(); i++) {
+        for (int i=0; i<statement->getProtoSymbolNames().size(); i++) {
             if (i > 0)
                 line += ", ";
-            line += format("`{}`", statement->getProtoNames().at(i));
+            line += format("`{}`", statement->getProtoSymbolNames().at(i)->getGlobalName());
         }
         line += ")";
     }
@@ -463,7 +463,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
     string line;
 
     // name
-    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName());
+    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
     if (!statement->getVariableStatements().empty() || !statement->getFunctionDeclarationStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -499,7 +499,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
 }
 
 string Logger::toString(shared_ptr<StatementProtoDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("PROTO DECL `{}`", statement->getGlobalName());
+    string line = format ("PROTO DECL `{}`", statement->getSymbolName()->getGlobalName());
     return formattedLine(line, indents);
 }
 
