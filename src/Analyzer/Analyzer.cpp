@@ -202,6 +202,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported) {
+    cout << statementBlob->getSymbolName()->getGlobalName() << endl;
     //scope->pushLevel();
     //scope->setNamedTypes(statementBlob->getNamedTypeKeys());
     //scope->blobScope->registerContextNamedValueTypeKeys(statementBlob->getNamedTypeKeys());
@@ -2423,10 +2424,10 @@ shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypeFun> valueTyp
 }
 
 shared_ptr<ValueType> Analyzer::checkValueType(shared_ptr<ValueTypePtr> valueTypePtr) {
-    return make_shared<ValueTypePtr>(
-        resolvedAndCheckedValueType(valueTypePtr->getPointeeValueType(), false, nullptr),
-        valueTypePtr->getIsVolatile()
-    );
+    shared_ptr<ValueType> pointeeValueType = resolvedAndCheckedValueType(valueTypePtr->getPointeeValueType(), false, nullptr);
+    if (pointeeValueType == nullptr)
+        return nullptr;
+    return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile());
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {
