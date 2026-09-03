@@ -61,7 +61,7 @@ void crashHandler(int signal) {
     void *frames[64];
     int framesCount = backtrace(frames, 64);
 
-    fprintf(stderr, "☠️ Crashed with signal %d:\n", signal);
+    cerr << endl << "☠️ Crashed with signal " << signal << ":" << endl;
     backtrace_symbols_fd(frames, framesCount, STDERR_FILENO);
 
     exit(1);
