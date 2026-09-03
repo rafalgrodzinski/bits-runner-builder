@@ -1851,6 +1851,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
     bool isVadr = false;
     bool isAdr = false;
     bool isSize = false;
+    bool isTag = false;
 
     shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(expression);
     shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
@@ -1861,12 +1862,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         isVadr = expressionValue->getIdentifier() == "vadr";
         isAdr = expressionValue->getIdentifier() == "adr";
         isSize = expressionValue->getIdentifier() == "size";
+        isTag = expressionValue->getIdentifier() == "tag";
     } else if (expressionCall != nullptr) {
         isVal = expressionCall->getName() == "val";
     }
 
     // Return quickly if not a built-in
-    if (!isCount && !isVal && !isVadr && !isAdr && !isSize)
+    if (!isCount && !isVal && !isVadr && !isAdr && !isSize && !isTag)
         return nullptr;
 
     // Do the appropriate built-in operation
@@ -1904,6 +1906,15 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
             pointerLoad->setVolatile(valueTypePtr->getIsVolatile());
         return WrappedValue::wrappedValue(pointerLoad, ValueTypeSimple::A);
+    } else if (parentWrappedValue->isEnumStruct() && isTag) {
+        // Load tag at index 0
+        llvm::Value *index[] = {
+            builder->getInt32(0),
+            builder->getInt32(0)
+        };
+        llvm::Value *tagMemberPtr = builder->CreateGEP(typeEnumStruct, parentWrappedValue->getPointerValue(), index);
+        llvm::LoadInst *tagMemberLoad = builder->CreateLoad(typeInt, tagMemberPtr);
+        return WrappedValue::wrappedValue(tagMemberLoad, ValueTypeSimple::UINT);
     } else if (isAdr) {
         llvm::Value *pointerValue = parentWrappedValue->getPointerValue();
         llvm::Value *alloca = buildAlloca(typePtr, format("a_adr-{}", string(pointerValue->getName())));

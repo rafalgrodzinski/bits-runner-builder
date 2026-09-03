@@ -1105,12 +1105,14 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isParentPointer = parentExpression->getValueType()->isPtr();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isParentProto = parentExpression->getValueType()->isProto();
+        bool isParentEnum = parentExpression->getValueType()->isEnum();
 
-        bool isCount = expressionValue->getIdentifier().compare("count") == 0;
-        bool isVal = expressionValue->getIdentifier().compare("val") == 0;
-        bool isVadr = expressionValue->getIdentifier().compare("vadr") == 0;
-        bool isAdr = expressionValue->getIdentifier().compare("adr") == 0;
-        bool isSize = expressionValue->getIdentifier().compare("size") == 0;
+        bool isCount = expressionValue->getIdentifier() == "count";
+        bool isVal = expressionValue->getIdentifier() == "val";
+        bool isVadr = expressionValue->getIdentifier() == "vadr";
+        bool isAdr = expressionValue->getIdentifier() == "adr";
+        bool isSize = expressionValue->getIdentifier() == "size";
+        bool isTag = expressionValue->getIdentifier() == "tag";
 
         if (isParentData && isCount) {
             expressionValue->valueType = ValueTypeSimple::UINT;
@@ -1152,6 +1154,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         } else if ((isParentPointer || isParentProto) && isVadr) {
             expressionValue->valueType = ValueTypeSimple::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
+            return expressionValue->getValueType();
+        } else if (isParentEnum && isTag) {
+            return expressionValue->valueType = ValueTypeSimple::UINT;
+            expressionValue->valueKind = ExpressionValueKind::BUILT_IN_TAG;
             return expressionValue->getValueType();
         } else if (isAdr) {
             expressionValue->valueType = ValueTypeSimple::A;

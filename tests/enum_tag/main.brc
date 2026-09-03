@@ -1,0 +1,13 @@
+Result<T> enum
+   Status::Success boxed<T>: 42
+   Status::Failure
+;
+
+doStuff fun: value u32 -> enum<Result, u32>
+   result enum<Result, u32> <- {}.enum<Result, u32>::Status::Failure
+   ret result
+;
+
+@export main fun -> u32   
+   ret doStuff(5).tag
+;
