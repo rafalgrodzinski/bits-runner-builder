@@ -2,6 +2,7 @@
 #define ANALYZER_SCOPE_PROTO_H
 
 #include <map>
+#include <optional>
 #include <vector>
 #include "Parser/SymbolName.h"
 
