@@ -202,7 +202,6 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported) {
-    cout << statementBlob->getSymbolName()->getGlobalName() << endl;
     //scope->pushLevel();
     //scope->setNamedTypes(statementBlob->getNamedTypeKeys());
     //scope->blobScope->registerContextNamedValueTypeKeys(statementBlob->getNamedTypeKeys());
