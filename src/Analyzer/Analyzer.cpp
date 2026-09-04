@@ -1668,7 +1668,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
     targetType = resolvedAndCheckedValueType(targetType, false, nullptr);
 
     switch (sourceType->getKind()) {
-        // from literal types
+        // From UINT
         case ValueTypeKind::UINT: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::UINT:
@@ -1691,14 +1691,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;   
@@ -1706,6 +1699,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
+        // From SINT
         case ValueTypeKind::SINT: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::SINT:
@@ -1719,14 +1713,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;   
@@ -1734,6 +1721,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
+        // From FLOAT
         case ValueTypeKind::FLOAT: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::FLOAT:
@@ -1742,14 +1730,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;   
@@ -1757,7 +1738,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
-        // from unsigned
+        // From U8
         case ValueTypeKind::U8: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::UINT:
@@ -1780,20 +1761,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
             }
             break;
         }
+
+        // From U16
         case ValueTypeKind::U16: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::UINT:
@@ -1814,20 +1790,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
             }
             break;
         }
+
+        // From U32
         case ValueTypeKind::U32: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::UINT:
@@ -1846,20 +1817,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
                 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
             }
             break;
         }
+
+        // From U64
         case ValueTypeKind::U64: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::UINT:
@@ -1876,14 +1842,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1891,7 +1850,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
-        // from signed
+        // From S8
         case ValueTypeKind::S8: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::SINT:
@@ -1906,20 +1865,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
             }
             break;
         }
+
+        // From S16
         case ValueTypeKind::S16: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::SINT:
@@ -1933,20 +1887,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
             }
             break;
         }
+
+        // From S32
         case ValueTypeKind::S32: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::SINT:
@@ -1959,20 +1908,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
             }
             break;
         }
+
+        // From S64
         case ValueTypeKind::S64: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::SINT:
@@ -1984,14 +1928,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1999,7 +1936,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
-        // from float
+        // From F32
         case ValueTypeKind::F32: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::FLOAT:
@@ -2008,20 +1945,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
             }
             break;
         }
+
+        // From F64
         case ValueTypeKind::F64: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::FLOAT:
@@ -2029,14 +1961,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -2044,21 +1969,14 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
-        // from address
+        // From A
         case ValueTypeKind::A: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::A:
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -2066,32 +1984,26 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
-        // from pointer
+        // From PTR
         case ValueTypeKind::PTR: {
             switch (targetType->getKind()) {
-                case ValueTypeKind::PTR: {
+                case ValueTypeKind::PTR:
                     return sourceType->isEqual(targetType);
-                }
-                case ValueTypeKind::BOXED: {
-                    return canImplicitCast(sourceType, dynamic_pointer_cast<ValueTypeBoxed>(targetType)->getBoxedValueType());
-                }
-                /*case ValueTypeKind::NAMED_TYPE: {
-                    shared_ptr<ValueType> resolvedNamedValueType = resolvedAndCheckedValueType(targetType, false, nullptr);
-                    if (resolvedNamedValueType->isNamedType())
-                        return false;
-                    return canImplicitCast(sourceType, resolvedNamedValueType);
-                }*/
+
+                case ValueTypeKind::BOXED:
+                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+
                 default:
                     return false;
             }
             break;
         }
 
-        // from data
+        // From DATA
         case ValueTypeKind::DATA: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::DATA:
-                    return canImplicitCast(dynamic_pointer_cast<ValueTypeData>(sourceType)->getElementValueType(), dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType());
+                    return canImplicitCast(sourceType->data()->getElementValueType(), targetType->data()->getElementValueType());
 
                 default:
                     return false;
@@ -2099,94 +2011,94 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
-        // blob
+        // From BLOB
         case ValueTypeKind::BLOB: {
             return sourceType->isEqual(targetType);
         }
 
-        // from composite
+        // From COMPOSITE
         case ValueTypeKind::COMPOSITE: {
             switch (targetType->getKind()) {
-                // to pointer
+                // From COMPOSITE to PTR
                 case ValueTypeKind::PTR: {
-                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
-                    return sourceElementTypes.size() == 1 && sourceElementTypes.at(0)->isInteger();
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
+                    return sourceElementValueTypes.size() == 1 && sourceElementValueTypes.at(0)->isInteger();
                 }
 
-                // to data
+                // From COMPOSITE to DATA
                 case ValueTypeKind::DATA: {
-                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
-                    for (shared_ptr<ValueType> sourceElementType : sourceElementTypes) {
-                        if (!canImplicitCast(sourceElementType, dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType()))
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
+                    for (shared_ptr<ValueType> sourceElementValueType : sourceElementValueTypes) {
+                        if (!canImplicitCast(sourceElementValueType, targetType->data()->getElementValueType()))
                             return false;
                     }
                     return true;
                 }
 
-                // to blob
+                // From COMPOSITE to BLOB
                 case ValueTypeKind::BLOB: {
-                    shared_ptr<ValueTypeBlob> targetValueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(targetType);
-                    // get target non-function types
-                    //optional<vector<shared_ptr<ValueType>>> targetMemberTypes = scope->getNonFunctionBlobMemberTypes(targetType);
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
+                    shared_ptr<ValueTypeBlob> targetValueTypeBlob = targetType->blob();
+
+                    // get target non-function field types
                     optional<vector<shared_ptr<ValueType>>> oTargetFieldValueTypes = scope->blobScope->getVariableFieldValueTypes(targetValueTypeBlob->getSymbolName());
                     if (!oTargetFieldValueTypes)
                         return false;
 
-                    // get source types
-                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
-
                     // check that number of memebrs match
-                    if (sourceElementTypes.size() != (*oTargetFieldValueTypes).size())
+                    if (sourceElementValueTypes.size() != (*oTargetFieldValueTypes).size())
                         return false;
 
                     // check that each entry in composite can be cast to member in blob
-                    scope->pushLevel();
-                    scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
-                    for (int i=0; i<(*oTargetFieldValueTypes).size(); i++) {
-                        if (!canImplicitCast(sourceElementTypes.at(i), (*oTargetFieldValueTypes).at(i)))
-                            return false;
-                    }
-                    scope->popLevel();
+                    if (!scope->level([this, sourceElementValueTypes, targetValueTypeBlob, oTargetFieldValueTypes]() -> bool {
+                        scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
+                        for (int i=0; i<(*oTargetFieldValueTypes).size(); i++) {
+                            if (!canImplicitCast(sourceElementValueTypes.at(i), (*oTargetFieldValueTypes).at(i)))
+                                return false;
+                        }
+                        return true;
+                    })) { return false; }
+
                     return true;
                 }
 
-                // to enum field
+                // From COMPOSITE to ENUM_FIELD
                 case ValueTypeKind::ENUM_FIELD: {
-                    // get target & source types
-                    shared_ptr<ValueTypeEnumField> targetValueTypeEnumField = dynamic_pointer_cast<ValueTypeEnumField>(targetType);
-                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
+                    shared_ptr<ValueTypeEnumField> targetValueTypeEnumField = targetType->enumField();
 
                     // first option, no source types and target is none
-                    if (sourceElementTypes.size() == 0) {
+                    if (sourceElementValueTypes.size() == 0) {
                         return targetValueTypeEnumField->getPayloadValueType()->getKind() == ValueTypeKind::NONE;
                     }
 
                     // otherwise source has to have one element
-                    if (sourceElementTypes.size() != 1)
+                    if (sourceElementValueTypes.size() != 1)
                         return false;
 
                     // and check if it can be cast
-                    return canImplicitCast(sourceElementTypes.front(), targetValueTypeEnumField->getPayloadValueType());
+                    return canImplicitCast(sourceElementValueTypes.front(), targetValueTypeEnumField->getPayloadValueType());
                 }
 
-                // to proto
+                // From COMPOSITE to PROTO
                 case ValueTypeKind::PROTO: {
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
                     shared_ptr<SymbolName> targetProtoSymbolName = targetType->proto()->getSymbolName();
 
-                    vector<shared_ptr<ValueType>> sourceElementTypes = dynamic_pointer_cast<ValueTypeComposite>(sourceType)->getElementValueTypes();
-                    if (sourceElementTypes.size() != 1 || !sourceElementTypes.at(0)->isPtr())
+                    // There should be only a single pointer to blob element
+                    if (sourceElementValueTypes.size() != 1 || !sourceElementValueTypes.front()->isPtr())
                         return false;
 
-                    shared_ptr<ValueType> subType = dynamic_pointer_cast<ValueTypePtr>(sourceElementTypes.at(0))->getPointeeValueType();
-                    if (subType == nullptr || !subType->isBlob())
+                    shared_ptr<ValueType> pointeeValueType = sourceElementValueTypes.front()->ptr()->getPointeeValueType();
+                    if (pointeeValueType == nullptr || !pointeeValueType->isBlob())
                         return false;
 
-                    string blobName = dynamic_pointer_cast<ValueTypeBlob>(subType)->getSymbolName()->getGlobalName();
-                    optional<vector<shared_ptr<SymbolName>>> conformingProtoSymbolNames = scope->blobScope->getConformingProtoSymbolNames(subType->blob()->getSymbolName());
-                    if (!conformingProtoSymbolNames)
+                    // Check if the blob type conforms to the target proto
+                    optional<vector<shared_ptr<SymbolName>>> oConformingProtoSymbolNames = scope->blobScope->getConformingProtoSymbolNames(pointeeValueType->blob()->getSymbolName());
+                    if (!oConformingProtoSymbolNames)
                         return false;
                     
-                    for (shared_ptr<SymbolName> conformingProtoSymbolName : *conformingProtoSymbolNames) {
+                    for (shared_ptr<SymbolName> conformingProtoSymbolName : *oConformingProtoSymbolNames) {
                         if(targetProtoSymbolName->isEqual(conformingProtoSymbolName))
                             return true;
                     }
@@ -2200,7 +2112,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             break;
         }
 
-        // from boxed
+        // From BOXED
         case ValueTypeKind::BOXED: {
             switch (targetType->getKind()) {
                 // TODO: Having automatic unboxing cast would be nice
@@ -2231,36 +2143,43 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             }
         }
 
-        // from enum field
+        // From ENUM_FIELD
         case ValueTypeKind::ENUM_FIELD: {
-            // Are identical?
-            if (sourceType->isEqual(targetType))
-                return true;
-            
-            // Is this a field of a parent enum?
-            shared_ptr<ValueTypeEnumField> sourceValueTypeEnumField = dynamic_pointer_cast<ValueTypeEnumField>(sourceType);
-            shared_ptr<ValueTypeEnum> targetValueTypeEnum = dynamic_pointer_cast<ValueTypeEnum>(targetType);
-            if (targetValueTypeEnum == nullptr)
-                return false;
+            switch (targetType->getKind()) {
+                // From ENUM_FIELD to ENUM_FIELD
+                case ValueTypeKind::ENUM_FIELD:
+                    return sourceType->isEqual(targetType);
 
-            if (!sourceValueTypeEnumField->getSymbolName()->getGlobalName().starts_with(targetValueTypeEnum->getSymbolName()->getGlobalName()))
-                return false;
+                // From ENUM_FIELD to ENUM
+                case ValueTypeKind::ENUM: {                    
+                    shared_ptr<ValueTypeEnumField> sourceValueTypeEnumField = sourceType->enumField();
+                    shared_ptr<ValueTypeEnum> targetValueTypeEnum = targetType->enumeration();
 
-            // Does number of named types match?
-            if (sourceValueTypeEnumField->getNamedValueTypes().size() != targetValueTypeEnum->getNamedValueTypes().size())
-                return false;
+                    // Is this a field of a parent enum?
+                    if (!sourceValueTypeEnumField->getSymbolName()->getGlobalName().starts_with(targetValueTypeEnum->getSymbolName()->getGlobalName()))
+                        return false;
 
-            // Are the named value types identical?
-            for (int i=0; i<sourceValueTypeEnumField->getNamedValueTypes().size(); i++) {
-                shared_ptr<ValueType> sourceNamedValueType = sourceValueTypeEnumField->getNamedValueTypes().at(i);
-                shared_ptr<ValueType> targetNamedValueType = targetValueTypeEnum->getNamedValueTypes().at(i);
-                if (!sourceNamedValueType->isEqual(targetNamedValueType))
+                    // Does number of named types match?
+                    if (sourceValueTypeEnumField->getNamedValueTypes().size() != targetValueTypeEnum->getNamedValueTypes().size())
+                        return false;
+
+                    // Are the named value types identical?
+                    for (int i=0; i<sourceValueTypeEnumField->getNamedValueTypes().size(); i++) {
+                        shared_ptr<ValueType> sourceNamedValueType = sourceValueTypeEnumField->getNamedValueTypes().at(i);
+                        shared_ptr<ValueType> targetNamedValueType = targetValueTypeEnum->getNamedValueTypes().at(i);
+                        if (!sourceNamedValueType->isEqual(targetNamedValueType))
+                            return false;
+                    }
+
+                    return true;
+                }
+
+                default:
                     return false;
             }
-
-            return true;
         }
 
+        // From any other type
         default:
             return false;
     }

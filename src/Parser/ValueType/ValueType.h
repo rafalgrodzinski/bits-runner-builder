@@ -19,21 +19,24 @@ using namespace std;
 
 enum class ValueTypeKind {
     NONE,
-
     BOOL,
+
     UINT,
     U8,
     U16,
     U32,
     U64,
+
     SINT,
     S8,
     S16,
     S32,
     S64,
+
     FLOAT,
     F32,
     F64,
+
     A,
 
     BLOB,
