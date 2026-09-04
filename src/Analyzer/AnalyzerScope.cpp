@@ -19,10 +19,11 @@ void AnalyzerScope::popLevel() {
     scopeLevels.pop();
 }
 
-void AnalyzerScope::level(function<void()> levelBlock) {
+bool AnalyzerScope::level(function<bool ()> levelBlock) {
     pushLevel();
-    levelBlock();
+    bool isSuccess = levelBlock();
     popLevel();
+    return isSuccess;
 }
 
 shared_ptr<ValueType> AnalyzerScope::getVariableType(const string &identifier) const {

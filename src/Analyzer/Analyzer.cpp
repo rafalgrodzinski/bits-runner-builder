@@ -208,30 +208,32 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
 
     // check and verify blob member variables
-    scope->level([this, statementBlob]{
+    if (!scope->level([this, statementBlob]() -> bool {
         for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
             // check for invalid member names
             if (statementVariable->getIdentifier().compare("adr") == 0) {
                 markErrorInvalidBuiltIn(statementVariable->getLocation(), statementVariable->getIdentifier(), statementVariable->getValueType());
-                return;
+                return false;
             }
 
             // blob variable should not have a value expression
             if (statementVariable->getExpression() != nullptr) {
                 markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
-                return;
+                return false;
             }
 
             // members should not have @export
             if (statementVariable->getShouldExport()) {
                 markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
-                return;
+                return false;
             }
             checkStatement(statementVariable);
             if (statementVariable->getValueType() == nullptr)
-                return;
+                return false;
         }
-    });
+
+        return true;
+    })) { return; }
 
     // verify member functions
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {

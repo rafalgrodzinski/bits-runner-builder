@@ -54,7 +54,7 @@ public:
 
     void pushLevel();
     void popLevel();
-    void level(function<void()> levelBlock);
+    bool level(function<bool ()> levelBlock);
 
     shared_ptr<ValueType> getVariableType(const string &identifier) const;
     bool setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition);
