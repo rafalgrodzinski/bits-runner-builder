@@ -12,13 +12,14 @@ class Location;
 class Module;
 class Parsee;
 class Token;
-class ValueType;
+struct EnumField;
 
 class Statement;
 class StatementAssignment;
 class StatementBlob;
 class StatementBlobDeclaration;
 class StatementBlock;
+class StatementEnum;
 class StatementExpression;
 class StatementFunction;
 class StatementFunctionDeclaration;
@@ -51,6 +52,18 @@ enum class ExpressionBinaryOperation;
 enum class ExpressionUnaryOperation;
 enum class TokenKind;
 
+class ValueType;
+class ValueTypeBlob;
+class ValueTypeBoxed;
+class ValueTypeComposite;
+class ValueTypeData;
+class ValueTypeEnum;
+class ValueTypeEnumField;
+class ValueTypeFun;
+class ValueTypeProto;
+class ValueTypePtr;
+class ValueTypeSimple;
+
 using namespace std;
 
 enum class IndentKind {
@@ -72,6 +85,7 @@ private:
     static string toString(shared_ptr<StatementBlob> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents);
+    static string toString(shared_ptr<StatementEnum> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementFunction> statement, vector<IndentKind> indents);
     static string toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents);
@@ -101,7 +115,20 @@ private:
     static string toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents);
     static string toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents);
 
+    // value type
+    static string toString(shared_ptr<ValueTypeBlob> valueTypeBlob);
+    static string toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
+    static string toString(shared_ptr<ValueTypeComposite> ValueTypeComposite);
+    static string toString(shared_ptr<ValueTypeData> valueTypeData);
+    static string toString(shared_ptr<ValueTypeEnum> valueTypeEnum);
+    static string toString(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
+    static string toString(shared_ptr<ValueTypeFun> valueTypeFun);
+    static string toString(shared_ptr<ValueTypeProto> valueTypeProto);
+    static string toString(shared_ptr<ValueTypePtr> valueTypePtr);
+    static string toString(shared_ptr<ValueTypeSimple> valueTypeSimple);
+ 
     // general support
+    static string toString(EnumField field, vector<IndentKind> indents);
     static string formattedLine(const string &line, const vector<IndentKind> &indents);
     static vector<IndentKind> adjustedLastIndent(vector<IndentKind> indents);
 

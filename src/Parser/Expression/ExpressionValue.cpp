@@ -13,6 +13,12 @@ shared_ptr<ExpressionValue> ExpressionValue::data(const string &identifier, shar
     return expression;
 }
 
+shared_ptr<ExpressionValue> ExpressionValue::enumeration(const string &name, shared_ptr<Location> location) {
+    shared_ptr<ExpressionValue> expression = make_shared<ExpressionValue>(name, location);
+    expression->valueKind = ExpressionValueKind::ENUM;
+    return expression;
+}
+
 ExpressionValue::ExpressionValue(const string &identifier, shared_ptr<Location> location):
 Expression(ExpressionKind::VALUE, nullptr, location) {
     size_t pos = identifier.find('.');

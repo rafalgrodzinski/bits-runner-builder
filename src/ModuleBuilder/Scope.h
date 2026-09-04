@@ -20,6 +20,8 @@ private:
         map<string, llvm::Function*> funMap;
         map<string, llvm::InlineAsm*> rawFunMap;
 
+        map<string, llvm::Constant*> enumFieldTagValuesMap;
+
         map<string, llvm::StructType*> protoStructTypesMap;
         map<string, vector<pair<string, shared_ptr<ValueType>>>> protoStructMembersMap;
 
@@ -43,6 +45,9 @@ public:
 
     bool setInlineAsm(const string &name, llvm::InlineAsm *inlineAsm);
     llvm::InlineAsm *getInlineAsm(const string &name) const;
+
+    bool setEnumFieldTagValue(const string &enumFieldName, llvm::Constant *enumTagValue);
+    llvm::Constant *getEnumFieldTagValue(const string &enumFieldName) const;
 
     bool setProtoStructType(const string &name, llvm::StructType *structType, const vector<pair<string, shared_ptr<ValueType>>> &members);
     llvm::StructType *getProtoStructType(const string &name) const;

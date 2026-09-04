@@ -7,6 +7,7 @@
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementEnum.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -34,7 +35,7 @@
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
 
 ModulesStore::ModulesStore(const string &defaultModuleName):
 defaultModuleName(defaultModuleName) { }
@@ -72,6 +73,11 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             }
             break;
         }
+        case StatementKind::ENUM: {
+            shared_ptr<StatementEnum> statementEnum = dynamic_pointer_cast<StatementEnum>(statement);
+            statementEnum->setModuleName(moduleName);
+            break;
+        }
         case StatementKind::EXPRESSION: {
             shared_ptr<StatementExpression> statementExpression = dynamic_pointer_cast<StatementExpression>(statement);
             setModuleName(statementExpression->getExpression(), moduleName);
@@ -88,6 +94,11 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             statementFunction->getReturnValueType()->setModuleName(moduleName);
             // body
             setModuleName(statementFunction->getStatementBlock(), moduleName);
+            break;
+        }
+        case StatementKind::FUNCTION_DECLARATION: {
+            shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
+            statementFunctionDeclaration->setModuleName(moduleName);
             break;
         }
         case StatementKind::META_EXTERN_FUNCTION: {
@@ -112,9 +123,9 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             // variable statements
             for (shared_ptr<Statement> variableStatement : statementProto->getVariableStatements())
                 setModuleName(variableStatement, moduleName);
-            // function statements
-            for (shared_ptr<Statement> functionStatement : statementProto->getFunctionDeclarationStatements())
-                setModuleName(functionStatement, moduleName);
+            // function declaration statements
+            for (shared_ptr<Statement> functionDeclarationStatement : statementProto->getFunctionDeclarationStatements())
+                setModuleName(functionDeclarationStatement, moduleName);
             break;
         }
         case StatementKind::RAW_FUNCTION: {
@@ -212,6 +223,8 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
         }
         case ExpressionKind::VALUE: {
             shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(expression);
+            if (expressionValue->getValueType() != nullptr)
+                expressionValue->getValueType()->setModuleName(moduleName);
             if (expressionValue->getIndexExpression() != nullptr)
                 setModuleName(expressionValue->getIndexExpression(), moduleName);
             break;
@@ -228,6 +241,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
     vector<shared_ptr<Statement>> moduleImportStatements;
     vector<shared_ptr<Statement>> moduleExternStatements;
+    vector<shared_ptr<Statement>> moduleEnumStatements;
     vector<shared_ptr<Statement>> moduleProtoDeclarationStatements;
     vector<shared_ptr<Statement>> moduleProtoStatements;
     vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
@@ -238,6 +252,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     vector<shared_ptr<Statement>> moduleRawFunctionStatements;
     vector<shared_ptr<Statement>> moduleBodyStatements;
 
+    vector<shared_ptr<Statement>> moduleExportedEnumStatements;
     vector<shared_ptr<Statement>> moduleExportedProtoDeclarationStatements;
     vector<shared_ptr<Statement>> moduleExportedProtoStatements;
     vector<shared_ptr<Statement>> moduleExportedBlobDeclarationStatements;
@@ -260,28 +275,16 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // exported header
                 if (statementBlob->getShouldExport()) {
-                    // update proto conformation for exported statement
-                    vector<string> exportedProtoNames;
-                    for (string &protoName : statementBlob->getProtoNames()) {
-                        string name;
-                        if (protoName.find('.', 0) == string::npos && defaultModuleName.compare(moduleName) != 0) {
-                            name = moduleName + "." + protoName;
-                        } else {
-                            name = protoName;
-                        }
-                        exportedProtoNames.push_back(name);
-                    }
-
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
-                        statementBlob->getName(),
+                        statementBlob->getSymbolName(),
                         statementBlob->getNamedTypeKeys(),
-                        exportedProtoNames,
+                        statementBlob->getProtoSymbolNames(),
                         statementBlob->getVariableStatements(),
                         vector<shared_ptr<StatementFunction>>(), // don't include function definitions
                         statementBlob->getLocation()
                     );
-                    exportedStatementBlob->setModuleName(statementBlob->getModuleName());
+                    exportedStatementBlob->setModuleName(statementBlob->getSymbolName()->getModuleName());
 
                     // append updated statement
                     moduleExportedBlobStatements.push_back(exportedStatementBlob);
@@ -305,6 +308,17 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     if (statementBlob->getShouldExport())
                        moduleExportedFunctionDeclarationStatements.push_back(statementBlobFunctionDeclaration);
                 }
+
+                break;
+            }
+            case StatementKind::ENUM: {
+                shared_ptr<StatementEnum> statementEnum = dynamic_pointer_cast<StatementEnum>(statement);
+                // local header
+                moduleEnumStatements.push_back(statementEnum);
+
+                // exported header
+                if (statementEnum->getShouldExport())
+                    moduleExportedEnumStatements.push_back(statementEnum);
 
                 break;
             }
@@ -393,6 +407,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         importStatementsMap[moduleName] = moduleImportStatements;
         // externs
         externStatementsMap[moduleName] = moduleExternStatements;
+        // enums
+        enumStatementsMap[moduleName] = moduleEnumStatements;
         // proto declarations
         protoDeclarationStatementsMap[moduleName] = moduleProtoDeclarationStatements;
         // proto definitions
@@ -411,6 +427,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // body statements
         bodyStatementsMap[moduleName] = moduleBodyStatements;
 
+        // exported enums
+        exportedEnumStatementsMap[moduleName] = moduleExportedEnumStatements;
         // exported proto declarations
         exportedProtoDeclarationStatementsMap[moduleName] = moduleExportedProtoDeclarationStatements;
         // exported proto definitions
@@ -502,6 +520,7 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // construct the local header
         // order for local header statements is:
         // - externs
+        // - enums
         // - proto declaration
         // - blob declarations
         // - import statements (imported statements may use blobs & protos)
@@ -514,6 +533,9 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         vector<shared_ptr<Statement>> headerStatements;
         // externs
         for (shared_ptr<Statement> statement : externStatementsMap[moduleName])
+            headerStatements.push_back(statement);
+        // enums
+        for (shared_ptr<Statement> statement : enumStatementsMap[moduleName])
             headerStatements.push_back(statement);
         // proto declarations
         for (shared_ptr<Statement> statement : protoDeclarationStatementsMap[moduleName])
@@ -572,6 +594,9 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
 
         // imports
         for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported enums
+        for (shared_ptr<Statement> statement : exportedEnumStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
         // exported proto declarations
         for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])

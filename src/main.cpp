@@ -3,6 +3,11 @@
 #include <filesystem>
 #include <ctime>
 
+#include <execinfo.h>
+#include <csignal>
+#include <cstdlib>
+#include <unistd.h>
+
 #include <llvm/Support/CommandLine.h>
 
 #include "Module/Module.h"
@@ -52,7 +57,22 @@ void versionPrinter(llvm::raw_ostream &os) {
     os << "Bits Runner Builder, version " << VERSION << "\n";
 }
 
+void crashHandler(int signal) {
+    void *frames[64];
+    int framesCount = backtrace(frames, 64);
+
+    cerr << endl << "☠️ Crashed with signal " << signal << ":" << endl;
+    backtrace_symbols_fd(frames, framesCount, STDERR_FILENO);
+
+    exit(1);
+}
+
 int main(int argc, char **argv) {
+    signal(SIGSEGV, crashHandler);
+    signal(SIGABRT, crashHandler);
+    signal(SIGILL, crashHandler);
+    signal(SIGFPE, crashHandler);
+
     win_support_init();
 
     llvm::cl::SetVersionPrinter(versionPrinter);

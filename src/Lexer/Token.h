@@ -62,6 +62,7 @@ enum class TokenKind {
     REPEAT,
     IF,
     ELSE,
+    ENUM,
 
     BOOL,
     FLOAT,

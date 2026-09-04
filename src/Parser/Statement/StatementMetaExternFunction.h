@@ -6,6 +6,7 @@
 #include "Statement.h"
 
 class ValueType;
+class ValueTypeFun;
 
 class StatementMetaExternFunction: public Statement {
 private:
@@ -32,7 +33,7 @@ public:
 
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
-    shared_ptr<ValueType> getValueType() const;
+    shared_ptr<ValueTypeFun> getValueType() const;
 };
 
 #endif

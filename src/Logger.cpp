@@ -8,13 +8,13 @@
 #include "Lexer/Token.h"
 #include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
-#include "Parser/ValueType.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
+#include "Parser/Statement/StatementEnum.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -42,6 +42,18 @@
 #include "Parser/Expression/ExpressionLiteral.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
+
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
+#include "Parser/ValueType/ValueTypeBoxed.h"
+#include "Parser/ValueType/ValueTypeComposite.h"
+#include "Parser/ValueType/ValueTypeData.h"
+#include "Parser/ValueType/ValueTypeEnum.h"
+#include "Parser/ValueType/ValueTypeEnumField.h"
+#include "Parser/ValueType/ValueTypeFun.h"
+#include "Parser/ValueType/ValueTypeProto.h"
+#include "Parser/ValueType/ValueTypePtr.h"
+#include "Parser/ValueType/ValueTypeSimple.h"
 
 /// Private ///
 
@@ -136,6 +148,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "ID(" + token->getLexme() + ")";
         case TokenKind::TYPE:
             return "TYPE(" + token->getLexme() + ")";
+        case TokenKind::ENUM:
+            return "ENUM";
         case TokenKind::DATA:
             return "DATA";
         case TokenKind::BLOB:
@@ -211,6 +225,8 @@ string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> inde
             return toString(dynamic_pointer_cast<StatementProto>(statement), indents);
         case StatementKind::PROTO_DECLARATION:
             return toString(dynamic_pointer_cast<StatementProtoDeclaration>(statement), indents);
+        case StatementKind::ENUM:
+            return toString(dynamic_pointer_cast<StatementEnum>(statement), indents);
         case StatementKind::BLOCK:
             return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
         case StatementKind::ASSIGNMENT:
@@ -245,7 +261,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     string line;
 
     // name
-    line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName());
+    line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
     // named type keys
     if (!statement->getNamedTypeKeys().empty()) {
         line += "<";
@@ -257,8 +273,15 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
         line += ">";
     }
     // proto
-    for (string &protoName : statement->getProtoNames())
-        line += format(", {}", protoName);
+    if (!statement->getProtoSymbolNames().empty()) {
+        line += "(";
+        for (int i=0; i<statement->getProtoSymbolNames().size(); i++) {
+            if (i > 0)
+                line += ", ";
+            line += format("`{}`", statement->getProtoSymbolNames().at(i)->getGlobalName());
+        }
+        line += ")";
+    }
     if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -294,7 +317,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
 }
 
 string Logger::toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("BLOB DECL `{}`", statement->getGlobalName());
+    string line = format ("BLOB DECL `{}`", statement->getSymbolName()->getGlobalName());
     return formattedLine(line, indents);
 }
 
@@ -310,6 +333,31 @@ string Logger::toString(shared_ptr<StatementBlock> statement, vector<IndentKind>
             currentIndents.push_back(IndentKind::NODE_LAST);
 
         text += toString(statement->getStatements().at(i), currentIndents);
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<StatementEnum> statement, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    // name
+    line = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
+    text += formattedLine(line, indents);
+
+    indents = adjustedLastIndent(indents);
+
+    // fields
+    int fieldsCount = statement->getFields().size();
+    for (int i=0; i<fieldsCount; i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < fieldsCount - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(statement->getFields().at(i), currentIndents);
     }
 
     return text;
@@ -415,7 +463,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
     string line;
 
     // name
-    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName());
+    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
     if (!statement->getVariableStatements().empty() || !statement->getFunctionDeclarationStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -451,7 +499,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
 }
 
 string Logger::toString(shared_ptr<StatementProtoDeclaration> statement, vector<IndentKind> indents) {
-    string line = format ("PROTO DECL `{}`", statement->getGlobalName());
+    string line = format ("PROTO DECL `{}`", statement->getSymbolName()->getGlobalName());
     return formattedLine(line, indents);
 }
 
@@ -882,6 +930,179 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
     return formattedLine(line, indents);
 }
 
+string Logger::toString(shared_ptr<ValueTypeBlob> valueTypeBlob) {
+    string text = "";
+    text += format("BLOB<`{}`", valueTypeBlob->getSymbolName()->getGlobalName());
+    // If there are no named value types, print the keys
+    if (valueTypeBlob->getNamedValueTypes().empty() && valueTypeBlob->getNamedValueTypeKeys()) {
+        vector<string> keys = *valueTypeBlob->getNamedValueTypeKeys();
+        for (string &key : keys) {
+            text += format(", `{}`", key);
+        }
+    } else {
+        for (shared_ptr<ValueType> valueType : valueTypeBlob->getNamedValueTypes()) {
+            text += format(", {}", toString(valueType));
+        }
+    }
+    text += ">";
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
+    string text = "";
+
+    text += "BOXED<";
+    if (valueTypeBoxed->getBoxedValueType() != nullptr) {
+        text += toString(valueTypeBoxed->getBoxedValueType());
+    } else if (valueTypeBoxed->getNamedValueTypeKey()) {
+        text += format("`{}`", *valueTypeBoxed->getNamedValueTypeKey());
+    } else {
+        text += "{INVALID}";
+    }
+    text += ">";
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeComposite> ValueTypeComposite) {
+    return "COMPOSITE";
+}
+
+string Logger::toString(shared_ptr<ValueTypeData> valueTypeData) {
+    string text;
+
+    if (valueTypeData->getCountExpression() != nullptr) {
+        text = format("DATA<{}, {}>", toString(valueTypeData->getElementValueType()), toString(valueTypeData->getCountExpression(), {}, false));
+    } else {
+        text = format("DATA<{}>", toString(valueTypeData->getElementValueType()));
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeEnum> valueTypeEnum) {
+    string text = "";
+    text += format("ENUM<`{}`", valueTypeEnum->getSymbolName()->getGlobalName());
+    for (shared_ptr<ValueType> valueType : valueTypeEnum->getNamedValueTypes()) {
+        text += ", ";
+        text += toString(valueType);
+    }
+    text += ">";
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
+    string text = "";
+    text += format("ENUM_FIELD<`{}`", valueTypeEnumField->getSymbolName()->getGlobalName());
+    for (shared_ptr<ValueType> valueType : valueTypeEnumField->getNamedValueTypes()) {
+        text += ", ";
+        text += toString(valueType);
+    }
+    text += ">";
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeFun> valueTypeFun) {
+    string text = "FUN";
+
+    // args
+    vector<shared_ptr<ValueType>> argumentTypes = valueTypeFun->getArgumentValueTypes();
+    for (int i=0; i<argumentTypes.size(); i++) {
+        if (i > 0)
+            text += ",";
+        text += format(" {}", toString(argumentTypes.at(i)));
+    }
+    // return
+    if (valueTypeFun->getReturnValueType() != nullptr) {
+        text += format(" -> {}", toString(valueTypeFun->getReturnValueType()));
+    }
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeProto> valueTypeProto) {
+    return format("PROTO<`{}`>", valueTypeProto->getSymbolName()->getGlobalName());
+}
+
+string Logger::toString(shared_ptr<ValueTypePtr> valueTypePtr) {
+    string text;
+
+    text += format("PTR<{}>", toString(valueTypePtr->getPointeeValueType()));
+    if (valueTypePtr->getIsVolatile())
+        text = format("v_{}", text);
+
+    return text;
+}
+
+string Logger::toString(shared_ptr<ValueTypeSimple> valueTypeSimple) {
+    string text;
+
+    switch (valueTypeSimple->getKind()) {
+        case ValueTypeKind::BOOL:
+            text = "BOOL";
+            break;
+        case ValueTypeKind::UINT:
+            text = "UINT";
+            break;
+        case ValueTypeKind::U8:
+            text = "U8";
+            break;
+        case ValueTypeKind::U16:
+            text = "U16";
+            break;
+        case ValueTypeKind::U32:
+            text = "U32";
+            break;
+        case ValueTypeKind::U64:
+            text = "U64";
+            break;
+        case ValueTypeKind::SINT:
+            text = "SINT";
+            break;
+        case ValueTypeKind::S8:
+            text = "S8";
+            break;
+        case ValueTypeKind::S16:
+            text = "S16";
+            break;
+        case ValueTypeKind::S32:
+            text = "S32";
+            break;
+        case ValueTypeKind::S64:
+            text = "S64";
+            break;
+        case ValueTypeKind::FLOAT:
+            text = "FLOAT";
+            break;
+        case ValueTypeKind::F32:
+            text = "F32";
+            break;
+        case ValueTypeKind::F64:
+            text = "F64";
+            break;
+        case ValueTypeKind::A:
+            text = "A";
+            break;
+        default:
+            text = "{INVALID}";
+            break;
+    }
+
+    return text;
+}
+
+string Logger::toString(EnumField field, vector<IndentKind> indents) {
+    string text;
+    string line;
+
+    line = format("`{}` {}", field.symbolName->getGlobalName(), toString(field.payloadValueType));
+    text += formattedLine(line, indents);
+
+    return text;
+}
+
 string Logger::formattedLine(const string &line, const vector<IndentKind> &indents) {
     // Just return the input, if no indents (useful for inline expressions)
     if (indents.empty())
@@ -1064,6 +1285,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "LITERAL(ID)";
         case TokenKind::TYPE:
             return "TYPE";
+        case TokenKind::ENUM:
+            return "ENUM";
         case TokenKind::DATA:
             return "DATA";
         case TokenKind::BLOB:
@@ -1276,114 +1499,54 @@ string Logger::toString(shared_ptr<Location> location) {
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {
-    string text = "{INVALID}";
-
-    if (valueType == nullptr)
-        return text;
+    string text;
 
     switch (valueType->getKind()) {
-        case ValueTypeKind::NONE:
+        case ValueTypeKind::NONE: {
             text = "NONE";
             break;
-        case ValueTypeKind::BOOL:
-            text = "BOOL";
+        }
+        case ValueTypeKind::PTR: {
+            text = toString(dynamic_pointer_cast<ValueTypePtr>(valueType));
             break;
-        case ValueTypeKind::UINT:
-            text = "UINT";
-            break;
-        case ValueTypeKind::U8:
-            text = "U8";
-            break;
-        case ValueTypeKind::U16:
-            text = "U16";
-            break;
-        case ValueTypeKind::U32:
-            text = "U32";
-            break;
-        case ValueTypeKind::U64:
-            text = "U64";
-            break;
-        case ValueTypeKind::SINT:
-            text = "SINT";
-            break;
-        case ValueTypeKind::S8:
-            text = "S8";
-            break;
-        case ValueTypeKind::S16:
-            text = "S16";
-            break;
-        case ValueTypeKind::S32:
-            text = "S32";
-            break;
-        case ValueTypeKind::S64:
-            text = "S64";
-            break;
-        case ValueTypeKind::FLOAT:
-            text = "FLOAT";
-            break;
-        case ValueTypeKind::F32:
-            text = "F32";
-            break;
-        case ValueTypeKind::F64:
-            text = "F64";
-            break;
-        case ValueTypeKind::A:
-            text = "A";
-            break;
-        case ValueTypeKind::PTR:
-            text = format("PTR<{}>", toString(valueType->getSubType()));
-            break;
+        }
         case ValueTypeKind::DATA: {
-            if (valueType->getCountExpression() != nullptr) {
-                text = format("DATA<{}, {}>", toString(valueType->getSubType()), toString(valueType->getCountExpression(), {}, false));
-            } else {
-                text = format("DATA<{}>", toString(valueType->getSubType()));
-            }
+            text = toString(dynamic_pointer_cast<ValueTypeData>(valueType));
             break;
         }
         case ValueTypeKind::BLOB: {
-            text = "";
-            text += format("BLOB<`{}`", valueType->getGlobalName());
-            if (valueType->getNamedTypeValues()) {
-                for (int i=0; i<(*valueType->getNamedTypeValues()).size(); i++) {
-                    text += ", ";
-                    text += toString((*valueType->getNamedTypeValues()).at(i));
-                }
-            }
-            text += ">";
+            text = toString(dynamic_pointer_cast<ValueTypeBlob>(valueType));
             break;
         }
-        case ValueTypeKind::PROTO:
-            text = format("PROTO<`{}`>", valueType->getGlobalName());
+        case ValueTypeKind::ENUM: {
+            text = toString(dynamic_pointer_cast<ValueTypeEnum>(valueType));
             break;
-        case ValueTypeKind::BOXED:
-            text = format("BOXED<{}>", toString(valueType->getSubType()));
+        }
+        case ValueTypeKind::ENUM_FIELD: {
+            text =  toString(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
             break;
+        }
+        case ValueTypeKind::PROTO: {
+            text = toString(dynamic_pointer_cast<ValueTypeProto>(valueType));
+            break;
+        }
+        case ValueTypeKind::BOXED: {
+            text = toString(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
+            break;
+        }
         case ValueTypeKind::FUN: {
-            text = "FUN";
-            // args
-            vector<shared_ptr<ValueType>> argumentTypes = *(valueType->getArgumentTypes());
-            for (int i=0; i<argumentTypes.size(); i++) {
-                if (i > 0)
-                    text += ",";
-                text += format(" {}", toString(argumentTypes.at(i)));
-            }
-            // return
-            if (valueType->getReturnType() != nullptr) {
-                text += format(" -> {}", toString(valueType->getReturnType()));
-            }
+            text = toString(dynamic_pointer_cast<ValueTypeFun>(valueType));
             break;
         }
-        case ValueTypeKind::COMPOSITE:
-            text = format("COMPOSITE");
+        case ValueTypeKind::COMPOSITE: {
+            text = toString(dynamic_pointer_cast<ValueTypeComposite>(valueType));
             break;
-        case ValueTypeKind::NAMED_TYPE:
-            text = format("`{}`", *valueType->getNamedTypeKey());
+        }
+        default: {
+            text = toString(dynamic_pointer_cast<ValueTypeSimple>(valueType));
             break;
+        }
     }
-
-    if (valueType->getIsVolatile())
-        text = format("v_{}", text);
 
     return text;
 }
