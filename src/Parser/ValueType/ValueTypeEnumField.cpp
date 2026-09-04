@@ -25,7 +25,7 @@ void ValueTypeEnumField::setModuleName(const string &moduleName) {
 
 bool ValueTypeEnumField::isEqual(shared_ptr<ValueType> other) const {
     // Check types
-    shared_ptr<ValueTypeEnumField> otherValueTypeEnumField = other->enumField();
+    shared_ptr<ValueTypeEnumField> otherValueTypeEnumField = other->toEnumField();
     if (otherValueTypeEnumField == nullptr)
         return false;
 

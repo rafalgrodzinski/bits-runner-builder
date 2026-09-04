@@ -20,7 +20,7 @@ void ValueTypeComposite::setModuleName(const string &moduleName) {
 
 bool ValueTypeComposite::isEqual(shared_ptr<ValueType> other) const {
     // Check if types match
-    shared_ptr<ValueTypeComposite> otherValueTypeComposite = other->composite();
+    shared_ptr<ValueTypeComposite> otherValueTypeComposite = other->toComposite();
     if (otherValueTypeComposite == nullptr)
         return false;
 

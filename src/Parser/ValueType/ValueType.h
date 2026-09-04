@@ -77,16 +77,16 @@ public:
     bool isDataBool();
     bool isDataNumeric();
 
-    shared_ptr<ValueTypeBlob> blob();
-    shared_ptr<ValueTypeBoxed> boxed();
-    shared_ptr<ValueTypeComposite> composite();
-    shared_ptr<ValueTypeData> data();
-    shared_ptr<ValueTypeEnum> enumeration();
-    shared_ptr<ValueTypeEnumField> enumField();
-    shared_ptr<ValueTypeFun> fun();
-    shared_ptr<ValueTypeProto> proto();
-    shared_ptr<ValueTypePtr> ptr();
-    shared_ptr<ValueTypeSimple> simple();
+    shared_ptr<ValueTypeBlob> toBlob();
+    shared_ptr<ValueTypeBoxed> toBoxed();
+    shared_ptr<ValueTypeComposite> toComposite();
+    shared_ptr<ValueTypeData> toData();
+    shared_ptr<ValueTypeEnum> toEnum();
+    shared_ptr<ValueTypeEnumField> toEnumField();
+    shared_ptr<ValueTypeFun> toFun();
+    shared_ptr<ValueTypeProto> toProto();
+    shared_ptr<ValueTypePtr> toPtr();
+    shared_ptr<ValueTypeSimple> toSimple();
 
     virtual void setModuleName(const string &moduleName) { }
     virtual bool isEqual(shared_ptr<ValueType> other) const = 0;

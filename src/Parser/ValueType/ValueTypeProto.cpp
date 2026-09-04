@@ -14,7 +14,7 @@ void ValueTypeProto::setModuleName(const string &moduleName) {
 
 bool ValueTypeProto::isEqual(shared_ptr<ValueType> other) const {
     // Check types
-    shared_ptr<ValueTypeProto> otherValueTypeProto = other->proto();
+    shared_ptr<ValueTypeProto> otherValueTypeProto = other->toProto();
     if (otherValueTypeProto == nullptr)
         return false;
 

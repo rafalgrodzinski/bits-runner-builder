@@ -26,7 +26,7 @@ void ValueTypeFun::setModuleName(const string &moduleName) {
 
 bool ValueTypeFun::isEqual(shared_ptr<ValueType> other) const {
     // Check if types match
-    shared_ptr<ValueTypeFun> otherValueTypeFun = other->fun();
+    shared_ptr<ValueTypeFun> otherValueTypeFun = other->toFun();
     if (otherValueTypeFun == nullptr)
         return false;
 

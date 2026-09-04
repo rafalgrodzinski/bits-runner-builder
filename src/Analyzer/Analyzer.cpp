@@ -804,7 +804,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             extraArguments = 1; // for the implicit "it"
             scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
         } else if (isParentProto) {
-            auto members = *scope->protoScope->getFields(parentExpression->getValueType()->proto()->getSymbolName());
+            auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionCall->getName().compare(member.first) == 0) {
                     valueType = member.second;
@@ -1223,7 +1223,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             return nullptr;
         // check proto member
         } else if (isParentProto) {
-            auto members = *scope->protoScope->getFields(parentExpression->getValueType()->proto()->getSymbolName());
+            auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
             for (pair<string, shared_ptr<ValueType>> &member : members) {
                 if (expressionValue->getIdentifier() == member.first) {
                     // found corresponding member, decide if it's a simple or data access
@@ -1255,7 +1255,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             }
             markErrorNotDefined(
                 expressionValue->getLocation(),
-                format("{}.{}", parentExpression->getValueType()->proto()->getSymbolName()->getGlobalName(), expressionValue->getIdentifier())
+                format("{}.{}", parentExpression->getValueType()->toProto()->getSymbolName()->getGlobalName(), expressionValue->getIdentifier())
             );
             return nullptr;
         }
@@ -1691,7 +1691,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;   
@@ -1713,7 +1713,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;   
@@ -1730,7 +1730,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;   
@@ -1761,7 +1761,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1790,7 +1790,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1817,7 +1817,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
                 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1842,7 +1842,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1865,7 +1865,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1887,7 +1887,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1908,7 +1908,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1928,7 +1928,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1945,7 +1945,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1961,7 +1961,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1976,7 +1976,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return true;
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -1991,7 +1991,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     return sourceType->isEqual(targetType);
 
                 case ValueTypeKind::BOXED:
-                    return canImplicitCast(sourceType, targetType->boxed()->getBoxedValueType());
+                    return canImplicitCast(sourceType, targetType->toBoxed()->getBoxedValueType());
 
                 default:
                     return false;
@@ -2003,7 +2003,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
         case ValueTypeKind::DATA: {
             switch (targetType->getKind()) {
                 case ValueTypeKind::DATA:
-                    return canImplicitCast(sourceType->data()->getElementValueType(), targetType->data()->getElementValueType());
+                    return canImplicitCast(sourceType->toData()->getElementValueType(), targetType->toData()->getElementValueType());
 
                 default:
                     return false;
@@ -2021,15 +2021,15 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
             switch (targetType->getKind()) {
                 // From COMPOSITE to PTR
                 case ValueTypeKind::PTR: {
-                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->toComposite()->getElementValueTypes();
                     return sourceElementValueTypes.size() == 1 && sourceElementValueTypes.at(0)->isInteger();
                 }
 
                 // From COMPOSITE to DATA
                 case ValueTypeKind::DATA: {
-                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->toComposite()->getElementValueTypes();
                     for (shared_ptr<ValueType> sourceElementValueType : sourceElementValueTypes) {
-                        if (!canImplicitCast(sourceElementValueType, targetType->data()->getElementValueType()))
+                        if (!canImplicitCast(sourceElementValueType, targetType->toData()->getElementValueType()))
                             return false;
                     }
                     return true;
@@ -2037,8 +2037,8 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // From COMPOSITE to BLOB
                 case ValueTypeKind::BLOB: {
-                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
-                    shared_ptr<ValueTypeBlob> targetValueTypeBlob = targetType->blob();
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->toComposite()->getElementValueTypes();
+                    shared_ptr<ValueTypeBlob> targetValueTypeBlob = targetType->toBlob();
 
                     // get target non-function field types
                     optional<vector<shared_ptr<ValueType>>> oTargetFieldValueTypes = scope->blobScope->getVariableFieldValueTypes(targetValueTypeBlob->getSymbolName());
@@ -2064,8 +2064,8 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // From COMPOSITE to ENUM_FIELD
                 case ValueTypeKind::ENUM_FIELD: {
-                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
-                    shared_ptr<ValueTypeEnumField> targetValueTypeEnumField = targetType->enumField();
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->toComposite()->getElementValueTypes();
+                    shared_ptr<ValueTypeEnumField> targetValueTypeEnumField = targetType->toEnumField();
 
                     // first option, no source types and target is none
                     if (sourceElementValueTypes.size() == 0) {
@@ -2082,19 +2082,19 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // From COMPOSITE to PROTO
                 case ValueTypeKind::PROTO: {
-                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->composite()->getElementValueTypes();
-                    shared_ptr<SymbolName> targetProtoSymbolName = targetType->proto()->getSymbolName();
+                    vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->toComposite()->getElementValueTypes();
+                    shared_ptr<SymbolName> targetProtoSymbolName = targetType->toProto()->getSymbolName();
 
                     // There should be only a single pointer to blob element
                     if (sourceElementValueTypes.size() != 1 || !sourceElementValueTypes.front()->isPtr())
                         return false;
 
-                    shared_ptr<ValueType> pointeeValueType = sourceElementValueTypes.front()->ptr()->getPointeeValueType();
+                    shared_ptr<ValueType> pointeeValueType = sourceElementValueTypes.front()->toPtr()->getPointeeValueType();
                     if (pointeeValueType == nullptr || !pointeeValueType->isBlob())
                         return false;
 
                     // Check if the blob type conforms to the target proto
-                    optional<vector<shared_ptr<SymbolName>>> oConformingProtoSymbolNames = scope->blobScope->getConformingProtoSymbolNames(pointeeValueType->blob()->getSymbolName());
+                    optional<vector<shared_ptr<SymbolName>>> oConformingProtoSymbolNames = scope->blobScope->getConformingProtoSymbolNames(pointeeValueType->toBlob()->getSymbolName());
                     if (!oConformingProtoSymbolNames)
                         return false;
                     
@@ -2152,8 +2152,8 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 
                 // From ENUM_FIELD to ENUM
                 case ValueTypeKind::ENUM: {                    
-                    shared_ptr<ValueTypeEnumField> sourceValueTypeEnumField = sourceType->enumField();
-                    shared_ptr<ValueTypeEnum> targetValueTypeEnum = targetType->enumeration();
+                    shared_ptr<ValueTypeEnumField> sourceValueTypeEnumField = sourceType->toEnumField();
+                    shared_ptr<ValueTypeEnum> targetValueTypeEnum = targetType->toEnum();
 
                     // Is this a field of a parent enum?
                     if (!sourceValueTypeEnumField->getSymbolName()->getGlobalName().starts_with(targetValueTypeEnum->getSymbolName()->getGlobalName()))
@@ -2188,19 +2188,19 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location) {
     switch (valueType->getKind()) {
         case ValueTypeKind::BLOB:
-           return typeForCheckedValueType(valueType->blob());
+           return typeForCheckedValueType(valueType->toBlob());
         case ValueTypeKind::BOXED:
-            return typeForCheckedValueType(valueType->boxed());
+            return typeForCheckedValueType(valueType->toBoxed());
         case ValueTypeKind::DATA:
-            return typeForCheckedValueType(valueType->data(), isCountExperssionRequired);
+            return typeForCheckedValueType(valueType->toData(), isCountExperssionRequired);
         case ValueTypeKind::ENUM:
-            return typeForCheckedValueType(valueType->enumeration());
+            return typeForCheckedValueType(valueType->toEnum());
         case ValueTypeKind::ENUM_FIELD:
-            return typeForCheckedValueType(valueType->enumField());
+            return typeForCheckedValueType(valueType->toEnumField());
         case ValueTypeKind::FUN:
-            return typeForCheckedValueType(valueType->fun());
+            return typeForCheckedValueType(valueType->toFun());
         case ValueTypeKind::PTR:
-            return typeForCheckedValueType(valueType->ptr());
+            return typeForCheckedValueType(valueType->toPtr());
         default:
             break;
     }

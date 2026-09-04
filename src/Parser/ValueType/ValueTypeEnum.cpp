@@ -19,7 +19,7 @@ void ValueTypeEnum::setModuleName(const string &moduleName) {
 
 bool ValueTypeEnum::isEqual(shared_ptr<ValueType> other) const {
     // Check if types match
-    shared_ptr<ValueTypeEnum> otherValueTypeEnum = other->enumeration();
+    shared_ptr<ValueTypeEnum> otherValueTypeEnum = other->toEnum();
     if (otherValueTypeEnum == nullptr)
         return false;
 

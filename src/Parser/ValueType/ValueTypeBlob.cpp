@@ -24,7 +24,7 @@ void ValueTypeBlob::setModuleName(const string &moduleName) {
 
 bool ValueTypeBlob::isEqual(shared_ptr<ValueType> other) const {
     // Check if types match
-    shared_ptr<ValueTypeBlob> valueTypeBlob = other->blob();
+    shared_ptr<ValueTypeBlob> valueTypeBlob = other->toBlob();
     if (valueTypeBlob == nullptr)
         return false;
 

@@ -180,55 +180,55 @@ bool ValueType::isAddress() const {
 }
 
 bool ValueType::isDataBool() {
-    if (this->data() == nullptr)
+    if (this->toData() == nullptr)
         return false;
 
-    return data()->getElementValueType()->isBool();
+    return toData()->getElementValueType()->isBool();
 }
 
 bool ValueType::isDataNumeric() {
-    if (data() == nullptr)
+    if (toData() == nullptr)
         return false;
 
-    return data()->getElementValueType()->isNumeric();
+    return toData()->getElementValueType()->isNumeric();
 }
 
-shared_ptr<ValueTypeBlob> ValueType::blob() {
+shared_ptr<ValueTypeBlob> ValueType::toBlob() {
     return dynamic_pointer_cast<ValueTypeBlob>(shared_from_this());
 }
 
-shared_ptr<ValueTypeBoxed> ValueType::boxed() {
+shared_ptr<ValueTypeBoxed> ValueType::toBoxed() {
     return dynamic_pointer_cast<ValueTypeBoxed>(shared_from_this());
 }
 
-shared_ptr<ValueTypeComposite> ValueType::composite() {
+shared_ptr<ValueTypeComposite> ValueType::toComposite() {
     return dynamic_pointer_cast<ValueTypeComposite>(shared_from_this());
 }
 
-shared_ptr<ValueTypeData> ValueType::data() {
+shared_ptr<ValueTypeData> ValueType::toData() {
     return dynamic_pointer_cast<ValueTypeData>(shared_from_this());
 }
 
-shared_ptr<ValueTypeEnum> ValueType::enumeration() {
+shared_ptr<ValueTypeEnum> ValueType::toEnum() {
     return dynamic_pointer_cast<ValueTypeEnum>(shared_from_this());
 }
 
-shared_ptr<ValueTypeEnumField> ValueType::enumField() {
+shared_ptr<ValueTypeEnumField> ValueType::toEnumField() {
     return dynamic_pointer_cast<ValueTypeEnumField>(shared_from_this());
 }
 
-shared_ptr<ValueTypeFun> ValueType::fun() {
+shared_ptr<ValueTypeFun> ValueType::toFun() {
     return dynamic_pointer_cast<ValueTypeFun>(shared_from_this());
 }
 
-shared_ptr<ValueTypeProto> ValueType::proto() {
+shared_ptr<ValueTypeProto> ValueType::toProto() {
     return dynamic_pointer_cast<ValueTypeProto>(shared_from_this());
 }
 
-shared_ptr<ValueTypePtr> ValueType::ptr() {
+shared_ptr<ValueTypePtr> ValueType::toPtr() {
     return dynamic_pointer_cast<ValueTypePtr>(shared_from_this());
 }
 
-shared_ptr<ValueTypeSimple> ValueType::simple() {
+shared_ptr<ValueTypeSimple> ValueType::toSimple() {
     return dynamic_pointer_cast<ValueTypeSimple>(shared_from_this());
 }

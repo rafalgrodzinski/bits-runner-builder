@@ -20,7 +20,7 @@ void ValueTypePtr::setModuleName(const string &moduleName) {
 
 bool ValueTypePtr::isEqual(shared_ptr<ValueType> other) const {
     // Check if types match
-    shared_ptr<ValueTypePtr> otherValueTypePtr = other->ptr();
+    shared_ptr<ValueTypePtr> otherValueTypePtr = other->toPtr();
     if (otherValueTypePtr == nullptr)
         return false;
 

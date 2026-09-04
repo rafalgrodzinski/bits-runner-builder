@@ -20,7 +20,7 @@ void ValueTypeBoxed::setModuleName(const string &moduleName) {
 
 bool ValueTypeBoxed::isEqual(shared_ptr<ValueType> other) const {
     // Check if types match
-    shared_ptr<ValueTypeBoxed> otherValueTypeBoxed = other->boxed();
+    shared_ptr<ValueTypeBoxed> otherValueTypeBoxed = other->toBoxed();
     if (otherValueTypeBoxed == nullptr)
         return false;
 

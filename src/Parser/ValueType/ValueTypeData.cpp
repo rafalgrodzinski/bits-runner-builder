@@ -22,7 +22,7 @@ void ValueTypeData::setModuleName(const string &moduleName) {
 
 bool ValueTypeData::isEqual(shared_ptr<ValueType> other) const {
     // Check if types match
-    shared_ptr<ValueTypeData> otherValueTypeData = other->data();
+    shared_ptr<ValueTypeData> otherValueTypeData = other->toData();
     if (otherValueTypeData == nullptr)
         return false;
 
