@@ -121,14 +121,14 @@ private:
     shared_ptr<Expression> checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType);
     bool canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
 
-    shared_ptr<ValueType> resolvedAndCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location);
-    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeBlob> valueTypeBlob);
-    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
-    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeData> valueTypeData);
-    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeEnum> valueTypeEnum);
-    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
-    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypeFun> valueTypeFun);
-    shared_ptr<ValueType> checkValueType(shared_ptr<ValueTypePtr> valueTypePtr);
+    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location);
+    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeBlob> valueTypeBlob);
+    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
+    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeData> valueTypeData, bool isCountExperssionRequired);
+    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeEnum> valueTypeEnum);
+    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
+    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeFun> valueTypeFun);
+    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr);
 
     void markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier);
     void markErrorInvalidAttribute(shared_ptr<Location> location, const string &name);
