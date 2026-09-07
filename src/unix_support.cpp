@@ -5,6 +5,9 @@
     #include <cstdlib>
     #include <execinfo.h>
     #include <unistd.h>
+    #include <iostream>
+
+    using namespace std;
 
     void crashHandler(int signal) {
         void *frames[64];
