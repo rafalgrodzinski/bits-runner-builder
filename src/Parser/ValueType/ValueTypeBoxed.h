@@ -8,10 +8,14 @@ class ValueTypeBoxed: public ValueType {
 friend class Analyzer;
 
 public:
-    ValueTypeBoxed(const optional<string> &namedValueTypeKey, shared_ptr<ValueType> boxedValueType);
+    ValueTypeBoxed(
+        const optional<string> &namedValueTypeKey,
+        shared_ptr<ValueType> boxedValueType,
+        shared_ptr<Location> location
+    );
 
-    optional<string> getNamedValueTypeKey();
-    shared_ptr<ValueType> getBoxedValueType();
+    optional<string> getNamedValueTypeKey() const;
+    shared_ptr<ValueType> getBoxedValueType() const;
 
     void setModuleName(const string &moduleName) override;
     bool isEqual(shared_ptr<ValueType> other) const override;

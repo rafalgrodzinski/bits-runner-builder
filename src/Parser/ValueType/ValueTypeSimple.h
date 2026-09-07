@@ -26,13 +26,12 @@ public:
     static shared_ptr<ValueType> F64;
     static shared_ptr<ValueType> A;
 
-    static shared_ptr<ValueTypeSimple> simpleForToken(shared_ptr<Token> token);
+    static shared_ptr<ValueTypeSimple> simpleForToken(shared_ptr<Token> token, shared_ptr<Location> location);
+
+    ValueTypeSimple(ValueTypeKind kind, shared_ptr<Location> location);
 
     bool isEqual(shared_ptr<ValueType> other) const override;
     shared_ptr<ValueType> clone() const override;
-
-public:
-    ValueTypeSimple(ValueTypeKind kind);
 };
 
 #endif

@@ -11,7 +11,11 @@ class ValueTypeEnum: public ValueType {
 friend class Analyzer;
 
 public:
-    ValueTypeEnum(const string &name, const vector<shared_ptr<ValueType>> &namedValueTypes);
+    ValueTypeEnum(
+        const string &name,
+        const vector<shared_ptr<ValueType>> &namedValueTypes,
+        shared_ptr<Location> location
+    );
 
     shared_ptr<SymbolName> getSymbolName() const;
     vector<shared_ptr<ValueType>> getNamedValueTypes();

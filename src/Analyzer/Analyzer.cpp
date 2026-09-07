@@ -612,7 +612,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         if (statementVariable->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(statementVariable->getValueType())->getCountExpression() == nullptr) {
             statementVariable->valueType = make_shared<ValueTypeData>(
                 dynamic_pointer_cast<ValueTypeData>(statementVariable->getValueType())->getElementValueType(),
-                dynamic_pointer_cast<ValueTypeData>(statementVariable->getExpression()->getValueType())->getCountExpression()
+                dynamic_pointer_cast<ValueTypeData>(statementVariable->getExpression()->getValueType())->getCountExpression(),
+                statementVariable->getLocation()
             );
         }
 
@@ -911,7 +912,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
         if (expressionCast->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression() == nullptr) {
             expressionCast->valueType = make_shared<ValueTypeData>(
                 dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getElementValueType(),
-                dynamic_pointer_cast<ValueTypeData>(parentExpression->getValueType())->getCountExpression()
+                dynamic_pointer_cast<ValueTypeData>(parentExpression->getValueType())->getCountExpression(),
+                expressionCast->getLocation()
             );
         }
         return expressionCast->getValueType();
@@ -977,7 +979,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionComposite
     }
     shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForUInt(elementTypes.size(), expressionCompositeLiteral->getLocation());
     countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
-    expressionCompositeLiteral->valueType = make_shared<ValueTypeComposite>(elementTypes, countExpression);
+    expressionCompositeLiteral->valueType = make_shared<ValueTypeComposite>(elementTypes, countExpression, expressionCompositeLiteral->getLocation());
     return expressionCompositeLiteral->getValueType();
 }
 
@@ -1568,7 +1570,8 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             ExpressionLiteral::expressionLiteralForUInt(
                 expressionCompositeLiteral->getExpressions().size(),
                 sourceExpression->getLocation()
-            )
+            ),
+            sourceExpression->getLocation()
         );
         dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression()->valueType = typeForExpression(dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression(), nullptr, returnType);
         // and then cast (if necessary) each of the element expressions
@@ -1611,7 +1614,8 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     if (targetType->isData() && dynamic_pointer_cast<ValueTypeData>(targetType)->getCountExpression() == nullptr) {
         targetType = make_shared<ValueTypeData>(
             dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType(),
-            dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression()
+            dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression(),
+            sourceExpression->getLocation()
         );
     }
 
@@ -2332,7 +2336,7 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr>
     shared_ptr<ValueType> pointeeValueType = typeForCheckedValueType(valueTypePtr->getPointeeValueType(), false, nullptr);
     if (pointeeValueType == nullptr)
         return nullptr;
-    return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile());
+    return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile(), valueTypePtr->getLocation());
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {

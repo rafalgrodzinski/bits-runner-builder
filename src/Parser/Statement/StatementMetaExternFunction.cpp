@@ -58,5 +58,5 @@ shared_ptr<ValueTypeFun> StatementMetaExternFunction::getValueType() const {
     for (auto &argument : arguments)
         argumentTypes.push_back(argument.second);
 
-    return make_shared<ValueTypeFun>(argumentTypes, returnValueType);
+    return make_shared<ValueTypeFun>(argumentTypes, returnValueType, getLocation());
 }

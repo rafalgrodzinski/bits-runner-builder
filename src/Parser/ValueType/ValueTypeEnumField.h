@@ -10,7 +10,11 @@ class ValueTypeEnumField: public ValueType {
 friend class Analyzer;
 
 public:
-    ValueTypeEnumField(const string &name, const vector<shared_ptr<ValueType>> namedValueTypes);
+    ValueTypeEnumField(
+        const string &name,
+        const vector<shared_ptr<ValueType>> namedValueTypes,
+        shared_ptr<Location> location
+    );
 
     shared_ptr<SymbolName> getSymbolName() const;
     vector<shared_ptr<ValueType>> getNamedValueTypes() const;

@@ -7,7 +7,11 @@ class Expression;
 
 class ValueTypeData: public ValueType {
 public:
-    ValueTypeData(shared_ptr<ValueType> elementValueType, shared_ptr<Expression> countExpression);
+    ValueTypeData(
+        shared_ptr<ValueType> elementValueType,
+        shared_ptr<Expression> countExpression,
+        shared_ptr<Location> location
+    );
 
     shared_ptr<ValueType> getElementValueType() const;
     shared_ptr<Expression> getCountExpression() const;

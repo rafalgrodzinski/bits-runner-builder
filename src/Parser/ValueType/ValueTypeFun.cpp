@@ -3,17 +3,18 @@
 
 ValueTypeFun::ValueTypeFun(
     const vector<shared_ptr<ValueType>> &argumentValueTypes,
-    shared_ptr<ValueType> returnValueType
+    shared_ptr<ValueType> returnValueType,
+    shared_ptr<Location> location
 ):
-ValueType(ValueTypeKind::FUN),
+ValueType(ValueTypeKind::FUN, location),
 argumentValueTypes(argumentValueTypes),
 returnValueType(returnValueType) { }
 
-vector<shared_ptr<ValueType>> ValueTypeFun::getArgumentValueTypes() {
+vector<shared_ptr<ValueType>> ValueTypeFun::getArgumentValueTypes() const {
     return argumentValueTypes;
 }
 
-shared_ptr<ValueType> ValueTypeFun::getReturnValueType() {
+shared_ptr<ValueType> ValueTypeFun::getReturnValueType() const {
     return returnValueType;
 }
 

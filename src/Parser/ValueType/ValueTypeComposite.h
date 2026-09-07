@@ -8,7 +8,11 @@ class Expression;
 
 class ValueTypeComposite: public ValueType {
 public:
-    ValueTypeComposite(const vector<shared_ptr<ValueType>> &elementValueTypes, shared_ptr<Expression> countExpression);
+    ValueTypeComposite(
+        const vector<shared_ptr<ValueType>> &elementValueTypes,
+        shared_ptr<Expression> countExpression,
+        shared_ptr<Location> location
+    );
 
     vector<shared_ptr<ValueType>> getElementValueTypes() const;
     shared_ptr<Expression> getCountExpression() const;

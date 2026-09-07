@@ -472,7 +472,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                         // Insert an implicit "it" argument for the blob function
                         pair<string, shared_ptr<ValueType>> itArgument = pair(
                             ".pit",
-                            make_shared<ValueTypePtr>(make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>()), false)
+                            make_shared<ValueTypePtr>(make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>(), nullptr), false, nullptr)
                         );
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
@@ -1125,7 +1125,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                         // Insert an implicit "it" argument at the beging
                         pair<string, shared_ptr<ValueType>> itArgument = pair(
                             ".pit",
-                            make_shared<ValueTypePtr>(ValueTypeSimple::NONE, false)
+                            make_shared<ValueTypePtr>(ValueTypeSimple::NONE, false, nullptr)
                         );
                         statementFunctionDeclaration->arguments.insert(statementFunctionDeclaration->arguments.begin(), itArgument);
                         functionDeclarationStatements.push_back(statementFunctionDeclaration);
@@ -2269,6 +2269,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_TYPE,
     };
 
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
+
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
             Parsee::oneOfParsee(
@@ -2558,23 +2560,23 @@ shared_ptr<ValueType> Parser::matchValueType() {
     }
 
     if (isBlob)
-        return make_shared<ValueTypeBlob>(name, argTypes);
+        return make_shared<ValueTypeBlob>(name, argTypes, location);
     else if (isBoxed)
-        return make_shared<ValueTypeBoxed>(boxedNamedValueTypeKey, subType);
+        return make_shared<ValueTypeBoxed>(boxedNamedValueTypeKey, subType, location);
     else if (isData)
-        return make_shared<ValueTypeData>(subType, countExpression);
+        return make_shared<ValueTypeData>(subType, countExpression, location);
     else if (isEnum)
-        return make_shared<ValueTypeEnum>(name, argTypes);
+        return make_shared<ValueTypeEnum>(name, argTypes, location);
     else if (isEnumField)
-        return make_shared<ValueTypeEnumField>(name, argTypes);
+        return make_shared<ValueTypeEnumField>(name, argTypes, location);
     else if (isProto)
-        return make_shared<ValueTypeProto>(name);
+        return make_shared<ValueTypeProto>(name, location);
     else if (isPtr)
-        return make_shared<ValueTypePtr>(subType, isVolatile);
+        return make_shared<ValueTypePtr>(subType, isVolatile, location);
     else if (isPtrFun)
-        return make_shared<ValueTypePtr>(make_shared<ValueTypeFun>(argTypes, retType), isVolatile);
+        return make_shared<ValueTypePtr>(make_shared<ValueTypeFun>(argTypes, retType, location), isVolatile, location);
     else
-        return ValueTypeSimple::simpleForToken(typeToken);
+        return ValueTypeSimple::simpleForToken(typeToken, location);
 }
 
 //

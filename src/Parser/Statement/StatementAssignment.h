@@ -14,7 +14,11 @@ private:
     shared_ptr<Expression> valueExpression;
 
 public:
-    StatementAssignment(shared_ptr<ExpressionChained> expressionChained, shared_ptr<Expression> valueExpression, shared_ptr<Location> location);
+    StatementAssignment(
+        shared_ptr<ExpressionChained> expressionChained,
+        shared_ptr<Expression> valueExpression,
+        shared_ptr<Location> location
+    );
 
     shared_ptr<ExpressionChained> getExpressionChained() const;
     shared_ptr<Expression> getValueExpression() const;

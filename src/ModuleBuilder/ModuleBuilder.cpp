@@ -524,8 +524,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
 
     // then pointers to all the variables
     for (shared_ptr<StatementVariable> statementVariable : statementProto->getVariableStatements()) {
-
-        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariable->getValueType(), false);
+        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariable->getValueType(), false, statementVariable->getLocation());
         members.push_back(pair(statementVariable->getIdentifier(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
         if (type == nullptr)
@@ -535,7 +534,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
 
     // and then pointers to the functions
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
-        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementFunctionDeclaration->getValueType(), false);
+        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementFunctionDeclaration->getValueType(), false, statementFunctionDeclaration->getLocation());
         members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
         if (type == nullptr)

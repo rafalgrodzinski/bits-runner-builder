@@ -1,7 +1,11 @@
 #include "ValueTypePtr.h"
 
-ValueTypePtr::ValueTypePtr(shared_ptr<ValueType> pointeeValueType, bool isVolatile):
-ValueType(ValueTypeKind::PTR),
+ValueTypePtr::ValueTypePtr(
+    shared_ptr<ValueType> pointeeValueType,
+    bool isVolatile,
+    shared_ptr<Location> location
+):
+ValueType(ValueTypeKind::PTR, location),
 pointeeValueType(pointeeValueType),
 isVolatile(isVolatile) { }
 

@@ -1,7 +1,11 @@
 #include "ValueTypeEnum.h"
 
-ValueTypeEnum::ValueTypeEnum(const string &name, const vector<shared_ptr<ValueType>> &namedValueTypes):
-ValueType(ValueTypeKind::ENUM),
+ValueTypeEnum::ValueTypeEnum(
+    const string &name,
+    const vector<shared_ptr<ValueType>> &namedValueTypes,
+    shared_ptr<Location> location
+):
+ValueType(ValueTypeKind::ENUM, location),
 symbolName(make_shared<SymbolName>(name)),
 namedValueTypes(namedValueTypes) { }
 

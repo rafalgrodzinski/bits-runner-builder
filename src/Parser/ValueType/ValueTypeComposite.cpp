@@ -1,7 +1,11 @@
 #include "ValueTypeComposite.h"
 
-ValueTypeComposite::ValueTypeComposite(const vector<shared_ptr<ValueType>> &elementValueTypes, shared_ptr<Expression> countExpression):
-ValueType(ValueTypeKind::COMPOSITE),
+ValueTypeComposite::ValueTypeComposite(
+    const vector<shared_ptr<ValueType>> &elementValueTypes,
+    shared_ptr<Expression> countExpression,
+    shared_ptr<Location> location
+):
+ValueType(ValueTypeKind::COMPOSITE, location),
 elementValueTypes(elementValueTypes),
 countExpression(countExpression) { }
 

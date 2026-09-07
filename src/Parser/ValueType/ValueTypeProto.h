@@ -6,7 +6,7 @@
 
 class ValueTypeProto: public ValueType {
 public:
-    ValueTypeProto(const string &name);
+    ValueTypeProto(const string &name, shared_ptr<Location> location);
 
     shared_ptr<SymbolName> getSymbolName() const;
 

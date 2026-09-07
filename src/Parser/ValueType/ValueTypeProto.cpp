@@ -1,7 +1,7 @@
 #include "ValueTypeProto.h"
 
-ValueTypeProto::ValueTypeProto(const string &name):
-ValueType(ValueTypeKind::PROTO),
+ValueTypeProto::ValueTypeProto(const string &name, shared_ptr<Location> location):
+ValueType(ValueTypeKind::PROTO, location),
 symbolName(make_shared<SymbolName>(name)) { }
 
 shared_ptr<SymbolName> ValueTypeProto::getSymbolName() const {
