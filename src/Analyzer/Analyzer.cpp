@@ -931,14 +931,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
         }
     // from boxed
     } else if (isSourceBoxed) {
-        /*if (parentExpression->getValueType()->getSubType()->isEqual(expressionCast->getValueType())) {
-            if (parentExpression->getValueType()->getSubType()->isPtr()) {
-                expressionCast->getValueType()->getSubType()->namedTypeKeys = parentExpression->getValueType()->getSubType()->getSubType()->getNamedTypeKeys();
-                expressionCast->getValueType()->getSubType()->namedTypeValues = parentExpression->getValueType()->getSubType()->getSubType()->getNamedTypeValues();
-            }
+        if (parentExpression->getValueType()->toBoxed()->getBoxedValueType()->isEqual(expressionCast->getValueType()))
             return expressionCast->getValueType();
-        }*/
-       return expressionCast->getValueType();
     // from enum
     } else if (isSourceEnum && isTargetNumeric) {
         return expressionCast->getValueType();
@@ -2216,11 +2210,6 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeBlob
         return false;
     } else
     */
-    /*
-    if (!valueType->namedTypeKeys)
-        valueType->namedTypeKeys = scope->getBlobNamedTypeKeys(valueType->getGlobalName());
-    return valueType;
-    */
 
     valueTypeBlob->setModuleName(module->getName());
     // Check if blob is registered
@@ -2228,13 +2217,7 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeBlob
         markErrorNotDefined(nullptr, valueTypeBlob->getSymbolName()->getGlobalName());
         return nullptr;
     }
-    
-    /*
-    // check 
-    scope->pushLevel();
-    scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeBlob->getNamedValueTypes());
-    scope->popLevel();
-    */
+
     optional<vector<string>> oNamedValueTypeKeys = scope->blobScope->getNamedValueTypeKeys(valueTypeBlob->getSymbolName());
     if (oNamedValueTypeKeys)
         valueTypeBlob->namedValueTypeKeys = *oNamedValueTypeKeys;
