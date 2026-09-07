@@ -2,6 +2,7 @@
 #define SYMBOL_NAME_H
 
 #include <format>
+#include <memory>
 #include <string>
 
 using namespace std;
