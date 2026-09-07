@@ -914,6 +914,7 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
         case ExpressionValueKind::BUILT_IN_VADR:
         case ExpressionValueKind::BUILT_IN_VAL_SIMPLE:
         case ExpressionValueKind::BUILT_IN_VAL_DATA:
+        case ExpressionValueKind::BUILT_IN_TAG:
             line = format("{}｢{}｣", expression->getIdentifier(), toString(expression->getValueType()));
             break;
         case ExpressionValueKind::DATA:
@@ -923,6 +924,9 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
             line = format("`{}`", expression->getIdentifier());
             break;
         case ExpressionValueKind::SIMPLE:
+            line = format("`{}`｢{}｣", expression->getIdentifier(), toString(expression->getValueType()));
+            break;
+        case ExpressionValueKind::ENUM:
             line = format("`{}`｢{}｣", expression->getIdentifier(), toString(expression->getValueType()));
             break;
     }
