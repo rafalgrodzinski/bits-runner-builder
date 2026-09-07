@@ -257,6 +257,9 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token = match(TokenKind::PROTO, "proto", true))
         return token;
 
+    if (token = match(TokenKind::ENUM, "enum", true))
+        return token;
+
     if (token = match(TokenKind::BOXED, "boxed", true))
         return token;
 

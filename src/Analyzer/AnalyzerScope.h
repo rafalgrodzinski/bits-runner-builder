@@ -1,64 +1,74 @@
 #ifndef ANALYZER_SCOPE_H
 #define ANALYZER_SCOPE_H
 
+#include <functional>
 #include <map>
-#include <string>
-#include <stack>
 #include <memory>
-#include <vector>
 #include <optional>
+#include <stack>
+#include <string>
+#include <vector>
+#include "AnalyzerScopeBlob.h"
+#include "AnalyzerScopeBoxed.h"
+#include "AnalyzerScopeEnum.h"
+#include "AnalyzerScopeProto.h"
 
+class SymbolName;
 class ValueType;
 
 using namespace std;
 
+enum class AnalyzerScopeState {
+    NOT_REGISTERED,
+    DECLARED,
+    DEFINED
+};
+
+enum class AnalyzerScopeRegisterResult {
+    SUCCES,
+    FAILURE_ALREADY_DECLARED,
+    FAILURE_ALREAD_DEFINED
+};
+
 class AnalyzerScope {
-private:
+friend class AnalyzerScopeBlob;
+friend class AnalyzerScopeBoxed;
+friend class AnalyzerScopeEnum;
+friend class AnalyzerScopeProto;
+
+public:
     typedef struct {
-        map<string, optional<vector<string>>> blobNamedTypeKeysMap;
-        map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> protoMembersMap;
-        map<string, vector<string>> blobProtosMap;
-        map<string, optional<vector<pair<string, shared_ptr<ValueType>>>>> blobMembersMap;
-
-        vector<string> namedTypes;
-
         map<string, shared_ptr<ValueType>> variableTypes;
         map<string, bool> isVariableDefinedMap;
 
         map<string, shared_ptr<ValueType>> functionTypeMap;
         map<string, bool> isFunctionDefinedMap;
+
+        AnalyzerScopeBlob::ScopeLevel scopeLevelBlob;
+        AnalyzerScopeBoxed::ScopeLevel scopeLevelBoxed;
+        AnalyzerScopeEnum::ScopeLevel scopeLevelEnum;
+        AnalyzerScopeProto::ScopeLevel scopeLevelProto;
     } ScopeLevel;
 
-    stack<ScopeLevel> scopeLevels;
-
-public:
     AnalyzerScope();
 
     void pushLevel();
     void popLevel();
-
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getProtoMembers(const string &name) const;
-    bool setProtoMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members);
-    
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getBlobMembers(shared_ptr<ValueType> valueType) const;
-    optional<vector<shared_ptr<ValueType>>> getNonFunctionBlobMemberTypes(shared_ptr<ValueType> valueType) const;
-    bool isBlobDeclared(const string &name) const;
-    bool setBlobMembers(const string &name, const optional<vector<pair<string, shared_ptr<ValueType>>>> &members);
-
-    bool isNamedTypeDeclared(const string &namedType) const;
-    bool setNamedTypes(const vector<string> &namedTypes);
-
-    optional<vector<string>> getBlobNamedTypeKeys(const string &blobName) const;
-    bool setBlobNamedTypeKeys(const string &blobName, const vector<string> &namedTypeKeys);
-
-    optional<vector<string>> getBlobProtoNames(const string &name) const;
-    bool setBlobProtoNames(const string &name, const vector<string> &protoNames);
+    bool level(function<bool ()> levelBlock);
 
     shared_ptr<ValueType> getVariableType(const string &identifier) const;
     bool setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition);
 
     shared_ptr<ValueType> getFunctionType(const string &name) const;
     bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
+
+    shared_ptr<AnalyzerScopeBlob> blobScope;
+    shared_ptr<AnalyzerScopeBoxed> boxedScope;
+    shared_ptr<AnalyzerScopeEnum> enumScope;
+    shared_ptr<AnalyzerScopeProto> protoScope;
+
+private:
+    stack<ScopeLevel> scopeLevels;
 };
 
 #endif

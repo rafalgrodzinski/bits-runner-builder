@@ -1,8 +1,9 @@
 #include "StatementBlob.h"
-
+#include "StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariable.h"
-#include "Parser/ValueType.h"
+#include "Parser/SymbolName.h"
+#include "Parser/ValueType/ValueType.h"
 
 StatementBlob::StatementBlob(
     bool shouldExport,
@@ -15,9 +16,29 @@ StatementBlob::StatementBlob(
 ):
 Statement(StatementKind::BLOB, location),
 shouldExport(shouldExport),
-name(name),
+symbolName(make_shared<SymbolName>(name)),
 namedTypeKeys(namedTypeKeys),
-protoNames(protoNames),
+variableStatements(variableStatements),
+functionStatements(functionStatements) {
+    for (const string &protoName : protoNames) {
+        protoSymbolNames.push_back(make_shared<SymbolName>(protoName));
+    }
+}
+
+StatementBlob::StatementBlob(
+    bool shouldExport,
+    shared_ptr<SymbolName> symbolName,
+    const vector<string> &namedTypeKeys,
+    vector<shared_ptr<SymbolName>> conformingProtoSymbolNames,
+    const vector<shared_ptr<StatementVariable>> &variableStatements,
+    const vector<shared_ptr<StatementFunction>> &functionStatements,
+    shared_ptr<Location> location
+):
+Statement(StatementKind::BLOB, location),
+shouldExport(shouldExport),
+symbolName(symbolName),
+namedTypeKeys(namedTypeKeys),
+protoSymbolNames(conformingProtoSymbolNames),
 variableStatements(variableStatements),
 functionStatements(functionStatements) { }
 
@@ -25,44 +46,23 @@ bool StatementBlob::getShouldExport() const {
     return shouldExport;
 }
 
-string StatementBlob::getName() const {
-    return name;
-}
-
-string StatementBlob::getGlobalName() const {
-    string moduleName = this->moduleName;
-    if (moduleName.empty())
-        moduleName = "{UNDEFINED}";
-
-    return format("{}.{}", moduleName, name);
-}
-
-string StatementBlob::getModuleName() const {
-    return moduleName;
+shared_ptr<SymbolName> StatementBlob::getSymbolName() const {
+    return symbolName;
 }
 
 void StatementBlob::setModuleName(const string &moduleName) {
-    if (!this->moduleName.empty())
-        return;
+    symbolName->setModuleName(moduleName);
 
-    // First register the name
-    this->moduleName = moduleName;
-
-    // Then ppend module name to proto names if required
-    for (string &protoName : protoNames) {
-        size_t pos = protoName.find('.');
-        if (pos == string::npos) {
-            protoName = format("{}.{}", moduleName, protoName);
-        }
-    }
+    for (shared_ptr<SymbolName> protoSymbolName : protoSymbolNames)
+        protoSymbolName->setModuleName(moduleName);
 }
 
 vector<string> StatementBlob::getNamedTypeKeys() const {
     return namedTypeKeys;
 }
 
-vector<string> StatementBlob::getProtoNames() const {
-    return protoNames;
+vector<shared_ptr<SymbolName>> StatementBlob::getProtoSymbolNames() const {
+    return protoSymbolNames;
 }
 
 vector<shared_ptr<StatementVariable>> StatementBlob::getVariableStatements() const {
@@ -84,9 +84,8 @@ vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getMembers() const {
 
 shared_ptr<StatementBlobDeclaration> StatementBlob::getDeclaration() const {
     return make_shared<StatementBlobDeclaration>(
-        getShouldExport(),
-        getName(),
-        getModuleName(),
+        shouldExport,
+        symbolName,
         getLocation()
     );
 }

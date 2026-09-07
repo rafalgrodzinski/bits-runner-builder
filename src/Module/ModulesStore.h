@@ -22,6 +22,7 @@ private:
     // header
     map<string, vector<shared_ptr<Statement>>> importStatementsMap;
     map<string, vector<shared_ptr<Statement>>> externStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> enumStatementsMap;
     map<string, vector<shared_ptr<Statement>>> protoDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> protoStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobDeclarationStatementsMap;
@@ -32,6 +33,7 @@ private:
     // body
     map<string, vector<shared_ptr<Statement>>> bodyStatementsMap;
     // exported
+    map<string, vector<shared_ptr<Statement>>> exportedEnumStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedProtoDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedProtoStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;

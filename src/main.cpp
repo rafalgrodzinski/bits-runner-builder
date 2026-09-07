@@ -21,6 +21,7 @@
 
 #include "Logger.h"
 
+#include "unix_support.h"
 #include "win_support.h"
 
 using namespace std;
@@ -53,6 +54,7 @@ void versionPrinter(llvm::raw_ostream &os) {
 }
 
 int main(int argc, char **argv) {
+    unix_support_init();
     win_support_init();
 
     llvm::cl::SetVersionPrinter(versionPrinter);

@@ -3,5 +3,5 @@
 SCRIPT_PATH="$(readlink -f "${BASH_SOURCE}")"
 SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 
-brb "${SCRIPT_DIR}/io.brc" "${SCRIPT_DIR}/stuff.brc" "${SCRIPT_DIR}/main.brc" &&
-cc -o multi_module io.o stuff.o main.o
+brb "${SCRIPT_DIR}/main.brc" "${SCRIPT_DIR}/io.brc" "${SCRIPT_DIR}/stuff.brc" &&
+cc -o multi_module main.o io.o stuff.o

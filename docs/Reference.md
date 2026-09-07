@@ -19,6 +19,7 @@ Source code is grouped into named modules, each module can be composed of number
 - [Boxed](Reference.md#boxed) (`boxed<T>`)
 - [Data](Reference.md#data) (`data<>`)
 - [Blob](Reference.md#blob) (`blob<>`)
+- [Enum](Reference.md#enum) (`enum<>`)
 - [Proto](Reference.md#proto) (`proto<>`)
 - [Pointers](Reference.md#pointers) (`ptr<>`)
 - [Functions](Reference.md#functions) (`fun`)
@@ -189,6 +190,18 @@ u1 blob<user> <- {34, "Bob"}
 u2 blob<user> <- u1
 u2.name <- "Alice"
 u2.id <- 35
+```
+
+## Enum
+Enums carry both a tag and a payload value. The tag is an unsigned integer and can either be assigned automatically (auto-intcrementing from the previouse value, just like in C), or can be specified explicitly as a constant expression. If a payload is specified, it can be a `boxed` with either an explicit type or one specified through a named type, just like in blobs.
+```
+Result<T> enum
+  Success boxed<T>
+  SuccessWithoutValue
+  Failure::Network boxed<u32>: 1 << 4
+  Failure::Input: 1 << 5
+  Failure::Resources: 1 << 6
+;
 ```
 
 ## Proto

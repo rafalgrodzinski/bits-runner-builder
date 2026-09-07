@@ -1,6 +1,7 @@
 #include "StatementRawFunction.h"
 
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeFun.h"
 
 StatementRawFunction::StatementRawFunction(
     bool shouldExport,
@@ -56,12 +57,12 @@ shared_ptr<ValueType> StatementRawFunction::getReturnValueType() const {
     return returnValueType;
 }
 
-shared_ptr<ValueType> StatementRawFunction::getValueType() const {
+shared_ptr<ValueTypeFun> StatementRawFunction::getValueType() const {
     vector<shared_ptr<ValueType>> argumentTypes;
     for (auto &argument : arguments)
         argumentTypes.push_back(argument.second);
 
-    return ValueType::fun(argumentTypes, returnValueType);
+    return make_shared<ValueTypeFun>(argumentTypes, returnValueType);
 }
 
 string StatementRawFunction::getRawSource() const {

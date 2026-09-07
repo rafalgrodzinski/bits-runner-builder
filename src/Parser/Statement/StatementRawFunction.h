@@ -6,6 +6,7 @@
 #include "Parser/Statement/Statement.h"
 
 class ValueType;
+class ValueTypeFun;
 
 class StatementRawFunction: public Statement {
 private:
@@ -36,7 +37,7 @@ public:
     string getConstraints() const;
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
-    shared_ptr<ValueType> getValueType() const;
+    shared_ptr<ValueTypeFun> getValueType() const;
     string getRawSource() const;
 };
 

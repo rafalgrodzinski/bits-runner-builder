@@ -43,6 +43,7 @@ private:
 
 public:
     static shared_ptr<ExpressionBinary> expression(const vector<shared_ptr<Token>> &tokens, shared_ptr<Expression> left, shared_ptr<Expression> right);
+    static shared_ptr<ExpressionBinary> expression(ExpressionBinaryOperation operation, shared_ptr<Expression> left, shared_ptr<Expression> right, shared_ptr<Location> location);
 
     ExpressionBinary(shared_ptr<Location> location);
 

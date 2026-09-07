@@ -1,6 +1,6 @@
-@import Dummy
+@import dummy
 
 @export main fun -> u32
-    @Dummy::getter().val <- 3
-    ret @Dummy::getter().val
+    @dummy::getter().val <- 3
+    ret @dummy::getter().val
 ;

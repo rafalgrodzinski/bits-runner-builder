@@ -3,7 +3,8 @@
 #include "Parser/Expression/Expression.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementReturn.h"
-#include "Parser/ValueType.h"
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeFun.h"
 
 StatementFunction::StatementFunction(
     bool shouldExport,
@@ -62,12 +63,12 @@ shared_ptr<ValueType> StatementFunction::getReturnValueType() const {
     return returnValueType;
 }
 
-shared_ptr<ValueType> StatementFunction::getValueType() const {
+shared_ptr<ValueTypeFun> StatementFunction::getValueType() const {
     vector<shared_ptr<ValueType>> argumentTypes;
     for (auto &argument : arguments)
         argumentTypes.push_back(argument.second);
 
-    return ValueType::fun(argumentTypes, returnValueType);
+    return make_shared<ValueTypeFun>(argumentTypes, returnValueType);
 }
 
 shared_ptr<StatementBlock> StatementFunction::getStatementBlock() const {

@@ -75,6 +75,25 @@ llvm::InlineAsm *Scope::getInlineAsm(const string &name) const {
     return nullptr;
 }
 
+bool Scope::setEnumFieldTagValue(const string &enumFieldName, llvm::Constant *tagValue) {
+    scopeLevels.top().enumFieldTagValuesMap[enumFieldName] = tagValue;
+
+    return true;
+}
+
+llvm::Constant *Scope::getEnumFieldTagValue(const string &enumFieldName) const {
+    stack<ScopeLevel> scopeLevels = this->scopeLevels;
+
+    while (!scopeLevels.empty()) {
+        llvm::Constant *value = scopeLevels.top().enumFieldTagValuesMap[enumFieldName];
+        if (value != nullptr)
+            return value;
+        scopeLevels.pop();
+    }
+
+    return nullptr;
+}
+
 bool Scope::setProtoStructType(const string &name, llvm::StructType *structType, const vector<pair<string, shared_ptr<ValueType>>> &members) {
     scopeLevels.top().protoStructTypesMap[name] = structType;
     scopeLevels.top().protoStructMembersMap[name] = members;

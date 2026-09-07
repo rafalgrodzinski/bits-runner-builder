@@ -8,6 +8,7 @@
 
 class StatementBlock;
 class ValueType;
+class ValueTypeFun;
 
 class StatementFunction: public Statement {
 friend class Parser;
@@ -37,7 +38,7 @@ public:
     void setModuleName(const string &moduleName);
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
-    shared_ptr<ValueType> getValueType() const;
+    shared_ptr<ValueTypeFun> getValueType() const;
     shared_ptr<StatementBlock> getStatementBlock() const;
     shared_ptr<StatementFunctionDeclaration> getDeclaration() const;
 };
