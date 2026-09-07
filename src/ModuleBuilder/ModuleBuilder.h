@@ -153,7 +153,7 @@ private:
     shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, shared_ptr<ExpressionValue> expression);
 
     // Support
-    llvm::Type *llvmTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox = false, shared_ptr<Location> location = nullptr);
+    llvm::Type *llvmTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox = false);
     int sizeInBitsForType(llvm::Type *type);
 
     // Error Handling    
