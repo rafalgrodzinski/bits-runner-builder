@@ -186,7 +186,11 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     shared_ptr<ValueType> targetType = typeForExpression(statementAssignment->getExpressionChained());
     if (targetType == nullptr)
         return;
+
     targetType = typeForCheckedValueType(targetType, false, statementAssignment->getLocation());
+    if (targetType == nullptr)
+        return;
+
     statementAssignment->valueExpression = checkAndTryCasting(statementAssignment->getValueExpression(), targetType, nullptr);
     if (statementAssignment->getValueExpression() == nullptr)
         return;
@@ -202,16 +206,14 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported) {
-    //scope->pushLevel();
-    //scope->setNamedTypes(statementBlob->getNamedTypeKeys());
-    //scope->blobScope->registerContextNamedValueTypeKeys(statementBlob->getNamedTypeKeys());
+    // first register named value types for the blob
     scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
 
-    // check and verify blob member variables
+    // then check and verify blob field variables
     if (!scope->level([this, statementBlob]() -> bool {
         for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
-            // check for invalid member names
-            if (statementVariable->getIdentifier().compare("adr") == 0) {
+            // check for invalid field names
+            if (statementVariable->getIdentifier() == "adr") {
                 markErrorInvalidBuiltIn(statementVariable->getLocation(), statementVariable->getIdentifier(), statementVariable->getValueType());
                 return false;
             }
@@ -222,11 +224,12 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                 return false;
             }
 
-            // members should not have @export
+            // fields should not have @export
             if (statementVariable->getShouldExport()) {
                 markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
                 return false;
             }
+
             checkStatement(statementVariable);
             if (statementVariable->getValueType() == nullptr)
                 return false;
@@ -235,65 +238,63 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
         return true;
     })) { return; }
 
-    // verify member functions
+    // verify field functions
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
-        // members should not have export
+        // fields should not have export
         if (statementFunction->getShouldExport()) {
             markErrorInvalidAttribute(statementFunction->getLocation(), "@export");
             return;
         }
     }
 
-    /*
     // verify proto compliance (but only if it's not an import statement)
     if (!isImported) {
-        for (string &protoName : statementBlob->getProtoNames()) {
-            auto protoMembers = scope->getProtoMembers(protoName);
-            if (!protoMembers) {
-                markErrorNotDefined(statementBlob->getLocation(), format("proto {}", protoName));
+        for (shared_ptr<SymbolName> protoSymbolName : statementBlob->getProtoSymbolNames()) {
+            optional<vector<pair<string, shared_ptr<ValueType>>>> oProtoFields = scope->protoScope->getFields(protoSymbolName);
+            if (!oProtoFields) {
+                markErrorNotDefined(statementBlob->getLocation(), format("proto {}", protoSymbolName->getGlobalName()));
                 return;
             }
 
-            // for each proto member
-            for (auto protoMember : *protoMembers) {
+            // for each proto field
+            for (pair<string, shared_ptr<ValueType>> protoField : *oProtoFields) {
                 bool isImplemented = false;
 
-                if (protoMember.second->isFun()) {
-                    string name = format("{}.{}", statementBlob->getSymbolName()->getName(), protoMember.first);
+                if (protoField.second->isFun()) {
+                    string funName = format("{}.{}", statementBlob->getSymbolName()->getName(), protoField.first);
                     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
-                        // check name
-                        if (name.compare(statementFunction->getName()) != 0) 
+                        // check function name
+                        if (funName != statementFunction->getName())
                             continue;
 
-                        isImplemented = true;
+                        // check function arguments
+                        int argsCount = (protoField.second->toFun()->getArgumentValueTypes()).size();
 
-                        // check arguments
-                        //int argsCount = (*protoMember.second->getArgumentTypes()).size();
-
+                        // count
                         if (argsCount != statementFunction->getArguments().size()) {
                             isImplemented = false;
                             break;
                         }
 
+                        // types
                         for (int i=1; i<argsCount; i++) {
-                            if (!(*protoMember.second->getArgumentTypes()).at(i)->isEqual(statementFunction->getArguments().at(i).second)) {
+                            if (!protoField.second->toFun()->getArgumentValueTypes().at(i)->isEqual(statementFunction->getArguments().at(i).second)) {
                                 isImplemented = false;
                                 break;
                             }
                         }
 
-                        if (!isImplemented)
-                            break;
-
-                        // check return type
-                        if (!protoMember.second->getReturnType()->isEqual(statementFunction->getReturnValueType())) {
+                        // return type
+                        if (!protoField.second->toFun()->getReturnValueType()->isEqual(statementFunction->getReturnValueType())) {
                             isImplemented = false;
                             break;
                         }
+
+                        isImplemented = true;
                     }
                 } else {
                     for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
-                        if (protoMember.first.compare(statementVariable->getIdentifier()) == 0 && protoMember.second->isEqual(statementVariable->getValueType())) {
+                        if (protoField.first == statementVariable->getIdentifier() && protoField.second->isEqual(statementVariable->getValueType())) {
                             isImplemented = true;
                             break;
                         }
@@ -301,15 +302,14 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                 }
 
                 if (!isImplemented) {
-                    markErrorNotImplemented(statementBlob->getLocation(), protoName, protoMember.first);
+                    markErrorNotImplemented(statementBlob->getLocation(), protoSymbolName->getGlobalName(), protoField.first);
                     return;
                 }
             }
         }
     }
-    */
 
-    // register blob members in scope
+    // register blob fields in scope
     vector<pair<string, shared_ptr<ValueType>>> members;
 
     // extract variable members
@@ -320,17 +320,13 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
         members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
 
-    // check each of the extracted member's type
+    // check each of the extracted fields's type
     for (auto &member : members) {
         if (typeForCheckedValueType(member.second, true, statementBlob->getLocation()) == nullptr)
             return;
     }
 
-    //scope->popLevel();
-
     // and the register
-    //if (!scope->setBlobMembers(name, members))
-    //    markErrorAlreadyDefined(statementBlob->getLocation(), statementBlob->getSymbolName()->getGlobalName());
     scope->blobScope->registerFields(statementBlob->getSymbolName(), members);
     scope->blobScope->registerConformingProtoSymbolNames(statementBlob->getSymbolName(), statementBlob->getProtoSymbolNames());
 }
@@ -396,7 +392,7 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
             return;
     }
 
-    // update return type
+    // check return type
     if (typeForCheckedValueType(statementFunction->getReturnValueType(), true, statementFunction->getLocation()) == nullptr)
         return;
 
@@ -486,15 +482,15 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImpor
 
 void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     scope->pushLevel();
-    // check and verify proto member variables
+    // check and verify proto field variables
     for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements()) {
-        // proto member variable should not have a value expression
+        // proto field variable should not have a value expression
         if (statementVariable->getExpression() != nullptr) {
             markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
             return;
         }
 
-        // members should not have @export
+        // fields should not have @export
         if (statementVariable->getShouldExport()) {
             markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
             return;
@@ -504,7 +500,7 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     }
     scope->popLevel();
 
-    // verify member function declarations
+    // verify field function declarations
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements()) {
         // members should not have export
         if (statementFunctionDeclaration->getShouldExport()) {
@@ -515,14 +511,14 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
         checkStatement(statementFunctionDeclaration);
     }
 
-    // register proto members in scope
+    // register proto fields in scope
     vector<pair<string, shared_ptr<ValueType>>> members;
 
-    // extract variable members
+    // extract variable fields
     for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements())
         members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
 
-    // then function members
+    // then function fields
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements())
         members.push_back(pair(statementFunctionDeclaration->getName(), statementFunctionDeclaration->getValueType()));
 
@@ -534,8 +530,6 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
 
     // and the register
     scope->protoScope->registerFields(statement->getSymbolName(), members);
-    //if (!scope->setProtoMembers(name, members))
-    //    markErrorAlreadyDefined(statement->getLocation(), statement->getGlobalName());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProtoDeclaration> statementProtoDeclaration) {
@@ -589,14 +583,13 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
         return;
 
     shared_ptr<ValueType> expressionType = statementReturn->getExpression()->getValueType();
-
-    /*if (expressionType == nullptr || !expressionType->isEqual(returnType))
+    if (expressionType == nullptr || !expressionType->isEqual(returnType)) {
         markErrorInvalidType(
             statementReturn->getLocation(),
             expressionType,
             returnType
         );
-    */
+    }
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
@@ -623,8 +616,10 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
             );
         }
 
-        //if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType()))
-        //    markErrorInvalidType(statementVariable->getExpression()->getLocation(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
+        if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType())) {
+            markErrorInvalidType(statementVariable->getExpression()->getLocation(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
+            return;
+        }
     }
 
     // data types should have count expression
@@ -840,11 +835,6 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
     // we want to skip the implicit argumnets hence startring from "extraArguments"
     for (int i=extraArguments; i<argumentTypes.size(); i++) {
         shared_ptr<ValueType> targetType = typeForCheckedValueType(argumentTypes.at(i), false, nullptr);
-        /*if (parentExpression != nullptr) {
-            targetType->namedTypeKeys = parentExpression->getValueType()->getNamedTypeKeys();
-            targetType->namedTypeValues = parentExpression->getValueType()->getNamedTypeValues();
-            targetType = resolvedAndCheckedValueType(targetType, false, parentExpression->getLocation());
-        }*/
 
         // ignore the implicit arguments
         int argumentExpressionIndex = i - extraArguments;
@@ -861,7 +851,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
         if (sourceType == nullptr)
             return nullptr;
 
-        /*if (!sourceType->isEqual(targetType)) {
+        if (!sourceType->isEqual(targetType)) {
             markErrorInvalidType(
                 expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getLocation(),
                 sourceType,
@@ -869,7 +859,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             );
             expressionCall->valueType = nullptr;
             return nullptr;
-        }*/
+        }
     }
 
     expressionCall->valueType = typeForCheckedValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), false, expressionCall->getLocation());
