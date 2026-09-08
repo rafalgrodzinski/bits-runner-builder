@@ -5,7 +5,11 @@
 
 class ValueTypePtr: public ValueType {
 public:
-    ValueTypePtr(shared_ptr<ValueType> pointeeValueType, bool isVolatile);
+    ValueTypePtr(
+        shared_ptr<ValueType> pointeeValueType,
+        bool isVolatile,
+        shared_ptr<Location> location
+    );
 
     shared_ptr<ValueType> getPointeeValueType() const;
     bool getIsVolatile() const;

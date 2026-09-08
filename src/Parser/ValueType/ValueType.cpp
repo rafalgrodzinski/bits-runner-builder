@@ -10,11 +10,15 @@
 #include "ValueTypePtr.h"
 #include "ValueTypeSimple.h"
 
-ValueType::ValueType(ValueTypeKind kind):
-kind(kind) { }
+ValueType::ValueType(ValueTypeKind kind, shared_ptr<Location> location):
+kind(kind), location(location) { }
 
 ValueTypeKind ValueType::getKind() const {
     return kind;
+}
+
+shared_ptr<Location> ValueType::getLocation() const {
+    return location;
 }
 
 bool ValueType::isBlob() const {

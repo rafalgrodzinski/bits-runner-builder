@@ -62,7 +62,7 @@ shared_ptr<ValueTypeFun> StatementRawFunction::getValueType() const {
     for (auto &argument : arguments)
         argumentTypes.push_back(argument.second);
 
-    return make_shared<ValueTypeFun>(argumentTypes, returnValueType);
+    return make_shared<ValueTypeFun>(argumentTypes, returnValueType, getLocation());
 }
 
 string StatementRawFunction::getRawSource() const {

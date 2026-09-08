@@ -5,7 +5,6 @@
 #include "AnalyzerScope.h"
 #include "AnalyzerScopeBlob.h"
 #include "Module/Module.h"
-#include "Defer.h"
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
@@ -187,7 +186,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     if (targetType == nullptr)
         return;
 
-    targetType = typeForCheckedValueType(targetType, false, statementAssignment->getLocation());
+    targetType = typeForCheckedValueType(targetType, false);
     if (targetType == nullptr)
         return;
 
@@ -198,7 +197,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     shared_ptr<ValueType> sourceType = statementAssignment->getValueExpression()->getValueType();
     if (sourceType != nullptr && !sourceType->isEqual(targetType)) {
         markErrorInvalidType(
-            statementAssignment->getExpressionChained()->getLocation(),
+            sourceType->getLocation(),
             sourceType,
             targetType
         );
@@ -322,7 +321,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
     // check each of the extracted fields's type
     for (auto &member : members) {
-        if (typeForCheckedValueType(member.second, true, statementBlob->getLocation()) == nullptr)
+        if (typeForCheckedValueType(member.second, true) == nullptr)
             return;
     }
 
@@ -346,7 +345,7 @@ void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
     for (EnumField &field : statementEnum->fields) {
         // Only none or boxed types are valid
         if (!field.payloadValueType->isBoxed() && field.payloadValueType->getKind() != ValueTypeKind::NONE) {
-            markErrorInvalidType(statementEnum->getLocation(), field.payloadValueType, nullptr);
+            markErrorInvalidType(field.payloadValueType->getLocation(), field.payloadValueType, nullptr);
             return;
         }
 
@@ -388,12 +387,12 @@ void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpressio
 void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
     // check argument types
     for (pair<string, shared_ptr<ValueType>> &argument : statementFunction->getArguments()) {
-        if (typeForCheckedValueType(argument.second, true, statementFunction->getLocation()) == nullptr)
+        if (typeForCheckedValueType(argument.second, true) == nullptr)
             return;
     }
 
     // check return type
-    if (typeForCheckedValueType(statementFunction->getReturnValueType(), true, statementFunction->getLocation()) == nullptr)
+    if (typeForCheckedValueType(statementFunction->getReturnValueType(), true) == nullptr)
         return;
 
     // check if function is not yet defined and register it
@@ -412,12 +411,12 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
     // check argument types
     for (auto &argument : statementFunctionDeclaration->getArguments()) {
-        if (typeForCheckedValueType(argument.second, true, statementFunctionDeclaration->getLocation()) == nullptr)
+        if (typeForCheckedValueType(argument.second, true) == nullptr)
             return;
     }
 
     // check return type
-    if (typeForCheckedValueType(statementFunctionDeclaration->getReturnValueType(), true, statementFunctionDeclaration->getLocation()) == nullptr)
+    if (typeForCheckedValueType(statementFunctionDeclaration->getReturnValueType(), true) == nullptr)
         return;
 
     string name = statementFunctionDeclaration->getGlobalName();
@@ -434,12 +433,12 @@ void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statement
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction) {
     // check argument types
     for (auto &argument : statementMetaExternFunction->getArguments()) {
-        if (typeForCheckedValueType(argument.second, true, statementMetaExternFunction->getLocation()) == nullptr)
+        if (typeForCheckedValueType(argument.second, true) == nullptr)
             return;
     }
 
     // check return type
-    if (typeForCheckedValueType(statementMetaExternFunction->getReturnValueType(), true, statementMetaExternFunction->getLocation()) == nullptr)
+    if (typeForCheckedValueType(statementMetaExternFunction->getReturnValueType(), true) == nullptr)
         return;
 
     if (!scope->setFunctionType(statementMetaExternFunction->getGlobalName(), statementMetaExternFunction->getValueType(), false))
@@ -524,7 +523,7 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
 
     // check each of the extracted type
     for (auto &member : members) {
-        if (typeForCheckedValueType(member.second, true, statement->getLocation()) == nullptr)
+        if (typeForCheckedValueType(member.second, true) == nullptr)
             return;
     }
 
@@ -585,7 +584,7 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
     shared_ptr<ValueType> expressionType = statementReturn->getExpression()->getValueType();
     if (expressionType == nullptr || !expressionType->isEqual(returnType)) {
         markErrorInvalidType(
-            statementReturn->getLocation(),
+            expressionType->getLocation(),
             expressionType,
             returnType
         );
@@ -593,7 +592,7 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
-    statementVariable->valueType = typeForCheckedValueType(statementVariable->getValueType(), false, statementVariable->getLocation());
+    statementVariable->valueType = typeForCheckedValueType(statementVariable->getValueType(), false);
     if (statementVariable->getValueType() == nullptr)
         return;
 
@@ -612,19 +611,24 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         if (statementVariable->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(statementVariable->getValueType())->getCountExpression() == nullptr) {
             statementVariable->valueType = make_shared<ValueTypeData>(
                 dynamic_pointer_cast<ValueTypeData>(statementVariable->getValueType())->getElementValueType(),
-                dynamic_pointer_cast<ValueTypeData>(statementVariable->getExpression()->getValueType())->getCountExpression()
+                dynamic_pointer_cast<ValueTypeData>(statementVariable->getExpression()->getValueType())->getCountExpression(),
+                statementVariable->getLocation()
             );
         }
 
         if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType())) {
-            markErrorInvalidType(statementVariable->getExpression()->getLocation(), statementVariable->getExpression()->getValueType(), statementVariable->getValueType());
+            markErrorInvalidType(
+                statementVariable->getExpression()->getValueType()->getLocation(),
+                statementVariable->getExpression()->getValueType(),
+                statementVariable->getValueType()
+            );
             return;
         }
     }
 
     // data types should have count expression
     if (statementVariable->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(statementVariable->getValueType())->getCountExpression() == nullptr) {
-        markErrorInvalidType(statementVariable->getLocation(), statementVariable->getValueType(), nullptr);
+        markErrorInvalidType(statementVariable->getValueType()->getLocation(), statementVariable->getValueType(), nullptr);
         return;
     }
 
@@ -646,7 +650,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     string identifier = statementVariableDeclaration->getGlobalIdentifier();
 
-    if (typeForCheckedValueType(statementVariableDeclaration->getValueType(), true, statementVariableDeclaration->getLocation()) == nullptr)
+    if (typeForCheckedValueType(statementVariableDeclaration->getValueType(), true) == nullptr)
         return;
 
     if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
@@ -711,7 +715,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
         rightTargetType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
     }
     if (rightTargetType == nullptr) {
-        markErrorInvalidType(expressionBinary->getLeft()->getLocation(), rightTargetType, nullptr);
+        markErrorInvalidType(rightTargetType->getLocation(), rightTargetType, nullptr);
         return nullptr;
     }
 
@@ -730,7 +734,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
     // firgure target type
     shared_ptr<ValueType> leftTargetType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
     if (leftTargetType == nullptr) {
-        markErrorInvalidType(expressionBinary->getRight()->getLocation(), leftTargetType, nullptr);
+        markErrorInvalidType(leftTargetType->getLocation(), leftTargetType, nullptr);
         return nullptr;
     }
 
@@ -774,99 +778,99 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
     int extraArguments = 0;
 
-    Defer defer([&](){
-        scope->popLevel();
-    });
-    scope->pushLevel();
+    if (!scope->level([&]() -> bool {
+        // check for built-in
+        if (parentExpression != nullptr) {
+            bool isParentPointer = parentExpression->getValueType()->isPtr();
+            bool isParentBlob = parentExpression->getValueType()->isBlob();
+            bool isParentProto = parentExpression->getValueType()->isProto();
+            bool isVal = expressionCall->getName().compare("val") == 0;
 
-    // check for built-in
-    if (parentExpression != nullptr) {
-        bool isParentPointer = parentExpression->getValueType()->isPtr();
-        bool isParentBlob = parentExpression->getValueType()->isBlob();
-        bool isParentProto = parentExpression->getValueType()->isProto();
-        bool isVal = expressionCall->getName().compare("val") == 0;
-
-        if (isParentPointer && isVal && dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->isFun()) {
-            valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
-        } else if (isParentBlob) {
-            shared_ptr<ValueTypeBlob> parentBlobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
-            string functionName = format("{}.{}", parentBlobValueType->getSymbolName()->getGlobalName(), expressionCall->getName());
-            valueType = scope->getFunctionType(functionName);
-            if (valueType == nullptr) {
-                markErrorNotDefined(expressionCall->getLocation(), functionName);
-                return nullptr;
-            }
-            extraArguments = 1; // for the implicit "it"
-            scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
-        } else if (isParentProto) {
-            auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
-            for (pair<string, shared_ptr<ValueType>> &member : members) {
-                if (expressionCall->getName().compare(member.first) == 0) {
-                    valueType = member.second;
+            if (isParentPointer && isVal && dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->isFun()) {
+                valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
+            } else if (isParentBlob) {
+                shared_ptr<ValueTypeBlob> parentBlobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
+                string functionName = format("{}.{}", parentBlobValueType->getSymbolName()->getGlobalName(), expressionCall->getName());
+                valueType = scope->getFunctionType(functionName);
+                if (valueType == nullptr) {
+                    markErrorNotDefined(expressionCall->getLocation(), functionName);
+                    return false;
                 }
+                extraArguments = 1; // for the implicit "it"
+                scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
+            } else if (isParentProto) {
+                auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
+                for (pair<string, shared_ptr<ValueType>> &member : members) {
+                    if (expressionCall->getName().compare(member.first) == 0) {
+                        valueType = member.second;
+                    }
+                }
+                extraArguments = 1; // for the implicit "it"
+            } else {
+                markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->toPtr()->getPointeeValueType(), nullptr);
+                return false;
             }
-            extraArguments = 1; // for the implicit "it"
         } else {
-            markErrorInvalidType(expressionCall->getLocation(), dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType(), nullptr);
-            return nullptr;
+            expressionCall->setModuleName(module->getName());
+            valueType = scope->getFunctionType(expressionCall->getGlobalName());
         }
-    } else {
-        expressionCall->setModuleName(module->getName());
-        valueType = scope->getFunctionType(expressionCall->getGlobalName());
-    }
 
-    // check if defined
-    if (valueType == nullptr) {
-        markErrorNotDefined(expressionCall->getLocation(), expressionCall->getGlobalName());
-        return nullptr;
-    }
+        // check if defined
+        if (valueType == nullptr) {
+            markErrorNotDefined(expressionCall->getLocation(), expressionCall->getGlobalName());
+            return false;
+        }
 
-    // check arguments count
-    vector<shared_ptr<ValueType>> argumentTypes = dynamic_pointer_cast<ValueTypeFun>(valueType)->getArgumentValueTypes();
-    if (argumentTypes.size() != expressionCall->getArgumentExpressions().size() + extraArguments) {
-        markErrorInvalidArgumentsCount(
-            expressionCall->getLocation(),
-            expressionCall->getArgumentExpressions().size(),
-            argumentTypes.size() - extraArguments
-        );
-        return nullptr;
-    }
-    // check argument types
-    // we want to skip the implicit argumnets hence startring from "extraArguments"
-    for (int i=extraArguments; i<argumentTypes.size(); i++) {
-        shared_ptr<ValueType> targetType = typeForCheckedValueType(argumentTypes.at(i), false, nullptr);
-
-        // ignore the implicit arguments
-        int argumentExpressionIndex = i - extraArguments;
-
-        expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
-            expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
-            targetType,
-            dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType()
-        );
-        if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
-            return nullptr;
-
-        shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
-        if (sourceType == nullptr)
-            return nullptr;
-
-        if (!sourceType->isEqual(targetType)) {
-            markErrorInvalidType(
-                expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getLocation(),
-                sourceType,
-                targetType
+        // check arguments count
+        vector<shared_ptr<ValueType>> argumentTypes = dynamic_pointer_cast<ValueTypeFun>(valueType)->getArgumentValueTypes();
+        if (argumentTypes.size() != expressionCall->getArgumentExpressions().size() + extraArguments) {
+            markErrorInvalidArgumentsCount(
+                expressionCall->getLocation(),
+                expressionCall->getArgumentExpressions().size(),
+                argumentTypes.size() - extraArguments
             );
-            expressionCall->valueType = nullptr;
-            return nullptr;
+            return false;
         }
-    }
+        // check argument types
+        // we want to skip the implicit argumnets hence startring from "extraArguments"
+        for (int i=extraArguments; i<argumentTypes.size(); i++) {
+            shared_ptr<ValueType> targetType = typeForCheckedValueType(argumentTypes.at(i), false);
 
-    expressionCall->valueType = typeForCheckedValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), false, expressionCall->getLocation());
-    if (expressionCall->getValueType() == nullptr) {
-        markErrorInvalidType(expressionCall->getLocation(), dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), nullptr);
-        return nullptr;
-    }
+            // ignore the implicit arguments
+            int argumentExpressionIndex = i - extraArguments;
+
+            expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
+                expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
+                targetType,
+                dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType()
+            );
+            if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
+                return false;
+
+            shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
+            if (sourceType == nullptr)
+                return false;
+
+            if (!sourceType->isEqual(targetType)) {
+                markErrorInvalidType(
+                    sourceType->getLocation(),
+                    sourceType,
+                    targetType
+                );
+                expressionCall->valueType = nullptr;
+                return false;
+            }
+        }
+
+        expressionCall->valueType = typeForCheckedValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), false);
+        if (expressionCall->getValueType() == nullptr) {
+            markErrorInvalidType(valueType->toFun()->getReturnValueType()->getLocation(), valueType->toFun()->getReturnValueType(), nullptr);
+            return false;
+        }
+
+        return true;
+    })) { return nullptr; }
+
     return expressionCall->getValueType();
 }
 
@@ -880,13 +884,17 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
         );
     }
 
-    expressionCast->valueType = typeForCheckedValueType(expressionCast->getValueType(), false, expressionCast->getLocation());
+    expressionCast->valueType = typeForCheckedValueType(expressionCast->getValueType(), false);
     if (expressionCast->getValueType() == nullptr)
         return nullptr;
 
     // if the first expression in a chain is a cast, we may want to do a built-in operation on it
     if (parentExpression == nullptr)
         return expressionCast->getValueType();
+
+    // If the types are identical, we ignore the cast
+    if (parentExpression->getValueType()->isEqual(expressionCast->getValueType()))
+        return parentExpression->getValueType();
 
     bool isSourceNumeric = parentExpression->getValueType()->isNumeric();
 
@@ -911,7 +919,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
         if (expressionCast->getValueType()->isData() && dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getCountExpression() == nullptr) {
             expressionCast->valueType = make_shared<ValueTypeData>(
                 dynamic_pointer_cast<ValueTypeData>(expressionCast->getValueType())->getElementValueType(),
-                dynamic_pointer_cast<ValueTypeData>(parentExpression->getValueType())->getCountExpression()
+                dynamic_pointer_cast<ValueTypeData>(parentExpression->getValueType())->getCountExpression(),
+                expressionCast->getLocation()
             );
         }
         return expressionCast->getValueType();
@@ -925,14 +934,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
         }
     // from boxed
     } else if (isSourceBoxed) {
-        /*if (parentExpression->getValueType()->getSubType()->isEqual(expressionCast->getValueType())) {
-            if (parentExpression->getValueType()->getSubType()->isPtr()) {
-                expressionCast->getValueType()->getSubType()->namedTypeKeys = parentExpression->getValueType()->getSubType()->getSubType()->getNamedTypeKeys();
-                expressionCast->getValueType()->getSubType()->namedTypeValues = parentExpression->getValueType()->getSubType()->getSubType()->getNamedTypeValues();
-            }
+        if (parentExpression->getValueType()->toBoxed()->getBoxedValueType()->isEqual(expressionCast->getValueType()))
             return expressionCast->getValueType();
-        }*/
-       return expressionCast->getValueType();
     // from enum
     } else if (isSourceEnum && isTargetNumeric) {
         return expressionCast->getValueType();
@@ -945,23 +948,23 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionChained> expressionChained) {
     shared_ptr<Expression> parentExpression = nullptr;
 
-    Defer defer([&](){
-        scope->popLevel();
-    });
-    scope->pushLevel();
-
-    for (shared_ptr<Expression> chainExpression : expressionChained->getChainExpressions()) {
-        shared_ptr<ValueType> chainType = typeForExpression(chainExpression, parentExpression, nullptr);
-        chainExpression->valueType = chainType;
-        parentExpression = chainExpression;
-        if (chainType == nullptr)
-            return nullptr;
-        if (shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(chainType)) {
-            scope->boxedScope->registerNamedValueTypesMap(*valueTypeBlob->getNamedValueTypeKeys(), valueTypeBlob->getNamedValueTypes());
+    if (!scope->level([&]() -> bool {
+        for (shared_ptr<Expression> chainExpression : expressionChained->getChainExpressions()) {
+            shared_ptr<ValueType> chainType = typeForExpression(chainExpression, parentExpression, nullptr);
+            chainExpression->valueType = chainType;
+            parentExpression = chainExpression;
+            if (chainType == nullptr)
+                return false;
+            if (shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(chainType)) {
+                scope->boxedScope->registerNamedValueTypesMap(*valueTypeBlob->getNamedValueTypeKeys(), valueTypeBlob->getNamedValueTypes());
+            }
         }
-    }
 
-    expressionChained->valueType = parentExpression->getValueType();
+        expressionChained->valueType = parentExpression->getValueType();
+
+        return true;
+    })) { return nullptr; }
+
     return expressionChained->getValueType();
 }
 
@@ -977,7 +980,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionComposite
     }
     shared_ptr<Expression> countExpression = ExpressionLiteral::expressionLiteralForUInt(elementTypes.size(), expressionCompositeLiteral->getLocation());
     countExpression->valueType = typeForExpression(countExpression, nullptr, nullptr);
-    expressionCompositeLiteral->valueType = make_shared<ValueTypeComposite>(elementTypes, countExpression);
+    expressionCompositeLiteral->valueType = make_shared<ValueTypeComposite>(elementTypes, countExpression, expressionCompositeLiteral->getLocation());
     return expressionCompositeLiteral->getValueType();
 }
 
@@ -996,8 +999,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
         return nullptr;
     } else if (!conditionType->isEqual(ValueTypeSimple::BOOL)) {
         markErrorInvalidType(
-            expressionIfElse->getConditionExpression()->getLocation(),
-            conditionType, ValueTypeSimple::BOOL
+            conditionType->getLocation(),
+            conditionType,
+            ValueTypeSimple::BOOL
         );
     }
 
@@ -1069,6 +1073,7 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
             break;
         default:
             markErrorInvalidType(expressionLiteral->getLocation(), nullptr, nullptr);
+            return nullptr;
     }
 
     return expressionLiteral->getValueType();
@@ -1171,12 +1176,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                 string nameVariable = expressionValue->getIdentifier();
                 string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
                 for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
-                    if (nameVariable.compare(blobMember.first) == 0 || nameFunction.compare(blobMember.first) == 0) {
+                    if (nameVariable == blobMember.first || nameFunction == blobMember.first) {
                         // found corresponding blob, decide if it's a simple or data access
                         switch (expressionValue->getValueKind()) {
                             case ExpressionValueKind::SIMPLE: {
                                 // resolve type of named type if required
-                                expressionValue->valueType = typeForCheckedValueType(blobMember.second, false, expressionValue->getLocation());
+                                expressionValue->valueType = typeForCheckedValueType(blobMember.second, false);
                                 scope->popLevel();
                                 return expressionValue->getValueType();
                             }
@@ -1184,7 +1189,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                 // make sure that the indexed value is an array
                                 shared_ptr<ValueType> valueType = blobMember.second;
                                 if (valueType->getKind() != ValueTypeKind::DATA) {
-                                    markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
+                                    markErrorInvalidType(valueType->getLocation(), valueType, nullptr);
                                     return nullptr;
                                 }
                                 expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobMember.second)->getElementValueType();
@@ -1225,7 +1230,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                             // make sure that the indexed value is an array
                             shared_ptr<ValueType> valueType = member.second;
                             if (valueType->getKind() != ValueTypeKind::DATA) {
-                                markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
+                                markErrorInvalidType(valueType->getLocation(), valueType, nullptr);
                                 return nullptr;
                             }
                             expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(member.second)->getElementValueType();
@@ -1233,7 +1238,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                             // make sure that the index expression evaluates to an uint
                             shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
                             if (!indexExpression->getValueType()->isUnsignedInteger()) {
-                                markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
+                                markErrorInvalidType(indexExpression->getValueType()->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
                                 return nullptr;
                             }
                             return expressionValue->getValueType();
@@ -1268,7 +1273,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
         // make sure that the indexed value is an array
         if (type->getKind() != ValueTypeKind::DATA) {
-            markErrorInvalidType(expressionValue->getLocation(), type, nullptr);
+            markErrorInvalidType(type->getLocation(), type, nullptr);
             return nullptr;
         }
         expressionValue->indexExpression = checkAndTryCasting(
@@ -1279,7 +1284,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
         // make sure that the index expression evaluates to an uint
         if (!indexExpression->getValueType()->isUnsignedInteger()) {
-            markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
+            markErrorInvalidType(indexExpression->getValueType()->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
             return nullptr;
         }
         type = dynamic_pointer_cast<ValueTypeData>(type)->getElementValueType();
@@ -1568,7 +1573,8 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             ExpressionLiteral::expressionLiteralForUInt(
                 expressionCompositeLiteral->getExpressions().size(),
                 sourceExpression->getLocation()
-            )
+            ),
+            sourceExpression->getLocation()
         );
         dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression()->valueType = typeForExpression(dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression(), nullptr, returnType);
         // and then cast (if necessary) each of the element expressions
@@ -1611,7 +1617,8 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     if (targetType->isData() && dynamic_pointer_cast<ValueTypeData>(targetType)->getCountExpression() == nullptr) {
         targetType = make_shared<ValueTypeData>(
             dynamic_pointer_cast<ValueTypeData>(targetType)->getElementValueType(),
-            dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression()
+            dynamic_pointer_cast<ValueTypeData>(sourceExpression->getValueType())->getCountExpression(),
+            sourceExpression->getLocation()
         );
     }
 
@@ -1619,7 +1626,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
     shared_ptr<ExpressionChained> targetExpression;
 
     if (targetType->isBoxed()) {
-        targetType = typeForCheckedValueType(targetType, false, sourceExpression->getLocation());
+        targetType = typeForCheckedValueType(targetType, false);
         if (targetType == nullptr)
             return nullptr;
 
@@ -1655,7 +1662,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 }
 
 bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
-    targetType = typeForCheckedValueType(targetType, false, nullptr);
+    targetType = typeForCheckedValueType(targetType, false);
 
     switch (sourceType->getKind()) {
         // From UINT
@@ -2040,7 +2047,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                         return false;
 
                     // check that each entry in composite can be cast to member in blob
-                    if (!scope->level([this, sourceElementValueTypes, targetValueTypeBlob, oTargetFieldValueTypes]() -> bool {
+                    if (!scope->level([&]() -> bool {
                         scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
                         for (int i=0; i<(*oTargetFieldValueTypes).size(); i++) {
                             if (!canImplicitCast(sourceElementValueTypes.at(i), (*oTargetFieldValueTypes).at(i)))
@@ -2175,7 +2182,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
     }
 }
 
-shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired, shared_ptr<Location> location) {
+shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired) {
     switch (valueType->getKind()) {
         case ValueTypeKind::BLOB:
            return typeForCheckedValueType(valueType->toBlob());
@@ -2206,30 +2213,24 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeBlob
         return false;
     } else
     */
-    /*
-    if (!valueType->namedTypeKeys)
-        valueType->namedTypeKeys = scope->getBlobNamedTypeKeys(valueType->getGlobalName());
-    return valueType;
-    */
 
-    valueTypeBlob->setModuleName(module->getName());
     // Check if blob is registered
     if (scope->blobScope->getState(valueTypeBlob->getSymbolName()) == AnalyzerScopeState::NOT_REGISTERED) {
-        markErrorNotDefined(nullptr, valueTypeBlob->getSymbolName()->getGlobalName());
+        markErrorNotDefined(valueTypeBlob->getLocation(), valueTypeBlob->getSymbolName()->getGlobalName());
         return nullptr;
     }
-    
-    /*
-    // check 
-    scope->pushLevel();
-    scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeBlob->getNamedValueTypes());
-    scope->popLevel();
-    */
+
+    // Leave the original alone
+    shared_ptr<ValueTypeBlob> clonedValueTypeBlob = valueTypeBlob->clone()->toBlob();
+
+    // Make sure module names are set properly
+    clonedValueTypeBlob->setModuleName(module->getName());
+
     optional<vector<string>> oNamedValueTypeKeys = scope->blobScope->getNamedValueTypeKeys(valueTypeBlob->getSymbolName());
     if (oNamedValueTypeKeys)
-        valueTypeBlob->namedValueTypeKeys = *oNamedValueTypeKeys;
+        clonedValueTypeBlob->namedValueTypeKeys = *oNamedValueTypeKeys;
 
-    return valueTypeBlob;
+    return clonedValueTypeBlob;
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {
@@ -2239,7 +2240,7 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeBoxe
     
     // Otherwise try getting value type from the provided scope
     if (!valueTypeBoxed->getNamedValueTypeKey()) {
-        markErrorInvalidType(nullptr, valueTypeBoxed, nullptr);
+        markErrorInvalidType(valueTypeBoxed->getLocation(), valueTypeBoxed, nullptr);
         return nullptr;
     }
     
@@ -2258,7 +2259,7 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeData
         valueTypeData->getCountExpression()->valueType = typeForExpression(valueTypeData->getCountExpression(), nullptr, nullptr);
         return valueTypeData;
     } else if (isCountExperssionRequired) {
-        markErrorInvalidType(nullptr, valueTypeData, nullptr);
+        markErrorInvalidType(valueTypeData->getLocation(), valueTypeData, nullptr);
         return nullptr;
     }
     return valueTypeData;
@@ -2275,7 +2276,7 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 
     // Check number of named types match
     if ((*oNamedValueTypeKeys).size() != valueTypeEnum->getNamedValueTypes().size()) {
-        markErrorInvalidType(nullptr, valueTypeEnum, nullptr);
+        markErrorInvalidType(valueTypeEnum->getLocation(), valueTypeEnum, nullptr);
         return nullptr;
     }
 
@@ -2303,10 +2304,10 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
     // Check payload type, first make sure that potential named types in boxed have access to the current context
     scope->pushLevel();
     scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeEnumField->getNamedValueTypes());
-    payloadValueType = typeForCheckedValueType(payloadValueType, false, nullptr);
+    payloadValueType = typeForCheckedValueType(payloadValueType, false);
     scope->popLevel();
     if (payloadValueType == nullptr) {
-        markErrorInvalidType(nullptr, valueTypeEnumField, nullptr);
+        markErrorInvalidType(valueTypeEnumField->getLocation(), valueTypeEnumField, nullptr);
         return nullptr;
     }
 
@@ -2319,20 +2320,20 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeFun> valueTypeFun) {
     vector<shared_ptr<ValueType>> argValueTypes = valueTypeFun->getArgumentValueTypes();
     for (shared_ptr<ValueType> argValueType : argValueTypes) {
-        if (typeForCheckedValueType(argValueType, true, nullptr) == nullptr)
+        if (typeForCheckedValueType(argValueType, true) == nullptr)
             return nullptr;
     }
-    if (typeForCheckedValueType(valueTypeFun->getReturnValueType(), true, nullptr) == nullptr)
+    if (typeForCheckedValueType(valueTypeFun->getReturnValueType(), true) == nullptr)
         return nullptr;
 
     return valueTypeFun;
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr) {
-    shared_ptr<ValueType> pointeeValueType = typeForCheckedValueType(valueTypePtr->getPointeeValueType(), false, nullptr);
+    shared_ptr<ValueType> pointeeValueType = typeForCheckedValueType(valueTypePtr->getPointeeValueType(), false);
     if (pointeeValueType == nullptr)
         return nullptr;
-    return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile());
+    return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile(), valueTypePtr->getLocation());
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {

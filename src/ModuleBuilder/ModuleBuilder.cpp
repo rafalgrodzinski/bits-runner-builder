@@ -105,7 +105,7 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
         llvmModule,
         builder,
         [this](shared_ptr<ValueType> valueType, bool shouldUnbox) {
-            return llvmTypeForValueType(valueType, shouldUnbox, nullptr);
+            return llvmTypeForValueType(valueType, shouldUnbox);
         },
         [this](llvm::Type* type, string identifier) {
             return buildAlloca(type, identifier);
@@ -524,8 +524,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
 
     // then pointers to all the variables
     for (shared_ptr<StatementVariable> statementVariable : statementProto->getVariableStatements()) {
-
-        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariable->getValueType(), false);
+        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariable->getValueType(), false, statementVariable->getLocation());
         members.push_back(pair(statementVariable->getIdentifier(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
         if (type == nullptr)
@@ -535,7 +534,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
 
     // and then pointers to the functions
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
-        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementFunctionDeclaration->getValueType(), false);
+        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementFunctionDeclaration->getValueType(), false, statementFunctionDeclaration->getLocation());
         members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
         if (type == nullptr)
@@ -823,7 +822,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     return;
 
                 if (!sourceWrappedValue->isArray()) {
-                    markErrorInvalidType(valueExpression->getLocation());
+                    markErrorInvalidType(valueExpression->getValueType()->getLocation());
                     return;
                 }
 
@@ -861,7 +860,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     };
                     shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpressions.at(i));
                     if (wrappedSourceValue == nullptr) {
-                        markErrorInvalidType(valueExpression->getLocation());
+                        markErrorInvalidType(valueExpression->getValueType()->getLocation());
                         return;
                     }
                     llvm::Value *targetPointerValue = targetWrappedValue->getPointerValue();
@@ -932,7 +931,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                     };
                     shared_ptr<WrappedValue> wrappedSourceValue = wrappedValueForExpression(valueExpressions.at(0));
                     if (wrappedSourceValue == nullptr) {
-                        markErrorInvalidType(valueExpression->getLocation());
+                        markErrorInvalidType(valueExpression->getValueType()->getLocation());
                         return;
                     }
                     llvm::Value *targetPointerValue = targetWrappedValue->getPointerValue();
@@ -1500,7 +1499,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                 currentWrappedValue = wrappedValueForValue(sourceValue, sourcePointerValue, sourceType, expressionValue);
                 parentExpression = chainExpression;
             } else {
-                markErrorInvalidType(expressionValue->getLocation());
+                markErrorInvalidType(expressionValue->getValueType()->getLocation());
                 return nullptr;
             }
         // Proto expression?
@@ -1957,6 +1956,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedValue> sourceWrappedValue, shared_ptr<ValueType> targetValueType) {
+    // If the types are identical, ignore the cast
+    if (sourceWrappedValue->getValueType()->isEqual(targetValueType))
+        return sourceWrappedValue;
+
     // Figure out source type
     bool isSourceUInt = false;
     bool isSourceSInt = false;
@@ -2333,7 +2336,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         llvm::Value *sourceValue = sourceWrappedValue->getValue();
         return WrappedValue::wrappedValue(sourceValue, targetValueType);
     } else {
-        markErrorInvalidCast(nullptr);
+        markErrorInvalidCast(targetValueType->getLocation());
         return nullptr;
     }
 }
@@ -2406,9 +2409,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForTypeBuiltIn(llvm::Type *t
 //
 // Support
 //
-llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox, shared_ptr<Location> location) {
+llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox) {
     if (valueType == nullptr) {
-        markErrorInvalidType(location);
+        markErrorInvalidType(valueType->getLocation());
         return nullptr;
     }
 
@@ -2447,7 +2450,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             return typePtr;
         case ValueTypeKind::BOXED:
             if (shouldUnbox && dynamic_pointer_cast<ValueTypeBoxed>(valueType)->getBoxedValueType() != nullptr)
-                return llvmTypeForValueType(dynamic_pointer_cast<ValueTypeBoxed>(valueType)->getBoxedValueType());
+                return llvmTypeForValueType(valueType->toBoxed()->getBoxedValueType());
             else
                 return typeBoxed;
         case ValueTypeKind::DATA: {
@@ -2458,7 +2461,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             int elementsCount = 0;
             if (dynamic_pointer_cast<ExpressionLiteral>(dynamic_pointer_cast<ValueTypeData>(valueType)->getCountExpression()) != nullptr)
                 elementsCount = dynamic_pointer_cast<ExpressionLiteral>(dynamic_pointer_cast<ValueTypeData>(valueType)->getCountExpression())->getUIntValue();
-            llvm::Type *subType = llvmTypeForValueType(dynamic_pointer_cast<ValueTypeData>(valueType)->getElementValueType());
+            llvm::Type *subType = llvmTypeForValueType(valueType->toData()->getElementValueType());
             if (subType == nullptr)
                 return nullptr;
 
@@ -2482,7 +2485,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
         }
         case ValueTypeKind::FUN: {
             // returnType
-            llvm::Type *functionReturnType = llvmTypeForValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType());
+            llvm::Type *functionReturnType = llvmTypeForValueType(valueType->toFun()->getReturnValueType());
 
             // argument types
             vector<llvm::Type *> functionArgumentTypes;
@@ -2508,7 +2511,7 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             break;
     }
 
-    markErrorInvalidType(location);
+    markErrorInvalidType(valueType->getLocation());
     return nullptr;
 }
 

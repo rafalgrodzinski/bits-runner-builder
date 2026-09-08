@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+class Location;
 class ValueTypeBlob;
 class ValueTypeBoxed;
 class ValueTypeComposite;
@@ -18,9 +19,6 @@ class ValueTypeSimple;
 using namespace std;
 
 enum class ValueTypeKind {
-    NONE,
-    BOOL,
-
     UINT,
     U8,
     U16,
@@ -37,6 +35,8 @@ enum class ValueTypeKind {
     F32,
     F64,
 
+    NONE,
+    BOOL,
     A,
 
     BLOB,
@@ -52,10 +52,11 @@ enum class ValueTypeKind {
 
 class ValueType: public enable_shared_from_this<ValueType> {
 public:
-    ValueType(ValueTypeKind kind);
+    ValueType(ValueTypeKind kind, shared_ptr<Location> location);
     virtual ~ValueType() = default;
 
     ValueTypeKind getKind() const;
+    shared_ptr<Location> getLocation() const;
 
     bool isBlob() const;
     bool isBoxed() const;
@@ -94,6 +95,7 @@ public:
 
 private:
     ValueTypeKind kind;
+    shared_ptr<Location> location;
 };
 
 #endif

@@ -12,11 +12,12 @@ friend class Analyzer;
 public:
     ValueTypeFun(
         const vector<shared_ptr<ValueType>> &argumentValueTypes,
-        shared_ptr<ValueType> returnValueType
+        shared_ptr<ValueType> returnValueType,
+        shared_ptr<Location> location
     );
 
-    vector<shared_ptr<ValueType>> getArgumentValueTypes();
-    shared_ptr<ValueType> getReturnValueType();
+    vector<shared_ptr<ValueType>> getArgumentValueTypes() const;
+    shared_ptr<ValueType> getReturnValueType() const;
 
     void setModuleName(const string &moduleName) override;
     bool isEqual(shared_ptr<ValueType> other) const override;

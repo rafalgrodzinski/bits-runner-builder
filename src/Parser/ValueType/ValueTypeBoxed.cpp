@@ -1,15 +1,19 @@
 #include "ValueTypeBoxed.h"
 
-ValueTypeBoxed::ValueTypeBoxed(const optional<string> &namedValueTypeKey, shared_ptr<ValueType> boxedValueType):
-ValueType(ValueTypeKind::BOXED),
+ValueTypeBoxed::ValueTypeBoxed(
+    const optional<string> &namedValueTypeKey,
+    shared_ptr<ValueType> boxedValueType,
+    shared_ptr<Location> location
+):
+ValueType(ValueTypeKind::BOXED, location),
 namedValueTypeKey(namedValueTypeKey),
 boxedValueType(boxedValueType) { }
 
-optional<string> ValueTypeBoxed::getNamedValueTypeKey() {
+optional<string> ValueTypeBoxed::getNamedValueTypeKey() const {
     return namedValueTypeKey;
 }
 
-shared_ptr<ValueType> ValueTypeBoxed::getBoxedValueType() {
+shared_ptr<ValueType> ValueTypeBoxed::getBoxedValueType() const {
     return boxedValueType;
 }
 

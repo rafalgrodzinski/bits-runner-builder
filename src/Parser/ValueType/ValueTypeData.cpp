@@ -2,8 +2,12 @@
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 
-ValueTypeData::ValueTypeData(shared_ptr<ValueType> elementValueType, shared_ptr<Expression> countExpression):
-ValueType(ValueTypeKind::DATA),
+ValueTypeData::ValueTypeData(
+    shared_ptr<ValueType> elementValueType,
+    shared_ptr<Expression> countExpression,
+    shared_ptr<Location> location
+):
+ValueType(ValueTypeKind::DATA, location),
 elementValueType(elementValueType),
 countExpression(countExpression) { }
 
