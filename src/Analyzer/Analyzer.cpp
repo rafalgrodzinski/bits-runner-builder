@@ -1173,7 +1173,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                 string nameVariable = expressionValue->getIdentifier();
                 string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
                 for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
-                    if (nameVariable.compare(blobMember.first) == 0 || nameFunction.compare(blobMember.first) == 0) {
+                    if (nameVariable == blobMember.first || nameFunction == blobMember.first) {
                         // found corresponding blob, decide if it's a simple or data access
                         switch (expressionValue->getValueKind()) {
                             case ExpressionValueKind::SIMPLE: {
@@ -2211,18 +2211,23 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeBlob
     } else
     */
 
-    valueTypeBlob->setModuleName(module->getName());
     // Check if blob is registered
     if (scope->blobScope->getState(valueTypeBlob->getSymbolName()) == AnalyzerScopeState::NOT_REGISTERED) {
-        markErrorNotDefined(nullptr, valueTypeBlob->getSymbolName()->getGlobalName());
+        markErrorNotDefined(valueTypeBlob->getLocation(), valueTypeBlob->getSymbolName()->getGlobalName());
         return nullptr;
     }
 
+    // Leave the original alone
+    shared_ptr<ValueTypeBlob> clonedValueTypeBlob = valueTypeBlob->clone()->toBlob();
+
+    // Make sure module names are set properly
+    clonedValueTypeBlob->setModuleName(module->getName());
+
     optional<vector<string>> oNamedValueTypeKeys = scope->blobScope->getNamedValueTypeKeys(valueTypeBlob->getSymbolName());
     if (oNamedValueTypeKeys)
-        valueTypeBlob->namedValueTypeKeys = *oNamedValueTypeKeys;
+        clonedValueTypeBlob->namedValueTypeKeys = *oNamedValueTypeKeys;
 
-    return valueTypeBlob;
+    return clonedValueTypeBlob;
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed) {

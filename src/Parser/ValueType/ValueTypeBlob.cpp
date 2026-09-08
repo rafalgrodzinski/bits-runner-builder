@@ -23,16 +23,18 @@ vector<shared_ptr<ValueType>> ValueTypeBlob::getNamedValueTypes() const {
 
 void ValueTypeBlob::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
+    for (shared_ptr<ValueType> namedValueType : namedValueTypes)
+        namedValueType->setModuleName(moduleName);
 }
 
 bool ValueTypeBlob::isEqual(shared_ptr<ValueType> other) const {
     // Check if types match
-    shared_ptr<ValueTypeBlob> valueTypeBlob = other->toBlob();
-    if (valueTypeBlob == nullptr)
+    shared_ptr<ValueTypeBlob> otherValueTypeBlob = other->toBlob();
+    if (otherValueTypeBlob == nullptr)
         return false;
 
     // Are the symbol names identical?
-    if (!symbolName->isEqual(valueTypeBlob->getSymbolName()))
+    if (!symbolName->isEqual(otherValueTypeBlob->getSymbolName()))
         return false;
 
     return true;

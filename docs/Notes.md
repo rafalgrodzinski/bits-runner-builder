@@ -9,3 +9,4 @@ Available for:
 
 Changelist for [1.0.0-dev-107](https://github.com/rafalgrodzinski/bits-runner-builder/pull/208):
 - `ValueType` includes location for better debugging
+- Fixed named value type resolution
