@@ -1,0 +1,15 @@
+@module dummy
+
+@export ObjA<T> blob
+    value boxed<T>
+
+    getValue fun -> boxed<T>
+        ret it.value
+    ;
+;
+
+@export ObjB blob
+    doStuff fun -> u32
+        ret 5
+    ;
+;

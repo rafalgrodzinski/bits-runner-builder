@@ -1,0 +1,21 @@
+@import dummy
+
+Proxy blob
+   obja blob<@dummy::ObjA, ptr<blob<@dummy::ObjB>>>
+   objb blob<@dummy::ObjB>
+
+   setup fun
+      it.obja <- {it.objb.adr.ptr<blob<@dummy::ObjB>>}
+   ;
+
+   getB fun -> ptr<blob<@dummy::ObjB>>
+      ret it.obja.getValue().ptr<blob<@dummy::ObjB>>
+   ;
+;
+
+@export main fun -> u32
+   proxy blob<Proxy>
+   proxy.setup()
+
+   ret proxy.getB().ptr<blob<@dummy::ObjB>>.val.doStuff()
+;
