@@ -5,7 +5,6 @@
 #include "AnalyzerScope.h"
 #include "AnalyzerScopeBlob.h"
 #include "Module/Module.h"
-#include "Defer.h"
 
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionBinary.h"
@@ -779,99 +778,99 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
     int extraArguments = 0;
 
-    Defer defer([&](){
-        scope->popLevel();
-    });
-    scope->pushLevel();
+    if (!scope->level([&]() -> bool {
+        // check for built-in
+        if (parentExpression != nullptr) {
+            bool isParentPointer = parentExpression->getValueType()->isPtr();
+            bool isParentBlob = parentExpression->getValueType()->isBlob();
+            bool isParentProto = parentExpression->getValueType()->isProto();
+            bool isVal = expressionCall->getName().compare("val") == 0;
 
-    // check for built-in
-    if (parentExpression != nullptr) {
-        bool isParentPointer = parentExpression->getValueType()->isPtr();
-        bool isParentBlob = parentExpression->getValueType()->isBlob();
-        bool isParentProto = parentExpression->getValueType()->isProto();
-        bool isVal = expressionCall->getName().compare("val") == 0;
-
-        if (isParentPointer && isVal && dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->isFun()) {
-            valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
-        } else if (isParentBlob) {
-            shared_ptr<ValueTypeBlob> parentBlobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
-            string functionName = format("{}.{}", parentBlobValueType->getSymbolName()->getGlobalName(), expressionCall->getName());
-            valueType = scope->getFunctionType(functionName);
-            if (valueType == nullptr) {
-                markErrorNotDefined(expressionCall->getLocation(), functionName);
-                return nullptr;
-            }
-            extraArguments = 1; // for the implicit "it"
-            scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
-        } else if (isParentProto) {
-            auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
-            for (pair<string, shared_ptr<ValueType>> &member : members) {
-                if (expressionCall->getName().compare(member.first) == 0) {
-                    valueType = member.second;
+            if (isParentPointer && isVal && dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType()->isFun()) {
+                valueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
+            } else if (isParentBlob) {
+                shared_ptr<ValueTypeBlob> parentBlobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
+                string functionName = format("{}.{}", parentBlobValueType->getSymbolName()->getGlobalName(), expressionCall->getName());
+                valueType = scope->getFunctionType(functionName);
+                if (valueType == nullptr) {
+                    markErrorNotDefined(expressionCall->getLocation(), functionName);
+                    return false;
                 }
+                extraArguments = 1; // for the implicit "it"
+                scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
+            } else if (isParentProto) {
+                auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
+                for (pair<string, shared_ptr<ValueType>> &member : members) {
+                    if (expressionCall->getName().compare(member.first) == 0) {
+                        valueType = member.second;
+                    }
+                }
+                extraArguments = 1; // for the implicit "it"
+            } else {
+                markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->toPtr()->getPointeeValueType(), nullptr);
+                return false;
             }
-            extraArguments = 1; // for the implicit "it"
         } else {
-            markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->toPtr()->getPointeeValueType(), nullptr);
-            return nullptr;
+            expressionCall->setModuleName(module->getName());
+            valueType = scope->getFunctionType(expressionCall->getGlobalName());
         }
-    } else {
-        expressionCall->setModuleName(module->getName());
-        valueType = scope->getFunctionType(expressionCall->getGlobalName());
-    }
 
-    // check if defined
-    if (valueType == nullptr) {
-        markErrorNotDefined(expressionCall->getLocation(), expressionCall->getGlobalName());
-        return nullptr;
-    }
+        // check if defined
+        if (valueType == nullptr) {
+            markErrorNotDefined(expressionCall->getLocation(), expressionCall->getGlobalName());
+            return false;
+        }
 
-    // check arguments count
-    vector<shared_ptr<ValueType>> argumentTypes = dynamic_pointer_cast<ValueTypeFun>(valueType)->getArgumentValueTypes();
-    if (argumentTypes.size() != expressionCall->getArgumentExpressions().size() + extraArguments) {
-        markErrorInvalidArgumentsCount(
-            expressionCall->getLocation(),
-            expressionCall->getArgumentExpressions().size(),
-            argumentTypes.size() - extraArguments
-        );
-        return nullptr;
-    }
-    // check argument types
-    // we want to skip the implicit argumnets hence startring from "extraArguments"
-    for (int i=extraArguments; i<argumentTypes.size(); i++) {
-        shared_ptr<ValueType> targetType = typeForCheckedValueType(argumentTypes.at(i), false);
-
-        // ignore the implicit arguments
-        int argumentExpressionIndex = i - extraArguments;
-
-        expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
-            expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
-            targetType,
-            dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType()
-        );
-        if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
-            return nullptr;
-
-        shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
-        if (sourceType == nullptr)
-            return nullptr;
-
-        if (!sourceType->isEqual(targetType)) {
-            markErrorInvalidType(
-                sourceType->getLocation(),
-                sourceType,
-                targetType
+        // check arguments count
+        vector<shared_ptr<ValueType>> argumentTypes = dynamic_pointer_cast<ValueTypeFun>(valueType)->getArgumentValueTypes();
+        if (argumentTypes.size() != expressionCall->getArgumentExpressions().size() + extraArguments) {
+            markErrorInvalidArgumentsCount(
+                expressionCall->getLocation(),
+                expressionCall->getArgumentExpressions().size(),
+                argumentTypes.size() - extraArguments
             );
-            expressionCall->valueType = nullptr;
-            return nullptr;
+            return false;
         }
-    }
+        // check argument types
+        // we want to skip the implicit argumnets hence startring from "extraArguments"
+        for (int i=extraArguments; i<argumentTypes.size(); i++) {
+            shared_ptr<ValueType> targetType = typeForCheckedValueType(argumentTypes.at(i), false);
 
-    expressionCall->valueType = typeForCheckedValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), false);
-    if (expressionCall->getValueType() == nullptr) {
-        markErrorInvalidType(valueType->toFun()->getReturnValueType()->getLocation(), valueType->toFun()->getReturnValueType(), nullptr);
-        return nullptr;
-    }
+            // ignore the implicit arguments
+            int argumentExpressionIndex = i - extraArguments;
+
+            expressionCall->argumentExpressions[argumentExpressionIndex] = checkAndTryCasting(
+                expressionCall->getArgumentExpressions().at(argumentExpressionIndex),
+                targetType,
+                dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType()
+            );
+            if (expressionCall->getArgumentExpressions().at(argumentExpressionIndex) == nullptr)
+                return false;
+
+            shared_ptr<ValueType> sourceType = expressionCall->getArgumentExpressions().at(argumentExpressionIndex)->getValueType();
+            if (sourceType == nullptr)
+                return false;
+
+            if (!sourceType->isEqual(targetType)) {
+                markErrorInvalidType(
+                    sourceType->getLocation(),
+                    sourceType,
+                    targetType
+                );
+                expressionCall->valueType = nullptr;
+                return false;
+            }
+        }
+
+        expressionCall->valueType = typeForCheckedValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), false);
+        if (expressionCall->getValueType() == nullptr) {
+            markErrorInvalidType(valueType->toFun()->getReturnValueType()->getLocation(), valueType->toFun()->getReturnValueType(), nullptr);
+            return false;
+        }
+
+        return true;
+    })) { return nullptr; }
+
     return expressionCall->getValueType();
 }
 
@@ -949,23 +948,23 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionChained> expressionChained) {
     shared_ptr<Expression> parentExpression = nullptr;
 
-    Defer defer([&](){
-        scope->popLevel();
-    });
-    scope->pushLevel();
-
-    for (shared_ptr<Expression> chainExpression : expressionChained->getChainExpressions()) {
-        shared_ptr<ValueType> chainType = typeForExpression(chainExpression, parentExpression, nullptr);
-        chainExpression->valueType = chainType;
-        parentExpression = chainExpression;
-        if (chainType == nullptr)
-            return nullptr;
-        if (shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(chainType)) {
-            scope->boxedScope->registerNamedValueTypesMap(*valueTypeBlob->getNamedValueTypeKeys(), valueTypeBlob->getNamedValueTypes());
+    if (!scope->level([&]() -> bool {
+        for (shared_ptr<Expression> chainExpression : expressionChained->getChainExpressions()) {
+            shared_ptr<ValueType> chainType = typeForExpression(chainExpression, parentExpression, nullptr);
+            chainExpression->valueType = chainType;
+            parentExpression = chainExpression;
+            if (chainType == nullptr)
+                return false;
+            if (shared_ptr<ValueTypeBlob> valueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(chainType)) {
+                scope->boxedScope->registerNamedValueTypesMap(*valueTypeBlob->getNamedValueTypeKeys(), valueTypeBlob->getNamedValueTypes());
+            }
         }
-    }
 
-    expressionChained->valueType = parentExpression->getValueType();
+        expressionChained->valueType = parentExpression->getValueType();
+
+        return true;
+    })) { return nullptr; }
+
     return expressionChained->getValueType();
 }
 
@@ -2048,7 +2047,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                         return false;
 
                     // check that each entry in composite can be cast to member in blob
-                    if (!scope->level([this, sourceElementValueTypes, targetValueTypeBlob, oTargetFieldValueTypes]() -> bool {
+                    if (!scope->level([&]() -> bool {
                         scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
                         for (int i=0; i<(*oTargetFieldValueTypes).size(); i++) {
                             if (!canImplicitCast(sourceElementValueTypes.at(i), (*oTargetFieldValueTypes).at(i)))
