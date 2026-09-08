@@ -893,6 +893,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     if (parentExpression == nullptr)
         return expressionCast->getValueType();
 
+    // If the types are identical, we ignore the cast
+    if (parentExpression->getValueType()->isEqual(expressionCast->getValueType()))
+        return parentExpression->getValueType();
+
     bool isSourceNumeric = parentExpression->getValueType()->isNumeric();
 
     bool areNumeric = parentExpression->getValueType()->isNumeric() && expressionCast->getValueType()->isNumeric();

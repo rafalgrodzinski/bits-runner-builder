@@ -1956,6 +1956,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedValue> sourceWrappedValue, shared_ptr<ValueType> targetValueType) {
+    // If the types are identical, ignore the cast
+    if (sourceWrappedValue->getValueType()->isEqual(targetValueType))
+        return sourceWrappedValue;
+
     // Figure out source type
     bool isSourceUInt = false;
     bool isSourceSInt = false;
@@ -2332,7 +2336,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         llvm::Value *sourceValue = sourceWrappedValue->getValue();
         return WrappedValue::wrappedValue(sourceValue, targetValueType);
     } else {
-        markErrorInvalidCast(nullptr);
+        markErrorInvalidCast(targetValueType->getLocation());
         return nullptr;
     }
 }
