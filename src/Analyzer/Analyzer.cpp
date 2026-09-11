@@ -584,7 +584,7 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
     shared_ptr<ValueType> expressionType = statementReturn->getExpression()->getValueType();
     if (expressionType == nullptr || !expressionType->isEqual(returnType)) {
         markErrorInvalidType(
-            expressionType->getLocation(),
+            statementReturn->getExpression()->getLocation(),
             expressionType,
             returnType
         );
