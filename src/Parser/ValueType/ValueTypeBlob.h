@@ -19,6 +19,7 @@ public:
     );
 
     shared_ptr<SymbolName> getSymbolName() const;
+    shared_ptr<SymbolName> getPackedSymbolName() const;
     optional<vector<string>> getNamedValueTypeKeys() const;
     vector<shared_ptr<ValueType>> getNamedValueTypes() const;
     bool getIsPacked() const;

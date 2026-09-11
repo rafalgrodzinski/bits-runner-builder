@@ -15,6 +15,11 @@ shared_ptr<SymbolName> ValueTypeBlob::getSymbolName() const {
     return symbolName;
 }
 
+shared_ptr<SymbolName> ValueTypeBlob::getPackedSymbolName() const {
+    string packedName = format("{}_packed", symbolName->getName());
+    return make_shared<SymbolName>(packedName, symbolName->getModuleName());
+}
+
 optional<vector<string>> ValueTypeBlob::getNamedValueTypeKeys() const {
     return namedValueTypeKeys;
 }
@@ -41,6 +46,10 @@ bool ValueTypeBlob::isEqual(shared_ptr<ValueType> other) const {
 
     // Are the symbol names identical?
     if (!symbolName->isEqual(otherValueTypeBlob->getSymbolName()))
+        return false;
+
+    // Are they both packed/unpakced?
+    if (isPacked != otherValueTypeBlob->getIsPacked())
         return false;
 
     return true;

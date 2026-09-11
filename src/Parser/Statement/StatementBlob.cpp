@@ -50,6 +50,11 @@ shared_ptr<SymbolName> StatementBlob::getSymbolName() const {
     return symbolName;
 }
 
+shared_ptr<SymbolName> StatementBlob::getPackedSymbolName() const {
+    string packedName = format("{}_packed", symbolName->getName());
+    return make_shared<SymbolName>(packedName, symbolName->getModuleName());
+}
+
 void StatementBlob::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
 

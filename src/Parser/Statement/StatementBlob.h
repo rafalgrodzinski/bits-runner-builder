@@ -34,6 +34,7 @@ public:
 
     bool getShouldExport() const;
     shared_ptr<SymbolName> getSymbolName() const;
+    shared_ptr<SymbolName> getPackedSymbolName() const;
     void setModuleName(const string &moduleName);
 
     vector<string> getNamedTypeKeys() const;
