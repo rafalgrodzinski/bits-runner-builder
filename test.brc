@@ -1,43 +1,12 @@
-Result<T> enum
-   Status::Success boxed<T>: 42
-   Status::Failure //boxed<u32>: 77
-   Third
-   /*Other: 1 << 2
-   This: 1 << 3
-   Else*/
-;
+Dummy blob
+   valA u8
+   valB u32
 
-doStuff fun: value u32 -> enum<Result, u32>
-   /*
-   pCluster ptr<u16> <- {it.aFat + cluster * 2}
-   value <- pCluster.val
-
-   value <- {it.aFat + cluster * 2}.ptr<u16>.val
-   */
-
-   result enum<Result, u32> <- {}.enum<Result, u32>::Status::Failure
-   /*
-   //{value}.enum<Result, u32>::Success
-   result enum<Result, u32> <- {}.enum<Result, u32>::Success
-   result enum<Result, u32>::Else
-
-   if value % 2 = 0: ret {value}.enum<Result, u32>::Success
-   if value % 2 = 0: ret {value}.enum<Result, u32>::Success
-
-   ret enum<Result, u32>::Failure
-   ret {}.enum<Resul,t, u32>::Else
-   */
-   ret result
 ;
 
 @export main fun -> u32
-   /*
-   result enum<Result, u32> <- doStuff(11)
-
-   if result = enum<Result, u32>::Success
-   else if result = enum<Result, u32>::Failure
-   ;
-   */
-   
-   ret doStuff(5).tag
+   dummyA blob<Dummy>
+   dummyB blob_pack<Dummy>
+   //ret blob<Dummy>.size
+   ret dummyA.size
 ;

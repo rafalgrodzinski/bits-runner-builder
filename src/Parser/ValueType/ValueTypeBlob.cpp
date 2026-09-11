@@ -4,10 +4,12 @@
 ValueTypeBlob::ValueTypeBlob(
     const string &name,
     const vector<shared_ptr<ValueType>> &namedValueTypes,
+    bool isPacked,
     shared_ptr<Location> location):
 ValueType(ValueTypeKind::BLOB, location),
 symbolName(make_shared<SymbolName>(name)),
-namedValueTypes(namedValueTypes) { }
+namedValueTypes(namedValueTypes),
+isPacked(isPacked) { }
 
 shared_ptr<SymbolName> ValueTypeBlob::getSymbolName() const {
     return symbolName;
@@ -19,6 +21,10 @@ optional<vector<string>> ValueTypeBlob::getNamedValueTypeKeys() const {
 
 vector<shared_ptr<ValueType>> ValueTypeBlob::getNamedValueTypes() const {
     return namedValueTypes;
+}
+
+bool ValueTypeBlob::getIsPacked() const {
+    return isPacked;
 }
 
 void ValueTypeBlob::setModuleName(const string &moduleName) {

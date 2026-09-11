@@ -54,6 +54,7 @@ enum class TokenKind {
     RAW_SOURCE_LINE,
     DATA,
     BLOB,
+    BLOB_PACK,
     PROTO,
     BOXED,
     PTR,

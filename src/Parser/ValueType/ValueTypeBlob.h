@@ -14,12 +14,14 @@ public:
     ValueTypeBlob(
         const string &name,
         const vector<shared_ptr<ValueType>> &namedValueTypes,
+        bool isPacked,
         shared_ptr<Location> location
     );
 
     shared_ptr<SymbolName> getSymbolName() const;
     optional<vector<string>> getNamedValueTypeKeys() const;
     vector<shared_ptr<ValueType>> getNamedValueTypes() const;
+    bool getIsPacked() const;
 
     void setModuleName(const string &moduleName) override;
     bool isEqual(shared_ptr<ValueType> other) const override;
@@ -29,6 +31,7 @@ private:
     shared_ptr<SymbolName> symbolName;
     optional<vector<string>> namedValueTypeKeys;
     vector<shared_ptr<ValueType>> namedValueTypes;
+    bool isPacked;
 };
 
 #endif

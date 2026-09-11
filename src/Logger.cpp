@@ -154,6 +154,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "DATA";
         case TokenKind::BLOB:
             return "BLOB";
+        case TokenKind::BLOB_PACK:
+            return "BLOB_PACK";
         case TokenKind::PROTO:
             return "PROTO";
         case TokenKind::BOXED:
@@ -936,7 +938,11 @@ string Logger::toString(shared_ptr<ExpressionValue> expression, vector<IndentKin
 
 string Logger::toString(shared_ptr<ValueTypeBlob> valueTypeBlob) {
     string text = "";
-    text += format("BLOB<`{}`", valueTypeBlob->getSymbolName()->getGlobalName());
+    if (valueTypeBlob->getIsPacked()) {
+        text += format("BLOB_PACK<`{}`", valueTypeBlob->getSymbolName()->getGlobalName());
+    } else {
+        text += format("BLOB<`{}`", valueTypeBlob->getSymbolName()->getGlobalName());
+    }
     // If there are no named value types, print the keys
     if (valueTypeBlob->getNamedValueTypes().empty() && valueTypeBlob->getNamedValueTypeKeys()) {
         vector<string> keys = *valueTypeBlob->getNamedValueTypeKeys();
@@ -1295,6 +1301,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "DATA";
         case TokenKind::BLOB:
             return "BLOB";
+        case TokenKind::BLOB_PACK:
+            return "BLOB_PACK";
         case TokenKind::PROTO:
             return "PROTO";
         case TokenKind::BOXED:
