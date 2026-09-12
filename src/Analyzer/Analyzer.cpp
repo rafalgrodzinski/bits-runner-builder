@@ -853,7 +853,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
             if (!sourceType->isEqual(targetType)) {
                 markErrorInvalidType(
-                    sourceType->getLocation(),
+                    expressionCall->getLocation(),
                     sourceType,
                     targetType
                 );
