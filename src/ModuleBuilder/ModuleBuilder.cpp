@@ -1987,6 +1987,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isSourceData = false;
     bool isSourceBoxed = false;
     bool isSourceEnum = false;
+    bool isSourceBlob = false;
     int sourceSize = 0;
 
     // Unbox source type if required
@@ -2069,6 +2070,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             isSourceEnum = true;
             break;
         }
+        case ValueTypeKind::BLOB: {
+            isSourceBlob = true;
+            break;
+        }
         default:
             markErrorInvalidCast(nullptr);
             return nullptr;
@@ -2083,6 +2088,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isTargetData = false;
     bool isTargetBoxed = false;
     bool isTargetEnum = false;
+    bool isTargetBlob = false;
     int targetSize = 0;
 
     // Unwrap target type if required
@@ -2163,6 +2169,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::ENUM:
         case ValueTypeKind::ENUM_FIELD: {
             isTargetEnum = true;
+            break;
+        }
+        case ValueTypeKind::BLOB: {
+            isTargetBlob = true;
             break;
         }
         default:
@@ -2353,6 +2363,23 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     } else if (isSourceEnum && isTargetEnum) {
         llvm::Value *sourceValue = sourceWrappedValue->getValue();
         return WrappedValue::wrappedValue(sourceValue, targetValueType);
+    // blob to blob
+    } else if (isSourceBlob && isTargetBlob) {
+        llvm::StructType *sourceStructType = sourceWrappedValue->getStructType();
+        llvm::StructType *targetStructType = llvm::dyn_cast<llvm::StructType>(targetType);
+        llvm::AllocaInst *targetAlloca = buildAlloca(targetStructType);
+        for (int i=0; i<sourceStructType->getStructNumElements(); i++) {
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(i)
+            };
+            llvm::Value *sourceFieldPtr = builder->CreateGEP(sourceStructType, sourceWrappedValue->getPointerValue(), index);
+            llvm::LoadInst *sourceLoad = builder->CreateLoad(sourceStructType->getElementType(i), sourceFieldPtr);
+
+            llvm::Value *targetFieldPtr = builder->CreateGEP(targetStructType, targetAlloca, index);
+            builder->CreateStore(sourceLoad, targetFieldPtr);
+        }
+        return WrappedValue::wrappedValue(targetAlloca, targetValueType);
     } else {
         markErrorInvalidCast(targetValueType->getLocation());
         return nullptr;

@@ -907,6 +907,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     bool isSourceComposite = parentExpression->getValueType()->isComposite();
     bool isSourceBoxed = parentExpression->getValueType()->isBoxed();
     bool isSourceEnum = parentExpression->getValueType()->isEnum();
+    bool isSourceBlob = parentExpression->getValueType()->isBlob();
+
     bool isTargetBlob = expressionCast->getValueType()->isBlob();
     bool isTargetData = expressionCast->getValueType()->isData();
     bool isTargetEnumField = expressionCast->getValueType()->getKind() == ValueTypeKind::ENUM_FIELD;
@@ -939,6 +941,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     // from enum
     } else if (isSourceEnum && isTargetNumeric) {
         return expressionCast->getValueType();
+    // from blob to blob
+    } else if (isSourceBlob && isTargetBlob) {
+        if (parentExpression->getValueType()->toBlob()->getSymbolName()->isEqual(expressionCast->getValueType()->toBlob()->getSymbolName()))
+            return expressionCast->getValueType();
     }
 
     markErrorInvalidCast(expressionCast->getLocation(), parentExpression->getValueType(), expressionCast->getValueType());
