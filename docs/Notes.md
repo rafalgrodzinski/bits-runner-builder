@@ -7,6 +7,6 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-107](https://github.com/rafalgrodzinski/bits-runner-builder/pull/208):
-- `ValueType` includes location for better debugging
-- Fixed named value type resolution
+Changelist for [1.0.0-dev-108](https://github.com/rafalgrodzinski/bits-runner-builder/pull/211):
+- Added `blob_pack`
+- Some crash and error reporting fixes
