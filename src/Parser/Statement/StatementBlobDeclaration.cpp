@@ -17,3 +17,8 @@ bool StatementBlobDeclaration::getShouldExport() const {
 shared_ptr<SymbolName> StatementBlobDeclaration::getSymbolName() const {
     return symbolName;
 }
+
+shared_ptr<SymbolName> StatementBlobDeclaration::getPackedSymbolName() const {
+    string packedName = format("{}_packed", symbolName->getName());
+    return make_shared<SymbolName>(packedName, symbolName->getModuleName());
+}

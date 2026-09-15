@@ -263,8 +263,14 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
     if (statementBlob->getSymbolName()->getModuleName() != defaultModuleName)
         symbolName = statementBlob->getSymbolName()->getGlobalName();
 
+    // packed symbol name
+    string pakcedSymbolName = statementBlob->getPackedSymbolName()->getName();
+    if (statementBlob->getPackedSymbolName()->getModuleName() != defaultModuleName)
+        pakcedSymbolName = statementBlob->getPackedSymbolName()->getGlobalName();
+
     llvm::StructType *structType = scope->getStructType(statementBlob->getSymbolName()->getGlobalName());
-    if (structType == nullptr) {
+    llvm::StructType *packedStructType = scope->getStructType(statementBlob->getPackedSymbolName()->getGlobalName());
+    if (structType == nullptr || packedStructType == nullptr) {
         markErrorNotDeclared(nullptr, format("blob \"{}\"", statementBlob->getSymbolName()->getGlobalName()));
         return;
     }
@@ -279,8 +285,12 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
             return;
         types.push_back(type);
     }
+
     structType->setBody(types, false);
+    packedStructType->setBody(types, true);
+
     scope->setStruct(statementBlob->getSymbolName()->getGlobalName(), structType, memberNames);
+    scope->setStruct(statementBlob->getPackedSymbolName()->getGlobalName(), packedStructType, memberNames);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
@@ -289,8 +299,16 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statemen
     if (statementBlobDeclaration->getSymbolName()->getModuleName() != defaultModuleName)
         symbolName = statementBlobDeclaration->getSymbolName()->getGlobalName();
 
+    // packed symbol name
+    string packedSymbolName = statementBlobDeclaration->getPackedSymbolName()->getName();
+    if (statementBlobDeclaration->getPackedSymbolName()->getModuleName() != defaultModuleName)
+        packedSymbolName = statementBlobDeclaration->getPackedSymbolName()->getGlobalName();
+
     llvm::StructType *structType = llvm::StructType::create(*context, symbolName);
+    llvm::StructType *packedStructType = llvm::StructType::create(*context, packedSymbolName);
+
     scope->setStruct(statementBlobDeclaration->getSymbolName()->getGlobalName(), structType, {});
+    scope->setStruct(statementBlobDeclaration->getPackedSymbolName()->getGlobalName(), packedStructType, {});
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
@@ -1969,6 +1987,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isSourceData = false;
     bool isSourceBoxed = false;
     bool isSourceEnum = false;
+    bool isSourceBlob = false;
     int sourceSize = 0;
 
     // Unbox source type if required
@@ -2051,6 +2070,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             isSourceEnum = true;
             break;
         }
+        case ValueTypeKind::BLOB: {
+            isSourceBlob = true;
+            break;
+        }
         default:
             markErrorInvalidCast(nullptr);
             return nullptr;
@@ -2065,6 +2088,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     bool isTargetData = false;
     bool isTargetBoxed = false;
     bool isTargetEnum = false;
+    bool isTargetBlob = false;
     int targetSize = 0;
 
     // Unwrap target type if required
@@ -2145,6 +2169,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::ENUM:
         case ValueTypeKind::ENUM_FIELD: {
             isTargetEnum = true;
+            break;
+        }
+        case ValueTypeKind::BLOB: {
+            isTargetBlob = true;
             break;
         }
         default:
@@ -2335,6 +2363,23 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     } else if (isSourceEnum && isTargetEnum) {
         llvm::Value *sourceValue = sourceWrappedValue->getValue();
         return WrappedValue::wrappedValue(sourceValue, targetValueType);
+    // blob to blob
+    } else if (isSourceBlob && isTargetBlob) {
+        llvm::StructType *sourceStructType = sourceWrappedValue->getStructType();
+        llvm::StructType *targetStructType = llvm::dyn_cast<llvm::StructType>(targetType);
+        llvm::AllocaInst *targetAlloca = buildAlloca(targetStructType);
+        for (int i=0; i<sourceStructType->getStructNumElements(); i++) {
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(i)
+            };
+            llvm::Value *sourceFieldPtr = builder->CreateGEP(sourceStructType, sourceWrappedValue->getPointerValue(), index);
+            llvm::LoadInst *sourceLoad = builder->CreateLoad(sourceStructType->getElementType(i), sourceFieldPtr);
+
+            llvm::Value *targetFieldPtr = builder->CreateGEP(targetStructType, targetAlloca, index);
+            builder->CreateStore(sourceLoad, targetFieldPtr);
+        }
+        return WrappedValue::wrappedValue(targetAlloca, targetValueType);
     } else {
         markErrorInvalidCast(targetValueType->getLocation());
         return nullptr;
@@ -2468,9 +2513,15 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
             return llvm::ArrayType::get(subType, elementsCount);
         }
         case ValueTypeKind::BLOB: {
-            llvm::StructType *structType = scope->getStructType(dynamic_pointer_cast<ValueTypeBlob>(valueType)->getSymbolName()->getGlobalName());
+            string symbolName;
+            if (valueType->toBlob()->getIsPacked()) {
+                symbolName = valueType->toBlob()->getPackedSymbolName()->getGlobalName();
+            } else {
+                symbolName = valueType->toBlob()->getSymbolName()->getGlobalName();
+            }
+            llvm::StructType *structType = scope->getStructType(symbolName);
             if (structType == nullptr)
-                markErrorNotDefined(nullptr, format("blob \"{}\"", dynamic_pointer_cast<ValueTypeBlob>(valueType)->getSymbolName()->getGlobalName()));
+                markErrorNotDefined(nullptr, format("blob \"{}\"", symbolName));
             return structType;
         }
         case ValueTypeKind::ENUM:

@@ -584,7 +584,7 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
     shared_ptr<ValueType> expressionType = statementReturn->getExpression()->getValueType();
     if (expressionType == nullptr || !expressionType->isEqual(returnType)) {
         markErrorInvalidType(
-            expressionType->getLocation(),
+            statementReturn->getExpression()->getLocation(),
             expressionType,
             returnType
         );
@@ -799,8 +799,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                 extraArguments = 1; // for the implicit "it"
                 scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
             } else if (isParentProto) {
-                auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
-                for (pair<string, shared_ptr<ValueType>> &member : members) {
+                auto oMembers = scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
+                if (!oMembers) {
+                    markErrorNotDefined(parentExpression->getLocation(), parentExpression->getValueType()->toProto()->getSymbolName()->getGlobalName());
+                    return false;
+                }
+                for (pair<string, shared_ptr<ValueType>> &member : *oMembers) {
                     if (expressionCall->getName().compare(member.first) == 0) {
                         valueType = member.second;
                     }
@@ -853,7 +857,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
 
             if (!sourceType->isEqual(targetType)) {
                 markErrorInvalidType(
-                    sourceType->getLocation(),
+                    expressionCall->getLocation(),
                     sourceType,
                     targetType
                 );
@@ -907,6 +911,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     bool isSourceComposite = parentExpression->getValueType()->isComposite();
     bool isSourceBoxed = parentExpression->getValueType()->isBoxed();
     bool isSourceEnum = parentExpression->getValueType()->isEnum();
+    bool isSourceBlob = parentExpression->getValueType()->isBlob();
+
     bool isTargetBlob = expressionCast->getValueType()->isBlob();
     bool isTargetData = expressionCast->getValueType()->isData();
     bool isTargetEnumField = expressionCast->getValueType()->getKind() == ValueTypeKind::ENUM_FIELD;
@@ -939,6 +945,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     // from enum
     } else if (isSourceEnum && isTargetNumeric) {
         return expressionCast->getValueType();
+    // from blob to blob
+    } else if (isSourceBlob && isTargetBlob) {
+        if (parentExpression->getValueType()->toBlob()->getSymbolName()->isEqual(expressionCast->getValueType()->toBlob()->getSymbolName()))
+            return expressionCast->getValueType();
     }
 
     markErrorInvalidCast(expressionCast->getLocation(), parentExpression->getValueType(), expressionCast->getValueType());

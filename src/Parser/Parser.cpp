@@ -472,7 +472,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                         // Insert an implicit "it" argument for the blob function
                         pair<string, shared_ptr<ValueType>> itArgument = pair(
                             ".pit",
-                            make_shared<ValueTypePtr>(make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>(), nullptr), false, nullptr)
+                            make_shared<ValueTypePtr>(make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>(), false, nullptr), false, nullptr)
                         );
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
                         functionStatements.push_back(statementFunction);
@@ -2255,6 +2255,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         TAG_SIZE_EXPRESSION,
         
         TAG_BLOB,
+        TAG_BLOB_PACK,
         TAG_ENUM,
         TAG_PROTO,
 
@@ -2340,7 +2341,16 @@ shared_ptr<ValueType> Parser::matchValueType() {
                     },
                     // BLOB
                     {
-                        Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, true, TAG_BLOB),
+                        Parsee::oneOfParsee(
+                            {
+                                {
+                                    Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, true, TAG_BLOB),
+                                },
+                                {
+                                    Parsee::tokenParsee(TokenKind::BLOB_PACK, ParseeLevel::REQUIRED, true, TAG_BLOB_PACK)
+                                }
+                            }, ParseeLevel::REQUIRED, true
+                        ),
                         Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
                         // identifier - module prefix
                         Parsee::groupParsee(
@@ -2457,6 +2467,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return nullptr;
 
     bool isBlob = false;
+    bool isBlobPack = false;
     bool isBoxed = false;
     bool isData = false;
     bool isEnum = false;
@@ -2479,6 +2490,10 @@ shared_ptr<ValueType> Parser::matchValueType() {
         switch (parseeResult.getTag()) {
             case TAG_BLOB: {
                 isBlob = true;
+                break;
+            }
+            case TAG_BLOB_PACK: {
+                isBlobPack = true;
                 break;
             }
             case TAG_BOXED: {
@@ -2559,8 +2574,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         }
     }
 
-    if (isBlob)
-        return make_shared<ValueTypeBlob>(name, argTypes, location);
+    if (isBlob || isBlobPack)
+        return make_shared<ValueTypeBlob>(name, argTypes, isBlobPack, location);
     else if (isBoxed)
         return make_shared<ValueTypeBoxed>(boxedNamedValueTypeKey, subType, location);
     else if (isData)

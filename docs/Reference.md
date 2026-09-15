@@ -179,6 +179,8 @@ copiedNumbers <u32, 8> <- numbers // Only 8 values will be copied
 ## Blob
 Blobs are composites of different member types (like structs in C). Before use, they need to be defined using the `blob` keyword. They can be instantiated using the composite literal `{ }` or by assigning each member `.member` individually. Assigning one blob to another will create its copy. There is no casting between different blob types. Blobs can contain other blobs, but only if they have been already beforehand defined. This helps prevent a blobacalypse where `blob1` would contain `blob2` and `blob2` would contain `blob1` which would end up with infinite blobs. Using pointers is fine though.
 
+Instances can be of loose `blob<>` or packed `blob_pack<>` kinds. They cannot be assigned to each other directly, but they can be cast to each other.
+
 Blobs can implement a proto, which is indicated through `: proto1, proto` syntax. They can also define a named type through `BlobName<named1, named2>`, which then can be passed to a `boxed`.
 ```
 user blob
@@ -187,7 +189,7 @@ user blob
 ;
 
 u1 blob<user> <- {34, "Bob"}
-u2 blob<user> <- u1
+u2 blob_pack<user> <- u1.blob_pack<user>
 u2.name <- "Alice"
 u2.id <- 35
 ```
