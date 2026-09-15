@@ -799,8 +799,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                 extraArguments = 1; // for the implicit "it"
                 scope->boxedScope->registerNamedValueTypesMap(*parentBlobValueType->getNamedValueTypeKeys(), parentBlobValueType->getNamedValueTypes());
             } else if (isParentProto) {
-                auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
-                for (pair<string, shared_ptr<ValueType>> &member : members) {
+                auto oMembers = scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
+                if (!oMembers) {
+                    markErrorNotDefined(parentExpression->getLocation(), parentExpression->getValueType()->toProto()->getSymbolName()->getGlobalName());
+                    return false;
+                }
+                for (pair<string, shared_ptr<ValueType>> &member : *oMembers) {
                     if (expressionCall->getName().compare(member.first) == 0) {
                         valueType = member.second;
                     }
