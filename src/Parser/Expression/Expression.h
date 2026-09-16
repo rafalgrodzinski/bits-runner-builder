@@ -38,7 +38,7 @@ protected:
     shared_ptr<ValueType> valueType;
 
 public:
-    static shared_ptr<Expression> NONE;
+    static shared_ptr<Expression> none(shared_ptr<Location> location);
 
     Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
     virtual ~Expression() { }

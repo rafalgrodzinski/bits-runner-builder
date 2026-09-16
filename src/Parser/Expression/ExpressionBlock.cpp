@@ -13,7 +13,7 @@ Expression(ExpressionKind::BLOCK, nullptr, location) {
         resultStatementExpression = dynamic_pointer_cast<StatementExpression>(blockStatements.back());
         blockStatements.pop_back();
     } else {
-        resultStatementExpression = make_shared<StatementExpression>(Expression::NONE, location);
+        resultStatementExpression = make_shared<StatementExpression>(Expression::none(location), location);
     }
     statementBlock = make_shared<StatementBlock>(blockStatements, location);
 }

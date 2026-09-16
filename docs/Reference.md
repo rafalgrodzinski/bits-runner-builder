@@ -221,7 +221,7 @@ Square blob: Shape
 ```
 
 ## Pointers
-Pointers, just like in C, allow for low-level data manipulation and passing. They have an associated type, which is essential when reading/writing pointee's value. Each variable has a built-in member `.adr`, which will provide a system-dependant (32bit or 64bit) memory address value of type `a`. Pointers have also `.val`, which is equivalent to its pointee and `vadr`, which is the address of the thing it is pointing at. Don't confuse `.vadr` with `.adr`, as the later is the address of the pointer itself.
+Pointers, just like in C, allow for low-level data manipulation and passing. They have an associated type, which is essential when reading/writing pointee's value. Each variable has a built-in member `.adr`, which will provide a system-dependant (32bit or 64bit) memory address value of type `a`. That address then then be cast to a pointer with, giving us `someValue.adr.ptr<Type`, or we can get a pointer directly by doing `someValue.ptr<Type>` or even `someValue.ptr`. Pointers have `.val` built-in, which is equivalent to its pointee and `vadr`, which is the address of the thing it is pointing at. Don't confuse `.vadr` with `.adr`, as the later is the address of the pointer itself.
 
 Address is stored as an `a` type. You can see that it's similar to `u16`, or `f64`, but doesn't have an associated size, because it's implicit for the given target. `a` can be cast into a `ptr<>` type. You can think of it as an address and a window to a given address.
 ```
@@ -419,6 +419,7 @@ There is a couple of built-in members that can be accessible on all or some vari
 .size // Returns size in bytes of a simple, data, blob. Works on both instances and types
 .count // Data types only: Number of elements in sized data types
 .adr // Address of a given variable
+.ptr // Get a pointer to the veriable
 .val // Pointers only: returns the value that the pointer references
 .vadr // Pointers only: address of the referenced value (not the poitner itself)
 ```

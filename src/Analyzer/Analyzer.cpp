@@ -272,21 +272,21 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                         // count
                         if (argsCount != statementFunction->getArguments().size()) {
                             isImplemented = false;
-                            break;
+                            goto not_implemented;
                         }
 
                         // types
                         for (int i=1; i<argsCount; i++) {
                             if (!protoField.second->toFun()->getArgumentValueTypes().at(i)->isEqual(statementFunction->getArguments().at(i).second)) {
                                 isImplemented = false;
-                                break;
+                                goto not_implemented;
                             }
                         }
 
                         // return type
                         if (!protoField.second->toFun()->getReturnValueType()->isEqual(statementFunction->getReturnValueType())) {
                             isImplemented = false;
-                            break;
+                            goto not_implemented;
                         }
 
                         isImplemented = true;
@@ -300,6 +300,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                     }
                 }
 
+                not_implemented:
                 if (!isImplemented) {
                     markErrorNotImplemented(statementBlob->getLocation(), protoSymbolName->getGlobalName(), protoField.first);
                     return;
@@ -949,6 +950,14 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     } else if (isSourceBlob && isTargetBlob) {
         if (parentExpression->getValueType()->toBlob()->getSymbolName()->isEqual(expressionCast->getValueType()->toBlob()->getSymbolName()))
             return expressionCast->getValueType();
+    }  else if (isTargetPointer && !isSourceComposite) {
+        shared_ptr<ValueTypePtr> ptrValueType =  expressionCast->getValueType()->toPtr();
+        if (ptrValueType->getPointeeValueType() == nullptr) {
+            ptrValueType->pointeeValueType = parentExpression->getValueType()->clone();
+            return ptrValueType;
+        } else if (ptrValueType->getPointeeValueType()->isEqual(parentExpression->getValueType())) {
+            return ptrValueType;
+        }
     }
 
     markErrorInvalidCast(expressionCast->getLocation(), parentExpression->getValueType(), expressionCast->getValueType());
@@ -1113,6 +1122,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isParentProto = parentExpression->getValueType()->isProto();
         bool isParentEnum = parentExpression->getValueType()->isEnum();
+        bool isParentCast = parentExpression->getKind() == ExpressionKind::CAST;
 
         bool isCount = expressionValue->getIdentifier() == "count";
         bool isVal = expressionValue->getIdentifier() == "val";
@@ -1166,7 +1176,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             return expressionValue->valueType = ValueTypeSimple::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_TAG;
             return expressionValue->getValueType();
-        } else if (isAdr) {
+        } else if (!isParentCast && isAdr) {
             expressionValue->valueType = ValueTypeSimple::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_ADR;
             return expressionValue->getValueType();
@@ -1673,6 +1683,8 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
 
 bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType) {
     targetType = typeForCheckedValueType(targetType, false);
+    if (targetType == nullptr)
+        return false;
 
     switch (sourceType->getKind()) {
         // From UINT
@@ -2193,6 +2205,9 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired) {
+    if (valueType == nullptr)
+        return nullptr;
+
     switch (valueType->getKind()) {
         case ValueTypeKind::BLOB:
            return typeForCheckedValueType(valueType->toBlob());
@@ -2341,8 +2356,6 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeFun>
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr) {
     shared_ptr<ValueType> pointeeValueType = typeForCheckedValueType(valueTypePtr->getPointeeValueType(), false);
-    if (pointeeValueType == nullptr)
-        return nullptr;
     return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile(), valueTypePtr->getLocation());
 }
 
