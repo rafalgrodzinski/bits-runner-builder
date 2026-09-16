@@ -1114,6 +1114,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isParentProto = parentExpression->getValueType()->isProto();
         bool isParentEnum = parentExpression->getValueType()->isEnum();
+        bool isParentCast = parentExpression->getKind() == ExpressionKind::CAST;
 
         bool isCount = expressionValue->getIdentifier() == "count";
         bool isVal = expressionValue->getIdentifier() == "val";
@@ -1167,7 +1168,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             return expressionValue->valueType = ValueTypeSimple::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_TAG;
             return expressionValue->getValueType();
-        } else if (isAdr) {
+        } else if (!isParentCast && isAdr) {
             expressionValue->valueType = ValueTypeSimple::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_ADR;
             return expressionValue->getValueType();
