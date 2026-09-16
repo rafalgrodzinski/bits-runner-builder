@@ -1,12 +1,27 @@
-Dummy blob
-   valA u8
-   valB u32
+@module Video
 
-;
+@export Surface blob
+    adapter proto<Adapter>
 
-@export main fun -> u32
-   dummyA blob<Dummy>
-   dummyB blob_pack<Dummy>
-   //ret blob<Dummy>.size
-   ret dummyA.size
+    getWidth fun -> u32
+        if it.adapter.vadr = 0: ret 0
+        ret 0
+    ;
+
+    getHeight fun -> u32
+        if it.adapter.vadr = 0: ret 0
+        ret 0
+    ;
+
+    commit fun -> u32
+        if it.adapter.vadr = 0: ret
+    ;
+
+    clear fun: color u32
+        if it.adapter.vadr = 0: ret
+    ;
+
+    drawPixel fun: x u32, y u32, color u32
+        if it.adapter.vadr = 0: ret
+    ;
 ;

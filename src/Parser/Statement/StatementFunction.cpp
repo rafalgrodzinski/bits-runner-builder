@@ -25,7 +25,7 @@ returnValueType(returnValueType), statementBlock(statementBlock) {
         return;
 
     // add an empty return statement if none is present
-    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(Expression::NONE, location);
+    shared_ptr<StatementReturn> statementReturn = make_shared<StatementReturn>(nullptr, location);
     statements.push_back(statementReturn);
     this->statementBlock = make_shared<StatementBlock>(statements, statementBlock->getLocation());
 }
