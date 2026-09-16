@@ -9,4 +9,5 @@ Available for:
 
 Changelist for [1.0.0-dev-109](https://github.com/rafalgrodzinski/bits-runner-builder/pull/212):
 - Added direct `.ptr` instead of `.adr.ptr<Type>`
+- Fixed proto check
 - Some crash and error reporting fixes

@@ -272,21 +272,21 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                         // count
                         if (argsCount != statementFunction->getArguments().size()) {
                             isImplemented = false;
-                            break;
+                            goto not_implemented;
                         }
 
                         // types
                         for (int i=1; i<argsCount; i++) {
                             if (!protoField.second->toFun()->getArgumentValueTypes().at(i)->isEqual(statementFunction->getArguments().at(i).second)) {
                                 isImplemented = false;
-                                break;
+                                goto not_implemented;
                             }
                         }
 
                         // return type
                         if (!protoField.second->toFun()->getReturnValueType()->isEqual(statementFunction->getReturnValueType())) {
                             isImplemented = false;
-                            break;
+                            goto not_implemented;
                         }
 
                         isImplemented = true;
@@ -300,6 +300,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                     }
                 }
 
+                not_implemented:
                 if (!isImplemented) {
                     markErrorNotImplemented(statementBlob->getLocation(), protoSymbolName->getGlobalName(), protoField.first);
                     return;
