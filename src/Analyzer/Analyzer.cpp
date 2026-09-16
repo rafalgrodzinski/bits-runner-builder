@@ -953,7 +953,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     }  else if (isTargetPointer && !isSourceComposite) {
         shared_ptr<ValueTypePtr> ptrValueType =  expressionCast->getValueType()->toPtr();
         if (ptrValueType->getPointeeValueType() == nullptr) {
-            ptrValueType->pointeeValueType = parentExpression->getValueType();
+            ptrValueType->pointeeValueType = parentExpression->getValueType()->clone();
             return ptrValueType;
         } else if (ptrValueType->getPointeeValueType()->isEqual(parentExpression->getValueType())) {
             return ptrValueType;
