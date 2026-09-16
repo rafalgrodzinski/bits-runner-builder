@@ -7,6 +7,6 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-108](https://github.com/rafalgrodzinski/bits-runner-builder/pull/211):
-- Added `blob_pack`
+Changelist for [1.0.0-dev-109](https://github.com/rafalgrodzinski/bits-runner-builder/pull/212):
+- Added direct `.ptr` instead of `.adr.ptr<Type>`
 - Some crash and error reporting fixes
