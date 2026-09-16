@@ -1,5 +1,5 @@
 @export main fun -> u32
     value u8 <- 7
-    pValue ptr<u8> <- value.ptr
+    pValue ptr<u8> <- value.adr.ptr<u8>
     ret pValue.val
 ;
