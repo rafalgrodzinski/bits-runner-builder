@@ -931,14 +931,6 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
             );
         }
         return expressionCast->getValueType();
-    } else if (isTargetPointer && !isSourceComposite) {
-        shared_ptr<ValueTypePtr> ptrValueType =  expressionCast->getValueType()->toPtr();
-        if (ptrValueType->getPointeeValueType() == nullptr) {
-            ptrValueType->pointeeValueType = parentExpression->getValueType();
-            return ptrValueType;
-        } else if (ptrValueType->getPointeeValueType()->isEqual(parentExpression->getValueType())) {
-            return ptrValueType;
-        }
     // cast composite to complex type
     } else if (isSourceComposite && (isTargetBlob || isTargetData || isTargetEnumField || isTargetPointer || isTargetProto)) {
         if (canImplicitCast(parentExpression->getValueType(), expressionCast->getValueType())) {
@@ -958,6 +950,14 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCast> exp
     } else if (isSourceBlob && isTargetBlob) {
         if (parentExpression->getValueType()->toBlob()->getSymbolName()->isEqual(expressionCast->getValueType()->toBlob()->getSymbolName()))
             return expressionCast->getValueType();
+    }  else if (isTargetPointer && !isSourceComposite) {
+        shared_ptr<ValueTypePtr> ptrValueType =  expressionCast->getValueType()->toPtr();
+        if (ptrValueType->getPointeeValueType() == nullptr) {
+            ptrValueType->pointeeValueType = parentExpression->getValueType();
+            return ptrValueType;
+        } else if (ptrValueType->getPointeeValueType()->isEqual(parentExpression->getValueType())) {
+            return ptrValueType;
+        }
     }
 
     markErrorInvalidCast(expressionCast->getLocation(), parentExpression->getValueType(), expressionCast->getValueType());
