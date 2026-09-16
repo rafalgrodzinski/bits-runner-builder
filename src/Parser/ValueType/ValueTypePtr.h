@@ -4,6 +4,7 @@
 #include "ValueType.h"
 
 class ValueTypePtr: public ValueType {
+friend class Analyzer;
 public:
     ValueTypePtr(
         shared_ptr<ValueType> pointeeValueType,

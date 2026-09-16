@@ -2279,6 +2279,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             builder->CreatePtrToInt(sourceValue, targetType, format("a_to_uint-{}", string(sourceValue->getName()))),
             targetValueType
         );
+    // any to ptr
+    } else if (isTargetPointer) {
+        llvm::Value *pointerValue = sourceWrappedValue->getPointerValue();
+        llvm::Value *alloca = buildAlloca(typePtr, format("ptr-{}", string(pointerValue->getName())));
+        llvm::StoreInst *store = builder->CreateStore(pointerValue, alloca);
+        return WrappedValue::wrappedValue(alloca, targetValueType);
     // data to data
     } else if (isSourceData && isTargetData) {
         llvm::AllocaInst *targetAlloca = buildAlloca(targetType);
