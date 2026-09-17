@@ -1936,8 +1936,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         llvm::Value *pointerValue = parentWrappedValue->getPointerValue();
         llvm::Value *alloca = buildAlloca(typePtr, format("a_adr-{}", string(pointerValue->getName())));
         llvm::StoreInst *store = builder->CreateStore(pointerValue, alloca);
-        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
-            store->setVolatile(valueTypePtr->getIsVolatile());
+        if (parentWrappedValue->getValueType()->isPtr())
+            store->setVolatile(parentWrappedValue->getValueType()->toPtr()->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueTypeSimple::A);
     } else if (isSize) {
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
@@ -2279,10 +2279,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             builder->CreatePtrToInt(sourceValue, targetType, format("a_to_uint-{}", string(sourceValue->getName()))),
             targetValueType
         );
-    // any to ptr
-    } else if (isTargetPointer) {
-        llvm::Value *sourcePointerValue = sourceWrappedValue->getPointerValue();
-        return WrappedValue::wrappedRawValue(sourcePointerValue, targetValueType);
     // data to data
     } else if (isSourceData && isTargetData) {
         llvm::AllocaInst *targetAlloca = buildAlloca(targetType);
@@ -2384,6 +2380,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             builder->CreateStore(sourceLoad, targetFieldPtr);
         }
         return WrappedValue::wrappedValue(targetAlloca, targetValueType);
+    // any to ptr
+    } else if (isTargetPointer) {
+        llvm::Value *sourcePointerValue = sourceWrappedValue->getPointerValue();
+        llvm::Value *alloca = buildAlloca(typePtr, format("a_ptr-{}", string(sourcePointerValue->getName())));
+        llvm::StoreInst *store = builder->CreateStore(sourcePointerValue, alloca);
+        if (sourceWrappedValue->getValueType()->isPtr())
+            store->setVolatile(sourceWrappedValue->getValueType()->toPtr()->getIsVolatile());
+        return WrappedValue::wrappedValue(alloca, targetValueType);
     } else {
         markErrorInvalidCast(targetValueType->getLocation());
         return nullptr;
