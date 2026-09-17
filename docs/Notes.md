@@ -9,3 +9,4 @@ Available for:
 
 Changelist for [1.0.0-dev-110](https://github.com/rafalgrodzinski/bits-runner-builder/pull/214):
 - Allow raw functions without specifying constraints
+- Fixed `.ptr` cast
