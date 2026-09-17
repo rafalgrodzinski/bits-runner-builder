@@ -1,3 +1,5 @@
-doStuff raw
-    xchg bx, bx
+@export main fun -> u32
+    value u8 <- 7
+    pValue ptr<u8> <- value.ptr
+    ret pValue.val
 ;

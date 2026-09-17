@@ -136,22 +136,40 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
     return wrappedValue;
 }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(llvm::Value *pointerValue, llvm::Type *type, shared_ptr<ValueType> valueType) {
+shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(llvm::Value *pointerValue, shared_ptr<ValueType> pointeeValueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    llvm::Type *pointeeType = WrappedValue::llvmTypeForValueType(valueType, true);
+    llvm::Type *pointeeType = WrappedValue::llvmTypeForValueType(pointeeValueType, true);
     wrappedValue->type = pointeeType;
-    wrappedValue->valueType = valueType;
+    wrappedValue->valueType = pointeeValueType;
 
-    wrappedValue->valueLambda = [pointeeType, pointerValue, valueType]() {
+    wrappedValue->valueLambda = [pointeeType, pointerValue, pointeeValueType]() {
         llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
-        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(valueType))
+        if (shared_ptr<ValueTypePtr> valueTypePtr = pointeeValueType->toPtr())
             load->setVolatile(valueTypePtr->getIsVolatile());
         return load;
     };
     wrappedValue->pointerValueLambda = [pointerValue]() {
         return pointerValue;
     };
+
+    return wrappedValue;
+}
+
+shared_ptr<WrappedValue> WrappedValue::wrappedRawValue(llvm::Value *value, shared_ptr<ValueType> valueType) {
+    shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
+    wrappedValue->type = WrappedValue::llvmTypeForValueType(valueType, true);
+    wrappedValue->valueType = valueType;
+
+    wrappedValue->valueLambda = [value]() {
+        return value;
+    };
+    wrappedValue->pointerValueLambda = [value]() {
+        llvm::AllocaInst *alloca = WrappedValue::buildAlloca(value->getType(), "a_wrp");
+        llvm::StoreInst *store = WrappedValue::builder.lock()->CreateStore(value, alloca);
+        return alloca;
+    };
+
     return wrappedValue;
 }
 

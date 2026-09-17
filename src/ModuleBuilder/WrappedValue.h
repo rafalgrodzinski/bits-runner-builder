@@ -36,7 +36,8 @@ public:
     );
 
     static shared_ptr<WrappedValue> wrappedValue(llvm::Value *value, shared_ptr<ValueType> valueType);
-    static shared_ptr<WrappedValue> wrappedPointerValue(llvm::Value *pointerValue, llvm::Type *pointeeType, shared_ptr<ValueType> valueType);
+    static shared_ptr<WrappedValue> wrappedPointerValue(llvm::Value *pointerValue, shared_ptr<ValueType> pointeeValueType);
+    static shared_ptr<WrappedValue> wrappedRawValue(llvm::Value *value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, uint64_t value, shared_ptr<ValueType> valueType);
     static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
 

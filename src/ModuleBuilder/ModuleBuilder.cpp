@@ -2281,8 +2281,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // any to ptr
     } else if (isTargetPointer) {
-        llvm::Value *sourceValue = sourceWrappedValue->getPointerValue();
-        return WrappedValue::wrappedValue(sourceValue, targetValueType);
+        llvm::Value *sourcePointerValue = sourceWrappedValue->getPointerValue();
+        return WrappedValue::wrappedRawValue(sourcePointerValue, targetValueType);
     // data to data
     } else if (isSourceData && isTargetData) {
         llvm::AllocaInst *targetAlloca = buildAlloca(targetType);
@@ -2404,7 +2404,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForValue(llvm::Value *value,
                 } else {
                     return WrappedValue::wrappedPointerValue(
                         pointerValue,
-                        type,
                         expression->getValueType()
                     );
                 }
@@ -2426,7 +2425,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForValue(llvm::Value *value,
                 llvm::Value *elementPtr = builder->CreateGEP(sourceArrayType, sourceValue, index, format("gep_data-{}", string(sourceValue->getName())));
                 return WrappedValue::wrappedPointerValue(
                     elementPtr,
-                    sourceArrayType->getArrayElementType(),
                     expression->getValueType()
                 );
             }
