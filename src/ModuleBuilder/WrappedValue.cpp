@@ -136,22 +136,23 @@ shared_ptr<WrappedValue> WrappedValue::wrappedValue(llvm::Value *value, shared_p
     return wrappedValue;
 }
 
-shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(llvm::Value *pointerValue, llvm::Type *type, shared_ptr<ValueType> valueType) {
+shared_ptr<WrappedValue> WrappedValue::wrappedPointerValue(llvm::Value *pointerValue, shared_ptr<ValueType> pointeeValueType) {
     shared_ptr<WrappedValue> wrappedValue = make_shared<WrappedValue>();
 
-    llvm::Type *pointeeType = WrappedValue::llvmTypeForValueType(valueType, true);
+    llvm::Type *pointeeType = WrappedValue::llvmTypeForValueType(pointeeValueType, true);
     wrappedValue->type = pointeeType;
-    wrappedValue->valueType = valueType;
+    wrappedValue->valueType = pointeeValueType;
 
-    wrappedValue->valueLambda = [pointeeType, pointerValue, valueType]() {
+    wrappedValue->valueLambda = [pointeeType, pointerValue, pointeeValueType]() {
         llvm::LoadInst *load = WrappedValue::builder.lock()->CreateLoad(pointeeType, pointerValue, format("ld_wrp-{}", string(pointerValue->getName())));
-        if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(valueType))
-            load->setVolatile(valueTypePtr->getIsVolatile());
+        if (pointeeValueType->isPtr())
+            load->setVolatile(pointeeValueType->toPtr()->getIsVolatile());
         return load;
     };
     wrappedValue->pointerValueLambda = [pointerValue]() {
         return pointerValue;
     };
+
     return wrappedValue;
 }
 

@@ -7,7 +7,6 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-109](https://github.com/rafalgrodzinski/bits-runner-builder/pull/212):
-- Added direct `.ptr` instead of `.adr.ptr<Type>`
-- Fixed proto check
-- Some crash and error reporting fixes
+Changelist for [1.0.0-dev-110](https://github.com/rafalgrodzinski/bits-runner-builder/pull/214):
+- Allow raw functions without specifying constraints
+- Fixed `.ptr` cast

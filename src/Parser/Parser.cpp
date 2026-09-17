@@ -1172,10 +1172,10 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             // constraints
             Parsee::groupParsee(
                 {
-                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
                     Parsee::tokenParsee(TokenKind::STRING, ParseeLevel::CRITICAL, true, TAG_CONSTRAINTS),
                     Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::CRITICAL, true
+                }, ParseeLevel::OPTIONAL, true
             ),
             // arguments
             Parsee::groupParsee(

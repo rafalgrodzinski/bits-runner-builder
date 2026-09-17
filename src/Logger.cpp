@@ -510,7 +510,7 @@ string Logger::toString(shared_ptr<StatementRawFunction> statement, vector<Inden
     string line;
 
     // name
-    line = format("RAW `{}`, {} → {}", statement->getName(), statement->getConstraints(), toString(statement->getReturnValueType()));
+    line = format("RAW `{}`, \"{}\" → {}", statement->getName(), statement->getConstraints(), toString(statement->getReturnValueType()));
     if (!statement->getArguments().empty())
         line += ":";
     text += formattedLine(line, indents);
