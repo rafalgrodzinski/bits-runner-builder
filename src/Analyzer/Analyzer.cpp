@@ -210,27 +210,21 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
     // then check and verify blob field variables
     if (!scope->level([this, statementBlob]() -> bool {
-        for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+        for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
             // check for invalid field names
-            if (statementVariable->getIdentifier() == "adr") {
-                markErrorInvalidBuiltIn(statementVariable->getLocation(), statementVariable->getIdentifier(), statementVariable->getValueType());
-                return false;
-            }
-
-            // blob variable should not have a value expression
-            if (statementVariable->getExpression() != nullptr) {
-                markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
+            if (statementVariableDeclaration->getIdentifier() == "adr") {
+                markErrorInvalidBuiltIn(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType());
                 return false;
             }
 
             // fields should not have @export
-            if (statementVariable->getShouldExport()) {
-                markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
+            if (statementVariableDeclaration->getShouldExport()) {
+                markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
                 return false;
             }
 
-            checkStatement(statementVariable);
-            if (statementVariable->getValueType() == nullptr)
+            checkStatement(statementVariableDeclaration);
+            if (statementVariableDeclaration->getValueType() == nullptr)
                 return false;
         }
 
@@ -292,8 +286,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                         isImplemented = true;
                     }
                 } else {
-                    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
-                        if (protoField.first == statementVariable->getIdentifier() && protoField.second->isEqual(statementVariable->getValueType())) {
+                    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
+                        if (protoField.first == statementVariableDeclaration->getIdentifier() && protoField.second->isEqual(statementVariableDeclaration->getValueType())) {
                             isImplemented = true;
                             break;
                         }
@@ -313,8 +307,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     vector<pair<string, shared_ptr<ValueType>>> members;
 
     // extract variable members
-    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
-        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations())
+        members.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
 
     // then function members
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())

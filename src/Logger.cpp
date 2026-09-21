@@ -284,24 +284,24 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
         }
         line += ")";
     }
-    if (!statement->getVariableStatements().empty() || !statement->getFunctionStatements().empty())
+    if (!statement->getStatementVariableDeclarations().empty() || !statement->getFunctionStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
 
     indents = adjustedLastIndent(indents);
 
-    int variablestatementsCount = statement->getVariableStatements().size();
+    int statementVariableDeclarationsCount = statement->getStatementVariableDeclarations().size();
     int functionStatementsCount = statement->getFunctionStatements().size();
 
     // member variables
-    for (int i=0; i<variablestatementsCount; i++) {
+    for (int i=0; i<statementVariableDeclarationsCount; i++) {
         vector<IndentKind> currentIndents = indents;
         if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
             currentIndents.push_back(IndentKind::NODE);
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
 
-        text += toString(statement->getVariableStatements().at(i), currentIndents);
+        text += toString(statement->getStatementVariableDeclarations().at(i), currentIndents);
     }
 
     // member functions

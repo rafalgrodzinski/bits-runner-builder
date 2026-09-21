@@ -56,6 +56,7 @@ private:
     shared_ptr<Statement> matchStatementRepeat();
     shared_ptr<Statement> matchStatementReturn();
     shared_ptr<Statement> matchStatementVariable();
+    shared_ptr<Statement> matchStatementVariableDeclaration();
 
     // Expressions
     shared_ptr<Expression> nextExpression();

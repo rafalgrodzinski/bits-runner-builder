@@ -7,7 +7,8 @@ StatementVariable::StatementVariable(
     const string &identifier,
     shared_ptr<ValueType> valueType,
     shared_ptr<Expression> expression,
-    shared_ptr<Location> location):
+    shared_ptr<Location> location
+):
 Statement(StatementKind::VARIABLE, location),
 shouldExport(shouldExport),
 identifier(identifier),

@@ -1,6 +1,17 @@
 #include "StatementVariableDeclaration.h"
 
 StatementVariableDeclaration::StatementVariableDeclaration(
+    const string &identifier,
+    shared_ptr<ValueType> valueType,
+    shared_ptr<Location> location
+):
+Statement(StatementKind::VARIABLE_DECLARATION, location),
+shouldExport(false),
+identifier(identifier),
+isRoot(false),
+valueType(valueType) { }
+
+StatementVariableDeclaration::StatementVariableDeclaration(
     bool shouldExport,
     const string &identifier,
     const string &moduleName,

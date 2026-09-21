@@ -328,7 +328,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         TAG_NAMESPACE,
         TAG_NAME,
         TAG_TYPE_ARGUMENT_NAME,
-        TAG_STATEMENT_IN_BLOB,
+        TAG_FIELD,
         TAG_PROTO_MODULE_PREFIX,
         TAG_PROTO_NAME
     };
@@ -403,14 +403,14 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                 }, ParseeLevel::OPTIONAL, true
             ),
             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-            // members
+            // fields
             Parsee::repeatedGroupParsee(
                 {
                     Parsee::statementKindsParsee(
-                        {StatementKind::VARIABLE, StatementKind::FUNCTION},
+                        {StatementKind::VARIABLE_DECLARATION, StatementKind::FUNCTION},
                         ParseeLevel::REQUIRED,
                         true,
-                        TAG_STATEMENT_IN_BLOB
+                        TAG_FIELD
                     ),
                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
                 }, ParseeLevel::OPTIONAL, true
@@ -425,7 +425,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     bool shouldExport = false;
     string name;
     vector<string> typeArgumentNames;
-    vector<shared_ptr<StatementVariable>> variableStatements;
+    vector<shared_ptr<StatementVariableDeclaration>> statementVariableDeclarations;
     vector<shared_ptr<StatementFunction>> functionStatements;
     vector<string> protoNames;
 
@@ -459,10 +459,10 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                 protoNames.push_back(protoName);
                 break;
             }
-            case TAG_STATEMENT_IN_BLOB: {
+            case TAG_FIELD: {
                 switch (parseeResult.getStatement()->getKind()) {
-                    case StatementKind::VARIABLE: {
-                        variableStatements.push_back(dynamic_pointer_cast<StatementVariable>(parseeResult.getStatement()));
+                    case StatementKind::VARIABLE_DECLARATION: {
+                        statementVariableDeclarations.push_back(dynamic_pointer_cast<StatementVariableDeclaration>(parseeResult.getStatement()));
                         break;
                     }
                     case StatementKind::FUNCTION: {
@@ -486,7 +486,15 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         }
     }
 
-    return make_shared<StatementBlob>(shouldExport, name, typeArgumentNames, protoNames, variableStatements, functionStatements, location);
+    return make_shared<StatementBlob>(
+        shouldExport,
+        name,
+        typeArgumentNames,
+        protoNames,
+        statementVariableDeclarations,
+        functionStatements,
+        location
+    );
 }
 
 shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalTokenKinds) {
@@ -1437,7 +1445,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
 
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
         {
-            // export
+            // should export
             Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
             // identifier - namespaces
             Parsee::repeatedGroupParsee(
@@ -1448,6 +1456,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
             ),
             // identifier - name
             Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
+            // value type
             Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE),
             // initializer
             Parsee::groupParsee(
@@ -1494,6 +1503,59 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     }
 
     return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression, location);
+}
+
+shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
+    enum Tag {
+        TAG_NAMESPACE,
+        TAG_IDENTIFIER,
+        TAG_VALUE_TYPE
+    };
+
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
+        {
+            // identifier - namespaces
+            Parsee::repeatedGroupParsee(
+                {
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                }, ParseeLevel::OPTIONAL, true
+            ),
+            // identifier - name
+            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::OPTIONAL, true, TAG_IDENTIFIER),
+            // value type
+            Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE),
+        }
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    bool shouldExport = false;
+    string identifier;
+    shared_ptr<ValueType> valueType = nullptr;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_NAMESPACE: {
+                identifier += parseeResult.getToken()->getLexme();
+                identifier += "::";
+                break;
+            }
+            case TAG_IDENTIFIER: {
+                identifier += parseeResult.getToken()->getLexme();
+                break;
+            }
+            case TAG_VALUE_TYPE: {
+                valueType = parseeResult.getValueType();
+                break;
+            }
+        }
+    }
+
+    return make_shared<StatementVariableDeclaration>(identifier, valueType, location);
 }
 
 //
@@ -2820,6 +2882,9 @@ optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(ve
                 break;
             case StatementKind::VARIABLE:
                 statement = matchStatementVariable();
+                break;
+            case StatementKind::VARIABLE_DECLARATION:
+                statement = matchStatementVariableDeclaration();
                 break;
             default:
                 markError({}, {}, {});
