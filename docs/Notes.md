@@ -7,6 +7,6 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-110](https://github.com/rafalgrodzinski/bits-runner-builder/pull/214):
-- Allow raw functions without specifying constraints
-- Fixed `.ptr` cast
+Changelist for [1.0.0-dev-111](https://github.com/rafalgrodzinski/bits-runner-builder/pull/217):
+- Allow padding fields in blobs
+- Changed `StatementVariable` to `StatementVariableDeclaration` in blobs
