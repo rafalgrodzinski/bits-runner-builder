@@ -210,27 +210,21 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
     // then check and verify blob field variables
     if (!scope->level([this, statementBlob]() -> bool {
-        for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
+        for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
             // check for invalid field names
-            if (statementVariable->getIdentifier() == "adr") {
-                markErrorInvalidBuiltIn(statementVariable->getLocation(), statementVariable->getIdentifier(), statementVariable->getValueType());
-                return false;
-            }
-
-            // blob variable should not have a value expression
-            if (statementVariable->getExpression() != nullptr) {
-                markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
+            if (statementVariableDeclaration->getIdentifier() == "adr") {
+                markErrorInvalidBuiltIn(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType());
                 return false;
             }
 
             // fields should not have @export
-            if (statementVariable->getShouldExport()) {
-                markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
+            if (statementVariableDeclaration->getShouldExport()) {
+                markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
                 return false;
             }
 
-            checkStatement(statementVariable);
-            if (statementVariable->getValueType() == nullptr)
+            checkStatement(statementVariableDeclaration);
+            if (statementVariableDeclaration->getValueType() == nullptr)
                 return false;
         }
 
@@ -292,8 +286,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
                         isImplemented = true;
                     }
                 } else {
-                    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements()) {
-                        if (protoField.first == statementVariable->getIdentifier() && protoField.second->isEqual(statementVariable->getValueType())) {
+                    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
+                        if (protoField.first == statementVariableDeclaration->getIdentifier() && protoField.second->isEqual(statementVariableDeclaration->getValueType())) {
                             isImplemented = true;
                             break;
                         }
@@ -313,8 +307,8 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     vector<pair<string, shared_ptr<ValueType>>> members;
 
     // extract variable members
-    for (shared_ptr<StatementVariable> statementVariable : statementBlob->getVariableStatements())
-        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations())
+        members.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
 
     // then function members
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
@@ -633,6 +627,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         return;
     }
 
+    // try registering in scope
     if (!scope->setVariableType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true)) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
         return;
@@ -649,12 +644,19 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
-    string identifier = statementVariableDeclaration->getGlobalIdentifier();
-
-    if (typeForCheckedValueType(statementVariableDeclaration->getValueType(), true) == nullptr)
+    statementVariableDeclaration->valueType = typeForCheckedValueType(statementVariableDeclaration->getValueType(), false);
+    if (statementVariableDeclaration->getValueType() == nullptr)
         return;
 
-    if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
+    // data types should have count expression
+    if (statementVariableDeclaration->getValueType()->isData() && statementVariableDeclaration->getValueType()->toData()->getCountExpression() == nullptr) {
+        markErrorInvalidType(statementVariableDeclaration->getValueType()->getLocation(), statementVariableDeclaration->getValueType(), nullptr);
+        return;
+    }
+
+    // try registering in scope
+    string identifier = statementVariableDeclaration->getGlobalIdentifier();
+    if (!identifier.empty() && !scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
         markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);
 }
 
@@ -2404,7 +2406,7 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
     if (expectedType != nullptr)
         message = format("Invalid type {}, expected {}", Logger::toString(actualType), Logger::toString(expectedType));
     else
-        message = format(         "Invalid type {}", Logger::toString(actualType));
+        message = format("Invalid type {}", Logger::toString(actualType));
     errors.push_back(Error::error(location, message));
 }
 

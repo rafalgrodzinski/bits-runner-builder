@@ -1,5 +1,11 @@
+Dummy blob
+    v0 u8
+    u16
+    u8
+    v1 u32
+;
+
 @export main fun -> u32
-    value u8 <- 7
-    pValue ptr<u8> <- value.ptr
-    ret pValue.val
+    dummy blob<Dummy>
+    ret blob_pack<Dummy>.size
 ;

@@ -19,6 +19,12 @@ private:
 
 public:
     StatementVariableDeclaration(
+        const string &identifier,
+        shared_ptr<ValueType> valueType,
+        shared_ptr<Location> location
+    );
+
+    StatementVariableDeclaration(
         bool shouldExport,
         const string &identifier,
         const string &moduleName,

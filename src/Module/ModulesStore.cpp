@@ -56,9 +56,9 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
         case StatementKind::BLOB: {
             shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
             statementBlob->setModuleName(moduleName);
-            // variable statements
-            for (shared_ptr<Statement> variableStatement : statementBlob->getVariableStatements()) {
-                setModuleName(variableStatement, moduleName);
+            // statement variable declarations
+            for (shared_ptr<Statement> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
+                setModuleName(statementVariableDeclaration, moduleName);
             }
             // function statements
             for (shared_ptr<Statement> functionStatement : statementBlob->getFunctionStatements()) {
@@ -150,10 +150,15 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
         case StatementKind::VARIABLE: {
             shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
             statementVariable->setIsRoot(isRoot);
-            statementVariable->getValueType()->setModuleName(moduleName);
             statementVariable->setModuleName(moduleName);
             statementVariable->getValueType()->setModuleName(moduleName);
             setModuleName(statementVariable->getExpression(), moduleName);
+            break;
+        }
+        case StatementKind::VARIABLE_DECLARATION: {
+            shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
+            statementVariableDeclaration->setModuleName(moduleName);
+            statementVariableDeclaration->getValueType()->setModuleName(moduleName);
             break;
         }
         default:
@@ -280,7 +285,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         statementBlob->getSymbolName(),
                         statementBlob->getNamedTypeKeys(),
                         statementBlob->getProtoSymbolNames(),
-                        statementBlob->getVariableStatements(),
+                        statementBlob->getStatementVariableDeclarations(),
                         vector<shared_ptr<StatementFunction>>(), // don't include function definitions
                         statementBlob->getLocation()
                     );
