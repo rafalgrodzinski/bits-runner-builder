@@ -150,10 +150,15 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
         case StatementKind::VARIABLE: {
             shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
             statementVariable->setIsRoot(isRoot);
-            statementVariable->getValueType()->setModuleName(moduleName);
             statementVariable->setModuleName(moduleName);
             statementVariable->getValueType()->setModuleName(moduleName);
             setModuleName(statementVariable->getExpression(), moduleName);
+            break;
+        }
+        case StatementKind::VARIABLE_DECLARATION: {
+            shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
+            statementVariableDeclaration->setModuleName(moduleName);
+            statementVariableDeclaration->getValueType()->setModuleName(moduleName);
             break;
         }
         default:

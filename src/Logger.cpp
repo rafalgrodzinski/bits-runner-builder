@@ -1511,7 +1511,9 @@ string Logger::toString(shared_ptr<Location> location) {
 }
 
 string Logger::toString(shared_ptr<ValueType> valueType) {
-    string text;
+    string text = "{INVALID}";
+    if (valueType == nullptr)
+        return text;
 
     switch (valueType->getKind()) {
         case ValueTypeKind::NONE: {

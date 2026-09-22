@@ -627,6 +627,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         return;
     }
 
+    // try registering in scope
     if (!scope->setVariableType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true)) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
         return;
@@ -643,12 +644,19 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
-    string identifier = statementVariableDeclaration->getGlobalIdentifier();
-
-    if (typeForCheckedValueType(statementVariableDeclaration->getValueType(), true) == nullptr)
+    statementVariableDeclaration->valueType = typeForCheckedValueType(statementVariableDeclaration->getValueType(), false);
+    if (statementVariableDeclaration->getValueType() == nullptr)
         return;
 
-    if (!scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
+    // data types should have count expression
+    if (statementVariableDeclaration->getValueType()->isData() && statementVariableDeclaration->getValueType()->toData()->getCountExpression() == nullptr) {
+        markErrorInvalidType(statementVariableDeclaration->getValueType()->getLocation(), statementVariableDeclaration->getValueType(), nullptr);
+        return;
+    }
+
+    // try registering in scope
+    string identifier = statementVariableDeclaration->getGlobalIdentifier();
+    if (!identifier.empty() && !scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
         markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);
 }
 
@@ -2350,6 +2358,8 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeFun>
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr) {
     shared_ptr<ValueType> pointeeValueType = typeForCheckedValueType(valueTypePtr->getPointeeValueType(), false);
+    if (pointeeValueType == nullptr)
+        return nullptr;
     return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile(), valueTypePtr->getLocation());
 }
 
@@ -2398,7 +2408,7 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
     if (expectedType != nullptr)
         message = format("Invalid type {}, expected {}", Logger::toString(actualType), Logger::toString(expectedType));
     else
-        message = format(         "Invalid type {}", Logger::toString(actualType));
+        message = format("Invalid type {}", Logger::toString(actualType));
     errors.push_back(Error::error(location, message));
 }
 
