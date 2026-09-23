@@ -209,7 +209,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
 
     // then check and verify blob field variables
-    if (!scope->level([this, statementBlob]() -> bool {
+    if (!scope->level([&]() -> bool {
         for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
             // check for invalid field names
             if (statementVariableDeclaration->getIdentifier() == "adr") {
@@ -475,26 +475,28 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImpor
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
-    scope->pushLevel();
     // check and verify proto field variables
-    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statement->getStatementVariableDeclarations()) {
-        // fields should not have @export
-        if (statementVariableDeclaration->getShouldExport()) {
-            markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
-            return;
-        }
-        
-        // proto fields have to have an identifier
-        if (statementVariableDeclaration->getIdentifier().empty()) {
-            markErrorInvalidName(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier());
-            return;
+    if (!scope->level([&]() -> bool {
+        for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statement->getStatementVariableDeclarations()) {
+            // fields should not have @export
+            if (statementVariableDeclaration->getShouldExport()) {
+                markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
+                return false;
+            }
+            
+            // proto fields have to have an identifier
+            if (statementVariableDeclaration->getIdentifier().empty()) {
+                markErrorInvalidName(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier());
+                return false;
+            }
+
+            checkStatement(statementVariableDeclaration);
+            if (statementVariableDeclaration->getValueType() == nullptr)
+                return false;
         }
 
-        checkStatement(statementVariableDeclaration);
-        if (statementVariableDeclaration->getValueType() == nullptr)
-            return;
-    }
-    scope->popLevel();
+        return true;
+    })) { return; }
 
     // verify field function declarations
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getStatementFunctionDeclarations()) {
