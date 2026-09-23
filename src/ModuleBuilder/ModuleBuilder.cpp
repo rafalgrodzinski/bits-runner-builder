@@ -541,9 +541,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
     types.push_back(typePtr);
 
     // then pointers to all the variables
-    for (shared_ptr<StatementVariable> statementVariable : statementProto->getVariableStatements()) {
-        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariable->getValueType(), false, statementVariable->getLocation());
-        members.push_back(pair(statementVariable->getIdentifier(), valueType));
+    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementProto->getStatementVariableDeclarations()) {
+        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariableDeclaration->getValueType(), false, statementVariableDeclaration->getLocation());
+        members.push_back(pair(statementVariableDeclaration->getIdentifier(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
         if (type == nullptr)
             return;

@@ -477,20 +477,22 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImpor
 void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     scope->pushLevel();
     // check and verify proto field variables
-    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements()) {
-        // proto field variable should not have a value expression
-        if (statementVariable->getExpression() != nullptr) {
-            markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
-            return;
-        }
-
+    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statement->getStatementVariableDeclarations()) {
         // fields should not have @export
-        if (statementVariable->getShouldExport()) {
-            markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
+        if (statementVariableDeclaration->getShouldExport()) {
+            markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
+            return;
+        }
+        
+        // proto fields have to have an identifier
+        if (statementVariableDeclaration->getIdentifier().empty()) {
+            markErrorInvalidName(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier());
             return;
         }
 
-        checkStatement(statementVariable);
+        checkStatement(statementVariableDeclaration);
+        if (statementVariableDeclaration->getValueType() == nullptr)
+            return;
     }
     scope->popLevel();
 
@@ -509,8 +511,8 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     vector<pair<string, shared_ptr<ValueType>>> members;
 
     // extract variable fields
-    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements())
-        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statement->getStatementVariableDeclarations())
+        members.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
 
     // then function fields
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements())
@@ -2388,6 +2390,15 @@ void Analyzer::markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<Va
 
 void Analyzer::markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName) {
     string message = format("Invalid import, module \"{}\" doesn't exist", moduleName);
+    errors.push_back(Error::error(location, message));
+}
+
+void Analyzer::markErrorInvalidName(shared_ptr<Location> location, const string &name) {
+    string message;
+    if (name.empty())
+        message = format("Empty name is not allowed");
+    else
+        message = format("Name `{}` is not allowed", name);
     errors.push_back(Error::error(location, message));
 }
 

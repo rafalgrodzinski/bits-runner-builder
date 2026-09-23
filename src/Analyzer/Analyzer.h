@@ -136,6 +136,7 @@ private:
     void markErrorInvalidBuiltIn(shared_ptr<Location> location, const string &builtInName, shared_ptr<ValueType> type);
     void markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
     void markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName);
+    void markErrorInvalidName(shared_ptr<Location> location, const string &name);
     void markErrorInvalidOperationBinary(shared_ptr<Location> location, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
     void markErrorInvalidType(shared_ptr<Location> location, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);

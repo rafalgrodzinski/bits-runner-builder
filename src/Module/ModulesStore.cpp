@@ -121,8 +121,8 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
             statementProto->setModuleName(moduleName);
             // variable statements
-            for (shared_ptr<Statement> variableStatement : statementProto->getVariableStatements())
-                setModuleName(variableStatement, moduleName);
+            for (shared_ptr<Statement> statementVariableDeclaration : statementProto->getStatementVariableDeclarations())
+                setModuleName(statementVariableDeclaration, moduleName);
             // function declaration statements
             for (shared_ptr<Statement> functionDeclarationStatement : statementProto->getFunctionDeclarationStatements())
                 setModuleName(functionDeclarationStatement, moduleName);

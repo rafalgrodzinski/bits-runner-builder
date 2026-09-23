@@ -466,13 +466,13 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
 
     // name
     line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
-    if (!statement->getVariableStatements().empty() || !statement->getFunctionDeclarationStatements().empty())
+    if (!statement->getStatementVariableDeclarations().empty() || !statement->getFunctionDeclarationStatements().empty())
         line += ":";
     text += formattedLine(line, indents);
 
     indents = adjustedLastIndent(indents);
 
-    int variablestatementsCount = statement->getVariableStatements().size();
+    int variablestatementsCount = statement->getStatementVariableDeclarations().size();
     int functionStatementsCount = statement->getFunctionDeclarationStatements().size();
 
     // member variables
@@ -483,7 +483,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
 
-        text += toString(statement->getVariableStatements().at(i), currentIndents);
+        text += toString(statement->getStatementVariableDeclarations().at(i), currentIndents);
     }
 
     // member functions

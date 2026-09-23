@@ -1092,7 +1092,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
             Parsee::repeatedGroupParsee(
                 {
                     Parsee::statementKindsParsee(
-                        {StatementKind::VARIABLE, StatementKind::FUNCTION_DECLARATION},
+                        {StatementKind::VARIABLE_DECLARATION, StatementKind::FUNCTION_DECLARATION},
                         ParseeLevel::REQUIRED,
                         true,
                         TAG_STATEMENT_IN_PROTO
@@ -1109,7 +1109,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
 
     bool shouldExport = false;
     string name;
-    vector<shared_ptr<StatementVariable>> variableStatements;
+    vector<shared_ptr<StatementVariableDeclaration>> variableStatementDeclarations;
     vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
@@ -1124,8 +1124,8 @@ shared_ptr<Statement> Parser::matchStatementProto() {
             }
             case TAG_STATEMENT_IN_PROTO: {
                 switch (parseeResult.getStatement()->getKind()) {
-                    case StatementKind::VARIABLE: {
-                        variableStatements.push_back(dynamic_pointer_cast<StatementVariable>(parseeResult.getStatement()));
+                    case StatementKind::VARIABLE_DECLARATION: {
+                        variableStatementDeclarations.push_back(dynamic_pointer_cast<StatementVariableDeclaration>(parseeResult.getStatement()));
                         break;
                     }
                     case StatementKind::FUNCTION_DECLARATION: {
@@ -1147,7 +1147,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
         }
     }
 
-    return make_shared<StatementProto>(shouldExport, name, variableStatements, functionDeclarationStatements, location);
+    return make_shared<StatementProto>(shouldExport, name, variableStatementDeclarations, functionDeclarationStatements, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {

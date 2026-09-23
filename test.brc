@@ -1,11 +1,14 @@
-Dummy blob
-    v0 u8
-    u16
-    u8
-    v1 u32
+Stuff blob: IStuff
+    num u32
+;
+
+IStuff proto
+    num u32
 ;
 
 @export main fun -> u32
-    dummy blob<Dummy>
-    ret blob_pack<Dummy>.size
+    stuff blob<Stuff> <- {33}
+    iStuff proto<IStuff> <- {stuff.adr.ptr<blob<Stuff>>}
+
+    ret iStuff.num
 ;
