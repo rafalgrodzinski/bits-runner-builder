@@ -426,7 +426,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     string name;
     vector<string> typeArgumentNames;
     vector<shared_ptr<StatementVariableDeclaration>> statementVariableDeclarations;
-    vector<shared_ptr<StatementFunction>> functionStatements;
+    vector<shared_ptr<StatementFunction>> statementFunctions;
     vector<string> protoNames;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
@@ -475,7 +475,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                             make_shared<ValueTypePtr>(make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>(), false, nullptr), false, nullptr)
                         );
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
-                        functionStatements.push_back(statementFunction);
+                        statementFunctions.push_back(statementFunction);
                         break;
                     }
                     default:
@@ -492,7 +492,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         typeArgumentNames,
         protoNames,
         statementVariableDeclarations,
-        functionStatements,
+        statementFunctions,
         location
     );
 }
@@ -1092,7 +1092,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
             Parsee::repeatedGroupParsee(
                 {
                     Parsee::statementKindsParsee(
-                        {StatementKind::VARIABLE, StatementKind::FUNCTION_DECLARATION},
+                        {StatementKind::VARIABLE_DECLARATION, StatementKind::FUNCTION_DECLARATION},
                         ParseeLevel::REQUIRED,
                         true,
                         TAG_STATEMENT_IN_PROTO
@@ -1109,8 +1109,8 @@ shared_ptr<Statement> Parser::matchStatementProto() {
 
     bool shouldExport = false;
     string name;
-    vector<shared_ptr<StatementVariable>> variableStatements;
-    vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements;
+    vector<shared_ptr<StatementVariableDeclaration>> variableStatementDeclarations;
+    vector<shared_ptr<StatementFunctionDeclaration>> statementFunctionDeclarations;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -1124,8 +1124,8 @@ shared_ptr<Statement> Parser::matchStatementProto() {
             }
             case TAG_STATEMENT_IN_PROTO: {
                 switch (parseeResult.getStatement()->getKind()) {
-                    case StatementKind::VARIABLE: {
-                        variableStatements.push_back(dynamic_pointer_cast<StatementVariable>(parseeResult.getStatement()));
+                    case StatementKind::VARIABLE_DECLARATION: {
+                        variableStatementDeclarations.push_back(dynamic_pointer_cast<StatementVariableDeclaration>(parseeResult.getStatement()));
                         break;
                     }
                     case StatementKind::FUNCTION_DECLARATION: {
@@ -1136,7 +1136,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                             make_shared<ValueTypePtr>(ValueTypeSimple::NONE, false, nullptr)
                         );
                         statementFunctionDeclaration->arguments.insert(statementFunctionDeclaration->arguments.begin(), itArgument);
-                        functionDeclarationStatements.push_back(statementFunctionDeclaration);
+                        statementFunctionDeclarations.push_back(statementFunctionDeclaration);
                         break;
                     }
                     default:
@@ -1147,7 +1147,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
         }
     }
 
-    return make_shared<StatementProto>(shouldExport, name, variableStatements, functionDeclarationStatements, location);
+    return make_shared<StatementProto>(shouldExport, name, variableStatementDeclarations, statementFunctionDeclarations, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {

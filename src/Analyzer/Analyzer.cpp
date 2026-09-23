@@ -71,7 +71,7 @@ void Analyzer::checkModule() {
     // check blob member functions
     for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
-            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                 checkStatement(statementFunction);
             }
         }
@@ -209,7 +209,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
 
     // then check and verify blob field variables
-    if (!scope->level([this, statementBlob]() -> bool {
+    if (!scope->level([&]() -> bool {
         for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
             // check for invalid field names
             if (statementVariableDeclaration->getIdentifier() == "adr") {
@@ -232,7 +232,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     })) { return; }
 
     // verify field functions
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
         // fields should not have export
         if (statementFunction->getShouldExport()) {
             markErrorInvalidAttribute(statementFunction->getLocation(), "@export");
@@ -255,7 +255,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
                 if (protoField.second->isFun()) {
                     string funName = format("{}.{}", statementBlob->getSymbolName()->getName(), protoField.first);
-                    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+                    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                         // check function name
                         if (funName != statementFunction->getName())
                             continue;
@@ -304,24 +304,24 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     }
 
     // register blob fields in scope
-    vector<pair<string, shared_ptr<ValueType>>> members;
+    vector<pair<string, shared_ptr<ValueType>>> fields;
 
-    // extract variable members
+    // extract variable fields
     for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations())
-        members.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
+        fields.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
 
-    // then function members
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
-        members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
+    // then function fields
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions())
+        fields.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
 
     // check each of the extracted fields's type
-    for (auto &member : members) {
-        if (typeForCheckedValueType(member.second, true) == nullptr)
+    for (auto &field : fields) {
+        if (typeForCheckedValueType(field.second, true) == nullptr)
             return;
     }
 
     // and the register
-    scope->blobScope->registerFields(statementBlob->getSymbolName(), members);
+    scope->blobScope->registerFields(statementBlob->getSymbolName(), fields);
     scope->blobScope->registerConformingProtoSymbolNames(statementBlob->getSymbolName(), statementBlob->getProtoSymbolNames());
 }
 
@@ -475,27 +475,31 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImpor
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
-    scope->pushLevel();
     // check and verify proto field variables
-    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements()) {
-        // proto field variable should not have a value expression
-        if (statementVariable->getExpression() != nullptr) {
-            markErrorUnexpectedExpression(statementVariable->getExpression()->getLocation());
-            return;
+    if (!scope->level([&]() -> bool {
+        for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statement->getStatementVariableDeclarations()) {
+            // fields should not have @export
+            if (statementVariableDeclaration->getShouldExport()) {
+                markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
+                return false;
+            }
+            
+            // proto fields have to have an identifier
+            if (statementVariableDeclaration->getIdentifier().empty()) {
+                markErrorInvalidName(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier());
+                return false;
+            }
+
+            checkStatement(statementVariableDeclaration);
+            if (statementVariableDeclaration->getValueType() == nullptr)
+                return false;
         }
 
-        // fields should not have @export
-        if (statementVariable->getShouldExport()) {
-            markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
-            return;
-        }
-
-        checkStatement(statementVariable);
-    }
-    scope->popLevel();
+        return true;
+    })) { return; }
 
     // verify field function declarations
-    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements()) {
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getStatementFunctionDeclarations()) {
         // members should not have export
         if (statementFunctionDeclaration->getShouldExport()) {
             markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
@@ -509,11 +513,11 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     vector<pair<string, shared_ptr<ValueType>>> members;
 
     // extract variable fields
-    for (shared_ptr<StatementVariable> statementVariable : statement->getVariableStatements())
-        members.push_back(pair(statementVariable->getIdentifier(), statementVariable->getValueType()));
+    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statement->getStatementVariableDeclarations())
+        members.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
 
     // then function fields
-    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements())
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getStatementFunctionDeclarations())
         members.push_back(pair(statementFunctionDeclaration->getName(), statementFunctionDeclaration->getValueType()));
 
     // check each of the extracted type
@@ -2066,7 +2070,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     if (!oTargetFieldValueTypes)
                         return false;
 
-                    // check that number of memebrs match
+                    // check that number of fields match
                     if (sourceElementValueTypes.size() != (*oTargetFieldValueTypes).size())
                         return false;
 
@@ -2388,6 +2392,15 @@ void Analyzer::markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<Va
 
 void Analyzer::markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName) {
     string message = format("Invalid import, module \"{}\" doesn't exist", moduleName);
+    errors.push_back(Error::error(location, message));
+}
+
+void Analyzer::markErrorInvalidName(shared_ptr<Location> location, const string &name) {
+    string message;
+    if (name.empty())
+        message = format("Empty name is not allowed");
+    else
+        message = format("Name `{}` is not allowed", name);
     errors.push_back(Error::error(location, message));
 }
 

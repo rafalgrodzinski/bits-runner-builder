@@ -125,7 +125,7 @@ shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
     // build blob functions
     for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
-            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                 buildStatement(statementFunction);
             }
         }
@@ -276,11 +276,11 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
     }
 
     // Generate types for body
-    vector<string> memberNames;
+    vector<string> fieldNames;
     vector<llvm::Type *> types;
-    for (const pair<string, shared_ptr<ValueType>> &member: statementBlob->getMembers()) {
-        memberNames.push_back(member.first);
-        llvm::Type *type = llvmTypeForValueType(member.second);
+    for (const pair<string, shared_ptr<ValueType>> &field: statementBlob->getFields()) {
+        fieldNames.push_back(field.first);
+        llvm::Type *type = llvmTypeForValueType(field.second);
         if (type == nullptr)
             return;
         types.push_back(type);
@@ -289,8 +289,8 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
     structType->setBody(types, false);
     packedStructType->setBody(types, true);
 
-    scope->setStruct(statementBlob->getSymbolName()->getGlobalName(), structType, memberNames);
-    scope->setStruct(statementBlob->getPackedSymbolName()->getGlobalName(), packedStructType, memberNames);
+    scope->setStruct(statementBlob->getSymbolName()->getGlobalName(), structType, fieldNames);
+    scope->setStruct(statementBlob->getPackedSymbolName()->getGlobalName(), packedStructType, fieldNames);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
@@ -541,9 +541,9 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
     types.push_back(typePtr);
 
     // then pointers to all the variables
-    for (shared_ptr<StatementVariable> statementVariable : statementProto->getVariableStatements()) {
-        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariable->getValueType(), false, statementVariable->getLocation());
-        members.push_back(pair(statementVariable->getIdentifier(), valueType));
+    for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementProto->getStatementVariableDeclarations()) {
+        shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementVariableDeclaration->getValueType(), false, statementVariableDeclaration->getLocation());
+        members.push_back(pair(statementVariableDeclaration->getIdentifier(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);
         if (type == nullptr)
             return;
@@ -551,7 +551,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
     }
 
     // and then pointers to the functions
-    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getStatementFunctionDeclarations()) {
         shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementFunctionDeclaration->getValueType(), false, statementFunctionDeclaration->getLocation());
         members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);

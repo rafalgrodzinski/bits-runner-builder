@@ -18,7 +18,7 @@ public:
         const vector<string> &namedTypeKeys,
         const vector<string> &protoNames,
         const vector<shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
-        const vector<shared_ptr<StatementFunction>> &functionStatements,
+        const vector<shared_ptr<StatementFunction>> &statementFunctions,
         shared_ptr<Location> location
     );
 
@@ -28,7 +28,7 @@ public:
         const vector<string> &namedTypeKeys,
         vector<shared_ptr<SymbolName>> conformingProtoSymbolNames,
         const vector<shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
-        const vector<shared_ptr<StatementFunction>> &functionStatements,
+        const vector<shared_ptr<StatementFunction>> &statementFunctions,
         shared_ptr<Location> location
     );
 
@@ -40,8 +40,8 @@ public:
     vector<string> getNamedTypeKeys() const;
     vector<shared_ptr<SymbolName>> getProtoSymbolNames() const;
     vector<shared_ptr<StatementVariableDeclaration>> getStatementVariableDeclarations() const;
-    vector<shared_ptr<StatementFunction>> getFunctionStatements() const;
-    vector<pair<string, shared_ptr<ValueType>>> getMembers() const;
+    vector<shared_ptr<StatementFunction>> getStatementFunctions() const;
+    vector<pair<string, shared_ptr<ValueType>>> getFields() const;
 
     shared_ptr<StatementBlobDeclaration> getDeclaration() const;
 
@@ -50,7 +50,7 @@ private:
     shared_ptr<SymbolName> symbolName;
     vector<string> namedTypeKeys;
     vector<shared_ptr<StatementVariableDeclaration>> statementVariableDeclarations;
-    vector<shared_ptr<StatementFunction>> functionStatements;
+    vector<shared_ptr<StatementFunction>> statementFunctions;
     vector<shared_ptr<SymbolName>> protoSymbolNames;
 };
 
