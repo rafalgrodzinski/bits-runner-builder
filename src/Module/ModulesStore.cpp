@@ -120,7 +120,7 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
         case StatementKind::PROTO: {
             shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
             statementProto->setModuleName(moduleName);
-            // variable statements
+            // statement variable declarations
             for (shared_ptr<Statement> statementVariableDeclaration : statementProto->getStatementVariableDeclarations())
                 setModuleName(statementVariableDeclaration, moduleName);
             // statement function declarations
@@ -252,7 +252,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
     vector<shared_ptr<Statement>> moduleBlobStatements;
     vector<shared_ptr<Statement>> moduleVariableDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleVariableStatements;
+    vector<shared_ptr<Statement>> moduleStatementVariables;
     vector<shared_ptr<Statement>> moduleStatementFunctionDeclarations;
     vector<shared_ptr<Statement>> moduleRawFunctionStatements;
     vector<shared_ptr<Statement>> moduleBodyStatements;
@@ -387,7 +387,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = statementVariable->getDeclaration();
 
                 // local header
-                moduleVariableStatements.push_back(statementVariable);
+                moduleStatementVariables.push_back(statementVariable);
 
                 // exported header
                 if (statementVariable->getShouldExport())
@@ -425,7 +425,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // function declarations
         statementFunctionDeclarationsMap[moduleName] = moduleStatementFunctionDeclarations;
         // variable definitions
-        variableStatementsMap[moduleName] = moduleVariableStatements;
+        statementVariablesMap[moduleName] = moduleStatementVariables;
         // raw functions
         rawFunctionStatementsMap[moduleName] = moduleRawFunctionStatements;
     
@@ -484,8 +484,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         for (shared_ptr<Statement> statement : moduleStatementFunctionDeclarations)
             statementFunctionDeclarationsMap[moduleName].push_back(statement);
         // variable definitions
-        for (shared_ptr<Statement> statement : moduleVariableStatements)
-            variableStatementsMap[moduleName].push_back(statement);
+        for (shared_ptr<Statement> statement : moduleStatementVariables)
+            statementVariablesMap[moduleName].push_back(statement);
         // raw functions
         for (shared_ptr<Statement> statement : moduleRawFunctionStatements)
             rawFunctionStatementsMap[moduleName].push_back(statement);
@@ -561,7 +561,7 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         for (shared_ptr<Statement> statement : statementFunctionDeclarationsMap[moduleName])
             headerStatements.push_back(statement);
         // variable definitions
-        for (shared_ptr<Statement> statement : variableStatementsMap[moduleName])
+        for (shared_ptr<Statement> statement : statementVariablesMap[moduleName])
             headerStatements.push_back(statement);
         // raw functions definitions
         for (shared_ptr<Statement> statement : rawFunctionStatementsMap[moduleName])

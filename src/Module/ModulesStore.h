@@ -27,7 +27,7 @@ private:
     map<string, vector<shared_ptr<Statement>>> protoStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> variableStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> statementVariablesMap;
     map<string, vector<shared_ptr<Statement>>> statementFunctionDeclarationsMap;
     map<string, vector<shared_ptr<Statement>>> rawFunctionStatementsMap;
     // body
