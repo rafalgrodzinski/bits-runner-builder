@@ -291,12 +291,12 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     indents = adjustedLastIndent(indents);
 
     int statementVariableDeclarationsCount = statement->getStatementVariableDeclarations().size();
-    int functionStatementsCount = statement->getStatementFunctions().size();
+    int statementFunctionsCount = statement->getStatementFunctions().size();
 
     // member variables
     for (int i=0; i<statementVariableDeclarationsCount; i++) {
         vector<IndentKind> currentIndents = indents;
-        if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
+        if (i < statementFunctionsCount - 1 || statementFunctionsCount > 0)
             currentIndents.push_back(IndentKind::NODE);
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
@@ -305,9 +305,9 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     }
 
     // member functions
-    for (int i=0; i<functionStatementsCount; i++) {
+    for (int i=0; i<statementFunctionsCount; i++) {
         vector<IndentKind> currentIndents = indents;
-        if (i < functionStatementsCount - 1)
+        if (i < statementFunctionsCount - 1)
             currentIndents.push_back(IndentKind::NODE);
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
@@ -473,12 +473,12 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
     indents = adjustedLastIndent(indents);
 
     int variablestatementsCount = statement->getStatementVariableDeclarations().size();
-    int functionStatementsCount = statement->getStatementFunctionDeclarations().size();
+    int statementFunctionsCount = statement->getStatementFunctionDeclarations().size();
 
     // member variables
     for (int i=0; i<variablestatementsCount; i++) {
         vector<IndentKind> currentIndents = indents;
-        if (i < functionStatementsCount - 1 || functionStatementsCount > 0)
+        if (i < statementFunctionsCount - 1 || statementFunctionsCount > 0)
             currentIndents.push_back(IndentKind::NODE);
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
@@ -487,9 +487,9 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
     }
 
     // member functions
-    for (int i=0; i<functionStatementsCount; i++) {
+    for (int i=0; i<statementFunctionsCount; i++) {
         vector<IndentKind> currentIndents = indents;
-        if (i < functionStatementsCount - 1)
+        if (i < statementFunctionsCount - 1)
             currentIndents.push_back(IndentKind::NODE);
         else
             currentIndents.push_back(IndentKind::NODE_LAST);

@@ -426,7 +426,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     string name;
     vector<string> typeArgumentNames;
     vector<shared_ptr<StatementVariableDeclaration>> statementVariableDeclarations;
-    vector<shared_ptr<StatementFunction>> functionStatements;
+    vector<shared_ptr<StatementFunction>> statementFunctions;
     vector<string> protoNames;
 
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
@@ -475,7 +475,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                             make_shared<ValueTypePtr>(make_shared<ValueTypeBlob>(name, vector<shared_ptr<ValueType>>(), false, nullptr), false, nullptr)
                         );
                         statementFunction->arguments.insert(statementFunction->arguments.begin(), itArgument);
-                        functionStatements.push_back(statementFunction);
+                        statementFunctions.push_back(statementFunction);
                         break;
                     }
                     default:
@@ -492,7 +492,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
         typeArgumentNames,
         protoNames,
         statementVariableDeclarations,
-        functionStatements,
+        statementFunctions,
         location
     );
 }

@@ -60,9 +60,9 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             for (shared_ptr<Statement> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
                 setModuleName(statementVariableDeclaration, moduleName);
             }
-            // function statements
-            for (shared_ptr<Statement> functionStatement : statementBlob->getStatementFunctions()) {
-                setModuleName(functionStatement, moduleName);
+            // statement functions
+            for (shared_ptr<Statement> statementFunction : statementBlob->getStatementFunctions()) {
+                setModuleName(statementFunction, moduleName);
             }
             break;
         }
