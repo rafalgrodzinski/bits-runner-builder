@@ -71,7 +71,7 @@ void Analyzer::checkModule() {
     // check blob member functions
     for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
-            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                 checkStatement(statementFunction);
             }
         }
@@ -232,7 +232,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     })) { return; }
 
     // verify field functions
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
         // fields should not have export
         if (statementFunction->getShouldExport()) {
             markErrorInvalidAttribute(statementFunction->getLocation(), "@export");
@@ -255,7 +255,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
 
                 if (protoField.second->isFun()) {
                     string funName = format("{}.{}", statementBlob->getSymbolName()->getName(), protoField.first);
-                    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+                    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                         // check function name
                         if (funName != statementFunction->getName())
                             continue;
@@ -311,7 +311,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
         members.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
 
     // then function members
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements())
+    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions())
         members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
 
     // check each of the extracted fields's type
@@ -497,7 +497,7 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     scope->popLevel();
 
     // verify field function declarations
-    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements()) {
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getStatementFunctionDeclarations()) {
         // members should not have export
         if (statementFunctionDeclaration->getShouldExport()) {
             markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
@@ -515,7 +515,7 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
         members.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
 
     // then function fields
-    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getFunctionDeclarationStatements())
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getStatementFunctionDeclarations())
         members.push_back(pair(statementFunctionDeclaration->getName(), statementFunctionDeclaration->getValueType()));
 
     // check each of the extracted type

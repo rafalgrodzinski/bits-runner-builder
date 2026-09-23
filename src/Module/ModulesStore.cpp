@@ -61,7 +61,7 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
                 setModuleName(statementVariableDeclaration, moduleName);
             }
             // function statements
-            for (shared_ptr<Statement> functionStatement : statementBlob->getFunctionStatements()) {
+            for (shared_ptr<Statement> functionStatement : statementBlob->getStatementFunctions()) {
                 setModuleName(functionStatement, moduleName);
             }
             break;
@@ -124,7 +124,7 @@ void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &
             for (shared_ptr<Statement> statementVariableDeclaration : statementProto->getStatementVariableDeclarations())
                 setModuleName(statementVariableDeclaration, moduleName);
             // function declaration statements
-            for (shared_ptr<Statement> functionDeclarationStatement : statementProto->getFunctionDeclarationStatements())
+            for (shared_ptr<Statement> functionDeclarationStatement : statementProto->getStatementFunctionDeclarations())
                 setModuleName(functionDeclarationStatement, moduleName);
             break;
         }
@@ -298,7 +298,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 }
 
                 // create delclarations for blob functions
-                for (shared_ptr<StatementFunction> statementBlobFunction : statementBlob->getFunctionStatements()) {
+                for (shared_ptr<StatementFunction> statementBlobFunction : statementBlob->getStatementFunctions()) {
                     shared_ptr<StatementFunctionDeclaration> statementBlobFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
                         statementBlob->getShouldExport(),
                         statementBlobFunction->getName(),

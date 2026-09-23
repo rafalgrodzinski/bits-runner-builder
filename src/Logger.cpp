@@ -284,14 +284,14 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
         }
         line += ")";
     }
-    if (!statement->getStatementVariableDeclarations().empty() || !statement->getFunctionStatements().empty())
+    if (!statement->getStatementVariableDeclarations().empty() || !statement->getStatementFunctions().empty())
         line += ":";
     text += formattedLine(line, indents);
 
     indents = adjustedLastIndent(indents);
 
     int statementVariableDeclarationsCount = statement->getStatementVariableDeclarations().size();
-    int functionStatementsCount = statement->getFunctionStatements().size();
+    int functionStatementsCount = statement->getStatementFunctions().size();
 
     // member variables
     for (int i=0; i<statementVariableDeclarationsCount; i++) {
@@ -312,7 +312,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
         
-        text += toString(statement->getFunctionStatements().at(i), currentIndents);
+        text += toString(statement->getStatementFunctions().at(i), currentIndents);
     }
 
     return text;
@@ -466,14 +466,14 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
 
     // name
     line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
-    if (!statement->getStatementVariableDeclarations().empty() || !statement->getFunctionDeclarationStatements().empty())
+    if (!statement->getStatementVariableDeclarations().empty() || !statement->getStatementFunctionDeclarations().empty())
         line += ":";
     text += formattedLine(line, indents);
 
     indents = adjustedLastIndent(indents);
 
     int variablestatementsCount = statement->getStatementVariableDeclarations().size();
-    int functionStatementsCount = statement->getFunctionDeclarationStatements().size();
+    int functionStatementsCount = statement->getStatementFunctionDeclarations().size();
 
     // member variables
     for (int i=0; i<variablestatementsCount; i++) {
@@ -494,7 +494,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
         else
             currentIndents.push_back(IndentKind::NODE_LAST);
         
-        text += toString(statement->getFunctionDeclarationStatements().at(i), currentIndents);
+        text += toString(statement->getStatementFunctionDeclarations().at(i), currentIndents);
     }
 
     return text;

@@ -6,14 +6,14 @@ StatementProto::StatementProto(
     bool shouldExport,
     const string &name,
     const vector<shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
-    const vector<shared_ptr<StatementFunctionDeclaration>> &functionDeclarationStatements,
+    const vector<shared_ptr<StatementFunctionDeclaration>> &statementFunctionDeclarations,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::PROTO, location),
 shouldExport(shouldExport),
 symbolName(make_shared<SymbolName>(name)),
 statementVariableDeclarations(statementVariableDeclarations),
-functionDeclarationStatements(functionDeclarationStatements) { }
+statementFunctionDeclarations(statementFunctionDeclarations) { }
 
 bool StatementProto::getShouldExport() const {
     return shouldExport;
@@ -31,8 +31,8 @@ vector<shared_ptr<StatementVariableDeclaration>> StatementProto::getStatementVar
     return statementVariableDeclarations;
 }
 
-vector<shared_ptr<StatementFunctionDeclaration>> StatementProto::getFunctionDeclarationStatements() const {
-    return functionDeclarationStatements;
+vector<shared_ptr<StatementFunctionDeclaration>> StatementProto::getStatementFunctionDeclarations() const {
+    return statementFunctionDeclarations;
 }
 
 shared_ptr<StatementProtoDeclaration> StatementProto::getDeclaration() const {

@@ -125,7 +125,7 @@ shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
     // build blob functions
     for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
-            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getFunctionStatements()) {
+            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                 buildStatement(statementFunction);
             }
         }
@@ -551,7 +551,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {
     }
 
     // and then pointers to the functions
-    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getFunctionDeclarationStatements()) {
+    for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statementProto->getStatementFunctionDeclarations()) {
         shared_ptr<ValueType> valueType = make_shared<ValueTypePtr>(statementFunctionDeclaration->getValueType(), false, statementFunctionDeclaration->getLocation());
         members.push_back(pair(statementFunctionDeclaration->getName(), valueType));
         llvm::Type *type = llvmTypeForValueType(valueType);

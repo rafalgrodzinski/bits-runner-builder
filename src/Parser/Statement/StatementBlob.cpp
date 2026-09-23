@@ -1,9 +1,7 @@
 #include "StatementBlob.h"
 #include "StatementBlobDeclaration.h"
-#include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/SymbolName.h"
-#include "Parser/ValueType/ValueType.h"
 
 StatementBlob::StatementBlob(
     bool shouldExport,
@@ -11,7 +9,7 @@ StatementBlob::StatementBlob(
     const vector<string> &namedTypeKeys,
     const vector<string> &protoNames,
     const vector<shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
-    const vector<shared_ptr<StatementFunction>> &functionStatements,
+    const vector<shared_ptr<StatementFunction>> &statementFunctions,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::BLOB, location),
@@ -19,7 +17,7 @@ shouldExport(shouldExport),
 symbolName(make_shared<SymbolName>(name)),
 namedTypeKeys(namedTypeKeys),
 statementVariableDeclarations(statementVariableDeclarations),
-functionStatements(functionStatements) {
+statementFunctions(statementFunctions) {
     for (const string &protoName : protoNames) {
         protoSymbolNames.push_back(make_shared<SymbolName>(protoName));
     }
@@ -31,7 +29,7 @@ StatementBlob::StatementBlob(
     const vector<string> &namedTypeKeys,
     vector<shared_ptr<SymbolName>> conformingProtoSymbolNames,
     const vector<shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
-    const vector<shared_ptr<StatementFunction>> &functionStatements,
+    const vector<shared_ptr<StatementFunction>> &statementFunctions,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::BLOB, location),
@@ -40,7 +38,7 @@ symbolName(symbolName),
 namedTypeKeys(namedTypeKeys),
 protoSymbolNames(conformingProtoSymbolNames),
 statementVariableDeclarations(statementVariableDeclarations),
-functionStatements(functionStatements) { }
+statementFunctions(statementFunctions) { }
 
 bool StatementBlob::getShouldExport() const {
     return shouldExport;
@@ -74,8 +72,8 @@ vector<shared_ptr<StatementVariableDeclaration>> StatementBlob::getStatementVari
     return statementVariableDeclarations;
 }
 
-vector<shared_ptr<StatementFunction>> StatementBlob::getFunctionStatements() const {
-    return functionStatements;
+vector<shared_ptr<StatementFunction>> StatementBlob::getStatementFunctions() const {
+    return statementFunctions;
 }
 
 vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getMembers() const {
