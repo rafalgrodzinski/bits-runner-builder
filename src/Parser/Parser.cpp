@@ -1110,7 +1110,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
     bool shouldExport = false;
     string name;
     vector<shared_ptr<StatementVariableDeclaration>> variableStatementDeclarations;
-    vector<shared_ptr<StatementFunctionDeclaration>> functionDeclarationStatements;
+    vector<shared_ptr<StatementFunctionDeclaration>> statementFunctionDeclarations;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -1136,7 +1136,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                             make_shared<ValueTypePtr>(ValueTypeSimple::NONE, false, nullptr)
                         );
                         statementFunctionDeclaration->arguments.insert(statementFunctionDeclaration->arguments.begin(), itArgument);
-                        functionDeclarationStatements.push_back(statementFunctionDeclaration);
+                        statementFunctionDeclarations.push_back(statementFunctionDeclaration);
                         break;
                     }
                     default:
@@ -1147,7 +1147,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
         }
     }
 
-    return make_shared<StatementProto>(shouldExport, name, variableStatementDeclarations, functionDeclarationStatements, location);
+    return make_shared<StatementProto>(shouldExport, name, variableStatementDeclarations, statementFunctionDeclarations, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {

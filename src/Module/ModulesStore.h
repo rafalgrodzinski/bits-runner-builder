@@ -28,7 +28,7 @@ private:
     map<string, vector<shared_ptr<Statement>>> blobDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
     map<string, vector<shared_ptr<Statement>>> variableStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> functionDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> statementFunctionDeclarationsMap;
     map<string, vector<shared_ptr<Statement>>> rawFunctionStatementsMap;
     // body
     map<string, vector<shared_ptr<Statement>>> bodyStatementsMap;
@@ -39,7 +39,7 @@ private:
     map<string, vector<shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedBlobStatementsMap;
     map<string, vector<shared_ptr<Statement>>> exportedVariableDeclarationStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedFunctionDeclarationStatementsMap;
+    map<string, vector<shared_ptr<Statement>>> exportedStatementFunctionDeclarationsMap;
     map<string, vector<shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
 
     void setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot = false);
