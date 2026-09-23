@@ -41,7 +41,7 @@ public:
     vector<shared_ptr<SymbolName>> getProtoSymbolNames() const;
     vector<shared_ptr<StatementVariableDeclaration>> getStatementVariableDeclarations() const;
     vector<shared_ptr<StatementFunction>> getStatementFunctions() const;
-    vector<pair<string, shared_ptr<ValueType>>> getMembers() const;
+    vector<pair<string, shared_ptr<ValueType>>> getFields() const;
 
     shared_ptr<StatementBlobDeclaration> getDeclaration() const;
 

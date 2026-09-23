@@ -76,13 +76,13 @@ vector<shared_ptr<StatementFunction>> StatementBlob::getStatementFunctions() con
     return statementFunctions;
 }
 
-vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getMembers() const {
-    vector<pair<string, shared_ptr<ValueType>>> members;
+vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getFields() const {
+    vector<pair<string, shared_ptr<ValueType>>> fields;
 
     for (shared_ptr<StatementVariableDeclaration> statement : statementVariableDeclarations)
-        members.push_back(pair(statement->getIdentifier(), statement->getValueType()));
+        fields.push_back(pair(statement->getIdentifier(), statement->getValueType()));
 
-    return members;
+    return fields;
 }
 
 shared_ptr<StatementBlobDeclaration> StatementBlob::getDeclaration() const {

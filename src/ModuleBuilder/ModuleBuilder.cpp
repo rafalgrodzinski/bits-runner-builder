@@ -276,11 +276,11 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
     }
 
     // Generate types for body
-    vector<string> memberNames;
+    vector<string> fieldNames;
     vector<llvm::Type *> types;
-    for (const pair<string, shared_ptr<ValueType>> &member: statementBlob->getMembers()) {
-        memberNames.push_back(member.first);
-        llvm::Type *type = llvmTypeForValueType(member.second);
+    for (const pair<string, shared_ptr<ValueType>> &field: statementBlob->getFields()) {
+        fieldNames.push_back(field.first);
+        llvm::Type *type = llvmTypeForValueType(field.second);
         if (type == nullptr)
             return;
         types.push_back(type);
@@ -289,8 +289,8 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlob> statementBlob) {
     structType->setBody(types, false);
     packedStructType->setBody(types, true);
 
-    scope->setStruct(statementBlob->getSymbolName()->getGlobalName(), structType, memberNames);
-    scope->setStruct(statementBlob->getPackedSymbolName()->getGlobalName(), packedStructType, memberNames);
+    scope->setStruct(statementBlob->getSymbolName()->getGlobalName(), structType, fieldNames);
+    scope->setStruct(statementBlob->getPackedSymbolName()->getGlobalName(), packedStructType, fieldNames);
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {

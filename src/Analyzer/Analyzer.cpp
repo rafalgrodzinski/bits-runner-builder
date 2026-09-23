@@ -304,24 +304,24 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     }
 
     // register blob fields in scope
-    vector<pair<string, shared_ptr<ValueType>>> members;
+    vector<pair<string, shared_ptr<ValueType>>> fields;
 
-    // extract variable members
+    // extract variable fields
     for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations())
-        members.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
+        fields.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
 
-    // then function members
+    // then function fields
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions())
-        members.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
+        fields.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
 
     // check each of the extracted fields's type
-    for (auto &member : members) {
-        if (typeForCheckedValueType(member.second, true) == nullptr)
+    for (auto &field : fields) {
+        if (typeForCheckedValueType(field.second, true) == nullptr)
             return;
     }
 
     // and the register
-    scope->blobScope->registerFields(statementBlob->getSymbolName(), members);
+    scope->blobScope->registerFields(statementBlob->getSymbolName(), fields);
     scope->blobScope->registerConformingProtoSymbolNames(statementBlob->getSymbolName(), statementBlob->getProtoSymbolNames());
 }
 
@@ -2068,7 +2068,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     if (!oTargetFieldValueTypes)
                         return false;
 
-                    // check that number of memebrs match
+                    // check that number of fields match
                     if (sourceElementValueTypes.size() != (*oTargetFieldValueTypes).size())
                         return false;
 
