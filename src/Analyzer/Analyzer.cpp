@@ -1581,19 +1581,20 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         return sourceExpression;
     // composite to blob
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isBlob()) {
-        shared_ptr<ValueTypeBlob> targetValueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(targetType);
-        scope->pushLevel();
-        scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
+        scope->level([&]() -> bool {
+            shared_ptr<ValueTypeBlob> targetValueTypeBlob = targetType->toBlob();
+            scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
 
-        sourceExpression->valueType = targetType;
-        vector<shared_ptr<ValueType>> blobMemberTypes = *scope->blobScope->getVariableFieldValueTypes(dynamic_pointer_cast<ValueTypeBlob>(targetType)->getSymbolName());
-        shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
-        for (int i=0; i<blobMemberTypes.size(); i++) {
-            shared_ptr<ValueType> memberType = blobMemberTypes.at(i);
-            expressionCompositeLiteral->expressions[i] = checkAndTryCasting(expressionCompositeLiteral->getExpressions().at(i), memberType, returnType);
-        }
+            sourceExpression->valueType = targetType;
+            vector<shared_ptr<ValueType>> blobMemberTypes = *scope->blobScope->getVariableFieldValueTypes(dynamic_pointer_cast<ValueTypeBlob>(targetType)->getSymbolName());
+            shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
+            for (int i=0; i<blobMemberTypes.size(); i++) {
+                shared_ptr<ValueType> memberType = blobMemberTypes.at(i);
+                expressionCompositeLiteral->expressions[i] = checkAndTryCasting(expressionCompositeLiteral->getExpressions().at(i), memberType, returnType);
+            }
 
-        scope->popLevel();
+            return true;
+        });
 
         return sourceExpression;
     // composite to proto
@@ -2343,10 +2344,12 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
     }
 
     // Check payload type, first make sure that potential named types in boxed have access to the current context
-    scope->pushLevel();
-    scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeEnumField->getNamedValueTypes());
-    payloadValueType = typeForCheckedValueType(payloadValueType, false);
-    scope->popLevel();
+    scope->level([&]() -> bool {
+        scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeEnumField->getNamedValueTypes());
+        payloadValueType = typeForCheckedValueType(payloadValueType, false);
+        return true;
+    });
+
     if (payloadValueType == nullptr) {
         markErrorInvalidType(valueTypeEnumField->getLocation(), valueTypeEnumField, nullptr);
         return nullptr;
