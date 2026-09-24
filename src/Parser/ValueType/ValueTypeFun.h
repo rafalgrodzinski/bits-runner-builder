@@ -2,6 +2,7 @@
 #define VALUE_TYPE_FUN_H
 
 #include <vector>
+
 #include "ValueType.h"
 
 class SymbolName;

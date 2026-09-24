@@ -1,4 +1,5 @@
 #include "ValueTypeSimple.h"
+
 #include "Lexer/Token.h"
 
 using namespace std;

@@ -7,6 +7,7 @@
 
 class Error;
 class Token;
+
 enum class TokenKind;
 
 class Lexer {

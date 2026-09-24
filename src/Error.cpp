@@ -1,7 +1,7 @@
 #include "Error.h"
 
-#include "Parser/ValueType/ValueType.h"
 #include "Lexer/Location.h"
+#include "Parser/ValueType/ValueType.h"
 
 using namespace std;
 

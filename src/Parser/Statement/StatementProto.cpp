@@ -1,4 +1,5 @@
 #include "StatementProto.h"
+
 #include "StatementProtoDeclaration.h"
 #include "Parser/SymbolName.h"
 

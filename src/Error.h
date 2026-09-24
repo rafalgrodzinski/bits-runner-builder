@@ -6,6 +6,7 @@
 #include "Parser/Parsee/Parsee.h"
 
 class Location;
+class Parsee;
 class Token;
 class ValueType;
 

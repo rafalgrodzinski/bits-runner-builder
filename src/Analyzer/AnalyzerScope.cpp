@@ -1,4 +1,5 @@
 #include "AnalyzerScope.h"
+
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/SymbolName.h"
 

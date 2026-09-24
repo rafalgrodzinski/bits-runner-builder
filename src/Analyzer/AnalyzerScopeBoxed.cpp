@@ -1,4 +1,5 @@
 #include "AnalyzerScopeBoxed.h"
+
 #include "AnalyzerScope.h"
 
 using namespace std;

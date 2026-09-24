@@ -2,6 +2,7 @@
 #define STATEMENT_TYPE_H
 
 #include <format>
+
 #include "Statement.h"
 
 class StatementBlobDeclaration;

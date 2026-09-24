@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <vector>
+
 #include "ValueType.h"
 
 class SymbolName;

@@ -1,9 +1,9 @@
 #include "Analyzer.h"
 
-#include "Error.h"
-#include "Logger.h"
 #include "AnalyzerScope.h"
 #include "AnalyzerScopeBlob.h"
+#include "Error.h"
+#include "Logger.h"
 #include "Module/Module.h"
 
 #include "Parser/Expression/Expression.h"

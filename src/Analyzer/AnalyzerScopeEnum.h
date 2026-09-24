@@ -7,9 +7,9 @@
 #include <stack>
 #include <string>
 #include <vector>
-#include "Parser/SymbolName.h"
 
 class AnalyzerScope;
+class SymbolName;
 class ValueType;
 
 class AnalyzerScopeEnum {

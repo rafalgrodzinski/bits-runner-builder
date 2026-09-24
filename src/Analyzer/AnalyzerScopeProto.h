@@ -4,10 +4,11 @@
 #include <map>
 #include <optional>
 #include <vector>
-#include "Parser/SymbolName.h"
 
 class AnalyzerScope;
+class SymbolName;
 class ValueType;
+
 enum class AnalyzerScopeState;
 
 class AnalyzerScopeProto {

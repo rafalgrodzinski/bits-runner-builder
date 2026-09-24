@@ -16,11 +16,10 @@
 #include <llvm/Support/Error.h>
 #include <llvm/Target/TargetMachine.h>
 
-#include "Scope.h"
-
 class Error;
 class Location;
 class Module;
+class Scope;
 class ValueType;
 class WrappedValue;
 

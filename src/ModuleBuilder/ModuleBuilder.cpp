@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "Logger.h"
 #include "Module/Module.h"
+#include "Scope.h"
 #include "WrappedValue.h"
 
 #include "Parser/Statement/StatementAssignment.h"

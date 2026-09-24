@@ -2,6 +2,7 @@
 #define VALUE_TYPE_BOXED_H
 
 #include <optional>
+
 #include "ValueType.h"
 
 class ValueTypeBoxed: public ValueType {

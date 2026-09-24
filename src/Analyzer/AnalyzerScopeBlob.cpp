@@ -1,4 +1,5 @@
 #include "AnalyzerScopeBlob.h"
+
 #include "AnalyzerScope.h"
 #include "Parser/ValueType/ValueType.h"
 

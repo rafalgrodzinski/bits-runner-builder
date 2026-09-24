@@ -8,6 +8,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+
 #include "AnalyzerScopeBlob.h"
 #include "AnalyzerScopeBoxed.h"
 #include "AnalyzerScopeEnum.h"
