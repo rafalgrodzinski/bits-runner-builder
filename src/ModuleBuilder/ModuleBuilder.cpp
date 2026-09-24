@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "Logger.h"
 #include "Module/Module.h"
+#include "Scope.h"
 #include "WrappedValue.h"
 
 #include "Parser/Statement/StatementAssignment.h"
@@ -46,6 +47,10 @@
 #include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
+
+using namespace std;
+
+// MARK: - Public
 
 ModuleBuilder::ModuleBuilder(
     const string &defaultModuleName,
@@ -113,8 +118,6 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
     );
 }
 
-/// Public ///
-
 shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
     scope = make_shared<Scope>();
 
@@ -156,11 +159,10 @@ shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
     return llvmModule;
 }
 
-/// Private ///
+// MARK: - Private
 
-//
 // Statements
-//
+
 void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel importLevel) {
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
@@ -1148,9 +1150,9 @@ llvm::AllocaInst *ModuleBuilder::buildAlloca(llvm::Type *type, const string &ide
     return alloca;
 }
 
-//
+
 // Expressions
-//
+
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Expression> expression) {
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
@@ -2457,9 +2459,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForTypeBuiltIn(llvm::Type *t
     return nullptr;
 }
 
-//
+
 // Support
-//
+
 llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType, bool shouldUnbox) {
     if (valueType == nullptr) {
         markErrorInvalidType(valueType->getLocation());

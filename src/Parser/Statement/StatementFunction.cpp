@@ -6,6 +6,10 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypeFun.h"
 
+using namespace std;
+
+// MARK: - Public
+
 StatementFunction::StatementFunction(
     bool shouldExport,
     const string &name,

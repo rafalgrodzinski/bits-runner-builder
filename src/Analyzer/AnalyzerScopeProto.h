@@ -4,26 +4,27 @@
 #include <map>
 #include <optional>
 #include <vector>
-#include "Parser/SymbolName.h"
 
 class AnalyzerScope;
+class SymbolName;
 class ValueType;
+
 enum class AnalyzerScopeState;
 
 class AnalyzerScopeProto {
 public:
     typedef struct {
-        map<SymbolName, AnalyzerScopeState> statesMap;
-        map<SymbolName, vector<pair<string, shared_ptr<ValueType>>>> fieldsMap;
+        std::map<SymbolName, AnalyzerScopeState> statesMap;
+        std::map<SymbolName, std::vector<std::pair<std::string, std::shared_ptr<ValueType>>>> fieldsMap;
     } ScopeLevel;
 
     AnalyzerScopeProto(AnalyzerScope *parent);
 
-    void registerDeclaration(shared_ptr<SymbolName> symbolName);
-    AnalyzerScopeState getState(shared_ptr<SymbolName> symbolName);
+    void registerDeclaration(std::shared_ptr<SymbolName> symbolName);
+    AnalyzerScopeState getState(std::shared_ptr<SymbolName> symbolName);
 
-    void registerFields(shared_ptr<SymbolName> symbolName, const vector<pair<string, shared_ptr<ValueType>>> &fields);
-    optional<vector<pair<string, shared_ptr<ValueType>>>> getFields(shared_ptr<SymbolName> symbolName) const;
+    void registerFields(std::shared_ptr<SymbolName> symbolName, const std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> &fields);
+    std::optional<std::vector<std::pair<std::string, std::shared_ptr<ValueType>>>> getFields(std::shared_ptr<SymbolName> symbolName) const;
 
 private:
     AnalyzerScope *parent;

@@ -12,45 +12,43 @@ class Expression;
 class Statement;
 class ValueType;
 
-using namespace std;
-
 class ModulesStore {
+public:
+    ModulesStore(const std::string &defaultModuleName);
+
+    void appendStatements(std::vector<std::shared_ptr<Statement>> statements);
+    std::vector<std::shared_ptr<Module>> getModules();
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> getExportedHeaderStatementsMap();
+
 private:
-    string defaultModuleName;
-    vector<string> moduleNames;
+    std::string defaultModuleName;
+    std::vector<std::string> moduleNames;
 
     // header
-    map<string, vector<shared_ptr<Statement>>> importStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> externStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> enumStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> protoDeclarationStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> protoStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> blobDeclarationStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> blobStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> statementVariablesMap;
-    map<string, vector<shared_ptr<Statement>>> statementFunctionDeclarationsMap;
-    map<string, vector<shared_ptr<Statement>>> rawFunctionStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> importStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> externStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> enumStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> protoDeclarationStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> protoStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> blobDeclarationStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> blobStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> statementVariablesMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> statementFunctionDeclarationsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> rawFunctionStatementsMap;
     // body
-    map<string, vector<shared_ptr<Statement>>> bodyStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> bodyStatementsMap;
     // exported
-    map<string, vector<shared_ptr<Statement>>> exportedEnumStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedProtoDeclarationStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedProtoStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedBlobStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedVariableDeclarationStatementsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedStatementFunctionDeclarationsMap;
-    map<string, vector<shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedEnumStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedProtoDeclarationStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedProtoStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedBlobStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedVariableDeclarationStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedStatementFunctionDeclarationsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
 
-    void setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot = false);
-    void setModuleName(shared_ptr<Expression> expression, const string &moduleName);
-
-public:
-    ModulesStore(const string &defaultModuleName);
-
-    void appendStatements(vector<shared_ptr<Statement>> statements);
-    vector<shared_ptr<Module>> getModules();
-    map<string, vector<shared_ptr<Statement>>> getExportedHeaderStatementsMap();
+    void setModuleName(std::shared_ptr<Statement> statement, const std::string &moduleName, bool isRoot = false);
+    void setModuleName(std::shared_ptr<Expression> expression, const std::string &moduleName);
 };
 
 #endif

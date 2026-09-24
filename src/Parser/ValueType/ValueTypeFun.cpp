@@ -1,5 +1,10 @@
 #include "ValueTypeFun.h"
+
 #include "Parser/SymbolName.h"
+
+using namespace std;
+
+// MARK: - Public
 
 ValueTypeFun::ValueTypeFun(
     const vector<shared_ptr<ValueType>> &argumentValueTypes,

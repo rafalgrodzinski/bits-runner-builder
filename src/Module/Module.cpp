@@ -1,5 +1,9 @@
 #include "Module.h"
 
+using namespace std;
+
+// MARK: - Public
+
 Module:: Module(const string &name, const vector<shared_ptr<Statement>> &headerStatements, const vector<shared_ptr<Statement>> &bodyStatements):
 name(name), headerStatements(headerStatements), bodyStatements(bodyStatements) { }
 

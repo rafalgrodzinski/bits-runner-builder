@@ -11,17 +11,17 @@ enum class ExpressionUnaryOperation {
 };
 
 class ExpressionUnary: public Expression {
-private:
-    ExpressionUnaryOperation operation;
-    shared_ptr<Expression> subExpression;
-
 public:
-    static shared_ptr<ExpressionUnary> expression(shared_ptr<Token> token, shared_ptr<Expression> subExpression);
+    static std::shared_ptr<ExpressionUnary> expression(std::shared_ptr<Token> token, std::shared_ptr<Expression> subExpression);
 
-    ExpressionUnary(shared_ptr<Location> location);
+    ExpressionUnary(std::shared_ptr<Location> location);
 
     ExpressionUnaryOperation getOperation() const;
-    shared_ptr<Expression> getSubExpression() const;
+    std::shared_ptr<Expression> getSubExpression() const;
+
+private:
+    ExpressionUnaryOperation operation;
+    std::shared_ptr<Expression> subExpression;
 };
 
 #endif

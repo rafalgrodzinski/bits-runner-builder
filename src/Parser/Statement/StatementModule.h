@@ -4,13 +4,13 @@
 #include "Statement.h"
 
 class StatementModule: public Statement {
-private:
-    string name;
-
 public:
-    StatementModule(const string &name, shared_ptr<Location> location);
+    StatementModule(const std::string &name, std::shared_ptr<Location> location);
 
-    string getName() const;
+    std::string getName() const;
+
+private:
+    std::string name;
 };
 
 #endif

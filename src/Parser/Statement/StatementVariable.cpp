@@ -2,6 +2,10 @@
 
 #include "Parser/Expression/Expression.h"
 
+using namespace std;
+
+// MARK: - Public
+
 StatementVariable::StatementVariable(
     bool shouldExport,
     const string &identifier,

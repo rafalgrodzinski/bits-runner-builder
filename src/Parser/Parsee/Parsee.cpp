@@ -1,6 +1,8 @@
 #include "Parsee.h"
 
-Parsee::Parsee() { }
+using namespace std;
+
+// MARK: - Public
 
 Parsee Parsee::debug(const string &debugMessage) {
     Parsee parsee;
@@ -171,3 +173,6 @@ bool Parsee::getShouldReturn() const {
 string Parsee::getDebugMessage() const {
     return debugMessage;
 }
+
+// MARK: - Private
+Parsee::Parsee() { }

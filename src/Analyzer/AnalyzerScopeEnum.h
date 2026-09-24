@@ -7,27 +7,25 @@
 #include <stack>
 #include <string>
 #include <vector>
-#include "Parser/SymbolName.h"
 
 class AnalyzerScope;
+class SymbolName;
 class ValueType;
-
-using namespace std;
 
 class AnalyzerScopeEnum {
 public:
     typedef struct {
-        map<SymbolName, optional<vector<string>>> namedValueTypeKeys;
-        map<SymbolName, shared_ptr<ValueType>> payloadValueType;
+        std::map<SymbolName, std::optional<std::vector<std::string>>> namedValueTypeKeys;
+        std::map<SymbolName, std::shared_ptr<ValueType>> payloadValueType;
     } ScopeLevel;
 
     AnalyzerScopeEnum(AnalyzerScope *parent);
 
-    optional<vector<string>> getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName);
-    void registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys);
+    std::optional<std::vector<std::string>> getNamedValueTypeKeys(std::shared_ptr<SymbolName> symbolName);
+    void registerNamedValueTypeKeys(std::shared_ptr<SymbolName> symbolName, const std::vector<std::string> &namedValueTypeKeys);
 
-    shared_ptr<ValueType> getPayloadValueType(shared_ptr<SymbolName> symbolName);
-    void registerPayloadValueType(shared_ptr<SymbolName> symbolName, shared_ptr<ValueType> payloadValueType);
+    std::shared_ptr<ValueType> getPayloadValueType(std::shared_ptr<SymbolName> symbolName);
+    void registerPayloadValueType(std::shared_ptr<SymbolName> symbolName, std::shared_ptr<ValueType> payloadValueType);
 
 private:
     AnalyzerScope *parent;

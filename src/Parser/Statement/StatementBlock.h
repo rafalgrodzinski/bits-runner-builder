@@ -6,13 +6,13 @@
 class StatementExpression;
 
 class StatementBlock: public Statement {
-private:
-    vector<shared_ptr<Statement>> statements;
-
 public:
-    StatementBlock(const vector<shared_ptr<Statement>> &statements, shared_ptr<Location> location);
+    StatementBlock(const std::vector<std::shared_ptr<Statement>> &statements, std::shared_ptr<Location> location);
 
-    vector<shared_ptr<Statement>> getStatements() const;
+    std::vector<std::shared_ptr<Statement>> getStatements() const;
+
+private:
+    std::vector<std::shared_ptr<Statement>> statements;
 };
 
 #endif

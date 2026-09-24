@@ -1,5 +1,9 @@
 #include "ValueTypeEnum.h"
 
+using namespace std;
+
+// MARK: - Public
+
 ValueTypeEnum::ValueTypeEnum(
     const string &name,
     const vector<shared_ptr<ValueType>> &namedValueTypes,

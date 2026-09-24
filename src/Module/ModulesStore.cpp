@@ -37,209 +37,12 @@
 
 #include "Parser/ValueType/ValueType.h"
 
+using namespace std;
+
+// MARK: - Public
+
 ModulesStore::ModulesStore(const string &defaultModuleName):
 defaultModuleName(defaultModuleName) { }
-
-/// Private ///
-
-void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot) {
-    if (statement == nullptr)
-        return;
-
-    switch (statement->getKind()) {
-        case StatementKind::ASSIGNMENT: {
-            shared_ptr<StatementAssignment> statementAssignment = dynamic_pointer_cast<StatementAssignment>(statement);
-            setModuleName(statementAssignment->getExpressionChained(), moduleName);
-            setModuleName(statementAssignment->getValueExpression(), moduleName);
-            break;
-        }
-        case StatementKind::BLOB: {
-            shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
-            statementBlob->setModuleName(moduleName);
-            // statement variable declarations
-            for (shared_ptr<Statement> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
-                setModuleName(statementVariableDeclaration, moduleName);
-            }
-            // statement functions
-            for (shared_ptr<Statement> statementFunction : statementBlob->getStatementFunctions()) {
-                setModuleName(statementFunction, moduleName);
-            }
-            break;
-        }
-        case StatementKind::BLOCK: {
-            shared_ptr<StatementBlock> statementBlock = dynamic_pointer_cast<StatementBlock>(statement);
-            for (shared_ptr<Statement> blockStatement : statementBlock->getStatements()) {
-                setModuleName(blockStatement, moduleName);
-            }
-            break;
-        }
-        case StatementKind::ENUM: {
-            shared_ptr<StatementEnum> statementEnum = dynamic_pointer_cast<StatementEnum>(statement);
-            statementEnum->setModuleName(moduleName);
-            break;
-        }
-        case StatementKind::EXPRESSION: {
-            shared_ptr<StatementExpression> statementExpression = dynamic_pointer_cast<StatementExpression>(statement);
-            setModuleName(statementExpression->getExpression(), moduleName);
-            break;
-        }
-        case StatementKind::FUNCTION: {
-            shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
-            statementFunction->setModuleName(moduleName);
-            // arguments
-            for (const pair<string, shared_ptr<ValueType>> &argumentPair : statementFunction->getArguments()) {
-                argumentPair.second->setModuleName(moduleName);
-            }
-            // return
-            statementFunction->getReturnValueType()->setModuleName(moduleName);
-            // body
-            setModuleName(statementFunction->getStatementBlock(), moduleName);
-            break;
-        }
-        case StatementKind::FUNCTION_DECLARATION: {
-            shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
-            statementFunctionDeclaration->setModuleName(moduleName);
-            break;
-        }
-        case StatementKind::META_EXTERN_FUNCTION: {
-            shared_ptr<StatementMetaExternFunction> statementMetaExternFunction = dynamic_pointer_cast<StatementMetaExternFunction>(statement);
-            statementMetaExternFunction->setModuleName(moduleName);
-            // arguments
-            for (const pair<string, shared_ptr<ValueType>> &argumentPair : statementMetaExternFunction->getArguments()) {
-                argumentPair.second->setModuleName(moduleName);
-            }
-            // return
-            statementMetaExternFunction->getReturnValueType()->setModuleName(moduleName);
-            break;
-        }
-        case StatementKind::META_EXTERN_VARIABLE: {
-            shared_ptr<StatementMetaExternVariable> statementMetaExternVariable = dynamic_pointer_cast<StatementMetaExternVariable>(statement);
-            statementMetaExternVariable->setModuleName(moduleName);
-            break;
-        }
-        case StatementKind::PROTO: {
-            shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
-            statementProto->setModuleName(moduleName);
-            // statement variable declarations
-            for (shared_ptr<Statement> statementVariableDeclaration : statementProto->getStatementVariableDeclarations())
-                setModuleName(statementVariableDeclaration, moduleName);
-            // statement function declarations
-            for (shared_ptr<Statement> statementFunctionDeclaration : statementProto->getStatementFunctionDeclarations())
-                setModuleName(statementFunctionDeclaration, moduleName);
-            break;
-        }
-        case StatementKind::RAW_FUNCTION: {
-            shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(statement);
-            statementRawFunction->setModuleName(moduleName);
-            break;
-        }
-        case StatementKind::REPEAT: {
-            shared_ptr<StatementRepeat> statementRepeat = dynamic_pointer_cast<StatementRepeat>(statement);
-            setModuleName(statementRepeat->getInitStatement(), moduleName);
-            setModuleName(statementRepeat->getBodyBlockStatement(), moduleName);
-            setModuleName(statementRepeat->getPostStatement(), moduleName);
-            setModuleName(statementRepeat->getPreConditionExpression(), moduleName);
-            setModuleName(statementRepeat->getPostConditionExpression(), moduleName);
-            break;
-        }
-        case StatementKind::RETURN: {
-            shared_ptr<StatementReturn> statementReturn = dynamic_pointer_cast<StatementReturn>(statement);
-            setModuleName(statementReturn->getExpression(), moduleName);
-            break;
-        }
-        case StatementKind::VARIABLE: {
-            shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
-            statementVariable->setIsRoot(isRoot);
-            statementVariable->setModuleName(moduleName);
-            statementVariable->getValueType()->setModuleName(moduleName);
-            setModuleName(statementVariable->getExpression(), moduleName);
-            break;
-        }
-        case StatementKind::VARIABLE_DECLARATION: {
-            shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
-            statementVariableDeclaration->setModuleName(moduleName);
-            statementVariableDeclaration->getValueType()->setModuleName(moduleName);
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string &moduleName) {
-    if (expression == nullptr)
-        return;
-
-    switch (expression->getKind()) {
-        case ExpressionKind::BINARY: {
-            shared_ptr<ExpressionBinary> expressionBinary = dynamic_pointer_cast<ExpressionBinary>(expression);
-            setModuleName(expressionBinary->getLeft(), moduleName);
-            setModuleName(expressionBinary->getRight(), moduleName);
-            break;
-        }
-        case ExpressionKind::BLOCK: {
-            shared_ptr<ExpressionBlock> expressionBlock = dynamic_pointer_cast<ExpressionBlock>(expression);
-            setModuleName(expressionBlock->getStatementBlock(), moduleName);
-            setModuleName(expressionBlock->getResultStatementExpression(), moduleName);
-            break;
-        }
-        case ExpressionKind::CALL: {
-            shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
-            for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
-                setModuleName(argumentExpression, moduleName);
-            }
-            break;
-        }
-        case ExpressionKind::CAST: {
-            shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(expression);
-            expressionCast->getValueType()->setModuleName(moduleName);
-            break;
-        }
-        case ExpressionKind::CHAINED: {
-            shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(expression);
-            for (shared_ptr<Expression> expression : expressionChained->getChainExpressions()) {
-                setModuleName(expression, moduleName);
-            }
-            break;
-        }
-        case ExpressionKind::COMPOSITE_LITERAL: {
-            shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
-            for (shared_ptr<Expression> expression : expressionCompositeLiteral->getExpressions()) {
-                setModuleName(expression, moduleName);
-            }
-            break;
-        }
-        case ExpressionKind::GROUPING: {
-            shared_ptr<ExpressionGrouping> expressionGrouping = dynamic_pointer_cast<ExpressionGrouping>(expression);
-            setModuleName(expressionGrouping->getSubExpression(), moduleName);
-            break;
-        }
-        case ExpressionKind::IF_ELSE: {
-            shared_ptr<ExpressionIfElse> expressionIfElse = dynamic_pointer_cast<ExpressionIfElse>(expression);
-            setModuleName(expressionIfElse->getConditionExpression(), moduleName);
-            setModuleName(expressionIfElse->getThenExpression(), moduleName);
-            setModuleName(expressionIfElse->getElseExpression(), moduleName);
-            break;
-        }
-        case ExpressionKind::UNARY: {
-            shared_ptr<ExpressionUnary> expressionUnary = dynamic_pointer_cast<ExpressionUnary>(expression);
-            setModuleName(expressionUnary->getSubExpression(), moduleName);
-            break;
-        }
-        case ExpressionKind::VALUE: {
-            shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(expression);
-            if (expressionValue->getValueType() != nullptr)
-                expressionValue->getValueType()->setModuleName(moduleName);
-            if (expressionValue->getIndexExpression() != nullptr)
-                setModuleName(expressionValue->getIndexExpression(), moduleName);
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-/// Public ///
 
 void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;
@@ -627,4 +430,203 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
     }
 
     return statementsMap;
+}
+
+// MARK: - Private
+
+void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot) {
+    if (statement == nullptr)
+        return;
+
+    switch (statement->getKind()) {
+        case StatementKind::ASSIGNMENT: {
+            shared_ptr<StatementAssignment> statementAssignment = dynamic_pointer_cast<StatementAssignment>(statement);
+            setModuleName(statementAssignment->getExpressionChained(), moduleName);
+            setModuleName(statementAssignment->getValueExpression(), moduleName);
+            break;
+        }
+        case StatementKind::BLOB: {
+            shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
+            statementBlob->setModuleName(moduleName);
+            // statement variable declarations
+            for (shared_ptr<Statement> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
+                setModuleName(statementVariableDeclaration, moduleName);
+            }
+            // statement functions
+            for (shared_ptr<Statement> statementFunction : statementBlob->getStatementFunctions()) {
+                setModuleName(statementFunction, moduleName);
+            }
+            break;
+        }
+        case StatementKind::BLOCK: {
+            shared_ptr<StatementBlock> statementBlock = dynamic_pointer_cast<StatementBlock>(statement);
+            for (shared_ptr<Statement> blockStatement : statementBlock->getStatements()) {
+                setModuleName(blockStatement, moduleName);
+            }
+            break;
+        }
+        case StatementKind::ENUM: {
+            shared_ptr<StatementEnum> statementEnum = dynamic_pointer_cast<StatementEnum>(statement);
+            statementEnum->setModuleName(moduleName);
+            break;
+        }
+        case StatementKind::EXPRESSION: {
+            shared_ptr<StatementExpression> statementExpression = dynamic_pointer_cast<StatementExpression>(statement);
+            setModuleName(statementExpression->getExpression(), moduleName);
+            break;
+        }
+        case StatementKind::FUNCTION: {
+            shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
+            statementFunction->setModuleName(moduleName);
+            // arguments
+            for (const pair<string, shared_ptr<ValueType>> &argumentPair : statementFunction->getArguments()) {
+                argumentPair.second->setModuleName(moduleName);
+            }
+            // return
+            statementFunction->getReturnValueType()->setModuleName(moduleName);
+            // body
+            setModuleName(statementFunction->getStatementBlock(), moduleName);
+            break;
+        }
+        case StatementKind::FUNCTION_DECLARATION: {
+            shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(statement);
+            statementFunctionDeclaration->setModuleName(moduleName);
+            break;
+        }
+        case StatementKind::META_EXTERN_FUNCTION: {
+            shared_ptr<StatementMetaExternFunction> statementMetaExternFunction = dynamic_pointer_cast<StatementMetaExternFunction>(statement);
+            statementMetaExternFunction->setModuleName(moduleName);
+            // arguments
+            for (const pair<string, shared_ptr<ValueType>> &argumentPair : statementMetaExternFunction->getArguments()) {
+                argumentPair.second->setModuleName(moduleName);
+            }
+            // return
+            statementMetaExternFunction->getReturnValueType()->setModuleName(moduleName);
+            break;
+        }
+        case StatementKind::META_EXTERN_VARIABLE: {
+            shared_ptr<StatementMetaExternVariable> statementMetaExternVariable = dynamic_pointer_cast<StatementMetaExternVariable>(statement);
+            statementMetaExternVariable->setModuleName(moduleName);
+            break;
+        }
+        case StatementKind::PROTO: {
+            shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
+            statementProto->setModuleName(moduleName);
+            // statement variable declarations
+            for (shared_ptr<Statement> statementVariableDeclaration : statementProto->getStatementVariableDeclarations())
+                setModuleName(statementVariableDeclaration, moduleName);
+            // statement function declarations
+            for (shared_ptr<Statement> statementFunctionDeclaration : statementProto->getStatementFunctionDeclarations())
+                setModuleName(statementFunctionDeclaration, moduleName);
+            break;
+        }
+        case StatementKind::RAW_FUNCTION: {
+            shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(statement);
+            statementRawFunction->setModuleName(moduleName);
+            break;
+        }
+        case StatementKind::REPEAT: {
+            shared_ptr<StatementRepeat> statementRepeat = dynamic_pointer_cast<StatementRepeat>(statement);
+            setModuleName(statementRepeat->getInitStatement(), moduleName);
+            setModuleName(statementRepeat->getBodyBlockStatement(), moduleName);
+            setModuleName(statementRepeat->getPostStatement(), moduleName);
+            setModuleName(statementRepeat->getPreConditionExpression(), moduleName);
+            setModuleName(statementRepeat->getPostConditionExpression(), moduleName);
+            break;
+        }
+        case StatementKind::RETURN: {
+            shared_ptr<StatementReturn> statementReturn = dynamic_pointer_cast<StatementReturn>(statement);
+            setModuleName(statementReturn->getExpression(), moduleName);
+            break;
+        }
+        case StatementKind::VARIABLE: {
+            shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
+            statementVariable->setIsRoot(isRoot);
+            statementVariable->setModuleName(moduleName);
+            statementVariable->getValueType()->setModuleName(moduleName);
+            setModuleName(statementVariable->getExpression(), moduleName);
+            break;
+        }
+        case StatementKind::VARIABLE_DECLARATION: {
+            shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(statement);
+            statementVariableDeclaration->setModuleName(moduleName);
+            statementVariableDeclaration->getValueType()->setModuleName(moduleName);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string &moduleName) {
+    if (expression == nullptr)
+        return;
+
+    switch (expression->getKind()) {
+        case ExpressionKind::BINARY: {
+            shared_ptr<ExpressionBinary> expressionBinary = dynamic_pointer_cast<ExpressionBinary>(expression);
+            setModuleName(expressionBinary->getLeft(), moduleName);
+            setModuleName(expressionBinary->getRight(), moduleName);
+            break;
+        }
+        case ExpressionKind::BLOCK: {
+            shared_ptr<ExpressionBlock> expressionBlock = dynamic_pointer_cast<ExpressionBlock>(expression);
+            setModuleName(expressionBlock->getStatementBlock(), moduleName);
+            setModuleName(expressionBlock->getResultStatementExpression(), moduleName);
+            break;
+        }
+        case ExpressionKind::CALL: {
+            shared_ptr<ExpressionCall> expressionCall = dynamic_pointer_cast<ExpressionCall>(expression);
+            for (shared_ptr<Expression> argumentExpression : expressionCall->getArgumentExpressions()) {
+                setModuleName(argumentExpression, moduleName);
+            }
+            break;
+        }
+        case ExpressionKind::CAST: {
+            shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(expression);
+            expressionCast->getValueType()->setModuleName(moduleName);
+            break;
+        }
+        case ExpressionKind::CHAINED: {
+            shared_ptr<ExpressionChained> expressionChained = dynamic_pointer_cast<ExpressionChained>(expression);
+            for (shared_ptr<Expression> expression : expressionChained->getChainExpressions()) {
+                setModuleName(expression, moduleName);
+            }
+            break;
+        }
+        case ExpressionKind::COMPOSITE_LITERAL: {
+            shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(expression);
+            for (shared_ptr<Expression> expression : expressionCompositeLiteral->getExpressions()) {
+                setModuleName(expression, moduleName);
+            }
+            break;
+        }
+        case ExpressionKind::GROUPING: {
+            shared_ptr<ExpressionGrouping> expressionGrouping = dynamic_pointer_cast<ExpressionGrouping>(expression);
+            setModuleName(expressionGrouping->getSubExpression(), moduleName);
+            break;
+        }
+        case ExpressionKind::IF_ELSE: {
+            shared_ptr<ExpressionIfElse> expressionIfElse = dynamic_pointer_cast<ExpressionIfElse>(expression);
+            setModuleName(expressionIfElse->getConditionExpression(), moduleName);
+            setModuleName(expressionIfElse->getThenExpression(), moduleName);
+            setModuleName(expressionIfElse->getElseExpression(), moduleName);
+            break;
+        }
+        case ExpressionKind::UNARY: {
+            shared_ptr<ExpressionUnary> expressionUnary = dynamic_pointer_cast<ExpressionUnary>(expression);
+            setModuleName(expressionUnary->getSubExpression(), moduleName);
+            break;
+        }
+        case ExpressionKind::VALUE: {
+            shared_ptr<ExpressionValue> expressionValue = dynamic_pointer_cast<ExpressionValue>(expression);
+            if (expressionValue->getValueType() != nullptr)
+                expressionValue->getValueType()->setModuleName(moduleName);
+            if (expressionValue->getIndexExpression() != nullptr)
+                setModuleName(expressionValue->getIndexExpression(), moduleName);
+            break;
+        }
+        default:
+            break;
+    }
 }

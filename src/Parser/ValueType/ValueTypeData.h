@@ -8,21 +8,21 @@ class Expression;
 class ValueTypeData: public ValueType {
 public:
     ValueTypeData(
-        shared_ptr<ValueType> elementValueType,
-        shared_ptr<Expression> countExpression,
-        shared_ptr<Location> location
+        std::shared_ptr<ValueType> elementValueType,
+        std::shared_ptr<Expression> countExpression,
+        std::shared_ptr<Location> location
     );
 
-    shared_ptr<ValueType> getElementValueType() const;
-    shared_ptr<Expression> getCountExpression() const;
+    std::shared_ptr<ValueType> getElementValueType() const;
+    std::shared_ptr<Expression> getCountExpression() const;
 
-    void setModuleName(const string &moduleName) override;
-    bool isEqual(shared_ptr<ValueType> other) const override;
-    shared_ptr<ValueType> clone() const override;
+    void setModuleName(const std::string &moduleName) override;
+    bool isEqual(std::shared_ptr<ValueType> other) const override;
+    std::shared_ptr<ValueType> clone() const override;
 
 private:
-    shared_ptr<ValueType> elementValueType;
-    shared_ptr<Expression> countExpression;
+    std::shared_ptr<ValueType> elementValueType;
+    std::shared_ptr<Expression> countExpression;
 };
 
 #endif

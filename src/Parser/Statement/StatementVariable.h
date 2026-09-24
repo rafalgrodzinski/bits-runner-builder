@@ -12,34 +12,34 @@ class ValueType;
 class StatementVariable: public Statement {
 friend class Analyzer;
 
-private:
-    bool shouldExport;
-    string identifier;
-    string moduleName;
-    bool isRoot;
-    shared_ptr<ValueType> valueType;
-    shared_ptr<Expression> expression;
-
 public:
     StatementVariable(
         bool shouldExport,
-        const string &identifier,
-        shared_ptr<ValueType> valueType,
-        shared_ptr<Expression> expression,
-        shared_ptr<Location> location
+        const std::string &identifier,
+        std::shared_ptr<ValueType> valueType,
+        std::shared_ptr<Expression> expression,
+        std::shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
-    string getIdentifier() const;
-    string getGlobalIdentifier() const;
-    string getModuleName() const;
-    void setModuleName(const string &moduleName);
+    std::string getIdentifier() const;
+    std::string getGlobalIdentifier() const;
+    std::string getModuleName() const;
+    void setModuleName(const std::string &moduleName);
     bool getIsRoot() const;
     void setIsRoot(bool isRoot);
-    shared_ptr<ValueType> getValueType() const;
-    shared_ptr<Expression> getExpression() const;
+    std::shared_ptr<ValueType> getValueType() const;
+    std::shared_ptr<Expression> getExpression() const;
 
-    shared_ptr<StatementVariableDeclaration> getDeclaration() const;
+    std::shared_ptr<StatementVariableDeclaration> getDeclaration() const;
+
+private:
+    bool shouldExport;
+    std::string identifier;
+    std::string moduleName;
+    bool isRoot;
+    std::shared_ptr<ValueType> valueType;
+    std::shared_ptr<Expression> expression;
 };
 
 #endif

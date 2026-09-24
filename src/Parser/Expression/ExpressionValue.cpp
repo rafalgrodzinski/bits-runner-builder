@@ -1,5 +1,9 @@
 #include "ExpressionValue.h"
 
+using namespace std;
+
+// MARK: - Public
+
 shared_ptr<ExpressionValue> ExpressionValue::simple(const string &identifier, shared_ptr<Location> location) {
     shared_ptr<ExpressionValue> expression = make_shared<ExpressionValue>(identifier, location);
     expression->valueKind = ExpressionValueKind::SIMPLE;

@@ -9,17 +9,17 @@ class StatementBlobDeclaration: public Statement {
 public:
     StatementBlobDeclaration(
         bool shouldExport,
-        shared_ptr<SymbolName> symbolName,
-        shared_ptr<Location> location
+        std::shared_ptr<SymbolName> symbolName,
+        std::shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
-    shared_ptr<SymbolName> getSymbolName() const;
-    shared_ptr<SymbolName> getPackedSymbolName() const;
+    std::shared_ptr<SymbolName> getSymbolName() const;
+    std::shared_ptr<SymbolName> getPackedSymbolName() const;
 
 private:
     bool shouldExport;
-    shared_ptr<SymbolName> symbolName;
+    std::shared_ptr<SymbolName> symbolName;
 };
 
 #endif

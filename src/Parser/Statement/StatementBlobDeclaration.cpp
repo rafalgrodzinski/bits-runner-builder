@@ -1,5 +1,10 @@
 #include "StatementBlobDeclaration.h"
+
 #include "Parser/SymbolName.h"
+
+using namespace std;
+
+// MARK: - Public
 
 StatementBlobDeclaration::StatementBlobDeclaration(
     bool shouldExport,

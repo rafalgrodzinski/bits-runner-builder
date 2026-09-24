@@ -1,6 +1,11 @@
 #include "AnalyzerScope.h"
+
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/SymbolName.h"
+
+using namespace std;
+
+// MARK: - Public
 
 AnalyzerScope::AnalyzerScope() {
     blobScope = make_shared<AnalyzerScopeBlob>(this);

@@ -23,23 +23,23 @@ class ExpressionValue: public Expression {
 friend class Analyzer;
 
 public:
-    static shared_ptr<ExpressionValue> data(const string &identifier, shared_ptr<Expression> indexExpression, shared_ptr<Location> location);
-    static shared_ptr<ExpressionValue> enumeration(const string &name, shared_ptr<Location> location);
-    static shared_ptr<ExpressionValue> simple(const string &identifer, shared_ptr<Location> location);
+    static std::shared_ptr<ExpressionValue> data(const std::string &identifier, std::shared_ptr<Expression> indexExpression, std::shared_ptr<Location> location);
+    static std::shared_ptr<ExpressionValue> enumeration(const std::string &name, std::shared_ptr<Location> location);
+    static std::shared_ptr<ExpressionValue> simple(const std::string &identifer, std::shared_ptr<Location> location);
 
-    ExpressionValue(const string &identifier, shared_ptr<Location> location);
+    ExpressionValue(const std::string &identifier, std::shared_ptr<Location> location);
 
     ExpressionValueKind getValueKind() const;
-    string getIdentifier() const;
-    string getModuleName() const;
-    void setModuleName(const string &moduleName);
-    shared_ptr<Expression> getIndexExpression() const;
+    std::string getIdentifier() const;
+    std::string getModuleName() const;
+    void setModuleName(const std::string &moduleName);
+    std::shared_ptr<Expression> getIndexExpression() const;
 
 private:
     ExpressionValueKind valueKind;
-    string identifier;
-    string moduleName;
-    shared_ptr<Expression> indexExpression;
+    std::string identifier;
+    std::string moduleName;
+    std::shared_ptr<Expression> indexExpression;
 };
 
 #endif

@@ -1,5 +1,9 @@
 #include "StatementEnum.h"
 
+using namespace std;
+
+// MARK: - Public
+
 StatementEnum::StatementEnum(
     bool shouldExport,
     const string &name,

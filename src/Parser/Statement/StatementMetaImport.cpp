@@ -1,5 +1,9 @@
 #include "StatementMetaImport.h"
 
+using namespace std;
+
+// MARK: - Public
+
 StatementMetaImport::StatementMetaImport(const string &name, shared_ptr<Location> location):
 Statement(StatementKind::META_IMPORT, location), name(name) { }
 

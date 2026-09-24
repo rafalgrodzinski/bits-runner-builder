@@ -3,6 +3,10 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType/ValueType.h"
 
+using namespace std;
+
+// MARK: - Public
+
 ExpressionUnary::ExpressionUnary(shared_ptr<Location> location):
 Expression(ExpressionKind::UNARY, nullptr, location) { }
 

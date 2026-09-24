@@ -1,7 +1,11 @@
 #include "Error.h"
 
-#include "Parser/ValueType/ValueType.h"
 #include "Lexer/Location.h"
+#include "Parser/ValueType/ValueType.h"
+
+using namespace std;
+
+// MARK: - Public
 
 shared_ptr<Error> Error::error(shared_ptr<Location> location, const string &message) {
     shared_ptr<Error> error = make_shared<Error>();

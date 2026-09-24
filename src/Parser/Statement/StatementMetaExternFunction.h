@@ -9,31 +9,31 @@ class ValueType;
 class ValueTypeFun;
 
 class StatementMetaExternFunction: public Statement {
-private:
-    string name;
-    string moduleName;
-    string symbolName;
-
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnValueType;
-
 public:
     StatementMetaExternFunction(
-        const string &name,
-        const vector<pair<string, shared_ptr<ValueType>>> &arguments,
-        shared_ptr<ValueType> returnValueType,
-        shared_ptr<Location> location
+        const std::string &name,
+        const std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> &arguments,
+        std::shared_ptr<ValueType> returnValueType,
+        std::shared_ptr<Location> location
     );
 
-    string getName() const;
-    string getGlobalName() const;
-    string getModuleName() const;
-    void setModuleName(const string &moduleName);
-    string getSymbolName() const;
+    std::string getName() const;
+    std::string getGlobalName() const;
+    std::string getModuleName() const;
+    void setModuleName(const std::string &moduleName);
+    std::string getSymbolName() const;
 
-    vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
-    shared_ptr<ValueType> getReturnValueType() const;
-    shared_ptr<ValueTypeFun> getValueType() const;
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> getArguments() const;
+    std::shared_ptr<ValueType> getReturnValueType() const;
+    std::shared_ptr<ValueTypeFun> getValueType() const;
+
+private:
+    std::string name;
+    std::string moduleName;
+    std::string symbolName;
+
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> arguments;
+    std::shared_ptr<ValueType> returnValueType;
 };
 
 #endif

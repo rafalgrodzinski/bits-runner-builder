@@ -1,5 +1,9 @@
 #include "ValueTypePtr.h"
 
+using namespace std;
+
+// MARK: - Public
+
 ValueTypePtr::ValueTypePtr(
     shared_ptr<ValueType> pointeeValueType,
     bool isVolatile,

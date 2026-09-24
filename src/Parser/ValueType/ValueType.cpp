@@ -1,4 +1,5 @@
 #include "ValueType.h"
+
 #include "ValueTypeBlob.h"
 #include "ValueTypeBoxed.h"
 #include "ValueTypeComposite.h"
@@ -9,6 +10,10 @@
 #include "ValueTypeProto.h"
 #include "ValueTypePtr.h"
 #include "ValueTypeSimple.h"
+
+using namespace std;
+
+// MARK: - Public
 
 ValueType::ValueType(ValueTypeKind kind, shared_ptr<Location> location):
 kind(kind), location(location) { }

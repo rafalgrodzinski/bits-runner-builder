@@ -3,6 +3,10 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType/ValueType.h"
 
+using namespace std;
+
+// MARK: - Public
+
 ParseeResult ParseeResult::tokenResult(shared_ptr<Token> token, int tag) {
     ParseeResult parseeResult;
     parseeResult.kind = ParseeResultKind::TOKEN;
@@ -48,8 +52,6 @@ ParseeResult ParseeResult::expressionResult(shared_ptr<Expression> expression, i
     return parseeResult;
 }
 
-ParseeResult::ParseeResult() { }
-
 ParseeResultKind ParseeResult::getKind() const {
     return kind;
 }
@@ -77,3 +79,7 @@ shared_ptr<Expression> ParseeResult::getExpression() const {
 int ParseeResult::getTokensCount() const {
     return tokensCount;
 }
+
+// MARK: - Private
+
+ParseeResult::ParseeResult() { }

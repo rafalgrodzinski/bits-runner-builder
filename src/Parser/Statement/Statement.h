@@ -8,8 +8,6 @@
 
 class Location;
 
-using namespace std;
-
 enum class StatementKind {
     ASSIGNMENT,
     BLOB,
@@ -33,16 +31,16 @@ enum class StatementKind {
 };
 
 class Statement {
-private:
-    StatementKind kind;
-    shared_ptr<Location> location;
-
 public:
-    Statement(StatementKind kind, shared_ptr<Location> location);
+    Statement(StatementKind kind, std::shared_ptr<Location> location);
     virtual ~Statement() { }
 
     StatementKind getKind() const;
-    shared_ptr<Location> getLocation() const;
+    std::shared_ptr<Location> getLocation() const;
+
+private:
+    StatementKind kind;
+    std::shared_ptr<Location> location;
 };
 
 #endif

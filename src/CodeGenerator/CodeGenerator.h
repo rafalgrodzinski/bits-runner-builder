@@ -11,8 +11,6 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/TargetParser/Host.h>
 
-using namespace std;
-
 class CodeGenerator {
 public:
     enum class RelocationModel {
@@ -55,18 +53,10 @@ public:
         IR
     };
 
-private:
-    string targetTriple;
-    string architecture;
-    llvm::TargetMachine *targetMachine;
-    llvm::DataLayout dataLayout;
-    llvm::CallingConv::ID callingConvention;
-    llvm::OptimizationLevel passOptimizationLevel;
-
 public:
     CodeGenerator(
-        const string &targetTripleOption,
-        const string &architectureOption,
+        const std::string &targetTripleOption,
+        const std::string &architectureOption,
         RelocationModel relocationModelOption,
         CodeModel codeModelOption,
         OptimizationLevel optimizationLevelOption,
@@ -74,10 +64,18 @@ public:
         unsigned int optionBits
     );
 
-    void generateObjectFile(shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose);
+    void generateObjectFile(std::shared_ptr<llvm::Module> module, OutputKind outputKind, bool isVerbose);
     llvm::Triple::ArchType getArchType() const;
     llvm::DataLayout getDataLayout() const;
     llvm::CallingConv::ID getCallingConvetion() const;
+
+private:
+    std::string targetTriple;
+    std::string architecture;
+    llvm::TargetMachine *targetMachine;
+    llvm::DataLayout dataLayout;
+    llvm::CallingConv::ID callingConvention;
+    llvm::OptimizationLevel passOptimizationLevel;
 };
 
 #endif

@@ -64,8 +64,6 @@ class ValueTypeProto;
 class ValueTypePtr;
 class ValueTypeSimple;
 
-using namespace std;
-
 enum class IndentKind {
     ROOT,
     EMPTY,
@@ -75,77 +73,77 @@ enum class IndentKind {
 };
 
 class Logger {
+public:
+    static void print(const std::vector<std::shared_ptr<Token>> &tokens);
+    static void print(std::shared_ptr<Module> module);
+    static void printExportedHeaderStatements(const std::map<std::string, std::vector<std::shared_ptr<Statement>>> &statmentsMap);
+    static void print(std::shared_ptr<Error> error);
+
+    static std::string toString(std::shared_ptr<Location> location);
+    static std::string toString(std::shared_ptr<ValueType> valueType);
+    static std::string toString(ExpressionUnaryOperation operationUnary);
+    static std::string toString(ExpressionBinaryOperation operationBinary);
+
 private:
     // lexer
-    static string toString(shared_ptr<Token> token); // kind and contents
+    static std::string toString(std::shared_ptr<Token> token); // kind and contents
 
     // parser statements
-    static string toString(shared_ptr<Statement> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementAssignment> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementBlob> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementBlobDeclaration> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementBlock> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementEnum> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementFunction> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementFunctionDeclaration> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementMetaExternFunction> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementMetaExternVariable> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementMetaImport> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementModule> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementProto> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementProtoDeclaration> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementRawFunction> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementRepeat> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementReturn> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementVariable> statement, vector<IndentKind> indents);
-    static string toString(shared_ptr<StatementVariableDeclaration> statement, vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<Statement> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementAssignment> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementBlob> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementBlobDeclaration> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementBlock> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementEnum> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementExpression> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementFunction> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementFunctionDeclaration> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementMetaExternFunction> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementMetaExternVariable> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementMetaImport> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementModule> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementProto> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementProtoDeclaration> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementRawFunction> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementRepeat> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementReturn> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementVariable> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementVariableDeclaration> statement, std::vector<IndentKind> indents);
 
     // parser expressions
-    static string toString(shared_ptr<Expression> expression, vector<IndentKind> indents, bool isInline);
-    static string toString(shared_ptr<ExpressionBinary> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionBlock> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionCall> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionCast> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionChained> expression, vector<IndentKind> indents, bool isInline);
-    static string toString(shared_ptr<ExpressionCompositeLiteral> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKind> indents, bool isInline);
-    static string toString(shared_ptr<ExpressionLiteral> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents);
-    static string toString(shared_ptr<ExpressionValue> expression, vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<Expression> expression, std::vector<IndentKind> indents, bool isInline);
+    static std::string toString(std::shared_ptr<ExpressionBinary> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionBlock> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionCall> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionCast> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionChained> expression, std::vector<IndentKind> indents, bool isInline);
+    static std::string toString(std::shared_ptr<ExpressionCompositeLiteral> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionGrouping> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionIfElse> expression, std::vector<IndentKind> indents, bool isInline);
+    static std::string toString(std::shared_ptr<ExpressionLiteral> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionUnary> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionValue> expression, std::vector<IndentKind> indents);
 
     // value type
-    static string toString(shared_ptr<ValueTypeBlob> valueTypeBlob);
-    static string toString(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
-    static string toString(shared_ptr<ValueTypeComposite> ValueTypeComposite);
-    static string toString(shared_ptr<ValueTypeData> valueTypeData);
-    static string toString(shared_ptr<ValueTypeEnum> valueTypeEnum);
-    static string toString(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
-    static string toString(shared_ptr<ValueTypeFun> valueTypeFun);
-    static string toString(shared_ptr<ValueTypeProto> valueTypeProto);
-    static string toString(shared_ptr<ValueTypePtr> valueTypePtr);
-    static string toString(shared_ptr<ValueTypeSimple> valueTypeSimple);
+    static std::string toString(std::shared_ptr<ValueTypeBlob> valueTypeBlob);
+    static std::string toString(std::shared_ptr<ValueTypeBoxed> valueTypeBoxed);
+    static std::string toString(std::shared_ptr<ValueTypeComposite> ValueTypeComposite);
+    static std::string toString(std::shared_ptr<ValueTypeData> valueTypeData);
+    static std::string toString(std::shared_ptr<ValueTypeEnum> valueTypeEnum);
+    static std::string toString(std::shared_ptr<ValueTypeEnumField> valueTypeEnumField);
+    static std::string toString(std::shared_ptr<ValueTypeFun> valueTypeFun);
+    static std::string toString(std::shared_ptr<ValueTypeProto> valueTypeProto);
+    static std::string toString(std::shared_ptr<ValueTypePtr> valueTypePtr);
+    static std::string toString(std::shared_ptr<ValueTypeSimple> valueTypeSimple);
  
     // general support
-    static string toString(EnumField field, vector<IndentKind> indents);
-    static string formattedLine(const string &line, const vector<IndentKind> &indents);
-    static vector<IndentKind> adjustedLastIndent(vector<IndentKind> indents);
+    static std::string toString(EnumField field, std::vector<IndentKind> indents);
+    static std::string formattedLine(const std::string &line, const std::vector<IndentKind> &indents);
+    static std::vector<IndentKind> adjustedLastIndent(std::vector<IndentKind> indents);
 
     // errors support
-    static string toString(Parsee parsee);
-    static string toString(TokenKind tokenKind); // only kind
-
-public:
-    static void print(const vector<shared_ptr<Token>> &tokens);
-    static void print(shared_ptr<Module> module);
-    static void printExportedHeaderStatements(const map<string, vector<shared_ptr<Statement>>> &statmentsMap);
-    static void print(shared_ptr<Error> error);
-
-    static string toString(shared_ptr<Location> location);
-    static string toString(shared_ptr<ValueType> valueType);
-    static string toString(ExpressionUnaryOperation operationUnary);
-    static string toString(ExpressionBinaryOperation operationBinary);
+    static std::string toString(Parsee parsee);
+    static std::string toString(TokenKind tokenKind); // only kind
 };
 
 #endif

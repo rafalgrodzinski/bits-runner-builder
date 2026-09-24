@@ -1,5 +1,9 @@
 #include "StatementBlock.h"
 
+using namespace std;
+
+// MARK: - Public
+
 StatementBlock::StatementBlock(const vector<shared_ptr<Statement>> &statements, shared_ptr<Location> location):
 Statement(StatementKind::BLOCK, location), statements(statements) { }
 

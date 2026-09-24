@@ -3,6 +3,10 @@
 #include "Lexer/Location.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
 
+using namespace std;
+
+// MARK: - Public
+
 shared_ptr<Expression> Expression::none(shared_ptr<Location> location) {
     return make_shared<Expression>(ExpressionKind::NONE, ValueTypeSimple::NONE, location);
 }

@@ -5,8 +5,6 @@
 
 class ParseeResult;
 
-using namespace std;
-
 enum class ParseeResultsGroupKind {
     SUCCESS,
     NO_MATCH,
@@ -14,17 +12,17 @@ enum class ParseeResultsGroupKind {
 };
 
 class ParseeResultsGroup {
-private:
-    ParseeResultsGroupKind kind;
-    vector<ParseeResult> results;
-
 public:
-    static ParseeResultsGroup success(const vector<ParseeResult> &results);
+    static ParseeResultsGroup success(const std::vector<ParseeResult> &results);
     static ParseeResultsGroup noMatch();
     static ParseeResultsGroup failure();
 
     ParseeResultsGroupKind getKind() const;
-    vector<ParseeResult> getResults() const;
+    std::vector<ParseeResult> getResults() const;
+
+private:
+    ParseeResultsGroupKind kind;
+    std::vector<ParseeResult> results;
 };
 
 #endif

@@ -8,6 +8,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+
 #include "AnalyzerScopeBlob.h"
 #include "AnalyzerScopeBoxed.h"
 #include "AnalyzerScopeEnum.h"
@@ -15,8 +16,6 @@
 
 class SymbolName;
 class ValueType;
-
-using namespace std;
 
 enum class AnalyzerScopeState {
     NOT_REGISTERED,
@@ -38,11 +37,11 @@ friend class AnalyzerScopeProto;
 
 public:
     typedef struct {
-        map<string, shared_ptr<ValueType>> variableTypes;
-        map<string, bool> isVariableDefinedMap;
+        std::map<std::string, std::shared_ptr<ValueType>> variableTypes;
+        std::map<std::string, bool> isVariableDefinedMap;
 
-        map<string, shared_ptr<ValueType>> functionTypeMap;
-        map<string, bool> isFunctionDefinedMap;
+        std::map<std::string, std::shared_ptr<ValueType>> functionTypeMap;
+        std::map<std::string, bool> isFunctionDefinedMap;
 
         AnalyzerScopeBlob::ScopeLevel scopeLevelBlob;
         AnalyzerScopeBoxed::ScopeLevel scopeLevelBoxed;
@@ -54,21 +53,21 @@ public:
 
     void pushLevel();
     void popLevel();
-    bool level(function<bool ()> levelBlock);
+    bool level(std::function<bool ()> levelBlock);
 
-    shared_ptr<ValueType> getVariableType(const string &identifier) const;
-    bool setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition);
+    std::shared_ptr<ValueType> getVariableType(const std::string &identifier) const;
+    bool setVariableType(const std::string &identifier, std::shared_ptr<ValueType> type, bool isDefinition);
 
-    shared_ptr<ValueType> getFunctionType(const string &name) const;
-    bool setFunctionType(const string &name, shared_ptr<ValueType> type, bool isDefinition);
+    std::shared_ptr<ValueType> getFunctionType(const std::string &name) const;
+    bool setFunctionType(const std::string &name, std::shared_ptr<ValueType> type, bool isDefinition);
 
-    shared_ptr<AnalyzerScopeBlob> blobScope;
-    shared_ptr<AnalyzerScopeBoxed> boxedScope;
-    shared_ptr<AnalyzerScopeEnum> enumScope;
-    shared_ptr<AnalyzerScopeProto> protoScope;
+    std::shared_ptr<AnalyzerScopeBlob> blobScope;
+    std::shared_ptr<AnalyzerScopeBoxed> boxedScope;
+    std::shared_ptr<AnalyzerScopeEnum> enumScope;
+    std::shared_ptr<AnalyzerScopeProto> protoScope;
 
 private:
-    stack<ScopeLevel> scopeLevels;
+    std::stack<ScopeLevel> scopeLevels;
 };
 
 #endif

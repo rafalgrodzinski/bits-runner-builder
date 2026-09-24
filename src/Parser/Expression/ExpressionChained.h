@@ -4,13 +4,13 @@
 #include "Expression.h"
 
 class ExpressionChained: public Expression {
-private:
-    vector<shared_ptr<Expression>> chainExpressions;
-
 public:
-    ExpressionChained(const vector<shared_ptr<Expression>> &chainExpressions, shared_ptr<Location> location);
+    ExpressionChained(const std::vector<std::shared_ptr<Expression>> &chainExpressions, std::shared_ptr<Location> location);
 
-    vector<shared_ptr<Expression>> getChainExpressions() const;
+    std::vector<std::shared_ptr<Expression>> getChainExpressions() const;
+
+private:
+    std::vector<std::shared_ptr<Expression>> chainExpressions;
 };
 
 #endif

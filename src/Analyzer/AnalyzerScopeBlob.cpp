@@ -1,6 +1,11 @@
 #include "AnalyzerScopeBlob.h"
+
 #include "AnalyzerScope.h"
 #include "Parser/ValueType/ValueType.h"
+
+using namespace std;
+
+// MARK: - Public
 
 AnalyzerScopeBlob::AnalyzerScopeBlob(AnalyzerScope *parent):
 parent(parent) { }

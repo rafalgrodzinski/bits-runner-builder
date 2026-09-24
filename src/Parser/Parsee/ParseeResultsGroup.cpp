@@ -2,6 +2,10 @@
 
 #include "ParseeResult.h"
 
+using namespace std;
+
+// MARK: - Public
+
 ParseeResultsGroup ParseeResultsGroup::success(const vector<ParseeResult> &results) {
     ParseeResultsGroup resultsGroup;
     resultsGroup.kind = ParseeResultsGroupKind::SUCCESS;

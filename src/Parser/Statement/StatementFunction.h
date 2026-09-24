@@ -13,34 +13,34 @@ class ValueTypeFun;
 class StatementFunction: public Statement {
 friend class Parser;
 
-private:
-    bool shouldExport;
-    string name;
-    string moduleName;
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnValueType;
-    shared_ptr<StatementBlock> statementBlock;
-
 public:
     StatementFunction(
         bool shouldExport,
-        const string &name,
-        const vector<pair<string, shared_ptr<ValueType>>> &arguments,
-        shared_ptr<ValueType> returnValueType,
-        shared_ptr<StatementBlock> statementBlock,
-        shared_ptr<Location> location
+        const std::string &name,
+        const std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> &arguments,
+        std::shared_ptr<ValueType> returnValueType,
+        std::shared_ptr<StatementBlock> statementBlock,
+        std::shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
-    string getName() const;
-    string getGlobalName() const;
-    string getModuleName() const;
-    void setModuleName(const string &moduleName);
-    vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
-    shared_ptr<ValueType> getReturnValueType() const;
-    shared_ptr<ValueTypeFun> getValueType() const;
-    shared_ptr<StatementBlock> getStatementBlock() const;
-    shared_ptr<StatementFunctionDeclaration> getDeclaration() const;
+    std::string getName() const;
+    std::string getGlobalName() const;
+    std::string getModuleName() const;
+    void setModuleName(const std::string &moduleName);
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> getArguments() const;
+    std::shared_ptr<ValueType> getReturnValueType() const;
+    std::shared_ptr<ValueTypeFun> getValueType() const;
+    std::shared_ptr<StatementBlock> getStatementBlock() const;
+    std::shared_ptr<StatementFunctionDeclaration> getDeclaration() const;
+
+private:
+    bool shouldExport;
+    std::string name;
+    std::string moduleName;
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> arguments;
+    std::shared_ptr<ValueType> returnValueType;
+    std::shared_ptr<StatementBlock> statementBlock;
 };
 
 #endif

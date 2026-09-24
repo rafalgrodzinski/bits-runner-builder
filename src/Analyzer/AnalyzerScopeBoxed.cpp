@@ -1,5 +1,10 @@
 #include "AnalyzerScopeBoxed.h"
+
 #include "AnalyzerScope.h"
+
+using namespace std;
+
+// MARK: - Public
 
 AnalyzerScopeBoxed::AnalyzerScopeBoxed(AnalyzerScope *parent):
 parent(parent) { }

@@ -1,5 +1,9 @@
 #include "StatementVariableDeclaration.h"
 
+using namespace std;
+
+// MARK: - Public
+
 StatementVariableDeclaration::StatementVariableDeclaration(
     const string &identifier,
     shared_ptr<ValueType> valueType,

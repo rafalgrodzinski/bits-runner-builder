@@ -8,13 +8,13 @@ class Expression;
 class StatementExpression: public Statement {
 friend class Analyzer;
 
-private:
-    shared_ptr<Expression> expression;
-
 public:
-    StatementExpression(shared_ptr<Expression> expression, shared_ptr<Location> location);
+    StatementExpression(std::shared_ptr<Expression> expression, std::shared_ptr<Location> location);
 
-    shared_ptr<Expression> getExpression() const;
+    std::shared_ptr<Expression> getExpression() const;
+
+private:
+    std::shared_ptr<Expression> expression;
 };
 
 #endif

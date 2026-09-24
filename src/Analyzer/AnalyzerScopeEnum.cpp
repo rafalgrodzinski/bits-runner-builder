@@ -1,5 +1,11 @@
 #include "AnalyzerScopeEnum.h"
+
 #include "AnalyzerScope.h"
+#include "Parser/SymbolName.h"
+
+using namespace std;
+
+// MARK: - Public
 
 AnalyzerScopeEnum::AnalyzerScopeEnum(AnalyzerScope *parent):
 parent(parent) { }

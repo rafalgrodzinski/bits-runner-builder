@@ -1,9 +1,9 @@
 #include "Analyzer.h"
 
-#include "Error.h"
-#include "Logger.h"
 #include "AnalyzerScope.h"
 #include "AnalyzerScopeBlob.h"
+#include "Error.h"
+#include "Logger.h"
 #include "Module/Module.h"
 
 #include "Parser/Expression/Expression.h"
@@ -52,6 +52,10 @@
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
 
+using namespace std;
+
+// MARK: - Public
+
 Analyzer::Analyzer(
     const string &defaultModuleName,
     shared_ptr<Module> module,
@@ -89,9 +93,10 @@ void Analyzer::checkModule() {
     }
 }
 
-//
+// MARK: - Private
+
 // Statements
-//
+
 void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported, ImportLevel importLevel) {
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
@@ -394,13 +399,15 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
     if (!scope->setFunctionType(statementFunction->getGlobalName(), statementFunction->getValueType(), true))
         markErrorAlreadyDefined(statementFunction->getLocation(), statementFunction->getName());
 
-    scope->pushLevel();
-    // register arguments as variables
-    for (auto &argument : statementFunction->getArguments())
-        scope->setVariableType(argument.first, argument.second, true);
+    scope->level([&]() -> bool {
+        // register arguments as variables
+        for (auto &argument : statementFunction->getArguments())
+            scope->setVariableType(argument.first, argument.second, true);
 
-    checkStatement(statementFunction->getStatementBlock(), statementFunction->getReturnValueType());
-    scope->popLevel();
+        checkStatement(statementFunction->getStatementBlock(), statementFunction->getReturnValueType());
+
+        return true;
+    });
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
@@ -547,28 +554,34 @@ void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunct
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType) {
-    scope->pushLevel();
-    if (statementRepeat->getInitStatement() != nullptr)
-        checkStatement(statementRepeat->getInitStatement(), returnType);
+    if (!scope->level([&]() -> bool {
+        if (statementRepeat->getInitStatement() != nullptr)
+            checkStatement(statementRepeat->getInitStatement(), returnType);
 
-    if (statementRepeat->getPostStatement() != nullptr)
-        checkStatement(statementRepeat->getPostStatement(), returnType);
+        if (statementRepeat->getPostStatement() != nullptr)
+            checkStatement(statementRepeat->getPostStatement(), returnType);
 
-    if (shared_ptr<Expression> preConditionExpression = statementRepeat->getPreConditionExpression()) {
-        preConditionExpression->valueType = typeForExpression(preConditionExpression, nullptr, nullptr);
-        if (preConditionExpression->getValueType() != nullptr && !preConditionExpression->getValueType()->isEqual(ValueTypeSimple::BOOL))
-            markErrorInvalidType(preConditionExpression->getLocation(), preConditionExpression->getValueType(), ValueTypeSimple::BOOL);
-    }
+        if (shared_ptr<Expression> preConditionExpression = statementRepeat->getPreConditionExpression()) {
+            preConditionExpression->valueType = typeForExpression(preConditionExpression, nullptr, nullptr);
+            if (preConditionExpression->getValueType() != nullptr && !preConditionExpression->getValueType()->isEqual(ValueTypeSimple::BOOL)) {
+                markErrorInvalidType(preConditionExpression->getLocation(), preConditionExpression->getValueType(), ValueTypeSimple::BOOL);
+                return false;
+            }
+        }
 
-    if (shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression()) {
-        postConditionExpression->valueType = typeForExpression(postConditionExpression, nullptr, nullptr);
-        if (postConditionExpression->getValueType() != nullptr && !postConditionExpression->getValueType()->isEqual(ValueTypeSimple::BOOL))
-            markErrorInvalidType(postConditionExpression->getLocation(), postConditionExpression->getValueType(), ValueTypeSimple::BOOL);
-    }
+        if (shared_ptr<Expression> postConditionExpression = statementRepeat->getPostConditionExpression()) {
+            postConditionExpression->valueType = typeForExpression(postConditionExpression, nullptr, nullptr);
+            if (postConditionExpression->getValueType() != nullptr && !postConditionExpression->getValueType()->isEqual(ValueTypeSimple::BOOL)) {
+                markErrorInvalidType(postConditionExpression->getLocation(), postConditionExpression->getValueType(), ValueTypeSimple::BOOL);
+                return false;
+            }
+        }
 
-    // body
-    checkStatement(statementRepeat->getBodyBlockStatement(), returnType);
-    scope->popLevel();
+        // body
+        checkStatement(statementRepeat->getBodyBlockStatement(), returnType);
+
+        return true;
+    })) { return; }
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType) {
@@ -664,9 +677,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statement
         markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);
 }
 
-//
 // Expressions
-//
+
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> expression, shared_ptr<Expression> parentExpression, shared_ptr<ValueType> returnType) {
     if (expression == nullptr)
         return nullptr;
@@ -1196,46 +1208,48 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             string blobName = blobValueType->getSymbolName()->getGlobalName();
             optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->blobScope->getFields(blobValueType->getSymbolName());
             if (blobMembers) {
-                scope->pushLevel();
-                scope->boxedScope->registerNamedValueTypesMap(*blobValueType->getNamedValueTypeKeys(), blobValueType->getNamedValueTypes());
+                if (!scope->level([&]() -> bool {
+                    scope->boxedScope->registerNamedValueTypesMap(*blobValueType->getNamedValueTypeKeys(), blobValueType->getNamedValueTypes());
 
-                string nameVariable = expressionValue->getIdentifier();
-                string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
-                for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
-                    if (nameVariable == blobMember.first || nameFunction == blobMember.first) {
-                        // found corresponding blob, decide if it's a simple or data access
-                        switch (expressionValue->getValueKind()) {
-                            case ExpressionValueKind::SIMPLE: {
-                                // resolve type of named type if required
-                                expressionValue->valueType = typeForCheckedValueType(blobMember.second, false);
-                                scope->popLevel();
-                                return expressionValue->getValueType();
-                            }
-                            case ExpressionValueKind::DATA: {
-                                // make sure that the indexed value is an array
-                                shared_ptr<ValueType> valueType = blobMember.second;
-                                if (valueType->getKind() != ValueTypeKind::DATA) {
-                                    markErrorInvalidType(valueType->getLocation(), valueType, nullptr);
-                                    return nullptr;
+                    string nameVariable = expressionValue->getIdentifier();
+                    string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
+                    for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
+                        if (nameVariable == blobMember.first || nameFunction == blobMember.first) {
+                            // found corresponding blob, decide if it's a simple or data access
+                            switch (expressionValue->getValueKind()) {
+                                case ExpressionValueKind::SIMPLE: {
+                                    // resolve type of named type if required
+                                    expressionValue->valueType = typeForCheckedValueType(blobMember.second, false);
+                                    return true;
                                 }
-                                expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobMember.second)->getElementValueType();
-                                expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
-                                // make sure that the index expression evaluates to an uint
-                                shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
-                                if (!indexExpression->getValueType()->isUnsignedInteger()) {
-                                    markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
-                                    scope->popLevel();
-                                    return nullptr;
+                                case ExpressionValueKind::DATA: {
+                                    // make sure that the indexed value is an array
+                                    shared_ptr<ValueType> valueType = blobMember.second;
+                                    if (valueType->getKind() != ValueTypeKind::DATA) {
+                                        markErrorInvalidType(valueType->getLocation(), valueType, nullptr);
+                                        return false;
+                                    }
+                                    expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobMember.second)->getElementValueType();
+                                    expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
+                                    // make sure that the index expression evaluates to an uint
+                                    shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
+                                    if (!indexExpression->getValueType()->isUnsignedInteger()) {
+                                        markErrorInvalidType(indexExpression->getLocation(), indexExpression->getValueType(), ValueTypeSimple::UINT);
+                                        return false;
+                                    }
+
+                                    return true;
                                 }
-                                scope->popLevel();
-                                return expressionValue->getValueType();
+                                default:
+                                    break;
                             }
-                            default:
-                                break;
                         }
                     }
-                }
-                scope->popLevel();
+
+                    return true;
+                })) { return nullptr; }
+
+                return expressionValue->getValueType();
             }
             markErrorNotDefined(
                 expressionValue->getLocation(),
@@ -1571,19 +1585,20 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
         return sourceExpression;
     // composite to blob
     } else if (sourceExpression->getKind() == ExpressionKind::COMPOSITE_LITERAL && targetType->isBlob()) {
-        shared_ptr<ValueTypeBlob> targetValueTypeBlob = dynamic_pointer_cast<ValueTypeBlob>(targetType);
-        scope->pushLevel();
-        scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
+        scope->level([&]() -> bool {
+            shared_ptr<ValueTypeBlob> targetValueTypeBlob = targetType->toBlob();
+            scope->boxedScope->registerNamedValueTypesMap(*targetValueTypeBlob->getNamedValueTypeKeys(), targetValueTypeBlob->getNamedValueTypes());
 
-        sourceExpression->valueType = targetType;
-        vector<shared_ptr<ValueType>> blobMemberTypes = *scope->blobScope->getVariableFieldValueTypes(dynamic_pointer_cast<ValueTypeBlob>(targetType)->getSymbolName());
-        shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
-        for (int i=0; i<blobMemberTypes.size(); i++) {
-            shared_ptr<ValueType> memberType = blobMemberTypes.at(i);
-            expressionCompositeLiteral->expressions[i] = checkAndTryCasting(expressionCompositeLiteral->getExpressions().at(i), memberType, returnType);
-        }
+            sourceExpression->valueType = targetType;
+            vector<shared_ptr<ValueType>> blobMemberTypes = *scope->blobScope->getVariableFieldValueTypes(dynamic_pointer_cast<ValueTypeBlob>(targetType)->getSymbolName());
+            shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral = dynamic_pointer_cast<ExpressionCompositeLiteral>(sourceExpression);
+            for (int i=0; i<blobMemberTypes.size(); i++) {
+                shared_ptr<ValueType> memberType = blobMemberTypes.at(i);
+                expressionCompositeLiteral->expressions[i] = checkAndTryCasting(expressionCompositeLiteral->getExpressions().at(i), memberType, returnType);
+            }
 
-        scope->popLevel();
+            return true;
+        });
 
         return sourceExpression;
     // composite to proto
@@ -2333,10 +2348,12 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
     }
 
     // Check payload type, first make sure that potential named types in boxed have access to the current context
-    scope->pushLevel();
-    scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeEnumField->getNamedValueTypes());
-    payloadValueType = typeForCheckedValueType(payloadValueType, false);
-    scope->popLevel();
+    scope->level([&]() -> bool {
+        scope->boxedScope->registerNamedValueTypesMap(*oNamedValueTypeKeys, valueTypeEnumField->getNamedValueTypes());
+        payloadValueType = typeForCheckedValueType(payloadValueType, false);
+        return true;
+    });
+
     if (payloadValueType == nullptr) {
         markErrorInvalidType(valueTypeEnumField->getLocation(), valueTypeEnumField, nullptr);
         return nullptr;

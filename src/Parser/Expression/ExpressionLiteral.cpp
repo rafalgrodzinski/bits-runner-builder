@@ -3,6 +3,10 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType/ValueType.h"
 
+using namespace std;
+
+// MARK: - Public
+
 optional<int> ExpressionLiteral::decodeEscapedCharString(string charString) {
     switch (charString.length()) {
         case 1:

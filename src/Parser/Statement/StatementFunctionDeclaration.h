@@ -13,30 +13,30 @@ friend class Parser;
 
 private:
     bool shouldExport;
-    string name;
-    string moduleName;
+    std::string name;
+    std::string moduleName;
 
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnValueType;
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> arguments;
+    std::shared_ptr<ValueType> returnValueType;
 
 public:
     StatementFunctionDeclaration(
         bool shouldExport,
-        const string &name,
-        const string &moduleName,
-        const vector<pair<string, shared_ptr<ValueType>>> &arguments,
-        shared_ptr<ValueType> returnValueType,
-        shared_ptr<Location> location
+        const std::string &name,
+        const std::string &moduleName,
+        const std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> &arguments,
+        std::shared_ptr<ValueType> returnValueType,
+        std::shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
-    string getName() const;
-    string getGlobalName() const;
-    string getModuleName() const;
-    void setModuleName(const string &moduleName);
-    vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
-    shared_ptr<ValueType> getReturnValueType() const;
-    shared_ptr<ValueTypeFun> getValueType() const;
+    std::string getName() const;
+    std::string getGlobalName() const;
+    std::string getModuleName() const;
+    void setModuleName(const std::string &moduleName);
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> getArguments() const;
+    std::shared_ptr<ValueType> getReturnValueType() const;
+    std::shared_ptr<ValueTypeFun> getValueType() const;
 };
 
 #endif

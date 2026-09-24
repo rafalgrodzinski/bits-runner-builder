@@ -4,13 +4,13 @@
 #include "Statement.h"
 
 class StatementMetaImport: public Statement {
-private:
-    string name;
-
 public:
-    StatementMetaImport(const string &name, shared_ptr<Location> location);
+    StatementMetaImport(const std::string &name, std::shared_ptr<Location> location);
 
-    string getName() const;
+    std::string getName() const;
+
+private:
+    std::string name;
 };
 
 #endif

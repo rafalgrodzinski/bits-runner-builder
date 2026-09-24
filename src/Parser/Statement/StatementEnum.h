@@ -2,15 +2,16 @@
 #define STATEMENT_ENUM_H
 
 #include "Statement.h"
+
 #include "Parser/SymbolName.h"
 #include "Parser/ValueType/ValueType.h"
 
 class Expression;
 
 struct EnumField {
-    shared_ptr<SymbolName> symbolName;
-    shared_ptr<ValueType> payloadValueType;
-    shared_ptr<Expression> tagExpression;
+    std::shared_ptr<SymbolName> symbolName;
+    std::shared_ptr<ValueType> payloadValueType;
+    std::shared_ptr<Expression> tagExpression;
 };
 
 class StatementEnum: public Statement {
@@ -19,23 +20,23 @@ friend class Analyzer;
 public:
     StatementEnum(
         bool shouldExport,
-        const string &name,
-        const vector<string> &namedValueTypeKeys,
-        const vector<EnumField> &fields,
-        shared_ptr<Location> location
+        const std::string &name,
+        const std::vector<std::string> &namedValueTypeKeys,
+        const std::vector<EnumField> &fields,
+        std::shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
-    shared_ptr<SymbolName> getSymbolName() const;
-    void setModuleName(const string &moduleName);
-    vector<string> getNamedValueTypeKeys() const;
-    vector<EnumField> getFields() const;
+    std::shared_ptr<SymbolName> getSymbolName() const;
+    void setModuleName(const std::string &moduleName);
+    std::vector<std::string> getNamedValueTypeKeys() const;
+    std::vector<EnumField> getFields() const;
 
 private:
     bool shouldExport;
-    shared_ptr<SymbolName> symbolName;
-    vector<string> namedValueTypeKeys;
-    vector<EnumField> fields;
+    std::shared_ptr<SymbolName> symbolName;
+    std::vector<std::string> namedValueTypeKeys;
+    std::vector<EnumField> fields;
 };
 
 #endif

@@ -5,6 +5,10 @@
 #include "Location.h"
 #include "Token.h"
 
+using namespace std;
+
+// MARK: - Public
+
 Lexer::Lexer(const string &fileName, const string &source):
 currentFileName(fileName), source(source) { }
 
@@ -43,6 +47,8 @@ vector<shared_ptr<Token>> Lexer::getTokens() {
 
     return tokens;
 }
+
+// MARK: - Private
 
 shared_ptr<Token> Lexer::nextToken() {
     // Ignore white spaces

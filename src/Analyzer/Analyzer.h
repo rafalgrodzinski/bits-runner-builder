@@ -58,100 +58,99 @@ class ValueTypePtr;
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
 
-using namespace std;
-
 class Analyzer {
+private:
     enum class ImportLevel {
         NONE,
         EXPLICIT,
         IMPLICIT
     };
 
+public:
+    Analyzer(
+        const std::string &defaultModuleName,
+        std::shared_ptr<Module> module,
+        const std::map<std::string, std::vector<std::shared_ptr<Statement>>> &importableHeaderStatementsMap
+    );
+
+    void checkModule();
+
 private:
-    vector<shared_ptr<Error>> errors;
-    string defaultModuleName;
+    std::vector<std::shared_ptr<Error>> errors;
+    std::string defaultModuleName;
 
-    shared_ptr<AnalyzerScope> scope;
-    shared_ptr<Module> module;
-    map<string, vector<shared_ptr<Statement>>> importableHeaderStatementsMap;
-    map<string, ImportLevel> importedModuleLevelsMap;
+    std::shared_ptr<AnalyzerScope> scope;
+    std::shared_ptr<Module> module;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> importableHeaderStatementsMap;
+    std::map<std::string, ImportLevel> importedModuleLevelsMap;
 
-    void checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported = false, ImportLevel importLevel = ImportLevel::NONE);
-    void checkStatement(shared_ptr<StatementAssignment> statementAssignment);
-    void checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported);
-    void checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
-    void checkStatement(shared_ptr<StatementBlock> statementBlock, shared_ptr<ValueType> returnType);
-    void checkStatement(shared_ptr<StatementEnum> statementEnum);
-    void checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType);
-    void checkStatement(shared_ptr<StatementFunction> statementFunction);
-    void checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
-    void checkStatement(shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
-    void checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void checkStatement(shared_ptr<StatementMetaImport> statement, ImportLevel ImportLevel);
-    void checkStatement(shared_ptr<StatementProto> statement);
-    void checkStatement(shared_ptr<StatementProtoDeclaration> statement);
-    void checkStatement(shared_ptr<StatementRawFunction> statementRawFunction);
-    void checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType);
-    void checkStatement(shared_ptr<StatementReturn> statementReturn, shared_ptr<ValueType> returnType);
-    void checkStatement(shared_ptr<StatementVariable> statementVariable);
-    void checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
+    void checkStatement(std::shared_ptr<Statement> statement, std::shared_ptr<ValueType> returnType, bool isImported = false, ImportLevel importLevel = ImportLevel::NONE);
+    void checkStatement(std::shared_ptr<StatementAssignment> statementAssignment);
+    void checkStatement(std::shared_ptr<StatementBlob> statementBlob, bool isImported);
+    void checkStatement(std::shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
+    void checkStatement(std::shared_ptr<StatementBlock> statementBlock, std::shared_ptr<ValueType> returnType);
+    void checkStatement(std::shared_ptr<StatementEnum> statementEnum);
+    void checkStatement(std::shared_ptr<StatementExpression> statementExpression, std::shared_ptr<ValueType> returnType);
+    void checkStatement(std::shared_ptr<StatementFunction> statementFunction);
+    void checkStatement(std::shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
+    void checkStatement(std::shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
+    void checkStatement(std::shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
+    void checkStatement(std::shared_ptr<StatementMetaImport> statement, ImportLevel ImportLevel);
+    void checkStatement(std::shared_ptr<StatementProto> statement);
+    void checkStatement(std::shared_ptr<StatementProtoDeclaration> statement);
+    void checkStatement(std::shared_ptr<StatementRawFunction> statementRawFunction);
+    void checkStatement(std::shared_ptr<StatementRepeat> statementRepeat, std::shared_ptr<ValueType> returnType);
+    void checkStatement(std::shared_ptr<StatementReturn> statementReturn, std::shared_ptr<ValueType> returnType);
+    void checkStatement(std::shared_ptr<StatementVariable> statementVariable);
+    void checkStatement(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    shared_ptr<ValueType> typeForExpression(shared_ptr<Expression> expression, shared_ptr<Expression> parentExpression, shared_ptr<ValueType> returnType);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBinary> expressionBinary);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionBlock> expressionBlock, shared_ptr<ValueType> returnType);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCall> expressionCall, shared_ptr<Expression> parentExpression);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCast> expressionCast, shared_ptr<Expression> parentExpression);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionChained> expressionChained);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionGrouping> expressionGrouping);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionUnary> expressionUnary);
-    shared_ptr<ValueType> typeForExpression(shared_ptr<ExpressionValue> expressionValue, shared_ptr<Expression> parentExpression);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<Expression> expression, std::shared_ptr<Expression> parentExpression, std::shared_ptr<ValueType> returnType);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionBinary> expressionBinary);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionBlock> expressionBlock, std::shared_ptr<ValueType> returnType);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionCall> expressionCall, std::shared_ptr<Expression> parentExpression);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionCast> expressionCast, std::shared_ptr<Expression> parentExpression);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionChained> expressionChained);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionGrouping> expressionGrouping);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionIfElse> expressionIfElse, std::shared_ptr<ValueType> returnType);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionLiteral> expressionLiteral);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionUnary> expressionUnary);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionValue> expressionValue, std::shared_ptr<Expression> parentExpression);
 
     //
     // Support
     //
-    bool isUnaryOperationValidForType(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) const;
-    bool isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) const;
+    bool isUnaryOperationValidForType(ExpressionUnaryOperation operation, std::shared_ptr<ValueType> type) const;
+    bool isBinaryOperationValidForTypes(ExpressionBinaryOperation operation, std::shared_ptr<ValueType> firstType, std::shared_ptr<ValueType> secondType) const;
 
-    shared_ptr<ValueType> typeForUnaryOperation(ExpressionUnaryOperation operation, shared_ptr<ValueType> type) const;
-    shared_ptr<ValueType> typeForBinaryOperation(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) const;
+    std::shared_ptr<ValueType> typeForUnaryOperation(ExpressionUnaryOperation operation, std::shared_ptr<ValueType> type) const;
+    std::shared_ptr<ValueType> typeForBinaryOperation(ExpressionBinaryOperation operation, std::shared_ptr<ValueType> firstType, std::shared_ptr<ValueType> secondType) const;
 
-    shared_ptr<Expression> checkAndTryCasting(shared_ptr<Expression> sourceExpression, shared_ptr<ValueType> targetType, shared_ptr<ValueType> returnType);
-    bool canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
+    std::shared_ptr<Expression> checkAndTryCasting(std::shared_ptr<Expression> sourceExpression, std::shared_ptr<ValueType> targetType, std::shared_ptr<ValueType> returnType);
+    bool canImplicitCast(std::shared_ptr<ValueType> sourceType, std::shared_ptr<ValueType> targetType);
 
-    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired);
-    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeBlob> valueTypeBlob);
-    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeBoxed> valueTypeBoxed);
-    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeData> valueTypeData, bool isCountExperssionRequired);
-    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeEnum> valueTypeEnum);
-    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField);
-    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypeFun> valueTypeFun);
-    shared_ptr<ValueType> typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr);
+    std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueType> valueType, bool isCountExperssionRequired);
+    std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeBlob> valueTypeBlob);
+    std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeBoxed> valueTypeBoxed);
+    std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeData> valueTypeData, bool isCountExperssionRequired);
+    std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeEnum> valueTypeEnum);
+    std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeEnumField> valueTypeEnumField);
+    std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeFun> valueTypeFun);
+    std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypePtr> valueTypePtr);
 
-    void markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier);
-    void markErrorInvalidAttribute(shared_ptr<Location> location, const string &name);
-    void markErrorInvalidArgumentsCount(shared_ptr<Location> location, int actulCount, int expectedCount);
-    void markErrorInvalidBuiltIn(shared_ptr<Location> location, const string &builtInName, shared_ptr<ValueType> type);
-    void markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<ValueType> sourceType, shared_ptr<ValueType> targetType);
-    void markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName);
-    void markErrorInvalidName(shared_ptr<Location> location, const string &name);
-    void markErrorInvalidOperationBinary(shared_ptr<Location> location, ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType);
-    void markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type);
-    void markErrorInvalidType(shared_ptr<Location> location, shared_ptr<ValueType> actualType, shared_ptr<ValueType> expectedType);
-    void markErrorNotDefined(shared_ptr<Location> location, const string &name);
-    void markErrorNotImplemented(shared_ptr<Location> location, const string &protoName, const string &memberName);
-    void markErrorUnexpectedExpression(shared_ptr<Location> location);
-
-public:
-    Analyzer(
-        const string &defaultModuleName,
-        shared_ptr<Module> module,
-        const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
-    );
-
-    void checkModule();
+    void markErrorAlreadyDefined(std::shared_ptr<Location> location, const std::string &identifier);
+    void markErrorInvalidAttribute(std::shared_ptr<Location> location, const std::string &name);
+    void markErrorInvalidArgumentsCount(std::shared_ptr<Location> location, int actulCount, int expectedCount);
+    void markErrorInvalidBuiltIn(std::shared_ptr<Location> location, const std::string &builtInName, std::shared_ptr<ValueType> type);
+    void markErrorInvalidCast(std::shared_ptr<Location> location, std::shared_ptr<ValueType> sourceType, std::shared_ptr<ValueType> targetType);
+    void markErrorInvalidImport(std::shared_ptr<Location> location, const std::string &moduleName);
+    void markErrorInvalidName(std::shared_ptr<Location> location, const std::string &name);
+    void markErrorInvalidOperationBinary(std::shared_ptr<Location> location, ExpressionBinaryOperation operation, std::shared_ptr<ValueType> firstType, std::shared_ptr<ValueType> secondType);
+    void markErrorInvalidOperationUnary(std::shared_ptr<Location> location, ExpressionUnaryOperation operation, std::shared_ptr<ValueType> type);
+    void markErrorInvalidType(std::shared_ptr<Location> location, std::shared_ptr<ValueType> actualType, std::shared_ptr<ValueType> expectedType);
+    void markErrorNotDefined(std::shared_ptr<Location> location, const std::string &name);
+    void markErrorNotImplemented(std::shared_ptr<Location> location, const std::string &protoName, const std::string &memberName);
+    void markErrorUnexpectedExpression(std::shared_ptr<Location> location);
 };
 
 #endif

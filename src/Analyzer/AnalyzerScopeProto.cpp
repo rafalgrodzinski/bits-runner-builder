@@ -1,6 +1,12 @@
 #include "AnalyzerScopeProto.h"
+
 #include "AnalyzerScope.h"
+#include "Parser/SymbolName.h"
 #include "Parser/ValueType/ValueType.h"
+
+using namespace std;
+
+// MARK: - Public
 
 AnalyzerScopeProto::AnalyzerScopeProto(AnalyzerScope *parent):
 parent(parent) { }

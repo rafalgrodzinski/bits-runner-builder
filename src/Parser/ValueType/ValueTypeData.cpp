@@ -1,6 +1,11 @@
 #include "ValueTypeData.h"
+
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+
+using namespace std;
+
+// MARK: - Public
 
 ValueTypeData::ValueTypeData(
     shared_ptr<ValueType> elementValueType,

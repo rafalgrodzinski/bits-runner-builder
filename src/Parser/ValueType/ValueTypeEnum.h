@@ -4,6 +4,7 @@
 #include <map>
 #include <optional>
 #include <vector>
+
 #include "ValueType.h"
 #include "Parser/SymbolName.h"
 
@@ -12,22 +13,22 @@ friend class Analyzer;
 
 public:
     ValueTypeEnum(
-        const string &name,
-        const vector<shared_ptr<ValueType>> &namedValueTypes,
-        shared_ptr<Location> location
+        const std::string &name,
+        const std::vector<std::shared_ptr<ValueType>> &namedValueTypes,
+        std::shared_ptr<Location> location
     );
 
-    shared_ptr<SymbolName> getSymbolName() const;
-    vector<shared_ptr<ValueType>> getNamedValueTypes();
+    std::shared_ptr<SymbolName> getSymbolName() const;
+    std::vector<std::shared_ptr<ValueType>> getNamedValueTypes();
 
-    void setModuleName(const string &moduleName) override;
-    bool isEqual(shared_ptr<ValueType> other) const override;
-    shared_ptr<ValueType> clone() const override;
+    void setModuleName(const std::string &moduleName) override;
+    bool isEqual(std::shared_ptr<ValueType> other) const override;
+    std::shared_ptr<ValueType> clone() const override;
 
 private:
-    shared_ptr<SymbolName> symbolName;
-    optional<vector<string>> namedValueTypeKeys;
-    vector<shared_ptr<ValueType>> namedValueTypes;
+    std::shared_ptr<SymbolName> symbolName;
+    std::optional<std::vector<std::string>> namedValueTypeKeys;
+    std::vector<std::shared_ptr<ValueType>> namedValueTypes;
 };
 
 #endif

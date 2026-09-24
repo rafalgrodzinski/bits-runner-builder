@@ -2,6 +2,8 @@
 
 using namespace std;
 
+// MARK: - Public
+
 CodeGenerator::CodeGenerator(
     const string &targetTripleOption,
     const string &architectureOption,

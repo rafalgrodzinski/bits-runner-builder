@@ -1,5 +1,10 @@
 #include "ValueTypeBlob.h"
+
 #include "Parser/SymbolName.h"
+
+using namespace std;
+
+// MARK: - Public
 
 ValueTypeBlob::ValueTypeBlob(
     const string &name,

@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <vector>
+
 #include "ValueType.h"
 
 class SymbolName;
@@ -12,26 +13,26 @@ friend class Analyzer;
 
 public:
     ValueTypeBlob(
-        const string &name,
-        const vector<shared_ptr<ValueType>> &namedValueTypes,
+        const std::string &name,
+        const std::vector<std::shared_ptr<ValueType>> &namedValueTypes,
         bool isPacked,
-        shared_ptr<Location> location
+        std::shared_ptr<Location> location
     );
 
-    shared_ptr<SymbolName> getSymbolName() const;
-    shared_ptr<SymbolName> getPackedSymbolName() const;
-    optional<vector<string>> getNamedValueTypeKeys() const;
-    vector<shared_ptr<ValueType>> getNamedValueTypes() const;
+    std::shared_ptr<SymbolName> getSymbolName() const;
+    std::shared_ptr<SymbolName> getPackedSymbolName() const;
+    std::optional<std::vector<std::string>> getNamedValueTypeKeys() const;
+    std::vector<std::shared_ptr<ValueType>> getNamedValueTypes() const;
     bool getIsPacked() const;
 
-    void setModuleName(const string &moduleName) override;
-    bool isEqual(shared_ptr<ValueType> other) const override;
-    shared_ptr<ValueType> clone() const override;
+    void setModuleName(const std::string &moduleName) override;
+    bool isEqual(std::shared_ptr<ValueType> other) const override;
+    std::shared_ptr<ValueType> clone() const override;
 
 private:
-    shared_ptr<SymbolName> symbolName;
-    optional<vector<string>> namedValueTypeKeys;
-    vector<shared_ptr<ValueType>> namedValueTypes;
+    std::shared_ptr<SymbolName> symbolName;
+    std::optional<std::vector<std::string>> namedValueTypeKeys;
+    std::vector<std::shared_ptr<ValueType>> namedValueTypes;
     bool isPacked;
 };
 

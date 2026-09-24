@@ -1,5 +1,9 @@
 #include "ValueTypeBoxed.h"
 
+using namespace std;
+
+// MARK: - Public
+
 ValueTypeBoxed::ValueTypeBoxed(
     const optional<string> &namedValueTypeKey,
     shared_ptr<ValueType> boxedValueType,

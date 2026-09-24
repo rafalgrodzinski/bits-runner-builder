@@ -7,8 +7,6 @@
 
 class Location;
 
-using namespace std;
-
 enum class TokenKind {        
     OR,
     XOR,
@@ -86,38 +84,38 @@ enum class TokenKind {
 };
 
 class Token {
-private:
-    TokenKind kind;
-    string lexme;
-    shared_ptr<Location> location;
-
 public:
-    static vector<TokenKind> tokensLogicalOrXor;
-    static vector<TokenKind> tokensLogicalAnd;
-    static vector<TokenKind> tokensLogicalNot;
+    static std::vector<TokenKind> tokensLogicalOrXor;
+    static std::vector<TokenKind> tokensLogicalAnd;
+    static std::vector<TokenKind> tokensLogicalNot;
 
-    static vector<TokenKind> tokensEquality;
-    static vector<TokenKind> tokensComparison;
+    static std::vector<TokenKind> tokensEquality;
+    static std::vector<TokenKind> tokensComparison;
 
-    static vector<TokenKind> tokensBitwiseTest;
-    static vector<TokenKind> tokensBitwiseOrXor;
-    static vector<TokenKind> tokensBitwiseAnd;
-    static vector<TokenKind> tokensBitwiseShiftLeft;
-    static vector<TokenKind> tokensBitwiseShiftRight;
-    static vector<TokenKind> tokensBitwiseNot;
+    static std::vector<TokenKind> tokensBitwiseTest;
+    static std::vector<TokenKind> tokensBitwiseOrXor;
+    static std::vector<TokenKind> tokensBitwiseAnd;
+    static std::vector<TokenKind> tokensBitwiseShiftLeft;
+    static std::vector<TokenKind> tokensBitwiseShiftRight;
+    static std::vector<TokenKind> tokensBitwiseNot;
 
-    static vector<TokenKind> tokensTerm;
-    static vector<TokenKind> tokensFactor;
-    static vector<TokenKind> tokensUnary;
+    static std::vector<TokenKind> tokensTerm;
+    static std::vector<TokenKind> tokensFactor;
+    static std::vector<TokenKind> tokensUnary;
 
-    static vector<TokenKind> tokensLiteral;
+    static std::vector<TokenKind> tokensLiteral;
 
-    Token(TokenKind kind, const string &lexme, shared_ptr<Location> location);
+    Token(TokenKind kind, const std::string &lexme, std::shared_ptr<Location> location);
 
     TokenKind getKind() const;
-    string getLexme() const;
-    shared_ptr<Location> getLocation() const;
-    bool isOfKind(vector<TokenKind> kinds) const;
+    std::string getLexme() const;
+    std::shared_ptr<Location> getLocation() const;
+    bool isOfKind(std::vector<TokenKind> kinds) const;
+
+private:
+    TokenKind kind;
+    std::string lexme;
+    std::shared_ptr<Location> location;
 };
 
 #endif
