@@ -26,7 +26,7 @@ enum class ExpressionKind {
 };
 
 class Expression {
-    friend class Analyzer;
+friend class Analyzer;
 
 public:
     static std::shared_ptr<Expression> none(std::shared_ptr<Location> location);

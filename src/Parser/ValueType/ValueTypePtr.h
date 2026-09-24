@@ -5,6 +5,7 @@
 
 class ValueTypePtr: public ValueType {
 friend class Analyzer;
+
 public:
     ValueTypePtr(
         std::shared_ptr<ValueType> pointeeValueType,

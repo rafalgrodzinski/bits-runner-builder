@@ -7,8 +7,6 @@
 class SymbolName;
 
 class ValueTypeFun: public ValueType {
-friend class Analyzer;
-
 public:
     ValueTypeFun(
         const std::vector<std::shared_ptr<ValueType>> &argumentValueTypes,
