@@ -19,16 +19,6 @@ enum class ParseeResultKind {
 };
 
 class ParseeResult {
-private:
-    ParseeResultKind kind;
-    int tag;
-    shared_ptr<Token> token;
-    shared_ptr<ValueType> valueType;
-    shared_ptr<Statement> statement;
-    shared_ptr<Expression> expression;
-    int tokensCount;
-    ParseeResult();
-
 public:
     static ParseeResult tokenResult(shared_ptr<Token> token, int tag = -1);
     static ParseeResult valueTypeResult(shared_ptr<ValueType> valueType, int tokensCount, int tag = -1);
@@ -43,6 +33,16 @@ public:
     shared_ptr<Statement> getStatement() const;
     shared_ptr<Expression> getExpression() const;
     int getTokensCount() const;
+
+private:
+    ParseeResultKind kind;
+    int tag;
+    shared_ptr<Token> token;
+    shared_ptr<ValueType> valueType;
+    shared_ptr<Statement> statement;
+    shared_ptr<Expression> expression;
+    int tokensCount;
+    ParseeResult();
 };
 
 #endif

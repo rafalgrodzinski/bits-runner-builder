@@ -2,6 +2,8 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/SymbolName.h"
 
+// MARK: - Public
+
 AnalyzerScope::AnalyzerScope() {
     blobScope = make_shared<AnalyzerScopeBlob>(this);
     boxedScope = make_shared<AnalyzerScopeBoxed>(this);

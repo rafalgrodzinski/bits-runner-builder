@@ -1,5 +1,7 @@
 #include "StatementAssignment.h"
 
+// MARK: - Public
+
 StatementAssignment::StatementAssignment(
     shared_ptr<ExpressionChained> expressionChained,
     shared_ptr<Expression> valueExpression,

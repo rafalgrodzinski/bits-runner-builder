@@ -55,14 +55,6 @@ public:
         IR
     };
 
-private:
-    string targetTriple;
-    string architecture;
-    llvm::TargetMachine *targetMachine;
-    llvm::DataLayout dataLayout;
-    llvm::CallingConv::ID callingConvention;
-    llvm::OptimizationLevel passOptimizationLevel;
-
 public:
     CodeGenerator(
         const string &targetTripleOption,
@@ -78,6 +70,14 @@ public:
     llvm::Triple::ArchType getArchType() const;
     llvm::DataLayout getDataLayout() const;
     llvm::CallingConv::ID getCallingConvetion() const;
+
+private:
+    string targetTriple;
+    string architecture;
+    llvm::TargetMachine *targetMachine;
+    llvm::DataLayout dataLayout;
+    llvm::CallingConv::ID callingConvention;
+    llvm::OptimizationLevel passOptimizationLevel;
 };
 
 #endif

@@ -1,6 +1,8 @@
 #include "StatementBlobDeclaration.h"
 #include "Parser/SymbolName.h"
 
+// MARK: - Public
+
 StatementBlobDeclaration::StatementBlobDeclaration(
     bool shouldExport,
     shared_ptr<SymbolName> symbolName,

@@ -8,12 +8,6 @@
 class ValueType;
 
 class StatementMetaExternVariable: public Statement {
-private:
-    string identifier;
-    string moduleName;
-    string symbolName;
-    shared_ptr<ValueType> valueType;
-
 public:
     StatementMetaExternVariable(const string &identifier, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
 
@@ -23,6 +17,12 @@ public:
     void setModuleName(const string &moduleName);
     string getSymbolName() const;
     shared_ptr<ValueType> getValueType() const;
+
+private:
+    string identifier;
+    string moduleName;
+    string symbolName;
+    shared_ptr<ValueType> valueType;
 };
 
 #endif

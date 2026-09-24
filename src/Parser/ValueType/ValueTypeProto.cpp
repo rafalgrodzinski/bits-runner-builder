@@ -1,5 +1,7 @@
 #include "ValueTypeProto.h"
 
+// MARK: - Public
+
 ValueTypeProto::ValueTypeProto(const string &name, shared_ptr<Location> location):
 ValueType(ValueTypeKind::PROTO, location),
 symbolName(make_shared<SymbolName>(name)) { }

@@ -2,6 +2,8 @@
 
 #include "ValueTypeEnum.h"
 
+// MARK: - Public
+
 ValueTypeEnumField::ValueTypeEnumField(
     const string &name,
     const vector<shared_ptr<ValueType>> namedValueTypes,

@@ -52,6 +52,8 @@
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
 
+// MARK: - Public
+
 Analyzer::Analyzer(
     const string &defaultModuleName,
     shared_ptr<Module> module,
@@ -89,9 +91,10 @@ void Analyzer::checkModule() {
     }
 }
 
-//
+// MARK: - Private
+
 // Statements
-//
+
 void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported, ImportLevel importLevel) {
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
@@ -672,9 +675,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statement
         markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);
 }
 
-//
 // Expressions
-//
+
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> expression, shared_ptr<Expression> parentExpression, shared_ptr<ValueType> returnType) {
     if (expression == nullptr)
         return nullptr;

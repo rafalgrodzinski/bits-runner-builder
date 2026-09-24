@@ -9,10 +9,6 @@ class ExpressionChained;
 class StatementAssignment: public Statement {
 friend class Analyzer;
 
-private:
-    shared_ptr<ExpressionChained> expressionChained;
-    shared_ptr<Expression> valueExpression;
-
 public:
     StatementAssignment(
         shared_ptr<ExpressionChained> expressionChained,
@@ -22,6 +18,10 @@ public:
 
     shared_ptr<ExpressionChained> getExpressionChained() const;
     shared_ptr<Expression> getValueExpression() const;
+
+private:
+    shared_ptr<ExpressionChained> expressionChained;
+    shared_ptr<Expression> valueExpression;
 };
 
 #endif

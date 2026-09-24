@@ -2,6 +2,8 @@
 #include "AnalyzerScope.h"
 #include "Parser/ValueType/ValueType.h"
 
+// MARK: - Public
+
 AnalyzerScopeProto::AnalyzerScopeProto(AnalyzerScope *parent):
 parent(parent) { }
 

@@ -86,11 +86,6 @@ enum class TokenKind {
 };
 
 class Token {
-private:
-    TokenKind kind;
-    string lexme;
-    shared_ptr<Location> location;
-
 public:
     static vector<TokenKind> tokensLogicalOrXor;
     static vector<TokenKind> tokensLogicalAnd;
@@ -118,6 +113,11 @@ public:
     string getLexme() const;
     shared_ptr<Location> getLocation() const;
     bool isOfKind(vector<TokenKind> kinds) const;
+
+private:
+    TokenKind kind;
+    string lexme;
+    shared_ptr<Location> location;
 };
 
 #endif

@@ -12,14 +12,6 @@ class ValueType;
 class StatementVariable: public Statement {
 friend class Analyzer;
 
-private:
-    bool shouldExport;
-    string identifier;
-    string moduleName;
-    bool isRoot;
-    shared_ptr<ValueType> valueType;
-    shared_ptr<Expression> expression;
-
 public:
     StatementVariable(
         bool shouldExport,
@@ -40,6 +32,14 @@ public:
     shared_ptr<Expression> getExpression() const;
 
     shared_ptr<StatementVariableDeclaration> getDeclaration() const;
+
+private:
+    bool shouldExport;
+    string identifier;
+    string moduleName;
+    bool isRoot;
+    shared_ptr<ValueType> valueType;
+    shared_ptr<Expression> expression;
 };
 
 #endif

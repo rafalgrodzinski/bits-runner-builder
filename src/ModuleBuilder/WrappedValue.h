@@ -13,18 +13,6 @@ class ValueType;
 using namespace std;
 
 class WrappedValue {
-private:
-    static weak_ptr<llvm::Module> llvmModule;
-    static weak_ptr<llvm::IRBuilder<>> builder;
-    static function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType;
-    static function<llvm::AllocaInst *(llvm::Type*, string)> buildAlloca;
-
-    llvm::Type *type;
-    shared_ptr<ValueType> valueType;
-
-    function<llvm::Value *()> valueLambda;
-    function<llvm::Value *()> pointerValueLambda;
-
 public:
     WrappedValue();
 
@@ -56,6 +44,18 @@ public:
     bool isBlobStruct() const;
     bool isEnumStruct() const;
     bool isProtoStruct() const;
+
+private:
+    static weak_ptr<llvm::Module> llvmModule;
+    static weak_ptr<llvm::IRBuilder<>> builder;
+    static function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType;
+    static function<llvm::AllocaInst *(llvm::Type*, string)> buildAlloca;
+
+    llvm::Type *type;
+    shared_ptr<ValueType> valueType;
+
+    function<llvm::Value *()> valueLambda;
+    function<llvm::Value *()> pointerValueLambda;
 };
 
 #endif

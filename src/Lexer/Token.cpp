@@ -2,6 +2,8 @@
 
 #include "Location.h"
 
+// MARK: - Public
+
 vector<TokenKind> Token::tokensLogicalOrXor = {
     TokenKind::OR,
     TokenKind::XOR

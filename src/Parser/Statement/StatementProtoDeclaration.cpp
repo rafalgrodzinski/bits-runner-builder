@@ -1,6 +1,8 @@
 #include "StatementProtoDeclaration.h"
 #include "Parser/SymbolName.h"
 
+// MARK: - Public
+
 StatementProtoDeclaration::StatementProtoDeclaration(
     bool shouldExport,
     shared_ptr<SymbolName> symbolName,

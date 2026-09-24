@@ -1,5 +1,7 @@
 #include "ExpressionGrouping.h"
 
+// MARK: - Public
+
 ExpressionGrouping::ExpressionGrouping(shared_ptr<Expression> subExpression, shared_ptr<Location> location):
 Expression(ExpressionKind::GROUPING, nullptr, location), subExpression(subExpression) { }
 

@@ -1,6 +1,8 @@
 #include "AnalyzerScopeBoxed.h"
 #include "AnalyzerScope.h"
 
+// MARK: - Public
+
 AnalyzerScopeBoxed::AnalyzerScopeBoxed(AnalyzerScope *parent):
 parent(parent) { }
 

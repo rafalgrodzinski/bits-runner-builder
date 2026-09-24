@@ -1,6 +1,8 @@
 #include "AnalyzerScopeEnum.h"
 #include "AnalyzerScope.h"
 
+// MARK: - Public
+
 AnalyzerScopeEnum::AnalyzerScopeEnum(AnalyzerScope *parent):
 parent(parent) { }
 

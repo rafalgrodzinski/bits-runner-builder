@@ -10,14 +10,6 @@ enum class ExpressionLiteralKind {
 };
 
 class ExpressionLiteral: public Expression {
-private:
-    ExpressionLiteralKind literalKind;
-    bool boolValue;
-    uint64_t uIntValue;
-    double floatValue;
-
-    static optional<int> decodeEscapedCharString(string charString);
-
 public:
     static shared_ptr<ExpressionLiteral> expressionLiteralForToken(shared_ptr<Token> token);
     static shared_ptr<ExpressionLiteral> expressionLiteralForUInt(uint64_t value, shared_ptr<Location> location);
@@ -28,6 +20,14 @@ public:
     bool getBoolValue() const;
     uint64_t getUIntValue() const;
     double getFloatValue() const;
+
+private:
+    ExpressionLiteralKind literalKind;
+    bool boolValue;
+    uint64_t uIntValue;
+    double floatValue;
+
+    static optional<int> decodeEscapedCharString(string charString);
 };
 
 #endif

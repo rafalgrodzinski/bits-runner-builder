@@ -13,14 +13,6 @@ class ValueTypeFun;
 class StatementFunction: public Statement {
 friend class Parser;
 
-private:
-    bool shouldExport;
-    string name;
-    string moduleName;
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnValueType;
-    shared_ptr<StatementBlock> statementBlock;
-
 public:
     StatementFunction(
         bool shouldExport,
@@ -41,6 +33,14 @@ public:
     shared_ptr<ValueTypeFun> getValueType() const;
     shared_ptr<StatementBlock> getStatementBlock() const;
     shared_ptr<StatementFunctionDeclaration> getDeclaration() const;
+
+private:
+    bool shouldExport;
+    string name;
+    string moduleName;
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnValueType;
+    shared_ptr<StatementBlock> statementBlock;
 };
 
 #endif

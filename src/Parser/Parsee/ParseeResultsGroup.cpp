@@ -2,6 +2,8 @@
 
 #include "ParseeResult.h"
 
+// MARK: - Public
+
 ParseeResultsGroup ParseeResultsGroup::success(const vector<ParseeResult> &results) {
     ParseeResultsGroup resultsGroup;
     resultsGroup.kind = ParseeResultsGroupKind::SUCCESS;

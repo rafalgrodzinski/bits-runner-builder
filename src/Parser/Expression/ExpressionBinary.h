@@ -34,13 +34,6 @@ enum class ExpressionBinaryOperation {
 class ExpressionBinary: public Expression {
 friend class Analyzer;
 
-private:
-    ExpressionBinaryOperation operation;
-    shared_ptr<Expression> left;
-    shared_ptr<Expression> right;
-
-    static bool doTokensMatchTokenKinds(const vector<shared_ptr<Token>> &tokens, const vector<TokenKind> &tokenKinds);
-
 public:
     static shared_ptr<ExpressionBinary> expression(const vector<shared_ptr<Token>> &tokens, shared_ptr<Expression> left, shared_ptr<Expression> right);
     static shared_ptr<ExpressionBinary> expression(ExpressionBinaryOperation operation, shared_ptr<Expression> left, shared_ptr<Expression> right, shared_ptr<Location> location);
@@ -50,6 +43,13 @@ public:
     ExpressionBinaryOperation getOperation() const;
     shared_ptr<Expression> getLeft() const;
     shared_ptr<Expression> getRight() const;
+
+private:
+    ExpressionBinaryOperation operation;
+    shared_ptr<Expression> left;
+    shared_ptr<Expression> right;
+
+    static bool doTokensMatchTokenKinds(const vector<shared_ptr<Token>> &tokens, const vector<TokenKind> &tokenKinds);
 };
 
 #endif

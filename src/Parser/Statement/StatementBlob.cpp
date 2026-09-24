@@ -3,6 +3,8 @@
 #include "Parser/Statement/StatementVariableDeclaration.h"
 #include "Parser/SymbolName.h"
 
+// MARK: - Public
+
 StatementBlob::StatementBlob(
     bool shouldExport,
     const string &name,

@@ -55,6 +55,260 @@
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
 
+/// Public ///
+
+void Logger::print(const vector<shared_ptr<Token>> &tokens) {
+        for (int i=0; i<tokens.size(); i++) {
+            cout << i << "|" << toString(tokens.at(i));
+            if (i < tokens.size() - 1)
+                cout << "  ";
+        }
+        cout << endl;
+}
+
+void Logger::print(shared_ptr<Module> module) {
+    string text;
+
+    text += format("MODULE `{}`:\n", module->getName());
+    vector<IndentKind> indents = {IndentKind::ROOT};
+    
+    // header
+    indents.push_back(IndentKind::NODE);
+    text += formattedLine("HEADER", indents);
+    indents.at(indents.size()-1) = IndentKind::BRANCH;
+
+    vector<shared_ptr<Statement>> headerStatements = module->getHeaderStatements();
+    for (int i=0; i<headerStatements.size(); i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < headerStatements.size() - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(headerStatements.at(i), currentIndents);
+    }
+
+    // body
+    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+    text += formattedLine("BODY", indents);
+    indents.at(indents.size()-1) = IndentKind::EMPTY;
+
+    vector<shared_ptr<Statement>> bodyStatements = module->getBodyStatements();
+    for (int i=0; i<bodyStatements.size(); i++) {
+        vector<IndentKind> currentIndents = indents;
+        if (i < bodyStatements.size() - 1)
+            currentIndents.push_back(IndentKind::NODE);
+        else
+            currentIndents.push_back(IndentKind::NODE_LAST);
+
+        text += toString(bodyStatements.at(i), currentIndents);
+    }
+
+    cout << text;
+}
+
+void Logger::printExportedHeaderStatements(const map<string, vector<shared_ptr<Statement>>> &statementsMap) {
+    // iterate over exported statements from each of the module
+    for (auto &statementsMapEntry : statementsMap) {
+        // skip over modules with no exported statements
+        if (statementsMapEntry.second.empty())
+            continue;
+
+        string text;
+
+        text += format("EXPORTED STATEMENTS `{}`:\n", statementsMapEntry.first);
+
+        int statementsCount = statementsMapEntry.second.size();
+        for (int i=0; i<statementsCount; i++) {
+            vector<IndentKind> currentIndents = {IndentKind::ROOT};
+            if (i < statementsCount - 1)
+                currentIndents.push_back(IndentKind::NODE);
+            else
+                currentIndents.push_back(IndentKind::NODE_LAST);
+
+            text += toString(statementsMapEntry.second.at(i), currentIndents);
+        }
+
+        cout << text << endl;
+    }
+}
+
+void Logger::print(shared_ptr<Error> error) {
+    string message;
+    switch (error->getKind()) {
+        case ErrorKind::MESSAGE: {
+            string errorMessage = *(error->getMessage());
+            message = format("🔥 In {}: {}", toString(error->getLocation()), errorMessage);
+            break;
+        }
+        case ErrorKind::LEXER_ERROR: {
+            string lexme = error->getLexme() ? *(error->getLexme()) : "";
+            message = format("🔥 In {}: Unexpected token \"{}\"", toString(error->getLocation()), lexme);
+            break;
+        }
+        case ErrorKind::PARSER_ERROR: {
+            shared_ptr<Token> token = error->getActualToken();
+            optional<TokenKind> expectedTokenKind = error->getExpectedTokenKind();
+            optional<Parsee> expectedParsee = error->getExpectedParsee();
+            optional<string> errorMessage = error->getMessage();
+
+            if (expectedParsee) {
+                message = format(
+                    "🔥 In {}: Expected parsee {} but found {} instead",
+                    toString(token->getLocation()),
+                    toString((*expectedParsee)), 
+                    toString(token)
+                );
+            } else if (expectedTokenKind) {
+                message = format(
+                    "🔥 In {}: Expected token {} but found {} instead",
+                    toString(token->getLocation()),
+                    toString(*expectedTokenKind),
+                    toString(token)
+                );
+            } else {
+                message = format(
+                    "🔥 In {}: Unexpected token {} found",
+                    toString(token->getLocation()),
+                    toString(token)
+                );
+            }
+            if (errorMessage)
+                message += format(". {}", *errorMessage);
+            break;
+        }
+        case ErrorKind::BUILDER_FUNCTION_ERROR: {
+            string functionName = *(error->getFunctionName());
+            string errorMessage = *(error->getMessage());
+            message = format("🔥 Building function \"{}\" failed: {}", functionName, errorMessage);
+            break;
+        }
+        case ErrorKind::BUILDER_MODULE_ERROR: {
+            string moduleName = *(error->getModuleName());
+            string errorMessage = *(error->getMessage());
+            message = format("🔥 Building module \"{}\" failed: {}", moduleName, errorMessage);
+            break;
+        }
+    }
+    cout << message << endl;
+}
+
+string Logger::toString(shared_ptr<Location> location) {
+    if (location != nullptr) {
+        string fileName = location->getFileName();
+        int line = location->getLine() + 1;
+        int column = location->getColumn() + 1;
+        return format("file {}, line {}, column {}", fileName, line, column);
+    } else {
+        return "{UNKNOWN LOCATION}";
+    }
+}
+
+string Logger::toString(shared_ptr<ValueType> valueType) {
+    string text = "{INVALID}";
+    if (valueType == nullptr)
+        return text;
+
+    switch (valueType->getKind()) {
+        case ValueTypeKind::NONE: {
+            text = "NONE";
+            break;
+        }
+        case ValueTypeKind::PTR: {
+            text = toString(dynamic_pointer_cast<ValueTypePtr>(valueType));
+            break;
+        }
+        case ValueTypeKind::DATA: {
+            text = toString(dynamic_pointer_cast<ValueTypeData>(valueType));
+            break;
+        }
+        case ValueTypeKind::BLOB: {
+            text = toString(dynamic_pointer_cast<ValueTypeBlob>(valueType));
+            break;
+        }
+        case ValueTypeKind::ENUM: {
+            text = toString(dynamic_pointer_cast<ValueTypeEnum>(valueType));
+            break;
+        }
+        case ValueTypeKind::ENUM_FIELD: {
+            text =  toString(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
+            break;
+        }
+        case ValueTypeKind::PROTO: {
+            text = toString(dynamic_pointer_cast<ValueTypeProto>(valueType));
+            break;
+        }
+        case ValueTypeKind::BOXED: {
+            text = toString(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
+            break;
+        }
+        case ValueTypeKind::FUN: {
+            text = toString(dynamic_pointer_cast<ValueTypeFun>(valueType));
+            break;
+        }
+        case ValueTypeKind::COMPOSITE: {
+            text = toString(dynamic_pointer_cast<ValueTypeComposite>(valueType));
+            break;
+        }
+        default: {
+            text = toString(dynamic_pointer_cast<ValueTypeSimple>(valueType));
+            break;
+        }
+    }
+
+    return text;
+}
+
+string Logger::toString(ExpressionBinaryOperation operationBinary) {
+    switch (operationBinary) {
+        case ExpressionBinaryOperation::OR:
+            return "OR";
+        case ExpressionBinaryOperation::XOR:
+            return "XOR";
+        case ExpressionBinaryOperation::AND:
+            return "AND";
+
+        case ExpressionBinaryOperation::BIT_TEST:
+            return "BIT_TEST";
+        case ExpressionBinaryOperation::BIT_OR:
+            return "BIT_OR";
+        case ExpressionBinaryOperation::BIT_XOR:
+            return "BIT_XOR";
+        case ExpressionBinaryOperation::BIT_AND:
+            return "BIT_AND";
+        case ExpressionBinaryOperation::BIT_SHL:
+            return "BIT_SHL";
+        case ExpressionBinaryOperation::BIT_SHR:
+            return "BIT_SHR";
+
+        case ExpressionBinaryOperation::EQUAL:
+            return "=";
+        case ExpressionBinaryOperation::NOT_EQUAL:
+            return "!=";
+        case ExpressionBinaryOperation::LESS:
+            return "<";
+        case ExpressionBinaryOperation::LESS_EQUAL:
+            return "<=";
+        case ExpressionBinaryOperation::GREATER:
+            return ">";
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return ">=";
+
+        case ExpressionBinaryOperation::ADD:
+            return "+";
+        case ExpressionBinaryOperation::SUB:
+            return "-";
+        case ExpressionBinaryOperation::MUL:
+            return "*";
+        case ExpressionBinaryOperation::DIV:
+            return "/";
+        case ExpressionBinaryOperation::MOD:
+            return "%";
+    }
+
+    return "{INVALID}";
+}
+
 /// Private ///
 
 string Logger::toString(shared_ptr<Token> token) {
@@ -1356,260 +1610,6 @@ string Logger::toString(ExpressionUnaryOperation operationUnary) {
             return "PLUS";
         case ExpressionUnaryOperation::MINUS:
             return "MINUS";
-    }
-
-    return "{INVALID}";
-}
-
-/// Public ///
-
-void Logger::print(const vector<shared_ptr<Token>> &tokens) {
-        for (int i=0; i<tokens.size(); i++) {
-            cout << i << "|" << toString(tokens.at(i));
-            if (i < tokens.size() - 1)
-                cout << "  ";
-        }
-        cout << endl;
-}
-
-void Logger::print(shared_ptr<Module> module) {
-    string text;
-
-    text += format("MODULE `{}`:\n", module->getName());
-    vector<IndentKind> indents = {IndentKind::ROOT};
-    
-    // header
-    indents.push_back(IndentKind::NODE);
-    text += formattedLine("HEADER", indents);
-    indents.at(indents.size()-1) = IndentKind::BRANCH;
-
-    vector<shared_ptr<Statement>> headerStatements = module->getHeaderStatements();
-    for (int i=0; i<headerStatements.size(); i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < headerStatements.size() - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(headerStatements.at(i), currentIndents);
-    }
-
-    // body
-    indents.at(indents.size()-1) = IndentKind::NODE_LAST;
-    text += formattedLine("BODY", indents);
-    indents.at(indents.size()-1) = IndentKind::EMPTY;
-
-    vector<shared_ptr<Statement>> bodyStatements = module->getBodyStatements();
-    for (int i=0; i<bodyStatements.size(); i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < bodyStatements.size() - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(bodyStatements.at(i), currentIndents);
-    }
-
-    cout << text;
-}
-
-void Logger::printExportedHeaderStatements(const map<string, vector<shared_ptr<Statement>>> &statementsMap) {
-    // iterate over exported statements from each of the module
-    for (auto &statementsMapEntry : statementsMap) {
-        // skip over modules with no exported statements
-        if (statementsMapEntry.second.empty())
-            continue;
-
-        string text;
-
-        text += format("EXPORTED STATEMENTS `{}`:\n", statementsMapEntry.first);
-
-        int statementsCount = statementsMapEntry.second.size();
-        for (int i=0; i<statementsCount; i++) {
-            vector<IndentKind> currentIndents = {IndentKind::ROOT};
-            if (i < statementsCount - 1)
-                currentIndents.push_back(IndentKind::NODE);
-            else
-                currentIndents.push_back(IndentKind::NODE_LAST);
-
-            text += toString(statementsMapEntry.second.at(i), currentIndents);
-        }
-
-        cout << text << endl;
-    }
-}
-
-void Logger::print(shared_ptr<Error> error) {
-    string message;
-    switch (error->getKind()) {
-        case ErrorKind::MESSAGE: {
-            string errorMessage = *(error->getMessage());
-            message = format("🔥 In {}: {}", toString(error->getLocation()), errorMessage);
-            break;
-        }
-        case ErrorKind::LEXER_ERROR: {
-            string lexme = error->getLexme() ? *(error->getLexme()) : "";
-            message = format("🔥 In {}: Unexpected token \"{}\"", toString(error->getLocation()), lexme);
-            break;
-        }
-        case ErrorKind::PARSER_ERROR: {
-            shared_ptr<Token> token = error->getActualToken();
-            optional<TokenKind> expectedTokenKind = error->getExpectedTokenKind();
-            optional<Parsee> expectedParsee = error->getExpectedParsee();
-            optional<string> errorMessage = error->getMessage();
-
-            if (expectedParsee) {
-                message = format(
-                    "🔥 In {}: Expected parsee {} but found {} instead",
-                    toString(token->getLocation()),
-                    toString((*expectedParsee)), 
-                    toString(token)
-                );
-            } else if (expectedTokenKind) {
-                message = format(
-                    "🔥 In {}: Expected token {} but found {} instead",
-                    toString(token->getLocation()),
-                    toString(*expectedTokenKind),
-                    toString(token)
-                );
-            } else {
-                message = format(
-                    "🔥 In {}: Unexpected token {} found",
-                    toString(token->getLocation()),
-                    toString(token)
-                );
-            }
-            if (errorMessage)
-                message += format(". {}", *errorMessage);
-            break;
-        }
-        case ErrorKind::BUILDER_FUNCTION_ERROR: {
-            string functionName = *(error->getFunctionName());
-            string errorMessage = *(error->getMessage());
-            message = format("🔥 Building function \"{}\" failed: {}", functionName, errorMessage);
-            break;
-        }
-        case ErrorKind::BUILDER_MODULE_ERROR: {
-            string moduleName = *(error->getModuleName());
-            string errorMessage = *(error->getMessage());
-            message = format("🔥 Building module \"{}\" failed: {}", moduleName, errorMessage);
-            break;
-        }
-    }
-    cout << message << endl;
-}
-
-string Logger::toString(shared_ptr<Location> location) {
-    if (location != nullptr) {
-        string fileName = location->getFileName();
-        int line = location->getLine() + 1;
-        int column = location->getColumn() + 1;
-        return format("file {}, line {}, column {}", fileName, line, column);
-    } else {
-        return "{UNKNOWN LOCATION}";
-    }
-}
-
-string Logger::toString(shared_ptr<ValueType> valueType) {
-    string text = "{INVALID}";
-    if (valueType == nullptr)
-        return text;
-
-    switch (valueType->getKind()) {
-        case ValueTypeKind::NONE: {
-            text = "NONE";
-            break;
-        }
-        case ValueTypeKind::PTR: {
-            text = toString(dynamic_pointer_cast<ValueTypePtr>(valueType));
-            break;
-        }
-        case ValueTypeKind::DATA: {
-            text = toString(dynamic_pointer_cast<ValueTypeData>(valueType));
-            break;
-        }
-        case ValueTypeKind::BLOB: {
-            text = toString(dynamic_pointer_cast<ValueTypeBlob>(valueType));
-            break;
-        }
-        case ValueTypeKind::ENUM: {
-            text = toString(dynamic_pointer_cast<ValueTypeEnum>(valueType));
-            break;
-        }
-        case ValueTypeKind::ENUM_FIELD: {
-            text =  toString(dynamic_pointer_cast<ValueTypeEnumField>(valueType));
-            break;
-        }
-        case ValueTypeKind::PROTO: {
-            text = toString(dynamic_pointer_cast<ValueTypeProto>(valueType));
-            break;
-        }
-        case ValueTypeKind::BOXED: {
-            text = toString(dynamic_pointer_cast<ValueTypeBoxed>(valueType));
-            break;
-        }
-        case ValueTypeKind::FUN: {
-            text = toString(dynamic_pointer_cast<ValueTypeFun>(valueType));
-            break;
-        }
-        case ValueTypeKind::COMPOSITE: {
-            text = toString(dynamic_pointer_cast<ValueTypeComposite>(valueType));
-            break;
-        }
-        default: {
-            text = toString(dynamic_pointer_cast<ValueTypeSimple>(valueType));
-            break;
-        }
-    }
-
-    return text;
-}
-
-string Logger::toString(ExpressionBinaryOperation operationBinary) {
-    switch (operationBinary) {
-        case ExpressionBinaryOperation::OR:
-            return "OR";
-        case ExpressionBinaryOperation::XOR:
-            return "XOR";
-        case ExpressionBinaryOperation::AND:
-            return "AND";
-
-        case ExpressionBinaryOperation::BIT_TEST:
-            return "BIT_TEST";
-        case ExpressionBinaryOperation::BIT_OR:
-            return "BIT_OR";
-        case ExpressionBinaryOperation::BIT_XOR:
-            return "BIT_XOR";
-        case ExpressionBinaryOperation::BIT_AND:
-            return "BIT_AND";
-        case ExpressionBinaryOperation::BIT_SHL:
-            return "BIT_SHL";
-        case ExpressionBinaryOperation::BIT_SHR:
-            return "BIT_SHR";
-
-        case ExpressionBinaryOperation::EQUAL:
-            return "=";
-        case ExpressionBinaryOperation::NOT_EQUAL:
-            return "!=";
-        case ExpressionBinaryOperation::LESS:
-            return "<";
-        case ExpressionBinaryOperation::LESS_EQUAL:
-            return "<=";
-        case ExpressionBinaryOperation::GREATER:
-            return ">";
-        case ExpressionBinaryOperation::GREATER_EQUAL:
-            return ">=";
-
-        case ExpressionBinaryOperation::ADD:
-            return "+";
-        case ExpressionBinaryOperation::SUB:
-            return "-";
-        case ExpressionBinaryOperation::MUL:
-            return "*";
-        case ExpressionBinaryOperation::DIV:
-            return "/";
-        case ExpressionBinaryOperation::MOD:
-            return "%";
     }
 
     return "{INVALID}";

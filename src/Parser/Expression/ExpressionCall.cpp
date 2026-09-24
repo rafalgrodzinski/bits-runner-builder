@@ -1,5 +1,7 @@
 #include "ExpressionCall.h"
 
+// MARK: - Public
+
 ExpressionCall::ExpressionCall(const string &name, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<Location> location):
 Expression(ExpressionKind::CALL, nullptr, location), argumentExpressions(argumentExpressions) {
     size_t pos = name.find('.');

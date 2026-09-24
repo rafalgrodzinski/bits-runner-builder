@@ -1,5 +1,7 @@
 #include "SymbolName.h"
 
+// MARK: - Public
+
 SymbolName::SymbolName(const string &name, const string &moduleName) {
     size_t pos = name.find('.');
     if (pos != string::npos) {

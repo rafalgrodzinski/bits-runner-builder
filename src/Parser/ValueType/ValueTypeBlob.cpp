@@ -1,6 +1,8 @@
 #include "ValueTypeBlob.h"
 #include "Parser/SymbolName.h"
 
+// MARK: - Public
+
 ValueTypeBlob::ValueTypeBlob(
     const string &name,
     const vector<shared_ptr<ValueType>> &namedValueTypes,

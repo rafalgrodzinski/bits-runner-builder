@@ -36,21 +36,6 @@ enum class ParseeLevel {
 };
 
 class Parsee {
-private:
-    ParseeKind kind;
-    int tag;
-    optional<vector<Parsee>> groupParsees;
-    optional<vector<Parsee>> repeatedParsees;
-    optional<vector<vector<Parsee>>> parsees;
-    optional<vector<StatementKind>> statementKinds;
-    TokenKind tokenKind;
-    bool shouldIncludeExpressionStatement;
-    bool isNumericExpression;
-    ParseeLevel level;
-    bool shouldReturn;
-    string debugMessage;
-    Parsee();
-
 public:
     static Parsee debug(const string &debugMessage);
     static Parsee expressionParsee(ParseeLevel level, bool shouldReturn, bool isNumeric, int tag = -1);
@@ -78,6 +63,21 @@ public:
     ParseeLevel getLevel() const;
     bool getShouldReturn() const;
     string getDebugMessage() const;
+
+private:
+    ParseeKind kind;
+    int tag;
+    optional<vector<Parsee>> groupParsees;
+    optional<vector<Parsee>> repeatedParsees;
+    optional<vector<vector<Parsee>>> parsees;
+    optional<vector<StatementKind>> statementKinds;
+    TokenKind tokenKind;
+    bool shouldIncludeExpressionStatement;
+    bool isNumericExpression;
+    ParseeLevel level;
+    bool shouldReturn;
+    string debugMessage;
+    Parsee();
 };
 
 #endif

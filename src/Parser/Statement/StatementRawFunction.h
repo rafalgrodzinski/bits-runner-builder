@@ -9,15 +9,6 @@ class ValueType;
 class ValueTypeFun;
 
 class StatementRawFunction: public Statement {
-private:
-    bool shouldExport;
-    string name;
-    string moduleName;
-    string constraints;
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnValueType;
-    string rawSource;
-
 public:
     StatementRawFunction(
         bool shouldExport,
@@ -39,6 +30,15 @@ public:
     shared_ptr<ValueType> getReturnValueType() const;
     shared_ptr<ValueTypeFun> getValueType() const;
     string getRawSource() const;
+
+private:
+    bool shouldExport;
+    string name;
+    string moduleName;
+    string constraints;
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnValueType;
+    string rawSource;
 };
 
 #endif

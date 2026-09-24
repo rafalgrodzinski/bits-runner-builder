@@ -2,6 +2,8 @@
 
 #include "Parser/Expression/Expression.h"
 
+// MARK: - Public
+
 StatementExpression::StatementExpression(shared_ptr<Expression> expression, shared_ptr<Location> location):
 Statement(StatementKind::EXPRESSION, location), expression(expression) { }
 

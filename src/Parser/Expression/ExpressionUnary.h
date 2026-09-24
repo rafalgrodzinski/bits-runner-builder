@@ -11,10 +11,6 @@ enum class ExpressionUnaryOperation {
 };
 
 class ExpressionUnary: public Expression {
-private:
-    ExpressionUnaryOperation operation;
-    shared_ptr<Expression> subExpression;
-
 public:
     static shared_ptr<ExpressionUnary> expression(shared_ptr<Token> token, shared_ptr<Expression> subExpression);
 
@@ -22,6 +18,10 @@ public:
 
     ExpressionUnaryOperation getOperation() const;
     shared_ptr<Expression> getSubExpression() const;
+
+private:
+    ExpressionUnaryOperation operation;
+    shared_ptr<Expression> subExpression;
 };
 
 #endif

@@ -1,6 +1,8 @@
 #include "ValueTypeSimple.h"
 #include "Lexer/Token.h"
 
+// MARK: - Public
+
 shared_ptr<ValueType> ValueTypeSimple::NONE = make_shared<ValueTypeSimple>(ValueTypeKind::NONE, nullptr);
 shared_ptr<ValueType> ValueTypeSimple::BOOL = make_shared<ValueTypeSimple>(ValueTypeKind::BOOL, nullptr);
 shared_ptr<ValueType> ValueTypeSimple::UINT = make_shared<ValueTypeSimple>(ValueTypeKind::UINT, nullptr);

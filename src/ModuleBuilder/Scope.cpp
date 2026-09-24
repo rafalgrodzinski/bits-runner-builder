@@ -1,5 +1,7 @@
 #include "Scope.h"
 
+// MARK: - Public
+
 Scope::Scope() {
     pushLevel();
 }

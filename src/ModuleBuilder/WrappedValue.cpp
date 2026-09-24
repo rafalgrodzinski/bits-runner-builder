@@ -3,10 +3,7 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypePtr.h"
 
-weak_ptr<llvm::Module> WrappedValue::llvmModule;
-weak_ptr<llvm::IRBuilder<>> WrappedValue::builder;
-function<llvm::Type *(shared_ptr<ValueType>, bool)> WrappedValue::llvmTypeForValueType;
-function<llvm::AllocaInst *(llvm::Type*, string)> WrappedValue::buildAlloca;
+// MARK: - Public
 
 WrappedValue::WrappedValue() { }
 
@@ -239,3 +236,9 @@ bool WrappedValue::isEnumStruct() const {
 bool WrappedValue::isProtoStruct() const {
     return valueType->isProto();
 }
+
+// MARK: - Private
+weak_ptr<llvm::Module> WrappedValue::llvmModule;
+weak_ptr<llvm::IRBuilder<>> WrappedValue::builder;
+function<llvm::Type *(shared_ptr<ValueType>, bool)> WrappedValue::llvmTypeForValueType;
+function<llvm::AllocaInst *(llvm::Type*, string)> WrappedValue::buildAlloca;

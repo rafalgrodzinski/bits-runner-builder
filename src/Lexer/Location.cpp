@@ -1,5 +1,7 @@
 #include "Location.h"
 
+// MARK: - Public
+
 Location::Location(const string &fileName, int line, int column):
 fileName(fileName), line(line), column(column) { }
 

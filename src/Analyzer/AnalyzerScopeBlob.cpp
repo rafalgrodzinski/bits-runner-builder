@@ -2,6 +2,8 @@
 #include "AnalyzerScope.h"
 #include "Parser/ValueType/ValueType.h"
 
+// MARK: - Public
+
 AnalyzerScopeBlob::AnalyzerScopeBlob(AnalyzerScope *parent):
 parent(parent) { }
 

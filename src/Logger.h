@@ -75,6 +75,17 @@ enum class IndentKind {
 };
 
 class Logger {
+public:
+    static void print(const vector<shared_ptr<Token>> &tokens);
+    static void print(shared_ptr<Module> module);
+    static void printExportedHeaderStatements(const map<string, vector<shared_ptr<Statement>>> &statmentsMap);
+    static void print(shared_ptr<Error> error);
+
+    static string toString(shared_ptr<Location> location);
+    static string toString(shared_ptr<ValueType> valueType);
+    static string toString(ExpressionUnaryOperation operationUnary);
+    static string toString(ExpressionBinaryOperation operationBinary);
+
 private:
     // lexer
     static string toString(shared_ptr<Token> token); // kind and contents
@@ -135,17 +146,6 @@ private:
     // errors support
     static string toString(Parsee parsee);
     static string toString(TokenKind tokenKind); // only kind
-
-public:
-    static void print(const vector<shared_ptr<Token>> &tokens);
-    static void print(shared_ptr<Module> module);
-    static void printExportedHeaderStatements(const map<string, vector<shared_ptr<Statement>>> &statmentsMap);
-    static void print(shared_ptr<Error> error);
-
-    static string toString(shared_ptr<Location> location);
-    static string toString(shared_ptr<ValueType> valueType);
-    static string toString(ExpressionUnaryOperation operationUnary);
-    static string toString(ExpressionBinaryOperation operationBinary);
 };
 
 #endif

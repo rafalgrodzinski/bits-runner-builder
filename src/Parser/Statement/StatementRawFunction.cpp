@@ -3,6 +3,8 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypeFun.h"
 
+// MARK: - Public
+
 StatementRawFunction::StatementRawFunction(
     bool shouldExport,
     const string &name,

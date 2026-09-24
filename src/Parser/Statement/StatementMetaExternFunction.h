@@ -9,14 +9,6 @@ class ValueType;
 class ValueTypeFun;
 
 class StatementMetaExternFunction: public Statement {
-private:
-    string name;
-    string moduleName;
-    string symbolName;
-
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnValueType;
-
 public:
     StatementMetaExternFunction(
         const string &name,
@@ -34,6 +26,14 @@ public:
     vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
     shared_ptr<ValueType> getReturnValueType() const;
     shared_ptr<ValueTypeFun> getValueType() const;
+
+private:
+    string name;
+    string moduleName;
+    string symbolName;
+
+    vector<pair<string, shared_ptr<ValueType>>> arguments;
+    shared_ptr<ValueType> returnValueType;
 };
 
 #endif

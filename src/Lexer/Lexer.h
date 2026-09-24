@@ -12,6 +12,11 @@ enum class TokenKind;
 using namespace std;
 
 class Lexer {
+public:
+    Lexer(const string &fileName, const string &source);
+
+    vector<shared_ptr<Token>> getTokens();
+
 private:
     string source;
     int currentIndex;
@@ -46,11 +51,6 @@ private:
     void advanceWithToken(shared_ptr<Token> token);
 
     void markError();
-
-public:
-    Lexer(const string &fileName, const string &source);
-
-    vector<shared_ptr<Token>> getTokens();
 };
 
 #endif

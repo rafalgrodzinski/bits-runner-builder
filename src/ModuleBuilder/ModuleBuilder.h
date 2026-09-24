@@ -70,6 +70,17 @@ class ModuleBuilder {
         IMPLICIT
     };
 
+public:
+    ModuleBuilder(
+        const string &defaultModuleName,
+        llvm::Triple::ArchType archType,
+        llvm::DataLayout dataLayout,
+        llvm::CallingConv::ID callingConvention,
+        shared_ptr<Module> module,
+        const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
+    );
+    shared_ptr<llvm::Module> getLlvmModule();
+
 private:
     vector<shared_ptr<Error>> errors;
     string defaultModuleName;
@@ -180,17 +191,6 @@ private:
 
     void debugPrint(const vector<llvm::Value *> &values);
     void debugPrint(const vector<llvm::Type *> &types);
-
-public:
-    ModuleBuilder(
-        const string &defaultModuleName,
-        llvm::Triple::ArchType archType,
-        llvm::DataLayout dataLayout,
-        llvm::CallingConv::ID callingConvention,
-        shared_ptr<Module> module,
-        const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
-    );
-    shared_ptr<llvm::Module> getLlvmModule();
 };
 
 #endif

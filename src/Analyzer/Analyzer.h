@@ -61,11 +61,21 @@ enum class ExpressionBinaryOperation;
 using namespace std;
 
 class Analyzer {
+private:
     enum class ImportLevel {
         NONE,
         EXPLICIT,
         IMPLICIT
     };
+
+public:
+    Analyzer(
+        const string &defaultModuleName,
+        shared_ptr<Module> module,
+        const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
+    );
+
+    void checkModule();
 
 private:
     vector<shared_ptr<Error>> errors;
@@ -143,15 +153,6 @@ private:
     void markErrorNotDefined(shared_ptr<Location> location, const string &name);
     void markErrorNotImplemented(shared_ptr<Location> location, const string &protoName, const string &memberName);
     void markErrorUnexpectedExpression(shared_ptr<Location> location);
-
-public:
-    Analyzer(
-        const string &defaultModuleName,
-        shared_ptr<Module> module,
-        const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
-    );
-
-    void checkModule();
 };
 
 #endif

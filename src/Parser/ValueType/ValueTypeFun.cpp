@@ -1,6 +1,8 @@
 #include "ValueTypeFun.h"
 #include "Parser/SymbolName.h"
 
+// MARK: - Public
+
 ValueTypeFun::ValueTypeFun(
     const vector<shared_ptr<ValueType>> &argumentValueTypes,
     shared_ptr<ValueType> returnValueType,

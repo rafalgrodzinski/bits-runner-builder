@@ -24,28 +24,6 @@ enum class ErrorKind {
 };
 
 class Error {
-private:
-    ErrorKind kind;
-    shared_ptr<Location> location;
-    optional<string> lexme;
-
-    shared_ptr<Token> actualToken;
-    optional<TokenKind> expectedTokenKind;
-    optional<Parsee> expectedParsee;
-
-    shared_ptr<ValueType> actualType;
-    shared_ptr<ValueType> expectedType;
-
-    shared_ptr<ValueType> firstType;
-    shared_ptr<ValueType> secondType;
-    optional<ExpressionUnaryOperation> unaryOperation;
-    optional<ExpressionBinaryOperation> binaryOperation;
-    string identifier;
-
-    optional<string> functionName;
-    optional<string> moduleName;
-    optional<string> message;
-
 public:
     static shared_ptr<Error> error(shared_ptr<Location> location, const string &message); 
 
@@ -77,6 +55,28 @@ public:
     optional<string> getFunctionName() const;
     optional<string> getModuleName() const;
     optional<string> getMessage() const;
+
+private:
+    ErrorKind kind;
+    shared_ptr<Location> location;
+    optional<string> lexme;
+
+    shared_ptr<Token> actualToken;
+    optional<TokenKind> expectedTokenKind;
+    optional<Parsee> expectedParsee;
+
+    shared_ptr<ValueType> actualType;
+    shared_ptr<ValueType> expectedType;
+
+    shared_ptr<ValueType> firstType;
+    shared_ptr<ValueType> secondType;
+    optional<ExpressionUnaryOperation> unaryOperation;
+    optional<ExpressionBinaryOperation> binaryOperation;
+    string identifier;
+
+    optional<string> functionName;
+    optional<string> moduleName;
+    optional<string> message;
 };
 
 #endif

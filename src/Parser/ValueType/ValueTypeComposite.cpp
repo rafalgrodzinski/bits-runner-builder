@@ -1,5 +1,7 @@
 #include "ValueTypeComposite.h"
 
+// MARK: - Public
+
 ValueTypeComposite::ValueTypeComposite(
     const vector<shared_ptr<ValueType>> &elementValueTypes,
     shared_ptr<Expression> countExpression,

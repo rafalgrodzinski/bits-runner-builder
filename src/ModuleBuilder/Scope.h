@@ -14,23 +14,6 @@ class WrappedValue;
 using namespace std;
 
 class Scope {
-private:
-    typedef struct {
-        map<string, shared_ptr<WrappedValue>> wrappedValueMap;
-        map<string, llvm::Function*> funMap;
-        map<string, llvm::InlineAsm*> rawFunMap;
-
-        map<string, llvm::Constant*> enumFieldTagValuesMap;
-
-        map<string, llvm::StructType*> protoStructTypesMap;
-        map<string, vector<pair<string, shared_ptr<ValueType>>>> protoStructMembersMap;
-
-        map<string, llvm::StructType*> structTypeMap;
-        map<string, vector<string>> structMembersMap;
-    } ScopeLevel;
-
-    stack<ScopeLevel> scopeLevels;
-
 public:
     Scope();
 
@@ -56,6 +39,23 @@ public:
     bool setStruct(const string &structName, llvm::StructType *type, const vector<string> &memberNames);
     llvm::StructType *getStructType(const string &memberName) const;
     optional<int> getStructMemberIndex(const string &structName, const string &memberName) const;
+
+private:
+    typedef struct {
+        map<string, shared_ptr<WrappedValue>> wrappedValueMap;
+        map<string, llvm::Function*> funMap;
+        map<string, llvm::InlineAsm*> rawFunMap;
+
+        map<string, llvm::Constant*> enumFieldTagValuesMap;
+
+        map<string, llvm::StructType*> protoStructTypesMap;
+        map<string, vector<pair<string, shared_ptr<ValueType>>>> protoStructMembersMap;
+
+        map<string, llvm::StructType*> structTypeMap;
+        map<string, vector<string>> structMembersMap;
+    } ScopeLevel;
+
+    stack<ScopeLevel> scopeLevels;
 };
 
 #endif

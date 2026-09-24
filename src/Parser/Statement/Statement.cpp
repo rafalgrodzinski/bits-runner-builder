@@ -2,6 +2,8 @@
 
 #include "Lexer/Location.h"
 
+// MARK: - Public
+
 Statement::Statement(StatementKind kind, shared_ptr<Location> location):
 kind(kind), location(location) { }
 

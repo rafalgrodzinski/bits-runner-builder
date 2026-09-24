@@ -4,13 +4,13 @@
 #include "Expression.h"
 
 class ExpressionGrouping: public Expression {
-private:
-    shared_ptr<Expression> subExpression;
-
 public:
     ExpressionGrouping(shared_ptr<Expression> subExpression, shared_ptr<Location> location);
 
     shared_ptr<Expression> getSubExpression() const;
+
+private:
+    shared_ptr<Expression> subExpression;
 };
 
 #endif

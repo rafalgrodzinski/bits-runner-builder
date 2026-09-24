@@ -53,6 +53,8 @@
 #include "Parsee/ParseeResult.h"
 #include "Parsee/ParseeResultsGroup.h"
 
+// MARK: - Public
+
 Parser::Parser(const vector<shared_ptr<Token>> &tokens):
 tokens(tokens) { }
 
@@ -99,9 +101,9 @@ vector<shared_ptr<Statement>> Parser::getStatements() {
     return statements;
 };
 
-//
+// MARK: - Private
+
 // Statements
-//
 
 shared_ptr<Statement> Parser::nextInBlockStatement() {
     shared_ptr<Statement> statement;
@@ -1558,9 +1560,8 @@ shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
     return make_shared<StatementVariableDeclaration>(identifier, valueType, location);
 }
 
-//
 // Expressions
-//
+
 shared_ptr<Expression> Parser::nextExpression() {
     shared_ptr<Expression> expression;
     int errorsCount = errors.size();
@@ -2660,9 +2661,8 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueTypeSimple::simpleForToken(typeToken, location);
 }
 
-//
 // Parsee
-//
+
 ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) {
     int errorsCount = errors.size();
     int startIndex = currentIndex;

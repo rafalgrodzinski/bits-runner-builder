@@ -14,10 +14,6 @@ enum class ParseeResultsGroupKind {
 };
 
 class ParseeResultsGroup {
-private:
-    ParseeResultsGroupKind kind;
-    vector<ParseeResult> results;
-
 public:
     static ParseeResultsGroup success(const vector<ParseeResult> &results);
     static ParseeResultsGroup noMatch();
@@ -25,6 +21,10 @@ public:
 
     ParseeResultsGroupKind getKind() const;
     vector<ParseeResult> getResults() const;
+
+private:
+    ParseeResultsGroupKind kind;
+    vector<ParseeResult> results;
 };
 
 #endif

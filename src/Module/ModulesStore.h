@@ -15,6 +15,13 @@ class ValueType;
 using namespace std;
 
 class ModulesStore {
+public:
+    ModulesStore(const string &defaultModuleName);
+
+    void appendStatements(vector<shared_ptr<Statement>> statements);
+    vector<shared_ptr<Module>> getModules();
+    map<string, vector<shared_ptr<Statement>>> getExportedHeaderStatementsMap();
+
 private:
     string defaultModuleName;
     vector<string> moduleNames;
@@ -44,13 +51,6 @@ private:
 
     void setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot = false);
     void setModuleName(shared_ptr<Expression> expression, const string &moduleName);
-
-public:
-    ModulesStore(const string &defaultModuleName);
-
-    void appendStatements(vector<shared_ptr<Statement>> statements);
-    vector<shared_ptr<Module>> getModules();
-    map<string, vector<shared_ptr<Statement>>> getExportedHeaderStatementsMap();
 };
 
 #endif

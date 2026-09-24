@@ -2,6 +2,8 @@
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 
+// MARK: - Public
+
 ValueTypeData::ValueTypeData(
     shared_ptr<ValueType> elementValueType,
     shared_ptr<Expression> countExpression,

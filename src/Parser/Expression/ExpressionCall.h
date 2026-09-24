@@ -8,11 +8,6 @@
 class ExpressionCall: public Expression {
 friend class Analyzer;
 
-private:
-    string name;
-    string moduleName;
-    vector<shared_ptr<Expression>> argumentExpressions;
-
 public:
     ExpressionCall(const string &name, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<Location> location);
 
@@ -22,6 +17,11 @@ public:
     void setModuleName(const string &moduleName);
 
     vector<shared_ptr<Expression>> getArgumentExpressions() const;
+
+private:
+    string name;
+    string moduleName;
+    vector<shared_ptr<Expression>> argumentExpressions;
 };
 
 #endif

@@ -2,6 +2,8 @@
 #include "StatementProtoDeclaration.h"
 #include "Parser/SymbolName.h"
 
+// MARK: - Public
+
 StatementProto::StatementProto(
     bool shouldExport,
     const string &name,

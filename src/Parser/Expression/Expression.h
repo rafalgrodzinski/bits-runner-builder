@@ -30,13 +30,6 @@ enum class ExpressionKind {
 class Expression {
     friend class Analyzer;
 
-private:
-    ExpressionKind kind;
-    shared_ptr<Location> location;
-
-protected:
-    shared_ptr<ValueType> valueType;
-
 public:
     static shared_ptr<Expression> none(shared_ptr<Location> location);
 
@@ -46,6 +39,13 @@ public:
     ExpressionKind getKind() const;
     shared_ptr<Location> getLocation() const;
     shared_ptr<ValueType> getValueType() const;
+
+protected:
+    shared_ptr<ValueType> valueType;
+
+private:
+    ExpressionKind kind;
+    shared_ptr<Location> location;
 };
 
 #endif

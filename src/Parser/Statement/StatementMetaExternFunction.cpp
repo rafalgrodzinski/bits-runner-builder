@@ -2,6 +2,8 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypeFun.h"
 
+// MARK: - Public
+
 StatementMetaExternFunction::StatementMetaExternFunction(
     const string &name,
     const vector<pair<string, shared_ptr<ValueType>>> &arguments,

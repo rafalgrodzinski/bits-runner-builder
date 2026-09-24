@@ -4,6 +4,8 @@
 #include "Lexer/Token.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 
+// MARK: - Public
+
 shared_ptr<ExpressionCompositeLiteral> ExpressionCompositeLiteral::expressionCompositeLiteralForExpressions(vector<shared_ptr<Expression>> expressions, shared_ptr<Location> location) {
     shared_ptr<ExpressionCompositeLiteral> expression = make_shared<ExpressionCompositeLiteral>(location);
     expression->expressions = expressions;
