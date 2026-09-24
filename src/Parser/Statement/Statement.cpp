@@ -2,6 +2,8 @@
 
 #include "Lexer/Location.h"
 
+using namespace std;
+
 // MARK: - Public
 
 Statement::Statement(StatementKind kind, shared_ptr<Location> location):

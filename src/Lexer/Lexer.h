@@ -9,38 +9,36 @@ class Error;
 class Token;
 enum class TokenKind;
 
-using namespace std;
-
 class Lexer {
 public:
-    Lexer(const string &fileName, const string &source);
+    Lexer(const std::string &fileName, const std::string &source);
 
-    vector<shared_ptr<Token>> getTokens();
+    std::vector<std::shared_ptr<Token>> getTokens();
 
 private:
-    string source;
+    std::string source;
     int currentIndex;
-    string currentFileName;
+    std::string currentFileName;
     int currentLine;
     int currentColumn;
-    vector<shared_ptr<Token>> tokens;
-    vector<shared_ptr<Error>> errors;
+    std::vector<std::shared_ptr<Token>> tokens;
+    std::vector<std::shared_ptr<Error>> errors;
     bool foundRawSourceStart;
     bool isParsingRawSource;
 
-    shared_ptr<Token> nextToken();
-    shared_ptr<Token> match(TokenKind kind, const string &lexme, bool needsSeparator);
-    shared_ptr<Token> matchFloat();
-    shared_ptr<Token> matchIntegerDec();
-    shared_ptr<Token> matchIntegerHex();
-    shared_ptr<Token> matchIntegerBin();
-    shared_ptr<Token> matchIntegerChar();
-    shared_ptr<Token> matchString();
-    shared_ptr<Token> matchType();
-    shared_ptr<Token> matchIdentifier();
+    std::shared_ptr<Token> nextToken();
+    std::shared_ptr<Token> match(TokenKind kind, const std::string &lexme, bool needsSeparator);
+    std::shared_ptr<Token> matchFloat();
+    std::shared_ptr<Token> matchIntegerDec();
+    std::shared_ptr<Token> matchIntegerHex();
+    std::shared_ptr<Token> matchIntegerBin();
+    std::shared_ptr<Token> matchIntegerChar();
+    std::shared_ptr<Token> matchString();
+    std::shared_ptr<Token> matchType();
+    std::shared_ptr<Token> matchIdentifier();
     void tryStartingRawSourceParsing();
-    shared_ptr<Token> matchRawSourceLine();
-    shared_ptr<Token> matchEnd();
+    std::shared_ptr<Token> matchRawSourceLine();
+    std::shared_ptr<Token> matchEnd();
 
     bool isWhiteSpace(int index) const;
     bool isDecDigit(int index) const;
@@ -48,7 +46,7 @@ private:
     bool isBinDigit(int index) const;
     bool isIdentifier(int index) const;
     bool isSeparator(int index) const;
-    void advanceWithToken(shared_ptr<Token> token);
+    void advanceWithToken(std::shared_ptr<Token> token);
 
     void markError();
 };

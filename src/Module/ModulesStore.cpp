@@ -37,6 +37,8 @@
 
 #include "Parser/ValueType/ValueType.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ModulesStore::ModulesStore(const string &defaultModuleName):

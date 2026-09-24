@@ -10,23 +10,21 @@
 
 class ValueType;
 
-using namespace std;
-
 class WrappedValue {
 public:
     WrappedValue();
 
     static void setup(
-        weak_ptr<llvm::Module> llvmModule,
-        weak_ptr<llvm::IRBuilder<>> builder,
-        function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType,
-        function<llvm::AllocaInst *(llvm::Type*, string)> buildAlloca
+        std::weak_ptr<llvm::Module> llvmModule,
+        std::weak_ptr<llvm::IRBuilder<>> builder,
+        std::function<llvm::Type *(std::shared_ptr<ValueType>, bool)> llvmTypeForValueType,
+        std::function<llvm::AllocaInst *(llvm::Type*, std::string)> buildAlloca
     );
 
-    static shared_ptr<WrappedValue> wrappedValue(llvm::Value *value, shared_ptr<ValueType> valueType);
-    static shared_ptr<WrappedValue> wrappedPointerValue(llvm::Value *pointerValue, shared_ptr<ValueType> pointeeValueType);
-    static shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, uint64_t value, shared_ptr<ValueType> valueType);
-    static shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, shared_ptr<ValueType> valueType);
+    static std::shared_ptr<WrappedValue> wrappedValue(llvm::Value *value, std::shared_ptr<ValueType> valueType);
+    static std::shared_ptr<WrappedValue> wrappedPointerValue(llvm::Value *pointerValue, std::shared_ptr<ValueType> pointeeValueType);
+    static std::shared_ptr<WrappedValue> wrappedUIntValue(llvm::Type *type, uint64_t value, std::shared_ptr<ValueType> valueType);
+    static std::shared_ptr<WrappedValue> wrappedNone(llvm::Type *type, std::shared_ptr<ValueType> valueType);
 
     llvm::Value *getValue() const;
     llvm::Value *getPointerValue() const;
@@ -37,7 +35,7 @@ public:
     llvm::Type *getType() const;
     llvm::ArrayType *getArrayType() const;
     llvm::StructType *getStructType() const;
-    shared_ptr<ValueType> getValueType() const;
+    std::shared_ptr<ValueType> getValueType() const;
 
     bool isArray() const;
     bool isPtr() const;
@@ -46,16 +44,16 @@ public:
     bool isProtoStruct() const;
 
 private:
-    static weak_ptr<llvm::Module> llvmModule;
-    static weak_ptr<llvm::IRBuilder<>> builder;
-    static function<llvm::Type *(shared_ptr<ValueType>, bool)> llvmTypeForValueType;
-    static function<llvm::AllocaInst *(llvm::Type*, string)> buildAlloca;
+    static std::weak_ptr<llvm::Module> llvmModule;
+    static std::weak_ptr<llvm::IRBuilder<>> builder;
+    static std::function<llvm::Type *(std::shared_ptr<ValueType>, bool)> llvmTypeForValueType;
+    static std::function<llvm::AllocaInst *(llvm::Type*, std::string)> buildAlloca;
 
     llvm::Type *type;
-    shared_ptr<ValueType> valueType;
+    std::shared_ptr<ValueType> valueType;
 
-    function<llvm::Value *()> valueLambda;
-    function<llvm::Value *()> pointerValueLambda;
+    std::function<llvm::Value *()> valueLambda;
+    std::function<llvm::Value *()> pointerValueLambda;
 };
 
 #endif

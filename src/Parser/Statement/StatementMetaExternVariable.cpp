@@ -1,5 +1,7 @@
 #include "StatementMetaExternVariable.h"
 
+using namespace std;
+
 // MARK: - Public
 
 StatementMetaExternVariable::StatementMetaExternVariable(const string &identifier, shared_ptr<ValueType> valueType, shared_ptr<Location> location):

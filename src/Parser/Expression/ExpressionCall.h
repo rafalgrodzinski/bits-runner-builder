@@ -9,19 +9,19 @@ class ExpressionCall: public Expression {
 friend class Analyzer;
 
 public:
-    ExpressionCall(const string &name, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<Location> location);
+    ExpressionCall(const std::string &name, const std::vector<std::shared_ptr<Expression>> &argumentExpressions, std::shared_ptr<Location> location);
 
-    string getName() const;
-    string getGlobalName() const;
-    string getModuleName() const;
-    void setModuleName(const string &moduleName);
+    std::string getName() const;
+    std::string getGlobalName() const;
+    std::string getModuleName() const;
+    void setModuleName(const std::string &moduleName);
 
-    vector<shared_ptr<Expression>> getArgumentExpressions() const;
+    std::vector<std::shared_ptr<Expression>> getArgumentExpressions() const;
 
 private:
-    string name;
-    string moduleName;
-    vector<shared_ptr<Expression>> argumentExpressions;
+    std::string name;
+    std::string moduleName;
+    std::vector<std::shared_ptr<Expression>> argumentExpressions;
 };
 
 #endif

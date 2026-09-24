@@ -2,6 +2,8 @@
 #include "Parser/Expression/Expression.h"
 #include "Parser/Expression/ExpressionLiteral.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ValueTypeData::ValueTypeData(

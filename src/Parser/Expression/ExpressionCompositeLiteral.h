@@ -7,15 +7,15 @@ class ExpressionCompositeLiteral: public Expression {
 friend class Analyzer;
 
 public:
-    static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForExpressions(vector<shared_ptr<Expression>> expressions, shared_ptr<Location> location);
-    static shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForTokenString(shared_ptr<Token> tokenString);
+    static std::shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForExpressions(std::vector<std::shared_ptr<Expression>> expressions, std::shared_ptr<Location> location);
+    static std::shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteralForTokenString(std::shared_ptr<Token> tokenString);
 
-    ExpressionCompositeLiteral(shared_ptr<Location> location);
+    ExpressionCompositeLiteral(std::shared_ptr<Location> location);
 
-    vector<shared_ptr<Expression>> getExpressions() const;
+    std::vector<std::shared_ptr<Expression>> getExpressions() const;
 
 private:
-    vector<shared_ptr<Expression>> expressions;
+    std::vector<std::shared_ptr<Expression>> expressions;
 };
 
 #endif

@@ -1,5 +1,7 @@
 #include "ValueTypePtr.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ValueTypePtr::ValueTypePtr(

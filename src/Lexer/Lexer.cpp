@@ -5,6 +5,8 @@
 #include "Location.h"
 #include "Token.h"
 
+using namespace std;
+
 // MARK: - Public
 
 Lexer::Lexer(const string &fileName, const string &source):

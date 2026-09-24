@@ -1,5 +1,7 @@
 #include "ValueTypeComposite.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ValueTypeComposite::ValueTypeComposite(

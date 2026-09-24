@@ -47,6 +47,8 @@
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ModuleBuilder::ModuleBuilder(

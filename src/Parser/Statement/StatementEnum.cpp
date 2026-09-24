@@ -1,5 +1,7 @@
 #include "StatementEnum.h"
 
+using namespace std;
+
 // MARK: - Public
 
 StatementEnum::StatementEnum(

@@ -1,5 +1,7 @@
 #include "ExpressionCall.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ExpressionCall::ExpressionCall(const string &name, const vector<shared_ptr<Expression>> &argumentExpressions, shared_ptr<Location> location):

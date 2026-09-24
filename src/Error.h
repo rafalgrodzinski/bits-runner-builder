@@ -13,8 +13,6 @@ enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
 enum class TokenKind;
 
-using namespace std;
-
 enum class ErrorKind {
     MESSAGE,
     LEXER_ERROR,
@@ -25,58 +23,58 @@ enum class ErrorKind {
 
 class Error {
 public:
-    static shared_ptr<Error> error(shared_ptr<Location> location, const string &message); 
+    static std::shared_ptr<Error> error(std::shared_ptr<Location> location, const std::string &message); 
 
-    static shared_ptr<Error> lexerError(shared_ptr<Location> location, const string &lexme);
-    static shared_ptr<Error> parserError(shared_ptr<Token> actualToken, optional<TokenKind> expectedTokenKind, const optional<Parsee> &expectedParsee, const optional<string> &message);
+    static std::shared_ptr<Error> lexerError(std::shared_ptr<Location> location, const std::string &lexme);
+    static std::shared_ptr<Error> parserError(std::shared_ptr<Token> actualToken, std::optional<TokenKind> expectedTokenKind, const std::optional<Parsee> &expectedParsee, const std::optional<std::string> &message);
 
-    static shared_ptr<Error> builderFunctionError(const string &funtionName, const string &message);
-    static shared_ptr<Error> builderModuleError(const string &moduleName, const string &message);
+    static std::shared_ptr<Error> builderFunctionError(const std::string &funtionName, const std::string &message);
+    static std::shared_ptr<Error> builderModuleError(const std::string &moduleName, const std::string &message);
 
     Error();
 
     ErrorKind getKind() const;
-    shared_ptr<Location> getLocation() const;
-    optional<string> getLexme() const;
+    std::shared_ptr<Location> getLocation() const;
+    std::optional<std::string> getLexme() const;
 
-    shared_ptr<Token> getActualToken() const;
-    optional<TokenKind> getExpectedTokenKind() const;
-    optional<Parsee> getExpectedParsee() const;
+    std::shared_ptr<Token> getActualToken() const;
+    std::optional<TokenKind> getExpectedTokenKind() const;
+    std::optional<Parsee> getExpectedParsee() const;
 
-    shared_ptr<ValueType> getActualType() const;
-    shared_ptr<ValueType> getExpectedType() const;
+    std::shared_ptr<ValueType> getActualType() const;
+    std::shared_ptr<ValueType> getExpectedType() const;
 
-    shared_ptr<ValueType> getFirstType() const;
-    shared_ptr<ValueType> getSecondType() const;
-    optional<ExpressionUnaryOperation> getUnaryOperation() const;
-    optional<ExpressionBinaryOperation> getBinaryOperation() const ;
-    optional<string> getIdentifier()const;
+    std::shared_ptr<ValueType> getFirstType() const;
+    std::shared_ptr<ValueType> getSecondType() const;
+    std::optional<ExpressionUnaryOperation> getUnaryOperation() const;
+    std::optional<ExpressionBinaryOperation> getBinaryOperation() const ;
+    std::optional<std::string> getIdentifier()const;
 
-    optional<string> getFunctionName() const;
-    optional<string> getModuleName() const;
-    optional<string> getMessage() const;
+    std::optional<std::string> getFunctionName() const;
+    std::optional<std::string> getModuleName() const;
+    std::optional<std::string> getMessage() const;
 
 private:
     ErrorKind kind;
-    shared_ptr<Location> location;
-    optional<string> lexme;
+    std::shared_ptr<Location> location;
+    std::optional<std::string> lexme;
 
-    shared_ptr<Token> actualToken;
-    optional<TokenKind> expectedTokenKind;
-    optional<Parsee> expectedParsee;
+    std::shared_ptr<Token> actualToken;
+    std::optional<TokenKind> expectedTokenKind;
+    std::optional<Parsee> expectedParsee;
 
-    shared_ptr<ValueType> actualType;
-    shared_ptr<ValueType> expectedType;
+    std::shared_ptr<ValueType> actualType;
+    std::shared_ptr<ValueType> expectedType;
 
-    shared_ptr<ValueType> firstType;
-    shared_ptr<ValueType> secondType;
-    optional<ExpressionUnaryOperation> unaryOperation;
-    optional<ExpressionBinaryOperation> binaryOperation;
-    string identifier;
+    std::shared_ptr<ValueType> firstType;
+    std::shared_ptr<ValueType> secondType;
+    std::optional<ExpressionUnaryOperation> unaryOperation;
+    std::optional<ExpressionBinaryOperation> binaryOperation;
+    std::string identifier;
 
-    optional<string> functionName;
-    optional<string> moduleName;
-    optional<string> message;
+    std::optional<std::string> functionName;
+    std::optional<std::string> moduleName;
+    std::optional<std::string> message;
 };
 
 #endif

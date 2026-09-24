@@ -12,18 +12,16 @@
 class AnalyzerScope;
 class ValueType;
 
-using namespace std;
-
 class AnalyzerScopeBoxed {
 public:
     typedef struct {
-        map<string, shared_ptr<ValueType>> namedValueTypesMap;
+        std::map<std::string, std::shared_ptr<ValueType>> namedValueTypesMap;
     } ScopeLevel;
 
     AnalyzerScopeBoxed(AnalyzerScope *parent);
 
-    shared_ptr<ValueType> getNamedValueType(const string &namedValueTypeKey) const;
-    void registerNamedValueTypesMap(const vector<string> &namedValueTypeKeys, const vector<shared_ptr<ValueType>> &namedValueTypes);
+    std::shared_ptr<ValueType> getNamedValueType(const std::string &namedValueTypeKey) const;
+    void registerNamedValueTypesMap(const std::vector<std::string> &namedValueTypeKeys, const std::vector<std::shared_ptr<ValueType>> &namedValueTypes);
 
 private:
     AnalyzerScope *parent;

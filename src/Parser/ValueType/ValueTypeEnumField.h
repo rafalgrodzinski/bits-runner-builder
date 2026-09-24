@@ -11,24 +11,24 @@ friend class Analyzer;
 
 public:
     ValueTypeEnumField(
-        const string &name,
-        const vector<shared_ptr<ValueType>> namedValueTypes,
-        shared_ptr<Location> location
+        const std::string &name,
+        const std::vector<std::shared_ptr<ValueType>> namedValueTypes,
+        std::shared_ptr<Location> location
     );
 
-    shared_ptr<SymbolName> getSymbolName() const;
-    vector<shared_ptr<ValueType>> getNamedValueTypes() const;
-    shared_ptr<ValueType> getPayloadValueType() const;
+    std::shared_ptr<SymbolName> getSymbolName() const;
+    std::vector<std::shared_ptr<ValueType>> getNamedValueTypes() const;
+    std::shared_ptr<ValueType> getPayloadValueType() const;
 
-    void setModuleName(const string &moduleName) override;
-    bool isEqual(shared_ptr<ValueType> other) const override;
-    shared_ptr<ValueType> clone() const override;
+    void setModuleName(const std::string &moduleName) override;
+    bool isEqual(std::shared_ptr<ValueType> other) const override;
+    std::shared_ptr<ValueType> clone() const override;
     
 private:
-    shared_ptr<SymbolName> symbolName;
-    vector<string> namedValueTypeKeys;
-    vector<shared_ptr<ValueType>> namedValueTypes;
-    shared_ptr<ValueType> payloadValueType;
+    std::shared_ptr<SymbolName> symbolName;
+    std::vector<std::string> namedValueTypeKeys;
+    std::vector<std::shared_ptr<ValueType>> namedValueTypes;
+    std::shared_ptr<ValueType> payloadValueType;
 };
 
 #endif

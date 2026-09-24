@@ -3,6 +3,8 @@
 #include "Parser/Expression/Expression.h"
 #include "Parser/Statement/StatementBlock.h"
 
+using namespace std;
+
 // MARK: - Public
 
 StatementRepeat::StatementRepeat(

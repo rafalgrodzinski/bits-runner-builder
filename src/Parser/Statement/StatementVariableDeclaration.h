@@ -12,34 +12,34 @@ friend class Analyzer;
 
 public:
     StatementVariableDeclaration(
-        const string &identifier,
-        shared_ptr<ValueType> valueType,
-        shared_ptr<Location> location
+        const std::string &identifier,
+        std::shared_ptr<ValueType> valueType,
+        std::shared_ptr<Location> location
     );
 
     StatementVariableDeclaration(
         bool shouldExport,
-        const string &identifier,
-        const string &moduleName,
+        const std::string &identifier,
+        const std::string &moduleName,
         bool isRoot,
-        shared_ptr<ValueType> valueType,
-        shared_ptr<Location> location
+        std::shared_ptr<ValueType> valueType,
+        std::shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
-    string getIdentifier() const;
-    string getGlobalIdentifier() const;
-    string getModuleName() const;
-    void setModuleName(const string &moduleName);
+    std::string getIdentifier() const;
+    std::string getGlobalIdentifier() const;
+    std::string getModuleName() const;
+    void setModuleName(const std::string &moduleName);
     bool getIsRoot() const;
-    shared_ptr<ValueType> getValueType() const;
+    std::shared_ptr<ValueType> getValueType() const;
 
 private:
     bool shouldExport;
-    string identifier;
-    string moduleName;
+    std::string identifier;
+    std::string moduleName;
     bool isRoot;
-    shared_ptr<ValueType> valueType;
+    std::shared_ptr<ValueType> valueType;
 };
 
 #endif

@@ -3,6 +3,8 @@
 #include "Lexer/Token.h"
 #include "Parser/ValueType/ValueType.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ParseeResult ParseeResult::tokenResult(shared_ptr<Token> token, int tag) {

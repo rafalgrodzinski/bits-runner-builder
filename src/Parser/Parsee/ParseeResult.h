@@ -8,8 +8,6 @@ class ValueType;
 class Statement;
 class Expression;
 
-using namespace std;
-
 enum class ParseeResultKind {
     TOKEN,
     VALUE_TYPE,
@@ -20,27 +18,27 @@ enum class ParseeResultKind {
 
 class ParseeResult {
 public:
-    static ParseeResult tokenResult(shared_ptr<Token> token, int tag = -1);
-    static ParseeResult valueTypeResult(shared_ptr<ValueType> valueType, int tokensCount, int tag = -1);
-    static ParseeResult statementResult(shared_ptr<Statement> statement, int tokensCount, int tag = -1);
-    static ParseeResult statementInBlockResult(shared_ptr<Statement> statement, int tokensCount, int tag = -1);
-    static ParseeResult expressionResult(shared_ptr<Expression> expression, int tokensCount, int tag = -1);
+    static ParseeResult tokenResult(std::shared_ptr<Token> token, int tag = -1);
+    static ParseeResult valueTypeResult(std::shared_ptr<ValueType> valueType, int tokensCount, int tag = -1);
+    static ParseeResult statementResult(std::shared_ptr<Statement> statement, int tokensCount, int tag = -1);
+    static ParseeResult statementInBlockResult(std::shared_ptr<Statement> statement, int tokensCount, int tag = -1);
+    static ParseeResult expressionResult(std::shared_ptr<Expression> expression, int tokensCount, int tag = -1);
 
     ParseeResultKind getKind() const;
     int getTag() const;
-    shared_ptr<Token> getToken() const;
-    shared_ptr<ValueType> getValueType() const;
-    shared_ptr<Statement> getStatement() const;
-    shared_ptr<Expression> getExpression() const;
+    std::shared_ptr<Token> getToken() const;
+    std::shared_ptr<ValueType> getValueType() const;
+    std::shared_ptr<Statement> getStatement() const;
+    std::shared_ptr<Expression> getExpression() const;
     int getTokensCount() const;
 
 private:
     ParseeResultKind kind;
     int tag;
-    shared_ptr<Token> token;
-    shared_ptr<ValueType> valueType;
-    shared_ptr<Statement> statement;
-    shared_ptr<Expression> expression;
+    std::shared_ptr<Token> token;
+    std::shared_ptr<ValueType> valueType;
+    std::shared_ptr<Statement> statement;
+    std::shared_ptr<Expression> expression;
     int tokensCount;
     ParseeResult();
 };

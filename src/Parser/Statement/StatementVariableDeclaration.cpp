@@ -1,5 +1,7 @@
 #include "StatementVariableDeclaration.h"
 
+using namespace std;
+
 // MARK: - Public
 
 StatementVariableDeclaration::StatementVariableDeclaration(

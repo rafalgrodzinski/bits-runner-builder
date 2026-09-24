@@ -2,6 +2,8 @@
 #include "StatementProtoDeclaration.h"
 #include "Parser/SymbolName.h"
 
+using namespace std;
+
 // MARK: - Public
 
 StatementProto::StatementProto(

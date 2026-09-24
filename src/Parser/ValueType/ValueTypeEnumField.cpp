@@ -2,6 +2,8 @@
 
 #include "ValueTypeEnum.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ValueTypeEnumField::ValueTypeEnumField(

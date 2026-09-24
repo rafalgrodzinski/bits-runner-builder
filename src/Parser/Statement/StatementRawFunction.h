@@ -12,33 +12,33 @@ class StatementRawFunction: public Statement {
 public:
     StatementRawFunction(
         bool shouldExport,
-        const string &name,
-        const string &constraints,
-        const vector<pair<string, shared_ptr<ValueType>>> &arguments,
-        shared_ptr<ValueType> returnValueType,
-        const string &rawSource,
-        shared_ptr<Location> location
+        const std::string &name,
+        const std::string &constraints,
+        const std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> &arguments,
+        std::shared_ptr<ValueType> returnValueType,
+        const std::string &rawSource,
+        std::shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
-    string getName() const;
-    string getGlobalName() const;
-    string getModuleName() const;
-    void setModuleName(const string &moduleName);
-    string getConstraints() const;
-    vector<pair<string, shared_ptr<ValueType>>> getArguments() const;
-    shared_ptr<ValueType> getReturnValueType() const;
-    shared_ptr<ValueTypeFun> getValueType() const;
-    string getRawSource() const;
+    std::string getName() const;
+    std::string getGlobalName() const;
+    std::string getModuleName() const;
+    void setModuleName(const std::string &moduleName);
+    std::string getConstraints() const;
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> getArguments() const;
+    std::shared_ptr<ValueType> getReturnValueType() const;
+    std::shared_ptr<ValueTypeFun> getValueType() const;
+    std::string getRawSource() const;
 
 private:
     bool shouldExport;
-    string name;
-    string moduleName;
-    string constraints;
-    vector<pair<string, shared_ptr<ValueType>>> arguments;
-    shared_ptr<ValueType> returnValueType;
-    string rawSource;
+    std::string name;
+    std::string moduleName;
+    std::string constraints;
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> arguments;
+    std::shared_ptr<ValueType> returnValueType;
+    std::string rawSource;
 };
 
 #endif

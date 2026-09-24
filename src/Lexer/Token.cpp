@@ -2,6 +2,8 @@
 
 #include "Location.h"
 
+using namespace std;
+
 // MARK: - Public
 
 vector<TokenKind> Token::tokensLogicalOrXor = {

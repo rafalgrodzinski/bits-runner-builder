@@ -10,6 +10,8 @@
 #include "ValueTypePtr.h"
 #include "ValueTypeSimple.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ValueType::ValueType(ValueTypeKind kind, shared_ptr<Location> location):

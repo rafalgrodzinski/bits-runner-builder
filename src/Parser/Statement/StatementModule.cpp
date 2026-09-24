@@ -1,5 +1,7 @@
 #include "StatementModule.h"
 
+using namespace std;
+
 // MARK: - Public
 
 StatementModule::StatementModule(const string &name, shared_ptr<Location> location):

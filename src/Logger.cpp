@@ -55,6 +55,8 @@
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
 
+using namespace std;
+
 /// Public ///
 
 void Logger::print(const vector<shared_ptr<Token>> &tokens) {

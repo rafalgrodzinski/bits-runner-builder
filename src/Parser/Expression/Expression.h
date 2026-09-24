@@ -10,8 +10,6 @@ class Location;
 class Token;
 class ValueType;
 
-using namespace std;
-
 enum class ExpressionKind {
     BINARY,
     BLOCK,
@@ -31,21 +29,21 @@ class Expression {
     friend class Analyzer;
 
 public:
-    static shared_ptr<Expression> none(shared_ptr<Location> location);
+    static std::shared_ptr<Expression> none(std::shared_ptr<Location> location);
 
-    Expression(ExpressionKind kind, shared_ptr<ValueType> valueType, shared_ptr<Location> location);
+    Expression(ExpressionKind kind, std::shared_ptr<ValueType> valueType, std::shared_ptr<Location> location);
     virtual ~Expression() { }
 
     ExpressionKind getKind() const;
-    shared_ptr<Location> getLocation() const;
-    shared_ptr<ValueType> getValueType() const;
+    std::shared_ptr<Location> getLocation() const;
+    std::shared_ptr<ValueType> getValueType() const;
 
 protected:
-    shared_ptr<ValueType> valueType;
+    std::shared_ptr<ValueType> valueType;
 
 private:
     ExpressionKind kind;
-    shared_ptr<Location> location;
+    std::shared_ptr<Location> location;
 };
 
 #endif

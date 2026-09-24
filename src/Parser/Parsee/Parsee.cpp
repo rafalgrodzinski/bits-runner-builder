@@ -1,5 +1,7 @@
 #include "Parsee.h"
 
+using namespace std;
+
 // MARK: - Public
 
 Parsee Parsee::debug(const string &debugMessage) {

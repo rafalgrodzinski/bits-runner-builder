@@ -11,17 +11,17 @@ friend class Analyzer;
 
 public:
     StatementAssignment(
-        shared_ptr<ExpressionChained> expressionChained,
-        shared_ptr<Expression> valueExpression,
-        shared_ptr<Location> location
+        std::shared_ptr<ExpressionChained> expressionChained,
+        std::shared_ptr<Expression> valueExpression,
+        std::shared_ptr<Location> location
     );
 
-    shared_ptr<ExpressionChained> getExpressionChained() const;
-    shared_ptr<Expression> getValueExpression() const;
+    std::shared_ptr<ExpressionChained> getExpressionChained() const;
+    std::shared_ptr<Expression> getValueExpression() const;
 
 private:
-    shared_ptr<ExpressionChained> expressionChained;
-    shared_ptr<Expression> valueExpression;
+    std::shared_ptr<ExpressionChained> expressionChained;
+    std::shared_ptr<Expression> valueExpression;
 };
 
 #endif

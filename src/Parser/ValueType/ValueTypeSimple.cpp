@@ -1,6 +1,8 @@
 #include "ValueTypeSimple.h"
 #include "Lexer/Token.h"
 
+using namespace std;
+
 // MARK: - Public
 
 shared_ptr<ValueType> ValueTypeSimple::NONE = make_shared<ValueTypeSimple>(ValueTypeKind::NONE, nullptr);

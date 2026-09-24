@@ -1,5 +1,7 @@
 #include "ExpressionGrouping.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ExpressionGrouping::ExpressionGrouping(shared_ptr<Expression> subExpression, shared_ptr<Location> location):

@@ -14,44 +14,44 @@ class StatementBlob: public Statement {
 public:
     StatementBlob(
         bool shouldExport,
-        const string &name,
-        const vector<string> &namedTypeKeys,
-        const vector<string> &protoNames,
-        const vector<shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
-        const vector<shared_ptr<StatementFunction>> &statementFunctions,
-        shared_ptr<Location> location
+        const std::string &name,
+        const std::vector<std::string> &namedTypeKeys,
+        const std::vector<std::string> &protoNames,
+        const std::vector<std::shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
+        const std::vector<std::shared_ptr<StatementFunction>> &statementFunctions,
+        std::shared_ptr<Location> location
     );
 
     StatementBlob(
         bool shouldExport,
-        shared_ptr<SymbolName> symbolName,
-        const vector<string> &namedTypeKeys,
-        vector<shared_ptr<SymbolName>> conformingProtoSymbolNames,
-        const vector<shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
-        const vector<shared_ptr<StatementFunction>> &statementFunctions,
-        shared_ptr<Location> location
+        std::shared_ptr<SymbolName> symbolName,
+        const std::vector<std::string> &namedTypeKeys,
+        std::vector<std::shared_ptr<SymbolName>> conformingProtoSymbolNames,
+        const std::vector<std::shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
+        const std::vector<std::shared_ptr<StatementFunction>> &statementFunctions,
+        std::shared_ptr<Location> location
     );
 
     bool getShouldExport() const;
-    shared_ptr<SymbolName> getSymbolName() const;
-    shared_ptr<SymbolName> getPackedSymbolName() const;
-    void setModuleName(const string &moduleName);
+    std::shared_ptr<SymbolName> getSymbolName() const;
+    std::shared_ptr<SymbolName> getPackedSymbolName() const;
+    void setModuleName(const std::string &moduleName);
 
-    vector<string> getNamedTypeKeys() const;
-    vector<shared_ptr<SymbolName>> getProtoSymbolNames() const;
-    vector<shared_ptr<StatementVariableDeclaration>> getStatementVariableDeclarations() const;
-    vector<shared_ptr<StatementFunction>> getStatementFunctions() const;
-    vector<pair<string, shared_ptr<ValueType>>> getFields() const;
+    std::vector<std::string> getNamedTypeKeys() const;
+    std::vector<std::shared_ptr<SymbolName>> getProtoSymbolNames() const;
+    std::vector<std::shared_ptr<StatementVariableDeclaration>> getStatementVariableDeclarations() const;
+    std::vector<std::shared_ptr<StatementFunction>> getStatementFunctions() const;
+    std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> getFields() const;
 
-    shared_ptr<StatementBlobDeclaration> getDeclaration() const;
+    std::shared_ptr<StatementBlobDeclaration> getDeclaration() const;
 
 private:
     bool shouldExport;
-    shared_ptr<SymbolName> symbolName;
-    vector<string> namedTypeKeys;
-    vector<shared_ptr<StatementVariableDeclaration>> statementVariableDeclarations;
-    vector<shared_ptr<StatementFunction>> statementFunctions;
-    vector<shared_ptr<SymbolName>> protoSymbolNames;
+    std::shared_ptr<SymbolName> symbolName;
+    std::vector<std::string> namedTypeKeys;
+    std::vector<std::shared_ptr<StatementVariableDeclaration>> statementVariableDeclarations;
+    std::vector<std::shared_ptr<StatementFunction>> statementFunctions;
+    std::vector<std::shared_ptr<SymbolName>> protoSymbolNames;
 };
 
 #endif

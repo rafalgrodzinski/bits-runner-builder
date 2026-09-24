@@ -5,12 +5,12 @@
 
 class StatementMetaImport: public Statement {
 public:
-    StatementMetaImport(const string &name, shared_ptr<Location> location);
+    StatementMetaImport(const std::string &name, std::shared_ptr<Location> location);
 
-    string getName() const;
+    std::string getName() const;
 
 private:
-    string name;
+    std::string name;
 };
 
 #endif

@@ -3,6 +3,8 @@
 #include "Parser/ValueType/ValueType.h"
 #include "Parser/ValueType/ValueTypePtr.h"
 
+using namespace std;
+
 // MARK: - Public
 
 WrappedValue::WrappedValue() { }

@@ -1,5 +1,7 @@
 #include "ExpressionValue.h"
 
+using namespace std;
+
 // MARK: - Public
 
 shared_ptr<ExpressionValue> ExpressionValue::simple(const string &identifier, shared_ptr<Location> location) {

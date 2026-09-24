@@ -6,16 +6,16 @@
 
 class ValueTypeProto: public ValueType {
 public:
-    ValueTypeProto(const string &name, shared_ptr<Location> location);
+    ValueTypeProto(const std::string &name, std::shared_ptr<Location> location);
 
-    shared_ptr<SymbolName> getSymbolName() const;
+    std::shared_ptr<SymbolName> getSymbolName() const;
 
-    void setModuleName(const string &moduleName) override;
-    bool isEqual(shared_ptr<ValueType> other) const override;
-    shared_ptr<ValueType> clone() const override;
+    void setModuleName(const std::string &moduleName) override;
+    bool isEqual(std::shared_ptr<ValueType> other) const override;
+    std::shared_ptr<ValueType> clone() const override;
 
 private:
-    shared_ptr<SymbolName> symbolName;
+    std::shared_ptr<SymbolName> symbolName;
 };
 
 #endif

@@ -2,6 +2,8 @@
 
 #include "Parser/Expression/Expression.h"
 
+using namespace std;
+
 // MARK: - Public
 
 StatementReturn::StatementReturn(shared_ptr<Expression> expression, shared_ptr<Location> location):

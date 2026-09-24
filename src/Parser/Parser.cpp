@@ -53,6 +53,8 @@
 #include "Parsee/ParseeResult.h"
 #include "Parsee/ParseeResultsGroup.h"
 
+using namespace std;
+
 // MARK: - Public
 
 Parser::Parser(const vector<shared_ptr<Token>> &tokens):

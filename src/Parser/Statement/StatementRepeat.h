@@ -9,26 +9,26 @@ class StatementBlock;
 class StatementRepeat: public Statement {
 public:
     StatementRepeat(
-        shared_ptr<Statement> initStatement,
-        shared_ptr<Statement> postStatement,
-        shared_ptr<Expression> preConditionExpression,
-        shared_ptr<Expression> postConditionExpression,
-        shared_ptr<StatementBlock> bodyBlockStatement,
-        shared_ptr<Location> location
+        std::shared_ptr<Statement> initStatement,
+        std::shared_ptr<Statement> postStatement,
+        std::shared_ptr<Expression> preConditionExpression,
+        std::shared_ptr<Expression> postConditionExpression,
+        std::shared_ptr<StatementBlock> bodyBlockStatement,
+        std::shared_ptr<Location> location
     );
 
-    shared_ptr<Statement> getInitStatement() const;
-    shared_ptr<Statement> getPostStatement() const;
-    shared_ptr<Expression> getPreConditionExpression() const;
-    shared_ptr<Expression> getPostConditionExpression() const;
-    shared_ptr<StatementBlock> getBodyBlockStatement() const;
+    std::shared_ptr<Statement> getInitStatement() const;
+    std::shared_ptr<Statement> getPostStatement() const;
+    std::shared_ptr<Expression> getPreConditionExpression() const;
+    std::shared_ptr<Expression> getPostConditionExpression() const;
+    std::shared_ptr<StatementBlock> getBodyBlockStatement() const;
 
 private:
-    shared_ptr<Statement> initStatement;
-    shared_ptr<Statement> postStatement;
-    shared_ptr<Expression> preConditionExpression;
-    shared_ptr<Expression> postConditionExpression;
-    shared_ptr<StatementBlock> bodyBlockStatement;
+    std::shared_ptr<Statement> initStatement;
+    std::shared_ptr<Statement> postStatement;
+    std::shared_ptr<Expression> preConditionExpression;
+    std::shared_ptr<Expression> postConditionExpression;
+    std::shared_ptr<StatementBlock> bodyBlockStatement;
 };
 
 #endif

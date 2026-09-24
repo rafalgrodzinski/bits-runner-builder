@@ -7,20 +7,20 @@ class ValueTypePtr: public ValueType {
 friend class Analyzer;
 public:
     ValueTypePtr(
-        shared_ptr<ValueType> pointeeValueType,
+        std::shared_ptr<ValueType> pointeeValueType,
         bool isVolatile,
-        shared_ptr<Location> location
+        std::shared_ptr<Location> location
     );
 
-    shared_ptr<ValueType> getPointeeValueType() const;
+    std::shared_ptr<ValueType> getPointeeValueType() const;
     bool getIsVolatile() const;
 
-    void setModuleName(const string &moduleName) override;
-    bool isEqual(shared_ptr<ValueType> other) const override;
-    shared_ptr<ValueType> clone() const override;
+    void setModuleName(const std::string &moduleName) override;
+    bool isEqual(std::shared_ptr<ValueType> other) const override;
+    std::shared_ptr<ValueType> clone() const override;
 
 private:
-    shared_ptr<ValueType> pointeeValueType;
+    std::shared_ptr<ValueType> pointeeValueType;
     bool isVolatile;
 };
 

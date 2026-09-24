@@ -6,6 +6,8 @@
 
 #include "Lexer/Location.h"
 
+using namespace std;
+
 // MARK: - Public
 
 ExpressionBlock::ExpressionBlock(const vector<shared_ptr<Statement>> &statements, shared_ptr<Location> location):

@@ -16,8 +16,6 @@ class ValueTypeProto;
 class ValueTypePtr;
 class ValueTypeSimple;
 
-using namespace std;
-
 enum class ValueTypeKind {
     UINT,
     U8,
@@ -50,13 +48,13 @@ enum class ValueTypeKind {
     PTR
 };
 
-class ValueType: public enable_shared_from_this<ValueType> {
+class ValueType: public std::enable_shared_from_this<ValueType> {
 public:
-    ValueType(ValueTypeKind kind, shared_ptr<Location> location);
+    ValueType(ValueTypeKind kind, std::shared_ptr<Location> location);
     virtual ~ValueType() = default;
 
     ValueTypeKind getKind() const;
-    shared_ptr<Location> getLocation() const;
+    std::shared_ptr<Location> getLocation() const;
 
     bool isBlob() const;
     bool isBoxed() const;
@@ -78,24 +76,24 @@ public:
     bool isDataBool();
     bool isDataNumeric();
 
-    shared_ptr<ValueTypeBlob> toBlob();
-    shared_ptr<ValueTypeBoxed> toBoxed();
-    shared_ptr<ValueTypeComposite> toComposite();
-    shared_ptr<ValueTypeData> toData();
-    shared_ptr<ValueTypeEnum> toEnum();
-    shared_ptr<ValueTypeEnumField> toEnumField();
-    shared_ptr<ValueTypeFun> toFun();
-    shared_ptr<ValueTypeProto> toProto();
-    shared_ptr<ValueTypePtr> toPtr();
-    shared_ptr<ValueTypeSimple> toSimple();
+    std::shared_ptr<ValueTypeBlob> toBlob();
+    std::shared_ptr<ValueTypeBoxed> toBoxed();
+    std::shared_ptr<ValueTypeComposite> toComposite();
+    std::shared_ptr<ValueTypeData> toData();
+    std::shared_ptr<ValueTypeEnum> toEnum();
+    std::shared_ptr<ValueTypeEnumField> toEnumField();
+    std::shared_ptr<ValueTypeFun> toFun();
+    std::shared_ptr<ValueTypeProto> toProto();
+    std::shared_ptr<ValueTypePtr> toPtr();
+    std::shared_ptr<ValueTypeSimple> toSimple();
 
-    virtual void setModuleName(const string &moduleName) { }
-    virtual bool isEqual(shared_ptr<ValueType> other) const = 0;
-    virtual shared_ptr<ValueType> clone() const = 0;
+    virtual void setModuleName(const std::string &moduleName) { }
+    virtual bool isEqual(std::shared_ptr<ValueType> other) const = 0;
+    virtual std::shared_ptr<ValueType> clone() const = 0;
 
 private:
     ValueTypeKind kind;
-    shared_ptr<Location> location;
+    std::shared_ptr<Location> location;
 };
 
 #endif

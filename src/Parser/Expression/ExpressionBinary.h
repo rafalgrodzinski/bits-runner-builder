@@ -35,21 +35,21 @@ class ExpressionBinary: public Expression {
 friend class Analyzer;
 
 public:
-    static shared_ptr<ExpressionBinary> expression(const vector<shared_ptr<Token>> &tokens, shared_ptr<Expression> left, shared_ptr<Expression> right);
-    static shared_ptr<ExpressionBinary> expression(ExpressionBinaryOperation operation, shared_ptr<Expression> left, shared_ptr<Expression> right, shared_ptr<Location> location);
+    static std::shared_ptr<ExpressionBinary> expression(const std::vector<std::shared_ptr<Token>> &tokens, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right);
+    static std::shared_ptr<ExpressionBinary> expression(ExpressionBinaryOperation operation, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right, std::shared_ptr<Location> location);
 
-    ExpressionBinary(shared_ptr<Location> location);
+    ExpressionBinary(std::shared_ptr<Location> location);
 
     ExpressionBinaryOperation getOperation() const;
-    shared_ptr<Expression> getLeft() const;
-    shared_ptr<Expression> getRight() const;
+    std::shared_ptr<Expression> getLeft() const;
+    std::shared_ptr<Expression> getRight() const;
 
 private:
     ExpressionBinaryOperation operation;
-    shared_ptr<Expression> left;
-    shared_ptr<Expression> right;
+    std::shared_ptr<Expression> left;
+    std::shared_ptr<Expression> right;
 
-    static bool doTokensMatchTokenKinds(const vector<shared_ptr<Token>> &tokens, const vector<TokenKind> &tokenKinds);
+    static bool doTokensMatchTokenKinds(const std::vector<std::shared_ptr<Token>> &tokens, const std::vector<TokenKind> &tokenKinds);
 };
 
 #endif

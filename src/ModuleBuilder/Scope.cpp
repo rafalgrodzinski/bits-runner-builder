@@ -1,5 +1,7 @@
 #include "Scope.h"
 
+using namespace std;
+
 // MARK: - Public
 
 Scope::Scope() {
