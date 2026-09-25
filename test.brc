@@ -23,4 +23,13 @@ handleErrorStatus fun: failureVal u32
         result.val
     ;
   ;
+
+  num u32 <- 5
+
+  if num {=4, >10, %2=0}
+    doSomething(num)
+  ;
+
+  if num ~ 0..10
+  ;
 ;
