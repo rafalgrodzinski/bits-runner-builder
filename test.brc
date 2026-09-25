@@ -3,20 +3,23 @@ Status enum
   Failure boxed<u32>
 ;
 
-handleError fun: status u32
+handleError fun: result enum<Status>::Failure
+  handleErrorStatus(result.val.u32)
+;
+
+handleErrorStatus fun: failureVal u32
 ;
 
 @export main fun -> u32
   result enum<Status>
   
-  match status: enum<Status>::Failure
-    handleError(result.val)
+  match result: enum<Status>::Failure
+    handleError(result)
   ;
 
   ret match result
     enum<status>::Success: 0
     enum<Status>::Failure>
-      handleError(result.val.u32)
         result.val
     ;
   ;
