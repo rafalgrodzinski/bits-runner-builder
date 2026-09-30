@@ -86,6 +86,7 @@ private:
     std::shared_ptr<Expression> matchExpressionGrouping();
     std::shared_ptr<Expression> matchExpressionIfElse(std::optional<bool> isMultiLine);
     std::shared_ptr<Expression> matchExpressionLiteral();
+    std::shared_ptr<Expression> matchExpressionMatch();
     std::shared_ptr<Expression> matchExpressionValue();
 
     std::shared_ptr<ValueType> matchValueType();

@@ -712,6 +712,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
         case ExpressionKind::VALUE:
             return typeForExpression(dynamic_pointer_cast<ExpressionValue>(expression), parentExpression);
         default:
+            markErrorUnexpectedExpression(expression->getLocation());
             break;
     }
     return nullptr;

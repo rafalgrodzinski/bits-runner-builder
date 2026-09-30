@@ -34,6 +34,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionMatch.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
@@ -1573,7 +1574,10 @@ shared_ptr<Expression> Parser::nextExpression() {
     
     if ((expression = matchExpressionIfElse({})) || errors.size() > errorsCount)
         return expression;
-    
+
+    if ((expression = matchExpressionMatch()) || errors.size() > errorsCount)
+        return expression;
+
     if ((expression = matchExpressionValue()) || errors.size() > errorsCount)
         return expression;
 
@@ -1798,6 +1802,9 @@ shared_ptr<Expression> Parser::matchPrimary() {
         return expression;
 
     if ((expression = matchExpressionIfElse(false)) || errors.size() > errorsCount)
+        return expression;
+
+    if ((expression = matchExpressionMatch()) || errors.size() > errorsCount)
         return expression;
 
     return nullptr;
@@ -2213,6 +2220,85 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
         return ExpressionLiteral::expressionLiteralForToken(token);
 
     return nullptr;
+}
+
+std::shared_ptr<Expression> Parser::matchExpressionMatch() {
+    enum Tag {
+        TAG_SWITCH_EXPR,
+        TAG_CASE_EXPR,
+        TAG_CASE_BODY_EXPR,
+        TAG_ELSE_EXPR
+    };
+
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
+        {
+            Parsee::tokenParsee(TokenKind::MATCH, ParseeLevel::REQUIRED, false),
+            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_SWITCH_EXPR),
+            Parsee::oneOfParsee(
+                {
+                    // single line
+                    {
+                        Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false)
+                    },
+                    // multi line
+                    {
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                        // cases
+                        /*Parsee::repeatedGroupParsee(
+                            {
+
+                            }, ParseeLevel::OPTIONAL, true
+                        ),*/
+                        // else
+                        Parsee::oneOfParsee(
+                            {
+                                // single line else
+                                {
+                                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                    Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
+                                },
+                                // multi line else
+                                /*{
+
+                                },*/
+                                // no else
+                                {
+                                    Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                                }
+                            }, ParseeLevel::CRITICAL, true
+                        )
+                    }
+                }, ParseeLevel::CRITICAL, true
+            )
+        }
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    shared_ptr<Expression> switchExpression = nullptr;
+    //vector<shared_ptr<Expression>> caseExpression;
+    shared_ptr<Expression> elseExpression = nullptr;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_SWITCH_EXPR:
+                switchExpression = parseeResult.getExpression();
+                break;
+            case TAG_CASE_EXPR:
+                break;
+            case TAG_CASE_BODY_EXPR:
+                break;
+            case TAG_ELSE_EXPR:
+                elseExpression = parseeResult.getExpression();
+                break;
+        }
+    }
+
+    return make_shared<ExpressionMatch>(switchExpression, elseExpression, location);
 }
 
 shared_ptr<Expression> Parser::matchExpressionValue() {
