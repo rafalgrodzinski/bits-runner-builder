@@ -40,6 +40,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionMatch.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
@@ -906,6 +907,8 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::LITERAL:
             return toString(dynamic_pointer_cast<ExpressionLiteral>(expression), isInline ? vector<IndentKind>() : indents);
+        case ExpressionKind::MATCH:
+            return toString(dynamic_pointer_cast<ExpressionMatch>(expression), indents, isInline);
         case ExpressionKind::COMPOSITE_LITERAL:
             return toString(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::CALL:
@@ -1083,7 +1086,6 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression, vector<Indent
 
 string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKind> indents, bool isInline) {
     string text;
-    string line;
 
     // name
     text += formattedLine("IF", isInline ? vector<IndentKind>() : indents);
@@ -1139,6 +1141,26 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
     }
 
     return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<ExpressionMatch> expression, vector<IndentKind> indents, bool isInline) {
+    string text;
+
+    // name
+    text += formattedLine("MATCH", isInline ? vector<IndentKind>() : indents);
+    // Only the initial MATCH is inline
+    if (isInline)
+        text += "\n";
+    
+    // switch
+    indents = adjustedLastIndent(indents);
+    text += toString(expression->getSwitchExpression(), indents, false);
+
+    // Need to remove the last new line, since the parent will add it
+    if (isInline)
+        text = text.substr(0, text.length() - 1);
+
+    return formattedLine(text, indents);
 }
 
 string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents) {

@@ -1,35 +1,56 @@
 Status enum
-  Success boxed
+  Success
   Failure boxed<u32>
 ;
 
-handleError fun: result enum<Status>::Failure
+/*handleError fun: result enum<Status>::Failure
   handleErrorStatus(result.val.u32)
 ;
 
-handleErrorStatus fun: failureVal u32
+@export stuff blob
+  result enum<Status>
+  value u32
 ;
+
+handleErrorStatus fun: failureVal u32
+;*/
 
 @export main fun -> u32
   result enum<Status>
   
-  match result: enum<Status>::Failure
+  /*match result: enum<Status>::Failure
     handleError(result)
-  ;
+  ;*/
 
-  ret match result
-    enum<status>::Success: 0
-    enum<Status>::Failure>
-        result.val
+  match result
+    enum<status>::Success
+    ;
+    enum<Status>::Failure
     ;
   ;
 
-  num u32 <- 5
+  /*num u32 <- 5
 
   if num {=4, >10, %2=0}
     doSomething(num)
   ;
 
   if num ~ 0..10
-  ;
+  ;*/
+
+  ret 0
 ;
+
+/*someFun fun: value1 u32, value2 u32 -> u32
+  ret value1 + value2
+;
+
+soemeFun cfun: value1 u32, value2 u32 -> u32
+  ret value1 + value2
+;
+
+@export in32 raw<"=r, r, ~{eax}, ~{edx}">: port u16 -> u32
+    mov dx, $1
+    in eax, dx
+    mov $0, eax
+;*/

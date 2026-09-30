@@ -45,6 +45,7 @@ class ExpressionCompositeLiteral;
 class ExpressionGrouping;
 class ExpressionIfElse;
 class ExpressionLiteral;
+class ExpressionMatch;
 class ExpressionUnary;
 class ExpressionValue;
 
@@ -121,6 +122,7 @@ private:
     static std::string toString(std::shared_ptr<ExpressionGrouping> expression, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<ExpressionIfElse> expression, std::vector<IndentKind> indents, bool isInline);
     static std::string toString(std::shared_ptr<ExpressionLiteral> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionMatch> expression, std::vector<IndentKind> indents, bool isInline);
     static std::string toString(std::shared_ptr<ExpressionUnary> expression, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<ExpressionValue> expression, std::vector<IndentKind> indents);
 
