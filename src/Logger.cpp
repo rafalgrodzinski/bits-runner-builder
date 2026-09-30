@@ -435,6 +435,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "IF";
         case TokenKind::ELSE:
             return "ELSE";
+        case TokenKind::MATCH:
+            return "MATCH";
         
         case TokenKind::M_MODULE:
             return "@MODULE";
@@ -1603,6 +1605,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "IF";
         case TokenKind::ELSE:
             return "ELSE";
+        case TokenKind::MATCH:
+            return "MATCH";
 
         case TokenKind::M_MODULE:
             return "@MODULE";
