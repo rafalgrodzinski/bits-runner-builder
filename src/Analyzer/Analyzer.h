@@ -42,6 +42,7 @@ class ExpressionCompositeLiteral;
 class ExpressionGrouping;
 class ExpressionIfElse;
 class ExpressionLiteral;
+class ExpressionMatch;
 class ExpressionNone;
 class ExpressionUnary;
 class ExpressionValue;
@@ -114,6 +115,7 @@ private:
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionGrouping> expressionGrouping);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionIfElse> expressionIfElse, std::shared_ptr<ValueType> returnType);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionLiteral> expressionLiteral);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionUnary> expressionUnary);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionValue> expressionValue, std::shared_ptr<Expression> parentExpression);
 

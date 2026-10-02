@@ -16,6 +16,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionMatch.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
@@ -705,6 +706,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
             return typeForExpression(dynamic_pointer_cast<ExpressionIfElse>(expression), returnType);
         case ExpressionKind::LITERAL:
             return typeForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::MATCH:
+            return typeForExpression(dynamic_pointer_cast<ExpressionMatch>(expression));
         case ExpressionKind::NONE:
             return ValueTypeSimple::NONE;
         case ExpressionKind::UNARY:
@@ -712,6 +715,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
         case ExpressionKind::VALUE:
             return typeForExpression(dynamic_pointer_cast<ExpressionValue>(expression), parentExpression);
         default:
+            markErrorUnexpectedExpression(expression->getLocation());
             break;
     }
     return nullptr;
@@ -1092,7 +1096,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
     return expressionIfElse->getValueType();
 }
 
-shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
+shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
     // if it's already set, return it
     if (expressionLiteral->getValueType() != nullptr)
         return expressionLiteral->getValueType();
@@ -1114,6 +1118,10 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
     }
 
     return expressionLiteral->getValueType();
+}
+
+std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch) {
+    return expressionMatch->getValueType();
 }
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionUnary> expressionUnary) {

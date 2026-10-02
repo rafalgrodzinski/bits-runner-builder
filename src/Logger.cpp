@@ -40,6 +40,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionMatch.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
@@ -434,6 +435,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "IF";
         case TokenKind::ELSE:
             return "ELSE";
+        case TokenKind::MATCH:
+            return "MATCH";
         
         case TokenKind::M_MODULE:
             return "@MODULE";
@@ -906,6 +909,8 @@ string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> in
             return toString(dynamic_pointer_cast<ExpressionGrouping>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::LITERAL:
             return toString(dynamic_pointer_cast<ExpressionLiteral>(expression), isInline ? vector<IndentKind>() : indents);
+        case ExpressionKind::MATCH:
+            return toString(dynamic_pointer_cast<ExpressionMatch>(expression), indents, isInline);
         case ExpressionKind::COMPOSITE_LITERAL:
             return toString(dynamic_pointer_cast<ExpressionCompositeLiteral>(expression), isInline ? vector<IndentKind>() : indents);
         case ExpressionKind::CALL:
@@ -1083,7 +1088,6 @@ string Logger::toString(shared_ptr<ExpressionGrouping> expression, vector<Indent
 
 string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKind> indents, bool isInline) {
     string text;
-    string line;
 
     // name
     text += formattedLine("IF", isInline ? vector<IndentKind>() : indents);
@@ -1139,6 +1143,48 @@ string Logger::toString(shared_ptr<ExpressionLiteral> expression, vector<IndentK
     }
 
     return formattedLine(line, indents);
+}
+
+string Logger::toString(shared_ptr<ExpressionMatch> expression, vector<IndentKind> indents, bool isInline) {
+    string text;
+
+    // name
+    text += formattedLine("MATCH", indents);
+    // Only the initial MATCH is inline
+    if (isInline)
+        text += "\n";
+    
+    // switch
+    indents = adjustedLastIndent(indents);
+    text += toString(expression->getSwitchExpression(), indents, false);
+
+    // cases
+    for (pair<shared_ptr<Expression>, shared_ptr<Expression>> &casePair : expression->getCasePairs()) {
+        indents.push_back(IndentKind::NODE);
+        text += toString(casePair.first, indents, false);
+
+        indents.push_back(IndentKind::NODE_LAST);
+        text += toString(casePair.second, indents, false);
+    }
+    
+    // else
+    if (expression->getElseExpression() != nullptr) {
+        indents.push_back(IndentKind::NODE_LAST);
+        text += formattedLine("ELSE", indents);
+        indents = adjustedLastIndent(indents);
+        // expression blocks add node_last themselves
+        if (expression->getElseExpression()->getKind() != ExpressionKind::BLOCK)
+            indents.push_back(IndentKind::NODE_LAST);
+        text += toString(expression->getElseExpression(), indents, false);
+    } else if (!expression->getCasePairs().empty()) {
+        indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+    }
+
+    // Need to remove the last new line, since the parent will add it
+    if (isInline)
+        text = text.substr(0, text.length() - 1);
+
+    return text;
 }
 
 string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents) {
@@ -1581,6 +1627,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "IF";
         case TokenKind::ELSE:
             return "ELSE";
+        case TokenKind::MATCH:
+            return "MATCH";
 
         case TokenKind::M_MODULE:
             return "@MODULE";
