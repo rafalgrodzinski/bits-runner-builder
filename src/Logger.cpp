@@ -1149,7 +1149,7 @@ string Logger::toString(shared_ptr<ExpressionMatch> expression, vector<IndentKin
     string text;
 
     // name
-    text += formattedLine("MATCH", isInline ? vector<IndentKind>() : indents);
+    text += formattedLine("MATCH", indents);
     // Only the initial MATCH is inline
     if (isInline)
         text += "\n";
@@ -1158,11 +1158,33 @@ string Logger::toString(shared_ptr<ExpressionMatch> expression, vector<IndentKin
     indents = adjustedLastIndent(indents);
     text += toString(expression->getSwitchExpression(), indents, false);
 
+    // cases
+    for (pair<shared_ptr<Expression>, shared_ptr<Expression>> &casePair : expression->getCasePairs()) {
+        indents.push_back(IndentKind::NODE);
+        text += toString(casePair.first, indents, false);
+
+        indents.push_back(IndentKind::NODE_LAST);
+        text += toString(casePair.second, indents, false);
+    }
+    
+    // else
+    if (expression->getElseExpression() != nullptr) {
+        indents.push_back(IndentKind::NODE_LAST);
+        text += formattedLine("ELSE", indents);
+        indents = adjustedLastIndent(indents);
+        // expression blocks add node_last themselves
+        if (expression->getElseExpression()->getKind() != ExpressionKind::BLOCK)
+            indents.push_back(IndentKind::NODE_LAST);
+        text += toString(expression->getElseExpression(), indents, false);
+    } else if (!expression->getCasePairs().empty()) {
+        indents.at(indents.size()-1) = IndentKind::NODE_LAST;
+    }
+
     // Need to remove the last new line, since the parent will add it
     if (isInline)
         text = text.substr(0, text.length() - 1);
 
-    return formattedLine(text, indents);
+    return text;
 }
 
 string Logger::toString(shared_ptr<ExpressionUnary> expression, vector<IndentKind> indents) {

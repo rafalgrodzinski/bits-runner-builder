@@ -2261,9 +2261,12 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
                                     Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
                                 },
                                 // multi line else
-                                /*{
-
-                                },*/
+                                {
+                                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                    Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
+                                    Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                                },
                                 // no else
                                 {
                                     Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
@@ -2280,8 +2283,10 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
         return nullptr;
 
     shared_ptr<Expression> switchExpression = nullptr;
-    //vector<shared_ptr<Expression>> caseExpression;
+    std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Expression>>> casePairs;
     shared_ptr<Expression> elseExpression = nullptr;
+
+    shared_ptr<Expression> caseExpression = nullptr;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
@@ -2289,8 +2294,16 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
                 switchExpression = parseeResult.getExpression();
                 break;
             case TAG_CASE_EXPR:
+                caseExpression = parseeResult.getExpression();
                 break;
             case TAG_CASE_BODY_EXPR:
+                casePairs.push_back(
+                    pair(
+                        caseExpression,
+                        parseeResult.getExpression()
+                    )
+                );
+                caseExpression = nullptr;
                 break;
             case TAG_ELSE_EXPR:
                 elseExpression = parseeResult.getExpression();
@@ -2298,7 +2311,12 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
         }
     }
 
-    return make_shared<ExpressionMatch>(switchExpression, elseExpression, location);
+    return make_shared<ExpressionMatch>(
+        switchExpression,
+        casePairs,
+        elseExpression,
+        location
+    );
 }
 
 shared_ptr<Expression> Parser::matchExpressionValue() {
