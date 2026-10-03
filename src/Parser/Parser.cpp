@@ -2225,8 +2225,8 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 std::shared_ptr<Expression> Parser::matchExpressionMatch() {
     enum Tag {
         TAG_SWITCH_EXPR,
+        TAG_CASE_PATTERN,
         TAG_CASE_EXPR,
-        TAG_CASE_BODY_EXPR,
         TAG_ELSE_EXPR
     };
 
@@ -2238,19 +2238,31 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
             Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_SWITCH_EXPR),
             Parsee::oneOfParsee(
                 {
-                    // single line
+                    // single line match
                     {
-                        Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false)
+                        Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                        // pattern
+                        Parsee::groupParsee(
+                            {
+                                Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
+                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
+                                // case expression
+                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::OPTIONAL, true, TAG_CASE_EXPR)
+                            }, ParseeLevel::OPTIONAL, true
+                        )
                     },
-                    // multi line
+                    // multi line match
                     {
                         Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
                         // cases
-                        /*Parsee::repeatedGroupParsee(
+                        Parsee::repeatedGroupParsee(
                             {
-
+                                Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
+                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
                             }, ParseeLevel::OPTIONAL, true
-                        ),*/
+                        ),
                         // else
                         Parsee::oneOfParsee(
                             {
@@ -2283,27 +2295,27 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
         return nullptr;
 
     shared_ptr<Expression> switchExpression = nullptr;
-    std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Expression>>> casePairs;
+    std::vector<std::pair<std::shared_ptr<Pattern>, std::shared_ptr<Expression>>> casePairs;
     shared_ptr<Expression> elseExpression = nullptr;
 
-    shared_ptr<Expression> caseExpression = nullptr;
+    shared_ptr<Pattern> casePattern = nullptr;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
             case TAG_SWITCH_EXPR:
                 switchExpression = parseeResult.getExpression();
                 break;
-            case TAG_CASE_EXPR:
-                caseExpression = parseeResult.getExpression();
+            case TAG_CASE_PATTERN:
+                casePattern = parseeResult.getPattern();
                 break;
-            case TAG_CASE_BODY_EXPR:
+            case TAG_CASE_EXPR:
                 casePairs.push_back(
                     pair(
-                        caseExpression,
+                        casePattern,
                         parseeResult.getExpression()
                     )
                 );
-                caseExpression = nullptr;
+                casePattern = nullptr;
                 break;
             case TAG_ELSE_EXPR:
                 elseExpression = parseeResult.getExpression();
@@ -2767,6 +2779,10 @@ shared_ptr<ValueType> Parser::matchValueType() {
         return ValueTypeSimple::simpleForToken(typeToken, location);
 }
 
+std::shared_ptr<Pattern> Parser::matchPattern() {
+    return nullptr;
+}
+
 // Parsee
 
 ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) {
@@ -2818,6 +2834,9 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
                 break;
             case ParseeKind::IF_ELSE_MULTI_LINE:
                 subResults = ifElseParseeResults(true, parsee.getTag());
+                break;
+            case ParseeKind::PATTERN:
+                subResults = patternParseeResults(parsee.getTag());
                 break;
             case ParseeKind::DEBUG:
                 cout << format("token {}: {}", currentIndex, parsee.getDebugMessage()) << flush;
@@ -3082,6 +3101,19 @@ optional<pair<vector<ParseeResult>, int>> Parser::ifElseParseeResults(optional<b
     int tokensCount = currentIndex - startIndex;
     currentIndex = startIndex;
     return pair(vector<ParseeResult>({ParseeResult::expressionResult(expression, tokensCount, tag)}), tokensCount);
+}
+
+std::optional<std::pair<std::vector<ParseeResult>, int>> Parser::patternParseeResults(int tag) {
+    int startIndex = currentIndex;
+    int errorsCount = errors.size();
+
+    shared_ptr<Pattern> pattern = matchPattern();
+    if (errors.size() > errorsCount || pattern == nullptr)
+        return {};
+
+    int tokensCount = currentIndex - startIndex;
+    currentIndex = startIndex;
+    return pair(vector<ParseeResult>({ParseeResult::patternResult(pattern, tokensCount, tag)}), tokensCount);
 }
 
 //

@@ -8,6 +8,7 @@
 #include "Lexer/Token.h"
 #include "Module/Module.h"
 #include "Parser/Parsee/Parsee.h"
+#include "Parser/Pattern.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -1159,9 +1160,9 @@ string Logger::toString(shared_ptr<ExpressionMatch> expression, vector<IndentKin
     text += toString(expression->getSwitchExpression(), indents, false);
 
     // cases
-    for (pair<shared_ptr<Expression>, shared_ptr<Expression>> &casePair : expression->getCasePairs()) {
+    for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expression->getCasePairs()) {
         indents.push_back(IndentKind::NODE);
-        text += toString(casePair.first, indents, false);
+        text += toString(casePair.first);
 
         indents.push_back(IndentKind::NODE_LAST);
         text += toString(casePair.second, indents, false);
@@ -1402,6 +1403,11 @@ string Logger::toString(shared_ptr<ValueTypeSimple> valueTypeSimple) {
             break;
     }
 
+    return text;
+}
+
+std::string Logger::toString(std::shared_ptr<Pattern> pattern) {
+    string text;
     return text;
 }
 

@@ -22,23 +22,21 @@ handleErrorStatus fun: failureVal u32
     handleError(result)
   ;*/
 
-  rep true
-    4 + 5
-  ;
-
-  if 4 > 8
-    8 + 3
-  else
-    3 + 11
-  ;
-
   match result
-    /*enum<status>::Success
+    enum<Status>::Success
     ;
     enum<Status>::Failure
+    ;
+    /*enum<Status>::Failure
     ;*/
 //  else
   ;
+ 
+//  value u32
+
+//  if value match 1..<8: 
+
+  //match 
 
   /*num u32 <- 5
 

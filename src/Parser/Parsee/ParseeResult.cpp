@@ -2,6 +2,7 @@
 
 #include "Lexer/Token.h"
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/Pattern.h"
 
 using namespace std;
 
@@ -52,6 +53,15 @@ ParseeResult ParseeResult::expressionResult(shared_ptr<Expression> expression, i
     return parseeResult;
 }
 
+ParseeResult ParseeResult::patternResult(std::shared_ptr<Pattern> pattern, int tokensCount, int tag) {
+    ParseeResult parseeResult;
+    parseeResult.kind = ParseeResultKind::PATTERN;
+    parseeResult.tag = tag;
+    parseeResult.pattern = pattern;
+    parseeResult.tokensCount = tokensCount;
+    return parseeResult;
+}
+
 ParseeResultKind ParseeResult::getKind() const {
     return kind;
 }
@@ -74,6 +84,10 @@ shared_ptr<Statement> ParseeResult::getStatement() const {
 
 shared_ptr<Expression> ParseeResult::getExpression() const {
     return expression;
+}
+
+std::shared_ptr<Pattern> ParseeResult::getPattern() const {
+    return pattern;
 }
 
 int ParseeResult::getTokensCount() const {

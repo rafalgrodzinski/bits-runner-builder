@@ -126,6 +126,15 @@ Parsee Parsee::valueTypeParsee(ParseeLevel level, bool shouldReturn, int tag) {
     return parsee;
 }
 
+Parsee Parsee::patternParsee(ParseeLevel level, bool shouldReturn, int tag) {
+    Parsee parsee;
+    parsee.kind = ParseeKind::PATTERN;
+    parsee.tag = tag;
+    parsee.level = level;
+    parsee.shouldReturn = shouldReturn;
+    return parsee;
+}
+
 ParseeKind Parsee::getKind() const {
     return kind;
 }
