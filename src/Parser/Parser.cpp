@@ -5,6 +5,7 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Token.h"
+#include "Pattern.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -2223,7 +2224,7 @@ shared_ptr<Expression> Parser::matchExpressionLiteral() {
 }
 
 std::shared_ptr<Expression> Parser::matchExpressionMatch() {
-    enum Tag {
+    enum {
         TAG_SWITCH_EXPR,
         TAG_CASE_PATTERN,
         TAG_CASE_EXPR,
@@ -2238,6 +2239,7 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
             Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_SWITCH_EXPR),
             Parsee::oneOfParsee(
                 {
+                    /*
                     // single line match
                     {
                         Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
@@ -2251,36 +2253,50 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
                             }, ParseeLevel::OPTIONAL, true
                         )
                     },
+                    */
                     // multi line match
                     {
                         Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                        Parsee::debug("afeter NEW_LINE\n"),
                         // cases
                         Parsee::repeatedGroupParsee(
                             {
                                 Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
+                                Parsee::debug("afeter PATTERN\n"),
                                 Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                Parsee::debug("afeter NEW_LINE2\n"),
                                 Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
-                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+                                Parsee::debug("afeter case expression\n"),
+                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false),
+                                Parsee::debug("afeter semi\n"),
+                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
                             }, ParseeLevel::OPTIONAL, true
                         ),
+                        Parsee::debug("before ELSE\n"),
                         // else
                         Parsee::oneOfParsee(
                             {
                                 // single line else
                                 {
+                                    Parsee::debug("else1\n"),
                                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
                                     Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                                     Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
                                 },
                                 // multi line else
                                 {
+                                    Parsee::debug("else2.1\n"),
                                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                    Parsee::debug("else2.2\n"),
                                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                    Parsee::debug("else2.3\n"),
                                     Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
+                                    Parsee::debug("else2.4\n"),
                                     Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
                                 },
                                 // no else
                                 {
+                                    Parsee::debug("else3\n"),
                                     Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
                                 }
                             }, ParseeLevel::CRITICAL, true
@@ -2423,7 +2439,7 @@ shared_ptr<Expression> Parser::matchExpressionValue() {
 }
 
 shared_ptr<ValueType> Parser::matchValueType() {
-    enum TAG {
+    enum {
         TAG_ARGUMENT_TYPE,
         TAG_SUBTYPE,
 
@@ -2780,7 +2796,32 @@ shared_ptr<ValueType> Parser::matchValueType() {
 }
 
 std::shared_ptr<Pattern> Parser::matchPattern() {
-    return nullptr;
+    enum {
+        TAG_VALUE_TYPE
+    };
+
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
+        {
+            Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE)
+        }
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    shared_ptr<ValueType> valueType;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_VALUE_TYPE:
+                valueType = parseeResult.getValueType();
+                break;
+        }
+    }
+
+    return make_shared<Pattern>(valueType);
 }
 
 // Parsee

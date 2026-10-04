@@ -29,7 +29,7 @@ handleErrorStatus fun: failureVal u32
     ;
     /*enum<Status>::Failure
     ;*/
-//  else
+  else
   ;
  
 //  value u32

@@ -1160,12 +1160,25 @@ string Logger::toString(shared_ptr<ExpressionMatch> expression, vector<IndentKin
     text += toString(expression->getSwitchExpression(), indents, false);
 
     // cases
-    for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expression->getCasePairs()) {
-        indents.push_back(IndentKind::NODE);
-        text += toString(casePair.first);
+    vector<pair<shared_ptr<Pattern>, shared_ptr<Expression>>> casePairs = expression->getCasePairs();
+    for (int i=0; i<casePairs.size(); i++) {
+        bool isLast = i == casePairs.size() - 1 && expression->getElseExpression() == nullptr;
+        if (isLast) {
+            indents.push_back(IndentKind::NODE_LAST);
+        } else {
+            indents.push_back(IndentKind::NODE);
+        }
+        // case pattern
+        text += formattedLine(toString(casePairs.at(i).first), indents);
+        // case expression
+        if (isLast) {
+            indents.at(indents.size()-1) = IndentKind::EMPTY;
+        } else {
+            indents.at(indents.size()-1) = IndentKind::BRANCH;
+        }
+        text += toString(casePairs.at(i).second, indents, false);
 
-        indents.push_back(IndentKind::NODE_LAST);
-        text += toString(casePair.second, indents, false);
+        indents.pop_back();
     }
     
     // else
@@ -1407,8 +1420,7 @@ string Logger::toString(shared_ptr<ValueTypeSimple> valueTypeSimple) {
 }
 
 std::string Logger::toString(std::shared_ptr<Pattern> pattern) {
-    string text;
-    return text;
+    return toString(pattern->getValueType());
 }
 
 string Logger::toString(EnumField field, vector<IndentKind> indents) {
