@@ -34,6 +34,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionMatch.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
@@ -1172,6 +1173,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::LITERAL:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::MATCH:
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionMatch>(expression));
         case ExpressionKind::NONE:
             return WrappedValue::wrappedNone(typeVoid, ValueTypeSimple::NONE);
         case ExpressionKind::UNARY:
@@ -1792,6 +1795,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     }
 
     return WrappedValue::wrappedValue(resultValue, expressionLiteral->getValueType());
+}
+
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionMatch> expressionMatch) {
+    return nullptr;
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
