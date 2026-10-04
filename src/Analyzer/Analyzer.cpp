@@ -53,6 +53,8 @@
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
 
+#include "Parser/Pattern.h"
+
 using namespace std;
 
 // MARK: - Public
@@ -707,7 +709,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
         case ExpressionKind::LITERAL:
             return typeForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
         case ExpressionKind::MATCH:
-            return typeForExpression(dynamic_pointer_cast<ExpressionMatch>(expression));
+            return typeForExpression(dynamic_pointer_cast<ExpressionMatch>(expression), returnType);
         case ExpressionKind::NONE:
             return ValueTypeSimple::NONE;
         case ExpressionKind::UNARY:
@@ -1120,7 +1122,18 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionLiteral> 
     return expressionLiteral->getValueType();
 }
 
-std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch) {
+std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch, shared_ptr<ValueType> returnType) {
+    expressionMatch->getSwitchExpression()->valueType = typeForExpression(expressionMatch->getSwitchExpression(), nullptr, returnType);
+
+    for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs()) {
+        checkPattern(casePair.first, expressionMatch->getSwitchExpression()->getValueType());
+        casePair.second->valueType = typeForExpression(casePair.second, nullptr, nullptr);
+    }
+
+    if (expressionMatch->getElseExpression() != nullptr) {
+        expressionMatch->getElseExpression()->valueType = typeForExpression(expressionMatch->getElseExpression(), nullptr, returnType);
+    }
+
     return expressionMatch->getValueType();
 }
 
@@ -2388,6 +2401,12 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeFun>
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr) {
     shared_ptr<ValueType> pointeeValueType = typeForCheckedValueType(valueTypePtr->getPointeeValueType(), false);
     return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile(), valueTypePtr->getLocation());
+}
+
+// Pattern
+
+void Analyzer::checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<ValueType> switchValueType) {
+    pattern->getValueType()->setModuleName(module->getName());
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {

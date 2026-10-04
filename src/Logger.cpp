@@ -1091,7 +1091,8 @@ string Logger::toString(shared_ptr<ExpressionIfElse> expression, vector<IndentKi
     string text;
 
     // name
-    text += formattedLine("IF", isInline ? vector<IndentKind>() : indents);
+    text = format("IF｢{}｣", toString(expression->getValueType()));
+    text = formattedLine(text, isInline ? vector<IndentKind>() : indents);
     // Only the initial IF is inline
     if (isInline)
         text += "\n";
@@ -1150,7 +1151,8 @@ string Logger::toString(shared_ptr<ExpressionMatch> expression, vector<IndentKin
     string text;
 
     // name
-    text += formattedLine("MATCH", indents);
+    text = format("MATCH｢{}｣", toString(expression->getValueType()));
+    text = formattedLine(text, indents);
     // Only the initial MATCH is inline
     if (isInline)
         text += "\n";

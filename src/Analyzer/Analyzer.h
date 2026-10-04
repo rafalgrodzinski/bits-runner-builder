@@ -56,6 +56,8 @@ class ValueTypeEnumField;
 class ValueTypeFun;
 class ValueTypePtr;
 
+class Pattern;
+
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
 
@@ -115,7 +117,7 @@ private:
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionGrouping> expressionGrouping);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionIfElse> expressionIfElse, std::shared_ptr<ValueType> returnType);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionLiteral> expressionLiteral);
-    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch, std::shared_ptr<ValueType> returnType);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionUnary> expressionUnary);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionValue> expressionValue, std::shared_ptr<Expression> parentExpression);
 
@@ -131,6 +133,8 @@ private:
     std::shared_ptr<Expression> checkAndTryCasting(std::shared_ptr<Expression> sourceExpression, std::shared_ptr<ValueType> targetType, std::shared_ptr<ValueType> returnType);
     bool canImplicitCast(std::shared_ptr<ValueType> sourceType, std::shared_ptr<ValueType> targetType);
 
+
+    // ValueType
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueType> valueType, bool isCountExperssionRequired);
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeBlob> valueTypeBlob);
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeBoxed> valueTypeBoxed);
@@ -139,6 +143,9 @@ private:
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeEnumField> valueTypeEnumField);
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeFun> valueTypeFun);
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypePtr> valueTypePtr);
+
+    // Pattern
+    void checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<ValueType> switchValueType);
 
     void markErrorAlreadyDefined(std::shared_ptr<Location> location, const std::string &identifier);
     void markErrorInvalidAttribute(std::shared_ptr<Location> location, const std::string &name);

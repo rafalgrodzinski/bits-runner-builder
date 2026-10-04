@@ -33,6 +33,9 @@ handleErrorStatus fun: failureVal u32
     ;*/
   else: value <- 4
   
+
+  if 4 > 5
+  ;
  
 //  value u32
 
