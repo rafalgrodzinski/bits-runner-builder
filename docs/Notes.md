@@ -9,3 +9,4 @@ Available for:
 
 Changelist for [1.0.0-dev-114](https://github.com/rafalgrodzinski/bits-runner-builder/pull/220):
 - Added `match` expression
+- Added early pattern matchin

@@ -2239,64 +2239,117 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
             Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_SWITCH_EXPR),
             Parsee::oneOfParsee(
                 {
-                    /*
                     // single line match
                     {
                         Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                        // pattern
-                        Parsee::groupParsee(
+                        // single line match :: case pattern
+                        Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
+                        // single line match :: case expression
+                        Parsee::oneOfParsee(
                             {
-                                Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
-                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::CRITICAL, false),
-                                // case expression
-                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::OPTIONAL, true, TAG_CASE_EXPR)
-                            }, ParseeLevel::OPTIONAL, true
+                                // single line match :: single line case expression
+                                {
+                                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                    Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                    // else
+                                    Parsee::oneOfParsee(
+                                        {
+                                            // single line match :: single line case expression :: single line else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
+                                            },
+                                            // single line match :: single line case expression :: multi line else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
+                                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                                            },
+                                            // single line match :: single line case expression :: no else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
+                                            }
+                                        }, ParseeLevel::CRITICAL, true
+                                    )
+                                },
+                                // single line match :: multi-line case expression
+                                {
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                    Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                    // else
+                                    Parsee::oneOfParsee(
+                                        {
+                                            // single line match :: multi-line case expression :: single line else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
+                                            },
+                                            // single line match :: multi-line case expression :: multi line else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
+                                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                                            },
+                                            // single line match :: multi-line case expression :: no else
+                                            {
+                                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                                            }
+                                        }, ParseeLevel::CRITICAL, true
+                                    )
+                                }
+                            }, ParseeLevel::CRITICAL, true
                         )
                     },
-                    */
                     // multi line match
                     {
                         Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                        Parsee::debug("afeter NEW_LINE\n"),
-                        // cases
+                        // multi line match :: cases
                         Parsee::repeatedGroupParsee(
                             {
+                                // multi line match :: case pattern
                                 Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
-                                Parsee::debug("afeter PATTERN\n"),
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                                Parsee::debug("afeter NEW_LINE2\n"),
-                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
-                                Parsee::debug("afeter case expression\n"),
-                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false),
-                                Parsee::debug("afeter semi\n"),
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
+                                // multi line match :: case expression
+                                Parsee::oneOfParsee(
+                                    {
+                                        // multi line match :: single line case expression
+                                        {
+                                            Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                            Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
+                                        },
+                                        // multi line match :: multi line case expression
+                                        {
+                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                            Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false),
+                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
+                                        }
+                                    }, ParseeLevel::CRITICAL, true
+                                )
                             }, ParseeLevel::OPTIONAL, true
                         ),
-                        Parsee::debug("before ELSE\n"),
-                        // else
+                        // multi line match :: else
                         Parsee::oneOfParsee(
                             {
-                                // single line else
+                                // multi line match :: single line else
                                 {
-                                    Parsee::debug("else1\n"),
                                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
                                     Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
                                     Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
                                 },
-                                // multi line else
+                                // multi line match :: multi line else
                                 {
-                                    Parsee::debug("else2.1\n"),
                                     Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                    Parsee::debug("else2.2\n"),
                                     Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                                    Parsee::debug("else2.3\n"),
                                     Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
-                                    Parsee::debug("else2.4\n"),
                                     Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
                                 },
-                                // no else
+                                // multi line match :: no else
                                 {
-                                    Parsee::debug("else3\n"),
                                     Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
                                 }
                             }, ParseeLevel::CRITICAL, true
