@@ -1522,6 +1522,8 @@ string Logger::toString(Parsee parsee) {
         case ParseeKind::IF_ELSE_MULTI_LINE:
         case ParseeKind::IF_ELSE_SINGLE_LINE:
             return "Expression If-Else";
+        case ParseeKind::PATTERN:
+            return "Pattern";
         case ParseeKind::DEBUG:
             return "DEBUG";
     }
