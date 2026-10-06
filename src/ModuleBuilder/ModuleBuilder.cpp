@@ -2084,8 +2084,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         }
         default:
-            markErrorInvalidCast(nullptr);
-            return nullptr;
+            break;
     }
 
     // Figure out target type
@@ -2185,8 +2184,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         }
         default:
-            markErrorInvalidCast(nullptr);
-            return nullptr;
+            break;
     }
 
     llvm::Type *targetType = llvmTypeForValueType(targetValueType);
