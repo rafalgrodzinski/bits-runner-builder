@@ -895,6 +895,9 @@ string Logger::toString(shared_ptr<StatementVariableDeclaration> statement, vect
 }
 
 string Logger::toString(shared_ptr<Expression> expression, vector<IndentKind> indents, bool isInline) {
+    if (expression == nullptr)
+        return "{INVALID}";
+
     switch (expression->getKind()) {
         case ExpressionKind::NONE:
             return formattedLine("NONE", indents);

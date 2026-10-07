@@ -1267,7 +1267,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                         }
                     }
 
-                    return true;
+                    markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
+                    return false;
                 })) { return nullptr; }
 
                 return expressionValue->getValueType();

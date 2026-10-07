@@ -1155,6 +1155,9 @@ llvm::AllocaInst *ModuleBuilder::buildAlloca(llvm::Type *type, const string &ide
 // Expressions
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Expression> expression) {
+    if (expression == nullptr)
+        return nullptr;
+
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
