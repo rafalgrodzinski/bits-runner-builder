@@ -25,6 +25,7 @@ Source code is grouped into named modules, each module can be composed of number
 - [Functions](Reference.md#functions) (`fun`)
 - [Raw Functions](Reference.md#raw-functions) (`raw`)
 - [Conditional Expressions](Reference.md#conditional-expressions) (`if`, `else`)
+- [Match Expressions](Reference.md#match-expressions) (`match`, `else`)
 - [Repeats](Reference.md#repeats) (`rep`)
 - [Chaining](Reference.md#chaining) (`thing.sutff[5].something`)
 - [Casts](Reference.md#casts) (`.u32`, `.data<u8>`)
@@ -329,6 +330,23 @@ else: andThat()
 if something
   doStuff
 else: doSomethingElse()
+```
+
+## Match Expressions
+Match expressions can be used determine actual enum field type of a given enum value type. They are akin to switch statements in C.
+```
+result enum<Result>
+
+match result
+  enum<Result>::Success: doSomething()
+  enum<Result>::Failure
+    handleFailure($0.val)
+  ;
+else
+  unexpectedResult()
+;
+
+match result: enum<Result>::Success: doSomething else: handleFailure()
 ```
 
 ## Repeats

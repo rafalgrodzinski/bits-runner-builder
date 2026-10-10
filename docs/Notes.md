@@ -7,5 +7,6 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-113](https://github.com/rafalgrodzinski/bits-runner-builder/issues/206):
-- Various code cleanup
+Changelist for [1.0.0-dev-114](https://github.com/rafalgrodzinski/bits-runner-builder/pull/220):
+- Added `match` expression
+- Added early pattern matchin

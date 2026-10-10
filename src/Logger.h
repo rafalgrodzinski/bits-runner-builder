@@ -12,6 +12,8 @@ class Location;
 class Module;
 class Parsee;
 class Token;
+class Pattern;
+
 struct EnumField;
 
 class Statement;
@@ -45,6 +47,7 @@ class ExpressionCompositeLiteral;
 class ExpressionGrouping;
 class ExpressionIfElse;
 class ExpressionLiteral;
+class ExpressionMatch;
 class ExpressionUnary;
 class ExpressionValue;
 
@@ -121,6 +124,7 @@ private:
     static std::string toString(std::shared_ptr<ExpressionGrouping> expression, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<ExpressionIfElse> expression, std::vector<IndentKind> indents, bool isInline);
     static std::string toString(std::shared_ptr<ExpressionLiteral> expression, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<ExpressionMatch> expression, std::vector<IndentKind> indents, bool isInline);
     static std::string toString(std::shared_ptr<ExpressionUnary> expression, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<ExpressionValue> expression, std::vector<IndentKind> indents);
 
@@ -135,6 +139,9 @@ private:
     static std::string toString(std::shared_ptr<ValueTypeProto> valueTypeProto);
     static std::string toString(std::shared_ptr<ValueTypePtr> valueTypePtr);
     static std::string toString(std::shared_ptr<ValueTypeSimple> valueTypeSimple);
+
+    // pattern
+    static std::string toString(std::shared_ptr<Pattern> pattern);
  
     // general support
     static std::string toString(EnumField field, std::vector<IndentKind> indents);

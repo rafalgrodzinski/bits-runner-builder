@@ -60,7 +60,25 @@ x86 Disassembly/Calling Conventions;
 LLVM itself provides a whole bunch of different options that can be used. Use `--help-hidden` to display all of them.
 
 ## Inline assembly
-BRC supports inline assembly, which is declared simillary to a function, but requires a list of constraints.
+BRC supports inline assembly, which is declared similarly to a function. A list of constraints may be necessary.
+
+### Labels
+To generate a unique label for each call to a raw function use `name${:uid}:`. For example:
+```
+@export disableInterrupts raw<"=r, ~{eax}"> -> bool
+    mov $0, 0
+
+    pushfd
+    pop eax
+    test eax, 0x200
+    jz .flag_not_set${:uid}
+    mov $0, 1
+
+.flag_not_set${:uid}:
+    popfd
+    cli
+;
+```
 
 ### Useful links
 - LLVM: Inline Assembler Expressions

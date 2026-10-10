@@ -289,6 +289,9 @@ shared_ptr<Token> Lexer::nextToken() {
 
     if (token = match(TokenKind::ELSE, "else", true))
         return token;
+
+    if (token = match(TokenKind::MATCH, "match", true))
+        return token;
     
     // literal
     if (token = match(TokenKind::BOOL, "true", true))

@@ -34,6 +34,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionMatch.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
@@ -1154,6 +1155,9 @@ llvm::AllocaInst *ModuleBuilder::buildAlloca(llvm::Type *type, const string &ide
 // Expressions
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Expression> expression) {
+    if (expression == nullptr)
+        return nullptr;
+
     switch (expression->getKind()) {
         case ExpressionKind::BINARY:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionBinary>(expression));
@@ -1172,6 +1176,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionIfElse>(expression));
         case ExpressionKind::LITERAL:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::MATCH:
+            return wrappedValueForExpression(dynamic_pointer_cast<ExpressionMatch>(expression));
         case ExpressionKind::NONE:
             return WrappedValue::wrappedNone(typeVoid, ValueTypeSimple::NONE);
         case ExpressionKind::UNARY:
@@ -1794,6 +1800,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     return WrappedValue::wrappedValue(resultValue, expressionLiteral->getValueType());
 }
 
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionMatch> expressionMatch) {
+    return nullptr;
+}
+
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
     shared_ptr<ValueType> valueType = expressionUnary->getSubExpression()->getValueType();
     llvm::Value *value = wrappedValueForExpression(expressionUnary->getSubExpression())->getValue();
@@ -2077,8 +2087,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         }
         default:
-            markErrorInvalidCast(nullptr);
-            return nullptr;
+            break;
     }
 
     // Figure out target type
@@ -2178,8 +2187,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         }
         default:
-            markErrorInvalidCast(nullptr);
-            return nullptr;
+            break;
     }
 
     llvm::Type *targetType = llvmTypeForValueType(targetValueType);

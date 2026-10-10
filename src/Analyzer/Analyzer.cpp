@@ -16,6 +16,7 @@
 #include "Parser/Expression/ExpressionGrouping.h"
 #include "Parser/Expression/ExpressionIfElse.h"
 #include "Parser/Expression/ExpressionLiteral.h"
+#include "Parser/Expression/ExpressionMatch.h"
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
@@ -51,6 +52,8 @@
 #include "Parser/ValueType/ValueTypeProto.h"
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
+
+#include "Parser/Pattern.h"
 
 using namespace std;
 
@@ -705,6 +708,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
             return typeForExpression(dynamic_pointer_cast<ExpressionIfElse>(expression), returnType);
         case ExpressionKind::LITERAL:
             return typeForExpression(dynamic_pointer_cast<ExpressionLiteral>(expression));
+        case ExpressionKind::MATCH:
+            return typeForExpression(dynamic_pointer_cast<ExpressionMatch>(expression), returnType);
         case ExpressionKind::NONE:
             return ValueTypeSimple::NONE;
         case ExpressionKind::UNARY:
@@ -712,6 +717,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
         case ExpressionKind::VALUE:
             return typeForExpression(dynamic_pointer_cast<ExpressionValue>(expression), parentExpression);
         default:
+            markErrorUnexpectedExpression(expression->getLocation());
             break;
     }
     return nullptr;
@@ -830,7 +836,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                 }
                 extraArguments = 1; // for the implicit "it"
             } else {
-                markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->toPtr()->getPointeeValueType(), nullptr);
+                if (isParentPointer) {
+                    markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->toPtr()->getPointeeValueType(), nullptr);
+                } else {
+                    markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType(), nullptr);
+                }
                 return false;
             }
         } else {
@@ -1092,7 +1102,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
     return expressionIfElse->getValueType();
 }
 
-shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
+shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionLiteral> expressionLiteral) {
     // if it's already set, return it
     if (expressionLiteral->getValueType() != nullptr)
         return expressionLiteral->getValueType();
@@ -1114,6 +1124,21 @@ shared_ptr<ValueType> Analyzer::Analyzer::typeForExpression(shared_ptr<Expressio
     }
 
     return expressionLiteral->getValueType();
+}
+
+std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch, shared_ptr<ValueType> returnType) {
+    expressionMatch->getSwitchExpression()->valueType = typeForExpression(expressionMatch->getSwitchExpression(), nullptr, returnType);
+
+    for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs()) {
+        checkPattern(casePair.first, expressionMatch->getSwitchExpression()->getValueType());
+        casePair.second->valueType = typeForExpression(casePair.second, nullptr, nullptr);
+    }
+
+    if (expressionMatch->getElseExpression() != nullptr) {
+        expressionMatch->getElseExpression()->valueType = typeForExpression(expressionMatch->getElseExpression(), nullptr, returnType);
+    }
+
+    return expressionMatch->getValueType();
 }
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
@@ -1246,7 +1271,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                         }
                     }
 
-                    return true;
+                    markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
+                    return false;
                 })) { return nullptr; }
 
                 return expressionValue->getValueType();
@@ -2380,6 +2406,12 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeFun>
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr) {
     shared_ptr<ValueType> pointeeValueType = typeForCheckedValueType(valueTypePtr->getPointeeValueType(), false);
     return make_shared<ValueTypePtr>(pointeeValueType, valueTypePtr->getIsVolatile(), valueTypePtr->getLocation());
+}
+
+// Pattern
+
+void Analyzer::checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<ValueType> switchValueType) {
+    pattern->getValueType()->setModuleName(module->getName());
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {
