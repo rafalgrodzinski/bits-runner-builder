@@ -836,7 +836,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
                 }
                 extraArguments = 1; // for the implicit "it"
             } else {
-                markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->toPtr()->getPointeeValueType(), nullptr);
+                if (isParentPointer) {
+                    markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType()->toPtr()->getPointeeValueType(), nullptr);
+                } else {
+                    markErrorInvalidType(expressionCall->getLocation(), parentExpression->getValueType(), nullptr);
+                }
                 return false;
             }
         } else {
