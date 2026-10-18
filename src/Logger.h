@@ -67,6 +67,8 @@ class ValueTypeProto;
 class ValueTypePtr;
 class ValueTypeSimple;
 
+class Pattern;
+
 enum class IndentKind {
     ROOT,
     EMPTY,
@@ -84,6 +86,7 @@ public:
 
     static std::string toString(std::shared_ptr<Location> location);
     static std::string toString(std::shared_ptr<ValueType> valueType);
+    static std::string toString(std::shared_ptr<Pattern> pattern);
     static std::string toString(ExpressionUnaryOperation operationUnary);
     static std::string toString(ExpressionBinaryOperation operationBinary);
 
@@ -139,9 +142,6 @@ private:
     static std::string toString(std::shared_ptr<ValueTypeProto> valueTypeProto);
     static std::string toString(std::shared_ptr<ValueTypePtr> valueTypePtr);
     static std::string toString(std::shared_ptr<ValueTypeSimple> valueTypeSimple);
-
-    // pattern
-    static std::string toString(std::shared_ptr<Pattern> pattern);
  
     // general support
     static std::string toString(EnumField field, std::vector<IndentKind> indents);

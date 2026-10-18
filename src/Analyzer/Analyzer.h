@@ -156,6 +156,7 @@ private:
     void markErrorInvalidName(std::shared_ptr<Location> location, const std::string &name);
     void markErrorInvalidOperationBinary(std::shared_ptr<Location> location, ExpressionBinaryOperation operation, std::shared_ptr<ValueType> firstType, std::shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(std::shared_ptr<Location> location, ExpressionUnaryOperation operation, std::shared_ptr<ValueType> type);
+    void markErrorInvalidPattern(std::shared_ptr<Location> location, std::shared_ptr<Pattern> pattern);
     void markErrorInvalidType(std::shared_ptr<Location> location, std::shared_ptr<ValueType> actualType, std::shared_ptr<ValueType> expectedType);
     void markErrorNotDefined(std::shared_ptr<Location> location, const std::string &name);
     void markErrorNotImplemented(std::shared_ptr<Location> location, const std::string &protoName, const std::string &memberName);

@@ -405,7 +405,8 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
     scope->level([&]() -> bool {
         // register arguments as variables
         for (auto &argument : statementFunction->getArguments())
-            scope->setVariableType(argument.first, argument.second, true);
+            scope->variableScope->registerValueType(argument.first, argument.second);
+            //scope->setVariableType(argument.first, argument.second, true);
 
         checkStatement(statementFunction->getStatementBlock(), statementFunction->getReturnValueType());
 
@@ -453,8 +454,9 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementM
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
    string identifier = statementMetaExternVariable->getGlobalIdentifier();
 
-    if (!scope->setVariableType(identifier, statementMetaExternVariable->getValueType(), false))
-        markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);
+    /*if (!scope->setVariableType(identifier, statementMetaExternVariable->getValueType(), false))
+        markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);*/
+    scope->variableScope->registerValueType(identifier, statementMetaExternVariable->getValueType());
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel) {
@@ -648,10 +650,11 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     }
 
     // try registering in scope
-    if (!scope->setVariableType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true)) {
+    /*if (!scope->setVariableType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true)) {
         markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
         return;
-    }
+    }*/
+   scope->variableScope->registerValueType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType());
 
     // updated corresponding variable declaration
     for (shared_ptr<Statement> headerStatement : this->module->getHeaderStatements()) {
@@ -676,8 +679,9 @@ void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statement
 
     // try registering in scope
     string identifier = statementVariableDeclaration->getGlobalIdentifier();
-    if (!identifier.empty() && !scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
-        markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);
+    /*if (!identifier.empty() && !scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
+        markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);*/
+    scope->variableScope->registerValueType(identifier, statementVariableDeclaration->getValueType());
 }
 
 // Expressions
@@ -1128,10 +1132,19 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionLiteral> 
 
 std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch, shared_ptr<ValueType> returnType) {
     expressionMatch->getSwitchExpression()->valueType = typeForExpression(expressionMatch->getSwitchExpression(), nullptr, returnType);
+    if (expressionMatch->getSwitchExpression()->getValueType() == nullptr)
+        return nullptr;
 
     for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs()) {
         checkPattern(casePair.first, expressionMatch->getSwitchExpression()->getValueType());
-        casePair.second->valueType = typeForExpression(casePair.second, nullptr, nullptr);
+        if (!scope->level([&]() -> bool {
+            scope->variableScope->registerAnonymousValueType(casePair.first->getValueType());
+            casePair.second->valueType = typeForExpression(casePair.second, nullptr, nullptr);
+            if (casePair.second->getValueType() == nullptr)
+                return false;
+
+            return true;
+        })) { return nullptr; }
     }
 
     if (expressionMatch->getElseExpression() != nullptr) {
@@ -1323,11 +1336,13 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     }
 
     // first assume it's just simple
-    shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
+    //shared_ptr<ValueType> type = scope->getVariableType(expressionValue->getIdentifier());
+    shared_ptr<ValueType> type = scope->variableScope->getValueType(expressionValue->getIdentifier());
     // try with global identifier
     if (type == nullptr && expressionValue->getModuleName().empty()) {
         string globalIdentifier = format("{}.{}", module->getName(), expressionValue->getIdentifier());
-        type = scope->getVariableType(globalIdentifier);
+        //type = scope->getVariableType(globalIdentifier);
+        type = scope->variableScope->getValueType(globalIdentifier);
         if (type != nullptr)
             expressionValue->setModuleName(module->getName());
     }
@@ -1357,7 +1372,8 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         expressionValue->valueKind = ExpressionValueKind::DATA;
     // check if it's blob's `it`
     } else if (type == nullptr && expressionValue->getIdentifier() == "it") {
-        shared_ptr<ValueType> blobPtrType = scope->getVariableType(".pit");
+        //shared_ptr<ValueType> blobPtrType = scope->getVariableType(".pit");
+        shared_ptr<ValueType> blobPtrType = scope->variableScope->getValueType(".pit");
         if (blobPtrType == nullptr) {
             markErrorNotDefined(expressionValue->getLocation(), expressionValue->getIdentifier());
             return nullptr;
@@ -2412,6 +2428,12 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr>
 
 void Analyzer::checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<ValueType> switchValueType) {
     pattern->getValueType()->setModuleName(module->getName());
+    shared_ptr<ValueTypeEnum> switchEnumValueType = switchValueType->toEnum();
+    shared_ptr<ValueTypeEnumField> patternEnumFieldValueType =  pattern->getValueType()->toEnumField();
+    if (switchEnumValueType == nullptr || patternEnumFieldValueType == nullptr || !canImplicitCast(patternEnumFieldValueType, switchValueType)) {
+        markErrorInvalidPattern(pattern->getLocation(), pattern);
+        return;
+    }
 }
 
 void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {
@@ -2460,6 +2482,11 @@ void Analyzer::markErrorInvalidOperationBinary(shared_ptr<Location> location, Ex
 
 void Analyzer::markErrorInvalidOperationUnary(shared_ptr<Location> location, ExpressionUnaryOperation operation, shared_ptr<ValueType> type) {
     string message = format("Invalid unary operation {} for type {}", Logger::toString(operation), Logger::toString(type));
+    errors.push_back(Error::error(location, message));
+}
+
+void Analyzer::markErrorInvalidPattern(std::shared_ptr<Location> location, std::shared_ptr<Pattern> pattern) {
+    string message = format("Invalid pattern {}", Logger::toString(pattern));
     errors.push_back(Error::error(location, message));
 }
 

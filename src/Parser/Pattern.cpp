@@ -4,9 +4,14 @@
 
 using namespace std;
 
-Pattern::Pattern(shared_ptr<ValueType> valueType):
+Pattern::Pattern(shared_ptr<ValueType> valueType, shared_ptr<Location> location):
+location(location),
 valueType(valueType) { }
 
-shared_ptr<ValueType> Pattern::getValueType() {
+std::shared_ptr<Location> Pattern::getLocation() const {
+    return location;
+}
+
+shared_ptr<ValueType> Pattern::getValueType() const {
     return valueType;
 }

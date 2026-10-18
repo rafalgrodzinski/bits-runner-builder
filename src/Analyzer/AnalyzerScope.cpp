@@ -12,6 +12,7 @@ AnalyzerScope::AnalyzerScope() {
     boxedScope = make_shared<AnalyzerScopeBoxed>(this);
     enumScope = make_shared<AnalyzerScopeEnum>(this);
     protoScope = make_shared<AnalyzerScopeProto>(this);
+    variableScope = make_shared<AnalyzerScopeVariable>(this);
 
     pushLevel();
 }
@@ -31,7 +32,7 @@ bool AnalyzerScope::level(function<bool ()> levelBlock) {
     return isSuccess;
 }
 
-shared_ptr<ValueType> AnalyzerScope::getVariableType(const string &identifier) const {
+/*shared_ptr<ValueType> AnalyzerScope::getVariableType(const string &identifier) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 
     while (!scopeLevels.empty()) {
@@ -42,31 +43,31 @@ shared_ptr<ValueType> AnalyzerScope::getVariableType(const string &identifier) c
     }
 
     return nullptr;
-}
+}*/
 
-bool AnalyzerScope::setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition) {
-    shared_ptr<ValueType> existingType = scopeLevels.top().variableTypes[identifier];
-    if (existingType != nullptr) {
-        // defining already defined variable
-        if (scopeLevels.top().isVariableDefinedMap[identifier] && isDefinition)
-            return false;
-
-        // check if kind and subtypes' kinds match (ignore count expression since it may not be defined for declarations)
-        if (existingType->getKind() != type->getKind())
-            return false;
-
-        /*if (existingType->getSubType() != nullptr && type->getSubType() != nullptr) {
-            if (existingType->getSubType()->getKind() != type->getSubType()->getKind())
-                return false;
-        }*/
-    }
-
-    scopeLevels.top().variableTypes[identifier] = type;
-    if (isDefinition)
-        scopeLevels.top().isVariableDefinedMap[identifier] = true;
-
-    return true;
-}
+//bool AnalyzerScope::setVariableType(const string &identifier, shared_ptr<ValueType> type, bool isDefinition) {
+//    shared_ptr<ValueType> existingType = scopeLevels.top().variableTypes[identifier];
+//    if (existingType != nullptr) {
+//        // defining already defined variable
+//        if (scopeLevels.top().isVariableDefinedMap[identifier] && isDefinition)
+//            return false;
+//
+//        // check if kind and subtypes' kinds match (ignore count expression since it may not be defined for declarations)
+//        if (existingType->getKind() != type->getKind())
+//            return false;
+//
+//        /*if (existingType->getSubType() != nullptr && type->getSubType() != nullptr) {
+//            if (existingType->getSubType()->getKind() != type->getSubType()->getKind())
+//                return false;
+//        }*/
+//    }
+//
+//    scopeLevels.top().variableTypes[identifier] = type;
+//    if (isDefinition)
+//        scopeLevels.top().isVariableDefinedMap[identifier] = true;
+//
+//    return true;
+//}
 
 shared_ptr<ValueType> AnalyzerScope::getFunctionType(const string &name) const {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;

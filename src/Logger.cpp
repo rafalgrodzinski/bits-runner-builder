@@ -263,6 +263,10 @@ string Logger::toString(shared_ptr<ValueType> valueType) {
     return text;
 }
 
+std::string Logger::toString(std::shared_ptr<Pattern> pattern) {
+    return toString(pattern->getValueType());
+}
+
 string Logger::toString(ExpressionBinaryOperation operationBinary) {
     switch (operationBinary) {
         case ExpressionBinaryOperation::OR:
@@ -1422,10 +1426,6 @@ string Logger::toString(shared_ptr<ValueTypeSimple> valueTypeSimple) {
     }
 
     return text;
-}
-
-std::string Logger::toString(std::shared_ptr<Pattern> pattern) {
-    return toString(pattern->getValueType());
 }
 
 string Logger::toString(EnumField field, vector<IndentKind> indents) {

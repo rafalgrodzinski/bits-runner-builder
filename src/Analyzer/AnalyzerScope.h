@@ -13,6 +13,7 @@
 #include "AnalyzerScopeBoxed.h"
 #include "AnalyzerScopeEnum.h"
 #include "AnalyzerScopeProto.h"
+#include "AnalyzerScopeVariable.h"
 
 class SymbolName;
 class ValueType;
@@ -34,11 +35,12 @@ friend class AnalyzerScopeBlob;
 friend class AnalyzerScopeBoxed;
 friend class AnalyzerScopeEnum;
 friend class AnalyzerScopeProto;
+friend class AnalyzerScopeVariable;
 
 public:
     typedef struct {
-        std::map<std::string, std::shared_ptr<ValueType>> variableTypes;
-        std::map<std::string, bool> isVariableDefinedMap;
+        //std::map<std::string, std::shared_ptr<ValueType>> variableTypes;
+        //std::map<std::string, bool> isVariableDefinedMap;
 
         std::map<std::string, std::shared_ptr<ValueType>> functionTypeMap;
         std::map<std::string, bool> isFunctionDefinedMap;
@@ -47,6 +49,7 @@ public:
         AnalyzerScopeBoxed::ScopeLevel scopeLevelBoxed;
         AnalyzerScopeEnum::ScopeLevel scopeLevelEnum;
         AnalyzerScopeProto::ScopeLevel scopeLevelProto;
+        AnalyzerScopeVariable::ScopeLevel scopeLevelVariable;
     } ScopeLevel;
 
     AnalyzerScope();
@@ -55,8 +58,8 @@ public:
     void popLevel();
     bool level(std::function<bool ()> levelBlock);
 
-    std::shared_ptr<ValueType> getVariableType(const std::string &identifier) const;
-    bool setVariableType(const std::string &identifier, std::shared_ptr<ValueType> type, bool isDefinition);
+    //std::shared_ptr<ValueType> getVariableType(const std::string &identifier) const;
+    //bool setVariableType(const std::string &identifier, std::shared_ptr<ValueType> type, bool isDefinition);
 
     std::shared_ptr<ValueType> getFunctionType(const std::string &name) const;
     bool setFunctionType(const std::string &name, std::shared_ptr<ValueType> type, bool isDefinition);
@@ -65,6 +68,7 @@ public:
     std::shared_ptr<AnalyzerScopeBoxed> boxedScope;
     std::shared_ptr<AnalyzerScopeEnum> enumScope;
     std::shared_ptr<AnalyzerScopeProto> protoScope;
+    std::shared_ptr<AnalyzerScopeVariable> variableScope;
 
 private:
     std::stack<ScopeLevel> scopeLevels;

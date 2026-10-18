@@ -2874,7 +2874,7 @@ std::shared_ptr<Pattern> Parser::matchPattern() {
         }
     }
 
-    return make_shared<Pattern>(valueType);
+    return make_shared<Pattern>(valueType, location);
 }
 
 // Parsee
