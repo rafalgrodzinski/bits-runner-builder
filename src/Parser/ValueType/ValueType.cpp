@@ -43,7 +43,11 @@ bool ValueType::isData() const {
 }
 
 bool ValueType::isEnum() const {
-    return kind == ValueTypeKind::ENUM || kind == ValueTypeKind::ENUM_FIELD;
+    return kind == ValueTypeKind::ENUM;
+}
+
+bool ValueType::isEnumField() const {
+    return kind == ValueTypeKind::ENUM_FIELD;
 }
 
 bool ValueType::isFun() const {

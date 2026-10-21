@@ -645,7 +645,7 @@ bool Lexer::isIdentifier(int index) const {
     char character = source.at(index);
     bool isDigit = character >= '0' && character <= '9';
     bool isAlpha = character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z';
-    bool isAlowedSymbol = character == '_';
+    bool isAlowedSymbol = character == '_' || character == '$';
 
     return isDigit || isAlpha || isAlowedSymbol;
 }

@@ -7,6 +7,8 @@ class Location;
 class ValueType;
 
 class Pattern {
+friend class Analyzer;
+
 public:
     Pattern(std::shared_ptr<ValueType> valueType, std::shared_ptr<Location> location);
 

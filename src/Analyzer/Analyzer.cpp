@@ -1135,17 +1135,28 @@ std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<Expressio
     if (expressionMatch->getSwitchExpression()->getValueType() == nullptr)
         return nullptr;
 
-    for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs()) {
-        checkPattern(casePair.first, expressionMatch->getSwitchExpression()->getValueType());
-        if (!scope->level([&]() -> bool {
-            scope->variableScope->registerAnonymousValueType(casePair.first->getValueType());
-            casePair.second->valueType = typeForExpression(casePair.second, nullptr, nullptr);
-            if (casePair.second->getValueType() == nullptr)
+    if (!scope->level([&]() -> bool {
+        scope->boxedScope->registerNamedValueTypesMap(
+            *scope->enumScope->getNamedValueTypeKeys(expressionMatch->getSwitchExpression()->getValueType()->toEnum()->getSymbolName()),
+            expressionMatch->getSwitchExpression()->getValueType()->toEnum()->getNamedValueTypes()
+        );
+        for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs()) {
+            casePair.first->valueType = typeForCheckedValueType(casePair.first->getValueType(), false);
+            if (casePair.first->getValueType() == nullptr)
                 return false;
+            checkPattern(casePair.first, expressionMatch->getSwitchExpression()->getValueType());
+            if (!scope->level([&]() -> bool {
+                scope->variableScope->registerAnonymousValueType(casePair.first->getValueType());
+                casePair.second->valueType = typeForExpression(casePair.second, nullptr, nullptr);
+                if (casePair.second->getValueType() == nullptr)
+                    return false;
 
-            return true;
-        })) { return nullptr; }
-    }
+                return true;
+            })) { return false; }
+        }
+
+        return true;
+    })) { return nullptr; };
 
     if (expressionMatch->getElseExpression() != nullptr) {
         expressionMatch->getElseExpression()->valueType = typeForExpression(expressionMatch->getElseExpression(), nullptr, returnType);
@@ -1177,7 +1188,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isParentPointer = parentExpression->getValueType()->isPtr();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isParentProto = parentExpression->getValueType()->isProto();
-        bool isParentEnum = parentExpression->getValueType()->isEnum();
+        bool isParentEnumField = parentExpression->getValueType()->isEnumField();
         bool isParentCast = parentExpression->getKind() == ExpressionKind::CAST;
 
         bool isCount = expressionValue->getIdentifier() == "count";
@@ -1187,10 +1198,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isSize = expressionValue->getIdentifier() == "size";
         bool isTag = expressionValue->getIdentifier() == "tag";
 
+        // parent data
         if (isParentData && isCount) {
             expressionValue->valueType = ValueTypeSimple::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_COUNT;
             return expressionValue->getValueType();
+        // parent pointer
         } else if (isParentPointer && isVal) {
             switch (expressionValue->getValueKind()) {
                 case ExpressionValueKind::SIMPLE:
@@ -1228,19 +1241,26 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             expressionValue->valueType = ValueTypeSimple::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
-        } else if (isParentEnum && isTag) {
-            return expressionValue->valueType = ValueTypeSimple::UINT;
+        // parent enum field
+        } else if (isParentEnumField && isTag) {
+            expressionValue->valueType = ValueTypeSimple::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_TAG;
             return expressionValue->getValueType();
+        } else if (isParentEnumField && isVal) {
+            expressionValue->valueType = parentExpression->getValueType()->toEnumField()->getPayloadValueType();
+            expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_SIMPLE;
+            return expressionValue->getValueType();
+        // parent cast
         } else if (!isParentCast && isAdr) {
             expressionValue->valueType = ValueTypeSimple::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_ADR;
             return expressionValue->getValueType();
+        // size
         } else if (isSize) {
             expressionValue->valueType = ValueTypeSimple::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_SIZE;
             return expressionValue->getValueType();
-        // check blob member
+        // parent blob
         } else if (isParentBlob) {
             shared_ptr<ValueTypeBlob> blobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
             string blobName = blobValueType->getSymbolName()->getGlobalName();
@@ -1295,7 +1315,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                 format("{}.{}", blobName, expressionValue->getIdentifier())
             );
             return nullptr;
-        // check proto member
+        // parent proto
         } else if (isParentProto) {
             auto members = *scope->protoScope->getFields(parentExpression->getValueType()->toProto()->getSymbolName());
             for (pair<string, shared_ptr<ValueType>> &member : members) {
@@ -2379,13 +2399,13 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 
     // Check if enum field is registered
     if (!oNamedValueTypeKeys || payloadValueType == nullptr) {
-        markErrorNotDefined(nullptr, valueTypeEnumField->getSymbolName()->getGlobalName());
+        markErrorNotDefined(valueTypeEnumField->getLocation(), valueTypeEnumField->getSymbolName()->getGlobalName());
         return nullptr;
     }
 
     // Check number of named types match
     if ((*oNamedValueTypeKeys).size() != valueTypeEnumField->getNamedValueTypes().size()) {
-        markErrorInvalidType(nullptr, valueTypeEnumField, nullptr);
+        markErrorInvalidType(valueTypeEnumField->getLocation(), valueTypeEnumField, nullptr);
         return nullptr;
     }
 

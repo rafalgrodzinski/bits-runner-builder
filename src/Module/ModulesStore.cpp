@@ -37,6 +37,7 @@
 #include "Parser/Expression/ExpressionValue.h"
 
 #include "Parser/ValueType/ValueType.h"
+#include "Parser/Pattern.h"
 
 using namespace std;
 
@@ -612,6 +613,16 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
             setModuleName(expressionIfElse->getConditionExpression(), moduleName);
             setModuleName(expressionIfElse->getThenExpression(), moduleName);
             setModuleName(expressionIfElse->getElseExpression(), moduleName);
+            break;
+        }
+        case ExpressionKind::MATCH: {
+            shared_ptr<ExpressionMatch> expressionMatch = dynamic_pointer_cast<ExpressionMatch>(expression);
+            setModuleName(expressionMatch->getSwitchExpression(), moduleName);
+            for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs()) {
+                casePair.first->getValueType()->setModuleName(moduleName);
+                setModuleName(casePair.second, moduleName);
+            }
+            setModuleName(expressionMatch->getElseExpression(), moduleName);
             break;
         }
         case ExpressionKind::UNARY: {

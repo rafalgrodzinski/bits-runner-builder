@@ -61,6 +61,7 @@ public:
     bool isComposite() const;
     bool isData() const;
     bool isEnum() const;
+    bool isEnumField() const;
     bool isFun() const;
     bool isProto() const;
     bool isPtr() const;

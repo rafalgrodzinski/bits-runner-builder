@@ -1330,11 +1330,7 @@ string Logger::toString(shared_ptr<ValueTypeEnum> valueTypeEnum) {
 string Logger::toString(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
     string text = "";
     text += format("ENUM_FIELD<`{}`", valueTypeEnumField->getSymbolName()->getGlobalName());
-    for (shared_ptr<ValueType> valueType : valueTypeEnumField->getNamedValueTypes()) {
-        text += ", ";
-        text += toString(valueType);
-    }
-    text += ">";
+    text += format(", {}>", toString(valueTypeEnumField->getPayloadValueType()));
 
     return text;
 }

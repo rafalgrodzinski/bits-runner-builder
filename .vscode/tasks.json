@@ -10,9 +10,10 @@
                 "isDefault": true
             },
             "presentation": {
-                "close": true,
+                "close": false,
                 "focus": true
-            }
+            },
+            "problemMatcher": ["$gcc"]
         },
         {
             "label": "Clean",

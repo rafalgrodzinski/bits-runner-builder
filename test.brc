@@ -26,9 +26,9 @@ handleErrorStatus fun: failureVal u32
   //match result: enum<Status>::Success: else: value <- 2
 
   match result
-    enum<Status>::Succes
+    enum<Status>::Success
     ;
-    enum<Status>::Failure: 5 * 8
+    enum<Status>::Failure: $0.val.u32 * 8
     /*enum<Status>::Failure
     ;*/
   else: value <- 4
