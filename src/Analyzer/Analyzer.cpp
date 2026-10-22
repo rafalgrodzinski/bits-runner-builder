@@ -374,12 +374,36 @@ void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
         currentTagExpression->valueType = typeForExpression(currentTagExpression, nullptr, nullptr);
 
         // Register enum field type
-        scope->enumScope->registerNamedValueTypeKeys(field.symbolName, statementEnum->getNamedValueTypeKeys());
-        scope->enumScope->registerPayloadValueType(field.symbolName, field.payloadValueType);
+        AnalyzerScopeRegisterResult keysRegisterResult = scope->enumScope->registerNamedValueTypeKeys(field.symbolName, statementEnum->getNamedValueTypeKeys());
+        if (keysRegisterResult != AnalyzerScopeRegisterResult::SUCCES) {
+            markErrorInvalidRegistration(
+                field.payloadValueType->getLocation(),
+                field.symbolName->getGlobalName(),
+                keysRegisterResult
+            );
+            return;
+        }
+        AnalyzerScopeRegisterResult payloadRegisterResult = scope->enumScope->registerPayloadValueType(field.symbolName, field.payloadValueType);
+        if (payloadRegisterResult != AnalyzerScopeRegisterResult::SUCCES) {
+            markErrorInvalidRegistration(
+                field.payloadValueType->getLocation(),
+                field.symbolName->getGlobalName(),
+                payloadRegisterResult
+            );
+            return;
+        }
     }
 
    // register enum type
-   scope->enumScope->registerNamedValueTypeKeys(statementEnum->getSymbolName(), statementEnum->getNamedValueTypeKeys());
+   AnalyzerScopeRegisterResult registerResult = scope->enumScope->registerNamedValueTypeKeys(statementEnum->getSymbolName(), statementEnum->getNamedValueTypeKeys());
+    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+        markErrorInvalidRegistration(
+            statementEnum->getLocation(),
+            statementEnum->getSymbolName()->getGlobalName(),
+            registerResult
+        );
+        return;
+    }
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {

@@ -3,16 +3,19 @@ Status enum
   Failure boxed<u32>
 ;
 
+Bleh enum
+  Succes
+;
+
 @export main fun -> u32
-  result enum<Status>
+  result enum<Status> //<- {6}.enum<Status>::Failure
 
   value u32
 
   match result
-    enum<Status>::Success
-    ;
-    enum<Status>::Failure: $0.val.u32 * 8
+    enum<Status>::Success: ret 8
+    enum<Status>::Failure: value <- $0.val.u32
   else: value <- 4
 
-  ret 0
+  ret value
 ;
