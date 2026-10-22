@@ -1,0 +1,17 @@
+Result<T> enum
+   Success
+   Failure boxed<T>
+;
+
+doStuff fun -> enum<Result, u32>
+  ret {43}.enum<Result, u32>::Failure
+;
+
+@export main fun -> u32
+   result enum<Result, u32> <- doStuff()
+
+  ret match result
+    enum<Result, u32>::Success: 7
+    enum<Result, u32>::Failure: $0.val.u32
+  else: 0
+;
