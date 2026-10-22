@@ -1,7 +1,7 @@
 #include "Analyzer.h"
 
-#include "AnalyzerScope.h"
-#include "AnalyzerScopeBlob.h"
+#include "Analyzer/AnalyzerScope/AnalyzerScope.h"
+#include "Analyzer/AnalyzerScope/AnalyzerScopeBlob.h"
 #include "Error.h"
 #include "Logger.h"
 #include "Module/Module.h"
