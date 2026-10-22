@@ -24,7 +24,8 @@ enum class ParseeKind {
     STATEMENT_BLOCK_MULTI_LINE,
     STATEMENT_BLOCK_SINGLE_LINE,
     TOKEN,
-    VALUE_TYPE
+    VALUE_TYPE,
+    PATTERN
 };
 
 enum class ParseeLevel {
@@ -48,6 +49,7 @@ public:
     static Parsee statementBlockSingleLineParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee tokenParsee(TokenKind tokenKind, ParseeLevel level, bool shouldReturn, int tag = -1);
     static Parsee valueTypeParsee(ParseeLevel level, bool shouldReturn, int tag = -1); 
+    static Parsee patternParsee(ParseeLevel level, bool shouldReturn, int tag = -1);
 
     ParseeKind getKind() const;
     int getTag() const;

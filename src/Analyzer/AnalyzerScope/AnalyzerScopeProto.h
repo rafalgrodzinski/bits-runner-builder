@@ -2,7 +2,9 @@
 #define ANALYZER_SCOPE_PROTO_H
 
 #include <map>
+#include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 class AnalyzerScope;

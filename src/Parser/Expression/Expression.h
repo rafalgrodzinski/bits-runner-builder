@@ -20,6 +20,7 @@ enum class ExpressionKind {
     GROUPING,
     IF_ELSE,
     LITERAL,
+    MATCH,
     NONE,
     UNARY,
     VALUE

@@ -1,14 +1,17 @@
-Stuff blob: IStuff
-    num u32
+Result<T> enum
+   Success
+   Failure boxed<T>
 ;
 
-IStuff proto
-    num u32
+doStuff fun -> enum<Result, u32>
+  ret {43}.enum<Result, u32>::Failure
 ;
 
 @export main fun -> u32
-    stuff blob<Stuff> <- {33}
-    iStuff proto<IStuff> <- {stuff.adr.ptr<blob<Stuff>>}
+   result enum<Result, u32> <- doStuff()
 
-    ret iStuff.num
+  ret match result
+    enum<Result, u32>::Success: 7
+    enum<Result, u32>::Failure: $0.val.u32
+  else: 0
 ;

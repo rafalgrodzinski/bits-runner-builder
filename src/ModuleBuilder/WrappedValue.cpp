@@ -232,7 +232,7 @@ bool WrappedValue::isBlobStruct() const {
 }
 
 bool WrappedValue::isEnumStruct() const {
-    return valueType->isEnum();
+    return valueType->isEnum() || valueType->isEnumField();
 }
 
 bool WrappedValue::isProtoStruct() const {

@@ -42,6 +42,7 @@ class ExpressionCompositeLiteral;
 class ExpressionGrouping;
 class ExpressionIfElse;
 class ExpressionLiteral;
+class ExpressionMatch;
 class ExpressionNone;
 class ExpressionUnary;
 class ExpressionValue;
@@ -55,6 +56,9 @@ class ValueTypeEnumField;
 class ValueTypeFun;
 class ValueTypePtr;
 
+class Pattern;
+
+enum class AnalyzerScopeRegisterResult;
 enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
 
@@ -112,8 +116,9 @@ private:
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionChained> expressionChained);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionCompositeLiteral> expressionCompositeLiteral);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionGrouping> expressionGrouping);
-    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionIfElse> expressionIfElse, std::shared_ptr<ValueType> returnType);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionIfElse> expressionIfElse, std::shared_ptr<ValueType> returnValueType);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionLiteral> expressionLiteral);
+    std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch, std::shared_ptr<ValueType> returnValueType);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionUnary> expressionUnary);
     std::shared_ptr<ValueType> typeForExpression(std::shared_ptr<ExpressionValue> expressionValue, std::shared_ptr<Expression> parentExpression);
 
@@ -128,7 +133,9 @@ private:
 
     std::shared_ptr<Expression> checkAndTryCasting(std::shared_ptr<Expression> sourceExpression, std::shared_ptr<ValueType> targetType, std::shared_ptr<ValueType> returnType);
     bool canImplicitCast(std::shared_ptr<ValueType> sourceType, std::shared_ptr<ValueType> targetType);
+    std::shared_ptr<ValueType> commonImplicitCastValueType(std::vector<std::shared_ptr<ValueType>> valueTypes);
 
+    // ValueType
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueType> valueType, bool isCountExperssionRequired);
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeBlob> valueTypeBlob);
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeBoxed> valueTypeBoxed);
@@ -137,6 +144,9 @@ private:
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeEnumField> valueTypeEnumField);
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypeFun> valueTypeFun);
     std::shared_ptr<ValueType> typeForCheckedValueType(std::shared_ptr<ValueTypePtr> valueTypePtr);
+
+    // Pattern
+    void checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<ValueType> switchValueType);
 
     void markErrorAlreadyDefined(std::shared_ptr<Location> location, const std::string &identifier);
     void markErrorInvalidAttribute(std::shared_ptr<Location> location, const std::string &name);
@@ -147,6 +157,8 @@ private:
     void markErrorInvalidName(std::shared_ptr<Location> location, const std::string &name);
     void markErrorInvalidOperationBinary(std::shared_ptr<Location> location, ExpressionBinaryOperation operation, std::shared_ptr<ValueType> firstType, std::shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(std::shared_ptr<Location> location, ExpressionUnaryOperation operation, std::shared_ptr<ValueType> type);
+    void markErrorInvalidPattern(std::shared_ptr<Location> location, std::shared_ptr<Pattern> pattern);
+    void markErrorInvalidRegistration(std::shared_ptr<Location> location, const std::string &identifier, AnalyzerScopeRegisterResult registerResult);
     void markErrorInvalidType(std::shared_ptr<Location> location, std::shared_ptr<ValueType> actualType, std::shared_ptr<ValueType> expectedType);
     void markErrorNotDefined(std::shared_ptr<Location> location, const std::string &name);
     void markErrorNotImplemented(std::shared_ptr<Location> location, const std::string &protoName, const std::string &memberName);

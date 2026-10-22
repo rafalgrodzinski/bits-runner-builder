@@ -61,11 +61,13 @@ public:
     bool isComposite() const;
     bool isData() const;
     bool isEnum() const;
+    bool isEnumField() const;
     bool isFun() const;
     bool isProto() const;
     bool isPtr() const;
     bool isSimple() const;
 
+    bool isNone() const;
     bool isBool() const;
     bool isNumeric() const;
     bool isInteger() const;

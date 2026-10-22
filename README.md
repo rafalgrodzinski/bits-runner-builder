@@ -71,7 +71,7 @@ It's mostly a learning opportunity and a bit of fun, but maybe you can find some
 - No curly braces for scope or semicollons
 - Functions inside of `blob` types for simple class-like funtionality
 - Interfaces with `proto` types
-- `if-else` statements are expressions
+- `if-else` and `match` are expressions
 - Explicitly sized types (integers, floats, etc)
 - `for`, `while`, `do-while` loops integrated into single `rep` keyword
 - Directly supports decimal, hex, binary numbers with `_` separator between digits

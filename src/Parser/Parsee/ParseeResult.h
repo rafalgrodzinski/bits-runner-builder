@@ -3,17 +3,19 @@
 
 #include <memory>
 
+class Expression;
+class Pattern;
+class Statement;
 class Token;
 class ValueType;
-class Statement;
-class Expression;
 
 enum class ParseeResultKind {
-    TOKEN,
-    VALUE_TYPE,
+    EXPRESSION,
+    PATTERN,
     STATEMENT,
     STATEMENT_IN_BLOCK,
-    EXPRESSION
+    TOKEN,
+    VALUE_TYPE
 };
 
 class ParseeResult {
@@ -23,6 +25,7 @@ public:
     static ParseeResult statementResult(std::shared_ptr<Statement> statement, int tokensCount, int tag = -1);
     static ParseeResult statementInBlockResult(std::shared_ptr<Statement> statement, int tokensCount, int tag = -1);
     static ParseeResult expressionResult(std::shared_ptr<Expression> expression, int tokensCount, int tag = -1);
+    static ParseeResult patternResult(std::shared_ptr<Pattern> pattern, int tokensCount, int tag = -1);
 
     ParseeResultKind getKind() const;
     int getTag() const;
@@ -30,6 +33,7 @@ public:
     std::shared_ptr<ValueType> getValueType() const;
     std::shared_ptr<Statement> getStatement() const;
     std::shared_ptr<Expression> getExpression() const;
+    std::shared_ptr<Pattern> getPattern() const;
     int getTokensCount() const;
 
 private:
@@ -39,6 +43,7 @@ private:
     std::shared_ptr<ValueType> valueType;
     std::shared_ptr<Statement> statement;
     std::shared_ptr<Expression> expression;
+    std::shared_ptr<Pattern> pattern;
     int tokensCount;
     ParseeResult();
 };

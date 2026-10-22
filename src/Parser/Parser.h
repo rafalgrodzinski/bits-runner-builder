@@ -12,6 +12,7 @@ class Error;
 enum class TokenKind;
 class Token;
 class ValueType;
+class Pattern;
 
 enum class StatementKind;
 class Statement;
@@ -86,9 +87,11 @@ private:
     std::shared_ptr<Expression> matchExpressionGrouping();
     std::shared_ptr<Expression> matchExpressionIfElse(std::optional<bool> isMultiLine);
     std::shared_ptr<Expression> matchExpressionLiteral();
+    std::shared_ptr<Expression> matchExpressionMatch();
     std::shared_ptr<Expression> matchExpressionValue();
 
     std::shared_ptr<ValueType> matchValueType();
+    std::shared_ptr<Pattern> matchPattern();
 
     // Parsee
     ParseeResultsGroup parseeResultsGroupForParsees(std::vector<Parsee> parsees);
@@ -103,6 +106,7 @@ private:
     std::optional<std::pair<std::vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
     std::optional<std::pair<std::vector<ParseeResult>, int>> expressionBlockMultiLineParseeResults(int tag);
     std::optional<std::pair<std::vector<ParseeResult>, int>> ifElseParseeResults(std::optional<bool> isMultiLine, int tag);
+    std::optional<std::pair<std::vector<ParseeResult>, int>> patternParseeResults(int tag);
 
     // Support
     std::optional<std::vector<std::shared_ptr<Token>>> tryMatchingTokenKinds(
