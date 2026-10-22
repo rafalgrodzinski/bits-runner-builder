@@ -1260,6 +1260,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         bool isParentPointer = parentExpression->getValueType()->isPtr();
         bool isParentBlob = parentExpression->getValueType()->isBlob();
         bool isParentProto = parentExpression->getValueType()->isProto();
+        bool isParentEnum = parentExpression->getValueType()->isEnum();
         bool isParentEnumField = parentExpression->getValueType()->isEnumField();
         bool isParentCast = parentExpression->getKind() == ExpressionKind::CAST;
 
@@ -1313,11 +1314,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
             expressionValue->valueType = ValueTypeSimple::A;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VADR;
             return expressionValue->getValueType();
-        // parent enum field
-        } else if (isParentEnumField && isTag) {
+        // parent enum/enum field
+        } else if ((isParentEnum || isParentEnumField) && isTag) {
             expressionValue->valueType = ValueTypeSimple::UINT;
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_TAG;
             return expressionValue->getValueType();
+        // parent enum field
         } else if (isParentEnumField && isVal) {
             expressionValue->valueType = parentExpression->getValueType()->toEnumField()->getPayloadValueType();
             expressionValue->valueKind = ExpressionValueKind::BUILT_IN_VAL_SIMPLE;
