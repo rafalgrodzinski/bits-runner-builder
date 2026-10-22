@@ -2376,10 +2376,17 @@ std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std
 
     shared_ptr<ValueType> targetValueType = valueTypes.at(0);
     for (int i=1; i<valueTypes.size(); i++) {
-        if (canImplicitCast(valueTypes.at(i), targetValueType)) {
+        // are they the same?
+        if (targetValueType->isEqual(valueTypes.at(i))) {
+            // don't do anything for identical types
+        // can we cast one way?
+        } else if (canImplicitCast(valueTypes.at(i), targetValueType)) {
             // keep the current target
+        // can we cast the other way?
         } else if (canImplicitCast(targetValueType, valueTypes.at(i))) {
+            // switch to a new target type
             targetValueType = valueTypes.at(i);
+        // panic
         } else {
             return ValueTypeSimple::NONE;
         }
