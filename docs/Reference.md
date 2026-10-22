@@ -333,21 +333,31 @@ else: doSomethingElse()
 ```
 
 ## Match Expressions
-Match expressions can be used determine actual enum field type of a given enum value type. They are akin to switch statements in C.
+Match expressions can be used determine actual enum field type of a given enum value type. They are akin to switch statements in C. Each enum field can have either an auto-incrementing tag or it can be explicitly stated using the `.tag` built-in.
+
 ```
-result enum<Result>
+Result<T> enum
+  Success: 5
+  Failure boxed<T>
+;
+
+result enum<Result, u32>
 
 match result
-  enum<Result>::Success: doSomething()
-  enum<Result>::Failure
-    handleFailure($0.val)
+  enum<Result, u32>::Success: doSomething()
+  enum<Result, u32>::Failure
+    handleFailure($0.val.u32)
   ;
 else
   unexpectedResult()
 ;
 
-match result: enum<Result>::Success: doSomething else: handleFailure()
+match result: enum<Result, u32>::Success: doSomething else: handleFailure()
 ```
+
+Enum fields can have associated values, but they need to be of a type `boxed`. Once matched, they can be accessed using the `.val` built-in.
+
+`match` expression produces a value, but only if there is an `else` and each of the case expressions evaluate to a type that can be commonly implicitly cast.
 
 ## Repeats
 C-style for, while, and do-while are all combined into a single `rep` loop. The format is `rep init-statement, pre-condition, post-condition, post-statement`. `init-statement` allows to setup a counter, pre-condition is evaluated before and post after each loop. `post-statement` is evaluated at the end of each loop. Each part is optional, but if you include post-condition, pre-condition must also be include. If you include `post-statement` then `init-statement` also has to be included. Body can be specified on the same line as the loop, in which case the final semicolon should be also included.
