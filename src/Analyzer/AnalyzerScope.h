@@ -39,9 +39,6 @@ friend class AnalyzerScopeVariable;
 
 public:
     typedef struct {
-        //std::map<std::string, std::shared_ptr<ValueType>> variableTypes;
-        //std::map<std::string, bool> isVariableDefinedMap;
-
         std::map<std::string, std::shared_ptr<ValueType>> functionTypeMap;
         std::map<std::string, bool> isFunctionDefinedMap;
 
@@ -57,9 +54,6 @@ public:
     void pushLevel();
     void popLevel();
     bool level(std::function<bool ()> levelBlock);
-
-    //std::shared_ptr<ValueType> getVariableType(const std::string &identifier) const;
-    //bool setVariableType(const std::string &identifier, std::shared_ptr<ValueType> type, bool isDefinition);
 
     std::shared_ptr<ValueType> getFunctionType(const std::string &name) const;
     bool setFunctionType(const std::string &name, std::shared_ptr<ValueType> type, bool isDefinition);

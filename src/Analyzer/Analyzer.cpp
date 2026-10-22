@@ -404,9 +404,13 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 
     scope->level([&]() -> bool {
         // register arguments as variables
-        for (auto &argument : statementFunction->getArguments())
-            scope->variableScope->registerValueType(argument.first, argument.second);
-            //scope->setVariableType(argument.first, argument.second, true);
+        for (auto &argument : statementFunction->getArguments()) {
+            AnalyzerScopeRegisterResult registerResult = scope->variableScope->registerValueType(argument.first, argument.second, true);
+            if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+                markErrorInvalidRegistration(argument.second->getLocation(), argument.first, registerResult);
+                return false;
+            }
+        }
 
         checkStatement(statementFunction->getStatementBlock(), statementFunction->getReturnValueType());
 
@@ -454,9 +458,11 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementM
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
    string identifier = statementMetaExternVariable->getGlobalIdentifier();
 
-    /*if (!scope->setVariableType(identifier, statementMetaExternVariable->getValueType(), false))
-        markErrorAlreadyDefined(statementMetaExternVariable->getLocation(), identifier);*/
-    scope->variableScope->registerValueType(identifier, statementMetaExternVariable->getValueType());
+    AnalyzerScopeRegisterResult registerResult = scope->variableScope->registerValueType(identifier, statementMetaExternVariable->getValueType(), false);
+    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+        markErrorInvalidRegistration(statementMetaExternVariable->getLocation(), identifier, registerResult);
+        return;
+    }
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel) {
@@ -649,12 +655,12 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         return;
     }
 
-    // try registering in scope
-    /*if (!scope->setVariableType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true)) {
-        markErrorAlreadyDefined(statementVariable->getLocation(), statementVariable->getIdentifier());
+    // try registering in scope*/
+    AnalyzerScopeRegisterResult registerResult = scope->variableScope->registerValueType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true);
+    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+        markErrorInvalidRegistration(statementVariable->getLocation(), statementVariable->getIdentifier(), registerResult);
         return;
-    }*/
-   scope->variableScope->registerValueType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType());
+    }
 
     // updated corresponding variable declaration
     for (shared_ptr<Statement> headerStatement : this->module->getHeaderStatements()) {
@@ -679,9 +685,11 @@ void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statement
 
     // try registering in scope
     string identifier = statementVariableDeclaration->getGlobalIdentifier();
-    /*if (!identifier.empty() && !scope->setVariableType(identifier, statementVariableDeclaration->getValueType(), false))
-        markErrorAlreadyDefined(statementVariableDeclaration->getLocation(), identifier);*/
-    scope->variableScope->registerValueType(identifier, statementVariableDeclaration->getValueType());
+    AnalyzerScopeRegisterResult registerResult = scope->variableScope->registerValueType(identifier, statementVariableDeclaration->getValueType(), false);
+    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+        markErrorInvalidRegistration(statementVariableDeclaration->getLocation(), identifier, registerResult);
+        return;
+    }
 }
 
 // Expressions
@@ -2509,6 +2517,18 @@ void Analyzer::markErrorInvalidOperationUnary(shared_ptr<Location> location, Exp
 
 void Analyzer::markErrorInvalidPattern(std::shared_ptr<Location> location, std::shared_ptr<Pattern> pattern) {
     string message = format("Invalid pattern {}", Logger::toString(pattern));
+    errors.push_back(Error::error(location, message));
+}
+
+void Analyzer::markErrorInvalidRegistration(std::shared_ptr<Location> location, const std::string &identifier, AnalyzerScopeRegisterResult registerResult) {
+    string message = "{INVALID STATE}";
+
+    if (registerResult == AnalyzerScopeRegisterResult::FAILURE_ALREAD_DEFINED) {
+        message = format("\"{}\" is already defined", identifier);
+    } else if (registerResult == AnalyzerScopeRegisterResult::FAILURE_ALREADY_DECLARED) {
+        message = format("Declaration of \"{}\" doesn't match existing type", identifier);
+    }
+
     errors.push_back(Error::error(location, message));
 }
 
