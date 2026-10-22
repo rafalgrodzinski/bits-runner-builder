@@ -1162,6 +1162,8 @@ std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<Expressio
         expressionMatch->getElseExpression()->valueType = typeForExpression(expressionMatch->getElseExpression(), nullptr, returnType);
     }
 
+    expressionMatch->valueType = ValueTypeSimple::NONE;
+
     return expressionMatch->getValueType();
 }
 

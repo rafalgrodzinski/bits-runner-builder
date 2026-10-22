@@ -49,6 +49,8 @@
 #include "Parser/ValueType/ValueTypePtr.h"
 #include "Parser/ValueType/ValueTypeSimple.h"
 
+#include "Parser/Pattern.h"
+
 using namespace std;
 
 // MARK: - Public
@@ -1801,7 +1803,97 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionMatch> expressionMatch) {
-    return nullptr;
+    llvm::Function *fun = builder->GetInsertBlock()->getParent();
+
+    shared_ptr<WrappedValue> switchWrappedValue = wrappedValueForExpression(expressionMatch->getSwitchExpression());
+    if (switchWrappedValue == nullptr)
+        return nullptr;
+
+    llvm::BasicBlock *caseNextConditionBlock = llvm::BasicBlock::Create(*context, "caseNextConditionBlock");
+    llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "mergeBlock");
+
+    builder->CreateBr(caseNextConditionBlock);
+
+    vector<pair<llvm::Value*, llvm::BasicBlock*>> llvmCasePairs;
+
+    // handle each of the patterns
+    for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs()) {
+        llvm::BasicBlock *caseBlock = llvm::BasicBlock::Create(*context, "caseBlock");
+    
+        // case condition
+        scope->pushLevel();
+        fun->insert(fun->end(), caseNextConditionBlock);
+        builder->SetInsertPoint(caseNextConditionBlock);
+        llvm::Value *caseConditionValue = valueForMatch(switchWrappedValue, casePair.first);
+        if (caseConditionValue == nullptr)
+            return nullptr;
+        scope->popLevel();
+
+        // case branch
+        caseNextConditionBlock = llvm::BasicBlock::Create(*context, "caseNextConditionBlock");
+        builder->CreateCondBr(caseConditionValue, caseBlock, caseNextConditionBlock);
+
+        // case block
+        scope->pushLevel();
+        fun->insert(fun->end(), caseBlock);
+        builder->SetInsertPoint(caseBlock);
+
+        // cast to enum field
+        shared_ptr<WrappedValue> enumFieldWrappedValue = WrappedValue::wrappedValue(switchWrappedValue->getValue(), casePair.first->getValueType());
+        scope->setAnonymousWrappedValue(enumFieldWrappedValue);
+
+        shared_ptr<WrappedValue> wrappedCaseValue = wrappedValueForExpression(casePair.second);
+        if (wrappedCaseValue == nullptr)
+            return nullptr;
+        llvm::Value *caseValue = wrappedCaseValue->getValue();
+        builder->CreateBr(mergeBlock);
+        caseBlock = builder->GetInsertBlock();
+        scope->popLevel();
+
+        // append to values used by phi
+        llvmCasePairs.push_back(pair(caseValue, caseBlock));
+    }
+
+    // Handle else block, if exists
+    if (expressionMatch->getElseExpression() != nullptr) {
+        scope->pushLevel();
+        fun->insert(fun->end(), caseNextConditionBlock);
+        builder->SetInsertPoint(caseNextConditionBlock);
+        shared_ptr<WrappedValue> wrappedElseValue = wrappedValueForExpression(expressionMatch->getElseExpression());
+        if (wrappedElseValue == nullptr)
+            return nullptr;
+        llvm::Value *elseValue = wrappedElseValue->getValue();
+        builder->CreateBr(mergeBlock);
+        caseNextConditionBlock = builder->GetInsertBlock();
+        scope->popLevel();
+
+        llvmCasePairs.push_back(pair(elseValue, caseNextConditionBlock));
+    // Otherwise just jump to merge
+    } else {
+        fun->insert(fun->end(), caseNextConditionBlock);
+        builder->SetInsertPoint(caseNextConditionBlock);
+        builder->CreateBr(mergeBlock);
+        caseNextConditionBlock = builder->GetInsertBlock();
+    }
+
+    // Merge
+    fun->insert(fun->end(), mergeBlock);
+    builder->SetInsertPoint(mergeBlock);
+
+    // non-exhaustive match
+    if (expressionMatch->getValueType()->isNone()) {
+        return WrappedValue::wrappedNone(typeVoid, ValueTypeSimple::NONE);
+    // exhaustive match
+    } else {
+        llvm::Type *matchType = llvmTypeForValueType(expressionMatch->getValueType());
+        if (matchType == nullptr)
+            return nullptr;
+        llvm::PHINode *phi = builder->CreatePHI(matchType, llvmCasePairs.size());
+        for (pair<llvm::Value*, llvm::BasicBlock*> &llvmCasePair : llvmCasePairs) {
+            phi->addIncoming(llvmCasePair.first, llvmCasePair.second);
+        }
+        return WrappedValue::wrappedValue(phi, expressionMatch->getValueType());
+    }
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionUnary> expressionUnary) {
@@ -1901,8 +1993,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         return nullptr;
 
     // Do the appropriate built-in operation
+    // parent data
     if (parentWrappedValue->isArray() && isCount) {
         return WrappedValue::wrappedUIntValue(typeInt, parentWrappedValue->getArrayType()->getNumElements(), ValueTypeSimple::UINT);
+    // parent pointer
     } else if (parentWrappedValue->isPtr() && isVal) {
         shared_ptr<ValueType> pointeeValueType = dynamic_pointer_cast<ValueTypePtr>(parentExpression->getValueType())->getPointeeValueType();
         if (pointeeValueType == nullptr) {
@@ -1922,6 +2016,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
             store->setVolatile(valueTypePtr->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueTypeSimple::A);
+    // parent proto
     } else if (parentWrappedValue->isProtoStruct() && isVadr) {
         string protoName = dynamic_pointer_cast<ValueTypeProto>(parentWrappedValue->getValueType())->getSymbolName()->getGlobalName();
         llvm::StructType *structType = scope->getProtoStructType(protoName);
@@ -1935,6 +2030,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         if (shared_ptr<ValueTypePtr> valueTypePtr = dynamic_pointer_cast<ValueTypePtr>(parentWrappedValue->getValueType()))
             pointerLoad->setVolatile(valueTypePtr->getIsVolatile());
         return WrappedValue::wrappedValue(pointerLoad, ValueTypeSimple::A);
+    // parent enum
     } else if (parentWrappedValue->isEnumStruct() && isTag) {
         // Load tag at index 0
         llvm::Value *index[] = {
@@ -1944,6 +2040,19 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         llvm::Value *tagMemberPtr = builder->CreateGEP(typeEnumStruct, parentWrappedValue->getPointerValue(), index);
         llvm::LoadInst *tagMemberLoad = builder->CreateLoad(typeInt, tagMemberPtr);
         return WrappedValue::wrappedValue(tagMemberLoad, ValueTypeSimple::UINT);
+    } else if (parentWrappedValue->isEnumStruct() && isVal) {
+        // load payload at index 1
+        llvm::Value *index[] = {
+            builder->getInt32(0),
+            builder->getInt32(1)
+        };
+        llvm::Value *payloadMemberPtr = builder->CreateGEP(typeEnumStruct, parentWrappedValue->getPointerValue(), index);
+        llvm::LoadInst *payloadMemberLoad = builder->CreateLoad(typeBoxed, payloadMemberPtr);
+        return WrappedValue::wrappedValue(
+            payloadMemberLoad,
+            parentWrappedValue->getValueType()->toEnumField()->getPayloadValueType()
+        );
+    // adr
     } else if (isAdr) {
         llvm::Value *pointerValue = parentWrappedValue->getPointerValue();
         llvm::Value *alloca = buildAlloca(typePtr, format("a_adr-{}", string(pointerValue->getName())));
@@ -1951,6 +2060,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForBuiltIn(shared_ptr<Wrappe
         if (parentWrappedValue->getValueType()->isPtr())
             store->setVolatile(parentWrappedValue->getValueType()->toPtr()->getIsVolatile());
         return WrappedValue::wrappedValue(alloca, ValueTypeSimple::A);
+    // size
     } else if (isSize) {
         int sizeInBytes = sizeInBitsForType(parentWrappedValue->getType()) / 8;
         if (sizeInBytes <= 0)
@@ -2467,6 +2577,30 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForTypeBuiltIn(llvm::Type *t
     return nullptr;
 }
 
+// Pattern
+llvm::Value *ModuleBuilder::valueForMatch(shared_ptr<WrappedValue> switchWrappedValue, shared_ptr<Pattern> pattern) {
+    switch (switchWrappedValue->getValueType()->getKind()) {
+        case ValueTypeKind::ENUM: {
+            // Load tag at index 0
+            llvm::Value *index[] = {
+                builder->getInt32(0),
+                builder->getInt32(0)
+            };
+            llvm::Value *tagMemberPtr = builder->CreateGEP(typeEnumStruct, switchWrappedValue->getPointerValue(), index);
+            llvm::LoadInst *tagMemberLoad = builder->CreateLoad(typeInt, tagMemberPtr);
+
+            // Get pattern tag
+            llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+
+            return builder->CreateICmpEQ(tagMemberLoad, tagValue);
+        }
+        default:
+            break;
+    }
+
+    markErrorInvalidPatternMatch(pattern->getLocation());
+    return nullptr;
+}
 
 // Support
 
@@ -2664,6 +2798,11 @@ void ModuleBuilder::markErrorInvalidOperationUnary(shared_ptr<Location> location
         Logger::toString(operation),
         Logger::toString(type)
     );
+    errors.push_back(Error::error(location, message));
+}
+
+void ModuleBuilder::markErrorInvalidPatternMatch(std::shared_ptr<Location> location) {
+    string message = "Invalid pattern match";
     errors.push_back(Error::error(location, message));
 }
 

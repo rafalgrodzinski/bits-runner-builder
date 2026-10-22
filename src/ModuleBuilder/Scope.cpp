@@ -24,6 +24,18 @@ bool Scope::setWrappedValue(const string &identifier, shared_ptr<WrappedValue> w
     return true;
 }
 
+bool Scope::setAnonymousWrappedValue(std::shared_ptr<WrappedValue> wrappedValue) {
+    bool isSuccess = setWrappedValue(
+        format("${}", scopeLevels.top().anonymousWrappedValuesCount),
+        wrappedValue
+    );
+
+    if (isSuccess)
+        scopeLevels.top().anonymousWrappedValuesCount++;
+
+    return isSuccess;
+}
+
 shared_ptr<WrappedValue> Scope::getWrappedValue(const string &identifier) {
     stack<ScopeLevel> scopeLevels = this->scopeLevels;
 

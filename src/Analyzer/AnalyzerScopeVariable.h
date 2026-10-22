@@ -14,7 +14,7 @@ class ValueType;
 class AnalyzerScopeVariable {
 public:
     typedef struct {
-        int AnonymousValueTypesCount = 0;
+        int anonymousValueTypesCount;
         std::map<std::string, std::shared_ptr<ValueType>> valueTypesMap;
     } ScopeLevel;
 

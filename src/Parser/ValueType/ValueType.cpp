@@ -26,6 +26,10 @@ shared_ptr<Location> ValueType::getLocation() const {
     return location;
 }
 
+bool ValueType::isNone() const {
+    return kind == ValueTypeKind::NONE;
+}
+
 bool ValueType::isBlob() const {
     return kind == ValueTypeKind::BLOB;
 }

@@ -29,6 +29,6 @@ void AnalyzerScopeVariable::registerValueType(const std::string &name, std::shar
 void AnalyzerScopeVariable::registerAnonymousValueType(std::shared_ptr<ValueType> valueType) {
     stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
 
-    registerValueType(format("${}", scopeLevels.top().scopeLevelVariable.AnonymousValueTypesCount), valueType);
-    scopeLevels.top().scopeLevelVariable.AnonymousValueTypesCount++;
+    registerValueType(format("${}", scopeLevels.top().scopeLevelVariable.anonymousValueTypesCount), valueType);
+    scopeLevels.top().scopeLevelVariable.anonymousValueTypesCount++;
 }

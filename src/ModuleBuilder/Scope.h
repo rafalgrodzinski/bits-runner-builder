@@ -1,6 +1,7 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+#include <format>
 #include <map>
 #include <stack>
 #include <string>
@@ -19,6 +20,7 @@ public:
     void popLevel();
 
     bool setWrappedValue(const std::string &identifier, std::shared_ptr<WrappedValue> wrappedvalue);
+    bool setAnonymousWrappedValue(std::shared_ptr<WrappedValue> wrappedValue);
     std::shared_ptr<WrappedValue> getWrappedValue(const std::string &identifier);
 
     bool setFunction(const std::string &name, llvm::Function *fun);
@@ -41,7 +43,10 @@ public:
 private:
     typedef struct {
         std::map<std::string, std::shared_ptr<WrappedValue>> wrappedValueMap;
+        int anonymousWrappedValuesCount;
+
         std::map<std::string, llvm::Function*> funMap;
+
         std::map<std::string, llvm::InlineAsm*> rawFunMap;
 
         std::map<std::string, llvm::Constant*> enumFieldTagValuesMap;

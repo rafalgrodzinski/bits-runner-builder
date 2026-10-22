@@ -19,6 +19,7 @@
 class Error;
 class Location;
 class Module;
+class Pattern;
 class Scope;
 class ValueType;
 class WrappedValue;
@@ -162,6 +163,9 @@ private:
     std::shared_ptr<WrappedValue> wrappedValueForValue(llvm::Value *value, llvm::Value *pointerValue, llvm::Type *type, std::shared_ptr<Expression> expression);
     std::shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, std::shared_ptr<ExpressionValue> expression);
 
+    // Pattern
+    llvm::Value *valueForMatch(std::shared_ptr<WrappedValue> switchWrappedValue, std::shared_ptr<Pattern> pattern);
+
     // Support
     llvm::Type *llvmTypeForValueType(std::shared_ptr<ValueType> valueType, bool shouldUnbox = false);
     int sizeInBitsForType(llvm::Type *type);
@@ -182,6 +186,7 @@ private:
     void markErrorInvalidMember(std::shared_ptr<Location> location, const std::string &blobName, const std::string &memberName);
     void markErrorInvalidOperationBinary(std::shared_ptr<Location> location, ExpressionBinaryOperation operation, std::shared_ptr<ValueType> firstType, std::shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(std::shared_ptr<Location> location, ExpressionUnaryOperation operation, std::shared_ptr<ValueType> type);
+    void markErrorInvalidPatternMatch(std::shared_ptr<Location> location);
     void markErrorInvalidType(std::shared_ptr<Location> location);
     void markErrorUnexpected(std::shared_ptr<Location> location, const std::string &name);
     void markErrorNotDeclared(std::shared_ptr<Location> location, const std::string &name);

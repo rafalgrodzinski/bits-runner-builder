@@ -67,6 +67,7 @@ public:
     bool isPtr() const;
     bool isSimple() const;
 
+    bool isNone() const;
     bool isBool() const;
     bool isNumeric() const;
     bool isInteger() const;
