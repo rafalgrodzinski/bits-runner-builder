@@ -1147,7 +1147,7 @@ std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<Expressio
             checkPattern(casePair.first, expressionMatch->getSwitchExpression()->getValueType());
             if (!scope->level([&]() -> bool {
                 scope->variableScope->registerAnonymousValueType(casePair.first->getValueType());
-                casePair.second->valueType = typeForExpression(casePair.second, nullptr, nullptr);
+                casePair.second->valueType = typeForExpression(casePair.second, nullptr, returnType);
                 if (casePair.second->getValueType() == nullptr)
                     return false;
 
