@@ -398,9 +398,20 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
     if (typeForCheckedValueType(statementFunction->getReturnValueType(), true) == nullptr)
         return;
 
-    // check if function is not yet defined and register it
-    if (!scope->setFunctionType(statementFunction->getGlobalName(), statementFunction->getValueType(), true))
-        markErrorAlreadyDefined(statementFunction->getLocation(), statementFunction->getName());
+    // register function definition
+    AnalyzerScopeRegisterResult registerResult = scope->functionScope->registerValueType(
+        statementFunction->getGlobalName(),
+        statementFunction->getValueType(),
+        true
+    );
+    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+        markErrorInvalidRegistration(
+            statementFunction->getLocation(),
+            statementFunction->getGlobalName(),
+            registerResult
+        );
+        return;
+    }
 
     scope->level([&]() -> bool {
         // register arguments as variables
@@ -429,14 +440,19 @@ void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statement
     if (typeForCheckedValueType(statementFunctionDeclaration->getReturnValueType(), true) == nullptr)
         return;
 
-    string name = statementFunctionDeclaration->getGlobalName();
-
-    if (!scope->setFunctionType(name, statementFunctionDeclaration->getValueType(), false)) {
-        markErrorInvalidType(
+    // register function declaration
+    AnalyzerScopeRegisterResult registerResult = scope->functionScope->registerValueType(
+        statementFunctionDeclaration->getGlobalName(),
+        statementFunctionDeclaration->getValueType(),
+        false
+    );
+    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+        markErrorInvalidRegistration(
             statementFunctionDeclaration->getLocation(),
-            statementFunctionDeclaration->getValueType(),
-            nullptr
+            statementFunctionDeclaration->getGlobalName(),
+            registerResult
         );
+        return;
     }
 }
 
@@ -451,8 +467,20 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternFunction> statementM
     if (typeForCheckedValueType(statementMetaExternFunction->getReturnValueType(), true) == nullptr)
         return;
 
-    if (!scope->setFunctionType(statementMetaExternFunction->getGlobalName(), statementMetaExternFunction->getValueType(), false))
-        markErrorAlreadyDefined(statementMetaExternFunction->getLocation(), statementMetaExternFunction->getGlobalName());
+    // register function declaration
+    AnalyzerScopeRegisterResult registerResult = scope->functionScope->registerValueType(
+        statementMetaExternFunction->getGlobalName(),
+        statementMetaExternFunction->getValueType(),
+        false
+    );
+    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+        markErrorInvalidRegistration(
+            statementMetaExternFunction->getLocation(),
+            statementMetaExternFunction->getGlobalName(),
+            registerResult
+        );
+        return;
+    }
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementMetaExternVariable) {
@@ -558,10 +586,20 @@ void Analyzer::checkStatement(shared_ptr<StatementRawFunction> statementRawFunct
     for (auto &argument : statementRawFunction->getArguments())
         argumentTypes.push_back(argument.second);
 
-    string name = statementRawFunction->getGlobalName();
-
-    if (!scope->setFunctionType(name, statementRawFunction->getValueType(), true))
-        markErrorAlreadyDefined(statementRawFunction->getLocation(), statementRawFunction->getGlobalName());
+    // register raw function definition
+    AnalyzerScopeRegisterResult registerResult = scope->functionScope->registerValueType(
+        statementRawFunction->getGlobalName(),
+        statementRawFunction->getValueType(),
+        true
+    );
+    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+        markErrorInvalidRegistration(
+            statementRawFunction->getLocation(),
+            statementRawFunction->getGlobalName(),
+            registerResult
+        );
+        return;
+    }
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementRepeat> statementRepeat, shared_ptr<ValueType> returnType) {
@@ -828,7 +866,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             } else if (isParentBlob) {
                 shared_ptr<ValueTypeBlob> parentBlobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
                 string functionName = format("{}.{}", parentBlobValueType->getSymbolName()->getGlobalName(), expressionCall->getName());
-                valueType = scope->getFunctionType(functionName);
+                valueType = scope->functionScope->getValueType(functionName);
                 if (valueType == nullptr) {
                     markErrorNotDefined(expressionCall->getLocation(), functionName);
                     return false;
@@ -857,7 +895,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             }
         } else {
             expressionCall->setModuleName(module->getName());
-            valueType = scope->getFunctionType(expressionCall->getGlobalName());
+            valueType = scope->functionScope->getValueType(expressionCall->getGlobalName());
         }
 
         // check if defined
@@ -1412,10 +1450,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         expressionValue->valueKind = ExpressionValueKind::SIMPLE;
     // check if it's a function
     } else if (type == nullptr) {
-        type = scope->getFunctionType(expressionValue->getIdentifier());
+        type = scope->functionScope->getValueType(expressionValue->getIdentifier());
         if (type == nullptr && expressionValue->getModuleName().empty()) {
             string globalIdentifier = format("{}.{}", module->getName(), expressionValue->getIdentifier());
-            type = scope->getFunctionType(globalIdentifier);
+            type = scope->functionScope->getValueType(globalIdentifier);
             if (type != nullptr)
                 expressionValue->setModuleName(module->getName());
         }

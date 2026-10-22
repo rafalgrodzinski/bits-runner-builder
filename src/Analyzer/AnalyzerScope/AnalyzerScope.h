@@ -12,6 +12,7 @@
 #include "AnalyzerScopeBlob.h"
 #include "AnalyzerScopeBoxed.h"
 #include "AnalyzerScopeEnum.h"
+#include "AnalyzerScopeFunction.h"
 #include "AnalyzerScopeProto.h"
 #include "AnalyzerScopeVariable.h"
 
@@ -34,17 +35,16 @@ class AnalyzerScope {
 friend class AnalyzerScopeBlob;
 friend class AnalyzerScopeBoxed;
 friend class AnalyzerScopeEnum;
+friend class AnalyzerScopeFunction;
 friend class AnalyzerScopeProto;
 friend class AnalyzerScopeVariable;
 
 public:
     typedef struct {
-        std::map<std::string, std::shared_ptr<ValueType>> functionTypeMap;
-        std::map<std::string, bool> isFunctionDefinedMap;
-
         AnalyzerScopeBlob::ScopeLevel scopeLevelBlob;
         AnalyzerScopeBoxed::ScopeLevel scopeLevelBoxed;
         AnalyzerScopeEnum::ScopeLevel scopeLevelEnum;
+        AnalyzerScopeFunction::ScopeLevel scopeLevelFunction;
         AnalyzerScopeProto::ScopeLevel scopeLevelProto;
         AnalyzerScopeVariable::ScopeLevel scopeLevelVariable;
     } ScopeLevel;
@@ -55,12 +55,10 @@ public:
     void popLevel();
     bool level(std::function<bool ()> levelBlock);
 
-    std::shared_ptr<ValueType> getFunctionType(const std::string &name) const;
-    bool setFunctionType(const std::string &name, std::shared_ptr<ValueType> type, bool isDefinition);
-
     std::shared_ptr<AnalyzerScopeBlob> blobScope;
     std::shared_ptr<AnalyzerScopeBoxed> boxedScope;
     std::shared_ptr<AnalyzerScopeEnum> enumScope;
+    std::shared_ptr<AnalyzerScopeFunction> functionScope;
     std::shared_ptr<AnalyzerScopeProto> protoScope;
     std::shared_ptr<AnalyzerScopeVariable> variableScope;
 

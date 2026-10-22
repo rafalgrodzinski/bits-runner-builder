@@ -5,7 +5,7 @@
 
 using namespace std;
 
-// MAKR: - Public
+// MARK: - Public
 
 AnalyzerScopeVariable::AnalyzerScopeVariable(AnalyzerScope *parent):
 parent(parent) { }
