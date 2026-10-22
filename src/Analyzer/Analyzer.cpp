@@ -1200,10 +1200,12 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionLiteral> 
     return expressionLiteral->getValueType();
 }
 
-std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch, shared_ptr<ValueType> returnType) {
-    expressionMatch->getSwitchExpression()->valueType = typeForExpression(expressionMatch->getSwitchExpression(), nullptr, returnType);
+std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<ExpressionMatch> expressionMatch, shared_ptr<ValueType> returnValueType) {
+    expressionMatch->getSwitchExpression()->valueType = typeForExpression(expressionMatch->getSwitchExpression(), nullptr, returnValueType);
     if (expressionMatch->getSwitchExpression()->getValueType() == nullptr)
         return nullptr;
+
+    vector<shared_ptr<ValueType>> caseValueTypes;
 
     if (!scope->level([&]() -> bool {
         scope->boxedScope->registerNamedValueTypesMap(
@@ -1217,22 +1219,34 @@ std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<Expressio
             checkPattern(casePair.first, expressionMatch->getSwitchExpression()->getValueType());
             if (!scope->level([&]() -> bool {
                 scope->variableScope->registerAnonymousValueType(casePair.first->getValueType());
-                casePair.second->valueType = typeForExpression(casePair.second, nullptr, returnType);
+                casePair.second->valueType = typeForExpression(casePair.second, nullptr, returnValueType);
                 if (casePair.second->getValueType() == nullptr)
                     return false;
 
                 return true;
             })) { return false; }
+
+            caseValueTypes.push_back(casePair.second->getValueType());
         }
 
         return true;
     })) { return nullptr; };
 
     if (expressionMatch->getElseExpression() != nullptr) {
-        expressionMatch->getElseExpression()->valueType = typeForExpression(expressionMatch->getElseExpression(), nullptr, returnType);
+        expressionMatch->getElseExpression()->valueType = typeForExpression(expressionMatch->getElseExpression(), nullptr, returnValueType);
+        caseValueTypes.push_back(expressionMatch->getElseExpression()->getValueType());
     }
 
-    expressionMatch->valueType = ValueTypeSimple::NONE;
+    // Check to what commont type can we cast the cases (only if there is an else expression)
+    if (expressionMatch->getElseExpression() != nullptr) {
+        expressionMatch->valueType = commonImplicitCastValueType(caseValueTypes);
+
+        for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs())
+            casePair.second = checkAndTryCasting(casePair.second, expressionMatch->getValueType(), returnValueType);
+        expressionMatch->elseExpression = checkAndTryCasting(expressionMatch->getElseExpression(), expressionMatch->getValueType(), returnValueType);
+    } else {
+        expressionMatch->valueType = ValueTypeSimple::NONE;
+    }
 
     return expressionMatch->getValueType();
 }
@@ -2359,6 +2373,24 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
         default:
             return false;
     }
+}
+
+std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std::shared_ptr<ValueType>> valueTypes) {
+    if (valueTypes.empty())
+        return ValueTypeSimple::NONE;
+
+    shared_ptr<ValueType> targetValueType = valueTypes.at(0);
+    for (int i=1; i<valueTypes.size(); i++) {
+        if (canImplicitCast(valueTypes.at(i), targetValueType)) {
+            // keep the current target
+        } else if (canImplicitCast(targetValueType, valueTypes.at(i))) {
+            targetValueType = valueTypes.at(i);
+        } else {
+            return ValueTypeSimple::NONE;
+        }
+    }
+
+    return targetValueType;
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueType> valueType, bool isCountExperssionRequired) {

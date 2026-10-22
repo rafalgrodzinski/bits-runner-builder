@@ -6,6 +6,8 @@
 class Pattern;
 
 class ExpressionMatch: public Expression {
+friend class Analyzer;
+
 public:
     ExpressionMatch(
         std::shared_ptr<Expression> switchExpression,

@@ -13,9 +13,9 @@ Bleh enum
   value u32
 
   match result
-    enum<Status>::Success: ret 8
-    enum<Status>::Failure: value <- $0.val.u32
-  else: value <- 4
+    enum<Status>::Success: 8
+    enum<Status>::Failure: $0.val.u32.u8
+  else: 4
 
   ret value
 ;
