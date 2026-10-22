@@ -1110,9 +1110,9 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionGrouping>
     return expressionGrouping->getValueType();
 }
 
-shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnType) {
+shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> expressionIfElse, shared_ptr<ValueType> returnValueType) {
     // first check that condition is as BOOL
-    expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueTypeSimple::BOOL, returnType);
+    expressionIfElse->conditionExpression = checkAndTryCasting(expressionIfElse->getConditionExpression(), ValueTypeSimple::BOOL, returnValueType);
     if (expressionIfElse->getConditionExpression() == nullptr)
         return nullptr;
     shared_ptr<ValueType> conditionType = expressionIfElse->getConditionExpression()->getValueType();
@@ -1126,52 +1126,44 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
         );
     }
 
-    // try cross-casting if else is present
+    vector<shared_ptr<ValueType>> conditionValueTypes;
+
+    // Then expression
+    scope->pushLevel();
+    expressionIfElse->getThenExpression()->valueType = typeForExpression(expressionIfElse->getThenExpression(), nullptr, returnValueType);
+    scope->popLevel();
+    if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
+        return nullptr;
+    conditionValueTypes.push_back(expressionIfElse->getThenExpression()->getValueType());
+
+    // Else expression
     if (expressionIfElse->getElseExpression() != nullptr) {
         scope->pushLevel();
-        shared_ptr<ValueType> elseType = typeForExpression(expressionIfElse->getElseExpression(), nullptr, returnType);
+        expressionIfElse->getElseExpression()->valueType = typeForExpression(expressionIfElse->getElseExpression(), nullptr, returnValueType);
         scope->popLevel();
-        if (elseType == nullptr)
+        if (expressionIfElse->getElseExpression()->getValueType() == nullptr)
             return nullptr;
-
-        scope->pushLevel();
-        expressionIfElse->thenExpression = checkAndTryCasting(
-            expressionIfElse->getThenExpression(),
-            elseType,
-            returnType
-        );
-        scope->popLevel();
-
-        if (expressionIfElse->getThenExpression() == nullptr)
-            return nullptr;
-
-        if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
-            return nullptr;
-
-        scope->pushLevel();
-        expressionIfElse->elseExpression = checkAndTryCasting(
-            expressionIfElse->getElseExpression(),
-            expressionIfElse->getThenExpression()->getValueType(),
-            returnType
-        );
-        scope->popLevel();
-    // otherwise just register then block's type
-    } else {
-        scope->pushLevel();
-        expressionIfElse->getThenExpression()->valueType = typeForExpression(
-            expressionIfElse->getThenExpression(),
-            nullptr,
-            returnType
-        );
-        scope->popLevel();
-        if (expressionIfElse->getThenExpression()->getValueType() == nullptr)
-            return nullptr;
+        conditionValueTypes.push_back(expressionIfElse->getElseExpression()->getValueType());
     }
 
-    // finally, figure out resulting type
-    shared_ptr<ValueType> thenType = expressionIfElse->getThenExpression()->getValueType();
-    shared_ptr<ValueType> elseType = expressionIfElse->getElseExpression() != nullptr ? expressionIfElse->getElseExpression()->getValueType() : nullptr;
-    expressionIfElse->valueType = thenType->isEqual(elseType) ? thenType : ValueTypeSimple::NONE;
+    // Check to what common type can we cast the conditions (only if there is an else expression)
+    if (expressionIfElse->getElseExpression() != nullptr) {
+        expressionIfElse->valueType = commonImplicitCastValueType(conditionValueTypes);
+
+        expressionIfElse->thenExpression = checkAndTryCasting(
+            expressionIfElse->getThenExpression(),
+            expressionIfElse->getValueType(),
+            returnValueType
+        );
+        expressionIfElse->elseExpression = checkAndTryCasting(
+            expressionIfElse->getElseExpression(),
+            expressionIfElse->getValueType(),
+            returnValueType
+        );
+    // Otherwise the whole thing is just none
+    } else {
+        expressionIfElse->valueType = ValueTypeSimple::NONE;
+    }
 
     return expressionIfElse->getValueType();
 }
@@ -1207,6 +1199,7 @@ std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<Expressio
 
     vector<shared_ptr<ValueType>> caseValueTypes;
 
+    // Evaluate each of the case expressions
     if (!scope->level([&]() -> bool {
         scope->boxedScope->registerNamedValueTypesMap(
             *scope->enumScope->getNamedValueTypeKeys(expressionMatch->getSwitchExpression()->getValueType()->toEnum()->getSymbolName()),
@@ -1232,6 +1225,7 @@ std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<Expressio
         return true;
     })) { return nullptr; };
 
+    // Else expression
     if (expressionMatch->getElseExpression() != nullptr) {
         expressionMatch->getElseExpression()->valueType = typeForExpression(expressionMatch->getElseExpression(), nullptr, returnValueType);
         caseValueTypes.push_back(expressionMatch->getElseExpression()->getValueType());
@@ -1244,6 +1238,7 @@ std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<Expressio
         for (pair<shared_ptr<Pattern>, shared_ptr<Expression>> &casePair : expressionMatch->getCasePairs())
             casePair.second = checkAndTryCasting(casePair.second, expressionMatch->getValueType(), returnValueType);
         expressionMatch->elseExpression = checkAndTryCasting(expressionMatch->getElseExpression(), expressionMatch->getValueType(), returnValueType);
+    // Otherwise the whole thing is just none
     } else {
         expressionMatch->valueType = ValueTypeSimple::NONE;
     }
