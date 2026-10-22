@@ -747,10 +747,13 @@ void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statement
 
     // try registering in scope
     string identifier = statementVariableDeclaration->getGlobalIdentifier();
-    AnalyzerScopeRegisterResult registerResult = scope->variableScope->registerValueType(identifier, statementVariableDeclaration->getValueType(), false);
-    if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
-        markErrorInvalidRegistration(statementVariableDeclaration->getLocation(), identifier, registerResult);
-        return;
+    // variable declarations are allowed (in blobs)
+    if (!identifier.empty()) {
+        AnalyzerScopeRegisterResult registerResult = scope->variableScope->registerValueType(identifier, statementVariableDeclaration->getValueType(), false);
+        if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
+            markErrorInvalidRegistration(statementVariableDeclaration->getLocation(), identifier, registerResult);
+            return;
+        }
     }
 }
 
