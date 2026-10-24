@@ -2182,7 +2182,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     switch (sourceValueTypeKind) {
         case ValueTypeKind::UINT:
             isSourceUInt = true;
-            sourceSize = typeInt->getBitWidth();
+            sourceSize = sourceWrappedValue->getValue()->getType()->getIntegerBitWidth();
             break;
         case ValueTypeKind::U8:
             isSourceUInt = true;
@@ -2202,7 +2202,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         case ValueTypeKind::SINT:
             isSourceSInt = true;
-            sourceSize = typeInt->getBitWidth();
+            sourceSize = sourceWrappedValue->getValue()->getType()->getIntegerBitWidth();
             break;
         case ValueTypeKind::S8:
             isSourceSInt = true;
