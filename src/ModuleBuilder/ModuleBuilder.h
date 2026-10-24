@@ -6,6 +6,8 @@
 #include <ranges>
 #include <stack>
 
+#include <llvm/ADT/APInt.h>
+#include <llvm/ADT/APSInt.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/IRBuilder.h>

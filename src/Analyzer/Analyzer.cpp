@@ -1703,10 +1703,23 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
         case ExpressionBinaryOperation::LESS_EQUAL:
         case ExpressionBinaryOperation::GREATER:
         case ExpressionBinaryOperation::GREATER_EQUAL:
-        case ExpressionBinaryOperation::BIT_TEST:
+        case ExpressionBinaryOperation::BIT_TEST: {
             return ValueTypeSimple::BOOL;
-        default:
+        }
+
+        case ExpressionBinaryOperation::ADD:
+        case ExpressionBinaryOperation::SUB:
+        case ExpressionBinaryOperation::MUL:
+        case ExpressionBinaryOperation::DIV:
+        case ExpressionBinaryOperation::MOD: {
+            // We want to promote binary integer operations to full ints
+            if (!firstType->isAddress() && !secondType->isAddress() && (firstType->isUnsignedInteger() || secondType->isUnsignedInteger())) {
+                return ValueTypeSimple::UINT;
+            } else if (firstType->isSignedInteger() || secondType->isSignedInteger()) {
+                return ValueTypeSimple::SINT;
+            }
             break;
+        }
     }
 
     // not change
