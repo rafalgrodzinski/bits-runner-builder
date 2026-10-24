@@ -2359,23 +2359,21 @@ std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std
             // don't do anything for identical types
         // can we cast one way?
         } else if (canImplicitCast(valueTypes.at(i), targetValueType)) {
-            if (valueTypes.at(i)->getKind() == ValueTypeKind::UINT || valueTypes.at(i)->getKind() == ValueTypeKind::SINT) {
-                targetValueType = valueTypes.at(i);
-            } else {
-                // keep the current target
-            }
+            // keep the current target
         // can we cast the other way?
         } else if (canImplicitCast(targetValueType, valueTypes.at(i))) {
-            if (targetValueType->getKind() == ValueTypeKind::UINT || targetValueType->getKind() == ValueTypeKind::SINT) {
-                targetValueType = targetValueType;
-            } else {
-                // switch to a new target type
-                targetValueType = valueTypes.at(i);
-            }
+            // switch to a new target type
+            targetValueType = valueTypes.at(i);
         // panic
         } else {
             return ValueTypeSimple::NONE;
         }
+    }
+
+    if (!targetType->isPointer() && targetType->isUnsignedInteger()) {
+      targetType = ValueTypeKind::UINT;
+    } else if (targetType->isSignedInteger()) {
+      targetType = ValueTypeKind::SINT;
     }
 
     return targetValueType;
