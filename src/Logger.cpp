@@ -1000,7 +1000,13 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
             break;
     }
 
-    string line = format("({} {} {})", toString(expression->getLeft(), indents, true), op, toString(expression->getRight(), indents, true));
+    string line = format(
+        "⟨{} {} {}⟩｢{}｣",
+        toString(expression->getLeft(), indents, true),
+        op,
+        toString(expression->getRight(), indents, true),
+        toString(expression->getValueType())
+    );
 
     return formattedLine(line, indents);
 }
@@ -1090,7 +1096,7 @@ string Logger::toString(shared_ptr<ExpressionCompositeLiteral> expression, vecto
 }
 
 string Logger::toString(shared_ptr<ExpressionGrouping> expression, vector<IndentKind> indents) {
-    string line = format("({})", toString(expression->getSubExpression(), indents, true));
+    string line = format("({})｢{}｣", toString(expression->getSubExpression(), indents, true), toString(expression->getValueType()));
     return formattedLine(line, indents);
 }
 
