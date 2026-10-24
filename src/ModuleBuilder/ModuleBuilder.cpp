@@ -1205,14 +1205,28 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         return nullptr;
 
     // First prepare extracted values if necessary
+    // We only want to widen for arithmetic operations
+    bool isArithmetic = false;
+    switch (expressionBinary->getOperation()) {
+        case ExpressionBinaryOperation::ADD:
+        case ExpressionBinaryOperation::SUB:
+        case ExpressionBinaryOperation::MUL:
+        case ExpressionBinaryOperation::DIV:
+        case ExpressionBinaryOperation::MOD:
+            isArithmetic = true;
+            break;
+        default:
+            break;
+    }
 
     // Convert pointers to int for pointer arithmetic
+    int intSize = typeInt->getIntegerBitWidth();
     if (leftValue->getType()->isPointerTy()) {
         leftValue = builder->CreatePtrToInt(leftValue, typePtrInt);
     // Widden integers
-    } else if (leftWrappedValue->getValueType()->isUnsignedInteger()) {
+    } else if (isArithmetic && leftWrappedValue->getValueType()->isUnsignedInteger() && leftWrappedValue->getType()->getIntegerBitWidth() < intSize) {
         leftValue = builder->CreateZExt(leftValue, typeInt);
-    } else if (leftWrappedValue->getValueType()->isSignedInteger()) {
+    } else if (isArithmetic && leftWrappedValue->getValueType()->isSignedInteger() && leftWrappedValue->getType()->getIntegerBitWidth() < intSize) {
         leftValue = builder->CreateSExt(leftValue, typeInt);
     // For enums extract values
     } else if (leftWrappedValue->isEnumStruct()) {
@@ -1223,9 +1237,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (rightValue->getType()->isPointerTy()) {
         rightValue = builder->CreatePtrToInt(rightValue, typePtrInt);
     // Widden integers
-    } else if (rightWrappedValue->getValueType()->isUnsignedInteger()) {
+    } else if (isArithmetic && rightWrappedValue->getValueType()->isUnsignedInteger() && rightWrappedValue->getType()->getIntegerBitWidth() < intSize) {
         rightValue = builder->CreateZExt(rightValue, typeInt);
-    } else if (rightWrappedValue->getValueType()->isSignedInteger()) {
+    } else if (isArithmetic && rightWrappedValue->getValueType()->isSignedInteger() && rightWrappedValue->getType()->getIntegerBitWidth() < intSize) {
         rightValue = builder->CreateSExt(rightValue, typeInt);
     // For enums extract values
     } else if (rightWrappedValue->isEnumStruct()) {
@@ -2817,14 +2831,14 @@ int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
 
 llvm::APInt ModuleBuilder::clampedInteger(uint64_t value, llvm::IntegerType *type, bool isSigned) {
     int bitsCount = type->getIntegerBitWidth();
-    llvm::APInt literal(typeInt->getIntegerBitWidth(), value);
+    llvm::APInt literal(64, value);
 
-    if (isSigned)
+    if (isSigned) {
         return llvm::APIntOps::umin(
             literal,
-            llvm::APInt::getSignedMaxValue(bitsCount).zext(typeInt->getIntegerBitWidth())
+            llvm::APInt::getSignedMaxValue(bitsCount).zext(64)
         ).trunc(bitsCount);
-
+    }
     return literal.truncUSat(bitsCount);
 }
 
