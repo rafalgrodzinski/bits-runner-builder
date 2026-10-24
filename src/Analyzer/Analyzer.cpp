@@ -205,7 +205,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     shared_ptr<ValueType> sourceType = statementAssignment->getValueExpression()->getValueType();
     if (sourceType != nullptr && !sourceType->isEqual(targetType)) {
         markErrorInvalidType(
-            sourceType->getLocation(),
+            statementAssignment->getValueExpression()->getLocation(),
             sourceType,
             targetType
         );
@@ -972,7 +972,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionCall> exp
             }
         }
 
-        expressionCall->valueType = typeForCheckedValueType(dynamic_pointer_cast<ValueTypeFun>(valueType)->getReturnValueType(), false);
+        expressionCall->valueType = typeForCheckedValueType(valueType->toFun()->getReturnValueType(), false);
         if (expressionCall->getValueType() == nullptr) {
             markErrorInvalidType(valueType->toFun()->getReturnValueType()->getLocation(), valueType->toFun()->getReturnValueType(), nullptr);
             return false;
@@ -1165,7 +1165,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionIfElse> e
         );
     // Otherwise the whole thing is just none
     } else {
-        expressionIfElse->valueType = ValueTypeSimple::NONE;
+        expressionIfElse->valueType = make_shared<ValueTypeSimple>(ValueTypeKind::NONE, expressionIfElse->getLocation());
     }
 
     return expressionIfElse->getValueType();
@@ -1243,7 +1243,7 @@ std::shared_ptr<ValueType> Analyzer::typeForExpression(std::shared_ptr<Expressio
         expressionMatch->elseExpression = checkAndTryCasting(expressionMatch->getElseExpression(), expressionMatch->getValueType(), returnValueType);
     // Otherwise the whole thing is just none
     } else {
-        expressionMatch->valueType = ValueTypeSimple::NONE;
+        expressionMatch->valueType = make_shared<ValueTypeSimple>(ValueTypeKind::NONE, expressionMatch->getLocation());
     }
 
     return expressionMatch->getValueType();
