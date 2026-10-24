@@ -1752,37 +1752,77 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             resultValue = llvm::ConstantInt::getBool(typeBool, expressionLiteral->getBoolValue());
             break;
 
-        case ValueTypeKind::UINT:
-            resultValue = llvm::ConstantInt::get(typeInt, expressionLiteral->getUIntValue());
+        case ValueTypeKind::UINT: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeInt, false)
+            );
             break;
-        case ValueTypeKind::U8:
-            resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::U8: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI8, false)
+            );
             break;
-        case ValueTypeKind::U16:
-            resultValue = llvm::ConstantInt::get(typeI16, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::U16: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI16, false)
+            );
             break;
-        case ValueTypeKind::U32:
-            resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::U32: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI32, false)
+            );
             break;
-        case ValueTypeKind::U64:
-            resultValue = llvm::ConstantInt::get(typeI64, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::U64: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI64, false)
+            );
             break;
+        }
 
-        case ValueTypeKind::SINT:
-            resultValue = llvm::ConstantInt::get(typeInt, expressionLiteral->getUIntValue());
+        case ValueTypeKind::SINT: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeInt, true)
+            );
             break;
-        case ValueTypeKind::S8:
-            resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::S8: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI8, true)
+            );
             break;
-        case ValueTypeKind::S16:
-            resultValue = llvm::ConstantInt::get(typeI16, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::S16: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI16, true)
+            );
             break;
-        case ValueTypeKind::S32:
-            resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::S32: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI32, true)
+            );
             break;
-        case ValueTypeKind::S64:
-            resultValue = llvm::ConstantInt::get(typeI64, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::S64: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI64, true)
+            );
             break;
+        }
 
         case ValueTypeKind::FLOAT:
             resultValue = llvm::ConstantFP::get(typeFloat, expressionLiteral->getFloatValue());
@@ -2773,6 +2813,19 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
 
 int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
     return llvmModule->getDataLayout().getTypeAllocSizeInBits(type);
+}
+
+llvm::APInt ModuleBuilder::clampedInteger(uint64_t value, llvm::IntegerType *type, bool isSigned) {
+    int bitsCount = type->getIntegerBitWidth();
+    llvm::APInt literal(typeInt->getIntegerBitWidth(), value, isSigned);
+
+    if (isSigned)
+        return llvm::APIntOps::umin(
+            literal,
+            llvm::APInt::getSignedMaxValue(bitsCount).zext(typeInt->getIntegerBitWidth()).trunc(bitsCount)
+        );
+
+    return literal.truncUSat(bitsCount);
 }
 
 //

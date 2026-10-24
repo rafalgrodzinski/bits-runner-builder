@@ -171,6 +171,7 @@ private:
     // Support
     llvm::Type *llvmTypeForValueType(std::shared_ptr<ValueType> valueType, bool shouldUnbox = false);
     int sizeInBitsForType(llvm::Type *type);
+    llvm::APInt clampedInteger(uint64_t value, llvm::IntegerType *type, bool isSigned);
 
     // Error Handling    
     void markFunctionError(const std::string &name, const std::string &message);
