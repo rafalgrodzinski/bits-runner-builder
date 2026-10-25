@@ -1,6 +1,8 @@
 ## Implicit Casts
 If there is no general information loss, casts can be implicit. So implicit cast are allowed if we can go unsigned -> signed, integer -> float, and less -> more bits. However, keep in mind that not all unsigned values will fit in a signed type and putting integer in a flot may also incur loss of information.
 
+Implicit casts don't do value clamping, so `val u8 <- 300` will overflow and assign 44.
+
 From `bool`: No implicit casting
 
 From `u8`: `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `a`
@@ -40,7 +42,7 @@ From/To boxed:
 `boxed` types are implicitly cast to their specified type. For example `boxed<u32>` and `u32` are effectively equivalent.
 
 ## Explicit Casts
-Any numeric type can be cast to any other numeric type. Negative number cast to unsigned will be set to 0. Exceeding values will be capped to minimum/maximum values.
+Any numeric type can be cast to any other numeric type. Negative number cast to unsigned will be set to 0. Exceeding values will be clamped to minimum/maximum values.
 
 From `bool`: No casting
 

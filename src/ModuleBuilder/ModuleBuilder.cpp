@@ -1197,21 +1197,65 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     shared_ptr<WrappedValue> rightWrappedValue = wrappedValueForExpression(expressionBinary->getRight());
     if (leftWrappedValue == nullptr || rightWrappedValue == nullptr)
         return nullptr;
+
     llvm::Value *leftValue = leftWrappedValue->getValue();
     llvm::Value *rightValue = rightWrappedValue->getValue();
-
     if (leftValue == nullptr || rightValue == nullptr)
         return nullptr;
 
-    // Convert pointers to int for pointer arithmetic
-    if (leftValue->getType()->isPointerTy())
-        leftValue = builder->CreatePtrToInt(leftValue, typePtrInt);
-    if (rightValue->getType()->isPointerTy())
-        rightValue = builder->CreatePtrToInt(rightValue, typePtrInt);
+    // First prepare extracted values if necessary
+    int leftSize = sizeInBitsForType(leftValue->getType());
+    int rightSize = sizeInBitsForType(rightValue->getType());
 
-    // For enums extract values
-    if (leftWrappedValue->isEnumStruct() && rightWrappedValue->isEnumStruct()) {
+    // Figure out what types and sizes we should operate on
+    llvm::Type *widenType = llvmTypeForValueType(expressionBinary->getValueType());
+    int widenSize = sizeInBitsForType(widenType);
+    if (leftSize > widenSize) {
+        widenSize = leftSize;
+        widenType = leftValue->getType();
+    } else if (rightSize > widenSize) {
+        widenSize = rightSize;
+        widenType = rightValue->getType();
+    }
+
+    // Bit test needs a special consideration because it's multiple operations
+    if (expressionBinary->getOperation() == ExpressionBinaryOperation::BIT_TEST) {
+        if (leftSize > rightSize) {
+            widenSize = leftSize;
+            widenType = leftValue->getType();
+        } else {
+            widenSize = rightSize;
+            widenType = rightValue->getType();
+        }
+    }
+
+    // Convert pointers to int for pointer arithmetic
+    if (leftValue->getType()->isPointerTy()) {
+        leftValue = builder->CreatePtrToInt(leftValue, typePtrInt);
+    // Widden integers
+    } else if (leftSize < widenSize) {
+        if (leftWrappedValue->getValueType()->isSignedInteger()) {
+            leftValue = builder->CreateSExt(leftValue, widenType);
+        } else {
+            leftValue = builder->CreateZExt(leftValue, widenType);
+        }
+    // For enums, extract values
+    } else if (leftWrappedValue->isEnumStruct()) {
         leftValue = builder->CreateExtractValue(leftValue, {0});
+    }
+
+    // Convert pointers to int for pointer arithmetic
+    if (rightValue->getType()->isPointerTy()) {
+        rightValue = builder->CreatePtrToInt(rightValue, typePtrInt);
+    // Widden integers
+    } else if (rightSize < widenSize) {
+        if (!expressionBinary->isBitwise() && rightWrappedValue->getValueType()->isSignedInteger()) {
+            rightValue = builder->CreateSExt(rightValue, widenType);
+        } else {
+            rightValue = builder->CreateZExt(rightValue, widenType);
+        }
+    // For enums, extract values
+    } else if (rightWrappedValue->isEnumStruct()) {
         rightValue = builder->CreateExtractValue(rightValue, {0});
     }
 
@@ -1260,17 +1304,15 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         }
         case ExpressionBinaryOperation::BIT_SHL: {
-            if (valueType->isUnsignedInteger())
-                resultValue = builder->CreateShl(leftValue, rightValue, "", true, false);
-            else if (valueType->isSignedInteger())
-                resultValue = builder->CreateShl(leftValue, rightValue, "", false, true);
+            resultValue = builder->CreateShl(leftValue, rightValue, "", false, false);
             break;
         }
         case ExpressionBinaryOperation::BIT_SHR: {
-            if (valueType->isUnsignedInteger())
-                resultValue = builder->CreateLShr(leftValue, rightValue);
-            else if (valueType->isSignedInteger())
+            if (valueType->isSignedInteger()) {
                 resultValue = builder->CreateAShr(leftValue, rightValue);
+            } else {
+                resultValue = builder->CreateLShr(leftValue, rightValue);
+            }
             break;
         }
 
@@ -1328,28 +1370,22 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
         // mathematical
         case ExpressionBinaryOperation::ADD: {
-            if (valueType->isUnsignedInteger())
-                resultValue = builder->CreateNUWAdd(leftValue, rightValue); // No Unsigned Wrap
-            else if (valueType->isSignedInteger())
-                resultValue = builder->CreateNSWAdd(leftValue, rightValue); // No Signed Wrap
+            if (valueType->isInteger())
+                resultValue = builder->CreateAdd(leftValue, rightValue);
             else if (valueType->isFloat())
                 resultValue = builder->CreateFAdd(leftValue, rightValue);
             break;
         }
         case ExpressionBinaryOperation::SUB: {
-            if (valueType->isUnsignedInteger())
-                resultValue = builder->CreateNUWSub(leftValue, rightValue);
-            else if (valueType->isSignedInteger())
-                resultValue = builder->CreateNSWSub(leftValue, rightValue);
+            if (valueType->isInteger())
+                resultValue = builder->CreateSub(leftValue, rightValue);
             else if (valueType->isFloat())
                 resultValue = builder->CreateFSub(leftValue, rightValue);
             break;
         }
         case ExpressionBinaryOperation::MUL: {
-            if (valueType->isUnsignedInteger())
-                resultValue = builder->CreateNUWMul(leftValue, rightValue);
-            else if (valueType->isSignedInteger())
-                resultValue = builder->CreateNSWMul(leftValue, rightValue);
+            if (valueType->isInteger())
+                resultValue = builder->CreateMul(leftValue, rightValue);
             else if (valueType->isFloat())
                 resultValue = builder->CreateFMul(leftValue, rightValue);
             break;
@@ -1461,7 +1497,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                 return nullptr;
         // Cast expression?
         } else if (shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression)) {
-            currentWrappedValue = wrappedValueForCast(currentWrappedValue, expressionCast->getValueType());
+            currentWrappedValue = wrappedValueForCast(currentWrappedValue, expressionCast->getValueType(), expressionCast->getShouldClamp());
             parentExpression = chainExpression;
             if (currentWrappedValue == nullptr)
                 return nullptr;
@@ -1741,37 +1777,77 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             resultValue = llvm::ConstantInt::getBool(typeBool, expressionLiteral->getBoolValue());
             break;
 
-        case ValueTypeKind::UINT:
-            resultValue = llvm::ConstantInt::get(typeInt, expressionLiteral->getUIntValue());
+        case ValueTypeKind::UINT: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeInt, false)
+            );
             break;
-        case ValueTypeKind::U8:
-            resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::U8: {
+            resultValue = llvm::ConstantInt::get(
+                typeI8,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI8, false)
+            );
             break;
-        case ValueTypeKind::U16:
-            resultValue = llvm::ConstantInt::get(typeI16, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::U16: {
+            resultValue = llvm::ConstantInt::get(
+                typeI16,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI16, false)
+            );
             break;
-        case ValueTypeKind::U32:
-            resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::U32: {
+            resultValue = llvm::ConstantInt::get(
+                typeI32,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI32, false)
+            );
             break;
-        case ValueTypeKind::U64:
-            resultValue = llvm::ConstantInt::get(typeI64, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::U64: {
+            resultValue = llvm::ConstantInt::get(
+                typeI64,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI64, false)
+            );
             break;
+        }
 
-        case ValueTypeKind::SINT:
-            resultValue = llvm::ConstantInt::get(typeInt, expressionLiteral->getUIntValue());
+        case ValueTypeKind::SINT: {
+            resultValue = llvm::ConstantInt::get(
+                typeInt,
+                clampedInteger(expressionLiteral->getUIntValue(), typeInt, true)
+            );
             break;
-        case ValueTypeKind::S8:
-            resultValue = llvm::ConstantInt::get(typeI8, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::S8: {
+            resultValue = llvm::ConstantInt::get(
+                typeI8,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI8, true)
+            );
             break;
-        case ValueTypeKind::S16:
-            resultValue = llvm::ConstantInt::get(typeI16, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::S16: {
+            resultValue = llvm::ConstantInt::get(
+                typeI16,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI16, true)
+            );
             break;
-        case ValueTypeKind::S32:
-            resultValue = llvm::ConstantInt::get(typeI32, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::S32: {
+            resultValue = llvm::ConstantInt::get(
+                typeI32,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI32, true)
+            );
             break;
-        case ValueTypeKind::S64:
-            resultValue = llvm::ConstantInt::get(typeI64, expressionLiteral->getUIntValue());
+        }
+        case ValueTypeKind::S64: {
+            resultValue = llvm::ConstantInt::get(
+                typeI64,
+                clampedInteger(expressionLiteral->getUIntValue(), typeI64, true)
+            );
             break;
+        }
 
         case ValueTypeKind::FLOAT:
             resultValue = llvm::ConstantFP::get(typeFloat, expressionLiteral->getFloatValue());
@@ -2095,10 +2171,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
     );
 }
 
-shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedValue> sourceWrappedValue, shared_ptr<ValueType> targetValueType) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedValue> sourceWrappedValue, shared_ptr<ValueType> targetValueType, bool shouldClamp) {
     // If the types are identical, ignore the cast
     if (sourceWrappedValue->getValueType()->isEqual(targetValueType))
         return sourceWrappedValue;
+
+    llvm::Type *sourceType = sourceWrappedValue->getType();
+    llvm::Type *targetType = llvmTypeForValueType(targetValueType);
 
     // Figure out source type
     bool isSourceUInt = false;
@@ -2117,7 +2196,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     switch (sourceValueTypeKind) {
         case ValueTypeKind::UINT:
             isSourceUInt = true;
-            sourceSize = typeInt->getBitWidth();
+            sourceSize = sourceWrappedValue->getValue()->getType()->getIntegerBitWidth();
             break;
         case ValueTypeKind::U8:
             isSourceUInt = true;
@@ -2137,7 +2216,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         case ValueTypeKind::SINT:
             isSourceSInt = true;
-            sourceSize = typeInt->getBitWidth();
+            sourceSize = sourceType->getIntegerBitWidth();
             break;
         case ValueTypeKind::S8:
             isSourceSInt = true;
@@ -2218,6 +2297,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::UINT:
             isTargetUInt = true;
             targetSize = typeInt->getBitWidth();
+            if (sourceSize > targetSize) {
+                targetSize = sourceSize;
+                targetType = sourceType;
+            }
             break;
         case ValueTypeKind::U8:
             isTargetUInt = true;
@@ -2238,6 +2321,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::SINT:
             isTargetSInt = true;
             targetSize = typeInt->getBitWidth();
+            if (sourceSize > targetSize) {
+                targetSize = sourceSize;
+                targetType = sourceType;
+            }
             break;
         case ValueTypeKind::S8:
             isTargetSInt = true;
@@ -2300,7 +2387,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
     }
 
-    llvm::Type *targetType = llvmTypeForValueType(targetValueType);
     // uint to int+
     if (isSourceUInt && (isTargetUInt || isTargetSInt) && targetSize >= sourceSize) {
         return WrappedValue::wrappedValue(
@@ -2309,8 +2395,21 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // uint to int-
     } if (isSourceUInt && (isTargetUInt || isTargetSInt) && targetSize < sourceSize) {
+        llvm::Value *value = sourceWrappedValue->getValue();
+        if (shouldClamp) {
+            // clamp to the max value
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::umin,
+                value,
+                llvm::ConstantInt::get(
+                    sourceWrappedValue->getType(),
+                    llvm::APInt::getMaxValue(targetSize).zext(sourceSize)
+                )
+            );
+        }
+        // truncate value
         return WrappedValue::wrappedValue(
-            builder->CreateTrunc(sourceWrappedValue->getValue(), targetType),
+            builder->CreateTrunc(value, targetType),
             targetValueType
         );
     // sint to sint+
@@ -2321,28 +2420,71 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // sint to sint-
     } else if (isSourceSInt && isTargetSInt && targetSize < sourceSize) {
+        llvm::Value *value = sourceWrappedValue->getValue();
+        if (shouldClamp) {
+            // clamp to the max value
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smin,
+                value,
+                llvm::ConstantInt::get(
+                    sourceWrappedValue->getType(),
+                    llvm::APSInt::getMaxValue(targetSize, false).sext(sourceSize)
+                )
+            );
+            // clamp to the min value
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smax,
+                value,
+                llvm::ConstantInt::get(
+                    sourceWrappedValue->getType(),
+                    llvm::APSInt::getMinValue(targetSize, false).sext(sourceSize)
+                )
+            );
+        }
+        // truncate value
         return WrappedValue::wrappedValue(
-            builder->CreateTrunc(sourceWrappedValue->getValue(), targetType),
+            builder->CreateTrunc(value, targetType),
             targetValueType
         );
     // sint to uint+
     } else if (isSourceSInt && isTargetUInt && targetSize >= sourceSize) {
-        // clamp value to 0 if negative
-        llvm::Constant *constantZero = llvm::ConstantInt::get(sourceWrappedValue->getType(), 0);
-        llvm::Value *compareToZero = builder->CreateICmpSLT(sourceWrappedValue->getValue(), constantZero);
-        llvm::Value *clampedValue = builder->CreateSelect(compareToZero, constantZero, sourceWrappedValue->getValue());
+        llvm::Value *value = sourceWrappedValue->getValue();
+        if (shouldClamp) {
+            // clamp to 0
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smax,
+                sourceWrappedValue->getValue(),
+                llvm::ConstantInt::get(sourceWrappedValue->getType(), 0)
+            );
+        }
+        // extend value
         return WrappedValue::wrappedValue(
-            builder->CreateZExt(clampedValue, targetType),
+            builder->CreateZExt(value, targetType),
             targetValueType
         );
     // sint to uint-
     } else if (isSourceSInt && isTargetUInt && targetSize < sourceSize) {
-        // clamp value to 0 if negative
-        llvm::Constant *constantZero = llvm::ConstantInt::get(sourceWrappedValue->getType(), 0);
-        llvm::Value *compareToZero = builder->CreateICmpSLT(sourceWrappedValue->getValue(), constantZero);
-        llvm::Value *clampedValue = builder->CreateSelect(compareToZero, constantZero, sourceWrappedValue->getValue());
+        llvm::Value *value = sourceWrappedValue->getValue();
+        if (shouldClamp) {
+            // clamp to the max value
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smin,
+                value,
+                llvm::ConstantInt::get(
+                    targetType,
+                    llvm::APSInt::getMaxValue(targetSize, true).zext(sourceSize)
+                )
+            );
+            // clamp to 0
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smax,
+                value,
+                llvm::ConstantInt::get(sourceWrappedValue->getType(), 0)
+            );
+        }
+        // truncate value
         return WrappedValue::wrappedValue(
-            builder->CreateTrunc(clampedValue, targetType),
+            builder->CreateTrunc(value, targetType),
             targetValueType
         );
     // uint to float
@@ -2442,7 +2584,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                         sourceMemberValue,
                         dynamic_pointer_cast<ValueTypeData>(sourceWrappedValue->getValueType())->getElementValueType()
                     ),
-                    dynamic_pointer_cast<ValueTypeData>(targetValueType)->getElementValueType()
+                    dynamic_pointer_cast<ValueTypeData>(targetValueType)->getElementValueType(),
+                    shouldClamp
                 );
                 if (castSourceMemberValue == nullptr)
                     return nullptr;
@@ -2718,6 +2861,19 @@ llvm::Type *ModuleBuilder::llvmTypeForValueType(shared_ptr<ValueType> valueType,
 
 int ModuleBuilder::sizeInBitsForType(llvm::Type *type) {
     return llvmModule->getDataLayout().getTypeAllocSizeInBits(type);
+}
+
+llvm::APInt ModuleBuilder::clampedInteger(uint64_t value, llvm::IntegerType *type, bool isSigned) {
+    int bitsCount = type->getIntegerBitWidth();
+    llvm::APInt literal(64, value);
+
+    if (isSigned) {
+        return llvm::APIntOps::umin(
+            literal,
+            llvm::APInt::getSignedMaxValue(bitsCount).zext(64)
+        ).trunc(bitsCount);
+    }
+    return literal.truncUSat(bitsCount);
 }
 
 //

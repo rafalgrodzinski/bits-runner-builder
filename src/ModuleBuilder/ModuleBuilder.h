@@ -6,6 +6,8 @@
 #include <ranges>
 #include <stack>
 
+#include <llvm/ADT/APInt.h>
+#include <llvm/ADT/APSInt.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/IRBuilder.h>
@@ -159,7 +161,7 @@ private:
 
     std::shared_ptr<WrappedValue> wrappedValueForBuiltIn(std::shared_ptr<WrappedValue> parentWrappedValue, std::shared_ptr<Expression> parentExpression, std::shared_ptr<Expression> expression);
     std::shared_ptr<WrappedValue> wrappedValueForCall(llvm::Value *callee, llvm::FunctionType *funType, const std::vector<llvm::Value*> &implicitArguments, const std::vector<std::shared_ptr<Expression>> &argumentExpressions, std::shared_ptr<ValueType> valueType);
-    std::shared_ptr<WrappedValue> wrappedValueForCast(std::shared_ptr<WrappedValue> wrappedValue, std::shared_ptr<ValueType> targetValueType);
+    std::shared_ptr<WrappedValue> wrappedValueForCast(std::shared_ptr<WrappedValue> wrappedValue, std::shared_ptr<ValueType> targetValueType, bool shouldClamp);
     std::shared_ptr<WrappedValue> wrappedValueForValue(llvm::Value *value, llvm::Value *pointerValue, llvm::Type *type, std::shared_ptr<Expression> expression);
     std::shared_ptr<WrappedValue> wrappedValueForTypeBuiltIn(llvm::Type *type, std::shared_ptr<ExpressionValue> expression);
 
@@ -169,6 +171,7 @@ private:
     // Support
     llvm::Type *llvmTypeForValueType(std::shared_ptr<ValueType> valueType, bool shouldUnbox = false);
     int sizeInBitsForType(llvm::Type *type);
+    llvm::APInt clampedInteger(uint64_t value, llvm::IntegerType *type, bool isSigned);
 
     // Error Handling    
     void markFunctionError(const std::string &name, const std::string &message);

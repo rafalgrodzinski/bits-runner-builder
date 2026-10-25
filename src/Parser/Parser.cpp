@@ -299,7 +299,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
             }
             case TAG_CAST: {
                 shared_ptr<ValueType> valueType = resultsGroup.getResults().at(i).getValueType();
-                shared_ptr<ExpressionCast> expression = make_shared<ExpressionCast>(valueType, location);
+                shared_ptr<ExpressionCast> expression = make_shared<ExpressionCast>(valueType, false, location);
                 chainExpressions.push_back(expression);
                 break;
             }
@@ -2008,7 +2008,7 @@ shared_ptr<Expression> Parser::matchExpressionCast() {
 
     shared_ptr<ValueType> valueType = parseeResults.getResults().at(0).getValueType();
 
-    return make_shared<ExpressionCast>(valueType, location);
+    return make_shared<ExpressionCast>(valueType, true, location);
 }
 
 shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {

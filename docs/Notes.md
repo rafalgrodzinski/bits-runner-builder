@@ -7,6 +7,7 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-114](https://github.com/rafalgrodzinski/bits-runner-builder/pull/220):
-- Added `match` expression
-- Added early pattern matching
+Changelist for [1.0.0-dev-115](https://github.com/rafalgrodzinski/bits-runner-builder/issues/224):
+- Explicitly cast values are clamped to min max
+- Implicit casts don't clamp
+- Better types handling

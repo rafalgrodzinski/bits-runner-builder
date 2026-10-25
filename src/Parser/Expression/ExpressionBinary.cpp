@@ -84,6 +84,63 @@ shared_ptr<Expression> ExpressionBinary::getRight() const {
     return right;
 }
 
+bool ExpressionBinary::isArithmetic() const {
+    switch (operation) {
+        case ExpressionBinaryOperation::ADD:
+        case ExpressionBinaryOperation::SUB:
+        case ExpressionBinaryOperation::MUL:
+        case ExpressionBinaryOperation::DIV:
+        case ExpressionBinaryOperation::MOD:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool ExpressionBinary::isBitwise() const {
+    switch (operation) {
+        case ExpressionBinaryOperation::BIT_OR:
+        case ExpressionBinaryOperation::BIT_XOR:
+        case ExpressionBinaryOperation::BIT_AND:
+        case ExpressionBinaryOperation::BIT_SHL:
+        case ExpressionBinaryOperation::BIT_SHR:
+        case ExpressionBinaryOperation::BIT_TEST:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool ExpressionBinary::isComparison() const {
+    switch (operation) {
+        case ExpressionBinaryOperation::EQUAL:
+        case ExpressionBinaryOperation::NOT_EQUAL:
+        case ExpressionBinaryOperation::LESS:
+        case ExpressionBinaryOperation::LESS_EQUAL:
+        case ExpressionBinaryOperation::GREATER:
+        case ExpressionBinaryOperation::GREATER_EQUAL:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool ExpressionBinary::isLogical() const {
+    switch (operation) {
+        case ExpressionBinaryOperation::OR:
+        case ExpressionBinaryOperation::XOR:
+        case ExpressionBinaryOperation::AND:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+
 bool ExpressionBinary::doTokensMatchTokenKinds(const vector<shared_ptr<Token>> &tokens, const vector<TokenKind> &tokenKinds) {
     // check if not empty and if sizes match
     if (tokens.empty() || tokens.size() != tokenKinds.size())

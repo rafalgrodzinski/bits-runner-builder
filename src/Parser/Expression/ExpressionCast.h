@@ -5,7 +5,11 @@
 
 class ExpressionCast: public Expression {
 public:
-    ExpressionCast(std::shared_ptr<ValueType> valueType, std::shared_ptr<Location> location);
+    ExpressionCast(std::shared_ptr<ValueType> valueType, bool shouldClamp, std::shared_ptr<Location> location);
+    bool getShouldClamp() const;
+
+private:
+    bool shouldClamp;
 };
 
 #endif
