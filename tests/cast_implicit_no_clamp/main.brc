@@ -1,0 +1,5 @@
+@export main fun -> u8
+  val u8 <- 100
+  val <- val + 200
+  ret val
+;
