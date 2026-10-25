@@ -11,7 +11,8 @@
             },
             "presentation": {
                 "close": false,
-                "focus": true
+                "focus": true,
+                "clear": true
             },
             "problemMatcher": ["$gcc"]
         },

@@ -44,6 +44,11 @@ public:
     std::shared_ptr<Expression> getLeft() const;
     std::shared_ptr<Expression> getRight() const;
 
+    bool isArithmetic() const;
+    bool isBitwise() const;
+    bool isComparison() const;
+    bool isLogical() const;
+
 private:
     ExpressionBinaryOperation operation;
     std::shared_ptr<Expression> left;

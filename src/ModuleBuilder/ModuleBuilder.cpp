@@ -1205,6 +1205,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         return nullptr;
 
     // First prepare extracted values if necessary
+    /*
     // We only want to widen for arithmetic operations
     bool isArithmetic = false;
     switch (expressionBinary->getOperation()) {
@@ -1217,17 +1218,24 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         default:
             break;
-    }
+    }*/
+
+
+    llvm::Type *leftType = leftValue->getType();
+    int intSize = typeInt->getIntegerBitWidth();
+    int leftSize = sizeInBitsForType(leftType);
+    int rightSize = sizeInBitsForType(rightValue->getType());
 
     // Convert pointers to int for pointer arithmetic
-    int intSize = typeInt->getIntegerBitWidth();
     if (leftValue->getType()->isPointerTy()) {
         leftValue = builder->CreatePtrToInt(leftValue, typePtrInt);
     // Widden integers
-    } else if (isArithmetic && leftWrappedValue->getValueType()->isUnsignedInteger() && leftWrappedValue->getType()->getIntegerBitWidth() < intSize) {
+    } else if (expressionBinary->isBitwise() && leftSize < rightSize) {
+        leftValue = builder->CreateZExt(leftValue, rightValue->getType());
+    /*} else if (expressionBinary->isBitwise() && leftWrappedValue->getValueType()->isInteger() && leftWrappedValue->getType()->getIntegerBitWidth() < intSize) {
         leftValue = builder->CreateZExt(leftValue, typeInt);
     } else if (isArithmetic && leftWrappedValue->getValueType()->isSignedInteger() && leftWrappedValue->getType()->getIntegerBitWidth() < intSize) {
-        leftValue = builder->CreateSExt(leftValue, typeInt);
+        leftValue = builder->CreateSExt(leftValue, typeInt);*/
     // For enums extract values
     } else if (leftWrappedValue->isEnumStruct()) {
         leftValue = builder->CreateExtractValue(leftValue, {0});
@@ -1237,10 +1245,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (rightValue->getType()->isPointerTy()) {
         rightValue = builder->CreatePtrToInt(rightValue, typePtrInt);
     // Widden integers
-    } else if (isArithmetic && rightWrappedValue->getValueType()->isUnsignedInteger() && rightWrappedValue->getType()->getIntegerBitWidth() < intSize) {
+    } else if (expressionBinary->isBitwise() && rightSize < leftSize) {
+        rightValue = builder->CreateZExt(rightValue, leftType);
+    /*} else if (expressionBinary->isBitwise() && rightSize > leftSize) {
+        rightValue = builder->CreateTrunc(rightValue, leftValue->getType());*/
+    /*} else if (isArithmetic && rightWrappedValue->getValueType()->isUnsignedInteger() && rightWrappedValue->getType()->getIntegerBitWidth() < intSize) {
         rightValue = builder->CreateZExt(rightValue, typeInt);
     } else if (isArithmetic && rightWrappedValue->getValueType()->isSignedInteger() && rightWrappedValue->getType()->getIntegerBitWidth() < intSize) {
-        rightValue = builder->CreateSExt(rightValue, typeInt);
+        rightValue = builder->CreateSExt(rightValue, typeInt);*/
     // For enums extract values
     } else if (rightWrappedValue->isEnumStruct()) {
         rightValue = builder->CreateExtractValue(rightValue, {0});
@@ -1280,28 +1292,33 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         }
         case ExpressionBinaryOperation::BIT_OR: {
             resultValue = builder->CreateOr(leftValue, rightValue);
+            resultValue = builder->CreateTrunc(leftValue, leftType);
             break;
         }
         case ExpressionBinaryOperation::BIT_XOR: {
             resultValue = builder->CreateXor(leftValue, rightValue);
+            resultValue = builder->CreateTrunc(leftValue, leftType);
             break;
         }
         case ExpressionBinaryOperation::BIT_AND: {
             resultValue = builder->CreateAnd(leftValue, rightValue);
+            resultValue = builder->CreateTrunc(leftValue, leftType);
             break;
         }
         case ExpressionBinaryOperation::BIT_SHL: {
-            if (valueType->isUnsignedInteger())
-                resultValue = builder->CreateShl(leftValue, rightValue, "", true, false);
-            else if (valueType->isSignedInteger())
-                resultValue = builder->CreateShl(leftValue, rightValue, "", false, true);
+            //if (valueType->isUnsignedInteger())
+                resultValue = builder->CreateShl(leftValue, rightValue, "", false, false);
+                resultValue = builder->CreateTrunc(leftValue, leftType);
+            /*else if (valueType->isSignedInteger())
+                resultValue = builder->CreateShl(leftValue, rightValue, "", false, true);*/
             break;
         }
         case ExpressionBinaryOperation::BIT_SHR: {
-            if (valueType->isUnsignedInteger())
+            //if (valueType->isUnsignedInteger())
                 resultValue = builder->CreateLShr(leftValue, rightValue);
-            else if (valueType->isSignedInteger())
-                resultValue = builder->CreateAShr(leftValue, rightValue);
+                resultValue = builder->CreateTrunc(leftValue, leftType);
+            /*else if (valueType->isSignedInteger())
+                resultValue = builder->CreateAShr(leftValue, rightValue);*/
             break;
         }
 

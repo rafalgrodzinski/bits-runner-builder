@@ -801,25 +801,33 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
 }
 
 shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
-    shared_ptr<ValueType> leftValueType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
-    shared_ptr<ValueType> rightValueType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
+    expressionBinary->getLeft()->valueType = typeForExpression(expressionBinary->getLeft(), nullptr, nullptr);
+    expressionBinary->getRight()->valueType = typeForExpression(expressionBinary->getRight(), nullptr, nullptr);
 
-    if (leftValueType == nullptr || rightValueType == nullptr)
+    if (expressionBinary->getLeft()->getValueType() == nullptr || expressionBinary->getRight()->getValueType() == nullptr)
         return nullptr;
 
-    shared_ptr<ValueType> commonType = commonImplicitCastValueType({leftValueType, rightValueType});
+    // We only want to adjust arithmetic or comparison operations
+    // Logical must already evaluate to bool
+    // bitwise we want to leave as they are and leave it to the module builder
+    if (expressionBinary->isArithmetic() || expressionBinary->isComparison()) {
+        shared_ptr<ValueType> commonType = commonImplicitCastValueType({
+            expressionBinary->getLeft()->getValueType(),
+            expressionBinary->getRight()->getValueType()
+        });
 
-    expressionBinary->left = checkAndTryCasting(
-        expressionBinary->getLeft(),
-        commonType,
-        nullptr
-    );
+        expressionBinary->left = checkAndTryCasting(
+            expressionBinary->getLeft(),
+            commonType,
+            nullptr
+        );
 
-    expressionBinary->right = checkAndTryCasting(
-        expressionBinary->getRight(),
-        commonType,
-        nullptr
-    );
+        expressionBinary->right = checkAndTryCasting(
+            expressionBinary->getRight(),
+            commonType,
+            nullptr
+        );
+    }
 
     expressionBinary->valueType = typeForBinaryOperation(
         expressionBinary->getOperation(),
@@ -1658,6 +1666,7 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
 
  shared_ptr<ValueType> Analyzer::typeForBinaryOperation(ExpressionBinaryOperation operation, shared_ptr<ValueType> firstType, shared_ptr<ValueType> secondType) const {
     switch (operation) {
+        // Comparisions change into BOOL
         case ExpressionBinaryOperation::EQUAL:
         case ExpressionBinaryOperation::NOT_EQUAL:
         case ExpressionBinaryOperation::LESS:
@@ -1668,15 +1677,12 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
             return ValueTypeSimple::BOOL;
         }
 
+        // We want to promote arithmetic integer operations to full ints
         case ExpressionBinaryOperation::ADD:
         case ExpressionBinaryOperation::SUB:
         case ExpressionBinaryOperation::MUL:
         case ExpressionBinaryOperation::DIV:
-        case ExpressionBinaryOperation::MOD:
-        case ExpressionBinaryOperation::BIT_OR:
-        case ExpressionBinaryOperation::BIT_XOR:
-        case ExpressionBinaryOperation::BIT_AND: {
-            // We want to promote binary integer operations to full ints
+        case ExpressionBinaryOperation::MOD: {
             if (!firstType->isAddress() && !secondType->isAddress() && (firstType->isUnsignedInteger() || secondType->isUnsignedInteger())) {
                 return ValueTypeSimple::UINT;
             } else if (firstType->isSignedInteger() || secondType->isSignedInteger()) {
@@ -2374,6 +2380,7 @@ std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std
         }
     }
 
+    // We want to promote integers to their native sizes
     if (!targetValueType->isPtr() && targetValueType->isUnsignedInteger()) {
         targetValueType = ValueTypeSimple::UINT;
     } else if (targetValueType->isSignedInteger()) {
