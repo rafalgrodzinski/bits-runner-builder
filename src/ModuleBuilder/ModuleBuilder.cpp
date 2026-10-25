@@ -2176,7 +2176,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     if (sourceWrappedValue->getValueType()->isEqual(targetValueType))
         return sourceWrappedValue;
 
-    llvm::Type *sourceType = sourceWrappedValue->getValue()->getType();
+    llvm::Type *sourceType = sourceWrappedValue->getType();
     llvm::Type *targetType = llvmTypeForValueType(targetValueType);
 
     // Figure out source type
