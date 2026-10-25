@@ -2370,10 +2370,10 @@ std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std
         }
     }
 
-    if (!targetType->isPointer() && targetType->isUnsignedInteger()) {
-      targetType = ValueTypeKind::UINT;
-    } else if (targetType->isSignedInteger()) {
-      targetType = ValueTypeKind::SINT;
+    if (!targetValueType->isPtr() && targetValueType->isUnsignedInteger()) {
+        targetValueType = ValueTypeSimple::UINT;
+    } else if (targetValueType->isSignedInteger()) {
+        targetValueType = ValueTypeSimple::SINT;
     }
 
     return targetValueType;
