@@ -21,7 +21,7 @@ public:
     std::vector<ParseeResult> getResults() const;
 
 private:
-    ParseeResultsGroupKind kind;
+    ParseeResultsGroupKind kind = ParseeResultsGroupKind::FAILURE;
     std::vector<ParseeResult> results;
 };
 

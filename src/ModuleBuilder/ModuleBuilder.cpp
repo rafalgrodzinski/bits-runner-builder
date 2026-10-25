@@ -1293,11 +1293,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         }
         case ExpressionBinaryOperation::BIT_SHL: {
-            if (valueType->isSignedInteger()) {
-                resultValue = builder->CreateShl(leftValue, rightValue, "", false, true);
-            } else {
-                resultValue = builder->CreateShl(leftValue, rightValue, "", true, false);
-            }
+            resultValue = builder->CreateShl(leftValue, rightValue, "", false, false);
             break;
         }
         case ExpressionBinaryOperation::BIT_SHR: {
