@@ -1200,37 +1200,38 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
     llvm::Value *leftValue = leftWrappedValue->getValue();
     llvm::Value *rightValue = rightWrappedValue->getValue();
-
     if (leftValue == nullptr || rightValue == nullptr)
         return nullptr;
 
     // First prepare extracted values if necessary
-    llvm::Type *originalLeftType = leftValue->getType();
-    int leftSize = sizeInBitsForType(originalLeftType);
+    int leftSize = sizeInBitsForType(leftValue->getType());
     int rightSize = sizeInBitsForType(rightValue->getType());
 
-    int widdenSize = typeInt->getIntegerBitWidth();
-    llvm::Type *widdenType = typeInt;
-    if (widdenSize < leftSize) {
-        widdenSize = leftSize;
-        widdenType = originalLeftType;
-    }
-    if (widdenSize < rightSize) {
-        widdenSize = rightSize;
-        widdenType = rightValue->getType();
+    // Figure out what types and sizes we should operate on
+    llvm::Type *widenType = llvmTypeForValueType(expressionBinary->getValueType());
+    int widenSize = sizeInBitsForType(widenType);
+
+    if (expressionBinary->getOperation() == ExpressionBinaryOperation::BIT_TEST) {
+        if (leftSize > rightSize) {
+            widenSize = leftSize;
+            widenType = leftValue->getType();
+        } else {
+            widenSize = rightSize;
+            widenType = rightValue->getType();
+        }
     }
 
     // Convert pointers to int for pointer arithmetic
     if (leftValue->getType()->isPointerTy()) {
         leftValue = builder->CreatePtrToInt(leftValue, typePtrInt);
     // Widden integers
-    } else if (expressionBinary->isBitwise() && leftSize < widdenSize) {
+    } else if (expressionBinary->isBitwise() && leftSize < widenSize) {
         if (leftWrappedValue->getValueType()->isSignedInteger()) {
-            leftValue = builder->CreateSExt(leftValue, widdenType);
+            leftValue = builder->CreateSExt(leftValue, widenType);
         } else {
-            leftValue = builder->CreateZExt(leftValue, widdenType);
+            leftValue = builder->CreateZExt(leftValue, widenType);
         }
-    // For enums extract values
+    // For enums, extract values
     } else if (leftWrappedValue->isEnumStruct()) {
         leftValue = builder->CreateExtractValue(leftValue, {0});
     }
@@ -1239,9 +1240,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (rightValue->getType()->isPointerTy()) {
         rightValue = builder->CreatePtrToInt(rightValue, typePtrInt);
     // Widden integers
-    } else if (expressionBinary->isBitwise() && rightSize < widdenSize) {
-        rightValue = builder->CreateZExt(rightValue, widdenType);
-    // For enums extract values
+    } else if (expressionBinary->isBitwise() && rightSize < widenSize) {
+        rightValue = builder->CreateZExt(rightValue, widenType);
+    // For enums, extract values
     } else if (rightWrappedValue->isEnumStruct()) {
         rightValue = builder->CreateExtractValue(rightValue, {0});
     }
@@ -1280,26 +1281,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         }
         case ExpressionBinaryOperation::BIT_OR: {
             resultValue = builder->CreateOr(leftValue, rightValue);
-            resultValue = builder->CreateTrunc(
-                resultValue, 
-                originalLeftType->isPointerTy() ? typePtrInt : originalLeftType
-            );
             break;
         }
         case ExpressionBinaryOperation::BIT_XOR: {
             resultValue = builder->CreateXor(leftValue, rightValue);
-            resultValue = builder->CreateTrunc(
-                resultValue, 
-                originalLeftType->isPointerTy() ? typePtrInt : originalLeftType
-            );
             break;
         }
         case ExpressionBinaryOperation::BIT_AND: {
             resultValue = builder->CreateAnd(leftValue, rightValue);
-            resultValue = builder->CreateTrunc(
-                resultValue, 
-                originalLeftType->isPointerTy() ? typePtrInt : originalLeftType
-            );
             break;
         }
         case ExpressionBinaryOperation::BIT_SHL: {
@@ -1308,10 +1297,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             } else {
                 resultValue = builder->CreateShl(leftValue, rightValue, "", true, false);
             }
-            resultValue = builder->CreateTrunc(
-                resultValue, 
-                originalLeftType->isPointerTy() ? typePtrInt : originalLeftType
-            );
             break;
         }
         case ExpressionBinaryOperation::BIT_SHR: {
@@ -1320,10 +1305,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             } else {
                 resultValue = builder->CreateLShr(leftValue, rightValue);
             }
-            resultValue = builder->CreateTrunc(
-                resultValue, 
-                originalLeftType->isPointerTy() ? typePtrInt : originalLeftType
-            );
             break;
         }
 

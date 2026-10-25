@@ -1682,7 +1682,12 @@ shared_ptr<ValueType> Analyzer::typeForUnaryOperation(ExpressionUnaryOperation o
         case ExpressionBinaryOperation::SUB:
         case ExpressionBinaryOperation::MUL:
         case ExpressionBinaryOperation::DIV:
-        case ExpressionBinaryOperation::MOD: {
+        case ExpressionBinaryOperation::MOD:
+        case ExpressionBinaryOperation::BIT_OR:
+        case ExpressionBinaryOperation::BIT_XOR:
+        case ExpressionBinaryOperation::BIT_AND:
+        case ExpressionBinaryOperation::BIT_SHL:
+        case ExpressionBinaryOperation::BIT_SHR: {
             if (!firstType->isAddress() && !secondType->isAddress() && (firstType->isUnsignedInteger() || secondType->isUnsignedInteger())) {
                 return ValueTypeSimple::UINT;
             } else if (firstType->isSignedInteger() || secondType->isSignedInteger()) {

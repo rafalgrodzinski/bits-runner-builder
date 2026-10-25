@@ -1001,7 +1001,7 @@ string Logger::toString(shared_ptr<ExpressionBinary> expression, vector<IndentKi
     }
 
     string line = format(
-        "⟨{} {} {}⟩｢{}｣",
+        "⎨{} {} {}⎬｢{}｣",
         toString(expression->getLeft(), indents, true),
         op,
         toString(expression->getRight(), indents, true),
