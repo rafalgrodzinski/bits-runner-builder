@@ -1211,6 +1211,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     llvm::Type *widenType = llvmTypeForValueType(expressionBinary->getValueType());
     int widenSize = sizeInBitsForType(widenType);
 
+    // Bit test needs a special consideration because it's multiple operations
     if (expressionBinary->getOperation() == ExpressionBinaryOperation::BIT_TEST) {
         if (leftSize > rightSize) {
             widenSize = leftSize;

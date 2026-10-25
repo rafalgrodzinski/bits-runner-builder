@@ -100,12 +100,12 @@ bool ExpressionBinary::isArithmetic() const {
 
 bool ExpressionBinary::isBitwise() const {
     switch (operation) {
-        case ExpressionBinaryOperation::BIT_TEST:
         case ExpressionBinaryOperation::BIT_OR:
         case ExpressionBinaryOperation::BIT_XOR:
         case ExpressionBinaryOperation::BIT_AND:
         case ExpressionBinaryOperation::BIT_SHL:
         case ExpressionBinaryOperation::BIT_SHR:
+        case ExpressionBinaryOperation::BIT_TEST:
             return true;
         default:
             break;
