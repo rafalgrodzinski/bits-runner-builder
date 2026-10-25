@@ -8,4 +8,6 @@ Available for:
 - Windows (x86_64)
 
 Changelist for [1.0.0-dev-115](https://github.com/rafalgrodzinski/bits-runner-builder/issues/224):
-- Saturate values when casting
+- Explicitly cast values are clamped to min max
+- Implicit casts don't clamp
+- Better types handling
