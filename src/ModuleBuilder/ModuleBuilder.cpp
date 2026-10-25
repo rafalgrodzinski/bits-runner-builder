@@ -1210,6 +1210,13 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     // Figure out what types and sizes we should operate on
     llvm::Type *widenType = llvmTypeForValueType(expressionBinary->getValueType());
     int widenSize = sizeInBitsForType(widenType);
+    if (leftSize > widenSize) {
+        widenSize = leftSize;
+        widenType = leftValue->getType();
+    } else if (rightSize > widenSize) {
+        widenSize = rightSize;
+        widenType = rightValue->getType();
+    }
 
     // Bit test needs a special consideration because it's multiple operations
     if (expressionBinary->getOperation() == ExpressionBinaryOperation::BIT_TEST) {
@@ -1226,7 +1233,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (leftValue->getType()->isPointerTy()) {
         leftValue = builder->CreatePtrToInt(leftValue, typePtrInt);
     // Widden integers
-    } else if (expressionBinary->isBitwise() && leftSize < widenSize) {
+    } else if (leftSize < widenSize) {
         if (leftWrappedValue->getValueType()->isSignedInteger()) {
             leftValue = builder->CreateSExt(leftValue, widenType);
         } else {
@@ -1241,8 +1248,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     if (rightValue->getType()->isPointerTy()) {
         rightValue = builder->CreatePtrToInt(rightValue, typePtrInt);
     // Widden integers
-    } else if (expressionBinary->isBitwise() && rightSize < widenSize) {
-        rightValue = builder->CreateZExt(rightValue, widenType);
+    } else if (rightSize < widenSize) {
+        if (!expressionBinary->isBitwise() && rightWrappedValue->getValueType()->isSignedInteger()) {
+            rightValue = builder->CreateSExt(rightValue, widenType);
+        } else {
+            rightValue = builder->CreateZExt(rightValue, widenType);
+        }
     // For enums, extract values
     } else if (rightWrappedValue->isEnumStruct()) {
         rightValue = builder->CreateExtractValue(rightValue, {0});
@@ -2165,6 +2176,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     if (sourceWrappedValue->getValueType()->isEqual(targetValueType))
         return sourceWrappedValue;
 
+    llvm::Type *sourceType = sourceWrappedValue->getValue()->getType();
+    llvm::Type *targetType = llvmTypeForValueType(targetValueType);
+
     // Figure out source type
     bool isSourceUInt = false;
     bool isSourceSInt = false;
@@ -2202,7 +2216,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
         case ValueTypeKind::SINT:
             isSourceSInt = true;
-            sourceSize = sourceWrappedValue->getValue()->getType()->getIntegerBitWidth();
+            sourceSize = sourceType->getIntegerBitWidth();
             break;
         case ValueTypeKind::S8:
             isSourceSInt = true;
@@ -2283,6 +2297,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::UINT:
             isTargetUInt = true;
             targetSize = typeInt->getBitWidth();
+            if (sourceSize > targetSize) {
+                targetSize = sourceSize;
+                targetType = sourceType;
+            }
             break;
         case ValueTypeKind::U8:
             isTargetUInt = true;
@@ -2303,6 +2321,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         case ValueTypeKind::SINT:
             isTargetSInt = true;
             targetSize = typeInt->getBitWidth();
+            if (sourceSize > targetSize) {
+                targetSize = sourceSize;
+                targetType = sourceType;
+            }
             break;
         case ValueTypeKind::S8:
             isTargetSInt = true;
@@ -2365,7 +2387,6 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
             break;
     }
 
-    llvm::Type *targetType = llvmTypeForValueType(targetValueType);
     // uint to int+
     if (isSourceUInt && (isTargetUInt || isTargetSInt) && targetSize >= sourceSize) {
         return WrappedValue::wrappedValue(
