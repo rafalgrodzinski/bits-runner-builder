@@ -1486,7 +1486,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
                 return nullptr;
         // Cast expression?
         } else if (shared_ptr<ExpressionCast> expressionCast = dynamic_pointer_cast<ExpressionCast>(chainExpression)) {
-            currentWrappedValue = wrappedValueForCast(currentWrappedValue, expressionCast->getValueType());
+            currentWrappedValue = wrappedValueForCast(currentWrappedValue, expressionCast->getValueType(), expressionCast->getShouldClamp());
             parentExpression = chainExpression;
             if (currentWrappedValue == nullptr)
                 return nullptr;
@@ -2160,7 +2160,7 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCall(llvm::Value *callee,
     );
 }
 
-shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedValue> sourceWrappedValue, shared_ptr<ValueType> targetValueType) {
+shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedValue> sourceWrappedValue, shared_ptr<ValueType> targetValueType, bool shouldClamp) {
     // If the types are identical, ignore the cast
     if (sourceWrappedValue->getValueType()->isEqual(targetValueType))
         return sourceWrappedValue;
@@ -2374,18 +2374,21 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // uint to int-
     } if (isSourceUInt && (isTargetUInt || isTargetSInt) && targetSize < sourceSize) {
-        // clamp to the max value
-        llvm::Value *clampedValue = builder->CreateBinaryIntrinsic(
-            llvm::Intrinsic::umin,
-            sourceWrappedValue->getValue(),
-            llvm::ConstantInt::get(
-                sourceWrappedValue->getType(),
-                llvm::APInt::getMaxValue(targetSize).zext(sourceSize)
-            )
-        );
-        // truncate clamped value
+        llvm::Value *value = sourceWrappedValue->getValue();
+        if (shouldClamp) {
+            // clamp to the max value
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::umin,
+                value,
+                llvm::ConstantInt::get(
+                    sourceWrappedValue->getType(),
+                    llvm::APInt::getMaxValue(targetSize).zext(sourceSize)
+                )
+            );
+        }
+        // truncate value
         return WrappedValue::wrappedValue(
-            builder->CreateTrunc(clampedValue, targetType),
+            builder->CreateTrunc(value, targetType),
             targetValueType
         );
     // sint to sint+
@@ -2396,62 +2399,71 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
         );
     // sint to sint-
     } else if (isSourceSInt && isTargetSInt && targetSize < sourceSize) {
-        // clamp to the max value
-        llvm::Value * clampedValue = builder->CreateBinaryIntrinsic(
-            llvm::Intrinsic::smin,
-            sourceWrappedValue->getValue(),
-            llvm::ConstantInt::get(
-                sourceWrappedValue->getType(),
-                llvm::APSInt::getMaxValue(targetSize, false).sext(sourceSize)
-            )
-        );
-        // clamp to the min value
-        clampedValue = builder->CreateBinaryIntrinsic(
-            llvm::Intrinsic::smax,
-            clampedValue,
-            llvm::ConstantInt::get(
-                sourceWrappedValue->getType(),
-                llvm::APSInt::getMinValue(targetSize, false).sext(sourceSize)
-            )
-        );
-        // truncate clamped value
+        llvm::Value *value = sourceWrappedValue->getValue();
+        if (shouldClamp) {
+            // clamp to the max value
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smin,
+                value,
+                llvm::ConstantInt::get(
+                    sourceWrappedValue->getType(),
+                    llvm::APSInt::getMaxValue(targetSize, false).sext(sourceSize)
+                )
+            );
+            // clamp to the min value
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smax,
+                value,
+                llvm::ConstantInt::get(
+                    sourceWrappedValue->getType(),
+                    llvm::APSInt::getMinValue(targetSize, false).sext(sourceSize)
+                )
+            );
+        }
+        // truncate value
         return WrappedValue::wrappedValue(
-            builder->CreateTrunc(clampedValue, targetType),
+            builder->CreateTrunc(value, targetType),
             targetValueType
         );
     // sint to uint+
     } else if (isSourceSInt && isTargetUInt && targetSize >= sourceSize) {
-        // clamp to 0
-        llvm::Value *clampedValue = builder->CreateBinaryIntrinsic(
-            llvm::Intrinsic::smax,
-            sourceWrappedValue->getValue(),
-            llvm::ConstantInt::get(sourceWrappedValue->getType(), 0)
-        );
-        // extend clamped value
+        llvm::Value *value = sourceWrappedValue->getValue();
+        if (shouldClamp) {
+            // clamp to 0
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smax,
+                sourceWrappedValue->getValue(),
+                llvm::ConstantInt::get(sourceWrappedValue->getType(), 0)
+            );
+        }
+        // extend value
         return WrappedValue::wrappedValue(
-            builder->CreateZExt(clampedValue, targetType),
+            builder->CreateZExt(value, targetType),
             targetValueType
         );
     // sint to uint-
     } else if (isSourceSInt && isTargetUInt && targetSize < sourceSize) {
-        // clamp to the max value
-        llvm::Value * clampedValue = builder->CreateBinaryIntrinsic(
-            llvm::Intrinsic::smin,
-            sourceWrappedValue->getValue(),
-            llvm::ConstantInt::get(
-                targetType,
-                llvm::APSInt::getMaxValue(targetSize, true).zext(sourceSize)
-            )
-        );
-        // clamp to 0
-        clampedValue = builder->CreateBinaryIntrinsic(
-            llvm::Intrinsic::smax,
-            clampedValue,
-            llvm::ConstantInt::get(sourceWrappedValue->getType(), 0)
-        );
-        // truncate clamped value
+        llvm::Value *value = sourceWrappedValue->getValue();
+        if (shouldClamp) {
+            // clamp to the max value
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smin,
+                value,
+                llvm::ConstantInt::get(
+                    targetType,
+                    llvm::APSInt::getMaxValue(targetSize, true).zext(sourceSize)
+                )
+            );
+            // clamp to 0
+            value = builder->CreateBinaryIntrinsic(
+                llvm::Intrinsic::smax,
+                value,
+                llvm::ConstantInt::get(sourceWrappedValue->getType(), 0)
+            );
+        }
+        // truncate value
         return WrappedValue::wrappedValue(
-            builder->CreateTrunc(clampedValue, targetType),
+            builder->CreateTrunc(value, targetType),
             targetValueType
         );
     // uint to float
@@ -2551,7 +2563,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
                         sourceMemberValue,
                         dynamic_pointer_cast<ValueTypeData>(sourceWrappedValue->getValueType())->getElementValueType()
                     ),
-                    dynamic_pointer_cast<ValueTypeData>(targetValueType)->getElementValueType()
+                    dynamic_pointer_cast<ValueTypeData>(targetValueType)->getElementValueType(),
+                    shouldClamp
                 );
                 if (castSourceMemberValue == nullptr)
                     return nullptr;

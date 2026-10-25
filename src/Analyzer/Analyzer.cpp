@@ -1817,7 +1817,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             vector<shared_ptr<Expression>>(
                 {
                     sourceExpression,
-                    make_shared<ExpressionCast>(valueTypeBoxed, sourceExpression->getLocation())
+                    make_shared<ExpressionCast>(valueTypeBoxed, false, sourceExpression->getLocation())
                 }
             ),
             sourceExpression->getLocation()
@@ -1829,7 +1829,7 @@ shared_ptr<Expression> Analyzer::checkAndTryCasting(shared_ptr<Expression> sourc
             vector<shared_ptr<Expression>>(
                 {
                     sourceExpression,
-                    make_shared<ExpressionCast>(targetType, sourceExpression->getLocation())
+                    make_shared<ExpressionCast>(targetType, false, sourceExpression->getLocation())
                 }
             ),
             sourceExpression->getLocation()
