@@ -821,7 +821,11 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
         nullptr
     );
 
-    expressionBinary->valueType = typeForBinaryOperation(expressionBinary->getOperation(), leftValueType, rightValueType);
+    expressionBinary->valueType = typeForBinaryOperation(
+        expressionBinary->getOperation(),
+        expressionBinary->getLeft()->getValueType(),
+        expressionBinary->getRight()->getValueType()
+    );
     return expressionBinary->getValueType();
 }
 
