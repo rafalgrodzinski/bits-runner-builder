@@ -171,6 +171,9 @@ shared_ptr<Token> Lexer::nextToken() {
     if (token = match(TokenKind::SEMICOLON, ";", false))
         return token;
 
+    if (token = match(TokenKind::DOUBLE_ARROW, "<->", false))
+        return token;
+
     if (token = match(TokenKind::LEFT_ARROW, "<-", false))
          return token;
         

@@ -43,6 +43,7 @@ private:
     std::shared_ptr<Statement> matchStatementBlob();
     std::shared_ptr<Statement> matchStatementBlock(std::vector<TokenKind> terminalTokenKinds);
     std::shared_ptr<Statement> matchStatementEnum();
+    std::shared_ptr<Statement> matchStatementExchange();
     std::shared_ptr<Statement> matchStatementExpression();
     std::shared_ptr<Statement> matchStatementFunction();
     std::shared_ptr<Statement> matchStatementFunctionDeclaration();

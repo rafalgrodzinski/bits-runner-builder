@@ -104,89 +104,90 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
             checkStatement(dynamic_pointer_cast<StatementAssignment>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOB: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementBlob>(statement), isImported);
-            break;
+            return;
         }
         case StatementKind::BLOB_DECLARATION: {
             checkStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOCK: {
             checkStatement(dynamic_pointer_cast<StatementBlock>(statement), returnType);
-            break;
+            return;
         }
         case StatementKind::ENUM: {
             checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
-            break;
+            return;
         }
         case StatementKind::EXPRESSION: {
             checkStatement(dynamic_pointer_cast<StatementExpression>(statement), returnType);
-            break;
+            return;
         }
         case StatementKind::FUNCTION: {
             checkStatement(dynamic_pointer_cast<StatementFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::FUNCTION_DECLARATION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::META_EXTERN_FUNCTION: {
             checkStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::META_EXTERN_VARIABLE: {
             checkStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
-            break;
+            return;
         }
         case StatementKind::META_IMPORT: {
             ImportLevel newImportLevel = ImportLevel::IMPLICIT;
             if (importLevel == ImportLevel::NONE)
                 newImportLevel = ImportLevel::EXPLICIT;
             checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement), newImportLevel);
-            break;
+            return;
         }
         case StatementKind::PROTO: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementProto>(statement));
-            break;
+            return;
         }
         case StatementKind::PROTO_DECLARATION: {
             checkStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::RAW_FUNCTION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::REPEAT: {
             checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
-            break;
+            return;
         }
         case StatementKind::RETURN: {
             checkStatement(dynamic_pointer_cast<StatementReturn>(statement), returnType);
-            break;
+            return;
         }
         case StatementKind::VARIABLE: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementVariable>(statement));
-            break;
+            return;
         }
         case StatementKind::VARIABLE_DECLARATION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
-            break;
+            return;
         }
-        default: {
+        default:
             break;
-        }
     }
+
+    markErrorUnexpected(statement->getLocation(), "statement");
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignment) {
@@ -794,9 +795,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
         case ExpressionKind::VALUE:
             return typeForExpression(dynamic_pointer_cast<ExpressionValue>(expression), parentExpression);
         default:
-            markErrorUnexpectedExpression(expression->getLocation());
             break;
     }
+
+    markErrorUnexpected(expression->getLocation(), "expression");
     return nullptr;
 }
 
@@ -2649,8 +2651,8 @@ void Analyzer::markErrorNotImplemented(shared_ptr<Location> location, const stri
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorUnexpectedExpression(shared_ptr<Location> location) {
-    string message = format("Unexpected expression");
+void Analyzer::markErrorUnexpected(shared_ptr<Location> location, const string &name) {
+    string message = format("Unexpected {}", name);
     errors.push_back(Error::error(location, message));
 }
 

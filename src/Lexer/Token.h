@@ -43,6 +43,7 @@ enum class TokenKind {
     COLON,
     DOUBLE_COLON,
     SEMICOLON,
+    DOUBLE_ARROW,
     LEFT_ARROW,
     RIGHT_ARROW,
     DOT,

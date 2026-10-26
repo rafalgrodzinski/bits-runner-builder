@@ -14,6 +14,7 @@ enum class StatementKind {
     BLOB_DECLARATION,
     BLOCK,
     ENUM,
+    EXCHANGE,
     EXPRESSION,
     FUNCTION,
     FUNCTION_DECLARATION,

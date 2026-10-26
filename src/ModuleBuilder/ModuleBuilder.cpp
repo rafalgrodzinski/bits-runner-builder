@@ -250,8 +250,10 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             break;
         }
         default:
-            markErrorUnexpected(statement->getLocation(), "statement");
+            break;
     }
+
+    markErrorUnexpected(statement->getLocation(), "statement");
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssignment) {
@@ -1187,9 +1189,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         case ExpressionKind::VALUE:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionValue>(expression));
         default:
-            markErrorUnexpected(expression->getLocation(), "expression");
-            return nullptr;
+            break;
     }
+
+    markErrorUnexpected(expression->getLocation(), "expression");
+    return nullptr;
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {

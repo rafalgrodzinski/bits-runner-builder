@@ -12,6 +12,7 @@
 #include "Parser/Statement/StatementBlob.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementEnum.h"
+#include "Parser/Statement/StatementExchange.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -114,6 +115,9 @@ shared_ptr<Statement> Parser::nextInBlockStatement() {
     int errorsCount = errors.size();
 
     if ((statement = matchStatementVariable()) || errors.size() > errorsCount)
+        return statement;
+
+    if ((statement = matchStatementExchange()) || errors.size() > errorsCount)
         return statement;
 
     if ((statement = matchStatementAssignment()) || errors.size() > errorsCount)
@@ -667,6 +671,42 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
     }
 
     return make_shared<StatementEnum>(shouldExport, name, namedTypeKeys, fields, location);
+}
+
+std::shared_ptr<Statement> Parser::matchStatementExchange() {
+    enum {
+        TAG_LEFT_EXPRESSION,
+        TAG_RIGHT_EXPRESSION
+    };
+
+    shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
+
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
+        {
+            Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_LEFT_EXPRESSION),
+            Parsee::tokenParsee(TokenKind::DOUBLE_ARROW, ParseeLevel::REQUIRED, false),
+            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false)
+        }
+    );
+
+    if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
+        return nullptr;
+
+    shared_ptr<Expression> leftExpression;
+    shared_ptr<Expression> rightExpression;
+
+    for (ParseeResult &parseeResult : resultsGroup.getResults()) {
+        switch (parseeResult.getTag()) {
+            case TAG_LEFT_EXPRESSION:
+                leftExpression = parseeResult.getExpression();
+                break;
+            case TAG_RIGHT_EXPRESSION:
+                rightExpression = parseeResult.getExpression();
+                break;
+        }
+    }
+
+    return make_shared<StatementExchange>(leftExpression, rightExpression, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementExpression() {
