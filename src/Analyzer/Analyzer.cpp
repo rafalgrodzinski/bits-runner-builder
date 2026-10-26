@@ -26,6 +26,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementEnum.h"
+#include "Parser/Statement/StatementExchange.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -121,6 +122,10 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
         }
         case StatementKind::ENUM: {
             checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
+            return;
+        }
+        case StatementKind::EXCHANGE: {
+            checkStatement(dynamic_pointer_cast<StatementExchange>(statement));
             return;
         }
         case StatementKind::EXPRESSION: {
@@ -405,6 +410,18 @@ void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
         );
         return;
     }
+}
+
+void Analyzer::checkStatement(std::shared_ptr<StatementExchange> statementExchange) {
+    statementExchange->getLeftExpression()->valueType = typeForExpression(statementExchange->getLeftExpression(), nullptr, nullptr);
+    statementExchange->getRightExpression()->valueType = typeForExpression(statementExchange->getRightExpression(), nullptr, nullptr);
+
+    if (statementExchange->getLeftExpression()->getValueType() == nullptr || statementExchange->getRightExpression()->getValueType() == nullptr)
+        return;
+
+    // Value types have to be the same
+    if (!statementExchange->getLeftExpression()->getValueType()->isEqual(statementExchange->getRightExpression()->getValueType()))
+        markErrorInvalidType(statementExchange->getLocation(), statementExchange->getLeftExpression()->getValueType(), nullptr);
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {

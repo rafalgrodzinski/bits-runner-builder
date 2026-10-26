@@ -642,7 +642,7 @@ std::string Logger::toString(std::shared_ptr<StatementExchange> statementExchang
         toString(statementExchange->getRightExpression(), indents, true)
     );
 
-    return text;
+    return formattedLine(text, indents);
 }
 
 string Logger::toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents) {

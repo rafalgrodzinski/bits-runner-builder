@@ -685,7 +685,7 @@ std::shared_ptr<Statement> Parser::matchStatementExchange() {
         {
             Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_LEFT_EXPRESSION),
             Parsee::tokenParsee(TokenKind::DOUBLE_ARROW, ParseeLevel::REQUIRED, false),
-            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false)
+            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_RIGHT_EXPRESSION)
         }
     );
 

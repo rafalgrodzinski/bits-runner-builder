@@ -170,66 +170,66 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
             buildStatement(dynamic_pointer_cast<StatementAssignment>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOB: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementBlob>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOB_DECLARATION: {
             buildStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOCK: {
             buildStatement(dynamic_pointer_cast<StatementBlock>(statement));
-            break;
+            return;
         }
         case StatementKind::ENUM: {
             buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
-            break;
+            return;
         }
         case StatementKind::EXPRESSION: {
             buildStatement(dynamic_pointer_cast<StatementExpression>(statement));
-            break;
+            return;
         }
         case StatementKind::FUNCTION: {
             buildStatement(dynamic_pointer_cast<StatementFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::FUNCTION_DECLARATION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::META_EXTERN_FUNCTION: {
             buildStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::META_EXTERN_VARIABLE: {
             buildStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
-            break;
+            return;
         }
         case StatementKind::META_IMPORT: {
             ImportLevel newImportLevel = ImportLevel::IMPLICIT;
             if (importLevel == ImportLevel::NONE)
                 newImportLevel = ImportLevel::EXPLICIT;
             buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement), newImportLevel);
-            break;
+            return;
         }
         case StatementKind::PROTO: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementProto>(statement));
-            break;
+            return;
         }
         case StatementKind::PROTO_DECLARATION: {
             buildStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::RAW_FUNCTION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::REPEAT: {
             buildStatement(dynamic_pointer_cast<StatementRepeat>(statement));
@@ -237,17 +237,17 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
         }
         case StatementKind::RETURN: {
             buildStatement(dynamic_pointer_cast<StatementReturn>(statement));
-            break;
+            return;
         }
         case StatementKind::VARIABLE: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementVariable>(statement));
-            break;
+            return;
         }
         case StatementKind::VARIABLE_DECLARATION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
-            break;
+            return;
         }
         default:
             break;

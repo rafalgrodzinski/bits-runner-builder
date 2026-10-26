@@ -6,6 +6,8 @@
 class Expression;
 
 class StatementExchange: public Statement {
+friend class Analyzer;
+
 public:
     StatementExchange(
         std::shared_ptr<Expression> leftExpression,
