@@ -1,8 +1,12 @@
+doStuff fun -> u8
+  ret 5
+;
+
 @export main fun -> u8
   val1 u8 <- 7
-  val2 u32 <- 13
+  val2 u8 <- 13
 
-  val1 <-> val2
+  3 <-> 4
 
   ret val1
 ;

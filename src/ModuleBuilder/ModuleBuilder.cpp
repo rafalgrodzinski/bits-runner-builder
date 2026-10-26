@@ -11,6 +11,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementEnum.h"
+#include "Parser/Statement/StatementExchange.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -189,6 +190,10 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
             return;
         }
+        case StatementKind::EXCHANGE: {
+            buildStatement(dynamic_pointer_cast<StatementExchange>(statement));
+            return;
+        }
         case StatementKind::EXPRESSION: {
             buildStatement(dynamic_pointer_cast<StatementExpression>(statement));
             return;
@@ -339,6 +344,20 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
         llvm::Constant *tagValue = constantWrappedValue->getConstantValue();
         scope->setEnumFieldTagValue(field.symbolName->getGlobalName(), tagValue);
     }
+}
+
+void ModuleBuilder::buildStatement(std::shared_ptr<StatementExchange> statementExchange) {
+    shared_ptr<WrappedValue> leftWrappedValue = wrappedValueForExpression(statementExchange->getLeftExpression());
+    shared_ptr<WrappedValue> rightWrappedValue = wrappedValueForExpression(statementExchange->getRightExpression());
+    if (leftWrappedValue == nullptr || rightWrappedValue == nullptr)
+        return;
+
+    llvm::AllocaInst *tempAlloca = builder->CreateAlloca(leftWrappedValue->getType());
+    builder->CreateStore(leftWrappedValue->getValue(), tempAlloca);
+    llvm::Value *tempValue = builder->CreateLoad(leftWrappedValue->getType(), tempAlloca);
+
+    builder->CreateStore(rightWrappedValue->getValue(), leftWrappedValue->getPointerValue());
+    builder->CreateStore(tempValue, rightWrappedValue->getPointerValue());
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementExpression> statementExpression) {

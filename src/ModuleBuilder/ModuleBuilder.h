@@ -32,6 +32,7 @@ class StatementBlob;
 class StatementBlobDeclaration;
 class StatementBlock;
 class StatementEnum;
+class StatementExchange;
 class StatementExpression;
 class StatementFunction;
 class StatementFunctionDeclaration;
@@ -126,6 +127,7 @@ private:
     void buildStatement(std::shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
     void buildStatement(std::shared_ptr<StatementBlock> statementBlock);
     void buildStatement(std::shared_ptr<StatementEnum> statementEnum);
+    void buildStatement(std::shared_ptr<StatementExchange> statementExchange);
     void buildStatement(std::shared_ptr<StatementExpression> statementExpression);
     void buildStatement(std::shared_ptr<StatementFunction> statementFunction);
     void buildStatement(std::shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
