@@ -15,7 +15,7 @@ Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https
 ```
 // main.brc
 
-// Generate an array of randome numbers and print them
+// Generate an array of random numbers and then print them
 @import B
 
 @extern rand fun -> u64
@@ -23,7 +23,7 @@ Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https
 @extern time fun: second u64 -> u64
 
 @export main fun -> u32
-    // Initialize randome number generator
+    // Initialize random number generator
     srand(time(0))
 
     // Initialize an array with 10 randomly generated numbers
@@ -36,7 +36,7 @@ Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https
         @B::String(" ").print()
     ;
 
-    @B::String("\n").println()
+    @B::String::println()
 
     ret 0
 ;
@@ -71,11 +71,13 @@ It's mostly a learning opportunity and a bit of fun, but maybe you can find some
 - No curly braces for scope or semicollons
 - Functions inside of `blob` types for simple class-like funtionality
 - Interfaces with `proto` types
+- Enums with payloads
 - `if-else` and `match` are expressions
 - Explicitly sized types (integers, floats, etc)
 - `for`, `while`, `do-while` loops integrated into single `rep` keyword
 - Directly supports decimal, hex, binary numbers with `_` separator between digits
 - Bit test `&?` operator
+- Exchange values `<->` operator
 - Shows tokens, AST, and build statistics for each phase with `--verb=v2` or `--verb=v3`
 
 
