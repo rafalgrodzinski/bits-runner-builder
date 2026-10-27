@@ -162,6 +162,7 @@ private:
     void markErrorInvalidPattern(std::shared_ptr<Location> location, std::shared_ptr<Pattern> pattern);
     void markErrorInvalidRegistration(std::shared_ptr<Location> location, const std::string &identifier, AnalyzerScopeRegisterResult registerResult);
     void markErrorInvalidType(std::shared_ptr<Location> location, std::shared_ptr<ValueType> actualType, std::shared_ptr<ValueType> expectedType);
+    void markErrorNameNotAllowed(std::shared_ptr<Location> location, const std::string &name);
     void markErrorNotDefined(std::shared_ptr<Location> location, const std::string &name);
     void markErrorNotImplemented(std::shared_ptr<Location> location, const std::string &protoName, const std::string &memberName);
     void markErrorUnexpected(std::shared_ptr<Location> location, const std::string &name);

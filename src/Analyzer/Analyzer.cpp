@@ -58,6 +58,8 @@
 
 using namespace std;
 
+static vector<string> illegalBlobFieldNames = {"adr", "size"};
+
 // MARK: - Public
 
 Analyzer::Analyzer(
@@ -226,9 +228,11 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     if (!scope->level([&]() -> bool {
         for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
             // check for invalid field names
-            if (statementVariableDeclaration->getIdentifier() == "adr") {
-                markErrorInvalidBuiltIn(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType());
-                return false;
+            for (string &illegalName : illegalBlobFieldNames) {
+                if (statementVariableDeclaration->getIdentifier() == illegalName) {
+                    markErrorNameNotAllowed(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier());
+                    return false;
+                }
             }
 
             // fields should not have @export
@@ -2655,6 +2659,11 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
         message = format("Invalid type {}, expected {}", Logger::toString(actualType), Logger::toString(expectedType));
     else
         message = format("Invalid type {}", Logger::toString(actualType));
+    errors.push_back(Error::error(location, message));
+}
+
+void Analyzer::markErrorNameNotAllowed(std::shared_ptr<Location> location, const std::string &name) {
+    string message = format("Name \"{}\" is not allowed in this context", name);
     errors.push_back(Error::error(location, message));
 }
 
