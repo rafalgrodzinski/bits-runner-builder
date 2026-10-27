@@ -238,7 +238,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
         }
         case StatementKind::REPEAT: {
             buildStatement(dynamic_pointer_cast<StatementRepeat>(statement));
-            break;
+            return;
         }
         case StatementKind::RETURN: {
             buildStatement(dynamic_pointer_cast<StatementReturn>(statement));
