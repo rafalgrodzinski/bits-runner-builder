@@ -31,13 +31,13 @@
      showguides="false"
      inkscape:zoom="1.42"
      inkscape:cx="396.47887"
-     inkscape:cy="172.53521"
-     inkscape:window-width="2508"
-     inkscape:window-height="1387"
+     inkscape:cy="275"
+     inkscape:window-width="2389"
+     inkscape:window-height="1380"
      inkscape:window-x="52"
      inkscape:window-y="25"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="g13">
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1">
     <inkscape:grid
        id="grid1"
        units="mm"
@@ -110,7 +110,23 @@
        x2="85"
        y2="110"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="translate(-2.0531158e-6)" />
+       gradientTransform="translate(-1.2785706e-6)" />
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3">
+      <rect
+         style="display:inline;fill:#ffffff;fill-opacity:1;stroke:#ffb000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         id="rect3"
+         width="60.000004"
+         height="59.999996"
+         x="25"
+         y="50"
+         ry="9.9999971"
+         inkscape:export-filename="/Users/Rafal/Desktop/Logo.png"
+         inkscape:export-xdpi="433.23291"
+         inkscape:export-ydpi="433.23291"
+         inkscape:label="Background" />
+    </clipPath>
   </defs>
   <g
      inkscape:groupmode="layer"
@@ -119,14 +135,14 @@
      style="display:inline"
      transform="translate(86.022267)">
     <rect
-       style="display:inline;fill:#202020;fill-opacity:1;stroke:#ffb000;stroke-width:2.04454;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       style="display:inline;fill:#202020;fill-opacity:1;stroke:#ffb000;stroke-width:2.11411;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
        id="rect13"
-       width="57.955463"
-       height="57.955463"
-       x="25.000006"
-       y="51.02227"
-       ry="9.6592426"
-       inkscape:export-filename="/Users/Rafal/Desktop/Icon.png"
+       width="57.885883"
+       height="57.885876"
+       x="25.034796"
+       y="51.057064"
+       ry="9.647644"
+       inkscape:export-filename="/Users/Rafal/Desktop/Simple.png"
        inkscape:export-xdpi="433.49332"
        inkscape:export-ydpi="433.49332"
        inkscape:label="Background" />
@@ -154,82 +170,82 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="display:inline;fill:#202020;fill-opacity:1;stroke:#ffb000;stroke-width:2.04454;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       style="display:inline;fill:#202020;fill-opacity:1;stroke:#ffb000;stroke-width:2.11662;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
        id="rect9"
-       width="57.955463"
-       height="57.955463"
-       x="26.02227"
-       y="51.022266"
-       ry="9.6592426"
-       inkscape:export-filename="/Users/Rafal/Desktop/Standard.png"
+       width="57.884647"
+       height="57.884647"
+       x="26.058311"
+       y="51.058308"
+       ry="9.64744"
+       inkscape:export-filename="/Users/Rafal/Desktop/Logo.png"
        inkscape:export-xdpi="433.49332"
        inkscape:export-ydpi="433.49332"
        inkscape:label="Background" />
     <rect
-       style="display:inline;fill:#ffb000;fill-opacity:1;stroke-width:0.23151"
+       style="display:inline;fill:#ffb000;fill-opacity:1;stroke-width:0.231509"
        id="rect1"
-       width="13.12499"
-       height="13.125001"
-       x="60"
-       y="63.437496"
-       ry="4.3750014"
+       width="13.124979"
+       height="13.124984"
+       x="59.374992"
+       y="63.125008"
+       ry="4.3749962"
        inkscape:label="Semicolon Top" />
     <path
-       style="fill:#ffb000;fill-opacity:1;stroke-width:0.231874;stroke-dasharray:none"
-       d="m 59.999997,80.937497 h 13.124991 v 8.749998 l -4.374996,8.75 h -4.374999 v 0 l 4.374999,-8.75 h -8.749995 z"
+       style="fill:#ffb000;fill-opacity:1;stroke-width:0.224479;stroke-dasharray:none"
+       d="m 59.374993,81.723426 h 13.12498 v 8.200775 l -4.374992,8.200775 h -4.374996 v 0 l 4.374996,-8.200775 h -8.749988 z"
        id="path1"
        sodipodi:nodetypes="ccccccccc"
        inkscape:label="Semicolon Bottom" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.2305px;line-height:0;font-family:'Gill Sans';-inkscape-font-specification:'Gill Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.698535px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.174635"
-       x="38.723793"
-       y="143.36604"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.2306px;line-height:0;font-family:'Gill Sans';-inkscape-font-specification:'Gill Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.69854px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.174637"
+       x="38.295307"
+       y="142.91022"
        id="text9"
-       transform="scale(1.4586393,0.68557045)"
+       transform="scale(1.4586395,0.68557036)"
        inkscape:label="C"><tspan
          sodipodi:role="line"
          id="tspan9"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.2305px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.174635"
-         x="39.422329"
-         y="143.36604">C</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.2306px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.174637"
+         x="38.993847"
+         y="142.91022">C</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.4303px;line-height:0;font-family:'Gill Sans';-inkscape-font-specification:'Gill Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.706631px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.176658"
-       x="38.966988"
-       y="121.64991"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.4302px;line-height:0;font-family:'Gill Sans';-inkscape-font-specification:'Gill Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.706627px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.176657"
+       x="38.52869"
+       y="121.20428"
        id="text8"
-       transform="scale(1.4259331,0.70129516)"
+       transform="scale(1.4259328,0.70129533)"
        inkscape:label="R"><tspan
          sodipodi:role="line"
          id="tspan8"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.4303px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.176658"
-         x="39.673618"
-         y="121.64991">R</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.4302px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.176657"
+         x="39.235317"
+         y="121.20428">R</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.981px;line-height:0;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.72896px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.182241"
-       x="38.578308"
-       y="106.18766"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.9811px;line-height:0;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.728963px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.182241"
+       x="38.153416"
+       y="105.728"
        id="text6"
-       transform="scale(1.470998,0.67981057)"
+       transform="scale(1.4709984,0.67981038)"
        inkscape:label="B"><tspan
          sodipodi:role="line"
          id="tspan6"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.981px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.182241"
-         x="39.307266"
-         y="106.18766">B</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.9811px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.182241"
+         x="38.882378"
+         y="105.728">B</tspan></text>
     <rect
-       style="display:inline;opacity:0.25;fill:url(#linearGradient11);fill-opacity:1;stroke-width:0.264583;stroke-dasharray:none"
+       style="display:none;opacity:0.25;fill:url(#linearGradient11);fill-opacity:1;stroke-width:0.264583;stroke-dasharray:none"
        id="rect9-3"
        width="60"
        height="60"
        x="25.000004"
        y="49.999996"
-       ry="9.9999981"
        inkscape:export-filename="rect9.png"
        inkscape:export-xdpi="433.49332"
        inkscape:export-ydpi="433.49332"
-       inkscape:label="Overlay" />
+       inkscape:label="Overlay"
+       clip-path="url(#clipPath3)" />
   </g>
 </svg>
