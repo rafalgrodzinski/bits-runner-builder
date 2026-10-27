@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.3 (0d15f750, 2025-12-25)"
+   sodipodi:docname="brc.svg"
+   inkscape:export-filename="/Users/Rafal/Desktop/brc_frame2.png"
+   inkscape:export-xdpi="433.49332"
+   inkscape:export-ydpi="433.49332"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="true"
+     showguides="false"
+     inkscape:zoom="1.42"
+     inkscape:cx="396.47887"
+     inkscape:cy="172.53521"
+     inkscape:window-width="2508"
+     inkscape:window-height="1387"
+     inkscape:window-x="52"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g13">
+    <inkscape:grid
+       id="grid1"
+       units="mm"
+       originx="0"
+       originy="0"
+       spacingx="0.99999998"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient10"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="0"
+         id="stop10" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="1"
+         id="stop11" />
+    </linearGradient>
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect10"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,0,0,1 @ F,0,0,1,0,5.0000004,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1"
+       radius="0"
+       unit="px"
+       method="auto"
+       mode="F"
+       chamfer_steps="1"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect9"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,0,0,2 @ F,0,0,1,0,0,0,2 @ F,0,0,1,0,0,0,2 @ F,0,0,1,0,0,0,2 @ F,0,0,1,0,0,0,2 @ F,0,0,1,0,0,0,2 @ F,0,0,1,0,0,0,2"
+       radius="0"
+       unit="px"
+       method="auto"
+       mode="F"
+       chamfer_steps="2"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient10"
+       id="linearGradient11"
+       x1="25"
+       y1="50"
+       x2="85"
+       y2="110"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-2.0531158e-6)" />
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="g13"
+     inkscape:label="Simple"
+     style="display:inline"
+     transform="translate(86.022267)">
+    <rect
+       style="display:inline;fill:#202020;fill-opacity:1;stroke:#ffb000;stroke-width:2.04454;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="rect13"
+       width="57.955463"
+       height="57.955463"
+       x="25.000006"
+       y="51.02227"
+       ry="9.6592426"
+       inkscape:export-filename="/Users/Rafal/Desktop/Icon.png"
+       inkscape:export-xdpi="433.49332"
+       inkscape:export-ydpi="433.49332"
+       inkscape:label="Background" />
+    <path
+       style="display:inline;fill:#ffb000;fill-opacity:1;stroke-width:0.264999;stroke-dasharray:none"
+       d="m 46.477738,79.999998 h 14.999999 v 9.999996 l -4.999999,10.000003 h -5.000002 v 0 l 5.000002,-10.000003 h -10 z"
+       id="path14"
+       sodipodi:nodetypes="ccccccccc"
+       inkscape:label="Semicolon Bottom" />
+    <rect
+       style="display:inline;fill:#ffb000;fill-opacity:1;stroke-width:0.264583"
+       id="rect14"
+       width="14.999998"
+       height="14.999999"
+       x="46.477737"
+       y="60"
+       ry="5.000001"
+       inkscape:label="Semicolon Top"
+       inkscape:export-filename="/Users/Rafal/Desktop/rect14.png"
+       inkscape:export-xdpi="650.23999"
+       inkscape:export-ydpi="650.23999" />
+  </g>
+  <g
+     inkscape:label="Standard"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="display:inline;fill:#202020;fill-opacity:1;stroke:#ffb000;stroke-width:2.04454;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="rect9"
+       width="57.955463"
+       height="57.955463"
+       x="26.02227"
+       y="51.022266"
+       ry="9.6592426"
+       inkscape:export-filename="/Users/Rafal/Desktop/Standard.png"
+       inkscape:export-xdpi="433.49332"
+       inkscape:export-ydpi="433.49332"
+       inkscape:label="Background" />
+    <rect
+       style="display:inline;fill:#ffb000;fill-opacity:1;stroke-width:0.23151"
+       id="rect1"
+       width="13.12499"
+       height="13.125001"
+       x="60"
+       y="63.437496"
+       ry="4.3750014"
+       inkscape:label="Semicolon Top" />
+    <path
+       style="fill:#ffb000;fill-opacity:1;stroke-width:0.231874;stroke-dasharray:none"
+       d="m 59.999997,80.937497 h 13.124991 v 8.749998 l -4.374996,8.75 h -4.374999 v 0 l 4.374999,-8.75 h -8.749995 z"
+       id="path1"
+       sodipodi:nodetypes="ccccccccc"
+       inkscape:label="Semicolon Bottom" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.2305px;line-height:0;font-family:'Gill Sans';-inkscape-font-specification:'Gill Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.698535px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.174635"
+       x="38.723793"
+       y="143.36604"
+       id="text9"
+       transform="scale(1.4586393,0.68557045)"
+       inkscape:label="C"><tspan
+         sodipodi:role="line"
+         id="tspan9"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.2305px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.174635"
+         x="39.422329"
+         y="143.36604">C</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.4303px;line-height:0;font-family:'Gill Sans';-inkscape-font-specification:'Gill Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.706631px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.176658"
+       x="38.966988"
+       y="121.64991"
+       id="text8"
+       transform="scale(1.4259331,0.70129516)"
+       inkscape:label="R"><tspan
+         sodipodi:role="line"
+         id="tspan8"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.4303px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.176658"
+         x="39.673618"
+         y="121.64991">R</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.981px;line-height:0;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0.72896px;word-spacing:0px;writing-mode:lr-tb;direction:rtl;fill:#ffffff;fill-opacity:1;stroke-width:0.182241"
+       x="38.578308"
+       y="106.18766"
+       id="text6"
+       transform="scale(1.470998,0.67981057)"
+       inkscape:label="B"><tspan
+         sodipodi:role="line"
+         id="tspan6"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.981px;font-family:'Arial Black';-inkscape-font-specification:'Arial Black, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;stroke-width:0.182241"
+         x="39.307266"
+         y="106.18766">B</tspan></text>
+    <rect
+       style="display:inline;opacity:0.25;fill:url(#linearGradient11);fill-opacity:1;stroke-width:0.264583;stroke-dasharray:none"
+       id="rect9-3"
+       width="60"
+       height="60"
+       x="25.000004"
+       y="49.999996"
+       ry="9.9999981"
+       inkscape:export-filename="rect9.png"
+       inkscape:export-xdpi="433.49332"
+       inkscape:export-ydpi="433.49332"
+       inkscape:label="Overlay" />
+  </g>
+</svg>
