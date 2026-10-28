@@ -187,7 +187,8 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             return;
         }
         case StatementKind::ENUM: {
-            buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
+            if (importLevel != ImportLevel::IMPLICIT)
+                buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
             return;
         }
         case StatementKind::EXCHANGE: {
@@ -341,6 +342,8 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
     // Register enum field tag values
     for (const EnumField &field : statementEnum->getFields()) {
         shared_ptr<WrappedValue> constantWrappedValue = wrappedValueForExpression(field.tagExpression);
+        if (constantWrappedValue == nullptr)
+            return;
         llvm::Constant *tagValue = constantWrappedValue->getConstantValue();
         scope->setEnumFieldTagValue(field.symbolName->getGlobalName(), tagValue);
     }
@@ -2757,6 +2760,10 @@ llvm::Value *ModuleBuilder::valueForMatch(shared_ptr<WrappedValue> switchWrapped
 
             // Get pattern tag
             llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+            if (tagValue == nullptr) {
+                markErrorNotDefined(pattern->getLocation(), pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+                return nullptr;
+            }
 
             return builder->CreateICmpEQ(tagMemberLoad, tagValue);
         }

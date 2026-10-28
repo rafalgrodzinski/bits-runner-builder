@@ -123,7 +123,8 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             return;
         }
         case StatementKind::ENUM: {
-            checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
+            if (importLevel != ImportLevel::IMPLICIT)
+                checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
             return;
         }
         case StatementKind::EXCHANGE: {
