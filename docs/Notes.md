@@ -9,3 +9,5 @@ Available for:
 
 Changelist for [1.0.0-dev-116](https://github.com/rafalgrodzinski/bits-runner-builder/pull/227):
 - Added exchange values `<->` operator
+- Fixed fun type check
+- Added array sorting
