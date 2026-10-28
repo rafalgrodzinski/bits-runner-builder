@@ -1362,7 +1362,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                     // make sure that the indexed value is an array
                                     shared_ptr<ValueType> valueType = blobMember.second;
                                     if (valueType->getKind() != ValueTypeKind::DATA) {
-                                        markErrorInvalidType(valueType->getLocation(), valueType, nullptr);
+                                        markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
                                         return false;
                                     }
                                     expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobMember.second)->getElementValueType();
