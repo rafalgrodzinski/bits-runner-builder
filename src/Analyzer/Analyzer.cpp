@@ -356,7 +356,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_
 void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
     // check fields
     shared_ptr<Expression> currentTagExpression = nullptr;
-    for (EnumField &field : statementEnum->getFields()) {
+    for (EnumField &field : statementEnum->fields) {
         // Only none or boxed types are valid
         if (!field.payloadValueType->isBoxed() && field.payloadValueType->getKind() != ValueTypeKind::NONE) {
             markErrorInvalidType(field.payloadValueType->getLocation(), field.payloadValueType, nullptr);
