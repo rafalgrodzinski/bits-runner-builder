@@ -1,12 +1,25 @@
-doStuff fun -> u8
-  ret 5
+@import B
+
+comp fun: valA boxed<u32>, valB boxed<u32> -> enum<@B::Array::ComparisonResult>
+  if valA.u32 > valB.u32: ret {}.enum<@B::Array::ComparisonResult>::Decreasing
+  ret {}.enum<@B::Array::ComparisonResult>::Equal
 ;
 
 @export main fun -> u8
-  val1 u8 <- 7
-  val2 u8 <- 13
+  nums blob<@B::Array, u32>
+  nums.push(7)
+  nums.push(15)
+  nums.push(3)
+  nums.push(2)
+  nums.push(18)
+  nums.push(99)
+  nums.push(3)
 
-  3 <-> 4
+  nums.sort(comp.ptr)
 
-  ret val1
+  rep i u32, i < nums.count, i <- i + 1
+    @B::StringForU32(nums.at(i).u32).println()
+  ;
+
+  ret 0
 ;

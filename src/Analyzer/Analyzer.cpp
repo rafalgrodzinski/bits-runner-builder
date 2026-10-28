@@ -2559,15 +2559,19 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeFun> valueTypeFun) {
-    vector<shared_ptr<ValueType>> argValueTypes = valueTypeFun->getArgumentValueTypes();
-    for (shared_ptr<ValueType> argValueType : argValueTypes) {
-        if (typeForCheckedValueType(argValueType, true) == nullptr)
-            return nullptr;
+    vector<shared_ptr<ValueType>> checkedArgumentValueTypes;
+    for (shared_ptr<ValueType> argumentValueType : valueTypeFun->getArgumentValueTypes()) {
+        shared_ptr<ValueType> checkedArgumentValueType = typeForCheckedValueType(argumentValueType, true);
+        if (checkedArgumentValueType == nullptr)
+        return nullptr;
+        checkedArgumentValueTypes.push_back(checkedArgumentValueType);
     }
-    if (typeForCheckedValueType(valueTypeFun->getReturnValueType(), true) == nullptr)
+    
+    shared_ptr<ValueType> checkedReturnValueType = typeForCheckedValueType(valueTypeFun->getReturnValueType(), true);
+    if (checkedReturnValueType == nullptr)
         return nullptr;
 
-    return valueTypeFun;
+    return make_shared<ValueTypeFun>(checkedArgumentValueTypes, checkedReturnValueType, valueTypeFun->getLocation());
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr) {

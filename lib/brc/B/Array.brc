@@ -3,9 +3,9 @@
 @import BSys
 
 @export Array::ComparisonResult enum
-    Less
+    Increasing
     Equal
-    Greater
+    Decreasing
 ;
 
 ARRAY_INIT_CAPACITY u32 <- 8
@@ -49,7 +49,7 @@ ARRAY_INIT_CAPACITY u32 <- 8
             isSorted <- true
             rep i u32 <- 1, i < it.count, i <- i + 1
                 match pComparisonFun.val(it.pValues.val[i-1], it.pValues.val[i])
-                    enum<Array::ComparisonResult>::Greater
+                    enum<Array::ComparisonResult>::Decreasing
                         it.pValues.val[i-1] <-> it.pValues.val[i]
                         isSorted <- false
                     ;
