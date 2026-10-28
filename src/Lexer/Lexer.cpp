@@ -540,7 +540,11 @@ shared_ptr<Token> Lexer::matchType() {
         return nullptr;
 
     // TYPE < TYPE [..]
-    if (tokens.size() >= 2 && tokens.back()->isOfKind({TokenKind::LEFT_ANGLE_BRACKET}) && !tokens.at(tokens.size() - 2)->isOfKind({TokenKind::TYPE}))
+    if (tokens.size() >= 2 && tokens.back()->getKind() == TokenKind::LEFT_ANGLE_BRACKET && tokens.at(tokens.size() - 2)->getKind() != TokenKind::TYPE)
+        return nullptr;
+
+    // .ANY < TYPE [..]
+    if (tokens.size() >= 3 && tokens.back()->getKind() == TokenKind::LEFT_ANGLE_BRACKET && tokens.at(tokens.size() - 3)->getKind() == TokenKind::DOT)
         return nullptr;
 
     while (nextIndex < source.length() && isIdentifier(nextIndex))
