@@ -355,7 +355,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlock> statementBlock, shared_
 void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
     // check fields
     shared_ptr<Expression> currentTagExpression = nullptr;
-    for (EnumField &field : statementEnum->fields) {
+    for (EnumField &field : statementEnum->getFields()) {
         // Only none or boxed types are valid
         if (!field.payloadValueType->isBoxed() && field.payloadValueType->getKind() != ValueTypeKind::NONE) {
             markErrorInvalidType(field.payloadValueType->getLocation(), field.payloadValueType, nullptr);
@@ -2589,11 +2589,6 @@ void Analyzer::checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<Va
         markErrorInvalidPattern(pattern->getLocation(), pattern);
         return;
     }
-}
-
-void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {
-    string message = format("\"{}\" is already defined", identifier);
-    errors.push_back(Error::error(location, message));
 }
 
 void Analyzer::markErrorInvalidAttribute(shared_ptr<Location> location, const string &name) {

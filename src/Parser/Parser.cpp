@@ -613,7 +613,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
     vector<string> namedTypeKeys;
     vector<EnumField> fields;
     string fieldName = "";
-    shared_ptr<ValueType> payloadValueType = ValueTypeSimple::NONE;
+    shared_ptr<ValueType> payloadValueType = nullptr;
     shared_ptr<Expression> tagExpression = nullptr;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
@@ -655,6 +655,8 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
             case TAG_FIELD_FINISHED: {
                 // prefix field with the enum name
                 fieldName = format("{}::{}", name, fieldName);
+                if (payloadValueType == nullptr)
+                    payloadValueType = make_shared<ValueTypeSimple>(ValueTypeKind::NONE, location);
                 fields.push_back(
                     EnumField(
                         make_shared<SymbolName>(fieldName),
@@ -663,7 +665,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
                     )
                 );
                 fieldName = "";
-                payloadValueType = ValueTypeSimple::NONE;
+                payloadValueType = nullptr;
                 tagExpression = nullptr;
                 break;
             }
