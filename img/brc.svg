@@ -31,13 +31,13 @@
      showguides="false"
      inkscape:zoom="1.42"
      inkscape:cx="396.47887"
-     inkscape:cy="275"
+     inkscape:cy="475"
      inkscape:window-width="2389"
      inkscape:window-height="1380"
-     inkscape:window-x="52"
+     inkscape:window-x="40"
      inkscape:window-y="25"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer1">
+     inkscape:current-layer="layer2">
     <inkscape:grid
        id="grid1"
        units="mm"
@@ -128,6 +128,42 @@
          inkscape:label="Background" />
     </clipPath>
   </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Icon">
+    <rect
+       style="display:none;opacity:0.865964;fill:#000000;stroke:none;stroke-width:2.117;stroke-dasharray:none;paint-order:fill markers stroke"
+       id="rect2"
+       width="60"
+       height="60"
+       x="-61.022266"
+       y="135"
+       ry="0"
+       transform="translate(86.022267)"
+       inkscape:label="Background"
+       inkscape:export-filename="/Users/Rafal/Desktop/rect14.png"
+       inkscape:export-xdpi="650.23999"
+       inkscape:export-ydpi="650.23999" />
+    <path
+       style="display:inline;fill:#ffb000;fill-opacity:1;stroke-width:0.342112;stroke-dasharray:none"
+       d="m 45.000001,166.30428 h 20.000001 l -10e-7,13.69571 -5,11.30428 -8.333335,1e-5 -1.666665,-1e-5 5,-11.30428 h -10 z"
+       id="path2"
+       sodipodi:nodetypes="ccccccccc"
+       inkscape:label="Semicolon Bottom" />
+    <rect
+       style="display:inline;fill:#ffb000;fill-opacity:1;stroke-width:0.352777"
+       id="rect4"
+       width="19.999998"
+       height="20.000004"
+       x="45"
+       y="139.09918"
+       ry="7.2051044"
+       inkscape:label="Semicolon Top"
+       inkscape:export-filename="/Users/Rafal/Desktop/icon.png"
+       inkscape:export-xdpi="54.186665"
+       inkscape:export-ydpi="54.186665" />
+  </g>
   <g
      inkscape:groupmode="layer"
      id="g13"
