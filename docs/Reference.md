@@ -12,7 +12,7 @@ Source code is grouped into named modules, each module can be composed of number
 ## Language Elements
 - [Comments](Reference.md#comments) (`//`, `/* */`)
 - [Literals](Reference.md#literals) (`123`, `0xa2`, `0b0101`, `3.14`, `"Hello"`, `'!'`, `true`, `false`)
-- [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`)
+- [Operators](Reference.md#operators) (`+`, `-`, `*`, `/`, `%`, `<-`, `<`, `<=`, `>`, `>=`, `=`, `!=`, `<->`)
 - [Logical Operators](Reference.md#logical-operators) (`or`, `xor`, `and`, `not`)
 - [Bitwise Operators](Reference.md#bitwise-operators) (`&?`, `|`, `^`, `&`, `<<`, `>>`, `~`)
 - [Simple Variables](Reference.md#simple-variables) (`u8`, `u16`, `u32`, `u64`, `s8`, `s16`, `s32`, `s64`, `f32`, `f64`, `a`, `ptr`, `data`, `blob`)
@@ -114,6 +114,7 @@ All the standard operators, such as `+`, `-`, `*`, `/`, `%` are available. The b
 >= // is greater than or equal
 <- // assignment
 ( ) // precedence
+<-> // exchange values
 ```
 
 ## Logical Operators

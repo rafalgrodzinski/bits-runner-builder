@@ -11,6 +11,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementEnum.h"
+#include "Parser/Statement/StatementExchange.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -170,88 +171,95 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
             buildStatement(dynamic_pointer_cast<StatementAssignment>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOB: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementBlob>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOB_DECLARATION: {
             buildStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOCK: {
             buildStatement(dynamic_pointer_cast<StatementBlock>(statement));
-            break;
+            return;
         }
         case StatementKind::ENUM: {
-            buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
-            break;
+            if (importLevel != ImportLevel::IMPLICIT)
+                buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
+            return;
+        }
+        case StatementKind::EXCHANGE: {
+            buildStatement(dynamic_pointer_cast<StatementExchange>(statement));
+            return;
         }
         case StatementKind::EXPRESSION: {
             buildStatement(dynamic_pointer_cast<StatementExpression>(statement));
-            break;
+            return;
         }
         case StatementKind::FUNCTION: {
             buildStatement(dynamic_pointer_cast<StatementFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::FUNCTION_DECLARATION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::META_EXTERN_FUNCTION: {
             buildStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::META_EXTERN_VARIABLE: {
             buildStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
-            break;
+            return;
         }
         case StatementKind::META_IMPORT: {
             ImportLevel newImportLevel = ImportLevel::IMPLICIT;
             if (importLevel == ImportLevel::NONE)
                 newImportLevel = ImportLevel::EXPLICIT;
             buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement), newImportLevel);
-            break;
+            return;
         }
         case StatementKind::PROTO: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementProto>(statement));
-            break;
+            return;
         }
         case StatementKind::PROTO_DECLARATION: {
             buildStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::RAW_FUNCTION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::REPEAT: {
             buildStatement(dynamic_pointer_cast<StatementRepeat>(statement));
-            break;
+            return;
         }
         case StatementKind::RETURN: {
             buildStatement(dynamic_pointer_cast<StatementReturn>(statement));
-            break;
+            return;
         }
         case StatementKind::VARIABLE: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementVariable>(statement));
-            break;
+            return;
         }
         case StatementKind::VARIABLE_DECLARATION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 buildStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
-            break;
+            return;
         }
         default:
-            markErrorUnexpected(statement->getLocation(), "statement");
+            break;
     }
+
+    markErrorUnexpected(statement->getLocation(), "statement");
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementAssignment> statementAssignment) {
@@ -334,9 +342,25 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
     // Register enum field tag values
     for (const EnumField &field : statementEnum->getFields()) {
         shared_ptr<WrappedValue> constantWrappedValue = wrappedValueForExpression(field.tagExpression);
+        if (constantWrappedValue == nullptr)
+            return;
         llvm::Constant *tagValue = constantWrappedValue->getConstantValue();
         scope->setEnumFieldTagValue(field.symbolName->getGlobalName(), tagValue);
     }
+}
+
+void ModuleBuilder::buildStatement(std::shared_ptr<StatementExchange> statementExchange) {
+    shared_ptr<WrappedValue> leftWrappedValue = wrappedValueForExpression(statementExchange->getLeftExpression());
+    shared_ptr<WrappedValue> rightWrappedValue = wrappedValueForExpression(statementExchange->getRightExpression());
+    if (leftWrappedValue == nullptr || rightWrappedValue == nullptr)
+        return;
+
+    llvm::AllocaInst *tempAlloca = builder->CreateAlloca(leftWrappedValue->getType());
+    builder->CreateStore(leftWrappedValue->getValue(), tempAlloca);
+    llvm::Value *tempValue = builder->CreateLoad(leftWrappedValue->getType(), tempAlloca);
+
+    builder->CreateStore(rightWrappedValue->getValue(), leftWrappedValue->getPointerValue());
+    builder->CreateStore(tempValue, rightWrappedValue->getPointerValue());
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementExpression> statementExpression) {
@@ -1187,9 +1211,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         case ExpressionKind::VALUE:
             return wrappedValueForExpression(dynamic_pointer_cast<ExpressionValue>(expression));
         default:
-            markErrorUnexpected(expression->getLocation(), "expression");
-            return nullptr;
+            break;
     }
+
+    markErrorUnexpected(expression->getLocation(), "expression");
+    return nullptr;
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
@@ -2734,6 +2760,10 @@ llvm::Value *ModuleBuilder::valueForMatch(shared_ptr<WrappedValue> switchWrapped
 
             // Get pattern tag
             llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+            if (tagValue == nullptr) {
+                markErrorNotDefined(pattern->getLocation(), pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+                return nullptr;
+            }
 
             return builder->CreateICmpEQ(tagMemberLoad, tagValue);
         }

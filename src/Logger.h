@@ -22,6 +22,7 @@ class StatementBlob;
 class StatementBlobDeclaration;
 class StatementBlock;
 class StatementEnum;
+class StatementExchange;
 class StatementExpression;
 class StatementFunction;
 class StatementFunctionDeclaration;
@@ -101,6 +102,7 @@ private:
     static std::string toString(std::shared_ptr<StatementBlobDeclaration> statement, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<StatementBlock> statement, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<StatementEnum> statement, std::vector<IndentKind> indents);
+    static std::string toString(std::shared_ptr<StatementExchange> statementExchange, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<StatementExpression> statement, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<StatementFunction> statement, std::vector<IndentKind> indents);
     static std::string toString(std::shared_ptr<StatementFunctionDeclaration> statement, std::vector<IndentKind> indents);

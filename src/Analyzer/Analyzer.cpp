@@ -26,6 +26,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementEnum.h"
+#include "Parser/Statement/StatementExchange.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -56,6 +57,8 @@
 #include "Parser/Pattern.h"
 
 using namespace std;
+
+static vector<string> illegalBlobFieldNames = {"adr", "size"};
 
 // MARK: - Public
 
@@ -104,89 +107,95 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
             checkStatement(dynamic_pointer_cast<StatementAssignment>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOB: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementBlob>(statement), isImported);
-            break;
+            return;
         }
         case StatementKind::BLOB_DECLARATION: {
             checkStatement(dynamic_pointer_cast<StatementBlobDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::BLOCK: {
             checkStatement(dynamic_pointer_cast<StatementBlock>(statement), returnType);
-            break;
+            return;
         }
         case StatementKind::ENUM: {
-            checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
-            break;
+            if (importLevel != ImportLevel::IMPLICIT)
+                checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
+            return;
+        }
+        case StatementKind::EXCHANGE: {
+            checkStatement(dynamic_pointer_cast<StatementExchange>(statement));
+            return;
         }
         case StatementKind::EXPRESSION: {
             checkStatement(dynamic_pointer_cast<StatementExpression>(statement), returnType);
-            break;
+            return;
         }
         case StatementKind::FUNCTION: {
             checkStatement(dynamic_pointer_cast<StatementFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::FUNCTION_DECLARATION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::META_EXTERN_FUNCTION: {
             checkStatement(dynamic_pointer_cast<StatementMetaExternFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::META_EXTERN_VARIABLE: {
             checkStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
-            break;
+            return;
         }
         case StatementKind::META_IMPORT: {
             ImportLevel newImportLevel = ImportLevel::IMPLICIT;
             if (importLevel == ImportLevel::NONE)
                 newImportLevel = ImportLevel::EXPLICIT;
             checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement), newImportLevel);
-            break;
+            return;
         }
         case StatementKind::PROTO: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementProto>(statement));
-            break;
+            return;
         }
         case StatementKind::PROTO_DECLARATION: {
             checkStatement(dynamic_pointer_cast<StatementProtoDeclaration>(statement));
-            break;
+            return;
         }
         case StatementKind::RAW_FUNCTION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
-            break;
+            return;
         }
         case StatementKind::REPEAT: {
             checkStatement(dynamic_pointer_cast<StatementRepeat>(statement), returnType);
-            break;
+            return;
         }
         case StatementKind::RETURN: {
             checkStatement(dynamic_pointer_cast<StatementReturn>(statement), returnType);
-            break;
+            return;
         }
         case StatementKind::VARIABLE: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementVariable>(statement));
-            break;
+            return;
         }
         case StatementKind::VARIABLE_DECLARATION: {
             if (importLevel != ImportLevel::IMPLICIT)
                 checkStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
-            break;
+            return;
         }
-        default: {
+        default:
             break;
-        }
     }
+
+    markErrorUnexpected(statement->getLocation(), "statement");
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignment) {
@@ -220,9 +229,11 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     if (!scope->level([&]() -> bool {
         for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
             // check for invalid field names
-            if (statementVariableDeclaration->getIdentifier() == "adr") {
-                markErrorInvalidBuiltIn(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType());
-                return false;
+            for (string &illegalName : illegalBlobFieldNames) {
+                if (statementVariableDeclaration->getIdentifier() == illegalName) {
+                    markErrorNameNotAllowed(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier());
+                    return false;
+                }
             }
 
             // fields should not have @export
@@ -404,6 +415,18 @@ void Analyzer::checkStatement(shared_ptr<StatementEnum> statementEnum) {
         );
         return;
     }
+}
+
+void Analyzer::checkStatement(std::shared_ptr<StatementExchange> statementExchange) {
+    statementExchange->getLeftExpression()->valueType = typeForExpression(statementExchange->getLeftExpression(), nullptr, nullptr);
+    statementExchange->getRightExpression()->valueType = typeForExpression(statementExchange->getRightExpression(), nullptr, nullptr);
+
+    if (statementExchange->getLeftExpression()->getValueType() == nullptr || statementExchange->getRightExpression()->getValueType() == nullptr)
+        return;
+
+    // Value types have to be the same
+    if (!statementExchange->getLeftExpression()->getValueType()->isEqual(statementExchange->getRightExpression()->getValueType()))
+        markErrorInvalidType(statementExchange->getLocation(), statementExchange->getLeftExpression()->getValueType(), nullptr);
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpression, shared_ptr<ValueType> returnType) {
@@ -794,9 +817,10 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<Expression> express
         case ExpressionKind::VALUE:
             return typeForExpression(dynamic_pointer_cast<ExpressionValue>(expression), parentExpression);
         default:
-            markErrorUnexpectedExpression(expression->getLocation());
             break;
     }
+
+    markErrorUnexpected(expression->getLocation(), "expression");
     return nullptr;
 }
 
@@ -1339,7 +1363,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
                                     // make sure that the indexed value is an array
                                     shared_ptr<ValueType> valueType = blobMember.second;
                                     if (valueType->getKind() != ValueTypeKind::DATA) {
-                                        markErrorInvalidType(valueType->getLocation(), valueType, nullptr);
+                                        markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
                                         return false;
                                     }
                                     expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobMember.second)->getElementValueType();
@@ -2486,7 +2510,7 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 
     // Check if enum is registered
     if (!oNamedValueTypeKeys) {
-        markErrorNotDefined(nullptr, valueTypeEnum->getSymbolName()->getGlobalName());
+        markErrorNotDefined(valueTypeEnum->getLocation(), valueTypeEnum->getSymbolName()->getGlobalName());
         return nullptr;
     }
 
@@ -2536,15 +2560,19 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeFun> valueTypeFun) {
-    vector<shared_ptr<ValueType>> argValueTypes = valueTypeFun->getArgumentValueTypes();
-    for (shared_ptr<ValueType> argValueType : argValueTypes) {
-        if (typeForCheckedValueType(argValueType, true) == nullptr)
-            return nullptr;
+    vector<shared_ptr<ValueType>> checkedArgumentValueTypes;
+    for (shared_ptr<ValueType> argumentValueType : valueTypeFun->getArgumentValueTypes()) {
+        shared_ptr<ValueType> checkedArgumentValueType = typeForCheckedValueType(argumentValueType, true);
+        if (checkedArgumentValueType == nullptr)
+        return nullptr;
+        checkedArgumentValueTypes.push_back(checkedArgumentValueType);
     }
-    if (typeForCheckedValueType(valueTypeFun->getReturnValueType(), true) == nullptr)
+    
+    shared_ptr<ValueType> checkedReturnValueType = typeForCheckedValueType(valueTypeFun->getReturnValueType(), true);
+    if (checkedReturnValueType == nullptr)
         return nullptr;
 
-    return valueTypeFun;
+    return make_shared<ValueTypeFun>(checkedArgumentValueTypes, checkedReturnValueType, valueTypeFun->getLocation());
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypePtr> valueTypePtr) {
@@ -2562,11 +2590,6 @@ void Analyzer::checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<Va
         markErrorInvalidPattern(pattern->getLocation(), pattern);
         return;
     }
-}
-
-void Analyzer::markErrorAlreadyDefined(shared_ptr<Location> location, const string &identifier) {
-    string message = format("\"{}\" is already defined", identifier);
-    errors.push_back(Error::error(location, message));
 }
 
 void Analyzer::markErrorInvalidAttribute(shared_ptr<Location> location, const string &name) {
@@ -2639,6 +2662,11 @@ void Analyzer::markErrorInvalidType(shared_ptr<Location> location, shared_ptr<Va
     errors.push_back(Error::error(location, message));
 }
 
+void Analyzer::markErrorNameNotAllowed(std::shared_ptr<Location> location, const std::string &name) {
+    string message = format("Name \"{}\" is not allowed in this context", name);
+    errors.push_back(Error::error(location, message));
+}
+
 void Analyzer::markErrorNotDefined(shared_ptr<Location> location, const string &name) {
     string message = format("{} is not defined in scope", name);
     errors.push_back(Error::error(location, message));
@@ -2649,8 +2677,8 @@ void Analyzer::markErrorNotImplemented(shared_ptr<Location> location, const stri
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorUnexpectedExpression(shared_ptr<Location> location) {
-    string message = format("Unexpected expression");
+void Analyzer::markErrorUnexpected(shared_ptr<Location> location, const string &name) {
+    string message = format("Unexpected {}", name);
     errors.push_back(Error::error(location, message));
 }
 

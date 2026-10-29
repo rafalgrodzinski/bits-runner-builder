@@ -7,7 +7,8 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-115](https://github.com/rafalgrodzinski/bits-runner-builder/issues/224):
-- Explicitly cast values are clamped to min max
-- Implicit casts don't clamp
-- Better types handling
+Changelist for [1.0.0-dev-116](https://github.com/rafalgrodzinski/bits-runner-builder/pull/227):
+- Added exchange values `<->` operator
+- Fixed fun type check
+- Added array sorting
+- Fixed enums in headers

@@ -16,6 +16,7 @@
 #include "Parser/Statement/StatementBlobDeclaration.h"
 #include "Parser/Statement/StatementBlock.h"
 #include "Parser/Statement/StatementEnum.h"
+#include "Parser/Statement/StatementExchange.h"
 #include "Parser/Statement/StatementExpression.h"
 #include "Parser/Statement/StatementFunction.h"
 #include "Parser/Statement/StatementFunctionDeclaration.h"
@@ -385,6 +386,8 @@ string Logger::toString(shared_ptr<Token> token) {
             return "::";
         case TokenKind::SEMICOLON:
             return ";";
+            case TokenKind::DOUBLE_ARROW:
+                return "↔︎";
         case TokenKind::LEFT_ARROW:
             return "←";
         case TokenKind::RIGHT_ARROW:
@@ -465,44 +468,46 @@ string Logger::toString(shared_ptr<Token> token) {
 
 string Logger::toString(shared_ptr<Statement> statement, vector<IndentKind> indents) {
     switch (statement->getKind()) {
-        case StatementKind::MODULE:
-            return toString(dynamic_pointer_cast<StatementModule>(statement), indents);
-        case StatementKind::META_IMPORT:
-            return toString(dynamic_pointer_cast<StatementMetaImport>(statement), indents);
-        case StatementKind::META_EXTERN_VARIABLE:
-            return toString(dynamic_pointer_cast<StatementMetaExternVariable>(statement), indents);
-        case StatementKind::META_EXTERN_FUNCTION:
-            return toString(dynamic_pointer_cast<StatementMetaExternFunction>(statement), indents);
-        case StatementKind::VARIABLE_DECLARATION:
-            return toString(dynamic_pointer_cast<StatementVariableDeclaration>(statement), indents);
-        case StatementKind::VARIABLE:
-            return toString(dynamic_pointer_cast<StatementVariable>(statement), indents);
-        case StatementKind::FUNCTION_DECLARATION:
-            return toString(dynamic_pointer_cast<StatementFunctionDeclaration>(statement), indents);
-        case StatementKind::FUNCTION:
-            return toString(dynamic_pointer_cast<StatementFunction>(statement), indents);
-        case StatementKind::RAW_FUNCTION:
-            return toString(dynamic_pointer_cast<StatementRawFunction>(statement), indents);
+        case StatementKind::ASSIGNMENT:
+            return toString(dynamic_pointer_cast<StatementAssignment>(statement), indents);
         case StatementKind::BLOB:
             return toString(dynamic_pointer_cast<StatementBlob>(statement), indents);
         case StatementKind::BLOB_DECLARATION:
             return toString(dynamic_pointer_cast<StatementBlobDeclaration>(statement), indents);
+        case StatementKind::BLOCK:
+            return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
+        case StatementKind::ENUM:
+            return toString(dynamic_pointer_cast<StatementEnum>(statement), indents);
+        case StatementKind::EXCHANGE:
+            return toString(dynamic_pointer_cast<StatementExchange>(statement), indents);
+        case StatementKind::EXPRESSION:
+            return toString(dynamic_pointer_cast<StatementExpression>(statement), indents);
+        case StatementKind::FUNCTION:
+            return toString(dynamic_pointer_cast<StatementFunction>(statement), indents);
+        case StatementKind::FUNCTION_DECLARATION:
+            return toString(dynamic_pointer_cast<StatementFunctionDeclaration>(statement), indents);
+        case StatementKind::META_EXTERN_FUNCTION:
+            return toString(dynamic_pointer_cast<StatementMetaExternFunction>(statement), indents);
+        case StatementKind::META_EXTERN_VARIABLE:
+            return toString(dynamic_pointer_cast<StatementMetaExternVariable>(statement), indents);
+        case StatementKind::META_IMPORT:
+            return toString(dynamic_pointer_cast<StatementMetaImport>(statement), indents);
+        case StatementKind::MODULE:
+            return toString(dynamic_pointer_cast<StatementModule>(statement), indents);
         case StatementKind::PROTO:
             return toString(dynamic_pointer_cast<StatementProto>(statement), indents);
         case StatementKind::PROTO_DECLARATION:
             return toString(dynamic_pointer_cast<StatementProtoDeclaration>(statement), indents);
-        case StatementKind::ENUM:
-            return toString(dynamic_pointer_cast<StatementEnum>(statement), indents);
-        case StatementKind::BLOCK:
-            return toString(dynamic_pointer_cast<StatementBlock>(statement), indents);
-        case StatementKind::ASSIGNMENT:
-            return toString(dynamic_pointer_cast<StatementAssignment>(statement), indents);
-        case StatementKind::RETURN:
-            return toString(dynamic_pointer_cast<StatementReturn>(statement), indents);
+        case StatementKind::RAW_FUNCTION:
+            return toString(dynamic_pointer_cast<StatementRawFunction>(statement), indents);
         case StatementKind::REPEAT:
             return toString(dynamic_pointer_cast<StatementRepeat>(statement), indents);
-        case StatementKind::EXPRESSION:
-            return toString(dynamic_pointer_cast<StatementExpression>(statement), indents);
+        case StatementKind::RETURN:
+            return toString(dynamic_pointer_cast<StatementReturn>(statement), indents);
+        case StatementKind::VARIABLE:
+            return toString(dynamic_pointer_cast<StatementVariable>(statement), indents);
+        case StatementKind::VARIABLE_DECLARATION:
+            return toString(dynamic_pointer_cast<StatementVariableDeclaration>(statement), indents);
     }
 
     return "{INVALID}";
@@ -606,11 +611,10 @@ string Logger::toString(shared_ptr<StatementBlock> statement, vector<IndentKind>
 
 string Logger::toString(shared_ptr<StatementEnum> statement, vector<IndentKind> indents) {
     string text;
-    string line;
 
     // name
-    line = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
-    text += formattedLine(line, indents);
+    text = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
+    text += formattedLine(text, indents);
 
     indents = adjustedLastIndent(indents);
 
@@ -627,6 +631,18 @@ string Logger::toString(shared_ptr<StatementEnum> statement, vector<IndentKind> 
     }
 
     return text;
+}
+
+std::string Logger::toString(std::shared_ptr<StatementExchange> statementExchange, std::vector<IndentKind> indents) {
+    string text;
+
+    text = format(
+        "{} ↔︎ {}",
+        toString(statementExchange->getLeftExpression(), indents, true),
+        toString(statementExchange->getRightExpression(), indents, true)
+    );
+
+    return formattedLine(text, indents);
 }
 
 string Logger::toString(shared_ptr<StatementExpression> statement, vector<IndentKind> indents) {
@@ -1602,6 +1618,8 @@ string Logger::toString(TokenKind tokenKind) {
             return "::";
         case TokenKind::SEMICOLON:
             return ";";
+            case TokenKind::DOUBLE_ARROW:
+                return "↔︎";
         case TokenKind::LEFT_ARROW:
             return "←";
         case TokenKind::RIGHT_ARROW:

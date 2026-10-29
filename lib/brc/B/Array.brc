@@ -2,6 +2,12 @@
 
 @import BSys
 
+@export Array::ComparisonResult enum
+    Increasing
+    Equal
+    Decreasing
+;
+
 ARRAY_INIT_CAPACITY u32 <- 8
 
 @export Array<T> blob
@@ -35,5 +41,20 @@ ARRAY_INIT_CAPACITY u32 <- 8
 
     at fun: index u32 -> boxed<T>
         ret it.pValues.val[index]
+    ;
+
+    sort fun: pComparisonFun ptr<fun: boxed<T>, boxed<T> -> enum<Array::ComparisonResult>>
+        isSorted bool <- false
+        rep not isSorted
+            isSorted <- true
+            rep i u32 <- 1, i < it.count, i <- i + 1
+                match pComparisonFun.val(it.pValues.val[i-1], it.pValues.val[i])
+                    enum<Array::ComparisonResult>::Decreasing
+                        it.pValues.val[i-1] <-> it.pValues.val[i]
+                        isSorted <- false
+                    ;
+                ;
+            ;
+        ;
     ;
 ;

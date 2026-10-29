@@ -17,6 +17,7 @@ class StatementBlob;
 class StatementBlobDeclaration;
 class StatementBlock;
 class StatementEnum;
+class StatementExchange;
 class StatementExpression;
 class StatementFunction;
 class StatementFunctionDeclaration;
@@ -94,6 +95,7 @@ private:
     void checkStatement(std::shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
     void checkStatement(std::shared_ptr<StatementBlock> statementBlock, std::shared_ptr<ValueType> returnType);
     void checkStatement(std::shared_ptr<StatementEnum> statementEnum);
+    void checkStatement(std::shared_ptr<StatementExchange> statementExchange);
     void checkStatement(std::shared_ptr<StatementExpression> statementExpression, std::shared_ptr<ValueType> returnType);
     void checkStatement(std::shared_ptr<StatementFunction> statementFunction);
     void checkStatement(std::shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
@@ -148,7 +150,6 @@ private:
     // Pattern
     void checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<ValueType> switchValueType);
 
-    void markErrorAlreadyDefined(std::shared_ptr<Location> location, const std::string &identifier);
     void markErrorInvalidAttribute(std::shared_ptr<Location> location, const std::string &name);
     void markErrorInvalidArgumentsCount(std::shared_ptr<Location> location, int actulCount, int expectedCount);
     void markErrorInvalidBuiltIn(std::shared_ptr<Location> location, const std::string &builtInName, std::shared_ptr<ValueType> type);
@@ -160,9 +161,10 @@ private:
     void markErrorInvalidPattern(std::shared_ptr<Location> location, std::shared_ptr<Pattern> pattern);
     void markErrorInvalidRegistration(std::shared_ptr<Location> location, const std::string &identifier, AnalyzerScopeRegisterResult registerResult);
     void markErrorInvalidType(std::shared_ptr<Location> location, std::shared_ptr<ValueType> actualType, std::shared_ptr<ValueType> expectedType);
+    void markErrorNameNotAllowed(std::shared_ptr<Location> location, const std::string &name);
     void markErrorNotDefined(std::shared_ptr<Location> location, const std::string &name);
     void markErrorNotImplemented(std::shared_ptr<Location> location, const std::string &protoName, const std::string &memberName);
-    void markErrorUnexpectedExpression(std::shared_ptr<Location> location);
+    void markErrorUnexpected(std::shared_ptr<Location> location, const std::string &name);
 };
 
 #endif
