@@ -11,3 +11,4 @@ Changelist for [1.0.0-dev-116](https://github.com/rafalgrodzinski/bits-runner-bu
 - Added exchange values `<->` operator
 - Fixed fun type check
 - Added array sorting
+- Fixed enums in headers
