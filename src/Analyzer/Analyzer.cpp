@@ -2510,7 +2510,7 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 
     // Check if enum is registered
     if (!oNamedValueTypeKeys) {
-        markErrorNotDefined(nullptr, valueTypeEnum->getSymbolName()->getGlobalName());
+        markErrorNotDefined(valueTypeEnum->getLocation(), valueTypeEnum->getSymbolName()->getGlobalName());
         return nullptr;
     }
 

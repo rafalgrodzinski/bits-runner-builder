@@ -217,7 +217,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         importStatementsMap[moduleName] = moduleImportStatements;
         // externs
         externStatementsMap[moduleName] = moduleExternStatements;
-        // enums
+        // enums definitions
         enumStatementsMap[moduleName] = moduleEnumStatements;
         // proto declarations
         protoDeclarationStatementsMap[moduleName] = moduleProtoDeclarationStatements;
@@ -273,6 +273,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // externs
         for (shared_ptr<Statement> statement : moduleExternStatements)
             externStatementsMap[moduleName].push_back(statement);
+        // enum definitions
+        for (shared_ptr<Statement> statement : moduleEnumStatements)
+            enumStatementsMap[moduleName].push_back(statement);
         // proto declarations
         for (shared_ptr<Statement> statement : moduleProtoDeclarationStatements)
             protoDeclarationStatementsMap[moduleName].push_back(statement);
@@ -299,6 +302,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         for (shared_ptr<Statement> statement : moduleBodyStatements)
             bodyStatementsMap[moduleName].push_back(statement);
 
+        // exported enum definitions
+        for (shared_ptr<Statement> statement : moduleExportedEnumStatements)
+            exportedEnumStatementsMap[moduleName].push_back(statement);
         // exported proto declarations
         for (shared_ptr<Statement> statement : moduleExportedProtoDeclarationStatements)
             exportedBlobDeclarationStatementsMap[moduleName].push_back(statement);
@@ -344,7 +350,7 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // externs
         for (shared_ptr<Statement> statement : externStatementsMap[moduleName])
             headerStatements.push_back(statement);
-        // enums
+        // enums definitions
         for (shared_ptr<Statement> statement : enumStatementsMap[moduleName])
             headerStatements.push_back(statement);
         // proto declarations
