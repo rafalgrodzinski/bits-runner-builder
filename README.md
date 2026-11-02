@@ -34,7 +34,7 @@ Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https
 - [🛠️ How to build](README.md#-how-to-build)
 - [💡 Samples](README.md#-samples)
 - [🖍️ Visual Studio Code support](README.md#-visual-studio-code-support)
-- [🔗 Further resources](README.md#-further-resources)
+- [🔗 More info](README.md#-more-info)
 
 
 ## 🥞 A taste of BRC
@@ -221,7 +221,7 @@ For a real use of the language checkout sources for the [Bits Runner](https://gi
 There are "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 which will then build and start debugging using command `brb --verb=v3 samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode and `lldb-dap` on your system. There is also a [BRC langauge extension](https://github.com/rafalgrodzinski/brc-vscode) available.
 
 
-## 🔗 Further resources
+## 🔗 More info
 - [Language reference](docs/Reference.md)
 - [Casting rules](docs/Casts.md)
 - [Extra information](docs/Extra.md)
