@@ -1,6 +1,8 @@
 <div align="center">
-    <img width="96" src="https://github.com/rafalgrodzinski/bits-runner-builder/blob/main/img/Logo.png"/>
-    <h1>Bits Runner Builder</h1>
+    <p>
+        <img width="96" src="https://github.com/rafalgrodzinski/bits-runner-builder/blob/main/img/Logo.png"/>
+        <h1>Bits Runner Builder</h1>
+    </p>
     <p>
         A low level system programming language that doesn't get in your way
     </p>
