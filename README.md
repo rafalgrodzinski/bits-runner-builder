@@ -19,7 +19,7 @@
         &nbsp;
         <a href="#"><img src="https://img.shields.io/github/repo-size/rafalgrodzinski/bits-runner-builder?label=Repo%20Size&color=white"></img></a>
         &nbsp;
-        <a href="https://github.com/rafalgrodzinski/bits-runner-builder/issues?color=lightblue"><img src="https://img.shields.io/github/issues/rafalgrodzinski/bits-runner-builder?label=Issues&color=white"></img></a>
+        <a href="https://github.com/rafalgrodzinski/bits-runner-builder/issues"><img src="https://img.shields.io/github/issues/rafalgrodzinski/bits-runner-builder?label=Issues&color=white"></img></a>
     </p>
 </div>
 
