@@ -27,7 +27,7 @@
 Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system project. It aims to be a modernised C with clear and explicit syntax. Bits Runner Builder (BRB) is its implementation. It's available for macOS, Linux, and Windows.
 
 
-### In this readme
+## 🧵 In this readme
 - [🥞 A taste of BRC](README.md#-a-taste-of-brc)
 - [🤓 But why?](README.md#-but-why)
 - [💿 How to install](README.md#-how-to-install)
