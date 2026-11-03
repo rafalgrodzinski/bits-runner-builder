@@ -1,0 +1,8 @@
+@module Second
+
+@import First
+
+@export BSecond blob
+    //pFirst ptr<blob<@First::BFirst>>
+    first blob<@First::BFirst>
+;

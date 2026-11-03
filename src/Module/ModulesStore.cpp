@@ -336,10 +336,10 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // construct the local header
         // order for local header statements is:
         // - externs
-        // - enums
+        // - import statements
         // - proto declaration
         // - blob declarations
-        // - import statements (imported statements may use blobs & protos)
+        // - enum definitions
         // - proto definition
         // - blob definitions
         // - function declarations
@@ -347,11 +347,11 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // - raw function definitions
 
         vector<shared_ptr<Statement>> headerStatements;
+        // imports
+        for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
+            headerStatements.push_back(statement);
         // externs
         for (shared_ptr<Statement> statement : externStatementsMap[moduleName])
-            headerStatements.push_back(statement);
-        // enums definitions
-        for (shared_ptr<Statement> statement : enumStatementsMap[moduleName])
             headerStatements.push_back(statement);
         // proto declarations
         for (shared_ptr<Statement> statement : protoDeclarationStatementsMap[moduleName])
@@ -359,8 +359,8 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // blob declarations
         for (shared_ptr<Statement> statement : blobDeclarationStatementsMap[moduleName])
             headerStatements.push_back(statement);
-        // imports
-        for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
+        // enums definitions
+        for (shared_ptr<Statement> statement : enumStatementsMap[moduleName])
             headerStatements.push_back(statement);
         // proto definitions
         for (shared_ptr<Statement> statement : protoStatementsMap[moduleName])
@@ -397,8 +397,9 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
     // order for exported header statements is:
     // - import statements
     // - proto declarations
-    // - proto definitions
     // - blob declarations
+    // - enum definitions
+    // - proto definitions
     // - blob definitions
     // - function declarations
     // - variable declarations
@@ -411,17 +412,17 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
         // imports
         for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
-        // exported enums
-        for (shared_ptr<Statement> statement : exportedEnumStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
         // exported proto declarations
         for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
-        // exported proto definitions
-        for (shared_ptr<Statement> statement : exportedProtoStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
         // exported blob declarations
         for (shared_ptr<Statement> statement : exportedBlobDeclarationStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported enums definitions
+        for (shared_ptr<Statement> statement : exportedEnumStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported proto definitions
+        for (shared_ptr<Statement> statement : exportedProtoStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
         // exported blob definitions
         for (shared_ptr<Statement> statement : exportedBlobStatementsMap[moduleName])

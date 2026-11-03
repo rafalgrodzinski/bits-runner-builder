@@ -1,0 +1,5 @@
+@module Video
+
+@export Adapter proto
+    getSurface fun: pMode ptr<blob<Mode>> -> ptr<blob<Surface>>
+;

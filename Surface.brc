@@ -1,0 +1,11 @@
+@module Video
+
+@export Surface blob
+    iAdapter proto<Adapter>
+    pMode ptr<blob<Mode>>
+
+    getWidth fun -> u32
+        if it.pMode.vadr = 0: ret 0
+        ret it.pMode.val.width
+    ;
+;
