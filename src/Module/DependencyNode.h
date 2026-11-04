@@ -15,6 +15,8 @@ public:
     std::shared_ptr<ValueType> getValueType();
     std::vector<std::shared_ptr<DependencyNode>> getChildDependencyNodes();
     void appendChildDependencyNodes(std::vector<std::shared_ptr<DependencyNode>> childDependencyNodes);
+    bool getIsVisited();
+    void markVisited();
 
 private:
     static std::vector<std::shared_ptr<DependencyNode>> cachedNodes;

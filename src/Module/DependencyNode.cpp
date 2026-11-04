@@ -77,6 +77,14 @@ vector<shared_ptr<DependencyNode>> DependencyNode::getChildDependencyNodes() {
     return childDependencyNodes;
 }
 
+bool DependencyNode::getIsVisited() {
+    return isVisited;
+}
+
+void DependencyNode::markVisited() {
+    isVisited = true;
+}
+
 // MARK: - Private
 
 vector<shared_ptr<DependencyNode>> DependencyNode::cachedNodes;

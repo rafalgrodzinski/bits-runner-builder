@@ -676,7 +676,7 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(vector<shared_ptr<S
         }
     }
 
-    return {};
+    return sortedStatements(dependencyNodes, statements);
 }
 
 shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<Statement> statement, const std::string &moduleName) {
@@ -754,4 +754,38 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<Statemen
         return DependencyNode::dependencyNode(statementVariableDeclaration->getValueType(), vector<shared_ptr<DependencyNode>>());
     
     return nullptr;
+}
+
+vector<shared_ptr<Statement>> ModulesStore::sortedStatements(vector<shared_ptr<DependencyNode>> dependencyNodes, vector<shared_ptr<Statement>> statements) {
+    vector<shared_ptr<Statement>> resolvedSortedStatements;
+
+    for (shared_ptr<DependencyNode> dependencyNode : dependencyNodes) {
+        // First go through each of the leafs (children)
+        for (shared_ptr<DependencyNode> childDependencyNode : dependencyNode->getChildDependencyNodes()) {
+            vector<shared_ptr<Statement>> resolvedChildSortedStatements = sortedStatements({childDependencyNode}, statements);
+            for (shared_ptr<Statement> resolvedChildSortedStatement : resolvedChildSortedStatements)
+                resolvedSortedStatements.push_back(resolvedChildSortedStatement);
+        }
+
+        // Handle the node itself
+        dependencyNode->markVisited();
+        // Find a corresponding statement
+        for (shared_ptr<Statement> statement : statements) {
+            // Is it a blob?
+            if (dependencyNode->getValueType()->isBlob() && statement->getKind() == StatementKind::BLOB) {
+                shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
+                if (dependencyNode->getValueType()->toBlob()->getSymbolName()->isEqual(statementBlob->getSymbolName())) {
+                    resolvedSortedStatements.insert(resolvedSortedStatements.begin(), statement);
+                }
+            // Or a proto?
+            } else if (dependencyNode->getValueType()->isProto() && statement->getKind() == StatementKind::PROTO) {
+                shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
+                if (dependencyNode->getValueType()->toProto()->getSymbolName()->isEqual(statementProto->getSymbolName())) {
+                    resolvedSortedStatements.insert(resolvedSortedStatements.begin(), statement);
+                }
+            }
+        }
+    }
+
+    return resolvedSortedStatements;
 }
