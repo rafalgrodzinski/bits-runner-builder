@@ -7,10 +7,14 @@
 #include <string>
 #include <vector>
 
+class DependencyNode;
 class Module;
 class Expression;
 class Statement;
-class ValueType;
+class StatementBlob;
+class StatementMetaImport;
+class StatementProto;
+class StatementVariableDeclaration;
 
 class ModulesStore {
 public:
@@ -49,6 +53,13 @@ private:
 
     void setModuleName(std::shared_ptr<Statement> statement, const std::string &moduleName, bool isRoot = false);
     void setModuleName(std::shared_ptr<Expression> expression, const std::string &moduleName);
+
+    std::vector<std::shared_ptr<Statement>> sortedStatements(std::vector<std::shared_ptr<Statement>> statements, const std::string &moduleName);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<Statement> statement, const std::string &moduleName);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementBlob> statementBlob);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementMetaImport> statementMetaImport, const std::string &moduleName);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementProto> statementProto, const std::string &moduleName);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 };
 
 #endif

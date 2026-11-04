@@ -1,6 +1,7 @@
 #include "ModulesStore.h"
 
 #include "Module.h"
+#include "DependencyNode.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -36,8 +37,10 @@
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
-#include "Parser/ValueType/ValueType.h"
 #include "Parser/Pattern.h"
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
+#include "Parser/ValueType/ValueTypeProto.h"
 
 using namespace std;
 
@@ -333,6 +336,15 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
     vector<shared_ptr<Module>> modules;
 
     for (const string &moduleName : moduleNames) {
+        vector<shared_ptr<Statement>> statements;
+
+        for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
+            statements.push_back(statement);
+        for (shared_ptr<Statement> statement : blobStatementsMap[moduleName])
+            statements.push_back(statement);
+
+        sortedStatements(statements, moduleName);
+
         // construct the local header
         // order for local header statements is:
         // - externs
@@ -444,7 +456,7 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
 // MARK: - Private
 
 void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot) {
-    if (statement == nullptr)
+    if (statement == nullptr) 
         return;
 
     switch (statement->getKind()) {
@@ -648,4 +660,98 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
         default:
             break;
     }
+}
+
+vector<shared_ptr<Statement>> ModulesStore::sortedStatements(vector<shared_ptr<Statement>> statements, const std::string &moduleName) {
+    vector<shared_ptr<DependencyNode>> dependencyNodes;
+
+    for (shared_ptr<Statement> statement : statements) {
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, moduleName)) {
+            if (resolvedDependencyNode->getValueType() != nullptr) {
+                dependencyNodes.push_back(resolvedDependencyNode);
+            } else {
+                for (shared_ptr<DependencyNode> resolvedChildDependencyNode : resolvedDependencyNode->getChildDependencyNodes())
+                    dependencyNodes.push_back(resolvedChildDependencyNode);
+            }
+        }
+    }
+
+    return {};
+}
+
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<Statement> statement, const std::string &moduleName) {
+    switch (statement->getKind()) {
+        case StatementKind::BLOB:
+            return dependencyNode(dynamic_pointer_cast<StatementBlob>(statement));
+        case StatementKind::META_IMPORT:
+            return dependencyNode(dynamic_pointer_cast<StatementMetaImport>(statement), moduleName);
+        case StatementKind::VARIABLE_DECLARATION:
+            return dependencyNode(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+        default:
+            break;
+    }
+
+    return nullptr;
+}
+
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementBlob> statementBlob) {
+    vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
+
+    // Iterate through variables
+    for (shared_ptr<Statement> statement : statementBlob->getStatementVariableDeclarations()) {
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, ""))
+            resolvedDependencyNodes.push_back(resolvedDependencyNode);
+    }
+
+    return DependencyNode::dependencyNode(
+        make_shared<ValueTypeBlob>(
+            statementBlob->getSymbolName()->getGlobalName(),
+            vector<shared_ptr<ValueType>>(),
+            false,
+            statementBlob->getLocation()
+        ),
+        resolvedDependencyNodes
+    );
+}
+
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMetaImport> statementMetaImport, const std::string &moduleName) {
+    if (statementMetaImport->getName() == moduleName)
+        return nullptr;
+
+    vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
+
+
+
+    vector<shared_ptr<Statement>> importableStatements = getExportedHeaderStatementsMap()[statementMetaImport->getName()];
+    for (shared_ptr<Statement> statement : importableStatements) {
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, moduleName))
+            resolvedDependencyNodes.push_back(resolvedDependencyNode);
+    }
+
+    return DependencyNode::dependencyNode(nullptr, resolvedDependencyNodes);
+}
+
+std::shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<StatementProto> statementProto, const std::string &moduleName) {
+    vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
+
+    // Iterate through variables
+    for (shared_ptr<Statement> statement : statementProto->getStatementVariableDeclarations()) {
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, ""))
+            resolvedDependencyNodes.push_back(resolvedDependencyNode);
+    }
+
+    return DependencyNode::dependencyNode(
+        make_shared<ValueTypeProto>(
+            statementProto->getSymbolName()->getGlobalName(),
+            statementProto->getLocation()
+        ),
+        resolvedDependencyNodes
+    );
+}
+
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
+    if (statementVariableDeclaration->getValueType()->isBlob())
+        return DependencyNode::dependencyNode(statementVariableDeclaration->getValueType(), vector<shared_ptr<DependencyNode>>());
+    
+    return nullptr;
 }

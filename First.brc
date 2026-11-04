@@ -3,5 +3,5 @@
 @import Second
 
 @export BFirst blob
-    //second blob<@Second
+    second blob<@Second::BSecond>
 ;
