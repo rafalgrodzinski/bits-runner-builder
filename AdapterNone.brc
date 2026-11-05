@@ -1,7 +1,0 @@
-@module Video
-
-@export AdapterNone blob: Adapter
-    getSurface fun: pMode ptr<blob<Mode>> -> ptr<blob<Surface>>
-        ret {0}
-    ;
-;

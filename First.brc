@@ -1,7 +1,0 @@
-@module First
-
-@import Second
-
-@export BFirst blob
-    second blob<@Second::BSecond>
-;

@@ -752,7 +752,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     for (shared_ptr<Statement> headerStatement : this->module->getHeaderStatements()) {
         // find matching declaration
         shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(headerStatement);
-        if (statementVariableDeclaration != nullptr && statementVariableDeclaration->getIdentifier().compare(statementVariable->getIdentifier()) == 0) {
+        if (statementVariableDeclaration != nullptr && statementVariableDeclaration->getGlobalIdentifier() == statementVariable->getGlobalIdentifier()) {
             statementVariableDeclaration->valueType = statementVariable->getValueType();
         }
     }
