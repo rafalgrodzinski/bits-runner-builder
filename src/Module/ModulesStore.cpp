@@ -802,21 +802,25 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<Statement> st
 shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementBlob> statementBlob) {
     vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
 
-    // Iterate through variables
+    // Variables
     for (shared_ptr<Statement> statement : statementBlob->getStatementVariableDeclarations()) {
         if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement))
             resolvedDependencyNodes.push_back(resolvedDependencyNode);
     }
 
-    return DependencyNode::dependencyNode(
-        make_shared<ValueTypeBlob>(
-            statementBlob->getSymbolName()->getGlobalName(),
-            vector<shared_ptr<ValueType>>(),
-            false,
-            statementBlob->getLocation()
-        ),
-        resolvedDependencyNodes
+    // Implemented protos
+    for (shared_ptr<SymbolName> protoSymbolName : statementBlob->getProtoSymbolNames()) {
+        shared_ptr<ValueType> valueTypeProto = make_shared<ValueTypeProto>(protoSymbolName->getGlobalName(), statementBlob->getLocation());
+        resolvedDependencyNodes.push_back(DependencyNode::dependencyNode(valueTypeProto, {}));
+    }
+
+    shared_ptr<ValueType> valueTypeBlob = make_shared<ValueTypeBlob>(
+        statementBlob->getSymbolName()->getGlobalName(),
+        vector<shared_ptr<ValueType>>(),
+        false,
+        statementBlob->getLocation()
     );
+    return DependencyNode::dependencyNode(valueTypeBlob, resolvedDependencyNodes);
 }
 
 shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMetaImport> statementMetaImport) {
