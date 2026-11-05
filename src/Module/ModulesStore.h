@@ -58,10 +58,12 @@ private:
     void setModuleName(std::shared_ptr<Statement> statement, const std::string &moduleName, bool isRoot = false);
     void setModuleName(std::shared_ptr<Expression> expression, const std::string &moduleName);
 
+    std::vector<std::string> visitedModules;
+
     std::vector<std::shared_ptr<Statement>> sortedStatements(const std::string &moduleName);
-    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<Statement> statement, const std::string &moduleName);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<Statement> statement);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementBlob> statementBlob);
-    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementMetaImport> statementMetaImport, const std::string &moduleName);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementMetaImport> statementMetaImport);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementProto> statementProto);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 

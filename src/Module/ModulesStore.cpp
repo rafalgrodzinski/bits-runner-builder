@@ -708,7 +708,9 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
 
     vector<shared_ptr<DependencyNode>> dependencyNodes;
     for (shared_ptr<Statement> statement : moduleStatements) {
-        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, moduleName)) {
+        visitedModules.clear();
+
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement)) {
             if (resolvedDependencyNode->getValueType() != nullptr) {
                 dependencyNodes.push_back(resolvedDependencyNode);
             } else {
@@ -718,6 +720,7 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
         }
     }
 
+    visitedModules.clear();
     vector<shared_ptr<Statement>> flattenedModuleStatements = flattenedStatements(moduleStatements, moduleName);
     vector<shared_ptr<Statement>> resolvedSortedBlobProtoStatements = sortedBlobProtoStatements(dependencyNodes, flattenedModuleStatements);
 
@@ -779,12 +782,12 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     return resolvedSortedStatements;
 }
 
-shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<Statement> statement, const std::string &moduleName) {
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::BLOB:
             return dependencyNode(dynamic_pointer_cast<StatementBlob>(statement));
         case StatementKind::META_IMPORT:
-            return dependencyNode(dynamic_pointer_cast<StatementMetaImport>(statement), moduleName);
+            return dependencyNode(dynamic_pointer_cast<StatementMetaImport>(statement));
         case StatementKind::PROTO:
             return dependencyNode(dynamic_pointer_cast<StatementProto>(statement));
         case StatementKind::VARIABLE_DECLARATION:
@@ -801,7 +804,7 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementBlob
 
     // Iterate through variables
     for (shared_ptr<Statement> statement : statementBlob->getStatementVariableDeclarations()) {
-        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, ""))
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement))
             resolvedDependencyNodes.push_back(resolvedDependencyNode);
     }
 
@@ -816,15 +819,20 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementBlob
     );
 }
 
-shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMetaImport> statementMetaImport, const std::string &moduleName) {
-    if (statementMetaImport->getName() == moduleName)
-        return nullptr;
-
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMetaImport> statementMetaImport) {
+    // Check if module already visited
+    for (const string &visitedModuleName : visitedModules) {
+        if (statementMetaImport->getName() == visitedModuleName)
+        return DependencyNode::dependencyNode(nullptr, {});
+    }
+    // Add to visited list
+    visitedModules.push_back(statementMetaImport->getName());
+    
     vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
 
     vector<shared_ptr<Statement>> importableStatements = getExportedHeaderStatementsMap()[statementMetaImport->getName()];
     for (shared_ptr<Statement> statement : importableStatements) {
-        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, moduleName))
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement))
             resolvedDependencyNodes.push_back(resolvedDependencyNode);
     }
 
@@ -836,7 +844,7 @@ std::shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<Sta
 
     // Iterate through variables
     for (shared_ptr<Statement> statement : statementProto->getStatementVariableDeclarations()) {
-        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, ""))
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement))
             resolvedDependencyNodes.push_back(resolvedDependencyNode);
     }
 
@@ -857,13 +865,21 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<Statemen
 }
 
 vector<shared_ptr<Statement>> ModulesStore::flattenedStatements(vector<shared_ptr<Statement>> statements, const string &moduleName) {
+    // Check if module already visited
+    for (const string &visitedModuleName : visitedModules) {
+        if (moduleName == visitedModuleName)
+        return {};
+    }
+    // Add to visited list
+    visitedModules.push_back(moduleName);
+
     vector<shared_ptr<Statement>> resolvedFlattenedStatements;
 
     for (shared_ptr<Statement> statement : statements) {
         if (shared_ptr<StatementMetaImport> statementMetaImport = dynamic_pointer_cast<StatementMetaImport>(statement)) {
             if (statementMetaImport->getName() != moduleName) {
                 vector<shared_ptr<Statement>> importableStatements = getExportedHeaderStatementsMap()[statementMetaImport->getName()];
-                vector<shared_ptr<Statement>> flattenedImportableStatements = flattenedStatements(importableStatements, moduleName);
+                vector<shared_ptr<Statement>> flattenedImportableStatements = flattenedStatements(importableStatements, statementMetaImport->getName());
                 resolvedFlattenedStatements.insert(resolvedFlattenedStatements.end(), flattenedImportableStatements.begin(), flattenedImportableStatements.end());
             }
         } else {
