@@ -38,6 +38,10 @@ shared_ptr<DependencyNode> DependencyNode::dependencyNode(shared_ptr<ValueType> 
     return dependencyNode;
 }
 
+void DependencyNode::reset() {
+    cachedNodes.clear();
+}
+
 DependencyNode::DependencyNode(shared_ptr<ValueType> valueType, vector<shared_ptr<DependencyNode>> childDependencyNodes):
 valueType(valueType),
 childDependencyNodes(childDependencyNodes),

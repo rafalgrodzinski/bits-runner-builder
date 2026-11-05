@@ -15,6 +15,7 @@ enum class DependencyNodeVisitStatus {
 class DependencyNode {
 public:
     static std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<ValueType>, std::vector<std::shared_ptr<DependencyNode>> childDependencyNodes);
+    static void reset();
 
     DependencyNode(std::shared_ptr<ValueType>, std::vector<std::shared_ptr<DependencyNode>> childDependencyNodes);
 

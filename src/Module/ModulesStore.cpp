@@ -350,6 +350,7 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
             statements.push_back(statement);
         */
 
+        DependencyNode::reset();
         vector<shared_ptr<Statement>> resolvedSortedStatements = sortedStatements(moduleName);
 
         // construct the local header
