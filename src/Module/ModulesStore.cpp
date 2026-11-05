@@ -727,6 +727,7 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     vector<shared_ptr<Statement>> statementProtoDeclarations;
     vector<shared_ptr<Statement>> statementBlobDeclarations;
     vector<shared_ptr<Statement>> statementVariables;
+    vector<shared_ptr<Statement>> statementVariableDeclarations;
     vector<shared_ptr<Statement>> statementFunctionDeclarations;
     vector<shared_ptr<Statement>> statementRawFunctions;
 
@@ -748,6 +749,9 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
             case StatementKind::VARIABLE:
                 statementVariables.push_back(statement);
                 break;
+            case StatementKind::VARIABLE_DECLARATION:
+                statementVariableDeclarations.push_back(statement);
+                break;
             case StatementKind::FUNCTION_DECLARATION:
                 statementFunctionDeclarations.push_back(statement);
                 break;
@@ -767,8 +771,9 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementProtoDeclarations.begin(), statementProtoDeclarations.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementBlobDeclarations.begin(), statementBlobDeclarations.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), resolvedSortedBlobProtoStatements.begin(), resolvedSortedBlobProtoStatements.end());
-    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariables.begin(), statementVariables.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementFunctionDeclarations.begin(), statementFunctionDeclarations.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariableDeclarations.begin(), statementVariableDeclarations.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariables.begin(), statementVariables.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementRawFunctions.begin(), statementRawFunctions.end());
 
     return resolvedSortedStatements;
