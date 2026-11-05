@@ -3,6 +3,9 @@
 #include "Module.h"
 #include "DependencyNode.h"
 
+#include "Error.h"
+#include "Logger.h"
+
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
 #include "Parser/Statement/StatementBlob.h"
@@ -415,6 +418,12 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
             bodyStatementsMap[moduleName]
         );
         modules.push_back(module);
+    }
+
+    if (!errors.empty()) {
+        for (shared_ptr<Error> &error : errors)
+            Logger::print(error);
+        exit(1);
     }
 
     return modules;
@@ -867,8 +876,7 @@ vector<shared_ptr<Statement>> ModulesStore::sortedBlobProtoStatements(vector<sha
 
         // Are we having a cycle?
         if (dependencyNode->getVisitStatus() == DependencyNodeVisitStatus::VISITING) {
-            // markError
-            cout << "ERROR! cycle at " << dependencyNode->getValueType() << "\n";
+            markErrorDependencyCycle(dependencyNode->getValueType()->getLocation());
             return resolvedSortedStatements;
         }
 
@@ -902,4 +910,9 @@ vector<shared_ptr<Statement>> ModulesStore::sortedBlobProtoStatements(vector<sha
     }
 
     return resolvedSortedStatements;
+}
+
+void ModulesStore::markErrorDependencyCycle(std::shared_ptr<Location> location) {
+    string message = "Dependency cycle detected";
+    errors.push_back(Error::error(location, message));
 }

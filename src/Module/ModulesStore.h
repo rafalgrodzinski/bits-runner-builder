@@ -8,6 +8,8 @@
 #include <vector>
 
 class DependencyNode;
+class Error;
+class Location;
 class Module;
 class Expression;
 class Statement;
@@ -25,6 +27,8 @@ public:
     std::map<std::string, std::vector<std::shared_ptr<Statement>>> getExportedHeaderStatementsMap();
 
 private:
+    std::vector<std::shared_ptr<Error>> errors;
+
     std::string defaultModuleName;
     std::vector<std::string> moduleNames;
 
@@ -66,6 +70,8 @@ private:
         std::vector<std::shared_ptr<DependencyNode>> dependencyNodes,
         std::vector<std::shared_ptr<Statement>> flattenedModuleStatements
     );
+
+    void markErrorDependencyCycle(std::shared_ptr<Location> location);
 };
 
 #endif

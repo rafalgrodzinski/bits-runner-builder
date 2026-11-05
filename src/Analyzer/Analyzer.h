@@ -7,9 +7,9 @@
 #include <vector>
 
 class AnalyzerScope;
-class Module;
 class Error;
 class Location;
+class Module;
 
 class Statement;
 class StatementAssignment;
