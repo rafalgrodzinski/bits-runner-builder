@@ -54,7 +54,7 @@ private:
     void setModuleName(std::shared_ptr<Statement> statement, const std::string &moduleName, bool isRoot = false);
     void setModuleName(std::shared_ptr<Expression> expression, const std::string &moduleName);
 
-    std::vector<std::shared_ptr<Statement>> sortedStatements(std::vector<std::shared_ptr<Statement>> statements, const std::string &moduleName);
+    std::vector<std::shared_ptr<Statement>> sortedStatements(const std::string &moduleName);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<Statement> statement, const std::string &moduleName);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementBlob> statementBlob);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementMetaImport> statementMetaImport, const std::string &moduleName);
@@ -62,7 +62,10 @@ private:
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
     std::vector<std::shared_ptr<Statement>> flattenedStatements(std::vector<std::shared_ptr<Statement>> statements, const std::string &moduleName);
-    std::vector<std::shared_ptr<Statement>> sortedStatements(std::vector<std::shared_ptr<DependencyNode>> dependencyNodes, std::vector<std::shared_ptr<Statement>> statements);
+    std::vector<std::shared_ptr<Statement>> sortedBlobProtoStatements(
+        std::vector<std::shared_ptr<DependencyNode>> dependencyNodes,
+        std::vector<std::shared_ptr<Statement>> flattenedModuleStatements
+    );
 };
 
 #endif
