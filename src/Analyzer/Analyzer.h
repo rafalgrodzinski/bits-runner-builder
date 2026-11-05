@@ -64,19 +64,8 @@ enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
 
 class Analyzer {
-private:
-    enum class ImportLevel {
-        NONE,
-        EXPLICIT,
-        IMPLICIT
-    };
-
 public:
-    Analyzer(
-        const std::string &defaultModuleName,
-        std::shared_ptr<Module> module,
-        const std::map<std::string, std::vector<std::shared_ptr<Statement>>> &importableHeaderStatementsMap
-    );
+    Analyzer(const std::string &defaultModuleName, std::shared_ptr<Module> module);
 
     void checkModule();
 
@@ -86,10 +75,8 @@ private:
 
     std::shared_ptr<AnalyzerScope> scope;
     std::shared_ptr<Module> module;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> importableHeaderStatementsMap;
-    std::map<std::string, ImportLevel> importedModuleLevelsMap;
 
-    void checkStatement(std::shared_ptr<Statement> statement, std::shared_ptr<ValueType> returnType, ImportLevel importLevel = ImportLevel::NONE);
+    void checkStatement(std::shared_ptr<Statement> statement, std::shared_ptr<ValueType> returnType);
     void checkStatement(std::shared_ptr<StatementAssignment> statementAssignment);
     void checkStatement(std::shared_ptr<StatementBlob> statementBlob);
     void checkStatement(std::shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
@@ -101,7 +88,6 @@ private:
     void checkStatement(std::shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void checkStatement(std::shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void checkStatement(std::shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void checkStatement(std::shared_ptr<StatementMetaImport> statement, ImportLevel ImportLevel);
     void checkStatement(std::shared_ptr<StatementProto> statement);
     void checkStatement(std::shared_ptr<StatementProtoDeclaration> statement);
     void checkStatement(std::shared_ptr<StatementRawFunction> statementRawFunction);

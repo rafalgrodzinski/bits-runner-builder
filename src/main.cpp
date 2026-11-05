@@ -252,11 +252,7 @@ int main(int argc, char **argv) {
             cout << format("🔮 Analyzing module \"{}\"", module->getName()) << endl;
 
         timeStamp = clock();
-        Analyzer typesAnalyzer(
-            DEFAULT_MODULE_NAME,
-            module,
-            modulesStore.getExportedHeaderStatementsMap()
-        );
+        Analyzer typesAnalyzer(DEFAULT_MODULE_NAME, module);
         typesAnalyzer.checkModule();
         timeStamp = clock() - timeStamp;
         totalAnalysisTime += timeStamp;

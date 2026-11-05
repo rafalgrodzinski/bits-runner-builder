@@ -63,14 +63,9 @@ static vector<string> illegalBlobFieldNames = {"adr", "size"};
 
 // MARK: - Public
 
-Analyzer::Analyzer(
-    const string &defaultModuleName,
-    shared_ptr<Module> module,
-    const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
-):
+Analyzer::Analyzer(const string &defaultModuleName, shared_ptr<Module> module):
 defaultModuleName(defaultModuleName),
-module(module),
-importableHeaderStatementsMap(importableHeaderStatementsMap) { }
+module(module) { }
 
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
@@ -99,15 +94,14 @@ void Analyzer::checkModule() {
 
 // Statements
 
-void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, ImportLevel importLevel) {
+void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType) {
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
             checkStatement(dynamic_pointer_cast<StatementAssignment>(statement));
             return;
         }
         case StatementKind::BLOB: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                checkStatement(dynamic_pointer_cast<StatementBlob>(statement));
+            checkStatement(dynamic_pointer_cast<StatementBlob>(statement));
             return;
         }
         case StatementKind::BLOB_DECLARATION: {
@@ -119,8 +113,7 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             return;
         }
         case StatementKind::ENUM: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
+            checkStatement(dynamic_pointer_cast<StatementEnum>(statement));
             return;
         }
         case StatementKind::EXCHANGE: {
@@ -136,8 +129,7 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             return;
         }
         case StatementKind::FUNCTION_DECLARATION: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                checkStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+            checkStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
             return;
         }
         case StatementKind::META_EXTERN_FUNCTION: {
@@ -148,16 +140,8 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             checkStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
             return;
         }
-        case StatementKind::META_IMPORT: {
-            ImportLevel newImportLevel = ImportLevel::IMPLICIT;
-            if (importLevel == ImportLevel::NONE)
-                newImportLevel = ImportLevel::EXPLICIT;
-            checkStatement(dynamic_pointer_cast<StatementMetaImport>(statement), newImportLevel);
-            return;
-        }
         case StatementKind::PROTO: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                checkStatement(dynamic_pointer_cast<StatementProto>(statement));
+            checkStatement(dynamic_pointer_cast<StatementProto>(statement));
             return;
         }
         case StatementKind::PROTO_DECLARATION: {
@@ -165,8 +149,7 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             return;
         }
         case StatementKind::RAW_FUNCTION: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                checkStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
+            checkStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
             return;
         }
         case StatementKind::REPEAT: {
@@ -178,13 +161,11 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
             return;
         }
         case StatementKind::VARIABLE: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                checkStatement(dynamic_pointer_cast<StatementVariable>(statement));
+            checkStatement(dynamic_pointer_cast<StatementVariable>(statement));
             return;
         }
         case StatementKind::VARIABLE_DECLARATION: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                checkStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+            checkStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
             return;
         }
         default:
@@ -533,33 +514,6 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaExternVariable> statementM
     if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
         markErrorInvalidRegistration(statementMetaExternVariable->getLocation(), identifier, registerResult);
         return;
-    }
-}
-
-void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel) {
-    // Check if import exits
-    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
-    if (it == importableHeaderStatementsMap.end()) {
-        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
-        return;
-    }
-
-    // Skip if import circles back
-    if (statementMetaImport->getName() == module->getName())
-        return;
-    
-    // Check already imported levels
-    ImportLevel currentImport = importedModuleLevelsMap[statementMetaImport->getName()];
-    if (
-        currentImport == ImportLevel::EXPLICIT ||
-        currentImport == ImportLevel::IMPLICIT && importLevel != ImportLevel::EXPLICIT
-    ) {
-        return;
-    }
-    importedModuleLevelsMap[statementMetaImport->getName()] = importLevel;
-
-    for (shared_ptr<Statement> &importedStatement : it->second) {
-        checkStatement(importedStatement, nullptr, importLevel);
     }
 }
 
