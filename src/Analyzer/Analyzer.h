@@ -89,9 +89,9 @@ private:
     std::map<std::string, std::vector<std::shared_ptr<Statement>>> importableHeaderStatementsMap;
     std::map<std::string, ImportLevel> importedModuleLevelsMap;
 
-    void checkStatement(std::shared_ptr<Statement> statement, std::shared_ptr<ValueType> returnType, bool isImported = false, ImportLevel importLevel = ImportLevel::NONE);
+    void checkStatement(std::shared_ptr<Statement> statement, std::shared_ptr<ValueType> returnType, ImportLevel importLevel = ImportLevel::NONE);
     void checkStatement(std::shared_ptr<StatementAssignment> statementAssignment);
-    void checkStatement(std::shared_ptr<StatementBlob> statementBlob, bool isImported);
+    void checkStatement(std::shared_ptr<StatementBlob> statementBlob);
     void checkStatement(std::shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
     void checkStatement(std::shared_ptr<StatementBlock> statementBlock, std::shared_ptr<ValueType> returnType);
     void checkStatement(std::shared_ptr<StatementEnum> statementEnum);

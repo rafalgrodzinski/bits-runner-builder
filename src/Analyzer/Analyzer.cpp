@@ -104,7 +104,7 @@ void Analyzer::checkModule() {
 
 // Statements
 
-void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, bool isImported, ImportLevel importLevel) {
+void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueType> returnType, ImportLevel importLevel) {
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
             checkStatement(dynamic_pointer_cast<StatementAssignment>(statement));
@@ -112,7 +112,7 @@ void Analyzer::checkStatement(shared_ptr<Statement> statement, shared_ptr<ValueT
         }
         case StatementKind::BLOB: {
             if (importLevel != ImportLevel::IMPLICIT)
-                checkStatement(dynamic_pointer_cast<StatementBlob>(statement), isImported);
+                checkStatement(dynamic_pointer_cast<StatementBlob>(statement));
             return;
         }
         case StatementKind::BLOB_DECLARATION: {
@@ -222,7 +222,7 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
     }
 }
 
-void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isImported) {
+void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     // first register named value types for the blob
     scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
 
@@ -261,7 +261,7 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob, bool isIm
     }
 
     // verify proto compliance (but only if it's not an import statement)
-    if (!isImported) {
+    if (statementBlob->getSymbolName()->getModuleName() == module->getName()) {
         for (shared_ptr<SymbolName> protoSymbolName : statementBlob->getProtoSymbolNames()) {
             optional<vector<pair<string, shared_ptr<ValueType>>>> oProtoFields = scope->protoScope->getFields(protoSymbolName);
             if (!oProtoFields) {
@@ -564,7 +564,7 @@ void Analyzer::checkStatement(shared_ptr<StatementMetaImport> statementMetaImpor
     importedModuleLevelsMap[statementMetaImport->getName()] = importLevel;
 
     for (shared_ptr<Statement> &importedStatement : it->second) {
-        checkStatement(importedStatement, nullptr, true, importLevel);
+        checkStatement(importedStatement, nullptr, importLevel);
     }
 }
 
