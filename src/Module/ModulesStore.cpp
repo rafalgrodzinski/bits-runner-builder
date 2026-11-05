@@ -342,8 +342,10 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
             statements.push_back(statement);
         for (shared_ptr<Statement> statement : blobStatementsMap[moduleName])
             statements.push_back(statement);
+        for (shared_ptr<Statement> statement : protoStatementsMap[moduleName])
+            statements.push_back(statement);
 
-        sortedStatements(statements, moduleName);
+        vector<shared_ptr<Statement>> resolvedSortedStatements = sortedStatements(statements, moduleName);
 
         // construct the local header
         // order for local header statements is:
@@ -359,9 +361,13 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // - raw function definitions
 
         vector<shared_ptr<Statement>> headerStatements;
+
+        /*
         // imports
         for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
             headerStatements.push_back(statement);
+        */
+
         // externs
         for (shared_ptr<Statement> statement : externStatementsMap[moduleName])
             headerStatements.push_back(statement);
@@ -374,12 +380,18 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
         // enums definitions
         for (shared_ptr<Statement> statement : enumStatementsMap[moduleName])
             headerStatements.push_back(statement);
+
+        /*
         // proto definitions
         for (shared_ptr<Statement> statement : protoStatementsMap[moduleName])
             headerStatements.push_back(statement);
         // blob definitions
         for (shared_ptr<Statement> statement : blobStatementsMap[moduleName])
             headerStatements.push_back(statement);
+        */
+        for (shared_ptr<Statement> statement : resolvedSortedStatements)
+            headerStatements.push_back(statement);
+
         // function declarations
         for (shared_ptr<Statement> statement : statementFunctionDeclarationsMap[moduleName])
             headerStatements.push_back(statement);
@@ -676,7 +688,7 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(vector<shared_ptr<S
         }
     }
 
-    return sortedStatements(dependencyNodes, statements);
+    return sortedStatements(dependencyNodes, flattenedStatements(statements, moduleName));
 }
 
 shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<Statement> statement, const std::string &moduleName) {
@@ -720,8 +732,6 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMeta
 
     vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
 
-
-
     vector<shared_ptr<Statement>> importableStatements = getExportedHeaderStatementsMap()[statementMetaImport->getName()];
     for (shared_ptr<Statement> statement : importableStatements) {
         if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement, moduleName))
@@ -756,35 +766,70 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<Statemen
     return nullptr;
 }
 
+vector<shared_ptr<Statement>> ModulesStore::flattenedStatements(vector<shared_ptr<Statement>> statements, const string &moduleName) {
+    vector<shared_ptr<Statement>> resolvedFlattenedStatements;
+
+    for (shared_ptr<Statement> statement : statements) {
+        if (shared_ptr<StatementMetaImport> statementMetaImport = dynamic_pointer_cast<StatementMetaImport>(statement)) {
+            if (statementMetaImport->getName() != moduleName) {
+                vector<shared_ptr<Statement>> importableStatements = getExportedHeaderStatementsMap()[statementMetaImport->getName()];
+                vector<shared_ptr<Statement>> flattenedImportableStatements = flattenedStatements(importableStatements, moduleName);
+                resolvedFlattenedStatements.insert(resolvedFlattenedStatements.end(), flattenedImportableStatements.begin(), flattenedImportableStatements.end());
+            }
+        } else {
+            resolvedFlattenedStatements.push_back(statement);
+        }
+    }
+
+    return resolvedFlattenedStatements;
+}
+
 vector<shared_ptr<Statement>> ModulesStore::sortedStatements(vector<shared_ptr<DependencyNode>> dependencyNodes, vector<shared_ptr<Statement>> statements) {
     vector<shared_ptr<Statement>> resolvedSortedStatements;
 
     for (shared_ptr<DependencyNode> dependencyNode : dependencyNodes) {
+        // Skip already visited nodes
+        if (dependencyNode->getVisitStatus() == DependencyNodeVisitStatus::VISITED)
+            continue;
+
+        // Are we having a cycle?
+        if (dependencyNode->getVisitStatus() == DependencyNodeVisitStatus::VISITING) {
+            // markError
+            cout << "ERROR! cycle at " << dependencyNode->getValueType() << "\n";
+            return resolvedSortedStatements;
+        }
+
+        dependencyNode->setVisitStatus(DependencyNodeVisitStatus::VISITING);
+
         // First go through each of the leafs (children)
         for (shared_ptr<DependencyNode> childDependencyNode : dependencyNode->getChildDependencyNodes()) {
             vector<shared_ptr<Statement>> resolvedChildSortedStatements = sortedStatements({childDependencyNode}, statements);
-            for (shared_ptr<Statement> resolvedChildSortedStatement : resolvedChildSortedStatements)
-                resolvedSortedStatements.push_back(resolvedChildSortedStatement);
+            resolvedSortedStatements.insert(resolvedSortedStatements.end(), resolvedChildSortedStatements.begin(), resolvedChildSortedStatements.end());
+            /*for (shared_ptr<Statement> resolvedChildSortedStatement : resolvedChildSortedStatements)
+                resolvedSortedStatements.push_back(resolvedChildSortedStatement);*/
         }
 
         // Handle the node itself
-        dependencyNode->markVisited();
         // Find a corresponding statement
         for (shared_ptr<Statement> statement : statements) {
             // Is it a blob?
             if (dependencyNode->getValueType()->isBlob() && statement->getKind() == StatementKind::BLOB) {
                 shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
                 if (dependencyNode->getValueType()->toBlob()->getSymbolName()->isEqual(statementBlob->getSymbolName())) {
-                    resolvedSortedStatements.insert(resolvedSortedStatements.begin(), statement);
+                    //resolvedSortedStatements.insert(resolvedSortedStatements.begin(), statement);
+                    resolvedSortedStatements.push_back(statement);
                 }
             // Or a proto?
             } else if (dependencyNode->getValueType()->isProto() && statement->getKind() == StatementKind::PROTO) {
                 shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
                 if (dependencyNode->getValueType()->toProto()->getSymbolName()->isEqual(statementProto->getSymbolName())) {
-                    resolvedSortedStatements.insert(resolvedSortedStatements.begin(), statement);
+                    //resolvedSortedStatements.insert(resolvedSortedStatements.begin(), statement);
+                    resolvedSortedStatements.push_back(statement);
                 }
             }
         }
+
+        dependencyNode->setVisitStatus(DependencyNodeVisitStatus::VISITED);
     }
 
     return resolvedSortedStatements;

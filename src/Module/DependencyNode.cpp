@@ -41,7 +41,7 @@ shared_ptr<DependencyNode> DependencyNode::dependencyNode(shared_ptr<ValueType> 
 DependencyNode::DependencyNode(shared_ptr<ValueType> valueType, vector<shared_ptr<DependencyNode>> childDependencyNodes):
 valueType(valueType),
 childDependencyNodes(childDependencyNodes),
-isVisited(false) { }
+visitStatus(DependencyNodeVisitStatus::NOT_VISITED) { }
 
 void DependencyNode::appendChildDependencyNodes(vector<shared_ptr<DependencyNode>> childDependencyNodes) {
     for (shared_ptr<DependencyNode> newChildDependencyNode : childDependencyNodes) {
@@ -77,12 +77,20 @@ vector<shared_ptr<DependencyNode>> DependencyNode::getChildDependencyNodes() {
     return childDependencyNodes;
 }
 
-bool DependencyNode::getIsVisited() {
+/*bool DependencyNode::getIsVisited() {
     return isVisited;
 }
 
 void DependencyNode::markVisited() {
     isVisited = true;
+}*/
+
+DependencyNodeVisitStatus DependencyNode::getVisitStatus() {
+    return visitStatus;
+}
+
+void DependencyNode::setVisitStatus(DependencyNodeVisitStatus visitStatus) {
+    this->visitStatus = visitStatus;
 }
 
 // MARK: - Private
