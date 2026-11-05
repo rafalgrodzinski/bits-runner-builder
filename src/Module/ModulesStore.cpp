@@ -780,6 +780,8 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<Statement> st
             return dependencyNode(dynamic_pointer_cast<StatementBlob>(statement));
         case StatementKind::META_IMPORT:
             return dependencyNode(dynamic_pointer_cast<StatementMetaImport>(statement), moduleName);
+        case StatementKind::PROTO:
+            return dependencyNode(dynamic_pointer_cast<StatementProto>(statement));
         case StatementKind::VARIABLE_DECLARATION:
             return dependencyNode(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
         default:
@@ -824,7 +826,7 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMeta
     return DependencyNode::dependencyNode(nullptr, resolvedDependencyNodes);
 }
 
-std::shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<StatementProto> statementProto, const std::string &moduleName) {
+std::shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<StatementProto> statementProto) {
     vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
 
     // Iterate through variables
@@ -890,19 +892,21 @@ vector<shared_ptr<Statement>> ModulesStore::sortedBlobProtoStatements(vector<sha
         }
 
         // Handle the node itself
-        // Find a corresponding statement
-        for (shared_ptr<Statement> statement : flattenedModuleStatements) {
-            // Is it a blob?
-            if (dependencyNode->getValueType()->isBlob() && statement->getKind() == StatementKind::BLOB) {
-                shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
-                if (dependencyNode->getValueType()->toBlob()->getSymbolName()->isEqual(statementBlob->getSymbolName())) {
-                    resolvedSortedStatements.push_back(statement);
-                }
-            // Or a proto?
-            } else if (dependencyNode->getValueType()->isProto() && statement->getKind() == StatementKind::PROTO) {
-                shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
-                if (dependencyNode->getValueType()->toProto()->getSymbolName()->isEqual(statementProto->getSymbolName())) {
-                    resolvedSortedStatements.push_back(statement);
+        if (dependencyNode->getValueType() != nullptr) {
+            // Find a corresponding statement
+            for (shared_ptr<Statement> statement : flattenedModuleStatements) {
+                // Is it a blob?
+                if (dependencyNode->getValueType()->isBlob() && statement->getKind() == StatementKind::BLOB) {
+                    shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
+                    if (dependencyNode->getValueType()->toBlob()->getSymbolName()->isEqual(statementBlob->getSymbolName())) {
+                        resolvedSortedStatements.push_back(statement);
+                    }
+                // Or a proto?
+                } else if (dependencyNode->getValueType()->isProto() && statement->getKind() == StatementKind::PROTO) {
+                    shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
+                    if (dependencyNode->getValueType()->toProto()->getSymbolName()->isEqual(statementProto->getSymbolName())) {
+                        resolvedSortedStatements.push_back(statement);
+                    }
                 }
             }
         }

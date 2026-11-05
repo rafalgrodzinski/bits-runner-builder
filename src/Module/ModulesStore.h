@@ -62,7 +62,7 @@ private:
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<Statement> statement, const std::string &moduleName);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementBlob> statementBlob);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementMetaImport> statementMetaImport, const std::string &moduleName);
-    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementProto> statementProto, const std::string &moduleName);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementProto> statementProto);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
     std::vector<std::shared_ptr<Statement>> flattenedStatements(std::vector<std::shared_ptr<Statement>> statements, const std::string &moduleName);
