@@ -125,22 +125,17 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
 shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
     scope = make_shared<Scope>();
 
-    // build header (doesn't build blob functions)
-    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements())
+    // statements (except for blob functions)
+    for (shared_ptr<Statement> headerStatement : module->getStatements())
         buildStatement(headerStatement);
 
     // build blob functions
-    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
+    for (shared_ptr<Statement> headerStatement : module->getStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
             for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                 buildStatement(statementFunction);
             }
         }
-    }
-
-    // build body statements
-    for (shared_ptr<Statement> statement : module->getBodyStatements()) {
-        buildStatement(statement);
     }
 
     // verify LLVM Module (only if there are no other errors, not to pollute the output)

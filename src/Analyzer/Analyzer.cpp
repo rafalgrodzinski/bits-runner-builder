@@ -75,22 +75,17 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) { }
 void Analyzer::checkModule() {
     scope = make_shared<AnalyzerScope>();
 
-    // check header
-    for (shared_ptr<Statement> statement : module->getHeaderStatements())
+    // check statements
+    for (shared_ptr<Statement> statement : module->getStatements())
         checkStatement(statement, nullptr);
 
     // check blob member functions
-    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
+    for (shared_ptr<Statement> headerStatement : module->getStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
             for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                 checkStatement(statementFunction);
             }
         }
-    }
-
-    // check body
-    for (shared_ptr<Statement> statement : module->getBodyStatements()) {
-            checkStatement(statement, nullptr);
     }
 
     if (!errors.empty()) {
@@ -746,15 +741,6 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
         markErrorInvalidRegistration(statementVariable->getLocation(), statementVariable->getIdentifier(), registerResult);
         return;
-    }
-
-    // updated corresponding variable declaration
-    for (shared_ptr<Statement> headerStatement : this->module->getHeaderStatements()) {
-        // find matching declaration
-        shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(headerStatement);
-        if (statementVariableDeclaration != nullptr && statementVariableDeclaration->getGlobalIdentifier() == statementVariable->getGlobalIdentifier()) {
-            statementVariableDeclaration->valueType = statementVariable->getValueType();
-        }
     }
 }
 
