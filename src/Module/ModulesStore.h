@@ -74,6 +74,7 @@ private:
     );
 
     void markErrorDependencyCycle(std::shared_ptr<Location> location);
+    void markErrorInvalidImport(std::shared_ptr<Location> location, const std::string &moduleName);
 };
 
 #endif

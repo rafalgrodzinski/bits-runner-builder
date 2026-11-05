@@ -140,7 +140,6 @@ private:
     void markErrorInvalidArgumentsCount(std::shared_ptr<Location> location, int actulCount, int expectedCount);
     void markErrorInvalidBuiltIn(std::shared_ptr<Location> location, const std::string &builtInName, std::shared_ptr<ValueType> type);
     void markErrorInvalidCast(std::shared_ptr<Location> location, std::shared_ptr<ValueType> sourceType, std::shared_ptr<ValueType> targetType);
-    void markErrorInvalidImport(std::shared_ptr<Location> location, const std::string &moduleName);
     void markErrorInvalidName(std::shared_ptr<Location> location, const std::string &name);
     void markErrorInvalidOperationBinary(std::shared_ptr<Location> location, ExpressionBinaryOperation operation, std::shared_ptr<ValueType> firstType, std::shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(std::shared_ptr<Location> location, ExpressionUnaryOperation operation, std::shared_ptr<ValueType> type);

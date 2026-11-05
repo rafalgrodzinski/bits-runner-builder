@@ -765,10 +765,21 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMeta
     // Check if module already visited
     for (const string &visitedModuleName : visitedModules) {
         if (statementMetaImport->getName() == visitedModuleName)
-        return DependencyNode::dependencyNode(nullptr, {});
+            return DependencyNode::dependencyNode(nullptr, {});
     }
     // Add to visited list
     visitedModules.push_back(statementMetaImport->getName());
+
+    // check if the import is valid
+    bool isValid = false;
+    for (const string &moduleName : moduleNames) {
+        if (moduleName == statementMetaImport->getName())
+            isValid = true;
+    }
+    if (!isValid) {
+        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
+        return DependencyNode::dependencyNode(nullptr, {});
+    }
     
     vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
 
@@ -882,5 +893,10 @@ vector<shared_ptr<Statement>> ModulesStore::sortedBlobProtoStatements(vector<sha
 
 void ModulesStore::markErrorDependencyCycle(std::shared_ptr<Location> location) {
     string message = "Dependency cycle detected";
+    errors.push_back(Error::error(location, message));
+}
+
+void ModulesStore::markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName) {
+    string message = format("Invalid import, module \"{}\" doesn't exist", moduleName);
     errors.push_back(Error::error(location, message));
 }

@@ -2553,11 +2553,6 @@ void Analyzer::markErrorInvalidCast(shared_ptr<Location> location, shared_ptr<Va
     errors.push_back(Error::error(location, message));
 }
 
-void Analyzer::markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName) {
-    string message = format("Invalid import, module \"{}\" doesn't exist", moduleName);
-    errors.push_back(Error::error(location, message));
-}
-
 void Analyzer::markErrorInvalidName(shared_ptr<Location> location, const string &name) {
     string message;
     if (name.empty())
