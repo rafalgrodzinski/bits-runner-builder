@@ -23,7 +23,6 @@ class StatementFunction;
 class StatementFunctionDeclaration;
 class StatementMetaExternFunction;
 class StatementMetaExternVariable;
-class StatementMetaImport;
 class StatementModule;
 class StatementProto;
 class StatementProtoDeclaration;

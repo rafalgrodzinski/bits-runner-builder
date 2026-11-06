@@ -33,7 +33,6 @@
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementMetaExternVariable.h"
-#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementModule.h"
 #include "Parser/Statement/StatementProto.h"
 #include "Parser/Statement/StatementProtoDeclaration.h"

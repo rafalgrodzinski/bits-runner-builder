@@ -267,11 +267,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    // Print exported header statements
-    if (verbosity >= Verbosity::V3) {
-        Logger::printExportedHeaderStatements(modulesStore.getExportedHeaderStatementsMap());
-    }
-
     // Specify code generator for desired target
     CodeGenerator codeGenerator(targetTriple, architecture, relocationModel, codeModel, optimizationLevel, callingConvention, options.getBits());
 
@@ -287,8 +282,7 @@ int main(int argc, char **argv) {
             codeGenerator.getArchType(),
             codeGenerator.getDataLayout(),
             codeGenerator.getCallingConvetion(),
-            module,
-            modulesStore.getExportedHeaderStatementsMap()
+            module
         );
         shared_ptr<llvm::Module> llvmModule = moduleBuilder.getLlvmModule();
         timeStamp = clock() - timeStamp;

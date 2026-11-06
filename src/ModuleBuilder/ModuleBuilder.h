@@ -38,7 +38,6 @@ class StatementFunction;
 class StatementFunctionDeclaration;
 class StatementMetaExternFunction;
 class StatementMetaExternVariable;
-class StatementMetaImport;
 class StatementProto;
 class StatementProtoDeclaration;
 class StatementRawFunction;
@@ -66,20 +65,13 @@ enum class ExpressionBinaryOperation;
 enum class ExpressionUnaryOperation;
 
 class ModuleBuilder {
-    enum class ImportLevel {
-        NONE,
-        EXPLICIT,
-        IMPLICIT
-    };
-
 public:
     ModuleBuilder(
         const std::string &defaultModuleName,
         llvm::Triple::ArchType archType,
         llvm::DataLayout dataLayout,
         llvm::CallingConv::ID callingConvention,
-        std::shared_ptr<Module> module,
-        const std::map<std::string, std::vector<std::shared_ptr<Statement>>> &importableHeaderStatementsMap
+        std::shared_ptr<Module> module
     );
     std::shared_ptr<llvm::Module> getLlvmModule();
 
@@ -88,8 +80,6 @@ private:
     std::string defaultModuleName;
 
     std::shared_ptr<Module> module;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> importableHeaderStatementsMap;
-    std::map<std::string, ImportLevel> importedModuleLevelsMap;
 
     std::shared_ptr<Scope> scope;
 
@@ -121,7 +111,7 @@ private:
     llvm::StructType *typeEnumStruct;
 
     // Statements
-    void buildStatement(std::shared_ptr<Statement> statement, ImportLevel importLevel = ImportLevel::NONE);
+    void buildStatement(std::shared_ptr<Statement> statement);
     void buildStatement(std::shared_ptr<StatementAssignment> statementAssignment);
     void buildStatement(std::shared_ptr<StatementBlob> statementBlob);
     void buildStatement(std::shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
@@ -133,7 +123,6 @@ private:
     void buildStatement(std::shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void buildStatement(std::shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void buildStatement(std::shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void buildStatement(std::shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel);
     void buildStatement(std::shared_ptr<StatementProto> statementProto);
     void buildStatement(std::shared_ptr<StatementProtoDeclaration> statementProtoDeclaration);
     void buildStatement(std::shared_ptr<StatementRawFunction> statementRawFunction);

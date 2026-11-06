@@ -237,59 +237,6 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
     return modules;
 }
 
-map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatementsMap() {
-    /*
-    // construct the exported headers map
-    // it is shared by all the modules
-
-    // order for exported header statements is:
-    // - import statements
-    // - enum definitions
-    // - proto declarations
-    // - blob declarations
-    // - proto definitions
-    // - blob definitions
-    // - function declarations
-    // - variable declarations
-    // - raw function definitions
-    map<string, vector<shared_ptr<Statement>>> statementsMap;
-    for (const string &moduleName : moduleNames) {
-        // first initialize it with an empty array (in case there are no exported statements)
-        statementsMap[moduleName] = {};
-
-        // imports
-        for (shared_ptr<Statement> statement : exportedImportStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported enums definitions
-        for (shared_ptr<Statement> statement : exportedEnumStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported proto declarations
-        for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported blob declarations
-        for (shared_ptr<Statement> statement : exportedBlobDeclarationStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported proto definitions
-        for (shared_ptr<Statement> statement : exportedProtoStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported blob definitions
-        for (shared_ptr<Statement> statement : exportedBlobStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported function declarations
-        for (shared_ptr<Statement> statement : exportedStatementFunctionDeclarationsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported variable declarations
-        for (shared_ptr<Statement> statement : exportedVariableDeclarationStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported raw function definitions
-        for (shared_ptr<Statement> statement : exportedRawFunctionStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-    }
-
-    return statementsMap;*/
-    return exportedStatementsMap;
-}
-
 // MARK: - Private
 
 void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot) {

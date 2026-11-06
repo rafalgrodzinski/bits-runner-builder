@@ -24,7 +24,6 @@ public:
 
     void appendStatements(std::vector<std::shared_ptr<Statement>> statements);
     std::vector<std::shared_ptr<Module>> getModules();
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> getExportedHeaderStatementsMap();
 
 private:
     std::vector<std::shared_ptr<Error>> errors;
