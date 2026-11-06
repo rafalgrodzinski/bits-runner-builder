@@ -7,5 +7,5 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-118](https://github.com/rafalgrodzinski/bits-runner-builder/pull/229):
+Changelist for [1.0.0-dev-118](https://github.com/rafalgrodzinski/bits-runner-builder/pull/231):
 - Homebrew formule gets automatically updated on merge
