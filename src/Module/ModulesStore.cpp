@@ -638,7 +638,7 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<Statemen
     return nullptr;
 }
 
-vector<shared_ptr<Statement>> ModulesStore::flattenedStatements(vector<shared_ptr<Statement>> statements, const string &moduleName) {
+vector<shared_ptr<Statement>> ModulesStore::flattenedStatements(const vector<shared_ptr<Statement>> &statements, const string &moduleName) {
     // Check if module already visited
     for (const string &visitedModuleName : visitedModules) {
         if (moduleName == visitedModuleName)
@@ -664,7 +664,7 @@ vector<shared_ptr<Statement>> ModulesStore::flattenedStatements(vector<shared_pt
     return resolvedFlattenedStatements;
 }
 
-vector<shared_ptr<Statement>> ModulesStore::sortedBlobProtoStatements(vector<shared_ptr<DependencyNode>> dependencyNodes, vector<shared_ptr<Statement>> flattenedModuleStatements) {
+vector<shared_ptr<Statement>> ModulesStore::sortedBlobProtoStatements(const vector<shared_ptr<DependencyNode>> &dependencyNodes, const vector<shared_ptr<Statement>> &flattenedModuleStatements) {
     vector<shared_ptr<Statement>> resolvedSortedStatements;
 
     for (shared_ptr<DependencyNode> dependencyNode : dependencyNodes) {

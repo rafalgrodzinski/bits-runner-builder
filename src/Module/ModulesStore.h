@@ -46,11 +46,8 @@ private:
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementProto> statementProto);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
 
-    std::vector<std::shared_ptr<Statement>> flattenedStatements(std::vector<std::shared_ptr<Statement>> statements, const std::string &moduleName);
-    std::vector<std::shared_ptr<Statement>> sortedBlobProtoStatements(
-        std::vector<std::shared_ptr<DependencyNode>> dependencyNodes,
-        std::vector<std::shared_ptr<Statement>> flattenedModuleStatements
-    );
+    std::vector<std::shared_ptr<Statement>> flattenedStatements(const std::vector<std::shared_ptr<Statement>> &statements, const std::string &moduleName);
+    std::vector<std::shared_ptr<Statement>> sortedBlobProtoStatements(const std::vector<std::shared_ptr<DependencyNode>> &dependencyNodes, const std::vector<std::shared_ptr<Statement>> &flattenedModuleStatements);
 
     void markErrorDependencyCycle(std::shared_ptr<Location> location);
     void markErrorInvalidImport(std::shared_ptr<Location> location, const std::string &moduleName);
