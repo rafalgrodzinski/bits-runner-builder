@@ -31,13 +31,13 @@ private:
     std::string defaultModuleName;
     std::vector<std::string> moduleNames;
 
+    std::vector<std::string> visitedModules;
+
     std::map<std::string, std::vector<std::shared_ptr<Statement>>> localStatementsMap;
     std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedStatementsMap;
 
     void setModuleName(std::shared_ptr<Statement> statement, const std::string &moduleName, bool isRoot = false);
     void setModuleName(std::shared_ptr<Expression> expression, const std::string &moduleName);
-
-    std::vector<std::string> visitedModules;
 
     std::vector<std::shared_ptr<Statement>> sortedStatements(const std::string &moduleName);
     std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<Statement> statement);

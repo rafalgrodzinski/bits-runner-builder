@@ -38,7 +38,7 @@ shared_ptr<DependencyNode> DependencyNode::dependencyNode(shared_ptr<ValueType> 
     return dependencyNode;
 }
 
-void DependencyNode::reset() {
+void DependencyNode::resetCache() {
     cachedNodes.clear();
 }
 
@@ -80,14 +80,6 @@ shared_ptr<ValueType> DependencyNode::getValueType() {
 vector<shared_ptr<DependencyNode>> DependencyNode::getChildDependencyNodes() {
     return childDependencyNodes;
 }
-
-/*bool DependencyNode::getIsVisited() {
-    return isVisited;
-}
-
-void DependencyNode::markVisited() {
-    isVisited = true;
-}*/
 
 DependencyNodeVisitStatus DependencyNode::getVisitStatus() {
     return visitStatus;

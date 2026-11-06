@@ -220,7 +220,6 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
     vector<shared_ptr<Module>> modules;
 
     for (const string &moduleName : moduleNames) {
-        DependencyNode::reset();
         vector<shared_ptr<Statement>> resolvedSortedStatements = sortedStatements(moduleName);
 
         // finally construct the module
@@ -447,7 +446,9 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
 }
 
 vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &moduleName) {
+    // First construct a dependency graph of blobs and protos
     vector<shared_ptr<DependencyNode>> dependencyNodes;
+    DependencyNode::resetCache();
     for (shared_ptr<Statement> statement : localStatementsMap[moduleName]) {
         visitedModules.clear();
 
@@ -462,7 +463,9 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     }
 
     visitedModules.clear();
+    // Get a flattened list of all explicit and imported statements
     vector<shared_ptr<Statement>> flattenedModuleStatements = flattenedStatements(localStatementsMap[moduleName], moduleName);
+    // dependency graph of blobs and protos to that flattened list
     vector<shared_ptr<Statement>> resolvedSortedBlobProtoStatements = sortedBlobProtoStatements(dependencyNodes, flattenedModuleStatements);
 
     // Split statements by category
@@ -471,8 +474,8 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     vector<shared_ptr<Statement>> statementProtoDeclarations;
     vector<shared_ptr<Statement>> statementBlobDeclarations;
     vector<shared_ptr<Statement>> statementVariableDeclarations;
-    vector<shared_ptr<Statement>> statementVariables;
     vector<shared_ptr<Statement>> statementFunctionDeclarations;
+    vector<shared_ptr<Statement>> statementVariables;
     vector<shared_ptr<Statement>> statementRawFunctions;
     vector<shared_ptr<Statement>> statementFunctions;
 
@@ -491,11 +494,11 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
             case StatementKind::BLOB_DECLARATION:
                 statementBlobDeclarations.push_back(statement);
                 break;
-            case StatementKind::FUNCTION_DECLARATION:
-                statementFunctionDeclarations.push_back(statement);
-                break;
             case StatementKind::VARIABLE_DECLARATION:
                 statementVariableDeclarations.push_back(statement);
+                break;
+            case StatementKind::FUNCTION_DECLARATION:
+                statementFunctionDeclarations.push_back(statement);
                 break;
             case StatementKind::VARIABLE:
                 statementVariables.push_back(statement);
@@ -507,7 +510,7 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
                 statementFunctions.push_back(statement);
                 break;
             default:
-                break; // Ignore all the other statements (imports, proto, blob)
+                break; // Ignore all the other statements (imports, protos, blobs)
         }
     }
 
@@ -519,8 +522,8 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     // - proto declaration
     // - blob declarations
     // - mix of ordered proto and blob definitions
-    // - function declarations
     // - variable declarations
+    // - function declarations
     // - variable definitions
     // - raw function definitions
     // - function definitions
@@ -529,8 +532,8 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementProtoDeclarations.begin(), statementProtoDeclarations.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementBlobDeclarations.begin(), statementBlobDeclarations.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), resolvedSortedBlobProtoStatements.begin(), resolvedSortedBlobProtoStatements.end());
-    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementFunctionDeclarations.begin(), statementFunctionDeclarations.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariableDeclarations.begin(), statementVariableDeclarations.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementFunctionDeclarations.begin(), statementFunctionDeclarations.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariables.begin(), statementVariables.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementRawFunctions.begin(), statementRawFunctions.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementFunctions.begin(), statementFunctions.end());
