@@ -19,11 +19,11 @@ AnalyzerScope::AnalyzerScope() {
 }
 
 void AnalyzerScope::pushLevel() {
-    scopeLevels.push(ScopeLevel());
+    scopeLevels.push_back(ScopeLevel());
 }
 
 void AnalyzerScope::popLevel() {
-    scopeLevels.pop();
+    scopeLevels.pop_back();
 }
 
 bool AnalyzerScope::level(function<bool ()> levelBlock) {

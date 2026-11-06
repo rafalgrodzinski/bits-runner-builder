@@ -14,17 +14,16 @@ void AnalyzerScopeBlob::registerDeclaration(shared_ptr<SymbolName> symbolName) {
     if (getState(symbolName) != AnalyzerScopeState::NOT_REGISTERED)
         return;
 
-    parent->scopeLevels.top().scopeLevelBlob.statesMap[*symbolName] = AnalyzerScopeState::DECLARED;
+    parent->scopeLevels.back().scopeLevelBlob.statesMap[*symbolName] = AnalyzerScopeState::DECLARED;
 }
 
 AnalyzerScopeState AnalyzerScopeBlob::getState(shared_ptr<SymbolName> symbolName) {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelBlob.statesMap.find(*symbolName);
-        if (it != scopeLevels.top().scopeLevelBlob.statesMap.end())
-            return scopeLevels.top().scopeLevelBlob.statesMap[*symbolName];
-        scopeLevels.pop();
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelBlob.statesMap.find(*symbolName);
+        if (it != (*sit).scopeLevelBlob.statesMap.end())
+            return (*sit).scopeLevelBlob.statesMap[*symbolName];
     }
 
     return AnalyzerScopeState::NOT_REGISTERED;
@@ -35,34 +34,33 @@ void AnalyzerScopeBlob::registerNamedValueTypeKeys(shared_ptr<SymbolName> symbol
     //if (scopeLevels.top().blobNamedTypeKeysMap.find(blobName) != scopeLevels.top().blobNamedTypeKeysMap.end())
     //    return false;
 
-    parent->scopeLevels.top().scopeLevelBlob.namedValueTypeKeysMap[*symbolName] = namedValueTypeKeys;
+    parent->scopeLevels.back().scopeLevelBlob.namedValueTypeKeysMap[*symbolName] = namedValueTypeKeys;
 
     //return true;
 }
 
 optional<vector<string>> AnalyzerScopeBlob::getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName) const {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelBlob.namedValueTypeKeysMap.find(*symbolName);
-        if (it != scopeLevels.top().scopeLevelBlob.namedValueTypeKeysMap.end())
-            return scopeLevels.top().scopeLevelBlob.namedValueTypeKeysMap[*symbolName];
-        scopeLevels.pop();
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelBlob.namedValueTypeKeysMap.find(*symbolName);
+        if (it != (*sit).scopeLevelBlob.namedValueTypeKeysMap.end())
+            return (*sit).scopeLevelBlob.namedValueTypeKeysMap[*symbolName];
     }
 
     return {};
 }
 
 void AnalyzerScopeBlob::registerFields(shared_ptr<SymbolName> symbolName, vector<pair<string, shared_ptr<ValueType>>> &fields) {
-    parent->scopeLevels.top().scopeLevelBlob.fieldsMap[*symbolName] = fields;
+    parent->scopeLevels.back().scopeLevelBlob.fieldsMap[*symbolName] = fields;
 }
 
 optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScopeBlob::getFields(shared_ptr<SymbolName> symbolName) const {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelBlob.fieldsMap.find(*symbolName);
-        if (it != scopeLevels.top().scopeLevelBlob.fieldsMap.end()) {
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelBlob.fieldsMap.find(*symbolName);
+        if (it != (*sit).scopeLevelBlob.fieldsMap.end()) {
             vector<pair<string, shared_ptr<ValueType>>> fields = *it->second;
 
             vector<pair<string, shared_ptr<ValueType>>> clonedFields;
@@ -71,7 +69,6 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScopeBlob::getFiel
             }
             return clonedFields;
         }
-        scopeLevels.pop();
     }
 
     return {};
@@ -92,17 +89,16 @@ optional<vector<shared_ptr<ValueType>>> AnalyzerScopeBlob::getVariableFieldValue
 }
 
 void AnalyzerScopeBlob::registerConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName, vector<shared_ptr<SymbolName>> conformingProtoSymbolNames) {
-    parent->scopeLevels.top().scopeLevelBlob.conformingProtoSymbolNamsMap[*symbolName] = conformingProtoSymbolNames;
+    parent->scopeLevels.back().scopeLevelBlob.conformingProtoSymbolNamsMap[*symbolName] = conformingProtoSymbolNames;
 }
 
 optional<vector<shared_ptr<SymbolName>>> AnalyzerScopeBlob::getConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName) {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelBlob.conformingProtoSymbolNamsMap.find(*symbolName);
-        if (it != scopeLevels.top().scopeLevelBlob.conformingProtoSymbolNamsMap.end())
-            return scopeLevels.top().scopeLevelBlob.conformingProtoSymbolNamsMap[*symbolName];
-        scopeLevels.pop();
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelBlob.conformingProtoSymbolNamsMap.find(*symbolName);
+        if (it != (*sit).scopeLevelBlob.conformingProtoSymbolNamsMap.end())
+            return (*sit).scopeLevelBlob.conformingProtoSymbolNamsMap[*symbolName];
     }
 
     return {};

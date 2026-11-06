@@ -11,20 +11,19 @@ AnalyzerScopeEnum::AnalyzerScopeEnum(AnalyzerScope *parent):
 parent(parent) { }
 
 optional<vector<string>> AnalyzerScopeEnum::getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName) {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelEnum.namedValueTypeKeysMap.find(*symbolName);
-        if (it != scopeLevels.top().scopeLevelEnum.namedValueTypeKeysMap.end())
-            return scopeLevels.top().scopeLevelEnum.namedValueTypeKeysMap[*symbolName];
-        scopeLevels.pop();
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelEnum.namedValueTypeKeysMap.find(*symbolName);
+        if (it != (*sit).scopeLevelEnum.namedValueTypeKeysMap.end())
+            return (*sit).scopeLevelEnum.namedValueTypeKeysMap[*symbolName];
     }
 
     return {};
 }
 
 AnalyzerScopeRegisterResult AnalyzerScopeEnum::registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys) {
-    optional<vector<string>> &oDeclaredNamedValueTypeKeys = parent->scopeLevels.top().scopeLevelEnum.namedValueTypeKeysMap[*symbolName];
+    optional<vector<string>> &oDeclaredNamedValueTypeKeys = parent->scopeLevels.back().scopeLevelEnum.namedValueTypeKeysMap[*symbolName];
 
     // If it's already declared, check
     if (oDeclaredNamedValueTypeKeys) {
@@ -48,23 +47,22 @@ AnalyzerScopeRegisterResult AnalyzerScopeEnum::registerNamedValueTypeKeys(shared
 }
 
 shared_ptr<ValueType> AnalyzerScopeEnum::getPayloadValueType(shared_ptr<SymbolName> symbolName) {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelEnum.payloadValueTypesMap.find(*symbolName);
-        if (it != scopeLevels.top().scopeLevelEnum.payloadValueTypesMap.end())
-            return scopeLevels.top().scopeLevelEnum.payloadValueTypesMap[*symbolName];
-        scopeLevels.pop();
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelEnum.payloadValueTypesMap.find(*symbolName);
+        if (it != (*sit).scopeLevelEnum.payloadValueTypesMap.end())
+            return (*sit).scopeLevelEnum.payloadValueTypesMap[*symbolName];
     }
 
     return nullptr;
 }
 
 AnalyzerScopeRegisterResult AnalyzerScopeEnum::registerPayloadValueType(shared_ptr<SymbolName> symbolName, shared_ptr<ValueType> payloadValueType) {
-    auto it = parent->scopeLevels.top().scopeLevelEnum.payloadValueTypesMap.find(*symbolName);
-    if (it != parent->scopeLevels.top().scopeLevelEnum.payloadValueTypesMap.end())
+    auto it = parent->scopeLevels.back().scopeLevelEnum.payloadValueTypesMap.find(*symbolName);
+    if (it != parent->scopeLevels.back().scopeLevelEnum.payloadValueTypesMap.end())
         return AnalyzerScopeRegisterResult::FAILURE_ALREAD_DEFINED;
 
-    parent->scopeLevels.top().scopeLevelEnum.payloadValueTypesMap[*symbolName] = payloadValueType;
+    parent->scopeLevels.back().scopeLevelEnum.payloadValueTypesMap[*symbolName] = payloadValueType;
     return AnalyzerScopeRegisterResult::SUCCES;
 }

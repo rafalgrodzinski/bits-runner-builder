@@ -10,3 +10,4 @@ Available for:
 Changelist for [1.0.0-dev-117](https://github.com/rafalgrodzinski/bits-runner-builder/pull/229):
 - Correct order of declarations and definitions is now fully automated
 - Analyzer and ModuleBuilder don't deal with import statements anymore
+- Better analysis performance

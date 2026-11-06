@@ -10,13 +10,12 @@ AnalyzerScopeBoxed::AnalyzerScopeBoxed(AnalyzerScope *parent):
 parent(parent) { }
 
 shared_ptr<ValueType> AnalyzerScopeBoxed::getNamedValueType(const string &namedValueTypeKey) const {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelBoxed.namedValueTypesMap.find(namedValueTypeKey);
-        if (it != scopeLevels.top().scopeLevelBoxed.namedValueTypesMap.end())
-            return scopeLevels.top().scopeLevelBoxed.namedValueTypesMap[namedValueTypeKey];
-        scopeLevels.pop();
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelBoxed.namedValueTypesMap.find(namedValueTypeKey);
+        if (it != (*sit).scopeLevelBoxed.namedValueTypesMap.end())
+            return (*sit).scopeLevelBoxed.namedValueTypesMap[namedValueTypeKey];
     }
 
     return nullptr;
@@ -27,7 +26,7 @@ void AnalyzerScopeBoxed::registerNamedValueTypesMap(const vector<string> &namedV
         return;
 
     for (int i=0; i<namedValueTypeKeys.size(); i++) {
-        parent->scopeLevels.top().scopeLevelBoxed.namedValueTypesMap[namedValueTypeKeys[i]] = namedValueTypes[i];
+        parent->scopeLevels.back().scopeLevelBoxed.namedValueTypesMap[namedValueTypeKeys[i]] = namedValueTypes[i];
     }
 
     //return AnalyzerScopeRegisterResult::SUCCES;
