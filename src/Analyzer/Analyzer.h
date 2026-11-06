@@ -7,9 +7,9 @@
 #include <vector>
 
 class AnalyzerScope;
-class Module;
 class Error;
 class Location;
+class Module;
 
 class Statement;
 class StatementAssignment;
@@ -23,7 +23,6 @@ class StatementFunction;
 class StatementFunctionDeclaration;
 class StatementMetaExternFunction;
 class StatementMetaExternVariable;
-class StatementMetaImport;
 class StatementModule;
 class StatementProto;
 class StatementProtoDeclaration;
@@ -64,19 +63,8 @@ enum class ExpressionUnaryOperation;
 enum class ExpressionBinaryOperation;
 
 class Analyzer {
-private:
-    enum class ImportLevel {
-        NONE,
-        EXPLICIT,
-        IMPLICIT
-    };
-
 public:
-    Analyzer(
-        const std::string &defaultModuleName,
-        std::shared_ptr<Module> module,
-        const std::map<std::string, std::vector<std::shared_ptr<Statement>>> &importableHeaderStatementsMap
-    );
+    Analyzer(const std::string &defaultModuleName, std::shared_ptr<Module> module);
 
     void checkModule();
 
@@ -86,12 +74,10 @@ private:
 
     std::shared_ptr<AnalyzerScope> scope;
     std::shared_ptr<Module> module;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> importableHeaderStatementsMap;
-    std::map<std::string, ImportLevel> importedModuleLevelsMap;
 
-    void checkStatement(std::shared_ptr<Statement> statement, std::shared_ptr<ValueType> returnType, bool isImported = false, ImportLevel importLevel = ImportLevel::NONE);
+    void checkStatement(std::shared_ptr<Statement> statement, std::shared_ptr<ValueType> returnType);
     void checkStatement(std::shared_ptr<StatementAssignment> statementAssignment);
-    void checkStatement(std::shared_ptr<StatementBlob> statementBlob, bool isImported);
+    void checkStatement(std::shared_ptr<StatementBlob> statementBlob);
     void checkStatement(std::shared_ptr<StatementBlobDeclaration> statementBlobDeclaration);
     void checkStatement(std::shared_ptr<StatementBlock> statementBlock, std::shared_ptr<ValueType> returnType);
     void checkStatement(std::shared_ptr<StatementEnum> statementEnum);
@@ -101,7 +87,6 @@ private:
     void checkStatement(std::shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration);
     void checkStatement(std::shared_ptr<StatementMetaExternFunction> statementMetaExternFunction);
     void checkStatement(std::shared_ptr<StatementMetaExternVariable> statementMetaExternVariable);
-    void checkStatement(std::shared_ptr<StatementMetaImport> statement, ImportLevel ImportLevel);
     void checkStatement(std::shared_ptr<StatementProto> statement);
     void checkStatement(std::shared_ptr<StatementProtoDeclaration> statement);
     void checkStatement(std::shared_ptr<StatementRawFunction> statementRawFunction);
@@ -154,7 +139,6 @@ private:
     void markErrorInvalidArgumentsCount(std::shared_ptr<Location> location, int actulCount, int expectedCount);
     void markErrorInvalidBuiltIn(std::shared_ptr<Location> location, const std::string &builtInName, std::shared_ptr<ValueType> type);
     void markErrorInvalidCast(std::shared_ptr<Location> location, std::shared_ptr<ValueType> sourceType, std::shared_ptr<ValueType> targetType);
-    void markErrorInvalidImport(std::shared_ptr<Location> location, const std::string &moduleName);
     void markErrorInvalidName(std::shared_ptr<Location> location, const std::string &name);
     void markErrorInvalidOperationBinary(std::shared_ptr<Location> location, ExpressionBinaryOperation operation, std::shared_ptr<ValueType> firstType, std::shared_ptr<ValueType> secondType);
     void markErrorInvalidOperationUnary(std::shared_ptr<Location> location, ExpressionUnaryOperation operation, std::shared_ptr<ValueType> type);

@@ -7,8 +7,7 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [1.0.0-dev-116](https://github.com/rafalgrodzinski/bits-runner-builder/pull/227):
-- Added exchange values `<->` operator
-- Fixed fun type check
-- Added array sorting
-- Fixed enums in headers
+Changelist for [1.0.0-dev-117](https://github.com/rafalgrodzinski/bits-runner-builder/pull/229):
+- Correct order of declarations and definitions is now fully automated
+- Analyzer and ModuleBuilder don't deal with import statements anymore
+- Better analysis performance

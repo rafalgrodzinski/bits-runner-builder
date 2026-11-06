@@ -252,11 +252,7 @@ int main(int argc, char **argv) {
             cout << format("🔮 Analyzing module \"{}\"", module->getName()) << endl;
 
         timeStamp = clock();
-        Analyzer typesAnalyzer(
-            DEFAULT_MODULE_NAME,
-            module,
-            modulesStore.getExportedHeaderStatementsMap()
-        );
+        Analyzer typesAnalyzer(DEFAULT_MODULE_NAME, module);
         typesAnalyzer.checkModule();
         timeStamp = clock() - timeStamp;
         totalAnalysisTime += timeStamp;
@@ -269,11 +265,6 @@ int main(int argc, char **argv) {
             Logger::print(module);
             cout << endl;
         }
-    }
-
-    // Print exported header statements
-    if (verbosity >= Verbosity::V3) {
-        Logger::printExportedHeaderStatements(modulesStore.getExportedHeaderStatementsMap());
     }
 
     // Specify code generator for desired target
@@ -291,8 +282,7 @@ int main(int argc, char **argv) {
             codeGenerator.getArchType(),
             codeGenerator.getDataLayout(),
             codeGenerator.getCallingConvetion(),
-            module,
-            modulesStore.getExportedHeaderStatementsMap()
+            module
         );
         shared_ptr<llvm::Module> llvmModule = moduleBuilder.getLlvmModule();
         timeStamp = clock() - timeStamp;

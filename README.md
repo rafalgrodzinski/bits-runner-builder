@@ -1,15 +1,40 @@
-# Bits Runner Builder
-<img width="96" alt="Logo" src="https://github.com/rafalgrodzinski/bits-runner-builder/blob/main/img/Logo.png" />
-Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) Operating System project. It aims to be a modernised C with s clear and explicit syntax. Bits Runner Builder (BRB) is its implementation. It's available for macOS, Linux, and Windows.
+<div align="center">
+    <p>
+        <img width="96" src="https://github.com/rafalgrodzinski/bits-runner-builder/blob/main/img/Logo.png"/>
+        <h1>Bits Runner Builder</h1>
+    </p>
+    <p>
+        A low level system programming language that doesn't get in your way
+    </p>
+    <p>
+        <a href="https://github.com/rafalgrodzinski/bits-runner-builder"><img src="https://img.shields.io/badge/;-f5b31e?label=BRC&labelColor=202020"/></a>
+        &nbsp;
+        <a href="https://en.cppreference.com/cpp"><img src="https://img.shields.io/badge/C++-00599c?logo=cplusplus"/></a>
+        &nbsp;
+        <a href="https://llvm.org/docs/LangRef.html"><img src="https://img.shields.io/badge/LLVM-262d3a?logo=llvm"/></a>
+        &nbsp;
+        <a href="https://github.com/rafalgrodzinski/bits-runner-builder"><img src="https://img.shields.io/github/stars/rafalgrodzinski/bits-runner-builder"/></a>
+        &nbsp;
+        <a href="https://github.com/rafalgrodzinski/bits-runner-builder/releases"><img src="https://img.shields.io/github/v/tag/rafalgrodzinski/bits-runner-builder?label=Version&color=white"/></a>
+        &nbsp;
+        <a href="#"><img src="https://img.shields.io/github/repo-size/rafalgrodzinski/bits-runner-builder?label=Repo%20Size&color=white"></img></a>
+        &nbsp;
+        <a href="https://github.com/rafalgrodzinski/bits-runner-builder/issues"><img src="https://img.shields.io/github/issues/rafalgrodzinski/bits-runner-builder?label=Issues&color=white"></img></a>
+    </p>
+</div>
 
-### In this readme
+#
+Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https://github.com/rafalgrodzinski/bits-runner) operating system project. It aims to be a modernised C with clear and explicit syntax. Bits Runner Builder (BRB) is its implementation. It's available for macOS, Linux, and Windows.
+
+
+## 🧵 In this readme
 - [🥞 A taste of BRC](README.md#-a-taste-of-brc)
 - [🤓 But why?](README.md#-but-why)
 - [💿 How to install](README.md#-how-to-install)
 - [🛠️ How to build](README.md#-how-to-build)
 - [💡 Samples](README.md#-samples)
 - [🖍️ Visual Studio Code support](README.md#-visual-studio-code-support)
-- [🔗 Further resources](README.md#-further-resources)
+- [🔗 More info](README.md#-more-info)
 
 
 ## 🥞 A taste of BRC
@@ -196,7 +221,7 @@ For a real use of the language checkout sources for the [Bits Runner](https://gi
 There are "Build (Debug)" and "Clean" tasks specified for VSCode. There is also a launch configuartion, which you can launch by pressing F5 which will then build and start debugging using command `brb --verb=v3 samples/test.brc`. You'll need to have "LLDB DAP" extension installed in VSCode and `lldb-dap` on your system. There is also a [BRC langauge extension](https://github.com/rafalgrodzinski/brc-vscode) available.
 
 
-## 🔗 Further resources
+## 🔗 More info
 - [Language reference](docs/Reference.md)
 - [Casting rules](docs/Casts.md)
 - [Extra information](docs/Extra.md)

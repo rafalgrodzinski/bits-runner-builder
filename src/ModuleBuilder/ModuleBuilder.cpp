@@ -17,7 +17,6 @@
 #include "Parser/Statement/StatementFunctionDeclaration.h"
 #include "Parser/Statement/StatementMetaExternFunction.h"
 #include "Parser/Statement/StatementMetaExternVariable.h"
-#include "Parser/Statement/StatementMetaImport.h"
 #include "Parser/Statement/StatementProto.h"
 #include "Parser/Statement/StatementProtoDeclaration.h"
 #include "Parser/Statement/StatementRawFunction.h"
@@ -61,14 +60,12 @@ ModuleBuilder::ModuleBuilder(
     llvm::Triple::ArchType archType,
     llvm::DataLayout dataLayout,
     llvm::CallingConv::ID callingConvention,
-    shared_ptr<Module> module,
-    const map<string, vector<shared_ptr<Statement>>> &importableHeaderStatementsMap
+    shared_ptr<Module> module
 ):
 defaultModuleName(defaultModuleName),
 archType(archType),
 callingConvention(callingConvention),
-module(module),
-importableHeaderStatementsMap(importableHeaderStatementsMap) {
+module(module) {
     int intSize = dataLayout.getLargestLegalIntTypeSizeInBits();
     int pointerSize = dataLayout.getPointerSizeInBits();
 
@@ -125,22 +122,17 @@ importableHeaderStatementsMap(importableHeaderStatementsMap) {
 shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
     scope = make_shared<Scope>();
 
-    // build header (doesn't build blob functions)
-    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements())
+    // statements (except for blob functions)
+    for (shared_ptr<Statement> headerStatement : module->getStatements())
         buildStatement(headerStatement);
 
     // build blob functions
-    for (shared_ptr<Statement> headerStatement : module->getHeaderStatements()) {
+    for (shared_ptr<Statement> headerStatement : module->getStatements()) {
         if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
             for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                 buildStatement(statementFunction);
             }
         }
-    }
-
-    // build body statements
-    for (shared_ptr<Statement> statement : module->getBodyStatements()) {
-        buildStatement(statement);
     }
 
     // verify LLVM Module (only if there are no other errors, not to pollute the output)
@@ -167,15 +159,14 @@ shared_ptr<llvm::Module> ModuleBuilder::getLlvmModule() {
 
 // Statements
 
-void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel importLevel) {
+void ModuleBuilder::buildStatement(shared_ptr<Statement> statement) {
     switch (statement->getKind()) {
         case StatementKind::ASSIGNMENT: {
             buildStatement(dynamic_pointer_cast<StatementAssignment>(statement));
             return;
         }
         case StatementKind::BLOB: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                buildStatement(dynamic_pointer_cast<StatementBlob>(statement));
+            buildStatement(dynamic_pointer_cast<StatementBlob>(statement));
             return;
         }
         case StatementKind::BLOB_DECLARATION: {
@@ -187,8 +178,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             return;
         }
         case StatementKind::ENUM: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
+            buildStatement(dynamic_pointer_cast<StatementEnum>(statement));
             return;
         }
         case StatementKind::EXCHANGE: {
@@ -204,8 +194,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             return;
         }
         case StatementKind::FUNCTION_DECLARATION: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                buildStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
+            buildStatement(dynamic_pointer_cast<StatementFunctionDeclaration>(statement));
             return;
         }
         case StatementKind::META_EXTERN_FUNCTION: {
@@ -216,16 +205,8 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             buildStatement(dynamic_pointer_cast<StatementMetaExternVariable>(statement));
             return;
         }
-        case StatementKind::META_IMPORT: {
-            ImportLevel newImportLevel = ImportLevel::IMPLICIT;
-            if (importLevel == ImportLevel::NONE)
-                newImportLevel = ImportLevel::EXPLICIT;
-            buildStatement(dynamic_pointer_cast<StatementMetaImport>(statement), newImportLevel);
-            return;
-        }
         case StatementKind::PROTO: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                buildStatement(dynamic_pointer_cast<StatementProto>(statement));
+            buildStatement(dynamic_pointer_cast<StatementProto>(statement));
             return;
         }
         case StatementKind::PROTO_DECLARATION: {
@@ -233,8 +214,7 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             return;
         }
         case StatementKind::RAW_FUNCTION: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
+            buildStatement(dynamic_pointer_cast<StatementRawFunction>(statement));
             return;
         }
         case StatementKind::REPEAT: {
@@ -246,13 +226,11 @@ void ModuleBuilder::buildStatement(shared_ptr<Statement> statement, ImportLevel 
             return;
         }
         case StatementKind::VARIABLE: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                buildStatement(dynamic_pointer_cast<StatementVariable>(statement));
+            buildStatement(dynamic_pointer_cast<StatementVariable>(statement));
             return;
         }
         case StatementKind::VARIABLE_DECLARATION: {
-            if (importLevel != ImportLevel::IMPLICIT)
-                buildStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+            buildStatement(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
             return;
         }
         default:
@@ -521,33 +499,6 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementMetaExternVariable> state
         statementMetaExternVariable->getGlobalIdentifier(),
         WrappedValue::wrappedValue(global, statementMetaExternVariable->getValueType())
     );
-}
-
-void ModuleBuilder::buildStatement(shared_ptr<StatementMetaImport> statementMetaImport, ImportLevel importLevel) {
-    // Check if import exists
-    auto it = importableHeaderStatementsMap.find(statementMetaImport->getName());
-    if (it == importableHeaderStatementsMap.end()) {
-        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
-        return;
-    }
-
-    // Skip if import circles back
-    if (statementMetaImport->getName() == module->getName())
-        return;
-
-    // Check already imported levels
-    ImportLevel currentImport = importedModuleLevelsMap[statementMetaImport->getName()];
-    if (
-        currentImport == ImportLevel::EXPLICIT ||
-        currentImport == ImportLevel::IMPLICIT && importLevel != ImportLevel::EXPLICIT
-    ) {
-        return;
-    }
-    importedModuleLevelsMap[statementMetaImport->getName()] = importLevel;
-
-    for (shared_ptr<Statement> &importedStatement : it->second) {
-        buildStatement(importedStatement, importLevel);
-    }
 }
 
 void ModuleBuilder::buildStatement(shared_ptr<StatementProto> statementProto) {

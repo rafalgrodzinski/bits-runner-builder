@@ -1,6 +1,10 @@
 #include "ModulesStore.h"
 
 #include "Module.h"
+#include "DependencyNode.h"
+
+#include "Error.h"
+#include "Logger.h"
 
 #include "Parser/Statement/Statement.h"
 #include "Parser/Statement/StatementAssignment.h"
@@ -36,8 +40,10 @@
 #include "Parser/Expression/ExpressionUnary.h"
 #include "Parser/Expression/ExpressionValue.h"
 
-#include "Parser/ValueType/ValueType.h"
 #include "Parser/Pattern.h"
+#include "Parser/ValueType/ValueType.h"
+#include "Parser/ValueType/ValueTypeBlob.h"
+#include "Parser/ValueType/ValueTypeProto.h"
 
 using namespace std;
 
@@ -49,27 +55,8 @@ defaultModuleName(defaultModuleName) { }
 void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;
 
-    vector<shared_ptr<Statement>> moduleImportStatements;
-    vector<shared_ptr<Statement>> moduleExternStatements;
-    vector<shared_ptr<Statement>> moduleEnumStatements;
-    vector<shared_ptr<Statement>> moduleProtoDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleProtoStatements;
-    vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleBlobStatements;
-    vector<shared_ptr<Statement>> moduleVariableDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleStatementVariables;
-    vector<shared_ptr<Statement>> moduleStatementFunctionDeclarations;
-    vector<shared_ptr<Statement>> moduleRawFunctionStatements;
-    vector<shared_ptr<Statement>> moduleBodyStatements;
-
-    vector<shared_ptr<Statement>> moduleExportedEnumStatements;
-    vector<shared_ptr<Statement>> moduleExportedProtoDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleExportedProtoStatements;
-    vector<shared_ptr<Statement>> moduleExportedBlobDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleExportedBlobStatements;
-    vector<shared_ptr<Statement>> moduleExportedStatementFunctionDeclarations;
-    vector<shared_ptr<Statement>> moduleExportedVariableDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleExportedRawFunctionStatements;
+    vector<shared_ptr<Statement>> moduleLocalStatements;
+    vector<shared_ptr<Statement>> moduleExportedStatements;
 
     for (shared_ptr<Statement> statement : statements) {
         setModuleName(statement, moduleName, true);
@@ -79,11 +66,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
                 shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = statementBlob->getDeclaration();
 
-                // local header
-                moduleBlobDeclarationStatements.push_back(statementBlobDeclaration);
-                moduleBlobStatements.push_back(statementBlob);
+                // local statements
+                moduleLocalStatements.push_back(statementBlobDeclaration);
+                moduleLocalStatements.push_back(statementBlob);
 
-                // exported header
+                // exported statements
                 if (statementBlob->getShouldExport()) {
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
@@ -97,9 +84,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     exportedStatementBlob->setModuleName(statementBlob->getSymbolName()->getModuleName());
 
                     // append updated statement
-                    moduleExportedBlobStatements.push_back(exportedStatementBlob);
+                    moduleExportedStatements.push_back(exportedStatementBlob);
                     // declaration doesn't contain any types, so it's fine like this
-                    moduleExportedBlobDeclarationStatements.push_back(statementBlobDeclaration);
+                    moduleExportedStatements.push_back(statementBlobDeclaration);
                 }
 
                 // create delclarations for blob functions
@@ -112,23 +99,26 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         statementBlobFunction->getReturnValueType(),
                         statementBlobFunction->getLocation()
                     );
-                    moduleStatementFunctionDeclarations.push_back(statementBlobFunctionDeclaration);
+
+                    // local statements
+                    moduleLocalStatements.push_back(statementBlobFunctionDeclaration);
 
                     // handle exported & public functions
                     if (statementBlob->getShouldExport())
-                       moduleExportedStatementFunctionDeclarations.push_back(statementBlobFunctionDeclaration);
+                       moduleExportedStatements.push_back(statementBlobFunctionDeclaration);
                 }
 
                 break;
             }
             case StatementKind::ENUM: {
                 shared_ptr<StatementEnum> statementEnum = dynamic_pointer_cast<StatementEnum>(statement);
-                // local header
-                moduleEnumStatements.push_back(statementEnum);
 
-                // exported header
+                // local statements
+                moduleLocalStatements.push_back(statementEnum);
+
+                // exported statements
                 if (statementEnum->getShouldExport())
-                    moduleExportedEnumStatements.push_back(statementEnum);
+                    moduleExportedStatements.push_back(statementEnum);
 
                 break;
             }
@@ -136,24 +126,27 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
                 shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = statementFunction->getDeclaration();
 
-                // local header
-                moduleStatementFunctionDeclarations.push_back(statementFunctionDeclaration);
-                // body
-                moduleBodyStatements.push_back(statementFunction);
+                // local statements
+                moduleLocalStatements.push_back(statementFunctionDeclaration);
+                moduleLocalStatements.push_back(statementFunction);
 
-                // exported header
+                // exported statements
                 if (statementFunction->getShouldExport())
-                   moduleExportedStatementFunctionDeclarations.push_back(statementFunctionDeclaration);
+                   moduleExportedStatements.push_back(statementFunctionDeclaration);
 
                 break;
             }
             case StatementKind::META_EXTERN_FUNCTION:
             case StatementKind::META_EXTERN_VARIABLE: {
-                moduleExternStatements.push_back(statement);
+                moduleLocalStatements.push_back(statement);
                 break;
             }
             case StatementKind::META_IMPORT: {
-                moduleImportStatements.push_back(statement);
+                // local statements
+                moduleLocalStatements.push_back(statement);
+
+                // exported statements
+                moduleExportedStatements.push_back(statement);
                 break;
             }
             case StatementKind::MODULE: {
@@ -165,25 +158,29 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
                 shared_ptr<StatementProtoDeclaration> statementProtoDeclaration = statementProto->getDeclaration();
 
-                // local header
-                moduleProtoDeclarationStatements.push_back(statementProtoDeclaration);
-                moduleProtoStatements.push_back(statementProto);
+                // local statements
+                moduleLocalStatements.push_back(statementProtoDeclaration);
+                moduleLocalStatements.push_back(statementProto);
 
-                // exported header
+                // exported statements
                 if (statementProto->getShouldExport()) {
                     // append proto statement
-                    moduleExportedProtoStatements.push_back(statementProto);
+                    moduleExportedStatements.push_back(statementProto);
                     // declaration doesn't contain any types, so it's fine like this
-                    moduleExportedProtoDeclarationStatements.push_back(statementProtoDeclaration);
+                    moduleExportedStatements.push_back(statementProtoDeclaration);
                 }
 
                 break;
             }
             case StatementKind::RAW_FUNCTION: {
                 shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(statement);
-                moduleRawFunctionStatements.push_back(statementRawFunction);
+
+                // local statements
+                moduleLocalStatements.push_back(statementRawFunction);
+
+                // exported statemetns
                 if (statementRawFunction->getShouldExport())
-                    moduleExportedRawFunctionStatements.push_back(statementRawFunction);
+                    moduleExportedStatements.push_back(statementRawFunction);
 
                 break;
             }
@@ -191,19 +188,17 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
                 shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = statementVariable->getDeclaration();
 
-                // local header
-                moduleStatementVariables.push_back(statementVariable);
+                // local statements
+                moduleLocalStatements.push_back(statementVariable);
 
-                // exported header
+                // exported statements
                 if (statementVariable->getShouldExport())
-                   moduleExportedVariableDeclarationStatements.push_back(statementVariableDeclaration);
+                   moduleExportedStatements.push_back(statementVariableDeclaration);
 
                 break;
             }
-            default: {
-                moduleBodyStatements.push_back(statement);
+            default:
                 break;
-            }
         }
     }
 
@@ -212,120 +207,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     if (find(moduleNames.begin(), moduleNames.end(), moduleName) == moduleNames.end()) {
         // name
         moduleNames.push_back(moduleName);
-
-        // imports
-        importStatementsMap[moduleName] = moduleImportStatements;
-        // externs
-        externStatementsMap[moduleName] = moduleExternStatements;
-        // enums definitions
-        enumStatementsMap[moduleName] = moduleEnumStatements;
-        // proto declarations
-        protoDeclarationStatementsMap[moduleName] = moduleProtoDeclarationStatements;
-        // proto definitions
-        protoStatementsMap[moduleName] = moduleProtoStatements;
-        // blob declarations
-        blobDeclarationStatementsMap[moduleName] = moduleBlobDeclarationStatements;
-        // blob definitons
-        blobStatementsMap[moduleName] = moduleBlobStatements;
-        // function declarations
-        statementFunctionDeclarationsMap[moduleName] = moduleStatementFunctionDeclarations;
-        // variable definitions
-        statementVariablesMap[moduleName] = moduleStatementVariables;
-        // raw functions
-        rawFunctionStatementsMap[moduleName] = moduleRawFunctionStatements;
-    
-        // body statements
-        bodyStatementsMap[moduleName] = moduleBodyStatements;
-
-        // exported enums
-        exportedEnumStatementsMap[moduleName] = moduleExportedEnumStatements;
-        // exported proto declarations
-        exportedProtoDeclarationStatementsMap[moduleName] = moduleExportedProtoDeclarationStatements;
-        // exported proto definitions
-        exportedProtoStatementsMap[moduleName] = moduleExportedProtoStatements;
-        // exported blob declarations
-        exportedBlobDeclarationStatementsMap[moduleName] = moduleExportedBlobDeclarationStatements;
-        // exported blob definitions
-        exportedBlobStatementsMap[moduleName] = moduleExportedBlobStatements;
-        // exported function declarations
-        exportedStatementFunctionDeclarationsMap[moduleName] = moduleExportedStatementFunctionDeclarations;
-        // exported variable declarations
-        exportedVariableDeclarationStatementsMap[moduleName] = moduleExportedVariableDeclarationStatements;
-        // exported raw functions
-        exportedRawFunctionStatementsMap[moduleName] = moduleExportedRawFunctionStatements;
+        localStatementsMap[moduleName] = moduleLocalStatements;
+        exportedStatementsMap[moduleName] = moduleExportedStatements;
     // or merge with existing ones
     } else {
-        // imports
-        for (shared_ptr<Statement> statement : moduleImportStatements) {
-            // Filter out dumplicated import statements
-            bool isAlreadyImported = false;
-            string newImportName = dynamic_pointer_cast<StatementMetaImport>(statement)->getName();
-            for (shared_ptr<Statement> importStatement : importStatementsMap[moduleName]) {
-                string importName = dynamic_pointer_cast<StatementMetaImport>(importStatement)->getName();
-                if (newImportName.compare(importName) == 0) {
-                    isAlreadyImported = true;
-                    break;
-                }
-            }
-            if (!isAlreadyImported)
-                importStatementsMap[moduleName].push_back(statement);
-        }
-        // externs
-        for (shared_ptr<Statement> statement : moduleExternStatements)
-            externStatementsMap[moduleName].push_back(statement);
-        // enum definitions
-        for (shared_ptr<Statement> statement : moduleEnumStatements)
-            enumStatementsMap[moduleName].push_back(statement);
-        // proto declarations
-        for (shared_ptr<Statement> statement : moduleProtoDeclarationStatements)
-            protoDeclarationStatementsMap[moduleName].push_back(statement);
-        // proto defintions
-        for (shared_ptr<Statement> statement : moduleProtoStatements)
-            protoStatementsMap[moduleName].push_back(statement);
-        // blob declarations
-        for (shared_ptr<Statement> statement : moduleBlobDeclarationStatements)
-            blobDeclarationStatementsMap[moduleName].push_back(statement);
-        // blob defintions
-        for (shared_ptr<Statement> statement : moduleBlobStatements)
-            blobStatementsMap[moduleName].push_back(statement);
-        // function declarations
-        for (shared_ptr<Statement> statement : moduleStatementFunctionDeclarations)
-            statementFunctionDeclarationsMap[moduleName].push_back(statement);
-        // variable definitions
-        for (shared_ptr<Statement> statement : moduleStatementVariables)
-            statementVariablesMap[moduleName].push_back(statement);
-        // raw functions
-        for (shared_ptr<Statement> statement : moduleRawFunctionStatements)
-            rawFunctionStatementsMap[moduleName].push_back(statement);
-
-        // body statements
-        for (shared_ptr<Statement> statement : moduleBodyStatements)
-            bodyStatementsMap[moduleName].push_back(statement);
-
-        // exported enum definitions
-        for (shared_ptr<Statement> statement : moduleExportedEnumStatements)
-            exportedEnumStatementsMap[moduleName].push_back(statement);
-        // exported proto declarations
-        for (shared_ptr<Statement> statement : moduleExportedProtoDeclarationStatements)
-            exportedBlobDeclarationStatementsMap[moduleName].push_back(statement);
-        // exported proto definitions
-        for (shared_ptr<Statement> statement : moduleExportedProtoStatements)
-            exportedBlobStatementsMap[moduleName].push_back(statement);
-        // exported blob declarations
-        for (shared_ptr<Statement> statement : moduleExportedBlobDeclarationStatements)
-            exportedBlobDeclarationStatementsMap[moduleName].push_back(statement);
-        // exported blob defintions
-        for (shared_ptr<Statement> statement : moduleExportedBlobStatements)
-            exportedBlobStatementsMap[moduleName].push_back(statement);
-        // exported function declarations
-        for (shared_ptr<Statement> statement : moduleExportedStatementFunctionDeclarations)
-            exportedStatementFunctionDeclarationsMap[moduleName].push_back(statement);
-        // exported variable declarations
-        for (shared_ptr<Statement> statement : moduleExportedVariableDeclarationStatements)
-            exportedVariableDeclarationStatementsMap[moduleName].push_back(statement);
-        // exported raw functions
-        for (shared_ptr<Statement> statement : moduleExportedRawFunctionStatements)
-            exportedRawFunctionStatementsMap[moduleName].push_back(statement);
+        localStatementsMap[moduleName].insert(localStatementsMap[moduleName].end(), moduleLocalStatements.begin(), moduleLocalStatements.end());
+        exportedStatementsMap[moduleName].insert(exportedStatementsMap[moduleName].end(), moduleExportedStatements.begin(), moduleExportedStatements.end());
     }
 }
 
@@ -333,117 +220,26 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
     vector<shared_ptr<Module>> modules;
 
     for (const string &moduleName : moduleNames) {
-        // construct the local header
-        // order for local header statements is:
-        // - externs
-        // - enums
-        // - proto declaration
-        // - blob declarations
-        // - import statements (imported statements may use blobs & protos)
-        // - proto definition
-        // - blob definitions
-        // - function declarations
-        // - variable definitions
-        // - raw function definitions
-
-        vector<shared_ptr<Statement>> headerStatements;
-        // externs
-        for (shared_ptr<Statement> statement : externStatementsMap[moduleName])
-            headerStatements.push_back(statement);
-        // enums definitions
-        for (shared_ptr<Statement> statement : enumStatementsMap[moduleName])
-            headerStatements.push_back(statement);
-        // proto declarations
-        for (shared_ptr<Statement> statement : protoDeclarationStatementsMap[moduleName])
-            headerStatements.push_back(statement);
-        // blob declarations
-        for (shared_ptr<Statement> statement : blobDeclarationStatementsMap[moduleName])
-            headerStatements.push_back(statement);
-        // imports
-        for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
-            headerStatements.push_back(statement);
-        // proto definitions
-        for (shared_ptr<Statement> statement : protoStatementsMap[moduleName])
-            headerStatements.push_back(statement);
-        // blob definitions
-        for (shared_ptr<Statement> statement : blobStatementsMap[moduleName])
-            headerStatements.push_back(statement);
-        // function declarations
-        for (shared_ptr<Statement> statement : statementFunctionDeclarationsMap[moduleName])
-            headerStatements.push_back(statement);
-        // variable definitions
-        for (shared_ptr<Statement> statement : statementVariablesMap[moduleName])
-            headerStatements.push_back(statement);
-        // raw functions definitions
-        for (shared_ptr<Statement> statement : rawFunctionStatementsMap[moduleName])
-            headerStatements.push_back(statement);
+        vector<shared_ptr<Statement>> resolvedSortedStatements = sortedStatements(moduleName);
 
         // finally construct the module
-        shared_ptr<Module> module = make_shared<Module>(
-            moduleName,
-            headerStatements,
-            bodyStatementsMap[moduleName]
-        );
+        shared_ptr<Module> module = make_shared<Module>(moduleName, resolvedSortedStatements);
         modules.push_back(module);
+    }
+
+    if (!errors.empty()) {
+        for (shared_ptr<Error> &error : errors)
+            Logger::print(error);
+        exit(1);
     }
 
     return modules;
 }
 
-map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatementsMap() {
-    // construct the exported headers map
-    // it is shared by all the modules
-
-    // order for exported header statements is:
-    // - import statements
-    // - proto declarations
-    // - proto definitions
-    // - blob declarations
-    // - blob definitions
-    // - function declarations
-    // - variable declarations
-    // - raw function definitions
-    map<string, vector<shared_ptr<Statement>>> statementsMap;
-    for (const string &moduleName : moduleNames) {
-        // first initialize it with an empty array (in case there are no exported statements)
-        statementsMap[moduleName] = {};
-
-        // imports
-        for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported enums
-        for (shared_ptr<Statement> statement : exportedEnumStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported proto declarations
-        for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported proto definitions
-        for (shared_ptr<Statement> statement : exportedProtoStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported blob declarations
-        for (shared_ptr<Statement> statement : exportedBlobDeclarationStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported blob definitions
-        for (shared_ptr<Statement> statement : exportedBlobStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported function declarations
-        for (shared_ptr<Statement> statement : exportedStatementFunctionDeclarationsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported variable declarations
-        for (shared_ptr<Statement> statement : exportedVariableDeclarationStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported raw function definitions
-        for (shared_ptr<Statement> statement : exportedRawFunctionStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-    }
-
-    return statementsMap;
-}
-
 // MARK: - Private
 
 void ModulesStore::setModuleName(shared_ptr<Statement> statement, const string &moduleName, bool isRoot) {
-    if (statement == nullptr)
+    if (statement == nullptr) 
         return;
 
     switch (statement->getKind()) {
@@ -647,4 +443,281 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
         default:
             break;
     }
+}
+
+vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &moduleName) {
+    // First construct a dependency graph of blobs and protos
+    vector<shared_ptr<DependencyNode>> dependencyNodes;
+    DependencyNode::resetCache();
+    for (shared_ptr<Statement> statement : localStatementsMap[moduleName]) {
+        visitedModules.clear();
+
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement)) {
+            if (resolvedDependencyNode->getValueType() != nullptr) {
+                dependencyNodes.push_back(resolvedDependencyNode);
+            } else {
+                for (shared_ptr<DependencyNode> resolvedChildDependencyNode : resolvedDependencyNode->getChildDependencyNodes())
+                    dependencyNodes.push_back(resolvedChildDependencyNode);
+            }
+        }
+    }
+
+    visitedModules.clear();
+    // Get a flattened list of all explicit and imported statements
+    vector<shared_ptr<Statement>> flattenedModuleStatements = flattenedStatements(localStatementsMap[moduleName], moduleName);
+    // dependency graph of blobs and protos to that flattened list
+    vector<shared_ptr<Statement>> resolvedSortedBlobProtoStatements = sortedBlobProtoStatements(dependencyNodes, flattenedModuleStatements);
+
+    // Split statements by category
+    vector<shared_ptr<Statement>> statementExterns;
+    vector<shared_ptr<Statement>> statementEnums;
+    vector<shared_ptr<Statement>> statementProtoDeclarations;
+    vector<shared_ptr<Statement>> statementBlobDeclarations;
+    vector<shared_ptr<Statement>> statementVariableDeclarations;
+    vector<shared_ptr<Statement>> statementFunctionDeclarations;
+    vector<shared_ptr<Statement>> statementVariables;
+    vector<shared_ptr<Statement>> statementRawFunctions;
+    vector<shared_ptr<Statement>> statementFunctions;
+
+    for (shared_ptr<Statement> statement : flattenedModuleStatements) {
+        switch (statement->getKind()) {
+            case StatementKind::META_EXTERN_VARIABLE:
+            case StatementKind::META_EXTERN_FUNCTION:
+                statementExterns.push_back(statement);
+                break;
+            case StatementKind::ENUM:
+                statementEnums.push_back(statement);
+                break;
+            case StatementKind::PROTO_DECLARATION:
+                statementProtoDeclarations.push_back(statement);
+                break;
+            case StatementKind::BLOB_DECLARATION:
+                statementBlobDeclarations.push_back(statement);
+                break;
+            case StatementKind::VARIABLE_DECLARATION:
+                statementVariableDeclarations.push_back(statement);
+                break;
+            case StatementKind::FUNCTION_DECLARATION:
+                statementFunctionDeclarations.push_back(statement);
+                break;
+            case StatementKind::VARIABLE:
+                statementVariables.push_back(statement);
+                break;
+            case StatementKind::RAW_FUNCTION:
+                statementRawFunctions.push_back(statement);
+                break;
+            case StatementKind::FUNCTION:
+                statementFunctions.push_back(statement);
+                break;
+            default:
+                break; // Ignore all the other statements (imports, protos, blobs)
+        }
+    }
+
+    // Reconstruct the final list of statements for this module
+    vector<shared_ptr<Statement>> resolvedSortedStatements;
+    // order for statements is:
+    // - externs
+    // - enum definitions
+    // - proto declaration
+    // - blob declarations
+    // - mix of ordered proto and blob definitions
+    // - variable declarations
+    // - function declarations
+    // - variable definitions
+    // - raw function definitions
+    // - function definitions
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementExterns.begin(), statementExterns.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementEnums.begin(), statementEnums.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementProtoDeclarations.begin(), statementProtoDeclarations.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementBlobDeclarations.begin(), statementBlobDeclarations.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), resolvedSortedBlobProtoStatements.begin(), resolvedSortedBlobProtoStatements.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariableDeclarations.begin(), statementVariableDeclarations.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementFunctionDeclarations.begin(), statementFunctionDeclarations.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariables.begin(), statementVariables.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementRawFunctions.begin(), statementRawFunctions.end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementFunctions.begin(), statementFunctions.end());
+
+    return resolvedSortedStatements;
+}
+
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<Statement> statement) {
+    switch (statement->getKind()) {
+        case StatementKind::META_IMPORT:
+            return dependencyNode(dynamic_pointer_cast<StatementMetaImport>(statement));
+        case StatementKind::PROTO:
+            return dependencyNode(dynamic_pointer_cast<StatementProto>(statement));
+        case StatementKind::BLOB:
+            return dependencyNode(dynamic_pointer_cast<StatementBlob>(statement));
+        case StatementKind::VARIABLE_DECLARATION:
+            return dependencyNode(dynamic_pointer_cast<StatementVariableDeclaration>(statement));
+        default:
+            break;
+    }
+
+    return nullptr;
+}
+
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementBlob> statementBlob) {
+    vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
+
+    // Variables
+    for (shared_ptr<Statement> statement : statementBlob->getStatementVariableDeclarations()) {
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement))
+            resolvedDependencyNodes.push_back(resolvedDependencyNode);
+    }
+
+    // Implemented protos
+    for (shared_ptr<SymbolName> protoSymbolName : statementBlob->getProtoSymbolNames()) {
+        shared_ptr<ValueType> valueTypeProto = make_shared<ValueTypeProto>(protoSymbolName->getGlobalName(), statementBlob->getLocation());
+        resolvedDependencyNodes.push_back(DependencyNode::dependencyNode(valueTypeProto, {}));
+    }
+
+    shared_ptr<ValueType> valueTypeBlob = make_shared<ValueTypeBlob>(
+        statementBlob->getSymbolName()->getGlobalName(),
+        vector<shared_ptr<ValueType>>(),
+        false,
+        statementBlob->getLocation()
+    );
+    return DependencyNode::dependencyNode(valueTypeBlob, resolvedDependencyNodes);
+}
+
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMetaImport> statementMetaImport) {
+    // Check if module already visited
+    for (const string &visitedModuleName : visitedModules) {
+        if (statementMetaImport->getName() == visitedModuleName)
+            return DependencyNode::dependencyNode(nullptr, {});
+    }
+    // Add to visited list
+    visitedModules.push_back(statementMetaImport->getName());
+
+    // check if the import is valid
+    bool isValid = false;
+    for (const string &moduleName : moduleNames) {
+        if (moduleName == statementMetaImport->getName())
+            isValid = true;
+    }
+    if (!isValid) {
+        markErrorInvalidImport(statementMetaImport->getLocation(), statementMetaImport->getName());
+        return DependencyNode::dependencyNode(nullptr, {});
+    }
+    
+    vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
+
+    vector<shared_ptr<Statement>> importableStatements = exportedStatementsMap[statementMetaImport->getName()];
+    for (shared_ptr<Statement> statement : importableStatements) {
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement))
+            resolvedDependencyNodes.push_back(resolvedDependencyNode);
+    }
+
+    return DependencyNode::dependencyNode(nullptr, resolvedDependencyNodes);
+}
+
+std::shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<StatementProto> statementProto) {
+    vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
+
+    // Iterate through variables
+    for (shared_ptr<Statement> statement : statementProto->getStatementVariableDeclarations()) {
+        if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement))
+            resolvedDependencyNodes.push_back(resolvedDependencyNode);
+    }
+
+    return DependencyNode::dependencyNode(
+        make_shared<ValueTypeProto>(
+            statementProto->getSymbolName()->getGlobalName(),
+            statementProto->getLocation()
+        ),
+        resolvedDependencyNodes
+    );
+}
+
+shared_ptr<DependencyNode> ModulesStore::dependencyNode(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
+    if (statementVariableDeclaration->getValueType()->isBlob())
+        return DependencyNode::dependencyNode(statementVariableDeclaration->getValueType(), vector<shared_ptr<DependencyNode>>());
+    
+    return nullptr;
+}
+
+vector<shared_ptr<Statement>> ModulesStore::flattenedStatements(const vector<shared_ptr<Statement>> &statements, const string &moduleName) {
+    // Check if module already visited
+    for (const string &visitedModuleName : visitedModules) {
+        if (moduleName == visitedModuleName)
+        return {};
+    }
+    // Add to visited list
+    visitedModules.push_back(moduleName);
+
+    vector<shared_ptr<Statement>> resolvedFlattenedStatements;
+
+    for (shared_ptr<Statement> statement : statements) {
+        if (shared_ptr<StatementMetaImport> statementMetaImport = dynamic_pointer_cast<StatementMetaImport>(statement)) {
+            if (statementMetaImport->getName() != moduleName) {
+                vector<shared_ptr<Statement>> importableStatements = exportedStatementsMap[statementMetaImport->getName()];
+                vector<shared_ptr<Statement>> flattenedImportableStatements = flattenedStatements(importableStatements, statementMetaImport->getName());
+                resolvedFlattenedStatements.insert(resolvedFlattenedStatements.end(), flattenedImportableStatements.begin(), flattenedImportableStatements.end());
+            }
+        } else {
+            resolvedFlattenedStatements.push_back(statement);
+        }
+    }
+
+    return resolvedFlattenedStatements;
+}
+
+vector<shared_ptr<Statement>> ModulesStore::sortedBlobProtoStatements(const vector<shared_ptr<DependencyNode>> &dependencyNodes, const vector<shared_ptr<Statement>> &flattenedModuleStatements) {
+    vector<shared_ptr<Statement>> resolvedSortedStatements;
+
+    for (shared_ptr<DependencyNode> dependencyNode : dependencyNodes) {
+        // Skip already visited nodes
+        if (dependencyNode->getVisitStatus() == DependencyNodeVisitStatus::VISITED)
+            continue;
+
+        // Are we having a cycle?
+        if (dependencyNode->getVisitStatus() == DependencyNodeVisitStatus::VISITING) {
+            markErrorDependencyCycle(dependencyNode->getValueType()->getLocation());
+            return resolvedSortedStatements;
+        }
+
+        dependencyNode->setVisitStatus(DependencyNodeVisitStatus::VISITING);
+
+        // First go through each of the leafs (children)
+        for (shared_ptr<DependencyNode> childDependencyNode : dependencyNode->getChildDependencyNodes()) {
+            vector<shared_ptr<Statement>> resolvedChildSortedStatements = sortedBlobProtoStatements({childDependencyNode}, flattenedModuleStatements);
+            resolvedSortedStatements.insert(resolvedSortedStatements.end(), resolvedChildSortedStatements.begin(), resolvedChildSortedStatements.end());
+        }
+
+        // Handle the node itself
+        if (dependencyNode->getValueType() != nullptr) {
+            // Find a corresponding statement
+            for (shared_ptr<Statement> statement : flattenedModuleStatements) {
+                // Is it a blob?
+                if (dependencyNode->getValueType()->isBlob() && statement->getKind() == StatementKind::BLOB) {
+                    shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
+                    if (dependencyNode->getValueType()->toBlob()->getSymbolName()->isEqual(statementBlob->getSymbolName())) {
+                        resolvedSortedStatements.push_back(statement);
+                    }
+                // Or a proto?
+                } else if (dependencyNode->getValueType()->isProto() && statement->getKind() == StatementKind::PROTO) {
+                    shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
+                    if (dependencyNode->getValueType()->toProto()->getSymbolName()->isEqual(statementProto->getSymbolName())) {
+                        resolvedSortedStatements.push_back(statement);
+                    }
+                }
+            }
+        }
+
+        dependencyNode->setVisitStatus(DependencyNodeVisitStatus::VISITED);
+    }
+
+    return resolvedSortedStatements;
+}
+
+void ModulesStore::markErrorDependencyCycle(std::shared_ptr<Location> location) {
+    string message = "Dependency cycle detected";
+    errors.push_back(Error::error(location, message));
+}
+
+void ModulesStore::markErrorInvalidImport(shared_ptr<Location> location, const string &moduleName) {
+    string message = format("Invalid import, module \"{}\" doesn't exist", moduleName);
+    errors.push_back(Error::error(location, message));
 }

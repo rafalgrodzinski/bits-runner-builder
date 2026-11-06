@@ -7,10 +7,16 @@
 #include <string>
 #include <vector>
 
+class DependencyNode;
+class Error;
+class Location;
 class Module;
 class Expression;
 class Statement;
-class ValueType;
+class StatementBlob;
+class StatementMetaImport;
+class StatementProto;
+class StatementVariableDeclaration;
 
 class ModulesStore {
 public:
@@ -18,37 +24,33 @@ public:
 
     void appendStatements(std::vector<std::shared_ptr<Statement>> statements);
     std::vector<std::shared_ptr<Module>> getModules();
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> getExportedHeaderStatementsMap();
 
 private:
+    std::vector<std::shared_ptr<Error>> errors;
+
     std::string defaultModuleName;
     std::vector<std::string> moduleNames;
 
-    // header
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> importStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> externStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> enumStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> protoDeclarationStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> protoStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> blobDeclarationStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> blobStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> statementVariablesMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> statementFunctionDeclarationsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> rawFunctionStatementsMap;
-    // body
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> bodyStatementsMap;
-    // exported
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedEnumStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedProtoDeclarationStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedProtoStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedBlobStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedVariableDeclarationStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedStatementFunctionDeclarationsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
+    std::vector<std::string> visitedModules;
+
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> localStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedStatementsMap;
 
     void setModuleName(std::shared_ptr<Statement> statement, const std::string &moduleName, bool isRoot = false);
     void setModuleName(std::shared_ptr<Expression> expression, const std::string &moduleName);
+
+    std::vector<std::shared_ptr<Statement>> sortedStatements(const std::string &moduleName);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<Statement> statement);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementBlob> statementBlob);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementMetaImport> statementMetaImport);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementProto> statementProto);
+    std::shared_ptr<DependencyNode> dependencyNode(std::shared_ptr<StatementVariableDeclaration> statementVariableDeclaration);
+
+    std::vector<std::shared_ptr<Statement>> flattenedStatements(const std::vector<std::shared_ptr<Statement>> &statements, const std::string &moduleName);
+    std::vector<std::shared_ptr<Statement>> sortedBlobProtoStatements(const std::vector<std::shared_ptr<DependencyNode>> &dependencyNodes, const std::vector<std::shared_ptr<Statement>> &flattenedModuleStatements);
+
+    void markErrorDependencyCycle(std::shared_ptr<Location> location);
+    void markErrorInvalidImport(std::shared_ptr<Location> location, const std::string &moduleName);
 };
 
 #endif

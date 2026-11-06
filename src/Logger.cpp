@@ -76,29 +76,13 @@ void Logger::print(shared_ptr<Module> module) {
 
     text += format("MODULE `{}`:\n", module->getName());
     vector<IndentKind> indents = {IndentKind::ROOT};
-    
-    // header
-    indents.push_back(IndentKind::NODE);
-    text += formattedLine("HEADER", indents);
-    indents.at(indents.size()-1) = IndentKind::BRANCH;
 
-    vector<shared_ptr<Statement>> headerStatements = module->getHeaderStatements();
-    for (int i=0; i<headerStatements.size(); i++) {
-        vector<IndentKind> currentIndents = indents;
-        if (i < headerStatements.size() - 1)
-            currentIndents.push_back(IndentKind::NODE);
-        else
-            currentIndents.push_back(IndentKind::NODE_LAST);
-
-        text += toString(headerStatements.at(i), currentIndents);
-    }
-
-    // body
+    // statements
     indents.at(indents.size()-1) = IndentKind::NODE_LAST;
     text += formattedLine("BODY", indents);
     indents.at(indents.size()-1) = IndentKind::EMPTY;
 
-    vector<shared_ptr<Statement>> bodyStatements = module->getBodyStatements();
+    vector<shared_ptr<Statement>> bodyStatements = module->getStatements();
     for (int i=0; i<bodyStatements.size(); i++) {
         vector<IndentKind> currentIndents = indents;
         if (i < bodyStatements.size() - 1)

@@ -11,20 +11,19 @@ AnalyzerScopeFunction::AnalyzerScopeFunction(AnalyzerScope *parent):
 parent(parent) { }
 
 shared_ptr<ValueType> AnalyzerScopeFunction::getValueType(const string &name) const {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelFunction.valueTypesMap.find(name);        
-        if (it != scopeLevels.top().scopeLevelFunction.valueTypesMap.end())
-            return scopeLevels.top().scopeLevelFunction.valueTypesMap[name];
-        scopeLevels.pop();
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelFunction.valueTypesMap.find(name);        
+        if (it != (*sit).scopeLevelFunction.valueTypesMap.end())
+            return (*sit).scopeLevelFunction.valueTypesMap[name];
     }
 
     return nullptr;
 }
 
 AnalyzerScopeRegisterResult AnalyzerScopeFunction::registerValueType(const string &name, shared_ptr<ValueType> valueType, bool isDefinition) {
-    AnalyzerScope::ScopeLevel &topScopeLevels = parent->scopeLevels.top();
+    AnalyzerScope::ScopeLevel &topScopeLevels = parent->scopeLevels.back();
 
     // Figure out existing registration state
     AnalyzerScopeState state = AnalyzerScopeState::NOT_REGISTERED;

@@ -5,7 +5,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <stack>
 #include <string>
 #include <vector>
 
@@ -63,7 +62,7 @@ public:
     std::shared_ptr<AnalyzerScopeVariable> variableScope;
 
 private:
-    std::stack<ScopeLevel> scopeLevels;
+    std::vector<ScopeLevel> scopeLevels;
 };
 
 #endif

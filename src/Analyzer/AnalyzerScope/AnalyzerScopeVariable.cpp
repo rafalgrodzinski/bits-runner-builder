@@ -11,20 +11,19 @@ AnalyzerScopeVariable::AnalyzerScopeVariable(AnalyzerScope *parent):
 parent(parent) { }
 
 std::shared_ptr<ValueType> AnalyzerScopeVariable::getValueType(const std::string &identifier) const {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
-    while (!scopeLevels.empty()) {
-        auto it = scopeLevels.top().scopeLevelVariable.valueTypesMap.find(identifier);        
-        if (it != scopeLevels.top().scopeLevelVariable.valueTypesMap.end())
-            return scopeLevels.top().scopeLevelVariable.valueTypesMap[identifier];
-        scopeLevels.pop();
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        auto it = (*sit).scopeLevelVariable.valueTypesMap.find(identifier);        
+        if (it != (*sit).scopeLevelVariable.valueTypesMap.end())
+            return (*sit).scopeLevelVariable.valueTypesMap[identifier];
     }
 
     return nullptr;
 }
 
 AnalyzerScopeRegisterResult AnalyzerScopeVariable::registerValueType(const std::string &identifier, std::shared_ptr<ValueType> valueType, bool isDefinition) {
-    AnalyzerScope::ScopeLevel &topScopeLevels = parent->scopeLevels.top();
+    AnalyzerScope::ScopeLevel &topScopeLevels = parent->scopeLevels.back();
 
     // Figure out existing registration state
     AnalyzerScopeState state = AnalyzerScopeState::NOT_REGISTERED;
@@ -57,12 +56,14 @@ AnalyzerScopeRegisterResult AnalyzerScopeVariable::registerValueType(const std::
 }
 
 AnalyzerScopeRegisterResult AnalyzerScopeVariable::registerAnonymousValueType(std::shared_ptr<ValueType> valueType) {
-    stack<AnalyzerScope::ScopeLevel> scopeLevels = parent->scopeLevels;
-
-    AnalyzerScopeRegisterResult result = registerValueType(format("${}", scopeLevels.top().scopeLevelVariable.anonymousValueTypesCount), valueType, true);
+    AnalyzerScopeRegisterResult result = registerValueType(
+        format("${}", parent->scopeLevels.back().scopeLevelVariable.anonymousValueTypesCount),
+        valueType,
+        true
+    );
 
     if (result == AnalyzerScopeRegisterResult::SUCCES)
-        scopeLevels.top().scopeLevelVariable.anonymousValueTypesCount++;
+        parent->scopeLevels.back().scopeLevelVariable.anonymousValueTypesCount++;
     
     return result;
 }
