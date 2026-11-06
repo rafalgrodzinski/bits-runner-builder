@@ -33,17 +33,7 @@ private:
     std::vector<std::string> moduleNames;
 
     std::map<std::string, std::vector<std::shared_ptr<Statement>>> localStatementsMap;
-
-    // exported
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedImportStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedEnumStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedProtoDeclarationStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedProtoStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedBlobDeclarationStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedBlobStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedVariableDeclarationStatementsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedStatementFunctionDeclarationsMap;
-    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedRawFunctionStatementsMap;
+    std::map<std::string, std::vector<std::shared_ptr<Statement>>> exportedStatementsMap;
 
     void setModuleName(std::shared_ptr<Statement> statement, const std::string &moduleName, bool isRoot = false);
     void setModuleName(std::shared_ptr<Expression> expression, const std::string &moduleName);

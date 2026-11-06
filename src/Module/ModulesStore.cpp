@@ -55,17 +55,8 @@ defaultModuleName(defaultModuleName) { }
 void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;
 
-   vector<shared_ptr<Statement>> moduleLocalStatements;
-
-    vector<shared_ptr<Statement>> moduleExportedMetaImportStatements;
-    vector<shared_ptr<Statement>> moduleExportedEnumStatements;
-    vector<shared_ptr<Statement>> moduleExportedProtoDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleExportedProtoStatements;
-    vector<shared_ptr<Statement>> moduleExportedBlobDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleExportedBlobStatements;
-    vector<shared_ptr<Statement>> moduleExportedStatementFunctionDeclarations;
-    vector<shared_ptr<Statement>> moduleExportedVariableDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleExportedRawFunctionStatements;
+    vector<shared_ptr<Statement>> moduleLocalStatements;
+    vector<shared_ptr<Statement>> moduleExportedStatements;
 
     for (shared_ptr<Statement> statement : statements) {
         setModuleName(statement, moduleName, true);
@@ -93,9 +84,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     exportedStatementBlob->setModuleName(statementBlob->getSymbolName()->getModuleName());
 
                     // append updated statement
-                    moduleExportedBlobStatements.push_back(exportedStatementBlob);
+                    moduleExportedStatements.push_back(exportedStatementBlob);
                     // declaration doesn't contain any types, so it's fine like this
-                    moduleExportedBlobDeclarationStatements.push_back(statementBlobDeclaration);
+                    moduleExportedStatements.push_back(statementBlobDeclaration);
                 }
 
                 // create delclarations for blob functions
@@ -114,7 +105,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                     // handle exported & public functions
                     if (statementBlob->getShouldExport())
-                       moduleExportedStatementFunctionDeclarations.push_back(statementBlobFunctionDeclaration);
+                       moduleExportedStatements.push_back(statementBlobFunctionDeclaration);
                 }
 
                 break;
@@ -127,7 +118,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // exported statements
                 if (statementEnum->getShouldExport())
-                    moduleExportedEnumStatements.push_back(statementEnum);
+                    moduleExportedStatements.push_back(statementEnum);
 
                 break;
             }
@@ -141,7 +132,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // exported statements
                 if (statementFunction->getShouldExport())
-                   moduleExportedStatementFunctionDeclarations.push_back(statementFunctionDeclaration);
+                   moduleExportedStatements.push_back(statementFunctionDeclaration);
 
                 break;
             }
@@ -151,8 +142,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 break;
             }
             case StatementKind::META_IMPORT: {
+                // local statements
                 moduleLocalStatements.push_back(statement);
-                moduleExportedMetaImportStatements.push_back(statement);
+
+                // exported statements
+                moduleExportedStatements.push_back(statement);
                 break;
             }
             case StatementKind::MODULE: {
@@ -171,9 +165,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 // exported statements
                 if (statementProto->getShouldExport()) {
                     // append proto statement
-                    moduleExportedProtoStatements.push_back(statementProto);
+                    moduleExportedStatements.push_back(statementProto);
                     // declaration doesn't contain any types, so it's fine like this
-                    moduleExportedProtoDeclarationStatements.push_back(statementProtoDeclaration);
+                    moduleExportedStatements.push_back(statementProtoDeclaration);
                 }
 
                 break;
@@ -186,7 +180,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // exported statemetns
                 if (statementRawFunction->getShouldExport())
-                    moduleExportedRawFunctionStatements.push_back(statementRawFunction);
+                    moduleExportedStatements.push_back(statementRawFunction);
 
                 break;
             }
@@ -199,7 +193,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
 
                 // exported statements
                 if (statementVariable->getShouldExport())
-                   moduleExportedVariableDeclarationStatements.push_back(statementVariableDeclaration);
+                   moduleExportedStatements.push_back(statementVariableDeclaration);
 
                 break;
             }
@@ -214,130 +208,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // name
         moduleNames.push_back(moduleName);
         localStatementsMap[moduleName] = moduleLocalStatements;
-
-        /*
-        // imports
-        importStatementsMap[moduleName] = moduleImportStatements;
-        // externs
-        externStatementsMap[moduleName] = moduleExternStatements;
-        // enums definitions
-        enumStatementsMap[moduleName] = moduleEnumStatements;
-        // proto declarations
-        protoDeclarationStatementsMap[moduleName] = moduleProtoDeclarationStatements;
-        // proto definitions
-        protoStatementsMap[moduleName] = moduleProtoStatements;
-        // blob declarations
-        blobDeclarationStatementsMap[moduleName] = moduleBlobDeclarationStatements;
-        // blob definitons
-        blobStatementsMap[moduleName] = moduleBlobStatements;
-        // function declarations
-        statementFunctionDeclarationsMap[moduleName] = moduleStatementFunctionDeclarations;
-        // variable definitions
-        statementVariablesMap[moduleName] = moduleStatementVariables;
-        // raw functions
-        rawFunctionStatementsMap[moduleName] = moduleRawFunctionStatements;
-    
-        // body statements
-        bodyStatementsMap[moduleName] = moduleBodyStatements;
-        */
-
-        // exported imports
-        exportedImportStatementsMap[moduleName] = moduleExportedMetaImportStatements;
-        // exported enums
-        exportedEnumStatementsMap[moduleName] = moduleExportedEnumStatements;
-        // exported proto declarations
-        exportedProtoDeclarationStatementsMap[moduleName] = moduleExportedProtoDeclarationStatements;
-        // exported proto definitions
-        exportedProtoStatementsMap[moduleName] = moduleExportedProtoStatements;
-        // exported blob declarations
-        exportedBlobDeclarationStatementsMap[moduleName] = moduleExportedBlobDeclarationStatements;
-        // exported blob definitions
-        exportedBlobStatementsMap[moduleName] = moduleExportedBlobStatements;
-        // exported function declarations
-        exportedStatementFunctionDeclarationsMap[moduleName] = moduleExportedStatementFunctionDeclarations;
-        // exported variable declarations
-        exportedVariableDeclarationStatementsMap[moduleName] = moduleExportedVariableDeclarationStatements;
-        // exported raw functions
-        exportedRawFunctionStatementsMap[moduleName] = moduleExportedRawFunctionStatements;
+        exportedStatementsMap[moduleName] = moduleExportedStatements;
     // or merge with existing ones
     } else {
         localStatementsMap[moduleName].insert(localStatementsMap[moduleName].end(), moduleLocalStatements.begin(), moduleLocalStatements.end());
-        /*
-        // imports
-        for (shared_ptr<Statement> statement : moduleImportStatements) {
-            // Filter out dumplicated import statements
-            bool isAlreadyImported = false;
-            string newImportName = dynamic_pointer_cast<StatementMetaImport>(statement)->getName();
-            for (shared_ptr<Statement> importStatement : importStatementsMap[moduleName]) {
-                string importName = dynamic_pointer_cast<StatementMetaImport>(importStatement)->getName();
-                if (newImportName.compare(importName) == 0) {
-                    isAlreadyImported = true;
-                    break;
-                }
-            }
-            if (!isAlreadyImported)
-                importStatementsMap[moduleName].push_back(statement);
-        }
-        // externs
-        for (shared_ptr<Statement> statement : moduleExternStatements)
-            externStatementsMap[moduleName].push_back(statement);
-        // enum definitions
-        for (shared_ptr<Statement> statement : moduleEnumStatements)
-            enumStatementsMap[moduleName].push_back(statement);
-        // proto declarations
-        for (shared_ptr<Statement> statement : moduleProtoDeclarationStatements)
-            protoDeclarationStatementsMap[moduleName].push_back(statement);
-        // proto defintions
-        for (shared_ptr<Statement> statement : moduleProtoStatements)
-            protoStatementsMap[moduleName].push_back(statement);
-        // blob declarations
-        for (shared_ptr<Statement> statement : moduleBlobDeclarationStatements)
-            blobDeclarationStatementsMap[moduleName].push_back(statement);
-        // blob defintions
-        for (shared_ptr<Statement> statement : moduleBlobStatements)
-            blobStatementsMap[moduleName].push_back(statement);
-        // function declarations
-        for (shared_ptr<Statement> statement : moduleStatementFunctionDeclarations)
-            statementFunctionDeclarationsMap[moduleName].push_back(statement);
-        // variable definitions
-        for (shared_ptr<Statement> statement : moduleStatementVariables)
-            statementVariablesMap[moduleName].push_back(statement);
-        // raw functions
-        for (shared_ptr<Statement> statement : moduleRawFunctionStatements)
-            rawFunctionStatementsMap[moduleName].push_back(statement);
-
-        // body statements
-        for (shared_ptr<Statement> statement : moduleBodyStatements)
-            bodyStatementsMap[moduleName].push_back(statement);
-        */
-
-        // exported meta import
-        for (shared_ptr<Statement> statement : moduleExportedMetaImportStatements)
-            exportedImportStatementsMap[moduleName].push_back(statement);
-        // exported enum definitions
-        for (shared_ptr<Statement> statement : moduleExportedEnumStatements)
-            exportedEnumStatementsMap[moduleName].push_back(statement);
-        // exported proto declarations
-        for (shared_ptr<Statement> statement : moduleExportedProtoDeclarationStatements)
-            exportedBlobDeclarationStatementsMap[moduleName].push_back(statement);
-        // exported proto definitions
-        for (shared_ptr<Statement> statement : moduleExportedProtoStatements)
-            exportedBlobStatementsMap[moduleName].push_back(statement);
-        // exported blob declarations
-        for (shared_ptr<Statement> statement : moduleExportedBlobDeclarationStatements)
-            exportedBlobDeclarationStatementsMap[moduleName].push_back(statement);
-        // exported blob defintions
-        for (shared_ptr<Statement> statement : moduleExportedBlobStatements)
-            exportedBlobStatementsMap[moduleName].push_back(statement);
-        // exported function declarations
-        for (shared_ptr<Statement> statement : moduleExportedStatementFunctionDeclarations)
-            exportedStatementFunctionDeclarationsMap[moduleName].push_back(statement);
-        // exported variable declarations
-        for (shared_ptr<Statement> statement : moduleExportedVariableDeclarationStatements)
-            exportedVariableDeclarationStatementsMap[moduleName].push_back(statement);
-        // exported raw functions
-        for (shared_ptr<Statement> statement : moduleExportedRawFunctionStatements)
-            exportedRawFunctionStatementsMap[moduleName].push_back(statement);
+        exportedStatementsMap[moduleName].insert(exportedStatementsMap[moduleName].end(), moduleExportedStatements.begin(), moduleExportedStatements.end());
     }
 }
 
@@ -363,6 +238,7 @@ vector<shared_ptr<Module>> ModulesStore::getModules() {
 }
 
 map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatementsMap() {
+    /*
     // construct the exported headers map
     // it is shared by all the modules
 
@@ -410,7 +286,8 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
             statementsMap[moduleName].push_back(statement);
     }
 
-    return statementsMap;
+    return statementsMap;*/
+    return exportedStatementsMap;
 }
 
 // MARK: - Private
@@ -777,7 +654,7 @@ shared_ptr<DependencyNode> ModulesStore::dependencyNode(shared_ptr<StatementMeta
     
     vector<shared_ptr<DependencyNode>> resolvedDependencyNodes;
 
-    vector<shared_ptr<Statement>> importableStatements = getExportedHeaderStatementsMap()[statementMetaImport->getName()];
+    vector<shared_ptr<Statement>> importableStatements = exportedStatementsMap[statementMetaImport->getName()];
     for (shared_ptr<Statement> statement : importableStatements) {
         if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement))
             resolvedDependencyNodes.push_back(resolvedDependencyNode);
@@ -825,7 +702,7 @@ vector<shared_ptr<Statement>> ModulesStore::flattenedStatements(vector<shared_pt
     for (shared_ptr<Statement> statement : statements) {
         if (shared_ptr<StatementMetaImport> statementMetaImport = dynamic_pointer_cast<StatementMetaImport>(statement)) {
             if (statementMetaImport->getName() != moduleName) {
-                vector<shared_ptr<Statement>> importableStatements = getExportedHeaderStatementsMap()[statementMetaImport->getName()];
+                vector<shared_ptr<Statement>> importableStatements = exportedStatementsMap[statementMetaImport->getName()];
                 vector<shared_ptr<Statement>> flattenedImportableStatements = flattenedStatements(importableStatements, statementMetaImport->getName());
                 resolvedFlattenedStatements.insert(resolvedFlattenedStatements.end(), flattenedImportableStatements.begin(), flattenedImportableStatements.end());
             }
