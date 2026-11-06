@@ -2617,4 +2617,3 @@ void Analyzer::markErrorUnexpected(shared_ptr<Location> location, const string &
     string message = format("Unexpected {}", name);
     errors.push_back(Error::error(location, message));
 }
-

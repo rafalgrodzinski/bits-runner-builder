@@ -55,19 +55,9 @@ defaultModuleName(defaultModuleName) { }
 void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     string moduleName = defaultModuleName;
 
-    vector<shared_ptr<Statement>> moduleImportStatements;
-    vector<shared_ptr<Statement>> moduleExternStatements;
-    vector<shared_ptr<Statement>> moduleEnumStatements;
-    vector<shared_ptr<Statement>> moduleProtoDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleProtoStatements;
-    vector<shared_ptr<Statement>> moduleBlobDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleBlobStatements;
-    vector<shared_ptr<Statement>> moduleVariableDeclarationStatements;
-    vector<shared_ptr<Statement>> moduleStatementVariables;
-    vector<shared_ptr<Statement>> moduleStatementFunctionDeclarations;
-    vector<shared_ptr<Statement>> moduleRawFunctionStatements;
-    vector<shared_ptr<Statement>> moduleBodyStatements;
+   vector<shared_ptr<Statement>> moduleLocalStatements;
 
+    vector<shared_ptr<Statement>> moduleExportedMetaImportStatements;
     vector<shared_ptr<Statement>> moduleExportedEnumStatements;
     vector<shared_ptr<Statement>> moduleExportedProtoDeclarationStatements;
     vector<shared_ptr<Statement>> moduleExportedProtoStatements;
@@ -85,11 +75,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement);
                 shared_ptr<StatementBlobDeclaration> statementBlobDeclaration = statementBlob->getDeclaration();
 
-                // local header
-                moduleBlobDeclarationStatements.push_back(statementBlobDeclaration);
-                moduleBlobStatements.push_back(statementBlob);
+                // local statements
+                moduleLocalStatements.push_back(statementBlobDeclaration);
+                moduleLocalStatements.push_back(statementBlob);
 
-                // exported header
+                // exported statements
                 if (statementBlob->getShouldExport()) {
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
                         statementBlob->getShouldExport(),
@@ -118,7 +108,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                         statementBlobFunction->getReturnValueType(),
                         statementBlobFunction->getLocation()
                     );
-                    moduleStatementFunctionDeclarations.push_back(statementBlobFunctionDeclaration);
+
+                    // local statements
+                    moduleLocalStatements.push_back(statementBlobFunctionDeclaration);
 
                     // handle exported & public functions
                     if (statementBlob->getShouldExport())
@@ -129,10 +121,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
             }
             case StatementKind::ENUM: {
                 shared_ptr<StatementEnum> statementEnum = dynamic_pointer_cast<StatementEnum>(statement);
-                // local header
-                moduleEnumStatements.push_back(statementEnum);
 
-                // exported header
+                // local statements
+                moduleLocalStatements.push_back(statementEnum);
+
+                // exported statements
                 if (statementEnum->getShouldExport())
                     moduleExportedEnumStatements.push_back(statementEnum);
 
@@ -142,12 +135,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(statement);
                 shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = statementFunction->getDeclaration();
 
-                // local header
-                moduleStatementFunctionDeclarations.push_back(statementFunctionDeclaration);
-                // body
-                moduleBodyStatements.push_back(statementFunction);
+                // local statements
+                moduleLocalStatements.push_back(statementFunctionDeclaration);
+                moduleLocalStatements.push_back(statementFunction);
 
-                // exported header
+                // exported statements
                 if (statementFunction->getShouldExport())
                    moduleExportedStatementFunctionDeclarations.push_back(statementFunctionDeclaration);
 
@@ -155,11 +147,12 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
             }
             case StatementKind::META_EXTERN_FUNCTION:
             case StatementKind::META_EXTERN_VARIABLE: {
-                moduleExternStatements.push_back(statement);
+                moduleLocalStatements.push_back(statement);
                 break;
             }
             case StatementKind::META_IMPORT: {
-                moduleImportStatements.push_back(statement);
+                moduleLocalStatements.push_back(statement);
+                moduleExportedMetaImportStatements.push_back(statement);
                 break;
             }
             case StatementKind::MODULE: {
@@ -171,11 +164,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementProto> statementProto = dynamic_pointer_cast<StatementProto>(statement);
                 shared_ptr<StatementProtoDeclaration> statementProtoDeclaration = statementProto->getDeclaration();
 
-                // local header
-                moduleProtoDeclarationStatements.push_back(statementProtoDeclaration);
-                moduleProtoStatements.push_back(statementProto);
+                // local statements
+                moduleLocalStatements.push_back(statementProtoDeclaration);
+                moduleLocalStatements.push_back(statementProto);
 
-                // exported header
+                // exported statements
                 if (statementProto->getShouldExport()) {
                     // append proto statement
                     moduleExportedProtoStatements.push_back(statementProto);
@@ -187,7 +180,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
             }
             case StatementKind::RAW_FUNCTION: {
                 shared_ptr<StatementRawFunction> statementRawFunction = dynamic_pointer_cast<StatementRawFunction>(statement);
-                moduleRawFunctionStatements.push_back(statementRawFunction);
+
+                // local statements
+                moduleLocalStatements.push_back(statementRawFunction);
+
+                // exported statemetns
                 if (statementRawFunction->getShouldExport())
                     moduleExportedRawFunctionStatements.push_back(statementRawFunction);
 
@@ -197,19 +194,17 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 shared_ptr<StatementVariable> statementVariable = dynamic_pointer_cast<StatementVariable>(statement);
                 shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = statementVariable->getDeclaration();
 
-                // local header
-                moduleStatementVariables.push_back(statementVariable);
+                // local statements
+                moduleLocalStatements.push_back(statementVariable);
 
-                // exported header
+                // exported statements
                 if (statementVariable->getShouldExport())
                    moduleExportedVariableDeclarationStatements.push_back(statementVariableDeclaration);
 
                 break;
             }
-            default: {
-                moduleBodyStatements.push_back(statement);
+            default:
                 break;
-            }
         }
     }
 
@@ -218,7 +213,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     if (find(moduleNames.begin(), moduleNames.end(), moduleName) == moduleNames.end()) {
         // name
         moduleNames.push_back(moduleName);
+        localStatementsMap[moduleName] = moduleLocalStatements;
 
+        /*
         // imports
         importStatementsMap[moduleName] = moduleImportStatements;
         // externs
@@ -242,7 +239,10 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
     
         // body statements
         bodyStatementsMap[moduleName] = moduleBodyStatements;
+        */
 
+        // exported imports
+        exportedImportStatementsMap[moduleName] = moduleExportedMetaImportStatements;
         // exported enums
         exportedEnumStatementsMap[moduleName] = moduleExportedEnumStatements;
         // exported proto declarations
@@ -261,6 +261,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         exportedRawFunctionStatementsMap[moduleName] = moduleExportedRawFunctionStatements;
     // or merge with existing ones
     } else {
+        localStatementsMap[moduleName].insert(localStatementsMap[moduleName].end(), moduleLocalStatements.begin(), moduleLocalStatements.end());
+        /*
         // imports
         for (shared_ptr<Statement> statement : moduleImportStatements) {
             // Filter out dumplicated import statements
@@ -307,7 +309,11 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
         // body statements
         for (shared_ptr<Statement> statement : moduleBodyStatements)
             bodyStatementsMap[moduleName].push_back(statement);
+        */
 
+        // exported meta import
+        for (shared_ptr<Statement> statement : moduleExportedMetaImportStatements)
+            exportedImportStatementsMap[moduleName].push_back(statement);
         // exported enum definitions
         for (shared_ptr<Statement> statement : moduleExportedEnumStatements)
             exportedEnumStatementsMap[moduleName].push_back(statement);
@@ -362,9 +368,9 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
 
     // order for exported header statements is:
     // - import statements
+    // - enum definitions
     // - proto declarations
     // - blob declarations
-    // - enum definitions
     // - proto definitions
     // - blob definitions
     // - function declarations
@@ -376,16 +382,16 @@ map<string, vector<shared_ptr<Statement>>> ModulesStore::getExportedHeaderStatem
         statementsMap[moduleName] = {};
 
         // imports
-        for (shared_ptr<Statement> statement : importStatementsMap[moduleName])
+        for (shared_ptr<Statement> statement : exportedImportStatementsMap[moduleName])
+            statementsMap[moduleName].push_back(statement);
+        // exported enums definitions
+        for (shared_ptr<Statement> statement : exportedEnumStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
         // exported proto declarations
         for (shared_ptr<Statement> statement : exportedProtoDeclarationStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
         // exported blob declarations
         for (shared_ptr<Statement> statement : exportedBlobDeclarationStatementsMap[moduleName])
-            statementsMap[moduleName].push_back(statement);
-        // exported enums definitions
-        for (shared_ptr<Statement> statement : exportedEnumStatementsMap[moduleName])
             statementsMap[moduleName].push_back(statement);
         // exported proto definitions
         for (shared_ptr<Statement> statement : exportedProtoStatementsMap[moduleName])
@@ -617,23 +623,8 @@ void ModulesStore::setModuleName(shared_ptr<Expression> expression, const string
 }
 
 vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &moduleName) {
-    vector<shared_ptr<Statement>> moduleStatements;
-
-    vector<shared_ptr<Statement>> statements;
-    moduleStatements.insert(moduleStatements.end(), importStatementsMap[moduleName].begin(), importStatementsMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), externStatementsMap[moduleName].begin(), externStatementsMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), protoDeclarationStatementsMap[moduleName].begin(), protoDeclarationStatementsMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), blobDeclarationStatementsMap[moduleName].begin(), blobDeclarationStatementsMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), enumStatementsMap[moduleName].begin(), enumStatementsMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), protoStatementsMap[moduleName].begin(), protoStatementsMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), blobStatementsMap[moduleName].begin(), blobStatementsMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), statementFunctionDeclarationsMap[moduleName].begin(), statementFunctionDeclarationsMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), statementVariablesMap[moduleName].begin(), statementVariablesMap[moduleName].end());
-    moduleStatements.insert(moduleStatements.end(), rawFunctionStatementsMap[moduleName].begin(), rawFunctionStatementsMap[moduleName].end());
-
-
     vector<shared_ptr<DependencyNode>> dependencyNodes;
-    for (shared_ptr<Statement> statement : moduleStatements) {
+    for (shared_ptr<Statement> statement : localStatementsMap[moduleName]) {
         visitedModules.clear();
 
         if (shared_ptr<DependencyNode> resolvedDependencyNode = dependencyNode(statement)) {
@@ -647,7 +638,7 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     }
 
     visitedModules.clear();
-    vector<shared_ptr<Statement>> flattenedModuleStatements = flattenedStatements(moduleStatements, moduleName);
+    vector<shared_ptr<Statement>> flattenedModuleStatements = flattenedStatements(localStatementsMap[moduleName], moduleName);
     vector<shared_ptr<Statement>> resolvedSortedBlobProtoStatements = sortedBlobProtoStatements(dependencyNodes, flattenedModuleStatements);
 
     // Split statements by category
@@ -655,10 +646,11 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     vector<shared_ptr<Statement>> statementEnums;
     vector<shared_ptr<Statement>> statementProtoDeclarations;
     vector<shared_ptr<Statement>> statementBlobDeclarations;
-    vector<shared_ptr<Statement>> statementVariables;
     vector<shared_ptr<Statement>> statementVariableDeclarations;
+    vector<shared_ptr<Statement>> statementVariables;
     vector<shared_ptr<Statement>> statementFunctionDeclarations;
     vector<shared_ptr<Statement>> statementRawFunctions;
+    vector<shared_ptr<Statement>> statementFunctions;
 
     for (shared_ptr<Statement> statement : flattenedModuleStatements) {
         switch (statement->getKind()) {
@@ -675,17 +667,20 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
             case StatementKind::BLOB_DECLARATION:
                 statementBlobDeclarations.push_back(statement);
                 break;
-            case StatementKind::VARIABLE:
-                statementVariables.push_back(statement);
+            case StatementKind::FUNCTION_DECLARATION:
+                statementFunctionDeclarations.push_back(statement);
                 break;
             case StatementKind::VARIABLE_DECLARATION:
                 statementVariableDeclarations.push_back(statement);
                 break;
-            case StatementKind::FUNCTION_DECLARATION:
-                statementFunctionDeclarations.push_back(statement);
+            case StatementKind::VARIABLE:
+                statementVariables.push_back(statement);
                 break;
             case StatementKind::RAW_FUNCTION:
                 statementRawFunctions.push_back(statement);
+                break;
+            case StatementKind::FUNCTION:
+                statementFunctions.push_back(statement);
                 break;
             default:
                 break; // Ignore all the other statements (imports, proto, blob)
@@ -714,8 +709,7 @@ vector<shared_ptr<Statement>> ModulesStore::sortedStatements(const std::string &
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariableDeclarations.begin(), statementVariableDeclarations.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementVariables.begin(), statementVariables.end());
     resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementRawFunctions.begin(), statementRawFunctions.end());
-
-    resolvedSortedStatements.insert(resolvedSortedStatements.end(), bodyStatementsMap[moduleName].begin(), bodyStatementsMap[moduleName].end());
+    resolvedSortedStatements.insert(resolvedSortedStatements.end(), statementFunctions.begin(), statementFunctions.end());
 
     return resolvedSortedStatements;
 }
