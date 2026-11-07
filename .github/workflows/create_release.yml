@@ -200,10 +200,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: rafalgrodzinski/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Update Formula
         env:
-          BUILD_KIND: ${{needs.build-project.outputs.build-kind}}
+          BUILD_KIND: ${{needs.build-project.outputs.build_kind}}
           VERSION: ${{needs.build-project.outputs.version}}
           TAG: ${{needs.build-project.outputs.tag}}
         shell: bash
