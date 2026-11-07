@@ -210,7 +210,7 @@ jobs:
         shell: bash
         run: |
           curl -sSfL -o source.tar.gz "https://github.com/rafalgrodzinski/bits-runner-builder/archive/refs/tags/${TAG}.tar.gz"
-          SHA_256="$(sha256 -q source.tar.gz)"
+          SHA_256="$(shasum -a 256 source.tar.gz | cut -f 1 -d " ")"
           rm source.tar.gz
           sed -i -E \
           -e "s/(BUILD_KIND = )\"(.+)\"/\1\"${BUILD_KIND}\"/" \
