@@ -233,5 +233,7 @@ jobs:
           VERSION: ${{needs.build-project.outputs.version}}
         shell: bash
         run: |
+          git config user.name "${{github.actor}}"
+          git config user.email "${{github.actor}}@users.noreply.github.com"
           git commit -am "Updated brb to version ${VERSION}"
           git push
