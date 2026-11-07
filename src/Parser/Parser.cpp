@@ -2921,12 +2921,12 @@ std::shared_ptr<Pattern> Parser::matchPattern() {
 
 // Parsee
 
-ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) {
+ParseeResultsGroup Parser::parseeResultsGroupForParsees(const vector<Parsee> &parsees) {
     int errorsCount = errors.size();
     int startIndex = currentIndex;
     vector<ParseeResult> parseeResults;
 
-    for (Parsee &parsee : parsees) {
+    for (const Parsee &parsee : parsees) {
         optional<pair<vector<ParseeResult>, int>> subResults;
         switch (parsee.getKind()) {
             case ParseeKind::GROUP:
@@ -3009,7 +3009,7 @@ ParseeResultsGroup Parser::parseeResultsGroupForParsees(vector<Parsee> parsees) 
     return ParseeResultsGroup::success(parseeResults);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::groupParseeResults(vector<Parsee> groupParsees) {
+optional<pair<vector<ParseeResult>, int>> Parser::groupParseeResults(const vector<Parsee> &groupParsees) {
     int startIndex = currentIndex;
     vector<ParseeResult> results;
     
@@ -3025,7 +3025,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::groupParseeResults(vector<Pars
     return pair(results, tokensCount);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::repeatedGroupParseeResults(vector<Parsee> repeatedParsees) {
+optional<pair<vector<ParseeResult>, int>> Parser::repeatedGroupParseeResults(const vector<Parsee> &repeatedParsees) {
     int startIndex = currentIndex;
     vector<ParseeResult> results;
     
@@ -3044,7 +3044,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::repeatedGroupParseeResults(vec
     return pair(results, tokensCount);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::oneOfParseeResults(vector<vector<Parsee>> parseeGroups) {
+optional<pair<vector<ParseeResult>, int>> Parser::oneOfParseeResults(const vector<vector<Parsee>> &parseeGroups) {
     int startIndex = currentIndex;
     vector<ParseeResult> results;
     ParseeResultsGroup resultsGroup;
@@ -3092,12 +3092,12 @@ optional<pair<vector<ParseeResult>, int>> Parser::valueTypeParseeResults(int ind
     return pair(vector<ParseeResult>({ParseeResult::valueTypeResult(valueType, tokensCount, tag)}), tokensCount);
 }
 
-optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(vector<StatementKind> statementKinds, int tag) {
+optional<pair<vector<ParseeResult>, int>> Parser::statementKindsParseeResults(const vector<StatementKind> &statementKinds, int tag) {
     int startIndex = currentIndex;
     int errorsCount = errors.size();
 
     shared_ptr<Statement> statement;
-    for (StatementKind &statementKind : statementKinds) {
+    for (const StatementKind &statementKind : statementKinds) {
         switch (statementKind) {
             case StatementKind::ASSIGNMENT:
                 statement = matchStatementAssignment();
@@ -3256,7 +3256,7 @@ std::optional<std::pair<std::vector<ParseeResult>, int>> Parser::patternParseeRe
 // Support
 //
 optional<vector<shared_ptr<Token>>> Parser::tryMatchingTokenKinds(
-    vector<TokenKind> kinds,
+    const vector<TokenKind> &kinds,
     bool shouldMatchAll,
     bool shouldAdvance,
     bool shouldSkipNewLine
