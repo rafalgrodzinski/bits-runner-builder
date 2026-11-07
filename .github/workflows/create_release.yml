@@ -191,7 +191,7 @@ jobs:
             --notes-file "${{github.workspace}}/docs/Notes.md"
 
   update-homebrew-formula:
-    runs-on: macos-15
+    runs-on: ubuntu-24.04
 
     needs: [build-project, create-release]
 
@@ -212,10 +212,10 @@ jobs:
           curl -sSfL -o source.tar.gz "https://github.com/rafalgrodzinski/bits-runner-builder/archive/refs/tags/${TAG}.tar.gz"
           SHA_256="$(sha256 -q source.tar.gz)"
           rm source.tar.gz
-          sed -i '' -E \
-          -e "s/(BUILD_KIND = )\"(.+)\"/\1\"${BUILD_KIND}\"/" Formula/brb.rb > Formula/brb.rb \
-          -e "s/(VERSION = )\"(.+)\"/\1\"${VERSION}\"/" Formula/brb.rb > Formula/brb.rb \
-          -e "s/(SHA_256 = )\"(.+)\"/\1\"${SHA_256}\"/" Formula/brb.rb > Formula/brb.rb \
+          sed -i -E \
+          -e "s/(BUILD_KIND = )\"(.+)\"/\1\"${BUILD_KIND}\"/" \
+          -e "s/(VERSION = )\"(.+)\"/\1\"${VERSION}\"/" \
+          -e "s/(SHA_256 = )\"(.+)\"/\1\"${SHA_256}\"/" \
           Formula/brb.rb
           git diff
 
