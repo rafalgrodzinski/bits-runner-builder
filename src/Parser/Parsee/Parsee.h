@@ -53,10 +53,10 @@ public:
 
     ParseeKind getKind() const;
     int getTag() const;
-    std::optional<std::vector<Parsee>> getGroupParsees() const;
-    std::optional<std::vector<Parsee>> getRepeatedParsees() const;
-    std::optional<std::vector<std::vector<Parsee>>> getParsees() const;
-    std::optional<std::vector<StatementKind>> getStatementKinds() const;
+    const std::optional<std::vector<Parsee>> &getGroupParsees() const;
+    const std::optional<std::vector<Parsee>> &getRepeatedParsees() const;
+    const std::optional<std::vector<std::vector<Parsee>>> &getParsees() const;
+    const std::optional<std::vector<StatementKind>> &getStatementKinds() const;
     TokenKind getTokenKind() const;
     bool getShouldIncludeExpressionStatement() const;
     bool getIsNumericExpression() const;

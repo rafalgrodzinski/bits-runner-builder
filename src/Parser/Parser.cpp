@@ -3051,7 +3051,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::oneOfParseeResults(const vecto
 
     int groupIndex = 0;
     while (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS && groupIndex < parseeGroups.size()) {
-        vector<Parsee> parseeGroup = parseeGroups.at(groupIndex);
+        const vector<Parsee> &parseeGroup = parseeGroups.at(groupIndex);
         resultsGroup = parseeResultsGroupForParsees(parseeGroup);
         if (resultsGroup.getKind() == ParseeResultsGroupKind::FAILURE) {
             return {};
@@ -3064,7 +3064,7 @@ optional<pair<vector<ParseeResult>, int>> Parser::oneOfParseeResults(const vecto
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return {};
 
-    for (ParseeResult &result : resultsGroup.getResults())
+    for (const ParseeResult &result : resultsGroup.getResults())
         results.push_back(result);
 
     int tokensCount = currentIndex - startIndex;
