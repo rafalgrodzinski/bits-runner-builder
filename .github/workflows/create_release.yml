@@ -212,15 +212,18 @@ jobs:
           curl -sSfL -o source.tar.gz "https://github.com/rafalgrodzinski/bits-runner-builder/archive/refs/tags/${TAG}.tar.gz"
           SHA_256="$(sha256 -q source.tar.gz)"
           rm source.tar.gz
+          cat Formula/brb.rb
           sed -r "s/(BUILD_KIND = )\"(.+)\"/\1\"${BUILD_KIND}\"/" Formula/brb.rb > Formula/brb.rb
+          cat Formula/brb.rb
           sed -r "s/(VERSION = )\"(.+)\"/\1\"${VERSION}\"/" Formula/brb.rb > Formula/brb.rb
+          cat Formula/brb.rb
           sed -r "s/(SHA_256 = )\"(.+)\"/\1\"${SHA_256}\"/" Formula/brb.rb > Formula/brb.rb
           cat Formula/brb.rb
 
-      - name: Update Tap
-        env:
-          VERSION: ${{needs.build-project.outputs.version}}
-        shell: bash
-        run: |
-          git commit -am "Updated brb to version ${VERSION}"
-          git push
+      #- name: Update Tap
+      #  env:
+      #    VERSION: ${{needs.build-project.outputs.version}}
+      #  shell: bash
+      #  run: |
+      #    git commit -am "Updated brb to version ${VERSION}"
+      #    git push
