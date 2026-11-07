@@ -95,13 +95,13 @@ private:
     std::shared_ptr<Pattern> matchPattern();
 
     // Parsee
-    ParseeResultsGroup parseeResultsGroupForParsees(std::vector<Parsee> parsees);
-    std::optional<std::pair<std::vector<ParseeResult>, int>> groupParseeResults(std::vector<Parsee> groupParsees);
-    std::optional<std::pair<std::vector<ParseeResult>, int>> repeatedGroupParseeResults(std::vector<Parsee> repeatedParsees);
-    std::optional<std::pair<std::vector<ParseeResult>, int>> oneOfParseeResults(std::vector<std::vector<Parsee>> parsees);
+    ParseeResultsGroup parseeResultsGroupForParsees(const std::vector<Parsee> &parsees);
+    std::optional<std::pair<std::vector<ParseeResult>, int>> groupParseeResults(const std::vector<Parsee> &groupParsees);
+    std::optional<std::pair<std::vector<ParseeResult>, int>> repeatedGroupParseeResults(const std::vector<Parsee> &repeatedParsees);
+    std::optional<std::pair<std::vector<ParseeResult>, int>> oneOfParseeResults(const std::vector<std::vector<Parsee>> &parsees);
     std::optional<std::pair<std::vector<ParseeResult>, int>> tokenParseeResults(TokenKind tokenKind, int tag);
     std::optional<std::pair<std::vector<ParseeResult>, int>> valueTypeParseeResults(int index, int tag);
-    std::optional<std::pair<std::vector<ParseeResult>, int>> statementKindsParseeResults(std::vector<StatementKind> statementKinds, int tag);
+    std::optional<std::pair<std::vector<ParseeResult>, int>> statementKindsParseeResults(const std::vector<StatementKind> &statementKinds, int tag);
     std::optional<std::pair<std::vector<ParseeResult>, int>> expressionParseeResults(bool isNumeric, int tag);
     std::optional<std::pair<std::vector<ParseeResult>, int>> statementBlockParseeResults(bool isMultiline, int tag);
     std::optional<std::pair<std::vector<ParseeResult>, int>> expressionBlockSingleLineParseeResults(int tag);
@@ -111,7 +111,7 @@ private:
 
     // Support
     std::optional<std::vector<std::shared_ptr<Token>>> tryMatchingTokenKinds(
-        std::vector<TokenKind> kinds,
+        const std::vector<TokenKind> &kinds,
         bool shouldMatchAll,
         bool shouldAdvance,
         bool shouldSkipNewLine

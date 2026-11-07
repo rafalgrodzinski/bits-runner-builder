@@ -143,19 +143,19 @@ int Parsee::getTag() const {
     return tag;
 }
 
-optional<vector<Parsee>> Parsee::getGroupParsees() const {
+const optional<vector<Parsee>> &Parsee::getGroupParsees() const {
     return groupParsees;
 }
 
-optional<vector<Parsee>> Parsee::getRepeatedParsees() const {
+const optional<vector<Parsee>> &Parsee::getRepeatedParsees() const {
     return repeatedParsees;
 }
 
-optional<vector<vector<Parsee>>> Parsee::getParsees() const {
+const optional<vector<vector<Parsee>>> &Parsee::getParsees() const {
     return parsees;
 }
 
-optional<vector<StatementKind>> Parsee::getStatementKinds() const {
+const optional<vector<StatementKind>> &Parsee::getStatementKinds() const {
     return statementKinds;
 }
 
