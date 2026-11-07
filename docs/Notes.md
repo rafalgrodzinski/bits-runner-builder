@@ -8,4 +8,5 @@ Available for:
 - Windows (x86_64)
 
 Changelist for [VERSION](https://github.com/rafalgrodzinski/bits-runner-builder/pull/231):
-- Homebrew formule gets automatically updated on merge
+- Homebrew formula gets automatically updated on merge
+- Notes version is set automatically

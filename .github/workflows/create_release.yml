@@ -32,8 +32,7 @@ jobs:
 
     strategy:
       matrix:
-        #os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
-        os: [macos-15]
+        os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
 
     runs-on: ${{matrix.os}}
 
@@ -228,12 +227,11 @@ jobs:
           -e "s/(VERSION = )\"(.+)\"/\1\"${VERSION}\"/" \
           -e "s/(SHA_256 = )\"(.+)\"/\1\"${SHA_256}\"/" \
           "${{github.workspace}}/Formula/brb.rb"
-          git diff
 
-      #- name: Update Tap
-      #  env:
-      #    VERSION: ${{needs.build-project.outputs.version}}
-      #  shell: bash
-      #  run: |
-      #    git commit -am "Updated brb to version ${VERSION}"
-      #    git push
+      - name: Update Homebrew Tap
+        env:
+          VERSION: ${{needs.build-project.outputs.version}}
+        shell: bash
+        run: |
+          git commit -am "Updated brb to version ${VERSION}"
+          git push
