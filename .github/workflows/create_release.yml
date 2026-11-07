@@ -26,12 +26,14 @@ permissions:
 jobs:
   build-project:
     outputs:
+      build_kind: ${{ steps.build_kind-info.outputs.BUILD_KIND }}
       version: ${{ steps.version-info.outputs.VERSION }}
       tag: ${{ steps.tag-info.outputs.TAG }}
 
     strategy:
       matrix:
-        os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
+        #os: [macos-15-intel, macos-15, ubuntu-24.04, windows-2025-vs2026]
+        os: [macos-15]
 
     runs-on: ${{matrix.os}}
 
@@ -88,16 +90,23 @@ jobs:
               VERSION_SUFFIX="-${BUILD_KIND}-${{github.run_number}}"
             ;;
           esac
+          echo "BUILD_KIND=${BUILD_KIND}" >> $GITHUB_ENV
           echo "VERSION=${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
           echo "TAG=${BUILD_KIND}/${VERSION_NUMBER}${VERSION_SUFFIX}" >> $GITHUB_ENV
 
-      - name: Output Version Info
+      - name: Output BUILD_KIND
+        id: build_kind-info
+        shell: bash
+        run: |
+          echo "BUILD_KIND=${BUILD_KIND}" >> $GITHUB_OUTPUT
+
+      - name: Output VERSION
         id: version-info
         shell: bash
         run: |
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Output Tag Info
+      - name: Output TAG
         id: tag-info
         shell: bash
         run: |
@@ -112,7 +121,8 @@ jobs:
       
       - name: Build Project
         shell: bash
-        run: cmake --build "${GITHUB_WORKSPACE}/build" --config Release
+        run: |
+          cmake --build "${GITHUB_WORKSPACE}/build" --config Release
 
       - name: Get Archive Name
         shell: bash
@@ -179,3 +189,38 @@ jobs:
           gh release create "${TAG}" "${{github.workspace}}/*.zip" \
             --title "${VERSION}" \
             --notes-file "${{github.workspace}}/docs/Notes.md"
+
+  update-homebrew-formula:
+    runs-on: macos-15
+
+    needs: [build-project, create-release]
+
+    steps:
+      - name: Checkout Tap
+        uses: actions/checkout@v6
+        with:
+          repository: rafalgrodzinski/homebrew-tap
+
+      - name: Update Formula
+        env:
+          BUILD_KIND: ${{needs.build-project.outputs.build-kind}}
+          VERSION: ${{needs.build-project.outputs.version}}
+          TAG: ${{needs.build-project.outputs.tag}}
+        shell: bash
+        run: |
+          curl -sSfL -o source.tar.gz "https://github.com/rafalgrodzinski/bits-runner-builder/archive/refs/tags/${TAG}.tar.gz"
+          SHA_256="$(sha256 -q source.tar.gz)"
+          rm source.tar.gz
+          sed -r "s/(BUILD_KIND = )\"(.+)\"/\1\"${BUILD_KIND}\"/" brb.rb > brb.rb
+          sed -r "s/(VERSION = )\"(.+)\"/\1\"${VERSION}\"/" brb.rb > brb.rb
+          sed -r "s/(SHA_256 = )\"(.+)\"/\1\"${SHA_256}\"/" brb.rb > brb.rb
+          cat brb.rb
+
+      - name: Update Tap
+        env:
+          VERSION: ${{needs.build-project.outputs.version}}
+        shell: bash
+        run: |
+          shell: bash
+          git commit -am "Updated brb to version ${VERSION}"
+          git push
