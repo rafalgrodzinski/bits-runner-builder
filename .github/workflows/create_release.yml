@@ -26,9 +26,9 @@ permissions:
 jobs:
   build-project:
     outputs:
-      build_kind: ${{ steps.build_kind-info.outputs.BUILD_KIND }}
-      version: ${{ steps.version-info.outputs.VERSION }}
-      tag: ${{ steps.tag-info.outputs.TAG }}
+      build_kind: ${{steps.build_kind-info.outputs.BUILD_KIND}}
+      version: ${{steps.version-info.outputs.VERSION}}
+      tag: ${{steps.tag-info.outputs.TAG}}
 
     strategy:
       matrix:
@@ -40,17 +40,20 @@ jobs:
     steps:
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
+        shell: bash
         run: |
           brew install llvm@20
           brew link llvm@20
 
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
+        shell: bash
         run: |
           sudo apt install llvm-20
 
       - name: Install CMake (Linux)
         if: runner.os == 'Linux'
+        shell: bash
         run: |
           wget https://github.com/Kitware/CMake/releases/download/v4.2.1/cmake-4.2.1-linux-x86_64.tar.gz -O cmake.tar.gz
           mkdir ${HOME}/.local
@@ -62,7 +65,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: D:\llvm-20.1.8
-          key: ${{ runner.os }}-llvm-20.1.8
+          key: ${{runner.os}}-llvm-20.1.8
 
       - name: Build LLVM (Windows)
         if: runner.os == 'Windows' && steps.cache-llvm.outputs.cache-hit != 'true'
@@ -166,7 +169,7 @@ jobs:
           if-no-files-found: error
 
   create-release:
-    runs-on: macos-15
+    runs-on: ubuntu-24.04
 
     needs: build-project
 
@@ -180,11 +183,19 @@ jobs:
           path: "${{github.workspace}}/"
           merge-multiple: true
 
+      - name: Update Notes Version
+        env:
+          VERSION: ${{needs.build-project.outputs.version}}
+        shell: bash
+        run: |
+          sed -i -E -e "s/VERSION/${VERSION}/" "${{github.workspace}}/docs/Notes.md"
+
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           VERSION: ${{needs.build-project.outputs.version}}
           TAG: ${{needs.build-project.outputs.tag}}
+        shell: bash
         run: |
           gh release create "${TAG}" "${{github.workspace}}/*.zip" \
             --title "${VERSION}" \
@@ -200,7 +211,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: rafalgrodzinski/homebrew-tap
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          token: ${{secrets.HOMEBREW_TAP_TOKEN}}
 
       - name: Update Formula
         env:
@@ -209,14 +220,14 @@ jobs:
           TAG: ${{needs.build-project.outputs.tag}}
         shell: bash
         run: |
-          curl -sSfL -o source.tar.gz "https://github.com/rafalgrodzinski/bits-runner-builder/archive/refs/tags/${TAG}.tar.gz"
-          SHA_256="$(shasum -a 256 source.tar.gz | cut -f 1 -d " ")"
-          rm source.tar.gz
+          curl -sSfL -o "${{github.workspace}}/source.tar.gz" "https://github.com/rafalgrodzinski/bits-runner-builder/archive/refs/tags/${TAG}.tar.gz"
+          SHA_256="$(shasum -a 256 ${{github.workspace}}/source.tar.gz | cut -f 1 -d " ")"
+          rm "${{github.workspace}}/source.tar.gz"
           sed -i -E \
           -e "s/(BUILD_KIND = )\"(.+)\"/\1\"${BUILD_KIND}\"/" \
           -e "s/(VERSION = )\"(.+)\"/\1\"${VERSION}\"/" \
           -e "s/(SHA_256 = )\"(.+)\"/\1\"${SHA_256}\"/" \
-          Formula/brb.rb
+          "${{github.workspace}}/Formula/brb.rb"
           git diff
 
       #- name: Update Tap
