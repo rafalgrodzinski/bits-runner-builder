@@ -214,13 +214,12 @@ jobs:
           sed -r "s/(BUILD_KIND = )\"(.+)\"/\1\"${BUILD_KIND}\"/" brb.rb > brb.rb
           sed -r "s/(VERSION = )\"(.+)\"/\1\"${VERSION}\"/" brb.rb > brb.rb
           sed -r "s/(SHA_256 = )\"(.+)\"/\1\"${SHA_256}\"/" brb.rb > brb.rb
-          cat brb.rb
+          echo $(cat brb.rb)
 
       - name: Update Tap
         env:
           VERSION: ${{needs.build-project.outputs.version}}
         shell: bash
         run: |
-          shell: bash
           git commit -am "Updated brb to version ${VERSION}"
           git push
