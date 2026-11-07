@@ -10,3 +10,4 @@ Available for:
 Changelist for [VERSION](https://github.com/rafalgrodzinski/bits-runner-builder/pull/231):
 - Homebrew formula gets automatically updated on merge
 - Notes version is set automatically
+- Much faster parsing

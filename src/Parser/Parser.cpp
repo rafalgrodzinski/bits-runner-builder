@@ -64,33 +64,32 @@ Parser::Parser(const vector<shared_ptr<Token>> &tokens):
 tokens(tokens) { }
 
 vector<shared_ptr<Statement>> Parser::getStatements() {
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // Only the first statement can be module declaration
-            Parsee::statementKindsParsee({StatementKind::MODULE}, ParseeLevel::OPTIONAL, true),
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::statementKindsParsee(
-                        {
-                            StatementKind::META_IMPORT,
-                            StatementKind::FUNCTION,
-                            StatementKind::RAW_FUNCTION,
-                            StatementKind::VARIABLE,
-                            StatementKind::META_EXTERN_FUNCTION,
-                            StatementKind::META_EXTERN_VARIABLE,
-                            StatementKind::ENUM,
-                            StatementKind::BLOB,
-                            StatementKind::PROTO
-                        },
-                        ParseeLevel::REQUIRED,
-                        true
-                    ),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            Parsee::tokenParsee(TokenKind::END, ParseeLevel::CRITICAL, false)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // Only the first statement can be module declaration
+        Parsee::statementKindsParsee({StatementKind::MODULE}, ParseeLevel::OPTIONAL, true),
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::statementKindsParsee(
+                    {
+                        StatementKind::META_IMPORT,
+                        StatementKind::FUNCTION,
+                        StatementKind::RAW_FUNCTION,
+                        StatementKind::VARIABLE,
+                        StatementKind::META_EXTERN_FUNCTION,
+                        StatementKind::META_EXTERN_VARIABLE,
+                        StatementKind::ENUM,
+                        StatementKind::BLOB,
+                        StatementKind::PROTO
+                    },
+                    ParseeLevel::REQUIRED,
+                    true
+                ),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        Parsee::tokenParsee(TokenKind::END, ParseeLevel::CRITICAL, false)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() == ParseeResultsGroupKind::FAILURE) {
         for (shared_ptr<Error> &error : errors)
@@ -151,114 +150,113 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // root chain
-            // identifier - module prefix
-            Parsee::groupParsee(
+    static const vector<Parsee> parsees = {
+        // root chain
+        // identifier - module prefix
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
+        Parsee::oneOfParsee(
+            {
+                // index expression
                 {
-                    Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
+                    Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
+                    Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
+                    Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                },
+                // call expression
                 {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
-            Parsee::oneOfParsee(
-                {
-                    // index expression
-                    {
-                        Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
-                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
-                        Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
-                    },
-                    // call expression
-                    {
-                        // arguments
-                        Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, ParseeLevel::REQUIRED, true, TAG_CALL_START),
-                        Parsee::groupParsee(
-                            {
-                                // first argument
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
-                                // additional arguments
-                                Parsee::repeatedGroupParsee(
-                                    {
-                                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
-                                    }, ParseeLevel::OPTIONAL, true
-                                ),
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, ParseeLevel::CRITICAL, true, TAG_CALL_END),
-                    }
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // additional chains
-            Parsee::repeatedGroupParsee(
-                {
-                    // dot separator in between
-                    Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::REQUIRED, false),
-                    Parsee::oneOfParsee(
+                    // arguments
+                    Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, ParseeLevel::REQUIRED, true, TAG_CALL_START),
+                    Parsee::groupParsee(
                         {
-                            {
-                                // identifier - name
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
-                                Parsee::oneOfParsee(
+                            // first argument
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                            Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
+                            // additional arguments
+                            Parsee::repeatedGroupParsee(
+                                {
+                                    Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                    Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
+                                }, ParseeLevel::OPTIONAL, true
+                            ),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, ParseeLevel::CRITICAL, true, TAG_CALL_END),
+                }
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // additional chains
+        Parsee::repeatedGroupParsee(
+            {
+                // dot separator in between
+                Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::REQUIRED, false),
+                Parsee::oneOfParsee(
+                    {
+                        {
+                            // identifier - name
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
+                            Parsee::oneOfParsee(
+                                {
+                                    // index expression
                                     {
-                                        // index expression
-                                        {
-                                            Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
-                                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
-                                            Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
-                                        },
-                                        // call expression
-                                        {
-                                            // arguments
-                                            Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, ParseeLevel::REQUIRED, true, TAG_CALL_START),
-                                            Parsee::groupParsee(
-                                                {
-                                                    // first argument
-                                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                                    Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
-                                                    // additional arguments
-                                                    Parsee::repeatedGroupParsee(
-                                                        {
-                                                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
-                                                        }, ParseeLevel::OPTIONAL, true
-                                                    ),
-                                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
-                                                }, ParseeLevel::OPTIONAL, true
-                                            ),
-                                            Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, ParseeLevel::CRITICAL, true, TAG_CALL_END),
-                                        }
-                                    }, ParseeLevel::OPTIONAL, true
-                                ),
-                            },
-                            {
-                                // cast expression
-                                Parsee::valueTypeParsee(ParseeLevel::OPTIONAL, true, TAG_CAST)
-                            }
-                        }, ParseeLevel::CRITICAL, true
-                    )
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // value expression
-            Parsee::tokenParsee(TokenKind::LEFT_ARROW, ParseeLevel::REQUIRED, false),
-            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_VALUE_EXPRESSION)
-        }
-    );
+                                        Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, false),
+                                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
+                                        Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                                    },
+                                    // call expression
+                                    {
+                                        // arguments
+                                        Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, ParseeLevel::REQUIRED, true, TAG_CALL_START),
+                                        Parsee::groupParsee(
+                                            {
+                                                // first argument
+                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                                Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
+                                                // additional arguments
+                                                Parsee::repeatedGroupParsee(
+                                                    {
+                                                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
+                                                    }, ParseeLevel::OPTIONAL, true
+                                                ),
+                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
+                                            }, ParseeLevel::OPTIONAL, true
+                                        ),
+                                        Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, ParseeLevel::CRITICAL, true, TAG_CALL_END),
+                                    }
+                                }, ParseeLevel::OPTIONAL, true
+                            ),
+                        },
+                        {
+                            // cast expression
+                            Parsee::valueTypeParsee(ParseeLevel::OPTIONAL, true, TAG_CAST)
+                        }
+                    }, ParseeLevel::CRITICAL, true
+                )
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // value expression
+        Parsee::tokenParsee(TokenKind::LEFT_ARROW, ParseeLevel::REQUIRED, false),
+        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_VALUE_EXPRESSION)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -345,89 +343,88 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // export
-            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            // type argument names
-            Parsee::groupParsee(
-                {
-                    // <
-                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
-                    // first name
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_TYPE_ARGUMENT_NAME),
-                    // subsequent names
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_TYPE_ARGUMENT_NAME)
-                        }, ParseeLevel::OPTIONAL, true
-                    ),
-                    // >
-                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, false),
-            // proto names
-            Parsee::groupParsee(
-                {
-                    // first name
-                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    // identifier - module prefix
-                    Parsee::groupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_MODULE_PREFIX),
-                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                        }, ParseeLevel::OPTIONAL, true
-                    ),
-                    // identifier
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
-                    //repeated subsequent names
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            // identifier - module prefix
-                            Parsee::groupParsee(
-                                {
-                                    Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
-                                    Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
-                                }, ParseeLevel::OPTIONAL, true
-                            ),
-                            // identifier
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
-                        }, ParseeLevel::OPTIONAL, true
-                    )
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-            // fields
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::statementKindsParsee(
-                        {StatementKind::VARIABLE_DECLARATION, StatementKind::FUNCTION},
-                        ParseeLevel::REQUIRED,
-                        true,
-                        TAG_FIELD
-                    ),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // export
+        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+        // type argument names
+        Parsee::groupParsee(
+            {
+                // <
+                Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                // first name
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_TYPE_ARGUMENT_NAME),
+                // subsequent names
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_TYPE_ARGUMENT_NAME)
+                    }, ParseeLevel::OPTIONAL, true
+                ),
+                // >
+                Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, false),
+        // proto names
+        Parsee::groupParsee(
+            {
+                // first name
+                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                // identifier - module prefix
+                Parsee::groupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_MODULE_PREFIX),
+                        Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                    }, ParseeLevel::OPTIONAL, true
+                ),
+                // identifier
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
+                //repeated subsequent names
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                        // identifier - module prefix
+                        Parsee::groupParsee(
+                            {
+                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME),
+                                Parsee::tokenParsee(TokenKind::DOT, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
+                            }, ParseeLevel::OPTIONAL, true
+                        ),
+                        // identifier
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_PROTO_NAME)
+                    }, ParseeLevel::OPTIONAL, true
+                )
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+        // fields
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::statementKindsParsee(
+                    {StatementKind::VARIABLE_DECLARATION, StatementKind::FUNCTION},
+                    ParseeLevel::REQUIRED,
+                    true,
+                    TAG_FIELD
+                ),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -543,67 +540,66 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // export
-            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENT_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENT_NAME),
-            // named type keys
-            Parsee::groupParsee(
-                {
-                    // <
-                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
-                    // first name
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAMED_TYPE_KEY),
-                    // subsequent names
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAMED_TYPE_KEY)
-                        }, ParseeLevel::OPTIONAL, true
-                    ),
-                    // >
-                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // enum
-            Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, false),
-            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-            // fields
-            Parsee::repeatedGroupParsee(
-                {
-                    // identifier - namespaces
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_IDENT_NAMESPACE),
-                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                        }, ParseeLevel::OPTIONAL, true
-                    ),
-                    // identifier - name
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_IDENT_NAME),
-                    // payload value type
-                    Parsee::valueTypeParsee(ParseeLevel::OPTIONAL, true, TAG_FIELD_PAYLOAD_VALUE_TYPE),
-                    // tag expression
-                    Parsee::groupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_FIELD_TAG_EXPRESSION)
-                        }, ParseeLevel::OPTIONAL, true
-                    ),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, true, TAG_FIELD_FINISHED)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // export
+        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENT_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENT_NAME),
+        // named type keys
+        Parsee::groupParsee(
+            {
+                // <
+                Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                // first name
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAMED_TYPE_KEY),
+                // subsequent names
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAMED_TYPE_KEY)
+                    }, ParseeLevel::OPTIONAL, true
+                ),
+                // >
+                Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // enum
+        Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, false),
+        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+        // fields
+        Parsee::repeatedGroupParsee(
+            {
+                // identifier - namespaces
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_IDENT_NAMESPACE),
+                        Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                    }, ParseeLevel::OPTIONAL, true
+                ),
+                // identifier - name
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_FIELD_IDENT_NAME),
+                // payload value type
+                Parsee::valueTypeParsee(ParseeLevel::OPTIONAL, true, TAG_FIELD_PAYLOAD_VALUE_TYPE),
+                // tag expression
+                Parsee::groupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_FIELD_TAG_EXPRESSION)
+                    }, ParseeLevel::OPTIONAL, true
+                ),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, true, TAG_FIELD_FINISHED)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -683,13 +679,12 @@ std::shared_ptr<Statement> Parser::matchStatementExchange() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_LEFT_EXPRESSION),
-            Parsee::tokenParsee(TokenKind::DOUBLE_ARROW, ParseeLevel::REQUIRED, false),
-            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_RIGHT_EXPRESSION)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_LEFT_EXPRESSION),
+        Parsee::tokenParsee(TokenKind::DOUBLE_ARROW, ParseeLevel::REQUIRED, false),
+        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_RIGHT_EXPRESSION)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -734,51 +729,50 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // export
-            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
-            // arguments
-            Parsee::groupParsee(
-                {
-                    // first argument
-                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
-                    // additional arguments
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                            Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
-                        }, ParseeLevel::OPTIONAL, true
-                    )
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // return type
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // new line
-            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // export
+        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+        Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
+        // arguments
+        Parsee::groupParsee(
+            {
+                // first argument
+                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
+                // additional arguments
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                        Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                    }, ParseeLevel::OPTIONAL, true
+                )
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // return type
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
+                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // new line
+        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -844,42 +838,41 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // export
-            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
-            // arguments
-            Parsee::groupParsee(
-                {
-                    // first argument
-                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
-                    // additional arguments
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                            Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
-                        }, ParseeLevel::OPTIONAL, true
-                    )
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // return type
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
-                }, ParseeLevel::OPTIONAL, true
-            )
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // export
+        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // identifier
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+        Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
+        // arguments
+        Parsee::groupParsee(
+            {
+                // first argument
+                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
+                // additional arguments
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                        Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                    }, ParseeLevel::OPTIONAL, true
+                )
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // return type
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
+                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
+            }, ParseeLevel::OPTIONAL, true
+        )
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -930,57 +923,56 @@ shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // @extern
-            Parsee::tokenParsee(TokenKind::M_EXTERN, ParseeLevel::REQUIRED, false),
-            // identifier - module prefix
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
-            // arguments
-            Parsee::groupParsee(
-                {
-                    // first argument
-                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
-                    // additional arguments
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                            Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
-                        }, ParseeLevel::OPTIONAL, true
-                    )
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // return type
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
-                }, ParseeLevel::OPTIONAL, true
-            )
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // @extern
+        Parsee::tokenParsee(TokenKind::M_EXTERN, ParseeLevel::REQUIRED, false),
+        // identifier - module prefix
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+        Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
+        // arguments
+        Parsee::groupParsee(
+            {
+                // first argument
+                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
+                // additional arguments
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                        Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                    }, ParseeLevel::OPTIONAL, true
+                )
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // return type
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
+            }, ParseeLevel::OPTIONAL, true
+        )
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1029,30 +1021,29 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // @extern
-            Parsee::tokenParsee(TokenKind::M_EXTERN, ParseeLevel::REQUIRED, false),
-            // identifier - module prefix
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
-            Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // @extern
+        Parsee::tokenParsee(TokenKind::M_EXTERN, ParseeLevel::REQUIRED, false),
+        // identifier - module prefix
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
+        Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1085,12 +1076,11 @@ shared_ptr<Statement> Parser::matchStatementMetaExternVariable() {
 shared_ptr<Statement> Parser::matchStatementMetaImport() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::tokenParsee(TokenKind::M_IMPORT, ParseeLevel::REQUIRED, false),
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        Parsee::tokenParsee(TokenKind::M_IMPORT, ParseeLevel::REQUIRED, false),
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1103,13 +1093,12 @@ shared_ptr<Statement> Parser::matchStatementMetaImport() {
 shared_ptr<Statement> Parser::matchStatementModule() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::tokenParsee(TokenKind::M_MODULE, ParseeLevel::REQUIRED, false),
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true),
-            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        Parsee::tokenParsee(TokenKind::M_MODULE, ParseeLevel::REQUIRED, false),
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true),
+        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1128,29 +1117,28 @@ shared_ptr<Statement> Parser::matchStatementProto() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // exports
-            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            Parsee::tokenParsee(TokenKind::PROTO, ParseeLevel::REQUIRED, false),
-            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-            // members
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::statementKindsParsee(
-                        {StatementKind::VARIABLE_DECLARATION, StatementKind::FUNCTION_DECLARATION},
-                        ParseeLevel::REQUIRED,
-                        true,
-                        TAG_STATEMENT_IN_PROTO
-                    ),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // exports
+        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // identifier
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+        Parsee::tokenParsee(TokenKind::PROTO, ParseeLevel::REQUIRED, false),
+        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+        // members
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::statementKindsParsee(
+                    {StatementKind::VARIABLE_DECLARATION, StatementKind::FUNCTION_DECLARATION},
+                    ParseeLevel::REQUIRED,
+                    true,
+                    TAG_STATEMENT_IN_PROTO
+                ),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1211,59 +1199,58 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // export
-            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            Parsee::tokenParsee(TokenKind::RAW_FUNCTION, ParseeLevel::REQUIRED, false),
-            // constraints
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::STRING, ParseeLevel::CRITICAL, true, TAG_CONSTRAINTS),
-                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // arguments
-            Parsee::groupParsee(
-                {
-                    // first argument
-                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
-                    // additional arguments
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
-                            Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
-                        }, ParseeLevel::OPTIONAL, true
-                    )
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // return type
+    static const vector<Parsee> parsees = {
+        // export
+        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+        Parsee::tokenParsee(TokenKind::RAW_FUNCTION, ParseeLevel::REQUIRED, false),
+        // constraints
         Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // new line
-            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
-        }
-    );
+            {
+                Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::STRING, ParseeLevel::CRITICAL, true, TAG_CONSTRAINTS),
+                Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // arguments
+        Parsee::groupParsee(
+            {
+                // first argument
+                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE),
+                // additional arguments
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ARGUMENT_IDENTIFIER),
+                        Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                    }, ParseeLevel::OPTIONAL, true
+                )
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // return type
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // new line
+        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::CRITICAL, false)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     bool shouldExport = false;
     string name;
@@ -1343,85 +1330,84 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::tokenParsee(TokenKind::REPEAT, ParseeLevel::REQUIRED, false),
-            Parsee::oneOfParsee(
+    static const vector<Parsee> parsees = {
+        Parsee::tokenParsee(TokenKind::REPEAT, ParseeLevel::REQUIRED, false),
+        Parsee::oneOfParsee(
+            {
+                // Has init
                 {
-                    // Has init
-                    {
-                        // init statement
-                        Parsee::statementKindsParsee({StatementKind::VARIABLE, StatementKind::ASSIGNMENT}, ParseeLevel::REQUIRED, true, TAG_STATEMENT_INIT),
-                        // condition
-                        Parsee::groupParsee(
-                            {
-                                // pre-condition
-                                Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_PRE_CONDITION),
-                                // post-condtion
-                                Parsee::groupParsee(
-                                    {
-                                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                        Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_POST_CONDITION),
-                                    }, ParseeLevel::OPTIONAL, true
-                                )
-                            }, ParseeLevel::OPTIONAL, true
-                        )
-                    },
-                    // No init
-                    {
-                        // pre-condition
-                        Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_PRE_CONDITION),
-                        // post-condtion
-                        Parsee::groupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_POST_CONDITION),
-                            }, ParseeLevel::OPTIONAL, true
-                        )
-                    },
-                },ParseeLevel::OPTIONAL, true
-            ),
-            // post statement
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::statementKindsParsee(
+                    // init statement
+                    Parsee::statementKindsParsee({StatementKind::VARIABLE, StatementKind::ASSIGNMENT}, ParseeLevel::REQUIRED, true, TAG_STATEMENT_INIT),
+                    // condition
+                    Parsee::groupParsee(
                         {
-                            StatementKind::VARIABLE,
-                            StatementKind::ASSIGNMENT,
-                            StatementKind::RETURN,
-                            StatementKind::REPEAT,
-                            StatementKind::EXPRESSION
-                        },
-                        ParseeLevel::CRITICAL,
-                        true,
-                        TAG_STATEMENT_POST
+                            // pre-condition
+                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_PRE_CONDITION),
+                            // post-condtion
+                            Parsee::groupParsee(
+                                {
+                                    Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                    Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_POST_CONDITION),
+                                }, ParseeLevel::OPTIONAL, true
+                            )
+                        }, ParseeLevel::OPTIONAL, true
                     )
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // Statements
-            Parsee::oneOfParsee(
+                },
+                // No init
                 {
-                    // single line
+                    // pre-condition
+                    Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_PRE_CONDITION),
+                    // post-condtion
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                            Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_POST_CONDITION),
+                        }, ParseeLevel::OPTIONAL, true
+                    )
+                },
+            },ParseeLevel::OPTIONAL, true
+        ),
+        // post statement
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::statementKindsParsee(
                     {
-                        Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                        Parsee::statementBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_STATEMENT_BLOCK)
+                        StatementKind::VARIABLE,
+                        StatementKind::ASSIGNMENT,
+                        StatementKind::RETURN,
+                        StatementKind::REPEAT,
+                        StatementKind::EXPRESSION
                     },
-                    // multi line
-                    {
-                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                        Parsee::statementBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_STATEMENT_BLOCK),
-                        Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
-                    }
-                }, ParseeLevel::CRITICAL, true
-            )
-        }
-    );
+                    ParseeLevel::CRITICAL,
+                    true,
+                    TAG_STATEMENT_POST
+                )
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // Statements
+        Parsee::oneOfParsee(
+            {
+                // single line
+                {
+                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                    Parsee::statementBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_STATEMENT_BLOCK)
+                },
+                // multi line
+                {
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                    Parsee::statementBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_STATEMENT_BLOCK),
+                    Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false)
+                }
+            }, ParseeLevel::CRITICAL, true
+        )
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1465,12 +1451,11 @@ shared_ptr<Statement> Parser::matchStatementRepeat() {
 shared_ptr<Statement> Parser::matchStatementReturn() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::tokenParsee(TokenKind::RETURN, ParseeLevel::REQUIRED, false),
-            Parsee::expressionParsee(ParseeLevel::OPTIONAL, true, false)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        Parsee::tokenParsee(TokenKind::RETURN, ParseeLevel::REQUIRED, false),
+        Parsee::expressionParsee(ParseeLevel::OPTIONAL, true, false)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1491,30 +1476,29 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // should export
-            Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
-            // value type
-            Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE),
-            // initializer
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::LEFT_ARROW, ParseeLevel::REQUIRED, false),
-                    Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_EXPRESSION)
-                }, ParseeLevel::OPTIONAL, true
-            )
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // should export
+        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_IDENTIFIER),
+        // value type
+        Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE),
+        // initializer
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::LEFT_ARROW, ParseeLevel::REQUIRED, false),
+                Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_EXPRESSION)
+            }, ParseeLevel::OPTIONAL, true
+        )
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1562,21 +1546,20 @@ shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::OPTIONAL, true, TAG_IDENTIFIER),
-            // value type
-            Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE),
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::OPTIONAL, true, TAG_IDENTIFIER),
+        // value type
+        Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE),
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -1967,46 +1950,45 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            // identifier - module prefix
-            Parsee::groupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - namespaces
-            Parsee::repeatedGroupParsee(
-                {
-                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
-                    Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            // identifier - name
-            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-            // arguments
-            Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, ParseeLevel::REQUIRED, false),
-            Parsee::groupParsee(
-                {
-                    // first argument
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                    Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
-                    // additional arguments
-                    Parsee::repeatedGroupParsee(
-                        {
-                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
-                        }, ParseeLevel::OPTIONAL, true
-                    ),
-                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
-                }, ParseeLevel::OPTIONAL, true
-            ),
-            Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, ParseeLevel::CRITICAL, false),
-        }
-    );
+    static const vector<Parsee> parsees = {
+        // identifier - module prefix
+        Parsee::groupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_MODULE_PREFIX),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - namespaces
+        Parsee::repeatedGroupParsee(
+            {
+                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAMESPACE),
+                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        // identifier - name
+        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+        // arguments
+        Parsee::tokenParsee(TokenKind::LEFT_ROUND_BRACKET, ParseeLevel::REQUIRED, false),
+        Parsee::groupParsee(
+            {
+                // first argument
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_ARGUMENT_EXPRESSION),
+                // additional arguments
+                Parsee::repeatedGroupParsee(
+                    {
+                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_ARGUMENT_EXPRESSION)
+                    }, ParseeLevel::OPTIONAL, true
+                ),
+                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
+            }, ParseeLevel::OPTIONAL, true
+        ),
+        Parsee::tokenParsee(TokenKind::RIGHT_ROUND_BRACKET, ParseeLevel::CRITICAL, false),
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -2039,11 +2021,10 @@ shared_ptr<Expression> Parser::matchExpressionCall() {
 shared_ptr<Expression> Parser::matchExpressionCast() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup parseeResults = parseeResultsGroupForParsees(
-        {
-            Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true)
+    };
+    ParseeResultsGroup parseeResults = parseeResultsGroupForParsees(parsees);
 
     if (parseeResults.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -2061,38 +2042,37 @@ shared_ptr<Expression> Parser::matchExpressionCompositeLiteral() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::oneOfParsee(
+    static const vector<Parsee> parsees = {
+        Parsee::oneOfParsee(
+            {
                 {
-                    {
-                        Parsee::tokenParsee(TokenKind::LEFT_CURLY_BRACKET, ParseeLevel::REQUIRED, false),
-                        // expressions
-                        Parsee::groupParsee(
-                            {
-                                // first expression
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_EXPRESSION),
-                                // additional expressions
-                                Parsee::repeatedGroupParsee(
-                                    {
-                                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
-                                        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_EXPRESSION)
-                                    }, ParseeLevel::OPTIONAL, true
-                                ),
-                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        Parsee::tokenParsee(TokenKind::RIGHT_CURLY_BRACKET, ParseeLevel::CRITICAL, false)
-                    },
-                    {
-                        Parsee::tokenParsee(TokenKind::STRING, ParseeLevel::REQUIRED, true, TAG_STRING)
-                    }
-                }, ParseeLevel::REQUIRED, true
-            )
-        }
-    );
+                    Parsee::tokenParsee(TokenKind::LEFT_CURLY_BRACKET, ParseeLevel::REQUIRED, false),
+                    // expressions
+                    Parsee::groupParsee(
+                        {
+                            // first expression
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                            Parsee::expressionParsee(ParseeLevel::REQUIRED, true, false, TAG_EXPRESSION),
+                            // additional expressions
+                            Parsee::repeatedGroupParsee(
+                                {
+                                    Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false),
+                                    Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_EXPRESSION)
+                                }, ParseeLevel::OPTIONAL, true
+                            ),
+                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::OPTIONAL, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    Parsee::tokenParsee(TokenKind::RIGHT_CURLY_BRACKET, ParseeLevel::CRITICAL, false)
+                },
+                {
+                    Parsee::tokenParsee(TokenKind::STRING, ParseeLevel::REQUIRED, true, TAG_STRING)
+                }
+            }, ParseeLevel::REQUIRED, true
+        )
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -2144,7 +2124,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse(optional<bool> isMultiLine)
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    vector<Parsee> singleLineParsees = {
+    const vector<Parsee> singleLineParsees = {
         Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
         Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_THEN),
         Parsee::oneOfParsee(
@@ -2174,7 +2154,7 @@ shared_ptr<Expression> Parser::matchExpressionIfElse(optional<bool> isMultiLine)
         )
     };
 
-    vector<Parsee> multiLineParsees = {
+    const vector<Parsee> multiLineParsees = {
         Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
         Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_THEN),
         Parsee::oneOfParsee(
@@ -2275,132 +2255,131 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::tokenParsee(TokenKind::MATCH, ParseeLevel::REQUIRED, false),
-            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_SWITCH_EXPR),
-            Parsee::oneOfParsee(
+    static const vector<Parsee> parsees = {
+        Parsee::tokenParsee(TokenKind::MATCH, ParseeLevel::REQUIRED, false),
+        Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_SWITCH_EXPR),
+        Parsee::oneOfParsee(
+            {
+                // single line match
                 {
-                    // single line match
-                    {
-                        Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                        // single line match :: case pattern
-                        Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
-                        // single line match :: case expression
-                        Parsee::oneOfParsee(
+                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                    // single line match :: case pattern
+                    Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
+                    // single line match :: case expression
+                    Parsee::oneOfParsee(
+                        {
+                            // single line match :: single line case expression
                             {
-                                // single line match :: single line case expression
-                                {
-                                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                                    Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
-                                    // else
-                                    Parsee::oneOfParsee(
-                                        {
-                                            // single line match :: single line case expression :: single line else
-                                            {
-                                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
-                                            },
-                                            // single line match :: single line case expression :: multi line else
-                                            {
-                                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
-                                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
-                                            },
-                                            // single line match :: single line case expression :: no else
-                                            {
-                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
-                                            }
-                                        }, ParseeLevel::CRITICAL, true
-                                    )
-                                },
-                                // single line match :: multi-line case expression
-                                {
-                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                                    Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
-                                    // else
-                                    Parsee::oneOfParsee(
-                                        {
-                                            // single line match :: multi-line case expression :: single line else
-                                            {
-                                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
-                                            },
-                                            // single line match :: multi-line case expression :: multi line else
-                                            {
-                                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
-                                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
-                                            },
-                                            // single line match :: multi-line case expression :: no else
-                                            {
-                                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
-                                            }
-                                        }, ParseeLevel::CRITICAL, true
-                                    )
-                                }
-                            }, ParseeLevel::CRITICAL, true
-                        )
-                    },
-                    // multi line match
-                    {
-                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                        // multi line match :: cases
-                        Parsee::repeatedGroupParsee(
-                            {
-                                // multi line match :: case pattern
-                                Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
-                                // multi line match :: case expression
+                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                // else
                                 Parsee::oneOfParsee(
                                     {
-                                        // multi line match :: single line case expression
+                                        // single line match :: single line case expression :: single line else
                                         {
+                                            Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
                                             Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                                            Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
-                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
+                                            Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
                                         },
-                                        // multi line match :: multi line case expression
+                                        // single line match :: single line case expression :: multi line else
                                         {
+                                            Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
                                             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                                            Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
-                                            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false),
+                                            Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
+                                            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                                        },
+                                        // single line match :: single line case expression :: no else
+                                        {
                                             Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
                                         }
                                     }, ParseeLevel::CRITICAL, true
                                 )
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // multi line match :: else
-                        Parsee::oneOfParsee(
+                            },
+                            // single line match :: multi-line case expression
                             {
-                                // multi line match :: single line else
+                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                // else
+                                Parsee::oneOfParsee(
+                                    {
+                                        // single line match :: multi-line case expression :: single line else
+                                        {
+                                            Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                            Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                            Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
+                                        },
+                                        // single line match :: multi-line case expression :: multi line else
+                                        {
+                                            Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                            Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
+                                            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                                        },
+                                        // single line match :: multi-line case expression :: no else
+                                        {
+                                            Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                                        }
+                                    }, ParseeLevel::CRITICAL, true
+                                )
+                            }
+                        }, ParseeLevel::CRITICAL, true
+                    )
+                },
+                // multi line match
+                {
+                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                    // multi line match :: cases
+                    Parsee::repeatedGroupParsee(
+                        {
+                            // multi line match :: case pattern
+                            Parsee::patternParsee(ParseeLevel::REQUIRED, true, TAG_CASE_PATTERN),
+                            // multi line match :: case expression
+                            Parsee::oneOfParsee(
                                 {
-                                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                                    Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
-                                },
-                                // multi line match :: multi line else
-                                {
-                                    Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
-                                    Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
-                                    Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
-                                    Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
-                                },
-                                // multi line match :: no else
-                                {
-                                    Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
-                                }
-                            }, ParseeLevel::CRITICAL, true
-                        )
-                    }
-                }, ParseeLevel::CRITICAL, true
-            )
-        }
-    );
+                                    // multi line match :: single line case expression
+                                    {
+                                        Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                        Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
+                                    },
+                                    // multi line match :: multi line case expression
+                                    {
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                        Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_CASE_EXPR),
+                                        Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::CRITICAL, false),
+                                        Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
+                                    }
+                                }, ParseeLevel::CRITICAL, true
+                            )
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // multi line match :: else
+                    Parsee::oneOfParsee(
+                        {
+                            // multi line match :: single line else
+                            {
+                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                Parsee::expressionBlockSingleLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR)
+                            },
+                            // multi line match :: multi line else
+                            {
+                                Parsee::tokenParsee(TokenKind::ELSE, ParseeLevel::REQUIRED, false),
+                                Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false),
+                                Parsee::expressionBlockMultiLineParsee(ParseeLevel::CRITICAL, true, TAG_ELSE_EXPR),
+                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                            },
+                            // multi line match :: no else
+                            {
+                                Parsee::tokenParsee(TokenKind::SEMICOLON, ParseeLevel::REQUIRED, false)
+                            }
+                        }, ParseeLevel::CRITICAL, true
+                    )
+                }
+            }, ParseeLevel::CRITICAL, true
+        )
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -2455,42 +2434,41 @@ shared_ptr<Expression> Parser::matchExpressionValue() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::oneOfParsee(
+    static const vector<Parsee> parsees = {
+        Parsee::oneOfParsee(
+            {
+                // SMPLE or DATA
                 {
-                    // SMPLE or DATA
-                    {
-                        // identifier - module prefix
-                        Parsee::groupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - namespaces
-                        Parsee::repeatedGroupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - name
-                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
-                        // index expression
-                        Parsee::groupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, true, TAG_DATA),
-                                Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
-                                Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        )
-                    }
-                }, ParseeLevel::REQUIRED, true
-            )
-        }
-    );
+                    // identifier - module prefix
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - namespaces
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - name
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
+                    // index expression
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::LEFT_SQUARE_BRACKET, ParseeLevel::REQUIRED, true, TAG_DATA),
+                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, false, TAG_INDEX_EXPRESSION),
+                            Parsee::tokenParsee(TokenKind::RIGHT_SQUARE_BRACKET, ParseeLevel::CRITICAL, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    )
+                }
+            }, ParseeLevel::REQUIRED, true
+        )
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -2564,200 +2542,199 @@ shared_ptr<ValueType> Parser::matchValueType() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::oneOfParsee(
+    static const vector<Parsee> parsees = {
+        Parsee::oneOfParsee(
+            {
+                // PTR
                 {
-                    // PTR
-                    {
-                        Parsee::oneOfParsee(
+                    Parsee::oneOfParsee(
+                        {
                             {
-                                {
-                                    Parsee::tokenParsee(TokenKind::PTR, ParseeLevel::REQUIRED, true, TAG_PTR),
-                                },
-                                {
-                                    Parsee::tokenParsee(TokenKind::PTR_VOLATILE, ParseeLevel::REQUIRED, true, TAG_PTR_VOLATILE),
-                                }
-                            }, ParseeLevel::REQUIRED, true
-                        ),
-                        Parsee::groupParsee(
+                                Parsee::tokenParsee(TokenKind::PTR, ParseeLevel::REQUIRED, true, TAG_PTR),
+                            },
                             {
-                                Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
-                                Parsee::oneOfParsee(
+                                Parsee::tokenParsee(TokenKind::PTR_VOLATILE, ParseeLevel::REQUIRED, true, TAG_PTR_VOLATILE),
+                            }
+                        }, ParseeLevel::REQUIRED, true
+                    ),
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                            Parsee::oneOfParsee(
+                                {
+                                    // function pointer
                                     {
-                                        // function pointer
-                                        {
-                                            Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, true, TAG_PTR_FUN),
-                                            // arguments
-                                            Parsee::groupParsee(
-                                                {
-                                                    // colon
-                                                    Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
-                                                    // first argument
-                                                    Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_ARGUMENT_TYPE),
-                                                    // addditional arguments
-                                                    Parsee::repeatedGroupParsee(
-                                                        {
-                                                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                                            Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
-                                                        }, ParseeLevel::OPTIONAL, true
-                                                    )
-                                                }, ParseeLevel::OPTIONAL, true
-                                            ),
-                                            // return type
-                                            Parsee::groupParsee(
-                                                {
-                                                    Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
-                                                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
-                                                }, ParseeLevel::OPTIONAL, true
-                                            )
-                                        },
-                                        // other pointer
-                                        {
-                                            Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_SUBTYPE)
-                                        }
-                                    }, ParseeLevel::CRITICAL, true
-                                ),
-                                Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                    },
-                    // DATA
-                    {
-                        Parsee::tokenParsee(TokenKind::DATA, ParseeLevel::REQUIRED, true, TAG_DATA),
-                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
-                        Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_SUBTYPE),
-                        Parsee::groupParsee(
+                                        Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, true, TAG_PTR_FUN),
+                                        // arguments
+                                        Parsee::groupParsee(
+                                            {
+                                                // colon
+                                                Parsee::tokenParsee(TokenKind::COLON, ParseeLevel::REQUIRED, false),
+                                                // first argument
+                                                Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_ARGUMENT_TYPE),
+                                                // addditional arguments
+                                                Parsee::repeatedGroupParsee(
+                                                    {
+                                                        Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                                                        Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                                                    }, ParseeLevel::OPTIONAL, true
+                                                )
+                                            }, ParseeLevel::OPTIONAL, true
+                                        ),
+                                        // return type
+                                        Parsee::groupParsee(
+                                            {
+                                                Parsee::tokenParsee(TokenKind::RIGHT_ARROW, ParseeLevel::REQUIRED, false),
+                                                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_RETURN_TYPE)
+                                            }, ParseeLevel::OPTIONAL, true
+                                        )
+                                    },
+                                    // other pointer
+                                    {
+                                        Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_SUBTYPE)
+                                    }
+                                }, ParseeLevel::CRITICAL, true
+                            ),
+                            Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                },
+                // DATA
+                {
+                    Parsee::tokenParsee(TokenKind::DATA, ParseeLevel::REQUIRED, true, TAG_DATA),
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                    Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_SUBTYPE),
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                            Parsee::expressionParsee(ParseeLevel::CRITICAL, true, true, TAG_SIZE_EXPRESSION)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                },
+                // BLOB
+                {
+                    Parsee::oneOfParsee(
+                        {
                             {
-                                Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                Parsee::expressionParsee(ParseeLevel::CRITICAL, true, true, TAG_SIZE_EXPRESSION)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
-                    },
-                    // BLOB
-                    {
-                        Parsee::oneOfParsee(
+                                Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, true, TAG_BLOB),
+                            },
                             {
-                                {
-                                    Parsee::tokenParsee(TokenKind::BLOB, ParseeLevel::REQUIRED, true, TAG_BLOB),
-                                },
-                                {
-                                    Parsee::tokenParsee(TokenKind::BLOB_PACK, ParseeLevel::REQUIRED, true, TAG_BLOB_PACK)
-                                }
-                            }, ParseeLevel::REQUIRED, true
-                        ),
-                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
-                        // identifier - module prefix
-                        Parsee::groupParsee(
+                                Parsee::tokenParsee(TokenKind::BLOB_PACK, ParseeLevel::REQUIRED, true, TAG_BLOB_PACK)
+                            }
+                        }, ParseeLevel::REQUIRED, true
+                    ),
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                    // identifier - module prefix
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - namespaces
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - name
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
+                    // argument types
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                            Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                },
+                // PROTO
+                {
+                    Parsee::tokenParsee(TokenKind::PROTO, ParseeLevel::REQUIRED, true, TAG_PROTO),
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                    // identifier - module prefix
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - namespaces
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - name
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
+                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                },
+                // ENUM
+                {
+                    Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, true, TAG_ENUM),
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
+                    // identifier - module prefix
+                    Parsee::groupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - namespaces
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    // identifier - name
+                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
+                    // argument types
+                    Parsee::repeatedGroupParsee(
+                        {
+                            Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
+                            Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
+                        }, ParseeLevel::OPTIONAL, true
+                    ),
+                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                    Parsee::repeatedGroupParsee(
+                        {
+                            // identifier - value name
+                            Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false),
+                            Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ENUM_FIELD_NAME)
+                        },ParseeLevel::OPTIONAL, true
+                    )
+                },
+                // BOXED
+                {
+                    Parsee::tokenParsee(TokenKind::BOXED, ParseeLevel::REQUIRED, true, TAG_BOXED),
+                    Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
+                    Parsee::oneOfParsee(
+                        {
                             {
-                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - namespaces
-                        Parsee::repeatedGroupParsee(
+                                Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_SUBTYPE),
+                            },
                             {
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - name
-                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
-                        // argument types
-                        Parsee::repeatedGroupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
-                    },
-                    // PROTO
-                    {
-                        Parsee::tokenParsee(TokenKind::PROTO, ParseeLevel::REQUIRED, true, TAG_PROTO),
-                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
-                        // identifier - module prefix
-                        Parsee::groupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - namespaces
-                        Parsee::repeatedGroupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - name
-                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
-                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
-                    },
-                    // ENUM
-                    {
-                        Parsee::tokenParsee(TokenKind::ENUM, ParseeLevel::REQUIRED, true, TAG_ENUM),
-                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::REQUIRED, false),
-                        // identifier - module prefix
-                        Parsee::groupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::META, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME_MODULE_PREFIX),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::CRITICAL, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - namespaces
-                        Parsee::repeatedGroupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME_NAMESPACE),
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        // identifier - name
-                        Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_NAME),
-                        // argument types
-                        Parsee::repeatedGroupParsee(
-                            {
-                                Parsee::tokenParsee(TokenKind::COMMA, ParseeLevel::REQUIRED, false),
-                                Parsee::valueTypeParsee(ParseeLevel::CRITICAL, true, TAG_ARGUMENT_TYPE)
-                            }, ParseeLevel::OPTIONAL, true
-                        ),
-                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
-                        Parsee::repeatedGroupParsee(
-                            {
-                                // identifier - value name
-                                Parsee::tokenParsee(TokenKind::DOUBLE_COLON, ParseeLevel::REQUIRED, false),
-                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::CRITICAL, true, TAG_ENUM_FIELD_NAME)
-                            },ParseeLevel::OPTIONAL, true
-                        )
-                    },
-                    // BOXED
-                    {
-                        Parsee::tokenParsee(TokenKind::BOXED, ParseeLevel::REQUIRED, true, TAG_BOXED),
-                        Parsee::tokenParsee(TokenKind::LEFT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false),
-                        Parsee::oneOfParsee(
-                            {
-                                {
-                                    Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_SUBTYPE),
-                                },
-                                {
-                                    Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_BOXED_NAMED_VALUE_TYPE_KEY)
-                                }
-                            }, ParseeLevel::CRITICAL, true
-                        ),
-                        Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
-                    },
-                    // SIMPLE
-                    {
-                        Parsee::tokenParsee(TokenKind::TYPE, ParseeLevel::REQUIRED, true, TAG_TYPE)
-                    }
-                }, ParseeLevel::REQUIRED, true
-            )
-        }
-    );
+                                Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_BOXED_NAMED_VALUE_TYPE_KEY)
+                            }
+                        }, ParseeLevel::CRITICAL, true
+                    ),
+                    Parsee::tokenParsee(TokenKind::RIGHT_ANGLE_BRACKET, ParseeLevel::CRITICAL, false)
+                },
+                // SIMPLE
+                {
+                    Parsee::tokenParsee(TokenKind::TYPE, ParseeLevel::REQUIRED, true, TAG_TYPE)
+                }
+            }, ParseeLevel::REQUIRED, true
+        )
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
@@ -2897,11 +2874,10 @@ std::shared_ptr<Pattern> Parser::matchPattern() {
 
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
-    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(
-        {
-            Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE)
-        }
-    );
+    static const vector<Parsee> parsees = {
+        Parsee::valueTypeParsee(ParseeLevel::REQUIRED, true, TAG_VALUE_TYPE)
+    };
+    ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
