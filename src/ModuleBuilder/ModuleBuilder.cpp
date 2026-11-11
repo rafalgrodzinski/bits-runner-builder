@@ -1188,7 +1188,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             leftBlock = builder->GetInsertBlock();
             if (leftValue == nullptr)
                 return nullptr;
-            builder->CreateCondBr(leftValue, mergeBlock, rightBlock);
+
+            if (isAnd) {
+                builder->CreateCondBr(leftValue, rightBlock, mergeBlock);
+            } else {
+                builder->CreateCondBr(leftValue, mergeBlock, rightBlock);
+            }
 
             // Right
             fun->insert(fun->end(), rightBlock);
