@@ -771,6 +771,17 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionBinary> e
     if (expressionBinary->getLeft()->getValueType() == nullptr || expressionBinary->getRight()->getValueType() == nullptr)
         return nullptr;
 
+    // We don't want binary operations on pointers (addresses are fine)
+    if (expressionBinary->getLeft()->getValueType()->isPtr() || expressionBinary->getRight()->getValueType()->isPtr()) {
+        markErrorInvalidOperationBinary(
+            expressionBinary->getLocation(),
+            expressionBinary->getOperation(),
+            expressionBinary->getLeft()->getValueType(),
+            expressionBinary->getRight()->getValueType()
+        );
+        return nullptr;
+    }
+
     // We only want to adjust arithmetic or comparison operations
     // Logical must already evaluate to bool
     // bitwise we want to leave as they are and leave it to the module builder
