@@ -7,7 +7,5 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [VERSION](https://github.com/rafalgrodzinski/bits-runner-builder/pull/231):
-- Homebrew formula gets automatically updated on merge
-- Notes version is set automatically
-- Much faster parsing
+Changelist for [VERSION](https://github.com/rafalgrodzinski/bits-runner-builder/pull/234):
+- Fixed pointer comparison
