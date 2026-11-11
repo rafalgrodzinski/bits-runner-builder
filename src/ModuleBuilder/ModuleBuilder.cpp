@@ -1170,6 +1170,52 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
+    // logical AND & OR need spearate path for short circuiting
+    if (expressionBinary->getOperation() == ExpressionBinaryOperation::AND || expressionBinary->getOperation() == ExpressionBinaryOperation::OR) {
+            llvm::Function *fun = builder->GetInsertBlock()->getParent();
+
+            llvm::BasicBlock *leftBlock = builder->GetInsertBlock();// llvm::BasicBlock::Create(*context, "andLeftBlock", fun);
+            llvm::BasicBlock *rightBlock = llvm::BasicBlock::Create(*context, "andRightBlock");
+            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "andMergeBlock");
+
+            // Left
+            shared_ptr<WrappedValue> leftWrappedValue = wrappedValueForExpression(expressionBinary->getLeft());
+            if (leftWrappedValue == nullptr)
+                return nullptr;
+            llvm::Value *leftValue = leftWrappedValue->getValue();
+            if (leftValue == nullptr)
+                return nullptr;
+            if (expressionBinary->getOperation() == ExpressionBinaryOperation::ADD) {
+                builder->CreateCondBr(leftValue, mergeBlock, rightBlock);
+            } else {
+                builder->CreateCondBr(leftValue, rightBlock, mergeBlock);
+            }
+
+            // Right
+            fun->insert(fun->end(), rightBlock);
+            builder->SetInsertPoint(rightBlock);
+            shared_ptr<WrappedValue> rightWrappedValue = wrappedValueForExpression(expressionBinary->getRight());
+            if (rightWrappedValue == nullptr)
+                return nullptr;
+            llvm::Value *rightValue = rightWrappedValue->getValue();
+            if (rightValue == nullptr)
+                return nullptr;
+            builder->CreateBr(mergeBlock);
+            rightBlock = builder->GetInsertBlock();
+
+            // Merge
+            fun->insert(fun->end(), mergeBlock);
+            builder->SetInsertPoint(mergeBlock);
+
+            // Phi
+            llvm::PHINode *phi = builder->CreatePHI(typeBool, 2, "andResult");
+            phi->addIncoming(builder->getFalse(), leftBlock);
+            phi->addIncoming(rightValue, rightBlock);
+
+            return WrappedValue::wrappedValue(phi, expressionBinary->getValueType());
+    }
+
+    // For all the other operations
     shared_ptr<WrappedValue> leftWrappedValue = wrappedValueForExpression(expressionBinary->getLeft());
     shared_ptr<WrappedValue> rightWrappedValue = wrappedValueForExpression(expressionBinary->getRight());
     if (leftWrappedValue == nullptr || rightWrappedValue == nullptr)
@@ -1242,38 +1288,8 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     llvm::Value *resultValue = nullptr;
     switch (expressionBinary->getOperation()) {
         // logical
-        case ExpressionBinaryOperation::OR: {
-            resultValue = builder->CreateLogicalOr(leftValue, rightValue);
-            break;
-        }
         case ExpressionBinaryOperation::XOR: {
             resultValue = builder->CreateXor(leftValue, rightValue);
-            break;
-        }
-        case ExpressionBinaryOperation::AND: {
-            llvm::Function *fun = builder->GetInsertBlock()->getParent();
-
-            llvm::BasicBlock *leftBlock = builder->GetInsertBlock();// llvm::BasicBlock::Create(*context, "andLeftBlock", fun);
-            llvm::BasicBlock *rightBlock = llvm::BasicBlock::Create(*context, "andRightBlock");
-            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "andMergeBlock");
-
-            // Left
-            builder->CreateCondBr(leftValue, rightBlock, mergeBlock);
-
-            // Right
-            fun->insert(fun->end(), rightBlock);
-            builder->SetInsertPoint(rightBlock);
-            builder->CreateBr(mergeBlock);
-            rightBlock = builder->GetInsertBlock();
-
-            // Merge
-            fun->insert(fun->end(), mergeBlock);
-            builder->SetInsertPoint(mergeBlock);
-
-            llvm::PHINode *phi = builder->CreatePHI(typeBool, 2, "andResult");
-            phi->addIncoming(builder->getFalse(), leftBlock);
-            phi->addIncoming(rightValue, rightBlock);
-            resultValue = phi;
             break;
         }
 
