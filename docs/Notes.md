@@ -7,6 +7,6 @@ Available for:
 - Linux (x86_64)
 - Windows (x86_64)
 
-Changelist for [VERSION](https://github.com/rafalgrodzinski/bits-runner-builder/pull/234):
+Changelist for [VERSION](https://github.com/rafalgrodzinski/bits-runner-builder/pull/233):
 - Fixed pointer comparison
 - Short circuiting of `and` & `or`
