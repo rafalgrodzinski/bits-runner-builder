@@ -1170,13 +1170,14 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 }
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
-    // logical AND & OR need spearate path for short circuiting
+    // Local logical AND & OR need spearate path for short circuiting
+    bool isLocal = builder->GetInsertBlock() != nullptr;
     bool isAnd = expressionBinary->getOperation() == ExpressionBinaryOperation::AND;
     bool isOr = expressionBinary->getOperation() == ExpressionBinaryOperation::OR;
-    if (isAnd || isOr) {
+    if (isLocal && (isAnd || isOr)) {
             llvm::Function *fun = builder->GetInsertBlock()->getParent();
 
-            llvm::BasicBlock *leftBlock;// = builder->GetInsertBlock();// llvm::BasicBlock::Create(*context, "andLeftBlock", fun);
+            llvm::BasicBlock *leftBlock;
             llvm::BasicBlock *rightBlock = llvm::BasicBlock::Create(*context, "andRightBlock");
             llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "andMergeBlock");
 
@@ -1296,8 +1297,16 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     llvm::Value *resultValue = nullptr;
     switch (expressionBinary->getOperation()) {
         // logical
+        case ExpressionBinaryOperation::OR: {
+            resultValue = builder->CreateLogicalOr(leftValue, rightValue);
+            break;
+        }
         case ExpressionBinaryOperation::XOR: {
             resultValue = builder->CreateXor(leftValue, rightValue);
+            break;
+        }
+        case ExpressionBinaryOperation::AND: {
+            resultValue = builder->CreateLogicalAnd(leftValue, rightValue);
             break;
         }
 
