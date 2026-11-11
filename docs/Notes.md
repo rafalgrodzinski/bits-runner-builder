@@ -9,3 +9,4 @@ Available for:
 
 Changelist for [VERSION](https://github.com/rafalgrodzinski/bits-runner-builder/pull/234):
 - Fixed pointer comparison
+- Short circuiting of `and` & `or`
