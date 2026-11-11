@@ -1251,7 +1251,29 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             break;
         }
         case ExpressionBinaryOperation::AND: {
-            resultValue = builder->CreateLogicalAnd(leftValue, rightValue);
+            llvm::Function *fun = builder->GetInsertBlock()->getParent();
+
+            llvm::BasicBlock *leftBlock = builder->GetInsertBlock();// llvm::BasicBlock::Create(*context, "andLeftBlock", fun);
+            llvm::BasicBlock *rightBlock = llvm::BasicBlock::Create(*context, "andRightBlock");
+            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "andMergeBlock");
+
+            // Left
+            builder->CreateCondBr(leftValue, rightBlock, mergeBlock);
+
+            // Right
+            fun->insert(fun->end(), rightBlock);
+            builder->SetInsertPoint(rightBlock);
+            builder->CreateBr(mergeBlock);
+            rightBlock = builder->GetInsertBlock();
+
+            // Merge
+            fun->insert(fun->end(), mergeBlock);
+            builder->SetInsertPoint(mergeBlock);
+
+            llvm::PHINode *phi = builder->CreatePHI(typeBool, 2, "andResult");
+            phi->addIncoming(builder->getFalse(), leftBlock);
+            phi->addIncoming(rightValue, rightBlock);
+            resultValue = phi;
             break;
         }
 
@@ -1709,12 +1731,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
     scope->pushLevel();
     builder->SetInsertPoint(thenBlock);
     shared_ptr<WrappedValue> wrappedValue = wrappedValueForExpression(expressionIfElse->getThenExpression());
+    scope->popLevel();
     if (wrappedValue == nullptr)
         return nullptr;
     llvm::Value *thenValue = wrappedValue->getValue();
     builder->CreateBr(mergeBlock);
     thenBlock = builder->GetInsertBlock();
-    scope->popLevel();
 
     // Else
     llvm::Value *elseValue = nullptr;
@@ -1723,12 +1745,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         fun->insert(fun->end(), elseBlock);
         builder->SetInsertPoint(elseBlock);
         shared_ptr<WrappedValue> wrappedElseValue = wrappedValueForExpression(expressionIfElse->getElseExpression());
+        scope->popLevel();
         if (wrappedElseValue == nullptr)
             return nullptr;
         elseValue = wrappedElseValue->getValue();
         builder->CreateBr(mergeBlock);
         elseBlock = builder->GetInsertBlock();
-        scope->popLevel();
     }
 
     // Merge
@@ -1878,9 +1900,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
         fun->insert(fun->end(), caseNextConditionBlock);
         builder->SetInsertPoint(caseNextConditionBlock);
         llvm::Value *caseConditionValue = valueForMatch(switchWrappedValue, casePair.first);
+        scope->popLevel();
         if (caseConditionValue == nullptr)
             return nullptr;
-        scope->popLevel();
 
         // case branch
         caseNextConditionBlock = llvm::BasicBlock::Create(*context, "caseNextConditionBlock");
