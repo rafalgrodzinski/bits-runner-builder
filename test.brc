@@ -1,8 +1,22 @@
-//@module Video
-//@import Video
-@import First
-@import Second
+value u8
+
+evalA fun -> bool
+  value <- 1
+  ret false
+;
+
+evalB fun -> bool
+  value <- 2
+  ret true
+;
+
+evalC fun -> bool
+  value <- 3
+  ret true
+;
 
 @export main fun -> u8
-  ret 0
+  if evalA() and evalB() and evalC():
+
+  ret value
 ;
