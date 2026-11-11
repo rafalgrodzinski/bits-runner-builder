@@ -12,11 +12,11 @@ evalB fun -> bool
 
 evalC fun -> bool
   value <- 3
-  ret true
+  ret false
 ;
 
 @export main fun -> u8
-  if evalA() and evalB() and evalC():
+  if evalA() or evalB() or evalC():
 
   ret value
 ;

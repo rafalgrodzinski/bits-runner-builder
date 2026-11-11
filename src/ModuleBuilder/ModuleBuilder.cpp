@@ -1171,10 +1171,12 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
 shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<ExpressionBinary> expressionBinary) {
     // logical AND & OR need spearate path for short circuiting
-    if (expressionBinary->getOperation() == ExpressionBinaryOperation::AND || expressionBinary->getOperation() == ExpressionBinaryOperation::OR) {
+    bool isAnd = expressionBinary->getOperation() == ExpressionBinaryOperation::AND;
+    bool isOr = expressionBinary->getOperation() == ExpressionBinaryOperation::OR;
+    if (isAnd || isOr) {
             llvm::Function *fun = builder->GetInsertBlock()->getParent();
 
-            llvm::BasicBlock *leftBlock = builder->GetInsertBlock();// llvm::BasicBlock::Create(*context, "andLeftBlock", fun);
+            llvm::BasicBlock *leftBlock;// = builder->GetInsertBlock();// llvm::BasicBlock::Create(*context, "andLeftBlock", fun);
             llvm::BasicBlock *rightBlock = llvm::BasicBlock::Create(*context, "andRightBlock");
             llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(*context, "andMergeBlock");
 
@@ -1183,13 +1185,10 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
             if (leftWrappedValue == nullptr)
                 return nullptr;
             llvm::Value *leftValue = leftWrappedValue->getValue();
+            leftBlock = builder->GetInsertBlock();
             if (leftValue == nullptr)
                 return nullptr;
-            if (expressionBinary->getOperation() == ExpressionBinaryOperation::ADD) {
-                builder->CreateCondBr(leftValue, mergeBlock, rightBlock);
-            } else {
-                builder->CreateCondBr(leftValue, rightBlock, mergeBlock);
-            }
+            builder->CreateCondBr(leftValue, mergeBlock, rightBlock);
 
             // Right
             fun->insert(fun->end(), rightBlock);
@@ -1209,7 +1208,11 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForExpression(shared_ptr<Exp
 
             // Phi
             llvm::PHINode *phi = builder->CreatePHI(typeBool, 2, "andResult");
-            phi->addIncoming(builder->getFalse(), leftBlock);
+            if (isAnd) {
+                phi->addIncoming(builder->getFalse(), leftBlock);
+            } else {
+                phi->addIncoming(builder->getTrue(), leftBlock);
+            }
             phi->addIncoming(rightValue, rightBlock);
 
             return WrappedValue::wrappedValue(phi, expressionBinary->getValueType());
