@@ -109,3 +109,10 @@
     putchar('0')
     putchar('m')
 ;
+
+// File
+@extern fopen fun: path ptr<u8>, mode ptr<u8> -> a
+
+@export fileOpen fun: path ptr<u8> -> a
+    ret fopen(path, "a".ptr)
+;
