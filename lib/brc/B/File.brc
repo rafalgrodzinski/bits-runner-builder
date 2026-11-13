@@ -4,4 +4,10 @@
 @export File blob
 ;
 
-@export File::
+@export File::new fun: path blob<String> -> enum<Result, boxed<ptr<File>>
+    resource a <- @BSys::fileOpen(path)
+    if resource = 0: ret {}.enum<Result, boxed<ptr<File>>::Failure
+
+    pFile ptr<blob<File>> <- @Bsys::memAlloc(blob<File>.size)
+    ret {pFile}.enum<Result, boxed<ptr<blob<File>>>>::Success
+;
