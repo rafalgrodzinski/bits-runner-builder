@@ -119,8 +119,13 @@
 @extern fwrite fun: aSource a, size u64, count u64, fp a -> u64
 
 @export fileOpen fun: path ptr<u8> -> a
-    mode data<u8> <- "a+"
-    ret fopen(path, mode.adr.ptr<u8>)
+    mode data<u8> <- "r+"
+    fp a <- fopen(path, mode.adr.ptr<u8>)
+    if fp != 0: ret fp
+
+    mode <- "w+"
+    fp <- fopen(path, mode.adr.ptr<u8>)
+    ret fp
 ;
 
 @export fileClose fun: fp a
