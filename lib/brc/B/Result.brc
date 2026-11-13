@@ -1,0 +1,6 @@
+@module B
+
+@export Result<T> enum
+    Success boxed<T>
+    Failure
+;

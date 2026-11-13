@@ -23,6 +23,8 @@ vector<shared_ptr<ValueType>> ValueTypeEnum::getNamedValueTypes() {
 
 void ValueTypeEnum::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
+    for (shared_ptr<ValueType> namedValueType : namedValueTypes)
+        namedValueType->setModuleName(moduleName);
 }
 
 bool ValueTypeEnum::isEqual(shared_ptr<ValueType> other) const {

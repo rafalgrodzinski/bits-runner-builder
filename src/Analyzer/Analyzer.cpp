@@ -675,7 +675,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 
         if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType())) {
             markErrorInvalidType(
-                statementVariable->getExpression()->getValueType()->getLocation(),
+                statementVariable->getLocation(),
                 statementVariable->getExpression()->getValueType(),
                 statementVariable->getValueType()
             );

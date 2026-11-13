@@ -29,6 +29,8 @@ shared_ptr<ValueType> ValueTypeEnumField::getPayloadValueType() const {
 
 void ValueTypeEnumField::setModuleName(const string &moduleName) {
     symbolName->setModuleName(moduleName);
+    for (shared_ptr<ValueType> namedValueType : namedValueTypes)
+        namedValueType->setModuleName(moduleName);
 }
 
 bool ValueTypeEnumField::isEqual(shared_ptr<ValueType> other) const {

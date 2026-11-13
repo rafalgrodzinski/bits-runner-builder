@@ -2,12 +2,14 @@
 @import BSys
 
 @export File blob
+    resourceId a
 ;
 
-@export File::new fun: path blob<String> -> enum<Result, boxed<ptr<File>>
-    resource a <- @BSys::fileOpen(path)
-    if resource = 0: ret {}.enum<Result, boxed<ptr<File>>::Failure
+@export File::new fun: path blob<String> -> enum<Result, ptr<blob<File>>>
+    resourceId a <- @BSys::fileOpen(path.string.adr.ptr<u8>).a
+    if resourceId = 0: ret {}.enum<Result, ptr<blob<File>>>::Failure
 
-    pFile ptr<blob<File>> <- @Bsys::memAlloc(blob<File>.size)
-    ret {pFile}.enum<Result, boxed<ptr<blob<File>>>>::Success
+    pFile ptr<blob<File>> <- @BSys::memAlloc(blob<File>.size).ptr<blob<File>>
+    pFile.val.resourceId <- resourceId
+    ret {pFile}.enum<Result, ptr<blob<File>>>::Success
 ;
