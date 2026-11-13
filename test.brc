@@ -1,5 +1,25 @@
 @import B
 
-@export main fun -> u8
-  ret 0
+@export main fun
+  pFile ptr<blob<@B::File>>
+
+  match @B::File::new(@B::String("test.brc"))
+    enum<@B::Result, ptr<blob<@B::File>>>::Success
+      pFile <- $0.val.ptr<blob<@B::File>>
+    ;
+  else
+    @B::String("Failed").println()
+    ret
+  ;
+
+  @B::StringForU32(pFile.val.getSize().u32).println()
+
+  aBuffer a <- @BSys::memAlloc(pFile.val.getSize())
+  @B::StringHexForU32(aBuffer.u32).println()
+  ct u64 <- pFile.val.read(0, pFile.val.getSize(), aBuffer)
+  @B::StringForU32(ct.u32).println()
+
+  rep i u32, i < pFile.val.getSize(), i <- i + 1
+    @B::StringForChar((aBuffer + i).ptr<u8>.val).printColor(@B::String::FOREGROUND_CYAN)
+  ;
 ;

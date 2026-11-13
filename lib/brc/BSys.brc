@@ -112,8 +112,21 @@
 
 // File
 @extern fopen fun: path ptr<u8>, mode ptr<u8> -> a
+@extern fseek fun: fp a, offset u64, origin u32 -> u32
+@extern ftell fun: fp a -> u64
+@extern fread fun: aTarget a, size u64, count u64, fp a -> u64
 
 @export fileOpen fun: path ptr<u8> -> a
     mode data<u8> <- "a"
     ret fopen(path, mode.adr.ptr<u8>)
+;
+
+@export fileGetSize fun: fp a -> u64
+    fseek(fp, 0, 2)
+    ret ftell(fp)
+;
+
+@export fileRead fun: fp a, offset u64, size u64, aTarget a -> u64
+    fseek(fp, offset, 0)
+    ret fread(aTarget, size, 1, fp)
 ;

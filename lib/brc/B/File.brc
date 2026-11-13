@@ -3,6 +3,14 @@
 
 @export File blob
     resourceId a
+
+    getSize fun -> u64
+        ret @BSys::fileGetSize(it.resourceId)
+    ;
+
+    read fun: offset u64, size u64, aTarget a -> u64
+        ret @BSys::fileRead(it.resourceId, offset, size, aTarget)
+    ;
 ;
 
 @export File::new fun: path blob<String> -> enum<Result, ptr<blob<File>>>
