@@ -1,0 +1,7 @@
+@module B
+@import BSys
+
+@export File blob
+;
+
+@export File::
