@@ -11,6 +11,15 @@
     read fun: offset u64, size u64, aTarget a -> u64
         ret @BSys::fileRead(it.resourceId, offset, size, aTarget)
     ;
+
+    write fun: aSource a, offset u64, size u64 -> u64
+        ret @BSys::fileWrite(it.resourceId, aSource, offset, size)
+    ;
+
+    release fun
+        @BSys::fileClose(it.resourceId)
+        it.resourceId <- 0
+    ;
 ;
 
 @export File::new fun: path blob<String> -> enum<Result, ptr<blob<File>>>

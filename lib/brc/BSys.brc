@@ -97,7 +97,7 @@
     else if isBgMagenta: putchar('5')
     else if isBgBrown: putchar('3')
     else if isBgWhite: putchar('7')
-    else: putchar('0')
+    else: putchar('9')
 
     // 'm' finishes the attributes
     putchar('m')
@@ -112,13 +112,19 @@
 
 // File
 @extern fopen fun: path ptr<u8>, mode ptr<u8> -> a
-@extern fseek fun: fp a, offset u64, origin u32 -> u32
+@extern fclose fun: fp a -> s32
+@extern fseek fun: fp a, offset u64, origin u32 -> s64
 @extern ftell fun: fp a -> u64
 @extern fread fun: aTarget a, size u64, count u64, fp a -> u64
+@extern fwrite fun: aSource a, size u64, count u64, fp a -> u64
 
 @export fileOpen fun: path ptr<u8> -> a
-    mode data<u8> <- "a"
+    mode data<u8> <- "a+"
     ret fopen(path, mode.adr.ptr<u8>)
+;
+
+@export fileClose fun: fp a
+    fclose(fp)
 ;
 
 @export fileGetSize fun: fp a -> u64
@@ -128,5 +134,10 @@
 
 @export fileRead fun: fp a, offset u64, size u64, aTarget a -> u64
     fseek(fp, offset, 0)
-    ret fread(aTarget, size, 1, fp)
+    ret fread(aTarget, 1, size, fp)
+;
+
+@export fileWrite fun: fp a, aSource a, offset u64, size u64 -> u64
+    fseek(fp, offset, 0)
+    ret fwrite(aSource, 1, size, fp)
 ;

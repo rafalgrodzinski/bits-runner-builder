@@ -12,14 +12,17 @@
     ret
   ;
 
-  @B::StringForU32(pFile.val.getSize().u32).println()
-
   aBuffer a <- @BSys::memAlloc(pFile.val.getSize())
-  @B::StringHexForU32(aBuffer.u32).println()
-  ct u64 <- pFile.val.read(0, pFile.val.getSize(), aBuffer)
-  @B::StringForU32(ct.u32).println()
+  pFile.val.read(0, pFile.val.getSize(), aBuffer)
 
   rep i u32, i < pFile.val.getSize(), i <- i + 1
-    @B::StringForChar((aBuffer + i).ptr<u8>.val).printColor(@B::String::FOREGROUND_CYAN)
+    @B::StringForChar((aBuffer + i).ptr<u8>.val).printColor(@B::String::FOREGROUND_MAGENTA)
   ;
+
+  pFile.val.release()
+
+  match @B::File::new(@B::String("abc.txt")): enum<@B::Result, ptr<blob<@B::File>>>::Success: pFile <- $0.val.ptr<blob<@B::File>> else: ret
+  text data<u8> <- "Hello, world\n"
+  pFile.val.write(text.adr, 0, 13)
+  pFile.val.release()
 ;
