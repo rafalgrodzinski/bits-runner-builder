@@ -113,8 +113,8 @@
 // File
 @extern fopen fun: path ptr<u8>, mode ptr<u8> -> a
 @extern fclose fun: fp a -> s32
-@extern fseek fun: fp a, offset u64, origin u32 -> s64
-@extern ftell fun: fp a -> u64
+@extern fseek fun: fp a, offset u64, origin u32 -> s32
+@extern ftell fun: fp a -> s64
 @extern fread fun: aTarget a, size u64, count u64, fp a -> u64
 @extern fwrite fun: aSource a, size u64, count u64, fp a -> u64
 
@@ -134,7 +134,7 @@
 
 @export fileGetSize fun: fp a -> u64
     fseek(fp, 0, 2)
-    ret ftell(fp)
+    ret ftell(fp).u64
 ;
 
 @export fileRead fun: fp a, offset u64, size u64, aTarget a -> u64
