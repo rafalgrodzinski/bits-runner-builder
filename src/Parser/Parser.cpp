@@ -2290,7 +2290,6 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
                                         },
                                         // single line match :: single line case expression :: no else
                                         {
-                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
                                         }
                                     }, ParseeLevel::CRITICAL, true
                                 )
