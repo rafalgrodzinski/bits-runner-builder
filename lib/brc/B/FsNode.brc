@@ -1,0 +1,12 @@
+@module B
+
+@export FsNode blob
+    openFile fun -> enum<Result, ptr<blob<File>>>
+    ;
+
+    createFile fun -> enum<Result, ptr<blob<File>>>
+    ;
+;
+
+@export FsNode fun: path blob<String> -> ptr<blob<FsNode>>
+;
