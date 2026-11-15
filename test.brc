@@ -1,7 +1,7 @@
 @import B
 
 @export main fun
-  pFile ptr<blob<@B::File>>
+  /*pFile ptr<blob<@B::File>>
 
   match @B::File::new(@B::String("test.brc"))
     enum<@B::Result, ptr<blob<@B::File>>>::Success
@@ -24,5 +24,5 @@
   match @B::File::new(@B::String("abc.txt")): enum<@B::Result, ptr<blob<@B::File>>>::Success: pFile <- $0.val.ptr<blob<@B::File>> else: ret
   text data<u8> <- "Hello, world\n"
   pFile.val.write(text.adr, 0, 13)
-  pFile.val.release()
+  pFile.val.release()*/
 ;
