@@ -1,12 +1,33 @@
 @module B
+@import BSys
+
+@export FsNode::Mode enum
+    Open
+    Create
+;
 
 @export FsNode blob
-    openFile fun -> enum<Result, ptr<blob<File>>>
+    path blob<String>
+
+    getFile fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<File>>>
+        resId u64 <- match mode 
+            enum<FsNode::Mode>::Open: @BSys::fileOpen(it.path.adr)
+            enum<FsNode::Mode>::Create: @BSys::fileCreate(it.path.adr)
+        else: 0
+
+        if resId = 0: ret {}.enum<Result, ptr<blob<File>>>::Failure
+        ret {File(resId)}.enum<Result, ptr<blob<File>>>::Success
     ;
 
-    createFile fun -> enum<Result, ptr<blob<File>>>
+    /*getDir fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<Dir>>>
     ;
+
+    delete fun -> enum<Result>
+    ;*/
 ;
 
 @export FsNode fun: path blob<String> -> ptr<blob<FsNode>>
+    p_fsNode ptr<blob<FsNode>> <- @BSys::memAlloc(blob<FsNode>.size).ptr<blob<FsNode>>
+    p_fsNode.val.path <- path
+    ret p_fsNode
 ;

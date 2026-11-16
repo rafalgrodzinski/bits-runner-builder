@@ -118,31 +118,40 @@
 @extern fread fun: aTarget a, size u64, count u64, fp a -> u64
 @extern fwrite fun: aSource a, size u64, count u64, fp a -> u64
 
-@export fileOpen fun: aPath a -> a
+SEEK_SET u32 <- 0
+SEEK_END u32 <- 2
+
+@export fileOpen fun: aPath a -> u64
     mode data<u8> <- "r+"
     fp a <- fopen(aPath.ptr<u8>, mode.adr.ptr<u8>)
-    if fp != 0: ret fp
+    ret fp.u64
+;
+
+@export fileCreate fun: aPath a -> u64
+    mode data<u8> <- "r+"
+    fp a <- fopen(aPath.ptr<u8>, mode.adr.ptr<u8>)
+    if fp != 0: ret fp.u64
 
     mode <- "w+"
     fp <- fopen(aPath.ptr<u8>, mode.adr.ptr<u8>)
-    ret fp
+    ret fp.u64
 ;
 
-@export fileClose fun: fp a
-    fclose(fp)
+@export fileClose fun: resId u64
+    fclose(resId.a)
 ;
 
-@export fileGetSize fun: fp a -> u64
-    fseek(fp, 0, 2)
-    ret ftell(fp).u64
+@export fileGetSize fun: resId u64 -> u64
+    fseek(resId.a, 0, SEEK_END)
+    ret ftell(resId.a).u64
 ;
 
-@export fileRead fun: fp a, offset u64, size u64, aTarget a -> u64
-    fseek(fp, offset, 0)
-    ret fread(aTarget, 1, size, fp)
+@export fileRead fun: resId u64, offset u64, size u64, aTarget a -> u64
+    fseek(resId.a, offset, SEEK_SET)
+    ret fread(aTarget, 1, size, resId.a)
 ;
 
-@export fileWrite fun: fp a, aSource a, offset u64, size u64 -> u64
-    fseek(fp, offset, 0)
-    ret fwrite(aSource, 1, size, fp)
+@export fileWrite fun: resId u64, aSource a, offset u64, size u64 -> u64
+    fseek(resId.a, offset, SEEK_SET)
+    ret fwrite(aSource, 1, size, resId.a)
 ;

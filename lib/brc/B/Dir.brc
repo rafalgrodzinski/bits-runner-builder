@@ -1,0 +1,5 @@
+@module B
+@import BSys
+
+@export Dir blob
+;
