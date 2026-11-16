@@ -111,29 +111,30 @@
 ;
 
 // File
-@extern fopen fun: path ptr<u8>, mode ptr<u8> -> a
-@extern fclose fun: fp a -> s32
-@extern fseek fun: fp a, offset u64, origin u32 -> s32
-@extern ftell fun: fp a -> s64
-@extern fread fun: aTarget a, size u64, count u64, fp a -> u64
-@extern fwrite fun: aSource a, size u64, count u64, fp a -> u64
+@extern fopen fun: a_path a, a_mode a -> a
+@extern fclose fun: a_fp a -> s32
+@extern fseek fun: a_fp a, offset u64, origin u32 -> s32
+@extern ftell fun: a_fp a -> s64
+@extern fread fun: a_target a, size u64, count u64, fp a -> u64
+@extern fwrite fun: a_source a, size u64, count u64, fp a -> u64
+@extern remove fun: a_path a -> u32
 
 SEEK_SET u32 <- 0
 SEEK_END u32 <- 2
 
-@export fileOpen fun: aPath a -> u64
+@export fileOpen fun: a_path a -> u64
     mode data<u8> <- "r+"
-    fp a <- fopen(aPath.ptr<u8>, mode.adr.ptr<u8>)
+    fp a <- fopen(a_path, mode.adr)
     ret fp.u64
 ;
 
-@export fileCreate fun: aPath a -> u64
+@export fileCreate fun: a_path a -> u64
     mode data<u8> <- "r+"
-    fp a <- fopen(aPath.ptr<u8>, mode.adr.ptr<u8>)
+    fp a <- fopen(a_path, mode.adr)
     if fp != 0: ret fp.u64
 
     mode <- "w+"
-    fp <- fopen(aPath.ptr<u8>, mode.adr.ptr<u8>)
+    fp <- fopen(a_path, mode.adr)
     ret fp.u64
 ;
 
@@ -146,12 +147,16 @@ SEEK_END u32 <- 2
     ret ftell(resId.a).u64
 ;
 
-@export fileRead fun: resId u64, offset u64, size u64, aTarget a -> u64
+@export fileRead fun: resId u64, offset u64, size u64, a_target a -> u64
     fseek(resId.a, offset, SEEK_SET)
-    ret fread(aTarget, 1, size, resId.a)
+    ret fread(a_target, 1, size, resId.a)
 ;
 
-@export fileWrite fun: resId u64, aSource a, offset u64, size u64 -> u64
+@export fileWrite fun: resId u64, a_source a, offset u64, size u64 -> u64
     fseek(resId.a, offset, SEEK_SET)
-    ret fwrite(aSource, 1, size, resId.a)
+    ret fwrite(a_source, 1, size, resId.a)
+;
+
+@export fileDelete fun: resId u64 -> bool
+    ret remove(resId.a) = 0
 ;

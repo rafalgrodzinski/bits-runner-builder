@@ -1,8 +1,7 @@
 @import B
 
 @export main fun
-
-    p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("test.brc"))
+    /*p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("test.brc"))
     p_file ptr<blob<@B::File>>
     match p_fsNode.val.getFile({}.enum<@B::FsNode::Mode>::Open)
         enum<@B::Result, ptr<blob<@B::File>>>::Success
@@ -19,5 +18,8 @@
     rep i u32, i < p_file.val.getSize(), i <- i + 1
         @B::StringForChar((a_buffer + i).ptr<u8>.val).printColor(@B::String::FOREGROUND_MAGENTA)
     ;
-    @B::String::println()
+    @B::String::println()*/
+
+    p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("dummy.txt"))
+    p_fsNode.val.delete()
 ;

@@ -6,8 +6,17 @@
     Create
 ;
 
+@export FsNode::Kind enum
+    File
+    Dir
+;
+
 @export FsNode blob
     path blob<String>
+
+    /*getKind fun -> enum<FsNode::Kind>
+
+    ;*/
 
     getFile fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<File>>>
         resId u64 <- match mode 
@@ -20,10 +29,11 @@
     ;
 
     /*getDir fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<Dir>>>
-    ;
+    ;*/
 
     delete fun -> enum<Result>
-    ;*/
+        ret if @BSys::fileDelete(it.path.string.adr.u64): {}.enum<Result>::Success else: {}.enum<Result>::Failure
+    ;
 ;
 
 @export FsNode fun: path blob<String> -> ptr<blob<FsNode>>
