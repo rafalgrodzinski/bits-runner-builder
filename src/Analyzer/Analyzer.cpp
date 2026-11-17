@@ -2220,9 +2220,13 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->toComposite()->getElementValueTypes();
                     shared_ptr<ValueTypeEnumField> targetValueTypeEnumField = targetType->toEnumField();
 
-                    // first option, no source types and target is none
+                    // first option, no source types and target is boxed<none> or none
                     if (sourceElementValueTypes.size() == 0) {
-                        return targetValueTypeEnumField->getPayloadValueType()->getKind() == ValueTypeKind::NONE;
+                        if (shared_ptr<ValueTypeBoxed> valueTypeBoxed = targetValueTypeEnumField->getPayloadValueType()->toBoxed()) {
+                            return valueTypeBoxed->getBoxedValueType()->isNone();
+                        } else {
+                            return targetValueTypeEnumField->getPayloadValueType()->getKind() == ValueTypeKind::NONE;
+                        }
                     }
 
                     // otherwise source has to have one element
@@ -2309,7 +2313,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     shared_ptr<ValueTypeEnum> targetValueTypeEnum = targetType->toEnum();
 
                     // Is this a field of a parent enum?
-                    if (!sourceValueTypeEnumField->getSymbolName()->getGlobalName().starts_with(targetValueTypeEnum->getSymbolName()->getGlobalName()))
+                    if (!sourceValueTypeEnumField->getEnumSymbolName()->isEqual(targetValueTypeEnum->getSymbolName()))
                         return false;
 
                     // Does number of named types match?
@@ -2347,17 +2351,27 @@ std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std
         // are they the same?
         if (targetValueType->isEqual(valueTypes.at(i))) {
             // don't do anything for identical types
+            continue;
         // can we cast one way?
         } else if (canImplicitCast(valueTypes.at(i), targetValueType)) {
             // keep the current target
+            continue;
         // can we cast the other way?
         } else if (canImplicitCast(targetValueType, valueTypes.at(i))) {
             // switch to a new target type
             targetValueType = valueTypes.at(i);
-        // panic
-        } else {
-            return ValueTypeSimple::NONE;
+            continue;
+        // can we upcast enum fields?
+        } else if (targetValueType->isEnumField() && valueTypes.at(0)->isEnumField()) {
+            shared_ptr<ValueTypeEnum> valueTypeEnumA = targetValueType->toEnumField()->getEnumValueType();
+            shared_ptr<ValueTypeEnum> valueTypeEnumB = valueTypes.at(0)->toEnumField()->getEnumValueType();
+            if (valueTypeEnumA->isEqual(valueTypeEnumB)) {
+                targetValueType = valueTypeEnumA;
+                continue;
+            }
         }
+        // panic
+        return ValueTypeSimple::NONE;
     }
 
     // We want to promote integers to their native sizes
@@ -2465,10 +2479,15 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
         return nullptr;
     }
 
-    // Check number of named types match
-    if ((*oNamedValueTypeKeys).size() != valueTypeEnum->getNamedValueTypes().size()) {
+    // Make sure we don't have more value types than keys
+    if ((*oNamedValueTypeKeys).size() < valueTypeEnum->getNamedValueTypes().size()) {
         markErrorInvalidType(valueTypeEnum->getLocation(), valueTypeEnum, nullptr);
         return nullptr;
+    }
+
+    // Then fill the remaining value types with NONE
+    for (int i = valueTypeEnum->getNamedValueTypes().size(); i < (*oNamedValueTypeKeys).size(); i++) {
+        valueTypeEnum->namedValueTypes.push_back(ValueTypeSimple::NONE);
     }
 
     valueTypeEnum->namedValueTypeKeys = *oNamedValueTypeKeys;
@@ -2477,19 +2496,24 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
-    optional<vector<string>> oNamedValueTypeKeys = scope->enumScope->getNamedValueTypeKeys(valueTypeEnumField->getSymbolName());
-    shared_ptr<ValueType> payloadValueType = scope->enumScope->getPayloadValueType(valueTypeEnumField->getSymbolName());
+    optional<vector<string>> oNamedValueTypeKeys = scope->enumScope->getNamedValueTypeKeys(valueTypeEnumField->getEnumFieldSymbolName());
+    shared_ptr<ValueType> payloadValueType = scope->enumScope->getPayloadValueType(valueTypeEnumField->getEnumFieldSymbolName());
 
     // Check if enum field is registered
     if (!oNamedValueTypeKeys || payloadValueType == nullptr) {
-        markErrorNotDefined(valueTypeEnumField->getLocation(), valueTypeEnumField->getSymbolName()->getGlobalName());
+        markErrorNotDefined(valueTypeEnumField->getLocation(), valueTypeEnumField->getEnumFieldSymbolName()->getGlobalName());
         return nullptr;
     }
 
-    // Check number of named types match
-    if ((*oNamedValueTypeKeys).size() != valueTypeEnumField->getNamedValueTypes().size()) {
+    // Make sure we don't have more value types than keys
+    if ((*oNamedValueTypeKeys).size() < valueTypeEnumField->getNamedValueTypes().size()) {
         markErrorInvalidType(valueTypeEnumField->getLocation(), valueTypeEnumField, nullptr);
         return nullptr;
+    }
+
+    // Then fill the remaining value types with NONE
+    for (int i = valueTypeEnumField->getNamedValueTypes().size(); i < (*oNamedValueTypeKeys).size(); i++) {
+        valueTypeEnumField->namedValueTypes.push_back(ValueTypeSimple::NONE);
     }
 
     // Check payload type, first make sure that potential named types in boxed have access to the current context

@@ -598,7 +598,7 @@ string Logger::toString(shared_ptr<StatementEnum> statement, vector<IndentKind> 
 
     // name
     text = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
-    text += formattedLine(text, indents);
+    text = formattedLine(text, indents);
 
     indents = adjustedLastIndent(indents);
 
@@ -1335,7 +1335,7 @@ string Logger::toString(shared_ptr<ValueTypeEnum> valueTypeEnum) {
 
 string Logger::toString(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
     string text = "";
-    text += format("ENUM_FIELD<`{}`", valueTypeEnumField->getSymbolName()->getGlobalName());
+    text += format("ENUM_FIELD<`{}`", valueTypeEnumField->getEnumFieldSymbolName()->getGlobalName());
     text += format(", {}>", toString(valueTypeEnumField->getPayloadValueType()));
 
     return text;

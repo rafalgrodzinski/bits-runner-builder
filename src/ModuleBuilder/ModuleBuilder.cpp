@@ -909,7 +909,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 
                 vector<llvm::Constant*> values;
                 // enum tag value
-                llvm::Constant *tagValue = scope->getEnumFieldTagValue(valueTypeEnumField->getSymbolName()->getGlobalName());
+                llvm::Constant *tagValue = scope->getEnumFieldTagValue(valueTypeEnumField->getEnumFieldSymbolName()->getGlobalName());
                 values.push_back(tagValue);
                 // payload value
                 llvm::Constant *payloadValue = llvm::Constant::getNullValue(typeBoxed);
@@ -2765,9 +2765,9 @@ llvm::Value *ModuleBuilder::valueForMatch(shared_ptr<WrappedValue> switchWrapped
             llvm::LoadInst *tagMemberLoad = builder->CreateLoad(typeInt, tagMemberPtr);
 
             // Get pattern tag
-            llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+            llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getEnumFieldSymbolName()->getGlobalName());
             if (tagValue == nullptr) {
-                markErrorNotDefined(pattern->getLocation(), pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+                markErrorNotDefined(pattern->getLocation(), pattern->getValueType()->toEnumField()->getEnumFieldSymbolName()->getGlobalName());
                 return nullptr;
             }
 
