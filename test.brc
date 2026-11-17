@@ -20,6 +20,21 @@
     ;
     @B::String::println()*/
 
-    p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("dummy.txt"))
+    /*p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("dummy.txt"))
+    p_fsNode.val.delete()*/
+
+    p_dir ptr<blob<@B::Dir>>
+    p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("./abc"))
+    match p_fsNode.val.getDir({}.enum<@B::FsNode::Mode>::Create)
+        enum<@B::Result, ptr<blob<@B::Dir>>>::Success
+            p_dir <- $0.val.ptr<blob<@B::Dir>>
+        ;
+    else
+        @B::String("Failed").println()
+        ret
+    ;
+
+    @B::StringForU32(p_dir.val.resId.u32).println()
+
     p_fsNode.val.delete()
 ;

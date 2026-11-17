@@ -7,16 +7,21 @@
 ;
 
 @export FsNode::Kind enum
+    None
     File
     Dir
 ;
 
 @export FsNode blob
     path blob<String>
+    kind enum<FsNode::Kind>
 
-    /*getKind fun -> enum<FsNode::Kind>
+    getKind fun -> enum<FsNode::Kind>
+        if it.kind = {}.enum<FsNode::Kind>::None
+        ;
 
-    ;*/
+        ret it.kind
+    ;
 
     getFile fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<File>>>
         resId u64 <- match mode 
@@ -25,19 +30,38 @@
         else: 0
 
         if resId = 0: ret {}.enum<Result, ptr<blob<File>>>::Failure
+        it.kind <- {}.enum<FsNode::Kind>::File
         ret {File(resId)}.enum<Result, ptr<blob<File>>>::Success
     ;
 
-    /*getDir fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<Dir>>>
-    ;*/
+    getDir fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<Dir>>>
+        resId u64 <- match mode
+            enum<FsNode::Mode>::Open: @BSys::dirOpen(it.path.adr)
+            enum<FsNode::Mode>::Create: @BSys::dirCreate(it.path.adr)
+        else: 0
+
+        if resId = 0: ret {}.enum<Result, ptr<blob<Dir>>>::Failure
+        it.kind <- {}.enum<FsNode::Kind>::Dir
+        ret {Dir(resId)}.enum<Result, ptr<blob<Dir>>>::Success
+    ;
 
     delete fun -> enum<Result>
-        ret if @BSys::fileDelete(it.path.string.adr.u64): {}.enum<Result>::Success else: {}.enum<Result>::Failure
+        ret match it.getKind()
+            enum<FsNode::Kind>::File
+                if @BSys::fileDelete(it.path.string.adr.u64): {}.enum<Result>::Success else: {}.enum<Result>::Failure
+            ;
+            enum<FsNode::Kind>::Dir
+                if @BSys::dirDelete(it.path.string.adr.u64): {}.enum<Result>::Success else: {}.enum<Result>::Failure
+            ;
+        else
+            {}.enum<Result>::Failure
+        ;
     ;
 ;
 
 @export FsNode fun: path blob<String> -> ptr<blob<FsNode>>
     p_fsNode ptr<blob<FsNode>> <- @BSys::memAlloc(blob<FsNode>.size).ptr<blob<FsNode>>
     p_fsNode.val.path <- path
+    p_fsNode.val.kind <- {}.enum<FsNode::Kind>::None
     ret p_fsNode
 ;

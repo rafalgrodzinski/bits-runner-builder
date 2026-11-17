@@ -110,7 +110,7 @@
     putchar('m')
 ;
 
-// File
+// FsNode, File, Dir
 @extern fopen fun: a_path a, a_mode a -> a
 @extern fclose fun: a_fp a -> s32
 @extern fseek fun: a_fp a, offset u64, origin u32 -> s32
@@ -118,6 +118,10 @@
 @extern fread fun: a_target a, size u64, count u64, fp a -> u64
 @extern fwrite fun: a_source a, size u64, count u64, fp a -> u64
 @extern remove fun: a_path a -> u32
+
+@extern opendir fun: a_path a -> a
+@extern mkdir fun: a_path a, mode u32 -> u32
+@extern rmdir fun: a_path a -> u32
 
 SEEK_SET u32 <- 0
 SEEK_END u32 <- 2
@@ -159,4 +163,26 @@ SEEK_END u32 <- 2
 
 @export fileDelete fun: resId u64 -> bool
     ret remove(resId.a) = 0
+;
+
+@export dirOpen fun: a_path a -> u64
+    ret opendir(a_path).u64
+;
+
+@export dirCreate fun: a_path a -> u64
+    // First try checking if a directory already exists
+    resId u64 <- dirOpen(a_path)
+    if resId != 0: ret resId
+
+    // If not, create it with the defaut permissions
+    // 0777 rwx rwx rwx (0x1ff)
+    // 0755 rwx r_x r_x (0x1ed)
+    if mkdir(a_path, 0x1ff) != 0: ret 0
+
+    // And then try opening it once more
+    ret dirOpen(a_path)
+;
+
+@export dirDelete fun: resId u64 -> bool
+    ret rmdir(resId.a) = 0
 ;

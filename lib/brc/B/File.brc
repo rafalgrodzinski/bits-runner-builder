@@ -15,11 +15,6 @@
     write fun: aSource a, offset u64, size u64 -> u64
         ret @BSys::fileWrite(it.resId, aSource, offset, size)
     ;
-
-    /*release fun
-        @BSys::fileClose(it.resourceId)
-        it.resourceId <- 0
-    ;*/
 ;
 
 @export File fun: resId u64 -> ptr<blob<File>>
