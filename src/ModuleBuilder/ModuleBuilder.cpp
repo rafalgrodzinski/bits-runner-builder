@@ -1084,14 +1084,15 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
     // simple
     } else {
         switch (valueExpression->getKind()) {
-            case ExpressionKind::VALUE: // simple <- var
-            case ExpressionKind::CHAINED: // simple <- .val
-            case ExpressionKind::IF_ELSE: // simple <- if else
-            case ExpressionKind::CALL: // simple <- function()
-            case ExpressionKind::LITERAL: // simple <- literal
             case ExpressionKind::BINARY: // simple <- binary expression
+            case ExpressionKind::CALL: // simple <- function()
+            case ExpressionKind::CHAINED: // simple <- .val
+            case ExpressionKind::GROUPING: // simple <- ( expression )
+            case ExpressionKind::IF_ELSE: // simple <- if else
+            case ExpressionKind::LITERAL: // simple <- literal
+            case ExpressionKind::MATCH:
             case ExpressionKind::UNARY: // simple <- unary expression
-            case ExpressionKind::GROUPING: { // simple <- ( expression )
+            case ExpressionKind::VALUE: { // simple <- var
                 shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
                 if (sourceWrappedValue == nullptr)
                     return;

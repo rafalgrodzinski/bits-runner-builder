@@ -2362,9 +2362,9 @@ std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std
             targetValueType = valueTypes.at(i);
             continue;
         // can we upcast enum fields?
-        } else if (targetValueType->isEnumField() && valueTypes.at(0)->isEnumField()) {
+        } else if (targetValueType->isEnumField() && valueTypes.at(i)->isEnumField()) {
             shared_ptr<ValueTypeEnum> valueTypeEnumA = targetValueType->toEnumField()->getEnumValueType();
-            shared_ptr<ValueTypeEnum> valueTypeEnumB = valueTypes.at(0)->toEnumField()->getEnumValueType();
+            shared_ptr<ValueTypeEnum> valueTypeEnumB = valueTypes.at(i)->toEnumField()->getEnumValueType();
             if (valueTypeEnumA->isEqual(valueTypeEnumB)) {
                 targetValueType = valueTypeEnumA;
                 continue;
@@ -2374,10 +2374,10 @@ std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std
         return ValueTypeSimple::NONE;
     }
 
-    // We want to promote integers to their native sizes
-    if (!targetValueType->isPtr() && targetValueType->isUnsignedInteger()) {
+    // We want to promote integers to their native sizes (if they are smaller than 64bit)
+    if (!targetValueType->isPtr() && targetValueType->isUnsignedInteger() & targetValueType->getKind() != ValueTypeKind::U64) {
         targetValueType = ValueTypeSimple::UINT;
-    } else if (targetValueType->isSignedInteger()) {
+    } else if (targetValueType->isSignedInteger() && targetValueType->getKind() != ValueTypeKind::S64) {
         targetValueType = ValueTypeSimple::SINT;
     }
 
