@@ -15,10 +15,12 @@
 @export FsNode blob
     path blob<String>
     kind enum<FsNode::Kind>
+    p_file ptr<blob<File>>
+    p_dir ptr<blob<Dir>>
 
     getKind fun -> enum<FsNode::Kind>
-        if it.kind = {}.enum<FsNode::Kind>::None
-        ;
+        it.getFile({}.enum<FsNode::Mode>::Open)
+        it.getDir({}.enum<FsNode::Mode>::Open)
 
         ret it.kind
     ;
@@ -31,7 +33,8 @@
 
         if resId = 0: ret {}.enum<Result, ptr<blob<File>>>::Failure
         it.kind <- {}.enum<FsNode::Kind>::File
-        ret {File(resId)}.enum<Result, ptr<blob<File>>>::Success
+        it.p_file <- File(resId)
+        ret {it.p_file}.enum<Result, ptr<blob<File>>>::Success
     ;
 
     getDir fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<Dir>>>
@@ -42,7 +45,8 @@
 
         if resId = 0: ret {}.enum<Result, ptr<blob<Dir>>>::Failure
         it.kind <- {}.enum<FsNode::Kind>::Dir
-        ret {Dir(resId)}.enum<Result, ptr<blob<Dir>>>::Success
+        it.p_dir <- Dir(resId)
+        ret {it.p_dir}.enum<Result, ptr<blob<Dir>>>::Success
     ;
 
     delete fun -> enum<Result>
@@ -56,6 +60,21 @@
         else
             {}.enum<Result>::Failure
         ;
+    ;
+
+    release fun
+        match it.kind
+            enum<FsNode::Kind>::File
+                @BSys::fileClose(it.p_file.val.resId)
+                @BSys::memFree(it.p_file.vadr)
+            ;
+            enum<FsNode::Kind>::Dir
+                @BSys::dirClose(it.p_dir.val.resId)
+                @BSys::memFree(it.p_dir.vadr)
+            ;
+        ;
+
+        @BSys::memFree(it.adr)
     ;
 ;
 

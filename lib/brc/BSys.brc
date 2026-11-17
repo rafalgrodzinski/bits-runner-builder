@@ -121,6 +121,7 @@
 
 @extern opendir fun: a_path a -> a
 @extern mkdir fun: a_path a, mode u32 -> u32
+@extern closedir fun: a_dp a -> u32
 @extern rmdir fun: a_path a -> u32
 
 SEEK_SET u32 <- 0
@@ -181,6 +182,10 @@ SEEK_END u32 <- 2
 
     // And then try opening it once more
     ret dirOpen(a_path)
+;
+
+@export dirClose fun: resId u64
+    closedir(resId.a)
 ;
 
 @export dirDelete fun: resId u64 -> bool
