@@ -157,7 +157,7 @@ SEEK_END u32 <- 2
     ret fread(a_target, 1, size, resId.a)
 ;
 
-@export fileWrite fun: resId u64, a_source a, offset u64, size u64 -> u64
+@export fileWrite fun: resId u64, offset u64, size u64, a_source a -> u64
     fseek(resId.a, offset, SEEK_SET)
     ret fwrite(a_source, 1, size, resId.a)
 ;

@@ -8,12 +8,12 @@
         ret @BSys::fileGetSize(it.resId)
     ;
 
-    read fun: offset u64, size u64, aTarget a -> u64
-        ret @BSys::fileRead(it.resId, offset, size, aTarget)
+    read fun: offset u64, size u64, a_target a -> u64
+        ret @BSys::fileRead(it.resId, offset, size, a_target)
     ;
 
-    write fun: aSource a, offset u64, size u64 -> u64
-        ret @BSys::fileWrite(it.resId, aSource, offset, size)
+    write fun: offset u64, size u64, a_source a -> u64
+        ret @BSys::fileWrite(it.resId, offset, size, a_source)
     ;
 ;
 
