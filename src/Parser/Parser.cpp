@@ -2290,7 +2290,6 @@ std::shared_ptr<Expression> Parser::matchExpressionMatch() {
                                         },
                                         // single line match :: single line case expression :: no else
                                         {
-                                            Parsee::tokenParsee(TokenKind::NEW_LINE, ParseeLevel::REQUIRED, false)
                                         }
                                     }, ParseeLevel::CRITICAL, true
                                 )
@@ -2757,6 +2756,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     shared_ptr<ValueType> subType = nullptr;
     shared_ptr<Expression> countExpression;
     string name;
+    string enumFieldName;
     optional<string> boxedNamedValueTypeKey;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
@@ -2784,8 +2784,9 @@ shared_ptr<ValueType> Parser::matchValueType() {
             case TAG_ENUM_FIELD_NAME: {
                 isEnum = false;
                 isEnumField = true;
-                name += "::";
-                name += parseeResult.getToken()->getLexme();
+                if (!enumFieldName.empty())
+                    enumFieldName += "::";
+                enumFieldName += parseeResult.getToken()->getLexme();
                 break;
             }
             case TAG_PROTO: {
@@ -2856,7 +2857,7 @@ shared_ptr<ValueType> Parser::matchValueType() {
     else if (isEnum)
         return make_shared<ValueTypeEnum>(name, argTypes, location);
     else if (isEnumField)
-        return make_shared<ValueTypeEnumField>(name, argTypes, location);
+        return make_shared<ValueTypeEnumField>(format("{}::{}", name, enumFieldName), name, argTypes, location);
     else if (isProto)
         return make_shared<ValueTypeProto>(name, location);
     else if (isPtr)

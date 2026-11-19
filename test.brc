@@ -1,22 +1,40 @@
-value u8
+@import B
 
-evalA fun -> bool
-  value <- 1
-  ret false
-;
+@export main fun
+    /*p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("test.brc"))
+    p_file ptr<blob<@B::File>>
+    match p_fsNode.val.getFile({}.enum<@B::FsNode::Mode>::Open)
+        enum<@B::Result, ptr<blob<@B::File>>>::Success
+          p_file <- $0.val.ptr<blob<@B::File>>
+        ;
+    else
+        @B::String("Failed").println()
+        ret
+    ;
 
-evalB fun -> bool
-  value <- 2
-  ret true
-;
+    a_buffer a <- @BSys::memAlloc(p_file.val.getSize())
+    p_file.val.read(0, p_file.val.getSize(), a_buffer)
 
-evalC fun -> bool
-  value <- 3
-  ret true
-;
+    rep i u32, i < p_file.val.getSize(), i <- i + 1
+        @B::StringForChar((a_buffer + i).ptr<u8>.val).printColor(@B::String::FOREGROUND_MAGENTA)
+    ;
+    @B::String::println()*/
 
-@export main fun -> u8
-  if evalA() and evalB() and evalC():
+    /*p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("dummy.txt"))
+    p_fsNode.val.delete()*/
 
-  ret value
+    p_dir ptr<blob<@B::Dir>>
+    p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("./abc"))
+    match p_fsNode.val.getDir({}.enum<@B::FsNode::Mode>::Create)
+        enum<@B::Result, ptr<blob<@B::Dir>>>::Success
+            p_dir <- $0.val.ptr<blob<@B::Dir>>
+        ;
+    else
+        @B::String("Failed").println()
+        ret
+    ;
+
+    @B::StringForU32(p_dir.val.resId.u32).println()
+
+    p_fsNode.val.delete()
 ;

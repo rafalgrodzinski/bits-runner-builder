@@ -909,7 +909,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 
                 vector<llvm::Constant*> values;
                 // enum tag value
-                llvm::Constant *tagValue = scope->getEnumFieldTagValue(valueTypeEnumField->getSymbolName()->getGlobalName());
+                llvm::Constant *tagValue = scope->getEnumFieldTagValue(valueTypeEnumField->getEnumFieldSymbolName()->getGlobalName());
                 values.push_back(tagValue);
                 // payload value
                 llvm::Constant *payloadValue = llvm::Constant::getNullValue(typeBoxed);
@@ -1084,14 +1084,15 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
     // simple
     } else {
         switch (valueExpression->getKind()) {
-            case ExpressionKind::VALUE: // simple <- var
-            case ExpressionKind::CHAINED: // simple <- .val
-            case ExpressionKind::IF_ELSE: // simple <- if else
-            case ExpressionKind::CALL: // simple <- function()
-            case ExpressionKind::LITERAL: // simple <- literal
             case ExpressionKind::BINARY: // simple <- binary expression
+            case ExpressionKind::CALL: // simple <- function()
+            case ExpressionKind::CHAINED: // simple <- .val
+            case ExpressionKind::GROUPING: // simple <- ( expression )
+            case ExpressionKind::IF_ELSE: // simple <- if else
+            case ExpressionKind::LITERAL: // simple <- literal
+            case ExpressionKind::MATCH:
             case ExpressionKind::UNARY: // simple <- unary expression
-            case ExpressionKind::GROUPING: { // simple <- ( expression )
+            case ExpressionKind::VALUE: { // simple <- var
                 shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
                 if (sourceWrappedValue == nullptr)
                     return;
@@ -2765,9 +2766,9 @@ llvm::Value *ModuleBuilder::valueForMatch(shared_ptr<WrappedValue> switchWrapped
             llvm::LoadInst *tagMemberLoad = builder->CreateLoad(typeInt, tagMemberPtr);
 
             // Get pattern tag
-            llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+            llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getEnumFieldSymbolName()->getGlobalName());
             if (tagValue == nullptr) {
-                markErrorNotDefined(pattern->getLocation(), pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+                markErrorNotDefined(pattern->getLocation(), pattern->getValueType()->toEnumField()->getEnumFieldSymbolName()->getGlobalName());
                 return nullptr;
             }
 

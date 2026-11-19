@@ -106,3 +106,7 @@ To generate a unique label for each call to a raw function use `name${:uid}:`. F
 ## Terminal Emulator
 - Mead's Guide to Colorized Output using ANSI Escape Sequences
 [https://azrael.digipen.edu/~mmead/www/mg/ansicolors/index.html](https://azrael.digipen.edu/~mmead/www/mg/ansicolors/index.html)
+
+
+## C
+- "System Interfaces: Detailed ToC": [https://pubs.opengroup.org/onlinepubs/9699919799/functions/contents.html](https://pubs.opengroup.org/onlinepubs/9699919799/functions/contents.html)

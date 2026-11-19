@@ -1,0 +1,24 @@
+@module B
+@import BSys
+
+@export File blob
+    resId u64
+
+    getSize fun -> u64
+        ret @BSys::fileGetSize(it.resId)
+    ;
+
+    read fun: offset u64, size u64, a_target a -> u64
+        ret @BSys::fileRead(it.resId, offset, size, a_target)
+    ;
+
+    write fun: offset u64, size u64, a_source a -> u64
+        ret @BSys::fileWrite(it.resId, offset, size, a_source)
+    ;
+;
+
+@export File fun: resId u64 -> ptr<blob<File>>
+    p_file ptr<blob<File>> <- @BSys::memAlloc(blob<File>.size).ptr<blob<File>>
+    p_file.val.resId <- resId
+    ret p_file
+;

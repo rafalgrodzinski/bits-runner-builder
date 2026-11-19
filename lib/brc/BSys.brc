@@ -97,7 +97,7 @@
     else if isBgMagenta: putchar('5')
     else if isBgBrown: putchar('3')
     else if isBgWhite: putchar('7')
-    else: putchar('0')
+    else: putchar('9')
 
     // 'm' finishes the attributes
     putchar('m')
@@ -108,4 +108,86 @@
     putchar('[')
     putchar('0')
     putchar('m')
+;
+
+// FsNode, File, Dir
+@extern fopen fun: a_path a, a_mode a -> a
+@extern fclose fun: a_fp a -> s32
+@extern fseek fun: a_fp a, offset u64, origin u32 -> s32
+@extern ftell fun: a_fp a -> s64
+@extern fread fun: a_target a, size u64, count u64, fp a -> u64
+@extern fwrite fun: a_source a, size u64, count u64, fp a -> u64
+@extern remove fun: a_path a -> u32
+
+@extern opendir fun: a_path a -> a
+@extern mkdir fun: a_path a, mode u32 -> u32
+@extern closedir fun: a_dp a -> u32
+@extern rmdir fun: a_path a -> u32
+
+SEEK_SET u32 <- 0
+SEEK_END u32 <- 2
+
+@export fileOpen fun: a_path a -> u64
+    mode data<u8> <- "r+"
+    fp a <- fopen(a_path, mode.adr)
+    ret fp.u64
+;
+
+@export fileCreate fun: a_path a -> u64
+    mode data<u8> <- "r+"
+    fp a <- fopen(a_path, mode.adr)
+    if fp != 0: ret fp.u64
+
+    mode <- "w+"
+    fp <- fopen(a_path, mode.adr)
+    ret fp.u64
+;
+
+@export fileClose fun: resId u64
+    fclose(resId.a)
+;
+
+@export fileGetSize fun: resId u64 -> u64
+    fseek(resId.a, 0, SEEK_END)
+    ret ftell(resId.a).u64
+;
+
+@export fileRead fun: resId u64, offset u64, size u64, a_target a -> u64
+    fseek(resId.a, offset, SEEK_SET)
+    ret fread(a_target, 1, size, resId.a)
+;
+
+@export fileWrite fun: resId u64, offset u64, size u64, a_source a -> u64
+    fseek(resId.a, offset, SEEK_SET)
+    ret fwrite(a_source, 1, size, resId.a)
+;
+
+@export fileDelete fun: resId u64 -> bool
+    ret remove(resId.a) = 0
+;
+
+@export dirOpen fun: a_path a -> u64
+    ret opendir(a_path).u64
+;
+
+@export dirCreate fun: a_path a -> u64
+    // First try checking if a directory already exists
+    resId u64 <- dirOpen(a_path)
+    if resId != 0: ret resId
+
+    // If not, create it with the defaut permissions
+    // 0777 rwx rwx rwx (0x1ff)
+    // 0755 rwx r_x r_x (0x1ed)
+    if mkdir(a_path, 0x1ff) != 0: ret 0
+
+    // And then try opening it once more
+    ret dirOpen(a_path)
+;
+
+@export dirClose fun: resId u64
+    closedir(resId.a)
+;
+
+@export dirDelete fun: resId u64 -> bool
+    ret rmdir(resId.a) = 0
 ;

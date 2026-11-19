@@ -135,19 +135,23 @@ Required dependencies
 - CMake 4.0.0 and up
 
 ### 🍎 macOS
-- Just as for installation, first get [Homebrew](https://brew.sh/) installed
-- `brew install llvm@20` Install LLVM
-- `brew install cmake` Install cmake
-- `cmake -B build` Configure the project
-- `cmake --build build --config Relese` (or `--config RelWithDebInfo`) Build the poject
-- Binary should be under `build/brb`
-- `cmake --build build --target install` Install in system
-- `bin/brb` will be the executables, `lib/brc/` will contain the standard libraries
+```sh
+brew install llvm@20 # Install LLVM
+brew install cmake # Install cmake
+cmake -B build # Configure the project
+cmake --build build --config Release
+# or --config RelWithDebInfo
+# Binary should be under build/brb
+cmake --build build --target install # Install in system
+# bin/brb will be the executable, lib/brc/ will contain the standard libraries
+```
 
-### 🐧 Linux
-- CMake: Version 4 wasn't available with apt-get, so it had to be installed manually from [cmake.org](https://cmake.org/download/)
-- Install LLVM: `sudo apt install llvm-20`
-- build process is the same as for macOS
+### 🐧 Linux (Debian based)
+```sh
+sudo apt install llvm-20 # Install LLVM
+# CMake: Version 4 wasn't available with apt-get, so it had to be installed manually from [cmake.org](https://cmake.org/download/)
+# Then the build process is the same as for macOS
+```
 
 ### 🪟 Windows
 Windows build is a little bit more involved because you need to setup the environment and build LLVM from sources. Available LLVM binaries don't contain the necessary libraries.
