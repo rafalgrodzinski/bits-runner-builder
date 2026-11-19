@@ -1404,7 +1404,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
         // make sure that the indexed value is an array
         if (type->getKind() != ValueTypeKind::DATA) {
-            markErrorInvalidType(type->getLocation(), type, nullptr);
+            markErrorInvalidType(expressionValue->getLocation(), type, nullptr);
             return nullptr;
         }
         expressionValue->indexExpression = checkAndTryCasting(
