@@ -226,15 +226,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
         return true;
     })) { return; }
 
-    // verify field functions
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
-        // fields should not have export
-        if (statementFunction->getShouldExport()) {
-            markErrorInvalidAttribute(statementFunction->getLocation(), "@export");
-            return;
-        }
-    }
-
     // verify proto compliance (but only if it's not an import statement)
     if (statementBlob->getSymbolName()->getModuleName() == module->getName()) {
         for (shared_ptr<SymbolName> protoSymbolName : statementBlob->getProtoSymbolNames()) {
@@ -411,6 +402,17 @@ void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpressio
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
+    // check attributes
+    if (statementFunction->getKind() != FunctionKind::MODULE && statementFunction->getShouldExport()) {
+        markErrorInvalidAttribute(statementFunction->getLocation(), "@export");
+        return;
+    }
+
+    if (statementFunction->getKind() != FunctionKind::BLOB && statementFunction->getIsPublic()) {
+        markErrorInvalidAttribute(statementFunction->getLocation(), "@pub");
+        return;
+    }
+
     // check argument types
     for (pair<string, shared_ptr<ValueType>> &argument : statementFunction->getArguments()) {
         if (typeForCheckedValueType(argument.second, true) == nullptr)
@@ -453,6 +455,17 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
+    // check attributes
+    if (statementFunctionDeclaration->getKind() != FunctionKind::MODULE && statementFunctionDeclaration->getShouldExport()) {
+        markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
+        return;
+    }
+
+    if (statementFunctionDeclaration->getKind() != FunctionKind::BLOB && statementFunctionDeclaration->getIsPublic()) {
+        markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@pub");
+        return;
+    }
+
     // check argument types
     for (auto &argument : statementFunctionDeclaration->getArguments()) {
         if (typeForCheckedValueType(argument.second, true) == nullptr)
@@ -540,6 +553,7 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
         return true;
     })) { return; }
 
+    /*
     // verify field function declarations
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getStatementFunctionDeclarations()) {
         // members should not have export
@@ -548,8 +562,9 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
             return;
         }
 
-        checkStatement(statementFunctionDeclaration);
+        checkStatement(statementFunctionDeclaration, false);
     }
+    */
 
     // register proto fields in scope
     vector<pair<string, shared_ptr<ValueType>>> members;

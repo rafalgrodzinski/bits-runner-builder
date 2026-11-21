@@ -10,16 +10,33 @@ using namespace std;
 
 StatementFunctionDeclaration::StatementFunctionDeclaration(
     bool shouldExport,
+    bool isPublic,
+    FunctionKind kind,
     const string &name,
     const string &moduleName,
     const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
     shared_ptr<Location> location
 ):
-Statement(StatementKind::FUNCTION_DECLARATION, location), shouldExport(shouldExport), name(name), moduleName(moduleName), arguments(arguments), returnValueType(returnValueType) { }
+Statement(StatementKind::FUNCTION_DECLARATION, location),
+shouldExport(shouldExport),
+isPublic(isPublic),
+kind(kind),
+name(name),
+moduleName(moduleName),
+arguments(arguments),
+returnValueType(returnValueType) { }
 
 bool StatementFunctionDeclaration::getShouldExport() const {
     return shouldExport;
+}
+
+bool StatementFunctionDeclaration::getIsPublic() const {
+    return isPublic;
+}
+
+FunctionKind StatementFunctionDeclaration::getKind() const {
+    return kind;
 }
 
 string StatementFunctionDeclaration::getName() const {

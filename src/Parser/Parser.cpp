@@ -474,6 +474,8 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
                     }
                     case StatementKind::FUNCTION: {
                         shared_ptr<StatementFunction> statementFunction = dynamic_pointer_cast<StatementFunction>(parseeResult.getStatement());
+                        // set appropriate kind
+                        statementFunction->kind = FunctionKind::BLOB;
                         // prefix function with name of the blob
                         statementFunction->name = format("{}.{}", name, statementFunction->getName());
                         // Insert an implicit "it" argument for the blob function
@@ -720,6 +722,7 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
 shared_ptr<Statement> Parser::matchStatementFunction() {
     enum {
         TAG_SHOULD_EXPORT,
+        TAG_IS_PUBLIC,
         TAG_NAMESPACE,
         TAG_NAME,
         TAG_ARGUMENT_IDENTIFIER,
@@ -730,8 +733,10 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
-        // export
+        // should export?
         Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // is public?
+        Parsee::tokenParsee(TokenKind::M_PUBLIC, ParseeLevel::OPTIONAL, true, TAG_IS_PUBLIC),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -778,6 +783,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
 
     bool shouldExport = false;
+    bool isPublic = false;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueTypeSimple::NONE;
@@ -788,6 +794,10 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         switch (parseeResult.getTag()) {
             case TAG_SHOULD_EXPORT: {
                 shouldExport = true;
+                break;
+            }
+            case TAG_IS_PUBLIC: {
+                isPublic = true;
                 break;
             }
             case TAG_NAMESPACE: {
@@ -824,12 +834,13 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementFunction>(shouldExport, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), location);
+    return make_shared<StatementFunction>(shouldExport, isPublic, FunctionKind::MODULE, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), location);
 }
 
 shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     enum {
         TAG_SHOULD_EXPORT,
+        TAG_IS_PUBLIC,
         TAG_NAME,
         TAG_ARGUMENT_IDENTIFIER,
         TAG_ARGUMENT_TYPE,
@@ -839,8 +850,10 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
-        // export
+        // should export?
         Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // is public?
+        Parsee::tokenParsee(TokenKind::M_PUBLIC, ParseeLevel::OPTIONAL, true, TAG_IS_PUBLIC),
         // identifier
         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
         Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
@@ -878,6 +891,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
         return nullptr;
 
     bool shouldExport = false;
+    bool isPublic = false;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueTypeSimple::NONE;
@@ -888,6 +902,10 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
         switch (parseeResult.getTag()) {
             case TAG_SHOULD_EXPORT: {
                 shouldExport = true;
+                break;
+            }
+            case TAG_IS_PUBLIC: {
+                isPublic = true;
                 break;
             }
             case TAG_NAME: {
@@ -908,7 +926,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
         }
     }
 
-    return make_shared<StatementFunctionDeclaration>(shouldExport, name, "", arguments, returnType, location);
+    return make_shared<StatementFunctionDeclaration>(shouldExport, isPublic, FunctionKind::MODULE, name, "", arguments, returnType, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
@@ -1166,6 +1184,8 @@ shared_ptr<Statement> Parser::matchStatementProto() {
                     }
                     case StatementKind::FUNCTION_DECLARATION: {
                         shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration = dynamic_pointer_cast<StatementFunctionDeclaration>(parseeResult.getStatement());
+                        // Mark as proto function
+                        statementFunctionDeclaration->kind = FunctionKind::PROTO;
                         // Insert an implicit "it" argument at the beging
                         pair<string, shared_ptr<ValueType>> itArgument = pair(
                             ".pit",

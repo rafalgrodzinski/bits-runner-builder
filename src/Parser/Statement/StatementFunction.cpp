@@ -12,6 +12,8 @@ using namespace std;
 
 StatementFunction::StatementFunction(
     bool shouldExport,
+    bool isPublic,
+    FunctionKind kind,
     const string &name,
     const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
@@ -20,6 +22,8 @@ StatementFunction::StatementFunction(
 ):
 Statement(StatementKind::FUNCTION, location),
 shouldExport(shouldExport),
+isPublic(isPublic),
+kind(kind),
 name(name),
 arguments(arguments),
 returnValueType(returnValueType), statementBlock(statementBlock) {
@@ -36,6 +40,14 @@ returnValueType(returnValueType), statementBlock(statementBlock) {
 
 bool StatementFunction::getShouldExport() const {
     return shouldExport;
+}
+
+bool StatementFunction::getIsPublic() const {
+    return isPublic;
+}
+
+FunctionKind StatementFunction::getKind() const {
+    return kind;
 }
 
 string StatementFunction::getName() const {
@@ -82,6 +94,8 @@ shared_ptr<StatementBlock> StatementFunction::getStatementBlock() const {
 shared_ptr<StatementFunctionDeclaration> StatementFunction::getDeclaration() const {
     return make_shared<StatementFunctionDeclaration>(
         getShouldExport(),
+        getIsPublic(),
+        getKind(),
         getName(),
         getModuleName(),
         getArguments(),

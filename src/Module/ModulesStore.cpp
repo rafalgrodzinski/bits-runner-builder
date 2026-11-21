@@ -92,7 +92,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 // create delclarations for blob functions
                 for (shared_ptr<StatementFunction> statementBlobFunction : statementBlob->getStatementFunctions()) {
                     shared_ptr<StatementFunctionDeclaration> statementBlobFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
-                        statementBlob->getShouldExport(),
+                        statementBlobFunction->getShouldExport(),
+                        statementBlobFunction->getIsPublic(),
+                        statementBlobFunction->getKind(),
                         statementBlobFunction->getName(),
                         statementBlobFunction->getModuleName(),
                         statementBlobFunction->getArguments(),
