@@ -1,40 +1,6 @@
-@import B
+@import TestA
 
 @export main fun
-    /*p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("test.brc"))
-    p_file ptr<blob<@B::File>>
-    match p_fsNode.val.getFile({}.enum<@B::FsNode::Mode>::Open)
-        enum<@B::Result, ptr<blob<@B::File>>>::Success
-          p_file <- $0.val.ptr<blob<@B::File>>
-        ;
-    else
-        @B::String("Failed").println()
-        ret
-    ;
-
-    a_buffer a <- @BSys::memAlloc(p_file.val.getSize())
-    p_file.val.read(0, p_file.val.getSize(), a_buffer)
-
-    rep i u32, i < p_file.val.getSize(), i <- i + 1
-        @B::StringForChar((a_buffer + i).ptr<u8>.val).printColor(@B::String::FOREGROUND_MAGENTA)
-    ;
-    @B::String::println()*/
-
-    /*p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("dummy.txt"))
-    p_fsNode.val.delete()*/
-
-    p_dir ptr<blob<@B::Dir>>
-    p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("./abc"))
-    match p_fsNode.val.getDir({}.enum<@B::FsNode::Mode>::Create)
-        enum<@B::Result, ptr<blob<@B::Dir>>>::Success
-            p_dir <- $0.val.ptr<blob<@B::Dir>>
-        ;
-    else
-        @B::String("Failed").println()
-        ret
-    ;
-
-    @B::StringForU32(p_dir.val.resId.u32).println()
-
-    p_fsNode.val.delete()
+    ta blob<@TestA::TestA>
+    ta.abc()
 ;

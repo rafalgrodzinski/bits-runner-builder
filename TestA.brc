@@ -1,0 +1,6 @@
+@module TestA
+
+@export TestA blob
+    abc fun
+    ;
+;
