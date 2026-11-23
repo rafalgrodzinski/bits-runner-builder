@@ -1488,6 +1488,7 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
 shared_ptr<Statement> Parser::matchStatementVariable() {
     enum Tag {
         TAG_SHOULD_EXPORT,
+        TAG_IS_PUBLIC,
         TAG_NAMESPACE,
         TAG_IDENTIFIER,
         TAG_VALUE_TYPE,
@@ -1497,8 +1498,10 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
-        // should export
+        // should export ?
         Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // is public?
+        Parsee::tokenParsee(TokenKind::M_PUBLIC, ParseeLevel::OPTIONAL, true, TAG_IS_PUBLIC),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -1524,6 +1527,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         return nullptr;
 
     bool shouldExport = false;
+    bool isPublic = false;
     string identifier;
     shared_ptr<ValueType> valueType;
     shared_ptr<Expression> expression;
@@ -1532,6 +1536,10 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         switch (parseeResult.getTag()) {
             case TAG_SHOULD_EXPORT: {
                 shouldExport =  true;
+                break;
+            }
+            case TAG_IS_PUBLIC: {
+                isPublic = true;
                 break;
             }
             case TAG_NAMESPACE: {
@@ -1554,11 +1562,21 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
         }
     }
 
-    return make_shared<StatementVariable>(shouldExport, identifier, valueType, expression, location);
+    return make_shared<StatementVariable>(
+        shouldExport,
+        isPublic,
+        VariableKind::MODULE,
+        identifier,
+        valueType,
+        expression,
+        location
+    );
 }
 
 shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
     enum Tag {
+        TAG_SHOULD_EXPORT,
+        TAG_IS_PUBLIC,
         TAG_NAMESPACE,
         TAG_IDENTIFIER,
         TAG_VALUE_TYPE
@@ -1567,6 +1585,10 @@ shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
+        // should export ?
+        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // is public?
+        Parsee::tokenParsee(TokenKind::M_PUBLIC, ParseeLevel::OPTIONAL, true, TAG_IS_PUBLIC),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -1585,11 +1607,20 @@ shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
         return nullptr;
 
     bool shouldExport = false;
+    bool isPublic = false;
     string identifier;
     shared_ptr<ValueType> valueType = nullptr;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
+            case TAG_SHOULD_EXPORT: {
+                shouldExport =  true;
+                break;
+            }
+            case TAG_IS_PUBLIC: {
+                isPublic = true;
+                break;
+            }
             case TAG_NAMESPACE: {
                 identifier += parseeResult.getToken()->getLexme();
                 identifier += "::";
@@ -1606,7 +1637,16 @@ shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
         }
     }
 
-    return make_shared<StatementVariableDeclaration>(identifier, valueType, location);
+    return make_shared<StatementVariableDeclaration>(
+        shouldExport,
+        isPublic,
+        VariableKind::MODULE,
+        identifier,
+        "",
+        false,
+        valueType,
+        location
+    );
 }
 
 // Expressions

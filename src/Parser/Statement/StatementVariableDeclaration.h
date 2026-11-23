@@ -7,18 +7,20 @@
 
 class ValueType;
 
+enum class VariableKind {
+    MODULE,
+    BLOB,
+    PROTO
+};
+
 class StatementVariableDeclaration: public Statement {
 friend class Analyzer;
 
 public:
     StatementVariableDeclaration(
-        const std::string &identifier,
-        std::shared_ptr<ValueType> valueType,
-        std::shared_ptr<Location> location
-    );
-
-    StatementVariableDeclaration(
         bool shouldExport,
+        bool isPublic,
+        VariableKind kind,
         const std::string &identifier,
         const std::string &moduleName,
         bool isRoot,
@@ -27,6 +29,8 @@ public:
     );
 
     bool getShouldExport() const;
+    bool getIsPublic() const;
+    VariableKind getKind() const;
     std::string getIdentifier() const;
     std::string getGlobalIdentifier() const;
     std::string getModuleName() const;
@@ -36,6 +40,8 @@ public:
 
 private:
     bool shouldExport;
+    bool isPublic;
+    VariableKind kind;
     std::string identifier;
     std::string moduleName;
     bool isRoot;

@@ -15,6 +15,8 @@ friend class Analyzer;
 public:
     StatementVariable(
         bool shouldExport,
+        bool isPublic,
+        VariableKind kind,
         const std::string &identifier,
         std::shared_ptr<ValueType> valueType,
         std::shared_ptr<Expression> expression,
@@ -22,6 +24,8 @@ public:
     );
 
     bool getShouldExport() const;
+    bool getIsPublic() const;
+    VariableKind getKind() const;
     std::string getIdentifier() const;
     std::string getGlobalIdentifier() const;
     std::string getModuleName() const;
@@ -35,6 +39,8 @@ public:
 
 private:
     bool shouldExport;
+    bool isPublic;
+    VariableKind kind;
     std::string identifier;
     std::string moduleName;
     bool isRoot;

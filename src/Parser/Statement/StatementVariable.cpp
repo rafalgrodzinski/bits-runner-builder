@@ -8,6 +8,8 @@ using namespace std;
 
 StatementVariable::StatementVariable(
     bool shouldExport,
+    bool isPublic,
+    VariableKind kind,
     const string &identifier,
     shared_ptr<ValueType> valueType,
     shared_ptr<Expression> expression,
@@ -15,12 +17,22 @@ StatementVariable::StatementVariable(
 ):
 Statement(StatementKind::VARIABLE, location),
 shouldExport(shouldExport),
+isPublic(isPublic),
+kind(kind),
 identifier(identifier),
 valueType(valueType),
 expression(expression) { }
 
 bool StatementVariable::getShouldExport() const {
     return shouldExport;
+}
+
+bool StatementVariable::getIsPublic() const {
+    return isPublic;
+}
+
+VariableKind StatementVariable::getKind() const {
+    return kind;
 }
 
 string StatementVariable::getIdentifier() const {
@@ -67,6 +79,8 @@ shared_ptr<Expression> StatementVariable::getExpression() const {
 shared_ptr<StatementVariableDeclaration> StatementVariable::getDeclaration() const {
     return make_shared<StatementVariableDeclaration>(
         shouldExport,
+        isPublic,
+        kind,
         identifier,
         moduleName,
         isRoot,
