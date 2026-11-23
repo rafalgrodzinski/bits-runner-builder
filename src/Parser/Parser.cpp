@@ -469,7 +469,9 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
             case TAG_FIELD: {
                 switch (parseeResult.getStatement()->getKind()) {
                     case StatementKind::VARIABLE_DECLARATION: {
-                        statementVariableDeclarations.push_back(dynamic_pointer_cast<StatementVariableDeclaration>(parseeResult.getStatement()));
+                        shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(parseeResult.getStatement());
+                        statementVariableDeclaration->kind = VariableKind::BLOB;
+                        statementVariableDeclarations.push_back(statementVariableDeclaration);
                         break;
                     }
                     case StatementKind::FUNCTION: {
@@ -1179,7 +1181,9 @@ shared_ptr<Statement> Parser::matchStatementProto() {
             case TAG_STATEMENT_IN_PROTO: {
                 switch (parseeResult.getStatement()->getKind()) {
                     case StatementKind::VARIABLE_DECLARATION: {
-                        variableStatementDeclarations.push_back(dynamic_pointer_cast<StatementVariableDeclaration>(parseeResult.getStatement()));
+                        shared_ptr<StatementVariableDeclaration> statementVariableDeclaration = dynamic_pointer_cast<StatementVariableDeclaration>(parseeResult.getStatement());
+                        statementVariableDeclaration->kind = VariableKind::PROTO;
+                        variableStatementDeclarations.push_back(statementVariableDeclaration);
                         break;
                     }
                     case StatementKind::FUNCTION_DECLARATION: {

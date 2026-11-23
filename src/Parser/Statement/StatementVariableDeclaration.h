@@ -15,6 +15,7 @@ enum class VariableKind {
 
 class StatementVariableDeclaration: public Statement {
 friend class Analyzer;
+friend class Parser;
 
 public:
     StatementVariableDeclaration(

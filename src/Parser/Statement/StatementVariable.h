@@ -11,6 +11,7 @@ class ValueType;
 
 class StatementVariable: public Statement {
 friend class Analyzer;
+friend class Parser;
 
 public:
     StatementVariable(

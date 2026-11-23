@@ -2,5 +2,7 @@
 
 @export main fun
     ta blob<@TestA::TestA>
-    ta.abc()
+    //ta.abc()
+    //@TestA::dummy()
+    //ta.value
 ;

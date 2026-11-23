@@ -135,6 +135,7 @@ private:
     // Pattern
     void checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<ValueType> switchValueType);
 
+    void markErrorInvalidAccess(std::shared_ptr<Location> location, const std::string &name);
     void markErrorInvalidAttribute(std::shared_ptr<Location> location, const std::string &name);
     void markErrorInvalidArgumentsCount(std::shared_ptr<Location> location, int actulCount, int expectedCount);
     void markErrorInvalidBuiltIn(std::shared_ptr<Location> location, const std::string &builtInName, std::shared_ptr<ValueType> type);

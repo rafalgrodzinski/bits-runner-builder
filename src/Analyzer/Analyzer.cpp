@@ -74,11 +74,15 @@ void Analyzer::checkModule() {
         checkStatement(statement, nullptr);
 
     // check blob member functions
-    for (shared_ptr<Statement> headerStatement : module->getStatements()) {
-        if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
-            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
-                checkStatement(statementFunction);
-            }
+    for (shared_ptr<Statement> statement : module->getStatements()) {
+        if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement)) {
+            scope->level([&]() -> bool {
+                // Keep track of the current blob so we can veriffy correct access for non-public fields
+                scope->blobScope->registerContextBlobName(statementBlob->getSymbolName()->getGlobalName());
+                for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
+                    checkStatement(statementFunction);
+                }
+            });
         }
     }
 
@@ -290,19 +294,19 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     }
 
     // register blob fields in scope
-    vector<pair<string, shared_ptr<ValueType>>> fields;
+    vector<AnalyzerScopeBlob::Field> fields;
 
     // extract variable fields
     for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations())
-        fields.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
+        fields.emplace_back(statementVariableDeclaration->getIsPublic(), statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType());
 
     // then function fields
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions())
-        fields.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
+        fields.emplace_back(statementFunction->getIsPublic(), statementFunction->getName(), statementFunction->getValueType());
 
     // check each of the extracted fields's type
     for (auto &field : fields) {
-        if (typeForCheckedValueType(field.second, true) == nullptr)
+        if (typeForCheckedValueType(field.valueType, true) == nullptr)
             return;
     }
 
@@ -664,6 +668,18 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
+    // check attributes
+    if (statementVariable->getKind() != VariableKind::MODULE && statementVariable->getShouldExport()) {
+        markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
+        return;
+    }
+
+    if (statementVariable->getKind() != VariableKind::BLOB && statementVariable->getIsPublic()) {
+        markErrorInvalidAttribute(statementVariable->getLocation(), "@pub");
+        return;
+    }
+
+    // resolve value type
     statementVariable->valueType = typeForCheckedValueType(statementVariable->getValueType(), false);
     if (statementVariable->getValueType() == nullptr)
         return;
@@ -704,7 +720,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         return;
     }
 
-    // try registering in scope*/
+    // try registering in scope
     AnalyzerScopeRegisterResult registerResult = scope->variableScope->registerValueType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true);
     if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
         markErrorInvalidRegistration(statementVariable->getLocation(), statementVariable->getIdentifier(), registerResult);
@@ -713,6 +729,18 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
+    // check attributes
+    if (statementVariableDeclaration->getKind() != VariableKind::MODULE && statementVariableDeclaration->getShouldExport()) {
+        markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
+        return;
+    }
+
+    if (statementVariableDeclaration->getKind() != VariableKind::BLOB && statementVariableDeclaration->getIsPublic()) {
+        markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@pub");
+        return;
+    }
+
+    // resolve value type
     statementVariableDeclaration->valueType = typeForCheckedValueType(statementVariableDeclaration->getValueType(), false);
     if (statementVariableDeclaration->getValueType() == nullptr)
         return;
@@ -1309,30 +1337,34 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         } else if (isParentBlob) {
             shared_ptr<ValueTypeBlob> blobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
             string blobName = blobValueType->getSymbolName()->getGlobalName();
-            optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->blobScope->getFields(blobValueType->getSymbolName());
-            if (blobMembers) {
+            optional<vector<AnalyzerScopeBlob::Field>> blobFields = scope->blobScope->getFields(blobValueType->getSymbolName());
+            if (blobFields) {
                 if (!scope->level([&]() -> bool {
                     scope->boxedScope->registerNamedValueTypesMap(*blobValueType->getNamedValueTypeKeys(), blobValueType->getNamedValueTypes());
 
                     string nameVariable = expressionValue->getIdentifier();
                     string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
-                    for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
-                        if (nameVariable == blobMember.first || nameFunction == blobMember.first) {
-                            // found corresponding blob, decide if it's a simple or data access
+                    for (AnalyzerScopeBlob::Field &blobField : *blobFields) {
+                        if (nameVariable == blobField.name || nameFunction == blobField.name) {
+                            // found corresponding blob, check if we can access it
+                            if (blobName != scope->blobScope->getContextBlobName() && !blobField.isPublic) {
+                                markErrorInvalidAccess(expressionValue->getLocation(), expressionValue->getIdentifier());
+                            }
+                            // then decide if it's a simple or data access
                             switch (expressionValue->getValueKind()) {
                                 case ExpressionValueKind::SIMPLE: {
                                     // resolve type of named type if required
-                                    expressionValue->valueType = typeForCheckedValueType(blobMember.second, false);
+                                    expressionValue->valueType = typeForCheckedValueType(blobField.valueType, false);
                                     return true;
                                 }
                                 case ExpressionValueKind::DATA: {
                                     // make sure that the indexed value is an array
-                                    shared_ptr<ValueType> valueType = blobMember.second;
+                                    shared_ptr<ValueType> valueType = blobField.valueType;
                                     if (valueType->getKind() != ValueTypeKind::DATA) {
                                         markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
                                         return false;
                                     }
-                                    expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobMember.second)->getElementValueType();
+                                    expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobField.valueType)->getElementValueType();
                                     expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
                                     // make sure that the index expression evaluates to an uint
                                     shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
@@ -2580,6 +2612,11 @@ void Analyzer::checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<Va
         markErrorInvalidPattern(pattern->getLocation(), pattern);
         return;
     }
+}
+
+void Analyzer::markErrorInvalidAccess(std::shared_ptr<Location> location, const std::string &name) {
+    string message = format("{} is not accessible in this scope", name);
+    errors.push_back(Error::error(location, message));
 }
 
 void Analyzer::markErrorInvalidAttribute(shared_ptr<Location> location, const string &name) {
