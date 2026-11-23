@@ -4,7 +4,7 @@ subA blob
 ;
 
 @ TestA blob
-    //sub blob<subA>
+    sub blob<subA>
 
     @ value u32
     @ abc fun
