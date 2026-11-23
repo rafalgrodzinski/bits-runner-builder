@@ -439,7 +439,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> stat
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes funLinkage = statementFunctionDeclaration->getShouldExport() ?
+    llvm::GlobalValue::LinkageTypes funLinkage = statementFunctionDeclaration->getShouldExport() || statementFunctionDeclaration->getIsPublic() ?
         llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 

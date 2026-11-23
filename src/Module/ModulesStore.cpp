@@ -106,7 +106,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     moduleLocalStatements.push_back(statementBlobFunctionDeclaration);
 
                     // handle exported & public functions
-                    if (statementBlob->getShouldExport())
+                    if (statementBlob->getShouldExport() && statementBlobFunction->getIsPublic())
                        moduleExportedStatements.push_back(statementBlobFunctionDeclaration);
                 }
 
