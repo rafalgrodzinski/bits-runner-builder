@@ -7,8 +7,7 @@ using namespace std;
 // MARK: - Public
 
 StatementVariable::StatementVariable(
-    bool shouldExport,
-    bool isPublic,
+    bool isVisibleOutside,
     VariableKind kind,
     const string &identifier,
     shared_ptr<ValueType> valueType,
@@ -16,19 +15,14 @@ StatementVariable::StatementVariable(
     shared_ptr<Location> location
 ):
 Statement(StatementKind::VARIABLE, location),
-shouldExport(shouldExport),
-isPublic(isPublic),
+isVisibleOutside(isVisibleOutside),
 kind(kind),
 identifier(identifier),
 valueType(valueType),
 expression(expression) { }
 
-bool StatementVariable::getShouldExport() const {
-    return shouldExport;
-}
-
-bool StatementVariable::getIsPublic() const {
-    return isPublic;
+bool StatementVariable::getIsVisibleOutside() const {
+    return isVisibleOutside;
 }
 
 VariableKind StatementVariable::getKind() const {
@@ -78,8 +72,7 @@ shared_ptr<Expression> StatementVariable::getExpression() const {
 
 shared_ptr<StatementVariableDeclaration> StatementVariable::getDeclaration() const {
     return make_shared<StatementVariableDeclaration>(
-        shouldExport,
-        isPublic,
+        isVisibleOutside,
         kind,
         identifier,
         moduleName,

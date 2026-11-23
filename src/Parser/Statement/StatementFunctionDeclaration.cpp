@@ -9,8 +9,7 @@ using namespace std;
 // MARK: - Public
 
 StatementFunctionDeclaration::StatementFunctionDeclaration(
-    bool shouldExport,
-    bool isPublic,
+    bool isVisibleOutside,
     FunctionKind kind,
     const string &name,
     const string &moduleName,
@@ -19,20 +18,15 @@ StatementFunctionDeclaration::StatementFunctionDeclaration(
     shared_ptr<Location> location
 ):
 Statement(StatementKind::FUNCTION_DECLARATION, location),
-shouldExport(shouldExport),
-isPublic(isPublic),
+isVisibleOutside(isVisibleOutside),
 kind(kind),
 name(name),
 moduleName(moduleName),
 arguments(arguments),
 returnValueType(returnValueType) { }
 
-bool StatementFunctionDeclaration::getShouldExport() const {
-    return shouldExport;
-}
-
-bool StatementFunctionDeclaration::getIsPublic() const {
-    return isPublic;
+bool StatementFunctionDeclaration::getIsVisibleOutside() const {
+    return isVisibleOutside;
 }
 
 FunctionKind StatementFunctionDeclaration::getKind() const {

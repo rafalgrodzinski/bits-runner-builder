@@ -10,3 +10,4 @@ Available for:
 Changelist for [VERSION](https://github.com/rafalgrodzinski/bits-runner-builder/pull/235):
 - Created file handling library
 - Common casting of enum fields to enums
+- Both exported and public attributes are now marked with a single `@`

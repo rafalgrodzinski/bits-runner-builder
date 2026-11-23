@@ -15,8 +15,7 @@ friend class Parser;
 
 public:
     StatementFunction(
-        bool shouldExport,
-        bool isPublic,
+        bool isVisibleOutside,
         FunctionKind kind,
         const std::string &name,
         const std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> &arguments,
@@ -25,8 +24,7 @@ public:
         std::shared_ptr<Location> location
     );
 
-    bool getShouldExport() const;
-    bool getIsPublic() const;
+    bool getIsVisibleOutside() const;
     FunctionKind getKind() const;
     std::string getName() const;
     std::string getGlobalName() const;
@@ -39,8 +37,7 @@ public:
     std::shared_ptr<StatementFunctionDeclaration> getDeclaration() const;
 
 private:
-    bool shouldExport;
-    bool isPublic;
+    bool isVisibleOutside;
     FunctionKind kind;
     std::string name;
     std::string moduleName;

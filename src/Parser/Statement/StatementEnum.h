@@ -19,21 +19,21 @@ friend class Analyzer;
 
 public:
     StatementEnum(
-        bool shouldExport,
+        bool isVisibleOutside,
         const std::string &name,
         const std::vector<std::string> &namedValueTypeKeys,
         const std::vector<EnumField> &fields,
         std::shared_ptr<Location> location
     );
 
-    bool getShouldExport() const;
+    bool getIsVisibleOutside() const;
     std::shared_ptr<SymbolName> getSymbolName() const;
     void setModuleName(const std::string &moduleName);
     std::vector<std::string> getNamedValueTypeKeys() const;
     std::vector<EnumField> getFields() const;
 
 private:
-    bool shouldExport;
+    bool isVisibleOutside;
     std::shared_ptr<SymbolName> symbolName;
     std::vector<std::string> namedValueTypeKeys;
     std::vector<EnumField> fields;

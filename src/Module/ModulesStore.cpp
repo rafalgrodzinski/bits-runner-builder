@@ -71,9 +71,9 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleLocalStatements.push_back(statementBlob);
 
                 // exported statements
-                if (statementBlob->getShouldExport()) {
+                if (statementBlob->getIsVisibleOutside()) {
                     shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
-                        statementBlob->getShouldExport(),
+                        statementBlob->getIsVisibleOutside(),
                         statementBlob->getSymbolName(),
                         statementBlob->getNamedTypeKeys(),
                         statementBlob->getProtoSymbolNames(),
@@ -92,8 +92,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 // create delclarations for blob functions
                 for (shared_ptr<StatementFunction> statementBlobFunction : statementBlob->getStatementFunctions()) {
                     shared_ptr<StatementFunctionDeclaration> statementBlobFunctionDeclaration = make_shared<StatementFunctionDeclaration>(
-                        statementBlobFunction->getShouldExport(),
-                        statementBlobFunction->getIsPublic(),
+                        statementBlobFunction->getIsVisibleOutside(),
                         statementBlobFunction->getKind(),
                         statementBlobFunction->getName(),
                         statementBlobFunction->getModuleName(),
@@ -105,8 +104,8 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     // local statements
                     moduleLocalStatements.push_back(statementBlobFunctionDeclaration);
 
-                    // handle exported & public functions
-                    if (statementBlob->getShouldExport() && statementBlobFunction->getIsPublic())
+                    // handle xported & public functionse
+                    if (statementBlob->getIsVisibleOutside() && statementBlobFunction->getIsVisibleOutside())
                        moduleExportedStatements.push_back(statementBlobFunctionDeclaration);
                 }
 
@@ -119,7 +118,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleLocalStatements.push_back(statementEnum);
 
                 // exported statements
-                if (statementEnum->getShouldExport())
+                if (statementEnum->getIsVisibleOutside())
                     moduleExportedStatements.push_back(statementEnum);
 
                 break;
@@ -133,7 +132,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleLocalStatements.push_back(statementFunction);
 
                 // exported statements
-                if (statementFunction->getShouldExport())
+                if (statementFunction->getIsVisibleOutside())
                    moduleExportedStatements.push_back(statementFunctionDeclaration);
 
                 break;
@@ -165,7 +164,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleLocalStatements.push_back(statementProto);
 
                 // exported statements
-                if (statementProto->getShouldExport()) {
+                if (statementProto->getIsVisibleOutside()) {
                     // append proto statement
                     moduleExportedStatements.push_back(statementProto);
                     // declaration doesn't contain any types, so it's fine like this
@@ -181,7 +180,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleLocalStatements.push_back(statementRawFunction);
 
                 // exported statemetns
-                if (statementRawFunction->getShouldExport())
+                if (statementRawFunction->getIsVisibleOutside())
                     moduleExportedStatements.push_back(statementRawFunction);
 
                 break;
@@ -194,7 +193,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleLocalStatements.push_back(statementVariable);
 
                 // exported statements
-                if (statementVariable->getShouldExport())
+                if (statementVariable->getIsVisibleOutside())
                    moduleExportedStatements.push_back(statementVariableDeclaration);
 
                 break;

@@ -1,6 +1,6 @@
 @import TestA
 
-@export main fun
+@ main fun
     ta blob<@TestA::TestA>
     //ta.abc()
     //@TestA::dummy()

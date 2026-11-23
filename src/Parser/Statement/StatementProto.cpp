@@ -8,20 +8,20 @@ using namespace std;
 // MARK: - Public
 
 StatementProto::StatementProto(
-    bool shouldExport,
+    bool isVisibleOutside,
     const string &name,
     const vector<shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
     const vector<shared_ptr<StatementFunctionDeclaration>> &statementFunctionDeclarations,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::PROTO, location),
-shouldExport(shouldExport),
+isVisibleOutside(isVisibleOutside),
 symbolName(make_shared<SymbolName>(name)),
 statementVariableDeclarations(statementVariableDeclarations),
 statementFunctionDeclarations(statementFunctionDeclarations) { }
 
-bool StatementProto::getShouldExport() const {
-    return shouldExport;
+bool StatementProto::getIsVisibleOutside() const {
+    return isVisibleOutside;
 }
 
 shared_ptr<SymbolName> StatementProto::getSymbolName() const {
@@ -42,7 +42,7 @@ vector<shared_ptr<StatementFunctionDeclaration>> StatementProto::getStatementFun
 
 shared_ptr<StatementProtoDeclaration> StatementProto::getDeclaration() const {
     return make_shared<StatementProtoDeclaration>(
-        shouldExport,
+        isVisibleOutside,
         symbolName,
         getLocation()
     );

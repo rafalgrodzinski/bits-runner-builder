@@ -8,17 +8,17 @@ class SymbolName;
 class StatementBlobDeclaration: public Statement {
 public:
     StatementBlobDeclaration(
-        bool shouldExport,
+        bool isVisibleOutside,
         std::shared_ptr<SymbolName> symbolName,
         std::shared_ptr<Location> location
     );
 
-    bool getShouldExport() const;
+    bool getIsVisibleOutside() const;
     std::shared_ptr<SymbolName> getSymbolName() const;
     std::shared_ptr<SymbolName> getPackedSymbolName() const;
 
 private:
-    bool shouldExport;
+    bool isVisibleOutside;
     std::shared_ptr<SymbolName> symbolName;
 };
 

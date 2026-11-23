@@ -8,7 +8,7 @@ using namespace std;
 // MARK: - Public
 
 StatementRawFunction::StatementRawFunction(
-    bool shouldExport,
+    bool isVisibleOutside,
     const string &name,
     const string &constraints,
     const vector<pair<string, shared_ptr<ValueType>>> &arguments,
@@ -17,15 +17,15 @@ StatementRawFunction::StatementRawFunction(
     shared_ptr<Location> location
 ):
 Statement(StatementKind::RAW_FUNCTION, location),
-shouldExport(shouldExport),
+isVisibleOutside(isVisibleOutside),
 name(name),
 constraints(constraints),
 arguments(arguments),
 returnValueType(returnValueType),
 rawSource(rawSource) { }
 
-bool StatementRawFunction::getShouldExport() const {
-    return shouldExport;
+bool StatementRawFunction::getIsVisibleOutside() const {
+    return isVisibleOutside;
 }
 
 string StatementRawFunction::getName() const {

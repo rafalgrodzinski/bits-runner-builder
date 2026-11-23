@@ -19,8 +19,7 @@ friend class Parser;
 
 public:
     StatementVariableDeclaration(
-        bool shouldExport,
-        bool isPublic,
+        bool isVisibleOutside,
         VariableKind kind,
         const std::string &identifier,
         const std::string &moduleName,
@@ -29,8 +28,7 @@ public:
         std::shared_ptr<Location> location
     );
 
-    bool getShouldExport() const;
-    bool getIsPublic() const;
+    bool getIsVisibleOutside() const;
     VariableKind getKind() const;
     std::string getIdentifier() const;
     std::string getGlobalIdentifier() const;
@@ -40,8 +38,7 @@ public:
     std::shared_ptr<ValueType> getValueType() const;
 
 private:
-    bool shouldExport;
-    bool isPublic;
+    bool isVisibleOutside;
     VariableKind kind;
     std::string identifier;
     std::string moduleName;

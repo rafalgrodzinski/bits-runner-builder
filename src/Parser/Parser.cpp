@@ -332,7 +332,7 @@ shared_ptr<Statement> Parser::matchStatementAssignment() {
 
 shared_ptr<Statement> Parser::matchStatementBlob() {
     enum Tag {
-        TAG_SHOULD_EXPORT,
+        TAG_IS_VISIBLE_OUTSIDE,
         TAG_NAMESPACE,
         TAG_NAME,
         TAG_TYPE_ARGUMENT_NAME,
@@ -345,7 +345,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
 
     static const vector<Parsee> parsees = {
         // export
-        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        Parsee::tokenParsee(TokenKind::META, ParseeLevel::OPTIONAL, true, TAG_IS_VISIBLE_OUTSIDE),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -429,7 +429,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport = false;
+    bool isVisibleOutside = false;
     string name;
     vector<string> typeArgumentNames;
     vector<shared_ptr<StatementVariableDeclaration>> statementVariableDeclarations;
@@ -439,8 +439,8 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
-            case TAG_SHOULD_EXPORT: {
-                shouldExport = true;
+            case TAG_IS_VISIBLE_OUTSIDE: {
+                isVisibleOutside = true;
                 break;
             }
             case TAG_NAMESPACE: {
@@ -498,7 +498,7 @@ shared_ptr<Statement> Parser::matchStatementBlob() {
     }
 
     return make_shared<StatementBlob>(
-        shouldExport,
+        isVisibleOutside,
         name,
         typeArgumentNames,
         protoNames,
@@ -531,7 +531,7 @@ shared_ptr<Statement> Parser::matchStatementBlock(vector<TokenKind> terminalToke
 
 shared_ptr<Statement> Parser::matchStatementEnum() {
     enum Tag {
-        TAG_SHOULD_EXPORT,
+        TAG_IS_VISIBLE_OUTSIDE,
         TAG_IDENT_NAMESPACE,
         TAG_IDENT_NAME,
         TAG_NAMED_TYPE_KEY,
@@ -546,7 +546,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
 
     static const vector<Parsee> parsees = {
         // export
-        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        Parsee::tokenParsee(TokenKind::META, ParseeLevel::OPTIONAL, true, TAG_IS_VISIBLE_OUTSIDE),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -608,7 +608,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport = false;
+    bool isVisibleOutside = false;
     string name = "";
     vector<string> namedTypeKeys;
     vector<EnumField> fields;
@@ -618,8 +618,8 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_SHOULD_EXPORT: {
-                shouldExport = true;
+            case TAG_IS_VISIBLE_OUTSIDE: {
+                isVisibleOutside = true;
                 break;
             }
             case TAG_IDENT_NAMESPACE: {
@@ -672,7 +672,7 @@ shared_ptr<Statement> Parser::matchStatementEnum() {
         }
     }
 
-    return make_shared<StatementEnum>(shouldExport, name, namedTypeKeys, fields, location);
+    return make_shared<StatementEnum>(isVisibleOutside, name, namedTypeKeys, fields, location);
 }
 
 std::shared_ptr<Statement> Parser::matchStatementExchange() {
@@ -723,8 +723,7 @@ shared_ptr<Statement> Parser::matchStatementExpression() {
 
 shared_ptr<Statement> Parser::matchStatementFunction() {
     enum {
-        TAG_SHOULD_EXPORT,
-        TAG_IS_PUBLIC,
+        TAG_IS_VISIBLE_OUTSIDE,
         TAG_NAMESPACE,
         TAG_NAME,
         TAG_ARGUMENT_IDENTIFIER,
@@ -735,10 +734,8 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
-        // should export?
-        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-        // is public?
-        Parsee::tokenParsee(TokenKind::M_PUBLIC, ParseeLevel::OPTIONAL, true, TAG_IS_PUBLIC),
+        // is visible outside?
+        Parsee::tokenParsee(TokenKind::META, ParseeLevel::OPTIONAL, true, TAG_IS_VISIBLE_OUTSIDE),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -784,8 +781,7 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport = false;
-    bool isPublic = false;
+    bool isVisibleOutside = false;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueTypeSimple::NONE;
@@ -794,12 +790,8 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
-            case TAG_SHOULD_EXPORT: {
-                shouldExport = true;
-                break;
-            }
-            case TAG_IS_PUBLIC: {
-                isPublic = true;
+            case TAG_IS_VISIBLE_OUTSIDE: {
+                isVisibleOutside = true;
                 break;
             }
             case TAG_NAMESPACE: {
@@ -836,13 +828,12 @@ shared_ptr<Statement> Parser::matchStatementFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementFunction>(shouldExport, isPublic, FunctionKind::MODULE, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), location);
+    return make_shared<StatementFunction>(isVisibleOutside, FunctionKind::MODULE, name, arguments, returnType, dynamic_pointer_cast<StatementBlock>(statementBlock), location);
 }
 
 shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     enum {
-        TAG_SHOULD_EXPORT,
-        TAG_IS_PUBLIC,
+        TAG_IS_VISIBLE_OUTSIDE,
         TAG_NAME,
         TAG_ARGUMENT_IDENTIFIER,
         TAG_ARGUMENT_TYPE,
@@ -852,10 +843,8 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
-        // should export?
-        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-        // is public?
-        Parsee::tokenParsee(TokenKind::M_PUBLIC, ParseeLevel::OPTIONAL, true, TAG_IS_PUBLIC),
+        // is visible outside
+        Parsee::tokenParsee(TokenKind::META, ParseeLevel::OPTIONAL, true, TAG_IS_VISIBLE_OUTSIDE),
         // identifier
         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
         Parsee::tokenParsee(TokenKind::FUNCTION, ParseeLevel::REQUIRED, false),
@@ -892,8 +881,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport = false;
-    bool isPublic = false;
+    bool isVisibleOutside = false;
     string name;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
     shared_ptr<ValueType> returnType = ValueTypeSimple::NONE;
@@ -902,12 +890,8 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
     for (int i=0; i<resultsGroup.getResults().size(); i++) {
         ParseeResult parseeResult = resultsGroup.getResults().at(i);
         switch (parseeResult.getTag()) {
-            case TAG_SHOULD_EXPORT: {
-                shouldExport = true;
-                break;
-            }
-            case TAG_IS_PUBLIC: {
-                isPublic = true;
+            case TAG_IS_VISIBLE_OUTSIDE: {
+                isVisibleOutside = true;
                 break;
             }
             case TAG_NAME: {
@@ -928,7 +912,7 @@ shared_ptr<Statement> Parser::matchStatementFunctionDeclaration() {
         }
     }
 
-    return make_shared<StatementFunctionDeclaration>(shouldExport, isPublic, FunctionKind::MODULE, name, "", arguments, returnType, location);
+    return make_shared<StatementFunctionDeclaration>(isVisibleOutside, FunctionKind::MODULE, name, "", arguments, returnType, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementMetaExternFunction() {
@@ -1130,7 +1114,7 @@ shared_ptr<Statement> Parser::matchStatementModule() {
 
 shared_ptr<Statement> Parser::matchStatementProto() {
     enum Tag {
-        TAG_SHOULD_EXPORT,
+        TAG_IS_VISIBLE_OUTSIDE,
         TAG_NAME,
         TAG_STATEMENT_IN_PROTO
     };
@@ -1139,7 +1123,7 @@ shared_ptr<Statement> Parser::matchStatementProto() {
 
     static const vector<Parsee> parsees = {
         // exports
-        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        Parsee::tokenParsee(TokenKind::META, ParseeLevel::OPTIONAL, true, TAG_IS_VISIBLE_OUTSIDE),
         // identifier
         Parsee::tokenParsee(TokenKind::IDENTIFIER, ParseeLevel::REQUIRED, true, TAG_NAME),
         Parsee::tokenParsee(TokenKind::PROTO, ParseeLevel::REQUIRED, false),
@@ -1163,15 +1147,15 @@ shared_ptr<Statement> Parser::matchStatementProto() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport = false;
+    bool isVisibleOutside = false;
     string name;
     vector<shared_ptr<StatementVariableDeclaration>> variableStatementDeclarations;
     vector<shared_ptr<StatementFunctionDeclaration>> statementFunctionDeclarations;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_SHOULD_EXPORT: {
-                shouldExport = true;
+            case TAG_IS_VISIBLE_OUTSIDE: {
+                isVisibleOutside = true;
                 break;
             }
             case TAG_NAME: {
@@ -1207,12 +1191,12 @@ shared_ptr<Statement> Parser::matchStatementProto() {
         }
     }
 
-    return make_shared<StatementProto>(shouldExport, name, variableStatementDeclarations, statementFunctionDeclarations, location);
+    return make_shared<StatementProto>(isVisibleOutside, name, variableStatementDeclarations, statementFunctionDeclarations, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementRawFunction() {
     enum {
-        TAG_SHOULD_EXPORT,
+        TAG_IS_VISIBLE_OUTSIDE,
         TAG_NAMESPACE,
         TAG_NAME,
         TAG_CONSTRAINTS,
@@ -1224,8 +1208,8 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
-        // export
-        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
+        // is visible outside?
+        Parsee::tokenParsee(TokenKind::META, ParseeLevel::OPTIONAL, true, TAG_IS_VISIBLE_OUTSIDE),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -1276,7 +1260,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
     };
     ParseeResultsGroup resultsGroup = parseeResultsGroupForParsees(parsees);
 
-    bool shouldExport = false;
+    bool isVisibleOutside = false;
     string name;
     string constraints;
     vector<pair<string, shared_ptr<ValueType>>> arguments;
@@ -1288,8 +1272,8 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
             for (int i=0; i<resultsGroup.getResults().size(); i++) {
                 ParseeResult parseeResult = resultsGroup.getResults().at(i);
                 switch (parseeResult.getTag()) {
-                    case TAG_SHOULD_EXPORT: {
-                        shouldExport = true;
+                    case TAG_IS_VISIBLE_OUTSIDE: {
+                        isVisibleOutside = true;
                         break;
                     }
                     case TAG_NAMESPACE: {
@@ -1340,7 +1324,7 @@ shared_ptr<Statement> Parser::matchStatementRawFunction() {
         return nullptr;
     }
 
-    return make_shared<StatementRawFunction>(shouldExport, name, constraints, arguments, returnType, rawSource, location);
+    return make_shared<StatementRawFunction>(isVisibleOutside, name, constraints, arguments, returnType, rawSource, location);
 }
 
 shared_ptr<Statement> Parser::matchStatementRepeat() {
@@ -1491,8 +1475,7 @@ shared_ptr<Statement> Parser::matchStatementReturn() {
 
 shared_ptr<Statement> Parser::matchStatementVariable() {
     enum Tag {
-        TAG_SHOULD_EXPORT,
-        TAG_IS_PUBLIC,
+        TAG_IS_VISIBLE_OUTSIDE,
         TAG_NAMESPACE,
         TAG_IDENTIFIER,
         TAG_VALUE_TYPE,
@@ -1502,10 +1485,8 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
-        // should export ?
-        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-        // is public?
-        Parsee::tokenParsee(TokenKind::M_PUBLIC, ParseeLevel::OPTIONAL, true, TAG_IS_PUBLIC),
+        // is visible outside?
+        Parsee::tokenParsee(TokenKind::META, ParseeLevel::OPTIONAL, true, TAG_IS_VISIBLE_OUTSIDE),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -1530,20 +1511,15 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport = false;
-    bool isPublic = false;
+    bool isVisibleOutside = false;
     string identifier;
     shared_ptr<ValueType> valueType;
     shared_ptr<Expression> expression;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_SHOULD_EXPORT: {
-                shouldExport =  true;
-                break;
-            }
-            case TAG_IS_PUBLIC: {
-                isPublic = true;
+            case TAG_IS_VISIBLE_OUTSIDE: {
+                isVisibleOutside = true;
                 break;
             }
             case TAG_NAMESPACE: {
@@ -1567,8 +1543,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
     }
 
     return make_shared<StatementVariable>(
-        shouldExport,
-        isPublic,
+        isVisibleOutside,
         VariableKind::MODULE,
         identifier,
         valueType,
@@ -1579,7 +1554,7 @@ shared_ptr<Statement> Parser::matchStatementVariable() {
 
 shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
     enum Tag {
-        TAG_SHOULD_EXPORT,
+        TAG_IS_VISIBLE_OUTSIDE,
         TAG_IS_PUBLIC,
         TAG_NAMESPACE,
         TAG_IDENTIFIER,
@@ -1589,10 +1564,8 @@ shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
     shared_ptr<Location> location = tokens.at(currentIndex)->getLocation();
 
     static const vector<Parsee> parsees = {
-        // should export ?
-        Parsee::tokenParsee(TokenKind::M_EXPORT, ParseeLevel::OPTIONAL, true, TAG_SHOULD_EXPORT),
-        // is public?
-        Parsee::tokenParsee(TokenKind::M_PUBLIC, ParseeLevel::OPTIONAL, true, TAG_IS_PUBLIC),
+        // is visible outside ?
+        Parsee::tokenParsee(TokenKind::META, ParseeLevel::OPTIONAL, true, TAG_IS_VISIBLE_OUTSIDE),
         // identifier - namespaces
         Parsee::repeatedGroupParsee(
             {
@@ -1610,19 +1583,14 @@ shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
     if (resultsGroup.getKind() != ParseeResultsGroupKind::SUCCESS)
         return nullptr;
 
-    bool shouldExport = false;
-    bool isPublic = false;
+    bool isVisibleOutside = false;
     string identifier;
     shared_ptr<ValueType> valueType = nullptr;
 
     for (ParseeResult &parseeResult : resultsGroup.getResults()) {
         switch (parseeResult.getTag()) {
-            case TAG_SHOULD_EXPORT: {
-                shouldExport =  true;
-                break;
-            }
-            case TAG_IS_PUBLIC: {
-                isPublic = true;
+            case TAG_IS_VISIBLE_OUTSIDE: {
+                isVisibleOutside =  true;
                 break;
             }
             case TAG_NAMESPACE: {
@@ -1642,8 +1610,7 @@ shared_ptr<Statement> Parser::matchStatementVariableDeclaration() {
     }
 
     return make_shared<StatementVariableDeclaration>(
-        shouldExport,
-        isPublic,
+        isVisibleOutside,
         VariableKind::MODULE,
         identifier,
         "",

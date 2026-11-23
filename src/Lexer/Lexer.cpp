@@ -330,9 +330,6 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
 
     // meta
-    if (token = match(TokenKind::M_EXPORT, "@export", true))
-        return token;
-
     if (token = match(TokenKind::M_EXTERN, "@extern", true))
         return token;
 
@@ -340,9 +337,6 @@ shared_ptr<Token> Lexer::nextToken() {
         return token;
         
     if (token = match(TokenKind::M_MODULE, "@module", true))
-        return token;
-
-    if (token = match(TokenKind::M_PUBLIC, "@pub", true))
         return token;
 
     if (token = match(TokenKind::META, "@", false))

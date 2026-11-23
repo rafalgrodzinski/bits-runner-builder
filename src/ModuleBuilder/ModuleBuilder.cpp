@@ -314,7 +314,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
 void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
     // linkage
     llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
-    if (statementEnum->getShouldExport())
+    if (statementEnum->getIsVisibleOutside())
         linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage;
 
     // Register enum field tag values
@@ -405,7 +405,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
     // Set attributes
     fun->addFnAttr(llvm::Attribute::NoUnwind);
 
-    if (!statementFunction->getShouldExport())
+    if (!statementFunction->getIsVisibleOutside())
         fun->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Local);
 
     // verify function
@@ -439,7 +439,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> stat
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes funLinkage = statementFunctionDeclaration->getShouldExport() || statementFunctionDeclaration->getIsPublic() ?
+    llvm::GlobalValue::LinkageTypes funLinkage = statementFunctionDeclaration->getIsVisibleOutside() ?
         llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
@@ -698,7 +698,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> stat
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes linkage = statementVariableDeclaration->getShouldExport()  ?
+    llvm::GlobalValue::LinkageTypes linkage = statementVariableDeclaration->getIsVisibleOutside()  ?
         llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
@@ -746,7 +746,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statementV
 
     // linkage
     llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
-    if (statementVariable->getShouldExport())
+    if (statementVariable->getIsVisibleOutside())
         linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage;
 
     // initializer

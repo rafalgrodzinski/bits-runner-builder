@@ -3,11 +3,11 @@
 subA blob
 ;
 
-@export TestA blob
-    sub blob<subA>
+@ TestA blob
+    //sub blob<subA>
 
-    @pub value u32
-    @pub abc fun
+    @ value u32
+    @ abc fun
         it.value
     ;
 ;

@@ -216,12 +216,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
                 }
             }
 
-            // fields should not have @export
-            if (statementVariableDeclaration->getShouldExport()) {
-                markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
-                return false;
-            }
-
             checkStatement(statementVariableDeclaration);
             if (statementVariableDeclaration->getValueType() == nullptr)
                 return false;
@@ -298,11 +292,11 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 
     // extract variable fields
     for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations())
-        fields.emplace_back(statementVariableDeclaration->getIsPublic(), statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType());
+        fields.emplace_back(statementVariableDeclaration->getIsVisibleOutside(), statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType());
 
     // then function fields
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions())
-        fields.emplace_back(statementFunction->getIsPublic(), statementFunction->getName(), statementFunction->getValueType());
+        fields.emplace_back(statementFunction->getIsVisibleOutside(), statementFunction->getName(), statementFunction->getValueType());
 
     // check each of the extracted fields's type
     for (auto &field : fields) {
@@ -407,13 +401,8 @@ void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpressio
 
 void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
     // check attributes
-    if (statementFunction->getKind() != FunctionKind::MODULE && statementFunction->getShouldExport()) {
-        markErrorInvalidAttribute(statementFunction->getLocation(), "@export");
-        return;
-    }
-
-    if (statementFunction->getKind() != FunctionKind::BLOB && statementFunction->getIsPublic()) {
-        markErrorInvalidAttribute(statementFunction->getLocation(), "@pub");
+    if (statementFunction->getKind() == FunctionKind::PROTO && statementFunction->getIsVisibleOutside()) {
+        markErrorInvalidAttribute(statementFunction->getLocation(), "@");
         return;
     }
 
@@ -460,13 +449,8 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
     // check attributes
-    if (statementFunctionDeclaration->getKind() != FunctionKind::MODULE && statementFunctionDeclaration->getShouldExport()) {
+    if (statementFunctionDeclaration->getKind() == FunctionKind::PROTO && statementFunctionDeclaration->getIsVisibleOutside()) {
         markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
-        return;
-    }
-
-    if (statementFunctionDeclaration->getKind() != FunctionKind::BLOB && statementFunctionDeclaration->getIsPublic()) {
-        markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@pub");
         return;
     }
 
@@ -537,12 +521,6 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     // check and verify proto field variables
     if (!scope->level([&]() -> bool {
         for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statement->getStatementVariableDeclarations()) {
-            // fields should not have @export
-            if (statementVariableDeclaration->getShouldExport()) {
-                markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
-                return false;
-            }
-            
             // proto fields have to have an identifier
             if (statementVariableDeclaration->getIdentifier().empty()) {
                 markErrorInvalidName(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier());
@@ -669,13 +647,8 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     // check attributes
-    if (statementVariable->getKind() != VariableKind::MODULE && statementVariable->getShouldExport()) {
+    if (statementVariable->getKind() == VariableKind::PROTO && statementVariable->getIsVisibleOutside()) {
         markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
-        return;
-    }
-
-    if (statementVariable->getKind() != VariableKind::BLOB && statementVariable->getIsPublic()) {
-        markErrorInvalidAttribute(statementVariable->getLocation(), "@pub");
         return;
     }
 
@@ -730,13 +703,8 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     // check attributes
-    if (statementVariableDeclaration->getKind() != VariableKind::MODULE && statementVariableDeclaration->getShouldExport()) {
+    if (statementVariableDeclaration->getKind() == VariableKind::PROTO && statementVariableDeclaration->getIsVisibleOutside()) {
         markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
-        return;
-    }
-
-    if (statementVariableDeclaration->getKind() != VariableKind::BLOB && statementVariableDeclaration->getIsPublic()) {
-        markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@pub");
         return;
     }
 

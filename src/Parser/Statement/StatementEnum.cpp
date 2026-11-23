@@ -5,20 +5,20 @@ using namespace std;
 // MARK: - Public
 
 StatementEnum::StatementEnum(
-    bool shouldExport,
+    bool isVisibleOutside,
     const string &name,
     const vector<string> &namedValueTypeKeys,
     const vector<EnumField> &fields,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::ENUM, location),
-shouldExport(shouldExport),
+isVisibleOutside(isVisibleOutside),
 symbolName(make_shared<SymbolName>(name)),
 namedValueTypeKeys(namedValueTypeKeys),
 fields(fields) { }
 
-bool StatementEnum::getShouldExport() const {
-    return shouldExport;
+bool StatementEnum::getIsVisibleOutside() const {
+    return isVisibleOutside;
 }
 
 shared_ptr<SymbolName> StatementEnum::getSymbolName() const {
