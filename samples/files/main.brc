@@ -1,0 +1,25 @@
+@import B
+
+@ main fun
+    // Open file
+    p_file ptr<blob<@B::File>>
+    p_fsNode ptr<blob<@B::FsNode>> <- @B::FsNode(@B::String("test.txt"))
+    match p_fsNode.val.getFile({}.enum<@B::FsNode::Mode>::Create)
+        enum<@B::Result, ptr<blob<@B::File>>>::Success
+            p_file <- $0.val.ptr<blob<@B::File>>
+        ;
+        enum<@B::Result, ptr<blob<@B::File>>>::Failure
+            @B::String("Failed to create test.txt").println()
+        ;
+    ;
+
+    // Write data
+    dummyData data<u8> <- "Hello, world!"
+    p_file.val.write(0, dummyData.size, dummyData.adr)
+
+    // Read and print data
+    a_buffer a <- @BSys::memAlloc(1024)
+    p_file.val.read(0, 5, a_buffer)
+
+    @B::String(a_buffer.ptr<data<u8>>.val).printlnColor(@B::String::FOREGROUND_MAGENTA)
+;

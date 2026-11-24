@@ -3,10 +3,18 @@
 
 @ Dir blob
     resId u64
+
+    @ init fun: resId u64
+        it.resId <- resId
+    ;
+
+    @ getResId fun -> u64
+        ret it.resId
+    ;
 ;
 
 @ Dir fun: resId u64 -> ptr<blob<Dir>>
     p_dir ptr<blob<Dir>> <- @BSys::memAlloc(blob<Dir>.size).ptr<blob<Dir>>
-    p_dir.val.resId <- resId
+    p_dir.val.init(resId)
     ret p_dir
 ;

@@ -4,21 +4,29 @@
 @ File blob
     resId u64
 
-    getSize fun -> u64
+    @ init fun: resId u64
+        it.resId <- resId
+    ;
+
+    @ getResId fun -> u64
+        ret it.resId
+    ;
+
+    @ getSize fun -> u64
         ret @BSys::fileGetSize(it.resId)
     ;
 
-    read fun: offset u64, size u64, a_target a -> u64
+    @ read fun: offset u64, size u64, a_target a -> u64
         ret @BSys::fileRead(it.resId, offset, size, a_target)
     ;
 
-    write fun: offset u64, size u64, a_source a -> u64
+    @ write fun: offset u64, size u64, a_source a -> u64
         ret @BSys::fileWrite(it.resId, offset, size, a_source)
     ;
 ;
 
 @ File fun: resId u64 -> ptr<blob<File>>
     p_file ptr<blob<File>> <- @BSys::memAlloc(blob<File>.size).ptr<blob<File>>
-    p_file.val.resId <- resId
+    p_file.val.init(resId)
     ret p_file
 ;

@@ -18,14 +18,19 @@
     p_file ptr<blob<File>>
     p_dir ptr<blob<Dir>>
 
-    getKind fun -> enum<FsNode::Kind>
+    @ init fun: path blob<String>
+        it.path <- path
+        it.kind <- {}.enum<FsNode::Kind>::None
+    ;
+
+    @ getKind fun -> enum<FsNode::Kind>
         it.getFile({}.enum<FsNode::Mode>::Open)
         it.getDir({}.enum<FsNode::Mode>::Open)
 
         ret it.kind
     ;
 
-    getFile fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<File>>>
+    @ getFile fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<File>>>
         resId u64 <- match mode 
             enum<FsNode::Mode>::Open: @BSys::fileOpen(it.path.adr)
             enum<FsNode::Mode>::Create: @BSys::fileCreate(it.path.adr)
@@ -37,7 +42,7 @@
         ret {it.p_file}.enum<Result, ptr<blob<File>>>::Success
     ;
 
-    getDir fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<Dir>>>
+    @ getDir fun: mode enum<FsNode::Mode> -> enum<Result, ptr<blob<Dir>>>
         resId u64 <- match mode
             enum<FsNode::Mode>::Open: @BSys::dirOpen(it.path.adr)
             enum<FsNode::Mode>::Create: @BSys::dirCreate(it.path.adr)
@@ -49,7 +54,7 @@
         ret {it.p_dir}.enum<Result, ptr<blob<Dir>>>::Success
     ;
 
-    delete fun -> enum<Result>
+    @ delete fun -> enum<Result>
         ret match it.getKind()
             enum<FsNode::Kind>::File
                 if @BSys::fileDelete(it.path.string.adr.u64): {}.enum<Result>::Success else: {}.enum<Result>::Failure
@@ -62,14 +67,14 @@
         ;
     ;
 
-    release fun
+    @ release fun
         match it.kind
             enum<FsNode::Kind>::File
-                @BSys::fileClose(it.p_file.val.resId)
+                @BSys::fileClose(it.p_file.val.getResId())
                 @BSys::memFree(it.p_file.vadr)
             ;
             enum<FsNode::Kind>::Dir
-                @BSys::dirClose(it.p_dir.val.resId)
+                @BSys::dirClose(it.p_dir.val.getResId())
                 @BSys::memFree(it.p_dir.vadr)
             ;
         ;
@@ -80,7 +85,6 @@
 
 @ FsNode fun: path blob<String> -> ptr<blob<FsNode>>
     p_fsNode ptr<blob<FsNode>> <- @BSys::memAlloc(blob<FsNode>.size).ptr<blob<FsNode>>
-    p_fsNode.val.path <- path
-    p_fsNode.val.kind <- {}.enum<FsNode::Kind>::None
+    p_fsNode.val.init(path)
     ret p_fsNode
 ;

@@ -1,6 +1,5 @@
-@import TestA
+@import B
 
 @ main fun
-    ta blob<@TestA::TestA>
-    pa proto<@TestA::pA>
+    en enum<@B::Result, u32>
 ;
