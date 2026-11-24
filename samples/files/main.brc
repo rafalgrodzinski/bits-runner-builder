@@ -19,7 +19,7 @@
 
     // Read and print data
     a_buffer a <- @BSys::memAlloc(1024)
-    p_file.val.read(0, 5, a_buffer)
+    p_file.val.read(0, 1024, a_buffer)
 
     @B::String(a_buffer.ptr<data<u8>>.val).printlnColor(@B::String::FOREGROUND_MAGENTA)
 ;

@@ -2578,7 +2578,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     } else if (isSourceData && isTargetData) {
         llvm::AllocaInst *targetAlloca = buildAlloca(targetType);
 
-        int elementsCount = min(sourceSize, targetSize);
+        int elementsCount = sourceSize;
+        if (targetSize < sourceSize || sourceSize == 0)
+            elementsCount = targetSize;
         int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
         bool areElementTypesSame = dynamic_pointer_cast<ValueTypeData>(sourceWrappedValue->getValueType())->getElementValueType()->isEqual(dynamic_pointer_cast<ValueTypeData>(targetValueType)->getElementValueType());
