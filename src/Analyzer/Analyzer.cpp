@@ -272,11 +272,21 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
                             goto not_implemented;
                         }
 
+                        // must be visible outside
+                        if (!statementFunction->getIsVisibleOutside()) {
+                            isImplemented = false;
+                            goto not_implemented;
+                        }
+
                         isImplemented = true;
                     }
                 } else {
                     for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
-                        if (protoField.first == statementVariableDeclaration->getIdentifier() && protoField.second->isEqual(statementVariableDeclaration->getValueType())) {
+                        if (
+                            protoField.first == statementVariableDeclaration->getIdentifier() &&
+                            protoField.second->isEqual(statementVariableDeclaration->getValueType()) && 
+                            statementVariableDeclaration->getIsVisibleOutside()
+                        ) {
                             isImplemented = true;
                             break;
                         }
