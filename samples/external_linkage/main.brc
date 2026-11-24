@@ -9,7 +9,7 @@ stuffCallback fun: result u64
     @io::printChar('\n')
 ;
 
-@export main fun -> u64
+@ main fun -> u64
     @stuff::value <- 4
     @stuff::callback <- { stuffCallback.adr }
     @stuff::doStuff(7)

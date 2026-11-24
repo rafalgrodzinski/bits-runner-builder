@@ -1,7 +1,7 @@
 @module stuff
 
-@export value u32 <- 42
+@ value u32 <- 42
 
-@export multiply fun: by u32
+@ multiply fun: by u32
     value <- value * by
 ;

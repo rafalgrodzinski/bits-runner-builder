@@ -2,17 +2,17 @@
 
 @extern putchar fun: character u64 -> u32
 
-@export printChar fun: character u64
+@ printChar fun: character u64
     putchar(character)
 ;
 
-@export print fun: text data<u64, 32>
+@ print fun: text data<u64, 32>
     rep i u64 <- 0, i < text.count and text[i] != 0, i <- i + 1
         putchar(text[i])
     ;
 ;
 
-@export printNum fun: number s64
+@ printNum fun: number s64
     if number < 0
         number <- -number
         putchar('-')

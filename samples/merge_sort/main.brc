@@ -44,7 +44,7 @@ mergeSort fun: numbers data<u64, 32>, low u64, high u64 -> data<u64, 32>
     ret numbers
 ;
 
-@export main fun -> u64
+@ main fun -> u64
     srand(time(0))
 
     // generate random numbers

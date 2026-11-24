@@ -1,13 +1,12 @@
 @module TestA
 
-subA blob
+@ pA proto
+    value u32
+    doStuff fun
 ;
 
-@ TestA blob
-    sub blob<subA>
-
+@ TestA blob: pA
     @ value u32
-    @ abc fun
-        it.value
+    @ doStuff fun
     ;
 ;

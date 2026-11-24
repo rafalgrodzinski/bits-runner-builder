@@ -6,7 +6,7 @@ callback fun: result u64
     @io::printChar('\n')
 ;
 
-@export main fun -> u64
+@ main fun -> u64
     @utils::calculateThings(4, 3, { callback.adr })
     ret 0
 ;

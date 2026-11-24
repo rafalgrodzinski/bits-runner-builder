@@ -2,23 +2,23 @@
 @import Lib
 
 Square blob: @Lib::Shape
-    name blob<@B::String>
-    length u32
-    getArea fun -> u32
+    @ name blob<@B::String>
+    @ length u32
+    @ getArea fun -> u32
         ret it.length * it.length
     ;
 ;
 
 Triangle blob: @Lib::Shape
-    name blob<@B::String>
-    width u32
-    height u32
-    getArea fun -> u32
+    @ name blob<@B::String>
+    @ width u32
+    @ height u32
+    @ getArea fun -> u32
         ret it.width * it.height / 2
     ;
 ;
 
-@export main fun -> u32
+@ main fun -> u32
     shape proto<@Lib::Shape>
 
     square blob<Square>

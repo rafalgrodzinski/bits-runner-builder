@@ -29,7 +29,7 @@ statementFunctions(statementFunctions) {
 }
 
 StatementBlob::StatementBlob(
-    bool shouldExport,
+    bool isVisibleOutside,
     shared_ptr<SymbolName> symbolName,
     const vector<string> &namedTypeKeys,
     vector<shared_ptr<SymbolName>> conformingProtoSymbolNames,

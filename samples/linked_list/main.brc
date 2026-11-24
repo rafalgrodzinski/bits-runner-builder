@@ -3,9 +3,9 @@
 @extern malloc fun: size u64 -> a
 
 user blob
-    name data<u64, 16>
-    id u64
-    next ptr<blob<user>>
+    @ name data<u64, 16>
+    @ id u64
+    @ next ptr<blob<user>>
 ;
 
 newUser fun: userPtrPtr ptr<ptr<blob<user>>>, name data<u64, 16>, id u64
@@ -34,7 +34,7 @@ printUsers fun: userPtr ptr<blob<user>>
     ;
 ;
 
-@export main fun -> u32
+@ main fun -> u32
     userPtr ptr<blob<user>> <- { 0x00 }
     newUser( { userPtr.adr }, "Bob", 14)
     newUser( { userPtr.adr }, "John", 7)

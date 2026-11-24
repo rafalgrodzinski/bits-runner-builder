@@ -4,43 +4,43 @@
 @extern malloc fun: bytesCount u64 -> a
 @extern free fun: address a
 
-@export memAlloc fun: bytesCount u64 -> a
+@ memAlloc fun: bytesCount u64 -> a
     ret malloc(bytesCount)
 ;
 
-@export memFree fun: address a
+@ memFree fun: address a
     free(address)
 ;
 
 // Print
 @extern putchar fun: character u32 -> u32
 
-@export FOREGROUND_BLACK u8 <- 0x00
-@export FOREGROUND_BLUE u8 <- 0x01
-@export FOREGROUND_GREEN u8 <- 0x02
-@export FOREGROUND_CYAN u8 <- 0x03
-@export FOREGROUND_RED u8 <- 0x04
-@export FOREGROUND_MAGENTA u8 <- 0x05
-@export FOREGROUND_BROWN u8 <- 0x06
-@export FOREGROUND_GRAY u8 <- 0x07
+@ FOREGROUND_BLACK u8 <- 0x00
+@ FOREGROUND_BLUE u8 <- 0x01
+@ FOREGROUND_GREEN u8 <- 0x02
+@ FOREGROUND_CYAN u8 <- 0x03
+@ FOREGROUND_RED u8 <- 0x04
+@ FOREGROUND_MAGENTA u8 <- 0x05
+@ FOREGROUND_BROWN u8 <- 0x06
+@ FOREGROUND_GRAY u8 <- 0x07
 
-@export BACKGROUND_BLACK u8 <- 0x00
-@export BACKGROUND_BLUE u8 <- 0x10
-@export BACKGROUND_GREEN u8 <- 0x20
-@export BACKGROUND_CYAN u8 <- 0x30
-@export BACKGROUND_RED u8 <- 0x40
-@export BACKGROUND_MAGENTA u8 <- 0x50
-@export BACKGROUND_BROWN u8 <- 0x60
-@export BACKGROUND_WHITE u8 <- 0x70
+@ BACKGROUND_BLACK u8 <- 0x00
+@ BACKGROUND_BLUE u8 <- 0x10
+@ BACKGROUND_GREEN u8 <- 0x20
+@ BACKGROUND_CYAN u8 <- 0x30
+@ BACKGROUND_RED u8 <- 0x40
+@ BACKGROUND_MAGENTA u8 <- 0x50
+@ BACKGROUND_BROWN u8 <- 0x60
+@ BACKGROUND_WHITE u8 <- 0x70
 
-@export ATTRIB_BRIGHT u8 <- 0x08
-@export ATTRIB_BLINK u8 <- 0x80
+@ ATTRIB_BRIGHT u8 <- 0x08
+@ ATTRIB_BLINK u8 <- 0x80
 
-@export printChar fun: character u8
+@ printChar fun: character u8
     putchar(character)
 ;
 
-@export setPrintAttribute fun: attribute u8
+@ setPrintAttribute fun: attribute u8
     /*
         \033[X;X;Xm<YOUR_TEXT>\033[0m
         Where each X is a semicolon separated attribute
@@ -103,7 +103,7 @@
     putchar('m')
 ;
 
-@export resetPrintAttribute fun
+@ resetPrintAttribute fun
     putchar(0x1b)
     putchar('[')
     putchar('0')
@@ -127,13 +127,13 @@
 SEEK_SET u32 <- 0
 SEEK_END u32 <- 2
 
-@export fileOpen fun: a_path a -> u64
+@ fileOpen fun: a_path a -> u64
     mode data<u8> <- "r+"
     fp a <- fopen(a_path, mode.adr)
     ret fp.u64
 ;
 
-@export fileCreate fun: a_path a -> u64
+@ fileCreate fun: a_path a -> u64
     mode data<u8> <- "r+"
     fp a <- fopen(a_path, mode.adr)
     if fp != 0: ret fp.u64
@@ -143,34 +143,34 @@ SEEK_END u32 <- 2
     ret fp.u64
 ;
 
-@export fileClose fun: resId u64
+@ fileClose fun: resId u64
     fclose(resId.a)
 ;
 
-@export fileGetSize fun: resId u64 -> u64
+@ fileGetSize fun: resId u64 -> u64
     fseek(resId.a, 0, SEEK_END)
     ret ftell(resId.a).u64
 ;
 
-@export fileRead fun: resId u64, offset u64, size u64, a_target a -> u64
+@ fileRead fun: resId u64, offset u64, size u64, a_target a -> u64
     fseek(resId.a, offset, SEEK_SET)
     ret fread(a_target, 1, size, resId.a)
 ;
 
-@export fileWrite fun: resId u64, offset u64, size u64, a_source a -> u64
+@ fileWrite fun: resId u64, offset u64, size u64, a_source a -> u64
     fseek(resId.a, offset, SEEK_SET)
     ret fwrite(a_source, 1, size, resId.a)
 ;
 
-@export fileDelete fun: resId u64 -> bool
+@ fileDelete fun: resId u64 -> bool
     ret remove(resId.a) = 0
 ;
 
-@export dirOpen fun: a_path a -> u64
+@ dirOpen fun: a_path a -> u64
     ret opendir(a_path).u64
 ;
 
-@export dirCreate fun: a_path a -> u64
+@ dirCreate fun: a_path a -> u64
     // First try checking if a directory already exists
     resId u64 <- dirOpen(a_path)
     if resId != 0: ret resId
@@ -184,10 +184,10 @@ SEEK_END u32 <- 2
     ret dirOpen(a_path)
 ;
 
-@export dirClose fun: resId u64
+@ dirClose fun: resId u64
     closedir(resId.a)
 ;
 
-@export dirDelete fun: resId u64 -> bool
+@ dirDelete fun: resId u64 -> bool
     ret rmdir(resId.a) = 0
 ;

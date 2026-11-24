@@ -2,37 +2,37 @@
 
 @import BSys
 
-@export String::FOREGROUND_BLACK u8 <- 0x00
-@export String::FOREGROUND_BLUE u8 <- 0x01
-@export String::FOREGROUND_GREEN u8 <- 0x02
-@export String::FOREGROUND_CYAN u8 <- 0x03
-@export String::FOREGROUND_RED u8 <- 0x04
-@export String::FOREGROUND_MAGENTA u8 <- 0x05
-@export String::FOREGROUND_BROWN u8 <- 0x06
-@export String::FOREGROUND_GRAY u8 <- 0x07
+@ String::FOREGROUND_BLACK u8 <- 0x00
+@ String::FOREGROUND_BLUE u8 <- 0x01
+@ String::FOREGROUND_GREEN u8 <- 0x02
+@ String::FOREGROUND_CYAN u8 <- 0x03
+@ String::FOREGROUND_RED u8 <- 0x04
+@ String::FOREGROUND_MAGENTA u8 <- 0x05
+@ String::FOREGROUND_BROWN u8 <- 0x06
+@ String::FOREGROUND_GRAY u8 <- 0x07
 
-@export String::BACKGROUND_BLACK u8 <- 0x00
-@export String::BACKGROUND_BLUE u8 <- 0x10
-@export String::BACKGROUND_GREEN u8 <- 0x20
-@export String::BACKGROUND_CYAN u8 <- 0x30
-@export String::BACKGROUND_RED u8 <- 0x40
-@export String::BACKGROUND_MAGENTA u8 <- 0x50
-@export String::BACKGROUND_BROWN u8 <- 0x60
-@export String::BACKGROUND_WHITE u8 <- 0x70
+@ String::BACKGROUND_BLACK u8 <- 0x00
+@ String::BACKGROUND_BLUE u8 <- 0x10
+@ String::BACKGROUND_GREEN u8 <- 0x20
+@ String::BACKGROUND_CYAN u8 <- 0x30
+@ String::BACKGROUND_RED u8 <- 0x40
+@ String::BACKGROUND_MAGENTA u8 <- 0x50
+@ String::BACKGROUND_BROWN u8 <- 0x60
+@ String::BACKGROUND_WHITE u8 <- 0x70
 
-@export String::ATTRIB_BRIGHT u8 <- 0x08
-@export String::ATTRIB_BLINK u8 <- 0x80
+@ String::ATTRIB_BRIGHT u8 <- 0x08
+@ String::ATTRIB_BLINK u8 <- 0x80
 
-@export String blob
-    string data<u8, 64>
+@ String blob
+    @ string data<u8, 64>
 
-    length fun -> u32
+    @ length fun -> u32
         i u32 <- 0
         rep it.string[i] != '\0' and i < it.string.count: i <- i + 1
         ret i
     ;
 
-    isEqual fun: other blob<String> -> bool
+    @ isEqual fun: other blob<String> -> bool
         if it.length() != other.length(): ret false
 
         rep i u32 <- 0, i < it.length(), i <- i + 1
@@ -42,29 +42,29 @@
         ret true
     ;
 
-    print fun
+    @ print fun
         rep i u32 <- 0, it.string[i] != '\0' and i < it.string.count, i <- i+1
             @BSys::printChar(it.string[i])
         ;
     ;
 
-    println fun
+    @ println fun
         it.print()
         @BSys::printChar('\n')
     ;
 
-    printColor fun: attribute u8
+    @ printColor fun: attribute u8
         @BSys::setPrintAttribute(attribute)
         it.print()
         @BSys::resetPrintAttribute()
     ;
 
-    printlnColor fun: attribute u8
+    @ printlnColor fun: attribute u8
         it.printColor(attribute)
         String("\n").print()
     ;
 
-    subString fun: from u32, to u32 -> blob<String>
+    @ subString fun: from u32, to u32 -> blob<String>
         string data<u8, 64>
 
         // determine resulting lenght
@@ -87,15 +87,15 @@
         ret String(string)
     ;
 
-    subStringFrom fun: from u32 -> blob<String>
+    @ subStringFrom fun: from u32 -> blob<String>
         ret it.subString(from, it.length())
     ;
 
-    subStringTo fun: to u32 -> blob<String>
+    @ subStringTo fun: to u32 -> blob<String>
         ret it.subString(0, to)
     ;
 
-    find fun: other blob<String> -> u32
+    @ find fun: other blob<String> -> u32
         length u32 <- it.length()
         otherLength u32 <- other.length()
 
@@ -110,7 +110,7 @@
         ret 0
     ;
 
-    findLast fun: other blob<String> -> u32
+    @ findLast fun: other blob<String> -> u32
         length u32 <- it.length()
         otherLength u32 <- other.length()
 
@@ -124,16 +124,16 @@
         ret 0
     ;
 
-    clear fun
+    @ clear fun
         it.string[0] <- '\0'
     ;
 
-    removeLast fun
+    @ removeLast fun
         length u32 <- it.length()
         if length > 0: it.string[length - 1] <- 0
     ;
 
-    append fun: char u8
+    @ append fun: char u8
         length u32 <- it.length()
         if length < it.string.count - 1
             it.string[length] <- char
@@ -142,7 +142,7 @@
     ;
 ;
 
-@export String fun: string data<u8, 64> -> blob<String>
+@ String fun: string data<u8, 64> -> blob<String>
     inst blob<String>
 
     inst.string <- string
@@ -150,17 +150,17 @@
     ret inst
 ;
 
-@export StringForBool fun: value bool -> blob<String>
+@ StringForBool fun: value bool -> blob<String>
     ret if value: String("true")
     else: String("false")
 ;
 
-@export StringForChar fun: char u8 -> blob<String>
+@ StringForChar fun: char u8 -> blob<String>
     string data<u8> <- {char, 0}
     ret String(string)
 ;
 
-@export StringForU32 fun: value u32 -> blob<String>
+@ StringForU32 fun: value u32 -> blob<String>
     string data<u8, 64>
 
     length u32 <- 0
@@ -187,7 +187,7 @@
 ;
 
 
-@export StringForU64 fun: value u64 -> blob<String>
+@ StringForU64 fun: value u64 -> blob<String>
     string data<u8, 64>
 
     length u32 <- 0
@@ -213,7 +213,7 @@
     ret String(string)
 ;
 
-@export StringForS32 fun: value s32 -> blob<String>
+@ StringForS32 fun: value s32 -> blob<String>
     string data<u8, 64>
     currentIndex u32 <- 0
 
@@ -245,7 +245,7 @@
     ret String(string)
 ;
 
-@export StringHexForU32 fun: value u32 -> blob<String>
+@ StringHexForU32 fun: value u32 -> blob<String>
     string data<u8, 64> <- {'0', 'x'}
     currentIndex u32 <- 2
 
@@ -270,7 +270,7 @@
     ret String(string)
 ;
 
-@export StringForF32 fun: value f32 -> blob<String>
+@ StringForF32 fun: value f32 -> blob<String>
     string data<u8, 64>
     currentIndex u32 <- 0
 
@@ -325,6 +325,6 @@
     ret String(string)
 ;
 
-@export String::println fun
+@ String::println fun
     @BSys::printChar('\n')
 ;

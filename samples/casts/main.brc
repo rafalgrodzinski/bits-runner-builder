@@ -1,6 +1,6 @@
 @import B
 
-@export main fun -> u32
+@ main fun -> u32
     msg blob<@B::String>
     val_u8 u8
     val_u32 u32

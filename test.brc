@@ -2,7 +2,5 @@
 
 @ main fun
     ta blob<@TestA::TestA>
-    //ta.abc()
-    //@TestA::dummy()
-    //ta.value
+    pa proto<@TestA::pA>
 ;
