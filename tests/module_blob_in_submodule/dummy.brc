@@ -2,6 +2,6 @@
 
 @import main
 
-@export doSuff fun: stuff blob<@main::Stuff> -> u32
+@ doSuff fun: stuff blob<@main::Stuff> -> u32
     ret stuff.value
 ;

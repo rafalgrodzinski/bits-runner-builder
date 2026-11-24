@@ -1,11 +1,11 @@
 @module B
 @import BSys
 
-@export Dir blob
+@ Dir blob
     resId u64
 ;
 
-@export Dir fun: resId u64 -> ptr<blob<Dir>>
+@ Dir fun: resId u64 -> ptr<blob<Dir>>
     p_dir ptr<blob<Dir>> <- @BSys::memAlloc(blob<Dir>.size).ptr<blob<Dir>>
     p_dir.val.resId <- resId
     ret p_dir

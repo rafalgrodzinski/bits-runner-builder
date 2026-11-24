@@ -65,7 +65,7 @@ BRC supports inline assembly, which is declared similarly to a function. A list 
 ### Labels
 To generate a unique label for each call to a raw function use `name${:uid}:`. For example:
 ```
-@export disableInterrupts raw<"=r, ~{eax}"> -> bool
+@ disableInterrupts raw<"=r, ~{eax}"> -> bool
     mov $0, 0
 
     pushfd

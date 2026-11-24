@@ -469,7 +469,7 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
     // check attributes
     if (statementFunctionDeclaration->getKind() == FunctionKind::PROTO && statementFunctionDeclaration->getIsVisibleOutside()) {
-        markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
+        markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@");
         return;
     }
 
@@ -559,7 +559,7 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getStatementFunctionDeclarations()) {
         // members should not have export
         if (statementFunctionDeclaration->getShouldExport()) {
-            markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
+            markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@");
             return;
         }
 
@@ -667,7 +667,7 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
     // check attributes
     if (statementVariable->getKind() == VariableKind::PROTO && statementVariable->getIsVisibleOutside()) {
-        markErrorInvalidAttribute(statementVariable->getLocation(), "@export");
+        markErrorInvalidAttribute(statementVariable->getLocation(), "@");
         return;
     }
 
@@ -723,7 +723,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
     // check attributes
     if (statementVariableDeclaration->getKind() == VariableKind::PROTO && statementVariableDeclaration->getIsVisibleOutside()) {
-        markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
+        markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@");
         return;
     }
 

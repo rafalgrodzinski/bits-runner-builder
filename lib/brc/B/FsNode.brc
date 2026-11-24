@@ -1,18 +1,18 @@
 @module B
 @import BSys
 
-@export FsNode::Mode enum
+@ FsNode::Mode enum
     Open
     Create
 ;
 
-@export FsNode::Kind enum
+@ FsNode::Kind enum
     None
     File
     Dir
 ;
 
-@export FsNode blob
+@ FsNode blob
     path blob<String>
     kind enum<FsNode::Kind>
     p_file ptr<blob<File>>
@@ -78,7 +78,7 @@
     ;
 ;
 
-@export FsNode fun: path blob<String> -> ptr<blob<FsNode>>
+@ FsNode fun: path blob<String> -> ptr<blob<FsNode>>
     p_fsNode ptr<blob<FsNode>> <- @BSys::memAlloc(blob<FsNode>.size).ptr<blob<FsNode>>
     p_fsNode.val.path <- path
     p_fsNode.val.kind <- {}.enum<FsNode::Kind>::None

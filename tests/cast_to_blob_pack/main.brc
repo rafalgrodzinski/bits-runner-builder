@@ -1,10 +1,10 @@
 Dummy blob
-   val8 u8
-   val16 u16
-   val32 u32
+   @ val8 u8
+   @ val16 u16
+   @ val32 u32
 ;
 
-@export main fun -> u32
+@ main fun -> u32
    dA blob<Dummy> <- {5, 13, 27}
    dB blob_pack<Dummy> <- dA.blob_pack<Dummy>
 
