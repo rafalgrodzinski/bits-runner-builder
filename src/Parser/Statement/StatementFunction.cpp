@@ -11,7 +11,8 @@ using namespace std;
 // MARK: - Public
 
 StatementFunction::StatementFunction(
-    bool shouldExport,
+    bool isVisibleOutside,
+    FunctionKind kind,
     const string &name,
     const vector<pair<string, shared_ptr<ValueType>>> &arguments,
     shared_ptr<ValueType> returnValueType,
@@ -19,7 +20,8 @@ StatementFunction::StatementFunction(
     shared_ptr<Location> location
 ):
 Statement(StatementKind::FUNCTION, location),
-shouldExport(shouldExport),
+isVisibleOutside(isVisibleOutside),
+kind(kind),
 name(name),
 arguments(arguments),
 returnValueType(returnValueType), statementBlock(statementBlock) {
@@ -34,8 +36,12 @@ returnValueType(returnValueType), statementBlock(statementBlock) {
     this->statementBlock = make_shared<StatementBlock>(statements, statementBlock->getLocation());
 }
 
-bool StatementFunction::getShouldExport() const {
-    return shouldExport;
+bool StatementFunction::getIsVisibleOutside() const {
+    return isVisibleOutside;
+}
+
+FunctionKind StatementFunction::getKind() const {
+    return kind;
 }
 
 string StatementFunction::getName() const {
@@ -81,11 +87,12 @@ shared_ptr<StatementBlock> StatementFunction::getStatementBlock() const {
 
 shared_ptr<StatementFunctionDeclaration> StatementFunction::getDeclaration() const {
     return make_shared<StatementFunctionDeclaration>(
-        getShouldExport(),
-        getName(),
-        getModuleName(),
-        getArguments(),
-        getReturnValueType(),
+        isVisibleOutside,
+        kind,
+        name,
+        moduleName,
+        arguments,
+        returnValueType,
         getLocation()
     );
 }

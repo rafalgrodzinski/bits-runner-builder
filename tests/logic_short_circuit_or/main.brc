@@ -15,7 +15,7 @@ evalC fun -> bool
   ret true
 ;
 
-@export main fun -> u8
+@ main fun -> u8
   if evalA() or evalB() or evalC():
 
   ret value

@@ -1,10 +1,10 @@
 @module B
 
-@export Date blob
-    timestamp u32
+@ Date blob
+    @ timestamp u32
 ;
 
-@export DateForComponents fun: year u32, month u32, day u32, hour u32, minutes u32, seconds u32 -> blob<Date>
+@ DateForComponents fun: year u32, month u32, day u32, hour u32, minutes u32, seconds u32 -> blob<Date>
     date blob<Date>
 
     monthYearDay data<u32> <- {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334}

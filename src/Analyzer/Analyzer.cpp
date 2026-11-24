@@ -74,11 +74,16 @@ void Analyzer::checkModule() {
         checkStatement(statement, nullptr);
 
     // check blob member functions
-    for (shared_ptr<Statement> headerStatement : module->getStatements()) {
-        if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(headerStatement)) {
-            for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
-                checkStatement(statementFunction);
-            }
+    for (shared_ptr<Statement> statement : module->getStatements()) {
+        if (shared_ptr<StatementBlob> statementBlob = dynamic_pointer_cast<StatementBlob>(statement)) {
+            scope->level([&]() -> bool {
+                // Keep track of the current blob so we can veriffy correct access for non-public fields
+                scope->blobScope->registerContextBlobName(statementBlob->getSymbolName()->getGlobalName());
+                for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
+                    checkStatement(statementFunction);
+                }
+                return true;
+            });
         }
     }
 
@@ -198,6 +203,11 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
+    if (
+        !statementBlob->getIsVisibleOutside() &&
+        statementBlob->getSymbolName()->getModuleName() != this->module->getName()
+    ) { return; }
+
     // first register named value types for the blob
     scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
 
@@ -212,12 +222,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
                 }
             }
 
-            // fields should not have @export
-            if (statementVariableDeclaration->getShouldExport()) {
-                markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
-                return false;
-            }
-
             checkStatement(statementVariableDeclaration);
             if (statementVariableDeclaration->getValueType() == nullptr)
                 return false;
@@ -225,15 +229,6 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 
         return true;
     })) { return; }
-
-    // verify field functions
-    for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
-        // fields should not have export
-        if (statementFunction->getShouldExport()) {
-            markErrorInvalidAttribute(statementFunction->getLocation(), "@export");
-            return;
-        }
-    }
 
     // verify proto compliance (but only if it's not an import statement)
     if (statementBlob->getSymbolName()->getModuleName() == module->getName()) {
@@ -278,11 +273,21 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
                             goto not_implemented;
                         }
 
+                        // must be visible outside
+                        if (!statementFunction->getIsVisibleOutside()) {
+                            isImplemented = false;
+                            goto not_implemented;
+                        }
+
                         isImplemented = true;
                     }
                 } else {
                     for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations()) {
-                        if (protoField.first == statementVariableDeclaration->getIdentifier() && protoField.second->isEqual(statementVariableDeclaration->getValueType())) {
+                        if (
+                            protoField.first == statementVariableDeclaration->getIdentifier() &&
+                            protoField.second->isEqual(statementVariableDeclaration->getValueType()) && 
+                            statementVariableDeclaration->getIsVisibleOutside()
+                        ) {
                             isImplemented = true;
                             break;
                         }
@@ -299,19 +304,19 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
     }
 
     // register blob fields in scope
-    vector<pair<string, shared_ptr<ValueType>>> fields;
+    vector<AnalyzerScopeBlob::Field> fields;
 
     // extract variable fields
     for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statementBlob->getStatementVariableDeclarations())
-        fields.push_back(pair(statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType()));
+        fields.emplace_back(statementVariableDeclaration->getIsVisibleOutside(), statementVariableDeclaration->getIdentifier(), statementVariableDeclaration->getValueType());
 
     // then function fields
     for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions())
-        fields.push_back(pair(statementFunction->getName(), statementFunction->getValueType()));
+        fields.emplace_back(statementFunction->getIsVisibleOutside(), statementFunction->getName(), statementFunction->getValueType());
 
     // check each of the extracted fields's type
     for (auto &field : fields) {
-        if (typeForCheckedValueType(field.second, true) == nullptr)
+        if (typeForCheckedValueType(field.valueType, true) == nullptr)
             return;
     }
 
@@ -321,6 +326,10 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
+    if (
+        !statementBlobDeclaration->getIsVisibleOutside() &&
+        statementBlobDeclaration->getSymbolName()->getModuleName() != this->module->getName()
+    ) { return; }
     scope->blobScope->registerDeclaration(statementBlobDeclaration->getSymbolName());
 }
 
@@ -411,6 +420,12 @@ void Analyzer::checkStatement(shared_ptr<StatementExpression> statementExpressio
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
+    // check attributes
+    if (statementFunction->getKind() == FunctionKind::PROTO && statementFunction->getIsVisibleOutside()) {
+        markErrorInvalidAttribute(statementFunction->getLocation(), "@");
+        return;
+    }
+
     // check argument types
     for (pair<string, shared_ptr<ValueType>> &argument : statementFunction->getArguments()) {
         if (typeForCheckedValueType(argument.second, true) == nullptr)
@@ -453,6 +468,12 @@ void Analyzer::checkStatement(shared_ptr<StatementFunction> statementFunction) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration) {
+    // check attributes
+    if (statementFunctionDeclaration->getKind() == FunctionKind::PROTO && statementFunctionDeclaration->getIsVisibleOutside()) {
+        markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@");
+        return;
+    }
+
     // check argument types
     for (auto &argument : statementFunctionDeclaration->getArguments()) {
         if (typeForCheckedValueType(argument.second, true) == nullptr)
@@ -520,12 +541,6 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
     // check and verify proto field variables
     if (!scope->level([&]() -> bool {
         for (shared_ptr<StatementVariableDeclaration> statementVariableDeclaration : statement->getStatementVariableDeclarations()) {
-            // fields should not have @export
-            if (statementVariableDeclaration->getShouldExport()) {
-                markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@export");
-                return false;
-            }
-            
             // proto fields have to have an identifier
             if (statementVariableDeclaration->getIdentifier().empty()) {
                 markErrorInvalidName(statementVariableDeclaration->getLocation(), statementVariableDeclaration->getIdentifier());
@@ -540,16 +555,18 @@ void Analyzer::checkStatement(shared_ptr<StatementProto> statement) {
         return true;
     })) { return; }
 
+    /*
     // verify field function declarations
     for (shared_ptr<StatementFunctionDeclaration> statementFunctionDeclaration : statement->getStatementFunctionDeclarations()) {
         // members should not have export
         if (statementFunctionDeclaration->getShouldExport()) {
-            markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@export");
+            markErrorInvalidAttribute(statementFunctionDeclaration->getLocation(), "@");
             return;
         }
 
-        checkStatement(statementFunctionDeclaration);
+        checkStatement(statementFunctionDeclaration, false);
     }
+    */
 
     // register proto fields in scope
     vector<pair<string, shared_ptr<ValueType>>> members;
@@ -649,6 +666,13 @@ void Analyzer::checkStatement(shared_ptr<StatementReturn> statementReturn, share
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
+    // check attributes
+    if (statementVariable->getKind() == VariableKind::PROTO && statementVariable->getIsVisibleOutside()) {
+        markErrorInvalidAttribute(statementVariable->getLocation(), "@");
+        return;
+    }
+
+    // resolve value type
     statementVariable->valueType = typeForCheckedValueType(statementVariable->getValueType(), false);
     if (statementVariable->getValueType() == nullptr)
         return;
@@ -675,7 +699,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 
         if (!statementVariable->getValueType()->isEqual(statementVariable->getExpression()->getValueType())) {
             markErrorInvalidType(
-                statementVariable->getExpression()->getValueType()->getLocation(),
+                statementVariable->getLocation(),
                 statementVariable->getExpression()->getValueType(),
                 statementVariable->getValueType()
             );
@@ -689,7 +713,7 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
         return;
     }
 
-    // try registering in scope*/
+    // try registering in scope
     AnalyzerScopeRegisterResult registerResult = scope->variableScope->registerValueType(statementVariable->getGlobalIdentifier(), statementVariable->getValueType(), true);
     if (registerResult != AnalyzerScopeRegisterResult::SUCCES) {
         markErrorInvalidRegistration(statementVariable->getLocation(), statementVariable->getIdentifier(), registerResult);
@@ -698,6 +722,13 @@ void Analyzer::checkStatement(shared_ptr<StatementVariable> statementVariable) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementVariableDeclaration> statementVariableDeclaration) {
+    // check attributes
+    if (statementVariableDeclaration->getKind() == VariableKind::PROTO && statementVariableDeclaration->getIsVisibleOutside()) {
+        markErrorInvalidAttribute(statementVariableDeclaration->getLocation(), "@");
+        return;
+    }
+
+    // resolve value type
     statementVariableDeclaration->valueType = typeForCheckedValueType(statementVariableDeclaration->getValueType(), false);
     if (statementVariableDeclaration->getValueType() == nullptr)
         return;
@@ -1294,30 +1325,34 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
         } else if (isParentBlob) {
             shared_ptr<ValueTypeBlob> blobValueType = dynamic_pointer_cast<ValueTypeBlob>(parentExpression->getValueType());
             string blobName = blobValueType->getSymbolName()->getGlobalName();
-            optional<vector<pair<string, shared_ptr<ValueType>>>> blobMembers = scope->blobScope->getFields(blobValueType->getSymbolName());
-            if (blobMembers) {
+            optional<vector<AnalyzerScopeBlob::Field>> blobFields = scope->blobScope->getFields(blobValueType->getSymbolName());
+            if (blobFields) {
                 if (!scope->level([&]() -> bool {
                     scope->boxedScope->registerNamedValueTypesMap(*blobValueType->getNamedValueTypeKeys(), blobValueType->getNamedValueTypes());
 
                     string nameVariable = expressionValue->getIdentifier();
                     string nameFunction = format("{}.{}", blobName, expressionValue->getIdentifier());
-                    for (pair<string, shared_ptr<ValueType>> &blobMember : *blobMembers) {
-                        if (nameVariable == blobMember.first || nameFunction == blobMember.first) {
-                            // found corresponding blob, decide if it's a simple or data access
+                    for (AnalyzerScopeBlob::Field &blobField : *blobFields) {
+                        if (nameVariable == blobField.name || nameFunction == blobField.name) {
+                            // found corresponding blob, check if we can access it
+                            if (blobName != scope->blobScope->getContextBlobName() && !blobField.isPublic) {
+                                markErrorInvalidAccess(expressionValue->getLocation(), expressionValue->getIdentifier());
+                            }
+                            // then decide if it's a simple or data access
                             switch (expressionValue->getValueKind()) {
                                 case ExpressionValueKind::SIMPLE: {
                                     // resolve type of named type if required
-                                    expressionValue->valueType = typeForCheckedValueType(blobMember.second, false);
+                                    expressionValue->valueType = typeForCheckedValueType(blobField.valueType, false);
                                     return true;
                                 }
                                 case ExpressionValueKind::DATA: {
                                     // make sure that the indexed value is an array
-                                    shared_ptr<ValueType> valueType = blobMember.second;
+                                    shared_ptr<ValueType> valueType = blobField.valueType;
                                     if (valueType->getKind() != ValueTypeKind::DATA) {
                                         markErrorInvalidType(expressionValue->getLocation(), valueType, nullptr);
                                         return false;
                                     }
-                                    expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobMember.second)->getElementValueType();
+                                    expressionValue->valueType = dynamic_pointer_cast<ValueTypeData>(blobField.valueType)->getElementValueType();
                                     expressionValue->getIndexExpression()->valueType = typeForExpression(expressionValue->getIndexExpression(), nullptr, nullptr);
                                     // make sure that the index expression evaluates to an uint
                                     shared_ptr<Expression> indexExpression = expressionValue->getIndexExpression();
@@ -1404,7 +1439,7 @@ shared_ptr<ValueType> Analyzer::typeForExpression(shared_ptr<ExpressionValue> ex
     if (type != nullptr && expressionValue->getIndexExpression() != nullptr) {
         // make sure that the indexed value is an array
         if (type->getKind() != ValueTypeKind::DATA) {
-            markErrorInvalidType(type->getLocation(), type, nullptr);
+            markErrorInvalidType(expressionValue->getLocation(), type, nullptr);
             return nullptr;
         }
         expressionValue->indexExpression = checkAndTryCasting(
@@ -2220,9 +2255,13 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     vector<shared_ptr<ValueType>> sourceElementValueTypes = sourceType->toComposite()->getElementValueTypes();
                     shared_ptr<ValueTypeEnumField> targetValueTypeEnumField = targetType->toEnumField();
 
-                    // first option, no source types and target is none
+                    // first option, no source types and target is boxed<none> or none
                     if (sourceElementValueTypes.size() == 0) {
-                        return targetValueTypeEnumField->getPayloadValueType()->getKind() == ValueTypeKind::NONE;
+                        if (shared_ptr<ValueTypeBoxed> valueTypeBoxed = targetValueTypeEnumField->getPayloadValueType()->toBoxed()) {
+                            return valueTypeBoxed->getBoxedValueType()->isNone();
+                        } else {
+                            return targetValueTypeEnumField->getPayloadValueType()->getKind() == ValueTypeKind::NONE;
+                        }
                     }
 
                     // otherwise source has to have one element
@@ -2309,7 +2348,7 @@ bool Analyzer::canImplicitCast(shared_ptr<ValueType> sourceType, shared_ptr<Valu
                     shared_ptr<ValueTypeEnum> targetValueTypeEnum = targetType->toEnum();
 
                     // Is this a field of a parent enum?
-                    if (!sourceValueTypeEnumField->getSymbolName()->getGlobalName().starts_with(targetValueTypeEnum->getSymbolName()->getGlobalName()))
+                    if (!sourceValueTypeEnumField->getEnumSymbolName()->isEqual(targetValueTypeEnum->getSymbolName()))
                         return false;
 
                     // Does number of named types match?
@@ -2347,23 +2386,33 @@ std::shared_ptr<ValueType> Analyzer::commonImplicitCastValueType(std::vector<std
         // are they the same?
         if (targetValueType->isEqual(valueTypes.at(i))) {
             // don't do anything for identical types
+            continue;
         // can we cast one way?
         } else if (canImplicitCast(valueTypes.at(i), targetValueType)) {
             // keep the current target
+            continue;
         // can we cast the other way?
         } else if (canImplicitCast(targetValueType, valueTypes.at(i))) {
             // switch to a new target type
             targetValueType = valueTypes.at(i);
-        // panic
-        } else {
-            return ValueTypeSimple::NONE;
+            continue;
+        // can we upcast enum fields?
+        } else if (targetValueType->isEnumField() && valueTypes.at(i)->isEnumField()) {
+            shared_ptr<ValueTypeEnum> valueTypeEnumA = targetValueType->toEnumField()->getEnumValueType();
+            shared_ptr<ValueTypeEnum> valueTypeEnumB = valueTypes.at(i)->toEnumField()->getEnumValueType();
+            if (valueTypeEnumA->isEqual(valueTypeEnumB)) {
+                targetValueType = valueTypeEnumA;
+                continue;
+            }
         }
+        // panic
+        return ValueTypeSimple::NONE;
     }
 
-    // We want to promote integers to their native sizes
-    if (!targetValueType->isPtr() && targetValueType->isUnsignedInteger()) {
+    // We want to promote integers to their native sizes (if they are smaller than 64bit)
+    if (!targetValueType->isPtr() && targetValueType->isUnsignedInteger() & targetValueType->getKind() != ValueTypeKind::U64) {
         targetValueType = ValueTypeSimple::UINT;
-    } else if (targetValueType->isSignedInteger()) {
+    } else if (targetValueType->isSignedInteger() && targetValueType->getKind() != ValueTypeKind::S64) {
         targetValueType = ValueTypeSimple::SINT;
     }
 
@@ -2465,10 +2514,15 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
         return nullptr;
     }
 
-    // Check number of named types match
-    if ((*oNamedValueTypeKeys).size() != valueTypeEnum->getNamedValueTypes().size()) {
+    // Make sure we don't have more value types than keys
+    if ((*oNamedValueTypeKeys).size() < valueTypeEnum->getNamedValueTypes().size()) {
         markErrorInvalidType(valueTypeEnum->getLocation(), valueTypeEnum, nullptr);
         return nullptr;
+    }
+
+    // Then fill the remaining value types with NONE
+    for (int i = valueTypeEnum->getNamedValueTypes().size(); i < (*oNamedValueTypeKeys).size(); i++) {
+        valueTypeEnum->namedValueTypes.push_back(ValueTypeSimple::NONE);
     }
 
     valueTypeEnum->namedValueTypeKeys = *oNamedValueTypeKeys;
@@ -2477,19 +2531,24 @@ shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnum
 }
 
 shared_ptr<ValueType> Analyzer::typeForCheckedValueType(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
-    optional<vector<string>> oNamedValueTypeKeys = scope->enumScope->getNamedValueTypeKeys(valueTypeEnumField->getSymbolName());
-    shared_ptr<ValueType> payloadValueType = scope->enumScope->getPayloadValueType(valueTypeEnumField->getSymbolName());
+    optional<vector<string>> oNamedValueTypeKeys = scope->enumScope->getNamedValueTypeKeys(valueTypeEnumField->getEnumFieldSymbolName());
+    shared_ptr<ValueType> payloadValueType = scope->enumScope->getPayloadValueType(valueTypeEnumField->getEnumFieldSymbolName());
 
     // Check if enum field is registered
     if (!oNamedValueTypeKeys || payloadValueType == nullptr) {
-        markErrorNotDefined(valueTypeEnumField->getLocation(), valueTypeEnumField->getSymbolName()->getGlobalName());
+        markErrorNotDefined(valueTypeEnumField->getLocation(), valueTypeEnumField->getEnumFieldSymbolName()->getGlobalName());
         return nullptr;
     }
 
-    // Check number of named types match
-    if ((*oNamedValueTypeKeys).size() != valueTypeEnumField->getNamedValueTypes().size()) {
+    // Make sure we don't have more value types than keys
+    if ((*oNamedValueTypeKeys).size() < valueTypeEnumField->getNamedValueTypes().size()) {
         markErrorInvalidType(valueTypeEnumField->getLocation(), valueTypeEnumField, nullptr);
         return nullptr;
+    }
+
+    // Then fill the remaining value types with NONE
+    for (int i = valueTypeEnumField->getNamedValueTypes().size(); i < (*oNamedValueTypeKeys).size(); i++) {
+        valueTypeEnumField->namedValueTypes.push_back(ValueTypeSimple::NONE);
     }
 
     // Check payload type, first make sure that potential named types in boxed have access to the current context
@@ -2541,6 +2600,11 @@ void Analyzer::checkPattern(std::shared_ptr<Pattern> pattern, std::shared_ptr<Va
         markErrorInvalidPattern(pattern->getLocation(), pattern);
         return;
     }
+}
+
+void Analyzer::markErrorInvalidAccess(std::shared_ptr<Location> location, const std::string &name) {
+    string message = format("{} is not accessible in this scope", name);
+    errors.push_back(Error::error(location, message));
 }
 
 void Analyzer::markErrorInvalidAttribute(shared_ptr<Location> location, const string &name) {

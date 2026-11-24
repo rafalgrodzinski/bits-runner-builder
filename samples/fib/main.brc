@@ -21,7 +21,7 @@ printNum fun: number u64
 ;
 
 // Print first 20 fibonaci numbers
-@export main fun -> u64
+@ main fun -> u64
     rep i u64 <- 0, i < 20, i <- i + 1
         res u64 <- fib(i)
         printNum(res)

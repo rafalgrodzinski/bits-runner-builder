@@ -7,20 +7,26 @@ using namespace std;
 // MARK: - Public
 
 StatementVariable::StatementVariable(
-    bool shouldExport,
+    bool isVisibleOutside,
+    VariableKind kind,
     const string &identifier,
     shared_ptr<ValueType> valueType,
     shared_ptr<Expression> expression,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::VARIABLE, location),
-shouldExport(shouldExport),
+isVisibleOutside(isVisibleOutside),
+kind(kind),
 identifier(identifier),
 valueType(valueType),
 expression(expression) { }
 
-bool StatementVariable::getShouldExport() const {
-    return shouldExport;
+bool StatementVariable::getIsVisibleOutside() const {
+    return isVisibleOutside;
+}
+
+VariableKind StatementVariable::getKind() const {
+    return kind;
 }
 
 string StatementVariable::getIdentifier() const {
@@ -66,7 +72,8 @@ shared_ptr<Expression> StatementVariable::getExpression() const {
 
 shared_ptr<StatementVariableDeclaration> StatementVariable::getDeclaration() const {
     return make_shared<StatementVariableDeclaration>(
-        shouldExport,
+        isVisibleOutside,
+        kind,
         identifier,
         moduleName,
         isRoot,

@@ -4,7 +4,7 @@ getter fun -> ptr<u32>
     ret {value.adr}
 ;
 
-@export main fun -> u32
+@ main fun -> u32
     getter().val <- 7
     ret getter().val
 ;

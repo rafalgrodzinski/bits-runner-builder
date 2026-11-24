@@ -8,16 +8,16 @@ class SymbolName;
 class StatementProtoDeclaration: public Statement {
 public:
     StatementProtoDeclaration(
-        bool shouldExport,
+        bool isVisibleOutside,
         std::shared_ptr<SymbolName> symbolName,
         std::shared_ptr<Location> location
     );
 
-    bool getShouldExport() const;
+    bool getIsVisibleOutside() const;
     std::shared_ptr<SymbolName> getSymbolName() const;
 
 private:
-    bool shouldExport;
+    bool isVisibleOutside;
     std::shared_ptr<SymbolName> symbolName;
 };
 

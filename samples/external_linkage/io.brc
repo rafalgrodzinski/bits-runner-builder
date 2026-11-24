@@ -2,11 +2,11 @@
 
 @extern putchar fun: character u64 -> u32
 
-@export printChar fun: character u64
+@ printChar fun: character u64
     putchar(character)
 ;
 
-@export printNum fun: number s64
+@ printNum fun: number s64
     if number < 0
         number <- -number
         putchar('-')

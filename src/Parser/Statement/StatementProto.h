@@ -11,14 +11,14 @@ class SymbolName;
 class StatementProto: public Statement {
 public:
     StatementProto(
-        bool shouldExport,
+        bool isVisibleOutside,
         const std::string &name,
         const std::vector<std::shared_ptr<StatementVariableDeclaration>> &statementVariableDeclarations,
         const std::vector<std::shared_ptr<StatementFunctionDeclaration>> &statementFunctionDeclarations,
         std::shared_ptr<Location> location
     );
 
-    bool getShouldExport() const;
+    bool getIsVisibleOutside() const;
     std::shared_ptr<SymbolName> getSymbolName() const;
     void setModuleName(const std::string &moduleName);
 
@@ -28,7 +28,7 @@ public:
     std::shared_ptr<StatementProtoDeclaration> getDeclaration() const;
 
 private:
-    bool shouldExport;
+    bool isVisibleOutside;
     std::shared_ptr<SymbolName> symbolName;
     std::vector<std::shared_ptr<StatementVariableDeclaration>> statementVariableDeclarations;
     std::vector<std::shared_ptr<StatementFunctionDeclaration>> statementFunctionDeclarations;

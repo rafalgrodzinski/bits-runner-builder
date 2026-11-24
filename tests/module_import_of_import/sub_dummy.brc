@@ -1,5 +1,5 @@
 @module sub_dummy
 
-@export sub_blob blob
-    value u32
+@ sub_blob blob
+    @ value u32
 ;

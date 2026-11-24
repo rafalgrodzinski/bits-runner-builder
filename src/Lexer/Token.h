@@ -75,10 +75,9 @@ enum class TokenKind {
     TYPE,
     IDENTIFIER,
 
-    M_MODULE,
-    M_IMPORT,
-    M_EXPORT,
     M_EXTERN,
+    M_IMPORT,
+    M_MODULE,
     META,
 
     NEW_LINE,

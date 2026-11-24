@@ -2,7 +2,7 @@
 
 @import BSys
 
-@export Array::ComparisonResult enum
+@ Array::ComparisonResult enum
     Increasing
     Equal
     Decreasing
@@ -10,12 +10,12 @@
 
 ARRAY_INIT_CAPACITY u32 <- 8
 
-@export Array<T> blob
+@ Array<T> blob
     pValues ptr<data<boxed<T>>>
     capacity u32
-    count u32
+    @ count u32
 
-    push fun: value boxed<T>
+    @ push fun: value boxed<T>
         // Do we nedd to allocate more space?
         if it.capacity <= it.count
             // Figure out new capacity
@@ -30,7 +30,7 @@ ARRAY_INIT_CAPACITY u32 <- 8
         it.count <- it.count + 1
     ;
 
-    pop fun -> boxed<T>
+    @ pop fun -> boxed<T>
         if it.count = 0
             empty boxed<T>
             ret empty
@@ -39,11 +39,11 @@ ARRAY_INIT_CAPACITY u32 <- 8
         ret it.at(it.count)
     ;
 
-    at fun: index u32 -> boxed<T>
+    @ at fun: index u32 -> boxed<T>
         ret it.pValues.val[index]
     ;
 
-    sort fun: pComparisonFun ptr<fun: boxed<T>, boxed<T> -> enum<Array::ComparisonResult>>
+    @ sort fun: pComparisonFun ptr<fun: boxed<T>, boxed<T> -> enum<Array::ComparisonResult>>
         isSorted bool <- false
         rep not isSorted
             isSorted <- true

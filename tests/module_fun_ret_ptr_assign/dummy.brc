@@ -2,6 +2,6 @@
 
 value u32
 
-@export getter fun -> ptr<u32>
+@ getter fun -> ptr<u32>
     ret {value.adr}
 ;

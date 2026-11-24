@@ -36,7 +36,11 @@ bool ValueTypePtr::isEqual(shared_ptr<ValueType> other) const {
     if (pointeeValueType == nullptr)
         return otherValueTypePtr->getPointeeValueType() == nullptr;
 
-    // Otherwise pointee types must be equal
+    // Otherwise they both must be non-null
+    if (pointeeValueType == nullptr || otherValueTypePtr->getPointeeValueType() == nullptr)
+        return false;
+
+    // And equal
     return pointeeValueType->isEqual(otherValueTypePtr->getPointeeValueType());
 }
 

@@ -2,12 +2,12 @@
 
 @import B
 
-@export Shape proto
+@ Shape proto
     name blob<@B::String>
     getArea fun -> u32
 ;
 
-@export printShape fun: shape proto<Shape>
+@ printShape fun: shape proto<Shape>
     text blob<@B::String>
 
     text <- @B::String("Area of ")

@@ -7,16 +7,16 @@ using namespace std;
 // MARK: - Public
 
 StatementBlobDeclaration::StatementBlobDeclaration(
-    bool shouldExport,
+    bool isVisibleOutside,
     shared_ptr<SymbolName> symbolName,
     shared_ptr<Location> location
 ):
 Statement(StatementKind::BLOB_DECLARATION, location),
-shouldExport(shouldExport),
+isVisibleOutside(isVisibleOutside),
 symbolName(symbolName) { }
 
-bool StatementBlobDeclaration::getShouldExport() const {
-    return shouldExport;
+bool StatementBlobDeclaration::getIsVisibleOutside() const {
+    return isVisibleOutside;
 }
 
 shared_ptr<SymbolName> StatementBlobDeclaration::getSymbolName() const {

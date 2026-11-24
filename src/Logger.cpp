@@ -434,8 +434,6 @@ string Logger::toString(shared_ptr<Token> token) {
             return "@MODULE";
         case TokenKind::M_IMPORT:
             return "@IMPORT";
-        case TokenKind::M_EXPORT:
-            return "@EXPORT";
         case TokenKind::M_EXTERN:
             return "@EXTERN";
         case TokenKind::META:
@@ -516,7 +514,7 @@ string Logger::toString(shared_ptr<StatementBlob> statement, vector<IndentKind> 
     string line;
 
     // name
-    line = format("{}BLOB `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
+    line = format("{}BLOB `{}`", (statement->getIsVisibleOutside() ? "@ " : ""), statement->getSymbolName()->getGlobalName());
     // named type keys
     if (!statement->getNamedTypeKeys().empty()) {
         line += "<";
@@ -597,8 +595,8 @@ string Logger::toString(shared_ptr<StatementEnum> statement, vector<IndentKind> 
     string text;
 
     // name
-    text = format("{}ENUM `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
-    text += formattedLine(text, indents);
+    text = format("{}ENUM `{}`", (statement->getIsVisibleOutside() ? "@ " : ""), statement->getSymbolName()->getGlobalName());
+    text = formattedLine(text, indents);
 
     indents = adjustedLastIndent(indents);
 
@@ -638,7 +636,7 @@ string Logger::toString(shared_ptr<StatementFunction> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("{}FUN `{}` → {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalName(), toString(statement->getReturnValueType()));
+    line = format("{}FUN `{}` → {}", (statement->getIsVisibleOutside() ? "@ " : ""), statement->getGlobalName(), toString(statement->getReturnValueType()));
     if (!statement->getArguments().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -729,7 +727,7 @@ string Logger::toString(shared_ptr<StatementProto> statement, vector<IndentKind>
     string line;
 
     // name
-    line = format("{}PROTO `{}`", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getSymbolName()->getGlobalName());
+    line = format("{}PROTO `{}`", (statement->getIsVisibleOutside() ? "@ " : ""), statement->getSymbolName()->getGlobalName());
     if (!statement->getStatementVariableDeclarations().empty() || !statement->getStatementFunctionDeclarations().empty())
         line += ":";
     text += formattedLine(line, indents);
@@ -872,7 +870,7 @@ string Logger::toString(shared_ptr<StatementVariable> statement, vector<IndentKi
     string line;
 
     // name
-    line = format("{}VAR `{}` {}", (statement->getShouldExport() ? "@EXPORT " : ""), statement->getGlobalIdentifier(), toString(statement->getValueType()));
+    line = format("{}VAR `{}` {}", (statement->getIsVisibleOutside() ? "@ " : ""), statement->getGlobalIdentifier(), toString(statement->getValueType()));
     if (statement->getExpression() != nullptr)
         line += ":";
     text += formattedLine(line, indents);
@@ -1335,7 +1333,7 @@ string Logger::toString(shared_ptr<ValueTypeEnum> valueTypeEnum) {
 
 string Logger::toString(shared_ptr<ValueTypeEnumField> valueTypeEnumField) {
     string text = "";
-    text += format("ENUM_FIELD<`{}`", valueTypeEnumField->getSymbolName()->getGlobalName());
+    text += format("ENUM_FIELD<`{}`", valueTypeEnumField->getEnumFieldSymbolName()->getGlobalName());
     text += format(", {}>", toString(valueTypeEnumField->getPayloadValueType()));
 
     return text;
@@ -1663,8 +1661,6 @@ string Logger::toString(TokenKind tokenKind) {
             return "@MODULE";
         case TokenKind::M_IMPORT:
             return "@IMPORT";
-        case TokenKind::M_EXPORT:
-            return "@EXPORT";
         case TokenKind::M_EXTERN:
             return "@EXTERN";
         case TokenKind::META:

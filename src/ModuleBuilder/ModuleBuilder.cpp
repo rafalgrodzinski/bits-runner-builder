@@ -314,7 +314,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementBlock> statementBlock) {
 void ModuleBuilder::buildStatement(shared_ptr<StatementEnum> statementEnum) {
     // linkage
     llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
-    if (statementEnum->getShouldExport())
+    if (statementEnum->getIsVisibleOutside())
         linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage;
 
     // Register enum field tag values
@@ -405,7 +405,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunction> statementFuncti
     // Set attributes
     fun->addFnAttr(llvm::Attribute::NoUnwind);
 
-    if (!statementFunction->getShouldExport())
+    if (!statementFunction->getIsVisibleOutside())
         fun->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Local);
 
     // verify function
@@ -439,7 +439,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementFunctionDeclaration> stat
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes funLinkage = statementFunctionDeclaration->getShouldExport() ?
+    llvm::GlobalValue::LinkageTypes funLinkage = statementFunctionDeclaration->getIsVisibleOutside() ?
         llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
@@ -698,7 +698,7 @@ void ModuleBuilder::buildStatement(shared_ptr<StatementVariableDeclaration> stat
         return;
 
     // linkage
-    llvm::GlobalValue::LinkageTypes linkage = statementVariableDeclaration->getShouldExport()  ?
+    llvm::GlobalValue::LinkageTypes linkage = statementVariableDeclaration->getIsVisibleOutside()  ?
         llvm::GlobalValue::LinkageTypes::ExternalLinkage :
         llvm::GlobalValue::LinkageTypes::InternalLinkage;
 
@@ -746,7 +746,7 @@ void ModuleBuilder::buildGlobalVariable(shared_ptr<StatementVariable> statementV
 
     // linkage
     llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::LinkageTypes::InternalLinkage;
-    if (statementVariable->getShouldExport())
+    if (statementVariable->getIsVisibleOutside())
         linkage = llvm::GlobalValue::LinkageTypes::ExternalLinkage;
 
     // initializer
@@ -909,7 +909,7 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
                 
                 vector<llvm::Constant*> values;
                 // enum tag value
-                llvm::Constant *tagValue = scope->getEnumFieldTagValue(valueTypeEnumField->getSymbolName()->getGlobalName());
+                llvm::Constant *tagValue = scope->getEnumFieldTagValue(valueTypeEnumField->getEnumFieldSymbolName()->getGlobalName());
                 values.push_back(tagValue);
                 // payload value
                 llvm::Constant *payloadValue = llvm::Constant::getNullValue(typeBoxed);
@@ -1084,14 +1084,15 @@ void ModuleBuilder::buildAssignment(shared_ptr<WrappedValue> targetWrappedValue,
     // simple
     } else {
         switch (valueExpression->getKind()) {
-            case ExpressionKind::VALUE: // simple <- var
-            case ExpressionKind::CHAINED: // simple <- .val
-            case ExpressionKind::IF_ELSE: // simple <- if else
-            case ExpressionKind::CALL: // simple <- function()
-            case ExpressionKind::LITERAL: // simple <- literal
             case ExpressionKind::BINARY: // simple <- binary expression
+            case ExpressionKind::CALL: // simple <- function()
+            case ExpressionKind::CHAINED: // simple <- .val
+            case ExpressionKind::GROUPING: // simple <- ( expression )
+            case ExpressionKind::IF_ELSE: // simple <- if else
+            case ExpressionKind::LITERAL: // simple <- literal
+            case ExpressionKind::MATCH:
             case ExpressionKind::UNARY: // simple <- unary expression
-            case ExpressionKind::GROUPING: { // simple <- ( expression )
+            case ExpressionKind::VALUE: { // simple <- var
                 shared_ptr<WrappedValue> sourceWrappedValue = wrappedValueForExpression(valueExpression);
                 if (sourceWrappedValue == nullptr)
                     return;
@@ -2577,7 +2578,9 @@ shared_ptr<WrappedValue> ModuleBuilder::wrappedValueForCast(shared_ptr<WrappedVa
     } else if (isSourceData && isTargetData) {
         llvm::AllocaInst *targetAlloca = buildAlloca(targetType);
 
-        int elementsCount = min(sourceSize, targetSize);
+        int elementsCount = sourceSize;
+        if (targetSize < sourceSize || sourceSize == 0)
+            elementsCount = targetSize;
         int elementSize = sizeInBitsForType(sourceWrappedValue->getArrayType()->getElementType()) / 8;
 
         bool areElementTypesSame = dynamic_pointer_cast<ValueTypeData>(sourceWrappedValue->getValueType())->getElementValueType()->isEqual(dynamic_pointer_cast<ValueTypeData>(targetValueType)->getElementValueType());
@@ -2765,9 +2768,9 @@ llvm::Value *ModuleBuilder::valueForMatch(shared_ptr<WrappedValue> switchWrapped
             llvm::LoadInst *tagMemberLoad = builder->CreateLoad(typeInt, tagMemberPtr);
 
             // Get pattern tag
-            llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+            llvm::Constant *tagValue = scope->getEnumFieldTagValue(pattern->getValueType()->toEnumField()->getEnumFieldSymbolName()->getGlobalName());
             if (tagValue == nullptr) {
-                markErrorNotDefined(pattern->getLocation(), pattern->getValueType()->toEnumField()->getSymbolName()->getGlobalName());
+                markErrorNotDefined(pattern->getLocation(), pattern->getValueType()->toEnumField()->getEnumFieldSymbolName()->getGlobalName());
                 return nullptr;
             }
 

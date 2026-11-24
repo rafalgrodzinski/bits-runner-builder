@@ -1,4 +1,4 @@
-@export main fun -> u32
+@ main fun -> u32
     nums data<u32> <- {1,2,3,5,8,13,21,34,55}
     pNums ptr<data<u32>> <- {nums.adr}
     ret pNums.val[3]

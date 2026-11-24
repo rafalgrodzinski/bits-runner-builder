@@ -13,30 +13,41 @@
 class AnalyzerScope;
 class ValueType;
 
+enum class AnalyzerScopeRegisterResult;
 enum class AnalyzerScopeState;
 
 class AnalyzerScopeBlob {
 public:
+    struct Field {
+        bool isPublic;
+        std::string name;
+        std::shared_ptr<ValueType> valueType;
+    };
+
     typedef struct {
+        std::optional<std::string> contextBlobName;
         std::map<SymbolName, AnalyzerScopeState> statesMap;
         std::map<SymbolName, std::optional<std::vector<std::string>>> namedValueTypeKeysMap;
-        std::map<SymbolName, std::optional<std::vector<std::pair<std::string, std::shared_ptr<ValueType>>>>> fieldsMap;
+        std::map<SymbolName, std::optional<std::vector<Field>>> fieldsMap;
         std::map<SymbolName, std::vector<std::shared_ptr<SymbolName>>> conformingProtoSymbolNamsMap;
     } ScopeLevel;
 
     AnalyzerScopeBlob(AnalyzerScope *parent);
 
-    void registerDeclaration(std::shared_ptr<SymbolName> symbolName);
+    AnalyzerScopeRegisterResult registerContextBlobName(const std::string &name);
+    std::optional<std::string> getContextBlobName() const;
+
+    AnalyzerScopeRegisterResult registerDeclaration(std::shared_ptr<SymbolName> symbolName);
     AnalyzerScopeState getState(std::shared_ptr<SymbolName> symbolName);
 
-    void registerNamedValueTypeKeys(std::shared_ptr<SymbolName> symbolName, const std::vector<std::string> &namedValueTypeKeys);
+    AnalyzerScopeRegisterResult registerNamedValueTypeKeys(std::shared_ptr<SymbolName> symbolName, const std::vector<std::string> &namedValueTypeKeys);
     std::optional<std::vector<std::string>> getNamedValueTypeKeys(std::shared_ptr<SymbolName> symbolName) const;
 
-    void registerFields(std::shared_ptr<SymbolName> symbolName, std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> &fields);
-    std::optional<std::vector<std::pair<std::string, std::shared_ptr<ValueType>>>> getFields(std::shared_ptr<SymbolName> symbolName) const;
+    AnalyzerScopeRegisterResult registerFields(std::shared_ptr<SymbolName> symbolName, std::vector<Field> &fields);
+    std::optional<std::vector<Field>> getFields(std::shared_ptr<SymbolName> symbolName) const;
     std::optional<std::vector<std::shared_ptr<ValueType>>> getVariableFieldValueTypes(std::shared_ptr<SymbolName> symbolName) const;
 
-    void registerConformingProtoSymbolNames(std::shared_ptr<SymbolName> symbolName, std::vector<std::shared_ptr<SymbolName>> conformingProtoSymbolNames);
+    AnalyzerScopeRegisterResult registerConformingProtoSymbolNames(std::shared_ptr<SymbolName> symbolName, std::vector<std::shared_ptr<SymbolName>> conformingProtoSymbolNames);
     std::optional<std::vector<std::shared_ptr<SymbolName>>> getConformingProtoSymbolNames(std::shared_ptr<SymbolName> symbolName);
 
 private:

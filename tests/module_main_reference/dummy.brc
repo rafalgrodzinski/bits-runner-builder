@@ -2,7 +2,7 @@
 
 @import main
 
-@export doStuff fun -> u32
+@ doStuff fun -> u32
     @main::value <- 13
     ret @main::value
 ;

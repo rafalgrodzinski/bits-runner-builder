@@ -9,7 +9,7 @@ using namespace std;
 // MARK: - Public
 
 StatementBlob::StatementBlob(
-    bool shouldExport,
+    bool isVisibleOutside,
     const string &name,
     const vector<string> &namedTypeKeys,
     const vector<string> &protoNames,
@@ -18,7 +18,7 @@ StatementBlob::StatementBlob(
     shared_ptr<Location> location
 ):
 Statement(StatementKind::BLOB, location),
-shouldExport(shouldExport),
+isVisibleOutside(isVisibleOutside),
 symbolName(make_shared<SymbolName>(name)),
 namedTypeKeys(namedTypeKeys),
 statementVariableDeclarations(statementVariableDeclarations),
@@ -29,7 +29,7 @@ statementFunctions(statementFunctions) {
 }
 
 StatementBlob::StatementBlob(
-    bool shouldExport,
+    bool isVisibleOutside,
     shared_ptr<SymbolName> symbolName,
     const vector<string> &namedTypeKeys,
     vector<shared_ptr<SymbolName>> conformingProtoSymbolNames,
@@ -38,15 +38,15 @@ StatementBlob::StatementBlob(
     shared_ptr<Location> location
 ):
 Statement(StatementKind::BLOB, location),
-shouldExport(shouldExport),
+isVisibleOutside(isVisibleOutside),
 symbolName(symbolName),
 namedTypeKeys(namedTypeKeys),
 protoSymbolNames(conformingProtoSymbolNames),
 statementVariableDeclarations(statementVariableDeclarations),
 statementFunctions(statementFunctions) { }
 
-bool StatementBlob::getShouldExport() const {
-    return shouldExport;
+bool StatementBlob::getIsVisibleOutside() const {
+    return isVisibleOutside;
 }
 
 shared_ptr<SymbolName> StatementBlob::getSymbolName() const {
@@ -92,7 +92,7 @@ vector<pair<string, shared_ptr<ValueType>>> StatementBlob::getFields() const {
 
 shared_ptr<StatementBlobDeclaration> StatementBlob::getDeclaration() const {
     return make_shared<StatementBlobDeclaration>(
-        shouldExport,
+        isVisibleOutside,
         symbolName,
         getLocation()
     );

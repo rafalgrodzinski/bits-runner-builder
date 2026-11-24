@@ -1,22 +1,5 @@
-value u8
+@import B
 
-evalA fun -> bool
-  value <- 1
-  ret false
-;
-
-evalB fun -> bool
-  value <- 2
-  ret true
-;
-
-evalC fun -> bool
-  value <- 3
-  ret true
-;
-
-@export main fun -> u8
-  if evalA() and evalB() and evalC():
-
-  ret value
+@ main fun
+    en enum<@B::Result, u32>
 ;

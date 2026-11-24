@@ -7,7 +7,7 @@ doStuff fun -> enum<Result, u32>
   ret {43}.enum<Result, u32>::Failure
 ;
 
-@export main fun -> u32
+@ main fun -> u32
    result enum<Result, u32> <- doStuff()
 
   ret match result

@@ -10,11 +10,28 @@ using namespace std;
 AnalyzerScopeBlob::AnalyzerScopeBlob(AnalyzerScope *parent):
 parent(parent) { }
 
-void AnalyzerScopeBlob::registerDeclaration(shared_ptr<SymbolName> symbolName) {
+AnalyzerScopeRegisterResult AnalyzerScopeBlob::registerContextBlobName(const std::string &name) {
+    parent->scopeLevels.back().scopeLevelBlob.contextBlobName = name;
+    return AnalyzerScopeRegisterResult::SUCCES;
+}
+
+optional<string> AnalyzerScopeBlob::getContextBlobName() const {
+    vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
+
+    for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
+        if ((*sit).scopeLevelBlob.contextBlobName)
+            return (*sit).scopeLevelBlob.contextBlobName;
+    }
+
+    return "";
+}
+
+AnalyzerScopeRegisterResult AnalyzerScopeBlob::registerDeclaration(shared_ptr<SymbolName> symbolName) {
     if (getState(symbolName) != AnalyzerScopeState::NOT_REGISTERED)
-        return;
+        return AnalyzerScopeRegisterResult::SUCCES;
 
     parent->scopeLevels.back().scopeLevelBlob.statesMap[*symbolName] = AnalyzerScopeState::DECLARED;
+    return AnalyzerScopeRegisterResult::SUCCES;
 }
 
 AnalyzerScopeState AnalyzerScopeBlob::getState(shared_ptr<SymbolName> symbolName) {
@@ -29,14 +46,13 @@ AnalyzerScopeState AnalyzerScopeBlob::getState(shared_ptr<SymbolName> symbolName
     return AnalyzerScopeState::NOT_REGISTERED;
 }
 
-void AnalyzerScopeBlob::registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys) {
+AnalyzerScopeRegisterResult AnalyzerScopeBlob::registerNamedValueTypeKeys(shared_ptr<SymbolName> symbolName, const vector<string> &namedValueTypeKeys) {
     // check if named types are already defined
-    //if (scopeLevels.top().blobNamedTypeKeysMap.find(blobName) != scopeLevels.top().blobNamedTypeKeysMap.end())
-    //    return false;
+    if (parent->scopeLevels.back().scopeLevelBlob.namedValueTypeKeysMap.find(*symbolName) != parent->scopeLevels.back().scopeLevelBlob.namedValueTypeKeysMap.end())
+        return AnalyzerScopeRegisterResult::FAILURE_ALREAD_DEFINED;
 
     parent->scopeLevels.back().scopeLevelBlob.namedValueTypeKeysMap[*symbolName] = namedValueTypeKeys;
-
-    //return true;
+    return AnalyzerScopeRegisterResult::SUCCES;
 }
 
 optional<vector<string>> AnalyzerScopeBlob::getNamedValueTypeKeys(shared_ptr<SymbolName> symbolName) const {
@@ -51,21 +67,25 @@ optional<vector<string>> AnalyzerScopeBlob::getNamedValueTypeKeys(shared_ptr<Sym
     return {};
 }
 
-void AnalyzerScopeBlob::registerFields(shared_ptr<SymbolName> symbolName, vector<pair<string, shared_ptr<ValueType>>> &fields) {
+AnalyzerScopeRegisterResult AnalyzerScopeBlob::registerFields(shared_ptr<SymbolName> symbolName, vector<Field> &fields) {
+    if (parent->scopeLevels.back().scopeLevelBlob.fieldsMap.find(*symbolName) != parent->scopeLevels.back().scopeLevelBlob.fieldsMap.end())
+        return AnalyzerScopeRegisterResult::FAILURE_ALREAD_DEFINED;
+
     parent->scopeLevels.back().scopeLevelBlob.fieldsMap[*symbolName] = fields;
+    return AnalyzerScopeRegisterResult::SUCCES;
 }
 
-optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScopeBlob::getFields(shared_ptr<SymbolName> symbolName) const {
+optional<vector<AnalyzerScopeBlob::Field>> AnalyzerScopeBlob::getFields(shared_ptr<SymbolName> symbolName) const {
     vector<AnalyzerScope::ScopeLevel> &scopeLevels = parent->scopeLevels;
 
     for (auto sit = scopeLevels.rbegin(); sit != scopeLevels.rend(); sit++) {
         auto it = (*sit).scopeLevelBlob.fieldsMap.find(*symbolName);
         if (it != (*sit).scopeLevelBlob.fieldsMap.end()) {
-            vector<pair<string, shared_ptr<ValueType>>> fields = *it->second;
+            vector<Field> &fields = *it->second;
 
-            vector<pair<string, shared_ptr<ValueType>>> clonedFields;
-            for (pair<string, shared_ptr<ValueType>> &field : fields) {
-                clonedFields.push_back({field.first, field.second->clone()});
+            vector<Field> clonedFields;
+            for (Field &field : fields) {
+                clonedFields.emplace_back(field.isPublic, field.name, field.valueType->clone());
             }
             return clonedFields;
         }
@@ -74,22 +94,26 @@ optional<vector<pair<string, shared_ptr<ValueType>>>> AnalyzerScopeBlob::getFiel
     return {};
 }
 
-optional<vector<shared_ptr<ValueType>>> AnalyzerScopeBlob::getVariableFieldValueTypes(shared_ptr<SymbolName> symbolName) const {
-    optional<vector<pair<string, shared_ptr<ValueType>>>> fields = getFields(symbolName);
-        if (!fields)
-            return { };
+optional<vector<shared_ptr<ValueType>>> AnalyzerScopeBlob::getVariableFieldValueTypes(std::shared_ptr<SymbolName> symbolName) const {
+    optional<vector<Field>> fields = getFields(symbolName);
+    if (!fields)
+        return { };
 
     vector<shared_ptr<ValueType>> valueTypes;
-    for (pair<string, shared_ptr<ValueType>> &field : *fields) {
-        if (!field.second->isFun())
-            valueTypes.push_back(field.second);
+    for (const Field &field : *fields) {
+        if (!field.valueType->isFun())
+            valueTypes.push_back(field.valueType);
     }
 
     return valueTypes;
 }
 
-void AnalyzerScopeBlob::registerConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName, vector<shared_ptr<SymbolName>> conformingProtoSymbolNames) {
+AnalyzerScopeRegisterResult AnalyzerScopeBlob::registerConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName, vector<shared_ptr<SymbolName>> conformingProtoSymbolNames) {
+    if (parent->scopeLevels.back().scopeLevelBlob.conformingProtoSymbolNamsMap.find(*symbolName) != parent->scopeLevels.back().scopeLevelBlob.conformingProtoSymbolNamsMap.end())
+        return AnalyzerScopeRegisterResult::FAILURE_ALREAD_DEFINED;
+
     parent->scopeLevels.back().scopeLevelBlob.conformingProtoSymbolNamsMap[*symbolName] = conformingProtoSymbolNames;
+    return AnalyzerScopeRegisterResult::SUCCES;
 }
 
 optional<vector<shared_ptr<SymbolName>>> AnalyzerScopeBlob::getConformingProtoSymbolNames(shared_ptr<SymbolName> symbolName) {

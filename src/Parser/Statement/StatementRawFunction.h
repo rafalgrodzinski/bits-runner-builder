@@ -11,7 +11,7 @@ class ValueTypeFun;
 class StatementRawFunction: public Statement {
 public:
     StatementRawFunction(
-        bool shouldExport,
+        bool isVisibleOutside,
         const std::string &name,
         const std::string &constraints,
         const std::vector<std::pair<std::string, std::shared_ptr<ValueType>>> &arguments,
@@ -20,7 +20,7 @@ public:
         std::shared_ptr<Location> location
     );
 
-    bool getShouldExport() const;
+    bool getIsVisibleOutside() const;
     std::string getName() const;
     std::string getGlobalName() const;
     std::string getModuleName() const;
@@ -32,7 +32,7 @@ public:
     std::string getRawSource() const;
 
 private:
-    bool shouldExport;
+    bool isVisibleOutside;
     std::string name;
     std::string moduleName;
     std::string constraints;

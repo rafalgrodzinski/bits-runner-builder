@@ -65,7 +65,7 @@ BRC supports inline assembly, which is declared similarly to a function. A list 
 ### Labels
 To generate a unique label for each call to a raw function use `name${:uid}:`. For example:
 ```
-@export disableInterrupts raw<"=r, ~{eax}"> -> bool
+@ disableInterrupts raw<"=r, ~{eax}"> -> bool
     mov $0, 0
 
     pushfd
@@ -106,3 +106,10 @@ To generate a unique label for each call to a raw function use `name${:uid}:`. F
 ## Terminal Emulator
 - Mead's Guide to Colorized Output using ANSI Escape Sequences
 [https://azrael.digipen.edu/~mmead/www/mg/ansicolors/index.html](https://azrael.digipen.edu/~mmead/www/mg/ansicolors/index.html)
+
+
+## C
+- "System Interfaces: Detailed ToC": [https://pubs.opengroup.org/onlinepubs/9699919799/functions/contents.html](https://pubs.opengroup.org/onlinepubs/9699919799/functions/contents.html)
+
+## Object files
+`nm <file>` List symbols
