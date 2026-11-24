@@ -202,6 +202,11 @@ void Analyzer::checkStatement(shared_ptr<StatementAssignment> statementAssignmen
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
+    if (
+        !statementBlob->getIsVisibleOutside() &&
+        statementBlob->getSymbolName()->getModuleName() != this->module->getName()
+    ) { return; }
+
     // first register named value types for the blob
     scope->blobScope->registerNamedValueTypeKeys(statementBlob->getSymbolName(), statementBlob->getNamedTypeKeys());
 
@@ -310,6 +315,10 @@ void Analyzer::checkStatement(shared_ptr<StatementBlob> statementBlob) {
 }
 
 void Analyzer::checkStatement(shared_ptr<StatementBlobDeclaration> statementBlobDeclaration) {
+    if (
+        !statementBlobDeclaration->getIsVisibleOutside() &&
+        statementBlobDeclaration->getSymbolName()->getModuleName() != this->module->getName()
+    ) { return; }
     scope->blobScope->registerDeclaration(statementBlobDeclaration->getSymbolName());
 }
 

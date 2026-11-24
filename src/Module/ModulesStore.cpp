@@ -71,23 +71,21 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                 moduleLocalStatements.push_back(statementBlob);
 
                 // exported statements
-                if (statementBlob->getIsVisibleOutside()) {
-                    shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
-                        statementBlob->getIsVisibleOutside(),
-                        statementBlob->getSymbolName(),
-                        statementBlob->getNamedTypeKeys(),
-                        statementBlob->getProtoSymbolNames(),
-                        statementBlob->getStatementVariableDeclarations(),
-                        vector<shared_ptr<StatementFunction>>(), // don't include function definitions
-                        statementBlob->getLocation()
-                    );
-                    exportedStatementBlob->setModuleName(statementBlob->getSymbolName()->getModuleName());
+                shared_ptr<StatementBlob> exportedStatementBlob = make_shared<StatementBlob>(
+                    statementBlob->getIsVisibleOutside(),
+                    statementBlob->getSymbolName(),
+                    statementBlob->getNamedTypeKeys(),
+                    statementBlob->getProtoSymbolNames(),
+                    statementBlob->getStatementVariableDeclarations(),
+                    vector<shared_ptr<StatementFunction>>(), // don't include function definitions
+                    statementBlob->getLocation()
+                );
+                exportedStatementBlob->setModuleName(statementBlob->getSymbolName()->getModuleName());
 
-                    // append updated statement
-                    moduleExportedStatements.push_back(exportedStatementBlob);
-                    // declaration doesn't contain any types, so it's fine like this
-                    moduleExportedStatements.push_back(statementBlobDeclaration);
-                }
+                // append updated statement
+                moduleExportedStatements.push_back(exportedStatementBlob);
+                // declaration doesn't contain any types, so it's fine like this
+                moduleExportedStatements.push_back(statementBlobDeclaration);
 
                 // create delclarations for blob functions
                 for (shared_ptr<StatementFunction> statementBlobFunction : statementBlob->getStatementFunctions()) {
@@ -104,7 +102,7 @@ void ModulesStore::appendStatements(vector<shared_ptr<Statement>> statements) {
                     // local statements
                     moduleLocalStatements.push_back(statementBlobFunctionDeclaration);
 
-                    // handle xported & public functionse
+                    // handle exported & public functions
                     if (statementBlob->getIsVisibleOutside() && statementBlobFunction->getIsVisibleOutside())
                        moduleExportedStatements.push_back(statementBlobFunctionDeclaration);
                 }
