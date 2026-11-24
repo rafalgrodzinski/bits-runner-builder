@@ -7,7 +7,7 @@ Semicolons are not placed at the end of statements, but instead they delimit blo
 
 Single equal sign `=` denotes comparion and instead left arrow `<-` is used as an assignment symbol.
 
-Source code is grouped into named modules, each module can be composed of number of files. There is no header file. Symbols visible in other modules have to be prefixed with `@export`.
+Source code is grouped into named modules, each module can be composed of number of files. There is no header file. Symbols visible in other modules have to be prefixed with `@`.
 
 ## Language Elements
 - [Comments](Reference.md#comments) (`//`, `/* */`)
@@ -30,12 +30,12 @@ Source code is grouped into named modules, each module can be composed of number
 - [Chaining](Reference.md#chaining) (`thing.sutff[5].something`)
 - [Casts](Reference.md#casts) (`.u32`, `.data<u8>`)
 - [Built-Ins](Reference.md#built-ins) (`.size`, `.count`, `.val`, `.vadr`, `.adr`)
-- [Modules](Reference.md#modules) (`@module`, `@import`, `@export`, `@extern`)
+- [Modules](Reference.md#modules) (`@module`, `@import`, `@`, `@extern`)
 - [Namespaces](Reference.md#namespaces) (`::`)
 
 ## Comments
 Like in C, comments can be specified using either `//`, which will run until the end of the line, or through `/* */` block. Unlike C, they can be also embeded inside of each other like `/* bla bla /* bla */ */`.
-```
+```rust
 // this is a main function
 main fun -> u32
   /*
@@ -51,7 +51,7 @@ main fun -> u32
 ## Literals
 **Number literals** can be specified as decimal, hexadecimal, and binary numbers. Digits can be separated by an '_' but it cannot be the first or the last character (otherwise it will get interpreted as an identifier).
 
-```
+```rust
 // Valid examples:
 1024
 1_024
@@ -78,7 +78,7 @@ _0b1101
 ```
 
 **Text literals** can be specified either as an implicitly zero terminated string, or as a single character. Strings are converted into arrays. Characters can be also backslash `\` escaped, just like in C.
-```
+```rust
 // Examples
 "Hello world"
 "Hello world\0" // in this case, the final zero is not appended
@@ -100,7 +100,7 @@ _0b1101
 
 ## Operators
 All the standard operators, such as `+`, `-`, `*`, `/`, `%` are available. The biggest difference is that the assignment uses the left arrow `<-` and thus a comparison is done with a single equal sign `=`.
-```
+```rust
 + // addition
 - // subtraction
 * // multiplication
@@ -119,7 +119,7 @@ All the standard operators, such as `+`, `-`, `*`, `/`, `%` are available. The b
 
 ## Logical Operators
 There's a couple of standard logical operations that can be performed on bool values.
-```
+```rust
 not // highest priority
 and // lower priority
 or, xor // lowest piority
@@ -128,7 +128,7 @@ or, xor // lowest piority
 
 ## Bitwise Operators
 Bitwise operators work just like in C. There are some additions though
-```
+```rust
 ~ // bitwise not, highest priority
 << // bit shift left
 >> // bit shift right
@@ -140,7 +140,7 @@ Bitwise operators work just like in C. There are some additions though
 
 ## Simple Variables
 Simple variables are specified by first providing the name and then the type. They can have an optional initializer. There are standard float and integer types available, but unlike in C, you have to be explicit about their size and signiness. On booleans you can only perform `=` and `!=` operations. There is no `void` type or an equivalent. Simple variables are implicitly zero (or false) initialized.
-```
+```rust
 bytesInKilobyte u32 <- 1_024
 pi f32 <- 3.14
 
@@ -158,7 +158,7 @@ a // memory address, size depends on target architecture (hence not followed by 
 
 ## Boxed
 BRC supports generics-like compile-time types through `boxed`. It is effectively equivalent to a C's union, but it is compile-time type checked. Boxed types can store either a simple variable or a pointer. They can be either direclty specialized, for example through `boxed<u32>` or `boxed<ptr<data<u8>>`, or through named type passed through a blob. Refer to samples/dyn_array for a further example.
-```
+```rust
 Storage<T> blob
   value blob<T>
 ;
@@ -168,7 +168,7 @@ store blob<Storage, u32> <- {77}
 
 ## Data
 Data is a composite of identical members and constant size (like an array in C). It has a built-in member `.count`, which is equivalent to the number of elements of the array. An array can be assigned to another array of the same type, which will create a shallow copy. If their sizes don't mach, only number of elements equivalent to the smaller array will be copied. If size is not specified, it will be inferred either from composite literal, other data variable, or a function call.
-```
+```rust
 text <u32> <- "Hello, world!"
 rep i u32, text[i] != '\0'
   printChar(text[i])
@@ -179,15 +179,18 @@ copiedNumbers <u32, 8> <- numbers // Only 8 values will be copied
 ```
 
 ## Blob
-Blobs are composites of different member types (like structs in C). Before use, they need to be defined using the `blob` keyword. They can be instantiated using the composite literal `{ }` or by assigning each member `.member` individually. Assigning one blob to another will create its copy. There is no casting between different blob types. Blobs can contain other blobs, but only if they have been already beforehand defined. This helps prevent a blobacalypse where `blob1` would contain `blob2` and `blob2` would contain `blob1` which would end up with infinite blobs. Using pointers is fine though.
+Blobs are composites of different field types (like structs in C). Before use, they need to be defined using the `blob` keyword. They can be instantiated using the composite literal `{ }` or by assigning each member `.member` individually. Assigning one blob to another will create its copy. There is no casting between different blob types. Blobs can contain other blobs, but you need to look out for circularily embedded blobs. This helps prevent a blobacalypse where `blob1` would contain `blob2` and `blob2` would contain `blob1` which would end up with infinite blobs. Using pointers is fine though.
+
+Fields are private by default. To make them accessible outside prefix them with `@`.
 
 Instances can be of loose `blob<>` or packed `blob_pack<>` kinds. They cannot be assigned to each other directly, but they can be cast to each other.
 
-Blobs can implement a proto, which is indicated through `: proto1, proto` syntax. They can also define a named type through `BlobName<named1, named2>`, which then can be passed to a `boxed`.
-```
+Blobs can implement a proto, which is indicated through `: proto1, proto` syntax. They can also define a named type through `BlobName<named1, named2>`, which then can be passed to a `boxed`. Each implemented field has to be marke as visible outside (public) using `@`.
+
+```rust
 user blob
-  id u64
-  name data<u8, 16>
+  @ id u64
+  @ name data<u8, 16>
 ;
 
 u1 blob<user> <- {34, "Bob"}
@@ -198,7 +201,7 @@ u2.id <- 35
 
 ## Enum
 Enums carry both a tag and a payload value. The tag is an unsigned integer and can either be assigned automatically (auto-intcrementing from the previouse value, just like in C), or can be specified explicitly as a constant expression. If a payload is specified, it can be a `boxed` with either an explicit type or one specified through a named type, just like in blobs.
-```
+```rust
 Result<T> enum
   Success boxed<T>
   SuccessWithoutValue
@@ -210,7 +213,7 @@ Result<T> enum
 
 ## Proto
 Protos allow for interface (or protocol) functionality. The idea is that a proto defines a contract (member variables and functions), which then is fulfilled by a blob. A pointer to that blob can be then used as an initializer to a proto.
-```
+```rust
 Shape proto
   area fun -> u32
 ;
@@ -226,7 +229,7 @@ Square blob: Shape
 Pointers, just like in C, allow for low-level data manipulation and passing. They have an associated type, which is essential when reading/writing pointee's value. Each variable has a built-in member `.adr`, which will provide a system-dependant (32bit or 64bit) memory address value of type `a`. That address then then be cast to a pointer with, giving us `someValue.adr.ptr<Type`, or we can get a pointer directly by doing `someValue.ptr<Type>` or even `someValue.ptr`. Pointers have `.val` built-in, which is equivalent to its pointee and `vadr`, which is the address of the thing it is pointing at. Don't confuse `.vadr` with `.adr`, as the later is the address of the pointer itself.
 
 Address is stored as an `a` type. You can see that it's similar to `u16`, or `f64`, but doesn't have an associated size, because it's implicit for the given target. `a` can be cast into a `ptr<>` type. You can think of it as an address and a window to a given address.
-```
+```rust
 a u32 <- 5
 pA ptr<u32>
 pA.vadr <- a.adr // now both a & pA.val indicate the same value
@@ -242,7 +245,7 @@ a.ptr<u32> <- 0x66
 
 ## Functions
 Functions in BRC work just like in C. You can specify an optional list of arguments and a return type.Colon should be omitted if there are no arguments. Arrow has to be on the same line as the return type. Calls require usage of round brackets. 
-```
+```rust
 // Valid examples
 main fun -> u32
   ret 0
@@ -289,7 +292,7 @@ addNums: num1 s32, num2 s32 ->
 
 ## Raw Functions
 A unique feature of BRC is a seamless use of inline assembly. Raw functions can be used just like normal functions, altoght there is a couple of limitations and they require so called constraints to be specified. It's the same as in gcc or clang, but they are specified as a single string instead of splitting them into input, output, and clobbers. Some more information can be found here . Intel syntax is used for the source.
-```
+```rust
 rawAdd raw<"=r, r, r">: num1 u32, num2 u32 -> u32
     add $1, $2
     mov $0, $1
@@ -301,7 +304,7 @@ result u32 <- rawAdd(5, 4)
 
 ## Conditional Expressions
 If-Else statement can be written on a single or multiple lines. It is an expression, which allows it to return values. If just an `if` is used, a value cannot be returned (since what will be returned if a condition is not met?). Single line version uses colons `:`, which are ommited in the multi-line version. Single and multi-line versions can be mixed together
-```
+```rust
 isValid bool <- if count = 0: doForEmpty() else: doForCount(count)
 
 if numer > 0
@@ -336,7 +339,7 @@ else: doSomethingElse()
 ## Match Expressions
 Match expressions can be used determine actual enum field type of a given enum value type. They are akin to switch statements in C. Each enum field can have either an auto-incrementing tag or it can be explicitly stated using the `.tag` built-in.
 
-```
+```rust
 Result<T> enum
   Success: 5
   Failure boxed<T>
@@ -362,7 +365,8 @@ Enum fields can have associated values, but they need to be of a type `boxed`. O
 
 ## Repeats
 C-style for, while, and do-while are all combined into a single `rep` loop. The format is `rep init-statement, pre-condition, post-condition, post-statement`. `init-statement` allows to setup a counter, pre-condition is evaluated before and post after each loop. `post-statement` is evaluated at the end of each loop. Each part is optional, but if you include post-condition, pre-condition must also be include. If you include `post-statement` then `init-statement` also has to be included. Body can be specified on the same line as the loop, in which case the final semicolon should be also included.
-```
+
+```rust
 // infinite loop
 rep:
 
@@ -377,7 +381,8 @@ rep i u32 <- 0, true, i < someValue: doStuff(i)
 
 ## Chaining
 Expressions and assignment statments can be chained, which allows for some complex logic to be created in a clearer way. This is Especially useful when dealing with pointers.
-```
+
+```rust
 tree blob
     branches data<u64, 8>
 ;
@@ -405,9 +410,9 @@ pThing.val.id <- 8
 ```
 
 ## Modules
-Each source file forms a module and each module can be made out of multiple source files. `@module NAME` must be placed at the beginning of the file. If no `@module` is specified, then `@module main` is assumed.
+Each source file forms a part of a module and each module can be made out of multiple source files. `@module NAME` must be placed at the beginning of the file. If no `@module` is specified, then `@module main` is assumed.
 
-Each module can export functionality using the `@export` prefix. In order to use a different module it has to be imported with `@import` and then we can use its exported symbols by prefixing them with `@moduleName.`.
+Each module can export functionality using the `@` prefix. In order to use a different module it has to be imported with `@import` and then we can use its exported symbols by prefixing them with `@moduleName.`.
 
 ```
 // app.brc
@@ -415,7 +420,7 @@ Each module can export functionality using the `@export` prefix. In order to use
 @import console
 
 // we need to export main so it's available to the OS
-@export main fun -> u32
+@ main fun -> u32
   @console::print("Hello, world!)
 ;
 
@@ -423,7 +428,7 @@ Each module can export functionality using the `@export` prefix. In order to use
 // console.brc
 @module console
 
-@export print fun: text data<u32, 32> 
+@ print fun: text data<u32, 32> 
   [..]
 ;
 ```
@@ -437,7 +442,7 @@ It's possible to cast between simple and data types (as long as data types don't
 
 Type of composite literal is casts automatically (if allowed), so you can do something like `nums8 data<u8> <- {4, 7, 8}`. Size of the data will also be deducted from the number of elements. Explicit casting is required if  data is asigned to data, for example `nums32 data<u32> <- nums8.data<u32>` requires an explicit cast. data size modified through casting as well, for example `nums data<u32> <- otherNums<u32, 8>` will cause at most 8 values to be taken (if there is less than 8, the rest will be garbage).
 
-```
+```rust
   nums8 data<u8> <- {1, 2, 4, 8, 16}.data<u8, 2>
   nums32 data<s32> <- {7.15, 4, -8}
 ```
@@ -455,14 +460,15 @@ There is a couple of built-in members that can be accessible on all or some vari
 
 ## Namespaces
 Each module define it's own namespace. Module-internal symbols can be references with or without the namespace. Imported symbols have to always be referenced with a module namespace. There is no equivalent to a `using NAME` from C++.
-```
+
+```rust
 // main.brc
 @import Dummy
 
 doMainThing fun
 ;
 
-@export fun main -> u32
+@ fun main -> u32
   @main::doMainThing()
   // or
   doMainThing()
@@ -474,7 +480,8 @@ doMainThing fun
 ```
 
 Global symbols can also have additional namespaces either for groupping or for static-linke functions:
-```
+
+```rust
 Values::DEFAULT u32 <- 7
 
 Dummy blob

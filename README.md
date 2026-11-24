@@ -38,7 +38,7 @@ Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https
 
 
 ## 🥞 A taste of BRC
-```
+```rust
 // main.brc
 
 // Generate an array of random numbers and then print them
@@ -48,7 +48,7 @@ Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https
 @extern srand fun: seed u64
 @extern time fun: second u64 -> u64
 
-@export main fun -> u32
+@ main fun -> u32
     // Initialize random number generator
     srand(time(0))
 
@@ -70,7 +70,7 @@ Bits Runer Code (BRC) is a low-level system language for the [Bits Runner](https
 
 If `brb` has been installed with Homebrew, you can build and run it using:
 
-```
+```sh
 brb main.brc "`brew --prefix`/lib/brc/BSys.brc" "`brew --prefix`/lib/brc/B/String.brc" "`brew --prefix`/lib/brc/B/Array.brc"
 cc -o taste main.o BSys.o B.o
 ./taste
@@ -95,7 +95,7 @@ It's mostly a learning opportunity and a bit of fun, but maybe you can find some
 - Pointers use instance properties instead of operators
 - Casting also uses member syntax
 - No curly braces for scope or semicollons
-- Functions inside of `blob` types for simple class-like funtionality
+- Variables and functions inside of `blob` types for simple class-like funtionality
 - Interfaces with `proto` types
 - Enums with payloads
 - `if-else` and `match` are expressions
@@ -136,35 +136,64 @@ Required dependencies
 
 ### 🍎 macOS
 ```sh
-brew install llvm@20 # Install LLVM
-brew install cmake # Install cmake
-cmake -B build # Configure the project
-cmake --build build --config Release
-# or --config RelWithDebInfo
-# Binary should be under build/brb
-cmake --build build --target install # Install in system
-# bin/brb will be the executable, lib/brc/ will contain the standard libraries
+# Install LLVM
+brew install llvm@20
+
+# Install cmake
+brew install cmake
+
+# Configure the project
+cmake -B build
+
+# And build it
+cmake --build build --config RelWithDebInfo # or --config Release
+
+# Built binary should be under build/brb
+
+# Now you can install it in your system
+cmake --build build --target install
+
+# ${PREFIX}/bin/brb will be the executable, ${PREFIX}/lib/brc/ will contain the standard libraries
 ```
 
 ### 🐧 Linux (Debian based)
 ```sh
-sudo apt install llvm-20 # Install LLVM
-# CMake: Version 4 wasn't available with apt-get, so it had to be installed manually from [cmake.org](https://cmake.org/download/)
+# Install LLVM
+sudo apt install llvm-20
+
+# CMake version 4 wasn't available with apt-get, so it had to be installed manually from https://cmake.org/download/
+
 # Then the build process is the same as for macOS
 ```
 
 ### 🪟 Windows
 Windows build is a little bit more involved because you need to setup the environment and build LLVM from sources. Available LLVM binaries don't contain the necessary libraries.
-- Instal `Visual Studio 2026` (any version) or just the `Build Tools for Visual Studio 2026` from (here)[https://visualstudio.microsoft.com/ja/downloads/]. Make sure that you install C++ and CMake components.
-- Setup `PATH` environment variable so it includes the `cmake.exe` location at
-- Download and unzip (LLVM 20.1.8 sources)[https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-20.1.8.zip] from release page and unzip them. Or run: `git clone git@github.com:llvm/llvm-project.git --branch llvmorg-20.1.8 --depth 1`
-- Run Visual Studio console `x64 Native Tools Command Prompt for VS`, go to the source folder and first configure the project: `cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:\llvm-20.1.8 -Thost=x64 -B build -S llvm`
-- Once that succeeded, build the project by running: `cmake --build build --config Release`. This can take anything from 10 minutes to 2-3 hours, depending on your hardware.
-- And finally install by running: `cmake --install build --prefix C:\llvm-20.1.8`
-- Now that LLVM is ready, go to brb source and configure: `cmake -B build -DCMAKE_PREFIX_PATH=C:\llvm-20.1.8`
-- And finally build it: `cmake --build build --config Release` (or `--config Debug`)
-- You'll then be able to find the executable under `build/Release/brb`.
 
+```sh
+# Instal "Visual Studio 2026" (any version) or just the "Build Tools for Visual Studio 2026" from https://visualstudio.microsoft.com/downloads/. Make sure that you install C++ and CMake components.
+
+# Setup PATH environment variable so it includes the cmake.exe location
+
+git clone git@github.com:llvm/llvm-project.git --branch llvmorg-20.1.8 --depth 1
+# or ownload and unzip LLVM 20.1.8 sources from release page at https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-20.1.8.zip
+
+# Run Visual Studio console "x64 Native Tools Command Prompt for VS", go to the LLVM source folder and configure the project
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:\llvm-20.1.8 -Thost=x64 -B build -S llvm
+
+# Then build the project, whcih can take anything from 10 minutes to 2-3 hours, depending on your hardware
+cmake --build build --config Release
+
+# Install the built binnaries
+cmake --install build --prefix C:\llvm-20.1.8
+
+# Now that LLVM is ready, go to brb source and configure the project
+cmake -B build -DCMAKE_PREFIX_PATH=C:\llvm-20.1.8`
+
+# And build it 
+cmake --build build --config RelWithDebInfo # or --config Release
+
+# You'll find the executable under build/RelWithDebInfo/brb
+```
 
 ## 💡 Samples
 Inside of `samples/` there is a bunch of different sample code using different features of the code. Inside each of them there is a `build.sh` and `build.bat`, which will generate an executable. You can also Run `samples/run_all.sh` to build and run each of the samples, which is useful for testing to check if everything works as expected.
