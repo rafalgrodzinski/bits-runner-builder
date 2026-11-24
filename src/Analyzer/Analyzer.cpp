@@ -82,6 +82,7 @@ void Analyzer::checkModule() {
                 for (shared_ptr<StatementFunction> statementFunction : statementBlob->getStatementFunctions()) {
                     checkStatement(statementFunction);
                 }
+                return true;
             });
         }
     }
